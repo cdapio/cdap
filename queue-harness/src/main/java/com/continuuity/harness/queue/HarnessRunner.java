@@ -14,6 +14,7 @@ import etm.core.configuration.BasicEtmConfigurator;
 import etm.core.configuration.EtmManager;
 import etm.core.configuration.EtmMonitorFactory;
 import etm.core.monitor.EtmMonitor;
+import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -36,25 +37,38 @@ public class HarnessRunner {
     List<QueueAdapter> queueAdapterList = Lists.newArrayList();
     List<Producer> producerList = Lists.newArrayList();
     List<Consumer> consumerList = Lists.newArrayList();
+    
+    Options options = new Options();
+    options.addOption("c", true, "Test configuration file");
+    options.addOption("t", true, "Name of the test");
+    options.addOption("q", true, "HBase ZK Quorum, if multiple hosts in qourum seperate by comma");
 
-
-    // Validate command line arguments.
-    if ( args[0] == null) {
+    CommandLineParser parser = new PosixParser();
+    CommandLine cmd = null;
+    try {
+      cmd = parser.parse( options, args );
+    } catch(ParseException e) {
+      System.err.println("Command line parsing error " + e.getLocalizedMessage());
+      System.exit(-1);
+    }
+    
+    if(! cmd.hasOption("c")) {
       System.err.println("No configuration file specified.");
-      System.exit(-1);
+      System.exit(-2);
+    }
+    
+    if(! cmd.hasOption("t")) {
+      System.err.println("No test name specified.");
+      System.exit(-3);
     }
 
-    String testName=args[1];
-    if(testName == null) {
-      System.err.println("Test name not specified");
-      System.exit(-1);
-    }
+    String testName=cmd.getOptionValue("t");
 
     // Load the properties file
     Properties properties = new Properties();
 
     try {
-      FileInputStream stream = new FileInputStream(args[0]);
+      FileInputStream stream = new FileInputStream(cmd.getOptionValue("c"));
       properties.load(stream);
     } catch (FileNotFoundException e) {
       System.err.println("File " + args[0] + " not found");
@@ -100,6 +114,7 @@ public class HarnessRunner {
       // to run.
       if("hbase".equals(storageType)) {
         Configuration conf =  HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", cmd.getOptionValue("q", "localhost"));
         HBaseAdmin admin = new HBaseAdmin(conf);
         if(! admin.isTableAvailable(testName)) {
           HColumnDescriptor queueDescriptor = new HColumnDescriptor("QUEUE");
@@ -127,7 +142,8 @@ public class HarnessRunner {
       // Create producer(s)
       for(int i = 0; i < pCount; ++i) {
         QueueAdapter adapter = queueAdapterList.get( i % qCount);
-        Producer producer = new Producer(adapter, msgSize.intValue(), msgCount);
+        Producer producer = new Producer(adapter, msgSize.intValue(),
+          msgCount/qCount);
         producerList.add(producer);
         producer.start();
       }
@@ -135,7 +151,7 @@ public class HarnessRunner {
       // Create consumer(s)
       for(int i = 0; i < cCount; ++i) {
         QueueAdapter adapter = queueAdapterList.get( i % qCount);
-        Consumer consumer = new Consumer(""+i, adapter, msgCount);
+        Consumer consumer = new Consumer(""+i, adapter, msgCount/qCount);
         consumerList.add(consumer);
         consumer.start();
       }
