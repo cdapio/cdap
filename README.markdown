@@ -1,8 +1,8 @@
 Continuuity Performance Repository
 Copyright (c) 2012 to Continuuity Inc. All rights reserved.
 
-Queue Performance
-==================================================================================
+## Queue Performance
+
 Continuuity Queues are essentially the basic building blocks for building 
 real time big data applications. Continuuity Queues are essentially built 
 on top of HBase (Sharded key-value store). Understanding the performance 
@@ -11,6 +11,8 @@ workloads is critically important to us.
 
 NOTE: Current implementation only supports connecting to local hbase instance. 
 Soon we will be adding the capability to connect to any hbase instance. 
+
+## How to
 
 In order to run queue performance, please follow the steps below
 
@@ -21,8 +23,8 @@ In order to run queue performance, please follow the steps below
  5. bin/queue-harness <properties-file> <test-name>
  6. bin/analyze <path-to-raw-results>
 
-Configuration file (standard java properties file)
-==================================================================================
+## Configuration file
+
 1. storage.engine
    Specifies the storage engine to be used for the test. Currently supports
    hbase and memory
