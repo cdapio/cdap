@@ -26,24 +26,30 @@ In order to run queue performance, please follow the steps below
 
 ## Configuration file
 
-1. storage.engine
+*  storage.engine
+
    Specifies the storage engine to be used for the test. Currently supports
    hbase and memory
 
-2. result.dir
+*  result.dir
+
    Specifies the directory where the results would be stored.
 
-3. message.size
+*  message.size
+
    Specifies the size of the message for the test
 
-4. message.count
+*  message.count
+
    Specifies the number of messages that will be generated and pushed 
    through the queue for tests
 
-5. queue.count
+*  queue.count
+
    Specifies the number of queues to be used during the test.
 
-6. producer.count
+*  producer.count
+
    Specifies number of producers that will be part of the test. 
    Number of producers that will be assigned per queue is 
    mod(producer.count, queue.count)
