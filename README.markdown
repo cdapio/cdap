@@ -1,5 +1,6 @@
-Continuuity Performance Repository
-Copyright (c) 2012 to Continuuity Inc. All rights reserved.
+*Continuuity Performance Repository*
+====================================
+*Copyright (c) 2012 to Continuuity Inc. All rights reserved.*
 
 ## Queue Performance
 
