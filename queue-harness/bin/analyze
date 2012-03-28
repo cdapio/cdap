@@ -1,0 +1,69 @@
+#!/bin/bash
+
+result=$1; shift;
+base=`dirname $0`
+dirname=`dirname $result`
+name=`basename $result`
+test=`echo $name | sed 's/.txt//g'`
+
+mkdir -p ${dirname}/${test} 2>/dev/null >/dev/null
+cp $result ${dirname}/${test}/
+
+producer_file="producer.${name}";
+consumer_file="consumer.${name}";
+combined_file="combined.${name}";
+overall_file="overall.${name}";
+
+grep 'p:m' ${result} > ${dirname}/${test}/${producer_file}
+grep 'c:m' ${result} > ${dirname}/${test}/${consumer_file}
+
+paste ${dirname}/${test}/${producer_file} ${dirname}/${test}/${consumer_file} > ${dirname}/${test}/${combined_file}
+cat ${dirname}/${test}/${combined_file} | awk -F"\t" ' { print $4 "\t" $1 "\t" $2 "\t" $5 "\t" $6 "\t" ($6-$1)/(1000*1000) "\t" ($6-$2)/(1000*1000) } ' | sed 's/p:m://g' > ${dirname}/${test}/${overall_file}
+
+E2E_FILE=${RANDOM}
+QUEUE_FILE=${RANDOM}
+
+awk -F"\t" ' { print $6 } ' ${dirname}/${test}/${overall_file} | sort -n > ${dirname}/${test}/${E2E_FILE}
+awk -F"\t" ' { print $7 } ' ${dirname}/${test}/${overall_file} | sort -n > ${dirname}/${test}/${QUEUE_FILE}
+
+# Computes end-to-end stats
+STATS=${dirname}/${test}/${E2E_FILE}
+median_e2e=`awk '{ count[NR]=$1 } END { if(NR%2) { print count[(NR+1)/2]; } else { print (count[(NR / 2)] + count[(NR / 2) + 1]) / 2.0; } }' ${STATS}`
+mean_e2e=`awk '{delta = $1 - avg; avg += delta / NR; mean2 += delta * ($1 - avg); } END { print avg }' ${STATS}`
+stddev_e2e=`awk '{delta = $1 - avg; avg += delta / NR; mean2 += delta * ($1 - avg); } END { print sqrt(mean2 / NR) }' ${STATS}`
+robust_stddev_e2e=`awk  -v median=$median_e2e 'function abs(x){return (((x < 0.0) ? -x : x) + 0.0)} BEGIN { count=0; sum=0; } { sum += abs($1 - median); count++ } END { print sum / count }' ${STATS}`
+min_e2e=`awk 'min=="" || $1 < min {min=$1} END{ print min}' ${STATS}`
+max_e2e=`awk 'max=="" || $1 > max {max=$1} END{ print max}' ${STATS}`
+
+STATS=${dirname}/${test}/${QUEUE_FILE}
+median_qt=`awk '{ count[NR]=$1 } END { if(NR%2) { print count[(NR+1)/2]; } else { print (count[(NR / 2)] + count[(NR / 2) + 1]) / 2.0; } }' ${STATS}`
+mean_qt=`awk '{delta = $1 - avg; avg += delta / NR; mean2 += delta * ($1 - avg); } END { print avg }' ${STATS}`
+stddev_qt=`awk '{delta = $1 - avg; avg += delta / NR; mean2 += delta * ($1 - avg); } END { print sqrt(mean2 / NR) }' ${STATS}`
+robust_stddev_qt=`awk  -v median=$median_qt 'function abs(x){return (((x < 0.0) ? -x : x) + 0.0)} BEGIN { count=0; sum=0; } { sum += abs($1 - median); count++ } END { print sum / count }' ${STATS}`
+min_qt=`awk 'min=="" || $1 < min {min=$1} END{ print min}' ${STATS}`
+max_qt=`awk 'max=="" || $1 > max {max=$1} END{ print max}' ${STATS}`
+
+exec > >(tee ${dirname}/${test}/analysis.results.txt)
+echo "End to End Stats"
+echo " Min    : $min_e2e"
+echo " Max    : $max_e2e"
+echo " Mean   : $mean_e2e"
+echo " Median : $median_e2e"
+echo " StdDev : $stddev_e2e (Mean based)"
+echo " StdDev : $robust_stddev_e2e (Robust Stddev - Median based)"
+echo " Histogram"
+awk -f ${base}/histbin.awk 0.0001 5 10  ${dirname}/${test}/${E2E_FILE}
+echo ""
+echo "Time in Queue"
+echo " Min    : $min_qt"
+echo " Max    : $max_qt"
+echo " Mean   : $mean_qt"
+echo " Median : $median_qt"
+echo " StdDev : $stddev_qt (Mean based)"
+echo " StdDev : $robust_stddev_qt (Robust Stddev - Median based)"
+echo " Histogram"
+awk -f ${base}/histbin.awk 0.0001 5 10  ${dirname}/${test}/${QUEUE_FILE}
+echo ""
+rm -f ${dirname}/${test}/${E2E_FILE} 2>/dev/null
+rm -f ${dirname}/${test}/${QUEUE_FILE} 2>/dev/null
+echo "done!"
