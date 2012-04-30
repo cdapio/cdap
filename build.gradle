@@ -1,6 +1,18 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
+test {
+	testLogging.showStandardStreams = true
+	jvmArgs '-Xmx512m'
+	
+	beforeTest { descriptor ->
+		logger.lifecycle("Running test: " + descriptor)
+	}
+	onOutput { descriptor, event ->
+		logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message)
+	}
+}
+
 repositories {
 	mavenCentral()
 }
@@ -8,3 +20,4 @@ repositories {
 dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
+
