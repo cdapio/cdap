@@ -1,0 +1,189 @@
+<class-diagram version="1.0.8" icons="true" always-add-relationships="false" generalizations="true" realizations="true" 
+  associations="true" dependencies="false" nesting-relationships="true">  
+  <interface id="1" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.fabric.operations.Operation" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/Operation.java" binary="false">    
+    <position height="-1" width="-1" x="792" y="361"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <interface id="2" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.fabric.operations.WriteOperation" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/WriteOperation.java" binary="false">    
+    <position height="-1" width="-1" x="543" y="211"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <interface id="3" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.fabric.operations.ReadOperation" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/ReadOperation.java" binary="false">    
+    <position height="-1" width="-1" x="1034" y="205"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <class id="4" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.Increment" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/Increment.java" binary="false">    
+    <position height="-1" width="-1" x="383" y="49"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="5" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.CompareAndSwap" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/CompareAndSwap.java" binary="false">    
+    <position height="-1" width="-1" x="701" y="50"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="6" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.OrderedRead" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/OrderedRead.java" binary="false">    
+    <position height="-1" width="-1" x="1185" y="59"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="7" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.OrderedWrite" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/OrderedWrite.java" binary="false">    
+    <position height="-1" width="-1" x="231" y="49"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="8" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.QueuePop" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/QueuePop.java" binary="false">    
+    <position height="-1" width="-1" x="1037" y="58"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="9" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.QueuePush" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/QueuePush.java" binary="false">    
+    <position height="-1" width="-1" x="533" y="50"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="10" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.Read" 
+    project="Continuuity Data Fabric" file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/Read.java" 
+    binary="false">    
+    <position height="-1" width="-1" x="1335" y="75"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="11" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.ReadModifyWrite" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/ReadModifyWrite.java" binary="false">    
+    <position height="-1" width="-1" x="857" y="50"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <class id="12" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.persistence.ops.Write" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/main/com/continuuity/persistence/ops/Write.java" binary="false">    
+    <position height="-1" width="-1" x="80" y="82"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </class>  
+  <interface id="13" corner="BOTTOM_RIGHT" language="java" name="com.continuuity.fabric.operations.OperationExecutor" 
+    project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/OperationExecutor.java" binary="false">    
+    <position height="-1" width="-1" x="794" y="508"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <interface id="14" corner="BOTTOM_RIGHT" language="java" 
+    name="com.continuuity.fabric.operations.SimpleOperationExecutor" project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/SimpleOperationExecutor.java" binary="false">    
+    <position height="61" width="170" x="520" y="658"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <interface id="15" corner="BOTTOM_RIGHT" language="java" 
+    name="com.continuuity.fabric.operations.TransactionalOperationExecutor" project="Continuuity Data Fabric" 
+    file="/Continuuity Data Fabric/src/v2/com/continuuity/fabric/operations/TransactionalOperationExecutor.java" 
+    binary="false">    
+    <position height="61" width="208" x="928" y="659"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true"/>      
+      <operations public="true" package="true" protected="true" private="true"/>    
+    </display>  
+  </interface>  
+  <generalization id="16">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="1"/>  
+  </generalization>  
+  <realization id="17">    
+    <end type="SOURCE" refId="12"/>    
+    <end type="TARGET" refId="2"/>  
+  </realization>  
+  <realization id="18">    
+    <end type="SOURCE" refId="7"/>    
+    <end type="TARGET" refId="2"/>  
+  </realization>  
+  <generalization id="19">    
+    <end type="SOURCE" refId="15"/>    
+    <end type="TARGET" refId="13"/>  
+  </generalization>  
+  <generalization id="20">    
+    <end type="SOURCE" refId="14"/>    
+    <end type="TARGET" refId="13"/>  
+  </generalization>  
+  <realization id="21">    
+    <end type="SOURCE" refId="9"/>    
+    <end type="TARGET" refId="2"/>  
+  </realization>  
+  <realization id="22">    
+    <end type="SOURCE" refId="8"/>    
+    <end type="TARGET" refId="3"/>  
+  </realization>  
+  <realization id="23">    
+    <end type="SOURCE" refId="10"/>    
+    <end type="TARGET" refId="3"/>  
+  </realization>  
+  <generalization id="24">    
+    <end type="SOURCE" refId="3"/>    
+    <end type="TARGET" refId="1"/>  
+  </generalization>  
+  <realization id="25">    
+    <end type="SOURCE" refId="6"/>    
+    <end type="TARGET" refId="3"/>  
+  </realization>  
+  <realization id="26">    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="2"/>  
+  </realization>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+    visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true"/>    
+    <operations public="true" package="true" protected="true" private="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>
