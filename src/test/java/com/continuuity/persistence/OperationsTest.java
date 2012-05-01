@@ -50,6 +50,7 @@ public class OperationsTest {
 
 	  // Runner : Execute writes through the SimpleMemoryOperationExecutor
 	  assertTrue(memoryOperationExecutor.execute(writes));
+	  System.out.println("Wrote two key-values");
 
 	  // Client Developer : Make two read operations
 	  Read [] reads = new Read [] {
@@ -58,10 +59,12 @@ public class OperationsTest {
 	  // Runner : Execute reads through the SimpleMemoryOperationExecutor
 	  byte [] value = memoryOperationExecutor.execute(reads[0]);
 	  assertEquals(new String(values[0]), new String(value));
+	  System.out.println("Read first key-value");
 	  value = memoryOperationExecutor.execute(reads[1]);
 	  assertEquals(new String(values[1]), new String(value));
+	  System.out.println("Read second key-value");
 	  
-	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", false);
+	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", true);
 	}
 
 }
