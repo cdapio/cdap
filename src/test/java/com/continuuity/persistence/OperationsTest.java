@@ -60,6 +60,8 @@ public class OperationsTest {
 	  assertEquals(new String(values[0]), new String(value));
 	  value = memoryOperationExecutor.execute(reads[1]);
 	  assertEquals(new String(values[1]), new String(value));
+	  
+	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", false);
 	}
 
 }
