@@ -64,7 +64,7 @@ public class OperationsTest {
 	  assertEquals(new String(values[1]), new String(value));
 	  System.out.println("Read second key-value");
 	  
-	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", false);
+	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", true);
 	}
 
 }
