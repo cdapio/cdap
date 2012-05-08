@@ -8,3 +8,8 @@
 #
 .gradle
 build/
+
+#eclipse stuff
+.classpath
+.project
+.settings/

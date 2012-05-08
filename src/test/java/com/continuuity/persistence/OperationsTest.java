@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import com.continuuity.fabric.engine.memory.MemoryEngine;
 import com.continuuity.fabric.engine.memory.MemorySimpleExecutor;
+import com.continuuity.fabric.operations.SimpleOperationExecutor;
 import com.continuuity.fabric.operations.impl.Read;
 import com.continuuity.fabric.operations.impl.Write;
 import com.continuuity.fabric.operations.memory.MemorySimpleOperationExecutor;
@@ -30,7 +31,7 @@ public class OperationsTest {
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void testSimpleMemoryReadWrite() throws Exception {
 
 	  byte [][] keys = new byte [][] { "key0".getBytes(), "key1".getBytes() };
 	  byte [][] values = new byte [][] {"value0".getBytes(), "value1".getBytes()};
@@ -67,4 +68,52 @@ public class OperationsTest {
 	  assertTrue("PURPOSEFUL FAULT INJECTION!!!", true);
 	}
 
+	@Test
+	public void testAllOperationsAgainstSimpleExecutor() {
+    MemoryEngine memoryEngine = new MemoryEngine();
+    MemorySimpleExecutor memoryExecutor =
+        new MemorySimpleExecutor(memoryEngine);
+    MemorySimpleOperationExecutor memoryOperationExecutor =
+        new MemorySimpleOperationExecutor(memoryExecutor);
+    testOperations(memoryOperationExecutor);
+	}
+
+	private void testOperations(SimpleOperationExecutor exec) {
+	  testSimpleReadWrite(exec);
+	  testOrderedReadWrite(exec);
+	  testReadModifyWrite(exec);
+	  testIncrement(exec);
+	  testCompareAndSwap(exec);
+	  testQueues(exec);
+	}
+
+  private void testSimpleReadWrite(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private void testOrderedReadWrite(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private void testQueues(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private void testCompareAndSwap(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private void testIncrement(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private void testReadModifyWrite(SimpleOperationExecutor exec) {
+    // TODO Auto-generated method stub
+    
+  }
 }

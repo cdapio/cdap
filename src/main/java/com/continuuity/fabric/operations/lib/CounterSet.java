@@ -6,7 +6,7 @@ import com.continuuity.fabric.operations.WriteOperation;
 public class CounterSet implements Library {
 
   @Override
-  public ReadOperation getRead() {
+  public ReadOperation<Long> getRead() {
     // TODO Auto-generated method stub
     return null;
   }

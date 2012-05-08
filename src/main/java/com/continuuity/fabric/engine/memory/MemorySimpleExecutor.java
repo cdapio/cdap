@@ -1,5 +1,9 @@
 package com.continuuity.fabric.engine.memory;
 
+import java.util.Map;
+
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.fabric.engine.NativeSimpleExecutor;
 import com.continuuity.fabric.operations.impl.Modifier;
 
@@ -11,11 +15,39 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
     this.engine = engine;
   }
 
-  public byte[] read(byte[] key) {
-    return this.engine.get(key);
+  public byte[] readRandom(byte[] key) {
+    return this.engine.get(generateRandomOrderKey(key));
   }
 
-  public void write(byte [] key, byte [] value) {
+  public void writeRandom(byte [] key, byte [] value) {
+    this.engine.put(generateRandomOrderKey(key), value);
+  }
+
+  public Map<byte[],byte[]> readOrdered(byte [] key) {
+    return this.engine.getAsMap(key);
+  }
+
+  /**
+   * 
+   * @param startKey inclusive
+   * @param endKey exclusive
+   * @return
+   */
+  public Map<byte[],byte[]> readOrdered(byte [] startKey, byte [] endKey) {
+    return this.engine.get(startKey, endKey);
+  }
+
+  /**
+   * 
+   * @param startKey inclusive
+   * @param limit
+   * @return
+   */
+  public Map<byte[],byte[]> readOrdered(byte [] startKey, int limit) {
+    return this.engine.get(startKey, limit);
+  }
+
+  public void writeOrdered(byte [] key, byte [] value) {
     this.engine.put(key, value);
   }
 
@@ -34,5 +66,27 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
 
   public long getCounter(byte [] key) {
     return this.engine.getCounter(key);
+  }
+
+  public void queuePush(byte [] queueName, byte [] queueEntry) {
+    this.engine.queuePush(queueName, queueEntry);
+  }
+
+  public byte [] queuePop(byte [] queueName) {
+    return this.engine.queuePop(queueName);
+  }
+
+  // Private helper methods
+
+
+  /**
+   * Generates a 4-byte hash of the specified key and returns a copy of the
+   * specified key with the hash prepended to it.
+   * @param key
+   * @return 4-byte-hash(key) + key
+   */
+  private byte[] generateRandomOrderKey(byte [] key) {
+    byte [] hash = Bytes.toBytes(Bytes.hashCode(key));
+    return Bytes.add(hash, key);
   }
 }
