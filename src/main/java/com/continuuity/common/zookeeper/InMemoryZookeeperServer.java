@@ -60,7 +60,6 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
     }
 
     Thread zkThread = new Thread(new Runnable() {
-      @Override
       public void run() {
         try {
           QuorumPeerConfig config = configBuilder.buildConfig(instanceIndex);
@@ -91,7 +90,6 @@ class InMemoryZookeeperServer extends QuorumPeerMain implements Closeable {
    *
    * @throws IOException
    */
-  @Override
   public void close() throws IOException {
     stop();
     if(state.compareAndSet(State.STOPPED, State.CLOSED)) {

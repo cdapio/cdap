@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
 
 /**
  * InMemoryZookeeper provides an in-memory implementation of ZooKeeper.
@@ -111,7 +110,6 @@ public class InMemoryZookeeper implements Closeable {
    * Closes connection with ZK.
    * @throws IOException
    */
-  @Override
   public void close() throws IOException {
     inMemoryZookeeperServer.close();
   }

@@ -26,7 +26,6 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
    * @param config Configuration of Peer.
    * @throws Exception
    */
-  @Override
   public void run(QuorumPeerConfig config) throws IOException {
     ServerConfig serverConfig = new ServerConfig();
     serverConfig.readFrom(config);
@@ -38,7 +37,6 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
    * Waits till ZooKeeperServer is started completely.
    * @throws Exception
    */
-  @Override
   public void block() throws InterruptedException {
     latch.await();
     Thread.sleep(30);
@@ -49,7 +47,6 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
    * and fideling with internals of ZK. There is really no other way of
    * doing this correctly.
    */
-  @Override
   public void kill() {
     try {
       Field connectionFactoryField = ZooKeeperServerMain.class.getDeclaredField("cnxnFactory");
@@ -70,7 +67,6 @@ class InMemoryZookeeperMain extends ZooKeeperServerMain implements InMemoryZooke
    * Closes a connection of ZK server.
    * @throws IOException
    */
-  @Override
   public void close() throws IOException {
     shutdown();
   }
