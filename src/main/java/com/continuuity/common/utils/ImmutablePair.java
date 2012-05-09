@@ -25,19 +25,36 @@ public final class ImmutablePair<A, B> {
   private final A first;
   private final B second;
 
+  /**
+   * Constructs a Immutable Pair.
+   * @param first object in pair
+   * @param second object in pair
+   */
   public ImmutablePair(A first, B second) {
     this.first = first;
     this.second = second;
   }
 
+  /**
+   * Returns first object from pair.
+   * @return first object from pair.
+   */
   public A getFirst() {
     return first;
   }
 
+  /**
+   * Return second object from pair.
+   * @return second object from pair.
+   */
   public B getSecond() {
     return second;
   }
 
+  /**
+   * Returns a string representation of {@link ImmutablePair} object.
+   * @return string representation of this object.
+   */
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -46,11 +63,20 @@ public final class ImmutablePair<A, B> {
             .toString();
   }
 
+  /**
+   * Returns a hash code value for this object.
+   * @return hash code value of this object.
+   */
   @Override
   public int hashCode() {
     return Objects.hashCode(first, second);
   }
 
+  /**
+   * Returns whether some other object "is equal" to this object.
+   * @param o reference object with which to compare
+   * @return true if object is the same as the obj argument; false otherwise.
+   */
   @Override
   public boolean equals(Object o) {
     if(o == null) return false;
