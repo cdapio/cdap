@@ -8,7 +8,7 @@ group = 'com.continuuity'
 version = globalVersion
 status = version.status
 
-def artifactId = common
+def artifactId = projectDir.name
 def groupId = group
 def versionNumber = version
 
@@ -79,7 +79,7 @@ uploadArchives {
         authentication(userName: USER, password: PASSWORD)
       }
       pom.version = versionNumber
-      pom.artifactId = artifactId
+      pom.artifactId = 'common'
       pom.groupId = groupId
     }
   }
