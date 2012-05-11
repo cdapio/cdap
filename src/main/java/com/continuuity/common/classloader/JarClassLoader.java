@@ -3,6 +3,12 @@ package com.continuuity.common.classloader;
 /**
  * JarClassLoader extends {@link MultiClassLoader}
  */
+
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
+
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public class JarClassLoader extends MultiClassLoader {
   private JarResources    jarResources;
 
