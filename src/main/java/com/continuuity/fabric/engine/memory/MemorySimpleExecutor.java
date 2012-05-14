@@ -51,29 +51,34 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
     this.engine.put(key, value);
   }
 
+  public long readCounter(byte[] key) {
+    return this.engine.getCounter(generateRandomOrderKey(key));
+  }
+
   public boolean compareAndSwap(byte [] key,
       byte [] expectedValue, byte [] newValue) {
-    return this.engine.compareAndSwap(key, expectedValue, newValue);
+    return this.engine.compareAndSwap(
+        generateRandomOrderKey(key), expectedValue, newValue);
   }
 
   public void readModifyWrite(byte [] key, Modifier<byte[]> modifier) {
-    this.engine.readModifyWrite(key, modifier);
+    this.engine.readModifyWrite(generateRandomOrderKey(key), modifier);
   }
 
   public void increment(byte [] key, long amount) {
-    this.engine.increment(key, amount);
+    this.engine.increment(generateRandomOrderKey(key), amount);
   }
 
   public long getCounter(byte [] key) {
-    return this.engine.getCounter(key);
+    return this.engine.getCounter(generateRandomOrderKey(key));
   }
 
   public void queuePush(byte [] queueName, byte [] queueEntry) {
-    this.engine.queuePush(queueName, queueEntry);
+    this.engine.queuePush(generateRandomOrderKey(queueName), queueEntry);
   }
 
   public byte [] queuePop(byte [] queueName) {
-    return this.engine.queuePop(queueName);
+    return this.engine.queuePop(generateRandomOrderKey(queueName));
   }
 
   // Private helper methods

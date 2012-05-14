@@ -1,5 +1,7 @@
 package com.continuuity.fabric.operations;
 
+import java.util.List;
+
 public interface SimpleOperationExecutor extends OperationExecutor {
 
   /**
@@ -13,5 +15,5 @@ public interface SimpleOperationExecutor extends OperationExecutor {
    * @return true if all operations succeeded, false if not
    */
   @Override
-  public boolean execute(WriteOperation [] writes);
+  public boolean execute(List<WriteOperation> writes);
 }

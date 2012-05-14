@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.fabric.engine.Engine;
 import com.continuuity.fabric.operations.impl.Modifier;
 
@@ -59,6 +61,7 @@ public class MemoryEngine implements Engine {
     byte [] existingValue = this.kvmap.get(key);
     if (existingValue == null && expectedValue != null) return false;
     if (existingValue != null && expectedValue == null) return false;
+    if (!Bytes.equals(existingValue, expectedValue)) return false;
     this.kvmap.put(key, newValue);
     return true;
   }

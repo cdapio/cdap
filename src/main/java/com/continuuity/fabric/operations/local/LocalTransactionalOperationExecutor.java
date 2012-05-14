@@ -1,5 +1,6 @@
 package com.continuuity.fabric.operations.local;
 
+import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.operations.SyncReadTimeoutException;
@@ -15,11 +16,11 @@ import com.continuuity.fabric.operations.impl.Read;
 import com.continuuity.fabric.operations.impl.ReadModifyWrite;
 import com.continuuity.fabric.operations.impl.Write;
 
-public class LocalTransactionalOperationExecutor
+public abstract class LocalTransactionalOperationExecutor
 implements TransactionalOperationExecutor {
 
   @Override
-  public boolean execute(WriteOperation[] writes) {
+  public boolean execute(List<WriteOperation> writes) {
     // TODO Auto-generated method stub
     return false;
   }

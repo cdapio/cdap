@@ -10,12 +10,6 @@ import com.continuuity.fabric.operations.impl.Write;
 public interface WriteOperationExecutor {
 
   /**
-   * @see SimpleOperationExecutor#execute(WriteOperation[])
-   * @see TransactionalOperationExecutor#execute(WriteOperation[])
-   */
-  public boolean execute(WriteOperation [] writes);
-
-  /**
    * Performs a {@link Write} operation.
    */
   public boolean execute(Write write);

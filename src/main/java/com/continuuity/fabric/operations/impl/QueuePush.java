@@ -3,16 +3,16 @@ package com.continuuity.fabric.operations.impl;
 import com.continuuity.fabric.operations.WriteOperation;
 
 public class QueuePush implements WriteOperation {
-  private byte [] key;
+  private byte [] queueName;
   private byte [] value;
  
-  public QueuePush(byte [] key, byte [] value) {
-    this.key = key;
+  public QueuePush(byte [] queueName, byte [] value) {
+    this.queueName = queueName;
     this.value = value;
   }
 
-  public byte [] getKey() {
-    return this.key;
+  public byte [] getQueueName() {
+    return this.queueName;
   }
  
   public byte [] getValue() {

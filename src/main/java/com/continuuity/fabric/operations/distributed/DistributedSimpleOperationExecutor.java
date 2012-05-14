@@ -1,5 +1,6 @@
 package com.continuuity.fabric.operations.distributed;
 
+import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.engine.hbase.HBaseSimpleExecutor;
@@ -22,7 +23,7 @@ import com.continuuity.fabric.operations.impl.Write;
  *
  * This executor utilizes the {@link HBaseSimpleExecutor}.
  */
-public class DistributedSimpleOperationExecutor
+public abstract class DistributedSimpleOperationExecutor
 implements SimpleOperationExecutor {
 
   HBaseSimpleExecutor executor;
@@ -32,7 +33,7 @@ implements SimpleOperationExecutor {
   }
 
   @Override
-  public boolean execute(WriteOperation[] writes) {
+  public boolean execute(List<WriteOperation> writes) {
     // TODO Auto-generated method stub
     return false;
   }

@@ -1,6 +1,7 @@
 package com.continuuity.fabric.operations.memory;
 
 
+import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.engine.memory.MemorySimpleExecutor;
@@ -14,6 +15,7 @@ import com.continuuity.fabric.operations.impl.OrderedWrite;
 import com.continuuity.fabric.operations.impl.QueuePop;
 import com.continuuity.fabric.operations.impl.QueuePush;
 import com.continuuity.fabric.operations.impl.Read;
+import com.continuuity.fabric.operations.impl.ReadCounter;
 import com.continuuity.fabric.operations.impl.ReadModifyWrite;
 import com.continuuity.fabric.operations.impl.Write;
 
@@ -28,7 +30,7 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   // Batch of writes
 
   @Override
-  public boolean execute(WriteOperation[] writes) {
+  public boolean execute(List<WriteOperation> writes) {
     for (WriteOperation write : writes) {
       if (write instanceof Write) {
         if (!execute((Write)write)) return false;
@@ -69,7 +71,7 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
 
   @Override
   public boolean execute(QueuePush push) {
-    this.executor.queuePush(push.getKey(), push.getValue());
+    this.executor.queuePush(push.getQueueName(), push.getValue());
     return true;
   }
 
@@ -90,6 +92,12 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   @Override
   public byte [] execute(Read read) throws SyncReadTimeoutException {
     return this.executor.readRandom(read.getKey());
+  }
+
+  @Override
+  public long execute(ReadCounter readCounter)
+  throws SyncReadTimeoutException {
+    return this.executor.readCounter(readCounter.getKey());
   }
 
   @Override

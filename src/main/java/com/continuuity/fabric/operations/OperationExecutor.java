@@ -8,6 +8,6 @@ package com.continuuity.fabric.operations;
  * Writes return true or false as to whether they succeeded or not.
  */
 public interface OperationExecutor
-extends ReadOperationExecutor, WriteOperationExecutor {
+extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor {
 
 }

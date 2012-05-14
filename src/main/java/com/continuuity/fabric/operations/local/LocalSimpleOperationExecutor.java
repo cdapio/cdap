@@ -1,5 +1,6 @@
 package com.continuuity.fabric.operations.local;
 
+import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.operations.SimpleOperationExecutor;
@@ -15,10 +16,10 @@ import com.continuuity.fabric.operations.impl.Read;
 import com.continuuity.fabric.operations.impl.ReadModifyWrite;
 import com.continuuity.fabric.operations.impl.Write;
 
-public class LocalSimpleOperationExecutor implements SimpleOperationExecutor {
+public abstract class LocalSimpleOperationExecutor implements SimpleOperationExecutor {
 
   @Override
-  public boolean execute(WriteOperation[] writes) {
+  public boolean execute(List<WriteOperation> writes) {
     // TODO Auto-generated method stub
     return false;
   }

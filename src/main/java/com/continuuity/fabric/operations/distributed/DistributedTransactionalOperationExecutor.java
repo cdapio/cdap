@@ -1,5 +1,6 @@
 package com.continuuity.fabric.operations.distributed;
 
+import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.engine.NativeExecutor;
@@ -22,11 +23,11 @@ import com.continuuity.fabric.operations.impl.Write;
  * Executes a list of {@link Operation}s by converting them into a list of
  * {@link NativeOperation}s and then executing them with a {@link NativeExecutor}.
  */
-public class DistributedTransactionalOperationExecutor
+public abstract class DistributedTransactionalOperationExecutor
 implements TransactionalOperationExecutor {
 
   @Override
-  public boolean execute(WriteOperation[] writes) {
+  public boolean execute(List<WriteOperation> writes) {
     // TODO Auto-generated method stub
     return false;
   }
