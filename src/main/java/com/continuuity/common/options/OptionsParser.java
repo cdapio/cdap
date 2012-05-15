@@ -1,27 +1,45 @@
+/**
+ * Copyright (c) 2012 to Continuuity Inc. All rights reserved.
+ * Licensed to Odiago, Inc.
+ */
 package com.continuuity.common.options;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.*;
 
 /**
- * Licensed to Odiago, Inc. under one or more contributor license
- * agreements.  See the NOTICE file distributed with this work for
- * additional information regarding copyright ownership.  Odiago, Inc.
- * licenses this file to you under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * <p>
+ *   <code>OptionsParser</code> looks into the class looking for annotations that
+ *   specifies options. It then matches them with the command line arguments passed
+ *   to it. If there are any options that are specified on command line and not
+ *   present in annotated definition an usage message is automatically generated.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   Following is an simple example of it's usage.
+ *   <code>
+ *     public class MyClass {
+ *       @Option(name="name", usage="Specifies the name of a flow")
+ *       private String flowName;
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied.  See the License for the specific language governing
- * permissions and limitations under the License.
+ *       @Option(name="flowlet", usage="Specifies the name of the flowlet")
+ *       private String flowletName;
+ *
+ *       @Option(name="class", usage="Specifies the class associated with the flowlet to be loaded")
+ *       private String className;
+ *
+ *       @Option(name="jar", usage="Specifies the path to the jar file that contains the class specified")
+ *       private String jarPath;
+ *
+ *       @Option(name="instance", usage="Specifies the instance id of the flowlet")
+ *       private int instance;
+ *
+ *       public static void main(String[] args) {
+ *        MyClass myclass = new MyClass();
+ *        OptionsParser.init(myclass, args, System.out);
+ *       }
+ *     }
+ *   </code>
+ * </p>
  */
 public final class OptionsParser {
 
@@ -140,6 +158,11 @@ public final class OptionsParser {
     return parsedOptions;
   }
 
+  /**
+   * Prints the usage based on declared Options in the class.
+   * @param options extracted options from introspecting a class
+   * @param out Stream to output the usage.
+   */
   private static void printUsage(Map<String, OptionSpec> options, PrintStream out) {
     final String FORMAT_STRING = "  --%s=<%s>\n%s\t(Default=%s)\n\n";
     if(!options.containsKey("help")) {
@@ -157,7 +180,4 @@ public final class OptionsParser {
       out.printf(FORMAT_STRING, option.getName(), option.getTypeName(), usage, option.getDefaultValue());
     }
   }
-
-
-
 }
