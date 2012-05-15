@@ -5,9 +5,9 @@ import com.continuuity.fabric.engine.NativeTransactionalExecutor;
 public class MemoryTransactionalExecutor implements NativeTransactionalExecutor {
 
   @SuppressWarnings("unused")
-  private final MemoryEngine engine;
+  private final MemorySimpleEngine engine;
 
-  public MemoryTransactionalExecutor(MemoryEngine engine) {
+  public MemoryTransactionalExecutor(MemorySimpleEngine engine) {
     this.engine = engine;
   }
 }

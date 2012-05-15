@@ -6,12 +6,15 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.fabric.engine.NativeSimpleExecutor;
 import com.continuuity.fabric.operations.impl.Modifier;
+import com.continuuity.fabric.operations.queues.QueueConsumer;
+import com.continuuity.fabric.operations.queues.QueueEntry;
+import com.continuuity.fabric.operations.queues.QueuePartitioner;
 
 public class MemorySimpleExecutor implements NativeSimpleExecutor {
 
-  private final MemoryEngine engine;
+  private final MemorySimpleEngine engine;
 
-  public MemorySimpleExecutor(MemoryEngine engine) {
+  public MemorySimpleExecutor(MemorySimpleEngine engine) {
     this.engine = engine;
   }
 
@@ -28,7 +31,7 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
   }
 
   /**
-   * 
+   *
    * @param startKey inclusive
    * @param endKey exclusive
    * @return
@@ -38,7 +41,7 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
   }
 
   /**
-   * 
+   *
    * @param startKey inclusive
    * @param limit
    * @return
@@ -73,11 +76,16 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
     return this.engine.getCounter(generateRandomOrderKey(key));
   }
 
-  public void queuePush(byte [] queueName, byte [] queueEntry) {
-    this.engine.queuePush(generateRandomOrderKey(queueName), queueEntry);
+  public boolean queuePush(byte [] queueName, byte [] queueEntry) {
+    return this.engine.queuePush(generateRandomOrderKey(queueName), queueEntry);
   }
 
-  public byte [] queuePop(byte [] queueName) {
+  public boolean queueAck(byte [] queueName, QueueEntry queueEntry) {
+    return this.engine.queueAck(generateRandomOrderKey(queueName), queueEntry);
+  }
+
+  public QueueEntry queuePop(byte [] queueName, QueueConsumer consumer,
+      QueuePartitioner partitioner) {
     return this.engine.queuePop(generateRandomOrderKey(queueName));
   }
 

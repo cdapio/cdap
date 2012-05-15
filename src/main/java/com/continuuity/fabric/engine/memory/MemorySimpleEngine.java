@@ -10,8 +10,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.fabric.engine.Engine;
 import com.continuuity.fabric.operations.impl.Modifier;
+import com.continuuity.fabric.operations.queues.QueueEntry;
 
-public class MemoryEngine implements Engine {
+public class MemorySimpleEngine implements Engine {
 
   private final TreeMap<byte[],byte[]> kvmap =
       new TreeMap<byte[],byte[]>(new ByteArrayComparator());
@@ -90,21 +91,28 @@ public class MemoryEngine implements Engine {
     return count.count;
   }
 
-  public void queuePush(byte [] queueName, byte [] queueEntry) {
+  public boolean queuePush(byte [] queueName, byte [] queueEntry) {
     Queue<byte[]> queue = this.queuemap.get(queueName);
     if (queue == null) {
       queue = new LinkedList<byte[]>();
       this.queuemap.put(queueName, queue);
     }
     queue.add(queueEntry);
+    return true;
   }
 
-  public byte [] queuePop(byte [] queueName) {
+  public boolean queueAck(byte[] queueName, QueueEntry queueEntry) {
+    
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  public QueueEntry queuePop(byte [] queueName) {
     Queue<byte[]> queue = this.queuemap.get(queueName);
     if (queue == null) {
       return null;
     }
-    return queue.poll();
+    return new QueueEntry(queue.poll(), 0);
     
   }
   public static class ByteArrayComparator implements Comparator<byte[]> {

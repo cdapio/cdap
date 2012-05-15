@@ -1,4 +1,4 @@
-package com.continuuity.fabric.operations.impl;
+package com.continuuity.fabric.operations.queues;
 
 import com.continuuity.fabric.operations.WriteOperation;
 

@@ -13,12 +13,14 @@ import com.continuuity.fabric.operations.impl.CompareAndSwap;
 import com.continuuity.fabric.operations.impl.Increment;
 import com.continuuity.fabric.operations.impl.OrderedRead;
 import com.continuuity.fabric.operations.impl.OrderedWrite;
-import com.continuuity.fabric.operations.impl.QueuePop;
-import com.continuuity.fabric.operations.impl.QueuePush;
 import com.continuuity.fabric.operations.impl.Read;
 import com.continuuity.fabric.operations.impl.ReadCounter;
 import com.continuuity.fabric.operations.impl.ReadModifyWrite;
 import com.continuuity.fabric.operations.impl.Write;
+import com.continuuity.fabric.operations.queues.QueueAck;
+import com.continuuity.fabric.operations.queues.QueueEntry;
+import com.continuuity.fabric.operations.queues.QueuePop;
+import com.continuuity.fabric.operations.queues.QueuePush;
 
 public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
 
@@ -76,12 +78,6 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   }
 
   @Override
-  public boolean execute(QueuePush push) {
-    this.executor.queuePush(push.getQueueName(), push.getValue());
-    return true;
-  }
-
-  @Override
   public boolean execute(Increment inc) {
     long result = this.executor.increment(inc.getKey(), inc.getAmount());
     inc.setResult(result);
@@ -101,7 +97,7 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
     return this.executor.compareAndSwap(cas.getKey(),
         cas.getExpectedValue(), cas.getNewValue());
   }
-  
+
   // Single read queries
 
   @Override
@@ -116,13 +112,6 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   throws SyncReadTimeoutException {
     long result = this.executor.readCounter(readCounter.getKey());
     readCounter.setResult(result);
-    return result;
-  }
-
-  @Override
-  public byte [] execute(QueuePop pop) throws SyncReadTimeoutException {
-    byte [] result = this.executor.queuePop(pop.getQueueName());
-    pop.setResult(result);
     return result;
   }
 
@@ -142,5 +131,26 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
     }
     orderedRead.setResult(result);
     return result;
+  }
+
+  // Queues
+
+  @Override
+  public boolean execute(QueuePush push) {
+    return this.executor.queuePush(push.getQueueName(), push.getValue());
+  }
+
+  @Override
+  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException {
+    QueueEntry entry = this.executor.queuePop(pop.getQueueName(),
+        pop.getConsumer(), pop.getPartitioner());
+    pop.setResult(entry);
+    return entry;
+  }
+
+  @Override
+  public boolean execute(QueueAck ack) {
+    // TODO Auto-generated method stub
+    return false;
   }
 }
