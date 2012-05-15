@@ -1,0 +1,19 @@
+<h1>Todos</h1>
+{{view App.Views.Create id="new-todo" placeholder="What needs to be done?"}}
+
+<!-- Insert this after the CreateTodoView and before the collection. -->
+{{#view App.Views.Stats id="stats"}}
+<button class="ember-button" {{action "clearCompletedTodos" target="App.Controllers.Todos" on="click"}}>
+Clear Completed Todos
+</button>
+{{/view}}
+
+{{view Em.Checkbox class="mark-all-done"
+checkedBinding="App.Controllers.Todos.allAreDone"}}
+Mark All as Done
+
+{{#each App.Controllers.Todos tagName="ul"}}
+<li {{bindAttr class="isDone"}}>
+{{view Em.Checkbox checkedBinding="isDone"}} {{title}}
+</li>
+{{/each}}

@@ -1,0 +1,51 @@
+
+defaultTasks 'all'
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '1.0-milestone-5'
+}
+
+task clean(type: Exec, description: 'Remove all files from ./build/') {
+	commandLine = ['rm', '-rf', './build/*']
+}
+
+task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS files') {
+	
+	// Uses jshint.json configuration file
+	// Uses .jshintignore for exceptions
+	commandLine = ["jshint", 
+		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/"
+		, "--config", 'jshint.json']
+}
+
+task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS') {
+	
+	// Uses app.build.js configuration file
+	"mkdir ./build/js".execute()
+	"cp -r ./client/js/lib ./build/js/".execute()
+	commandLine = ['r.js', '-o', 'app.build.js']
+}
+
+task css(type: Exec, dependsOn: 'js', description: 'Process and minify LESS -> CSS') {
+	"mkdir ./build/css".execute()
+	commandLine = ['cp', '-r', './client/css', './build/']
+}
+
+task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless browser environment') {
+	
+	// Pulled from https://github.com/detro/phantomjs-jasminexml-example
+	commandLine = ['phantomjs', './tests/runner.js', './tests/runner.html', './tests/output.xml']
+}
+
+task docs(type: Exec, dependsOn: 'css', description: 'Generates Groc documentation') {
+	
+	// Uses .groc.json configuration file
+    "rm -rf ./docs/*".execute()
+    commandLine = ['groc']
+}
+
+task all(dependsOn: ['clean', 'syntax', 'js', 'css', 'docs']) {
+	doLast {
+		println "Done!"
+	}
+}

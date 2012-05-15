@@ -1,0 +1,4 @@
+server/node_modules
+build/
+docs/
+.gradle/
