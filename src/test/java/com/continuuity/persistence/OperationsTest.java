@@ -25,10 +25,12 @@ import com.continuuity.fabric.operations.OperationGenerator;
 import com.continuuity.fabric.operations.WriteOperation;
 import com.continuuity.fabric.operations.impl.CompareAndSwap;
 import com.continuuity.fabric.operations.impl.Increment;
+import com.continuuity.fabric.operations.impl.Modifier;
 import com.continuuity.fabric.operations.impl.QueuePop;
 import com.continuuity.fabric.operations.impl.QueuePush;
 import com.continuuity.fabric.operations.impl.Read;
 import com.continuuity.fabric.operations.impl.ReadCounter;
+import com.continuuity.fabric.operations.impl.ReadModifyWrite;
 import com.continuuity.fabric.operations.impl.Write;
 import com.continuuity.fabric.operations.memory.MemorySimpleOperationExecutor;
 
@@ -311,9 +313,43 @@ public class OperationsTest {
     }
   }
 
-	@Test @Ignore
-  public void testReadModifyWrite() {
-    // TODO Implement read-modify-write test
+	@Test
+  public void testReadModifyWrite() throws Exception {
+	  
+	  byte [] key = Bytes.toBytes("keyrmw");
+	  byte [] value = Bytes.toBytes(0L);
+	  
+	  // write the first value (0)
+	  assertTrue(executor.execute(new Write(key, value)));
+	  
+	  // create two modifiers.  an incrementer and decrementer.
+	  Modifier<byte[]> incrementer = new Modifier<byte[]>() {
+      @Override
+      public byte [] modify(byte [] bytes) {
+        return Bytes.toBytes(Bytes.toLong(bytes)+1);
+      }
+    };
+    Modifier<byte[]> decrementer = new Modifier<byte[]>() {
+      @Override
+      public byte [] modify(byte [] bytes) {
+        return Bytes.toBytes(Bytes.toLong(bytes)-1);
+      }
+    };
+    
+    // increment 10 times
+    for (int i=0; i<10; i++)
+      assertTrue(executor.execute(new ReadModifyWrite(key, incrementer)));
+    
+    // verify value is 10L
+    assertEquals(10L, Bytes.toLong(executor.execute(new Read(key))));
+    
+    // decrement 12 times
+    for (int i=0; i<12; i++)
+      assertTrue(executor.execute(new ReadModifyWrite(key, decrementer)));
+    
+    // verify value is -2L
+    assertEquals(-2L, Bytes.toLong(executor.execute(new Read(key))));
+    
   }
 
 	@Test @Ignore
