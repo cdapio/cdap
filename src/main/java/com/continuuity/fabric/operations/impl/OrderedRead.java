@@ -1,12 +1,16 @@
 package com.continuuity.fabric.operations.impl;
 
+import java.util.Map;
+
 import com.continuuity.fabric.operations.ReadOperation;
 
-public class OrderedRead implements ReadOperation<byte[]> {
+public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
 
   private final byte [] startKey;
   private final byte [] endKey;
   private final int limit;
+
+  private Map<byte[], byte[]> result;
 
   public OrderedRead(byte [] key) {
     this(key, null, 1);
@@ -38,9 +42,13 @@ public class OrderedRead implements ReadOperation<byte[]> {
     return this.limit;
   }
   @Override
-  public byte[] getResult() {
-    // TODO Auto-generated method stub
-    return null;
+  public Map<byte[], byte[]> getResult() {
+    return this.result;
+  }
+  
+  @Override
+  public void setResult(Map<byte[], byte[]> result) {
+    this.result = result;
   }
 
 }

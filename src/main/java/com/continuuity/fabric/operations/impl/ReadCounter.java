@@ -19,4 +19,10 @@ public class ReadCounter implements ReadOperation<Long> {
     // TODO Auto-generated method stub
     return null;
   }
+
+  @Override
+  public void setResult(Long t) {
+    // TODO Auto-generated method stub
+    
+  }
 }

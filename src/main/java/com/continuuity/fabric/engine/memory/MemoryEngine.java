@@ -74,13 +74,14 @@ public class MemoryEngine implements Engine {
     }
   }
 
-  public void increment(byte [] key, long amount) {
+  public long increment(byte [] key, long amount) {
     Count count = this.countermap.get(key);
     if (count == null) {
       count = new Count();
       this.countermap.put(key, count);
     }
     count.count += amount;
+    return count.count;
   }
 
   public long getCounter(byte [] key) {

@@ -21,6 +21,7 @@ import org.junit.Test;
 import com.continuuity.fabric.engine.memory.MemoryEngine;
 import com.continuuity.fabric.engine.memory.MemorySimpleExecutor;
 import com.continuuity.fabric.operations.OperationExecutor;
+import com.continuuity.fabric.operations.OperationGenerator;
 import com.continuuity.fabric.operations.WriteOperation;
 import com.continuuity.fabric.operations.impl.CompareAndSwap;
 import com.continuuity.fabric.operations.impl.Increment;
@@ -196,6 +197,52 @@ public class OperationsTest {
       assertEquals(keys.length, executor.execute(new ReadCounter(keys[i])));
     }
     
+  }
+
+  @Test
+  public void testIncrementChain() throws Exception {
+
+    byte [] rawCounterKey = Bytes.toBytes("raw");
+    final byte [] stepCounterKey = Bytes.toBytes("step");
+    
+    // make a generator that increments every 10 increments
+    OperationGenerator<Long> generator = new OperationGenerator<Long>() {
+      @Override
+      public WriteOperation generateWriteOperation(Long amount) {
+        if (amount % 10 == 0) return new Increment(stepCounterKey, 10);
+        return null;
+      }
+    };
+    
+    // increment 9 times, step counter should not exist
+    for (int i=0; i<9; i++) {
+      Increment increment = new Increment(rawCounterKey, 1);
+      increment.setPostIncrementOperationGenerator(generator);
+      assertTrue(executor.execute(increment));
+      assertEquals(new Long(i+1), increment.getResult());
+    }
+    
+    // raw should be 9, step should be 0
+    assertEquals(9L, executor.execute(new ReadCounter(rawCounterKey)));
+    assertEquals(0L, executor.execute(new ReadCounter(stepCounterKey)));
+    
+    // one more and raw should be 10, step should be 1
+    Increment increment = new Increment(rawCounterKey, 1);
+    increment.setPostIncrementOperationGenerator(generator);
+    assertTrue(executor.execute(increment));
+    assertEquals(10L, executor.execute(new ReadCounter(rawCounterKey)));
+    assertEquals(10L, executor.execute(new ReadCounter(stepCounterKey)));
+    
+    // 15 more increments
+    for (int i=0; i<15; i++) {
+      increment = new Increment(rawCounterKey, 1);
+      increment.setPostIncrementOperationGenerator(generator);
+      assertTrue(executor.execute(increment));
+      assertEquals(new Long(i+11), increment.getResult());
+    }
+    // raw should be 25, step should be 20
+    assertEquals(25L, executor.execute(new ReadCounter(rawCounterKey)));
+    assertEquals(20L, executor.execute(new ReadCounter(stepCounterKey)));
   }
 
   @Test

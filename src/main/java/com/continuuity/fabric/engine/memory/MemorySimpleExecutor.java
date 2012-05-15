@@ -65,8 +65,8 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
     this.engine.readModifyWrite(generateRandomOrderKey(key), modifier);
   }
 
-  public void increment(byte [] key, long amount) {
-    this.engine.increment(generateRandomOrderKey(key), amount);
+  public long increment(byte [] key, long amount) {
+    return this.engine.increment(generateRandomOrderKey(key), amount);
   }
 
   public long getCounter(byte [] key) {

@@ -5,6 +5,8 @@ import com.continuuity.fabric.operations.ReadOperation;
 public class QueuePop implements ReadOperation<byte[]> {
   private final byte [] queueName;
 
+  private byte [] result;
+
   public QueuePop(byte [] queueName) {
     this.queueName = queueName;
   }
@@ -15,8 +17,12 @@ public class QueuePop implements ReadOperation<byte[]> {
 
   @Override
   public byte[] getResult() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.result;
+  }
+
+  @Override
+  public void setResult(byte[] result) {
+    this.result = result;
   }
 
 }

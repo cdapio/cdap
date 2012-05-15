@@ -17,4 +17,10 @@ public class Read implements ReadOperation<byte[]> {
   public byte [] getResult() {
     return null;
   }
+
+  @Override
+  public void setResult(byte[] t) {
+    // TODO Auto-generated method stub
+    
+  }
 }

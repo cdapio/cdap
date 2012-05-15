@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.continuuity.fabric.engine.memory.MemorySimpleExecutor;
+import com.continuuity.fabric.operations.OperationGenerator;
 import com.continuuity.fabric.operations.SimpleOperationExecutor;
 import com.continuuity.fabric.operations.SyncReadTimeoutException;
 import com.continuuity.fabric.operations.WriteOperation;
@@ -32,19 +33,24 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   @Override
   public boolean execute(List<WriteOperation> writes) {
     for (WriteOperation write : writes) {
-      if (write instanceof Write) {
-        if (!execute((Write)write)) return false;
-      } else if (write instanceof OrderedWrite) {
-        if (!execute((OrderedWrite)write)) return false;
-      } else if (write instanceof ReadModifyWrite) {
-        if (!execute((ReadModifyWrite)write)) return false;
-      } else if (write instanceof QueuePush) {
-        if (!execute((QueuePush)write)) return false;
-      } else if (write instanceof Increment) {
-        if (!execute((Increment)write)) return false;
-      } else if (write instanceof CompareAndSwap) {
-        if (!execute((CompareAndSwap)write)) return false;
-      }
+      if(!execute(write)) return false;
+    }
+    return true;
+  }
+
+  private boolean execute(WriteOperation write) {
+    if (write instanceof Write) {
+      if (!execute((Write)write)) return false;
+    } else if (write instanceof OrderedWrite) {
+      if (!execute((OrderedWrite)write)) return false;
+    } else if (write instanceof ReadModifyWrite) {
+      if (!execute((ReadModifyWrite)write)) return false;
+    } else if (write instanceof QueuePush) {
+      if (!execute((QueuePush)write)) return false;
+    } else if (write instanceof Increment) {
+      if (!execute((Increment)write)) return false;
+    } else if (write instanceof CompareAndSwap) {
+      if (!execute((CompareAndSwap)write)) return false;
     }
     return true;
   }
@@ -77,7 +83,16 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
 
   @Override
   public boolean execute(Increment inc) {
-    this.executor.increment(inc.getKey(), inc.getAmount());
+    long result = this.executor.increment(inc.getKey(), inc.getAmount());
+    inc.setResult(result);
+    OperationGenerator<Long> generator =
+        inc.getPostIncrementOperationGenerator();
+    if (generator != null) {
+      WriteOperation writeOperation = generator.generateWriteOperation(result);
+      if (writeOperation != null) {
+        return execute(writeOperation);
+      }
+    }
     return true;
   }
 
@@ -91,32 +106,41 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
 
   @Override
   public byte [] execute(Read read) throws SyncReadTimeoutException {
-    return this.executor.readRandom(read.getKey());
+    byte [] result = this.executor.readRandom(read.getKey());
+    read.setResult(result);
+    return result;
   }
 
   @Override
   public long execute(ReadCounter readCounter)
   throws SyncReadTimeoutException {
-    return this.executor.readCounter(readCounter.getKey());
+    long result = this.executor.readCounter(readCounter.getKey());
+    readCounter.setResult(result);
+    return result;
   }
 
   @Override
   public byte [] execute(QueuePop pop) throws SyncReadTimeoutException {
-    return this.executor.queuePop(pop.getQueueName());
+    byte [] result = this.executor.queuePop(pop.getQueueName());
+    pop.setResult(result);
+    return result;
   }
 
   @Override
   public Map<byte[], byte[]> execute(OrderedRead orderedRead) throws SyncReadTimeoutException {
+    Map<byte[], byte[]> result = null;
     if (orderedRead.getEndKey() == null) {
       if (orderedRead.getLimit() <= 1) {
-        return this.executor.readOrdered(orderedRead.getStartKey());
+        result = this.executor.readOrdered(orderedRead.getStartKey());
       } else {
-        return this.executor.readOrdered(orderedRead.getStartKey(),
+        result = this.executor.readOrdered(orderedRead.getStartKey(),
             orderedRead.getLimit());
       }
     } else {
-      return this.executor.readOrdered(orderedRead.getStartKey(),
+      result = this.executor.readOrdered(orderedRead.getStartKey(),
           orderedRead.getEndKey());
     }
+    orderedRead.setResult(result);
+    return result;
   }
 }
