@@ -69,7 +69,7 @@ public class MemoryQueue {
     }
     
     // If group has no entries available, wait for a push
-    if (!group.hasEntriesAvailable()) {
+    if (group.getHead() == null) {
       waitForPush();
       return pop(consumer, partitioner);
     }
@@ -83,7 +83,8 @@ public class MemoryQueue {
         GroupConsumptionInfo info =
             curEntry.getConsumerInfo(consumer.getGroupId());
         if (info.isAvailable() ||
-            info.getConsumerId() == consumer.getConsumerId()) {
+            (info.getConsumerId() == consumer.getConsumerId() &&
+            !info.isAcked())) {
           QueueEntry entry = curEntry.makeQueueEntry();
           if (partitioner.shouldEmit(consumer, entry)) {
             entry.setConsumer(consumer);
@@ -155,16 +156,9 @@ public class MemoryQueue {
   class ConsumerGroup {
     private final int id;
     private Entry head;
-    private boolean empty;
     ConsumerGroup(int id) {
       this.id = id;
       this.head = null;
-    }
-    public void setEmpty(boolean b) {
-      this.empty = true;
-    }
-    public boolean hasEntriesAvailable() {
-      return !empty;
     }
     public void setHead(Entry head) {
       this.head = head;
