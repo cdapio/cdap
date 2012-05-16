@@ -1,42 +1,62 @@
+/**
+ * Copyright (c) 2012 to Continuuity Inc. All rights reserved.
+ * Licensed to Odiago, Inc.
+ */
 package com.continuuity.common.options;
 
 import java.lang.reflect.Field;
 
 /**
- * Licensed to Odiago, Inc. under one or more contributor license
- * agreements.  See the NOTICE file distributed with this work for
- * additional information regarding copyright ownership.  Odiago, Inc.
- * licenses this file to you under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied.  See the License for the specific language governing
- * permissions and limitations under the License.
+ * Specifies an implementation for the specification of an Option.
  */
 public class OptionSpec {
+  /**
+   * Instance of the field.
+   */
   private Field field;
+
+  /**
+   * Specification of an object.
+   */
   private Option option;
+
+  /**
+   * Object the field and specification are from.
+   */
   private Object object;
 
+  /**
+   * Creates an instance of OptionSpec
+   * @param field annotated with @Option
+   * @param option specifying information about the field that needs to be filled in by command line argument.
+   * @param object specifies the object the option is specified in.
+   */
   public OptionSpec(Field field, Option option, Object object)  {
     this.field = field;
     this.option = option;
     this.object = object;
   }
 
+  /**
+   * Returns the name of the field.
+   * @return name of the field.
+   */
   public String getName() {
     return option.name().isEmpty() ? field.getName() : option.name();
   }
 
+  /**
+   * Returns the type of the field.
+   * @return type of the field.
+   */
   public Class<?> getType() {
     return field.getType();
   }
 
+  /**
+   * Returns the type name of the field annotated by <code>@Option</code>
+   * @return name of the type of field.
+   */
   public String getTypeName() {
     Class<?> type = getType();
     if(type == String.class) {
@@ -45,18 +65,34 @@ public class OptionSpec {
     return type.toString();
   }
 
+  /**
+   * Returns whether the field needs to be hidden or no
+   * @return true if hidden; false otherwise.
+   */
   public boolean isHidden() {
     return option.hidden();
   }
 
+  /**
+   * Returns the usage of the field
+   * @return String representation of usage.
+   */
   public String getUsage() {
     return option.usage();
   }
 
+  /**
+   * Returns environment variable to be associated with the field annotated with @Option.
+   * @return value of environment field.
+   */
   public String getEnvVar() {
     return option.envVar();
   }
 
+  /**
+   * Returns string representation of default value.
+   * @return default value of the field.
+   */
   public String getDefaultValue() {
     String value = "";
     try {
@@ -93,6 +129,11 @@ public class OptionSpec {
     return value;
   }
 
+  /**
+   * Sets the field with the value
+   * @param value to be set
+   * @throws IllegalAccessException
+   */
   public void setValue(String value) throws IllegalAccessException {
     if (!field.isAccessible()) {
       field.setAccessible(true);
