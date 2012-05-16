@@ -32,8 +32,8 @@ public @interface Option {
   boolean hidden() default false;
 
   /**
-   * Specifies the environment variable return.
-   * @return
+   * Specifies the environment variable to be associated a field.
+   * @return environment variable to be read for a field.
    */
   String envVar() default "";
 }
