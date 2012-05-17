@@ -1,8 +1,9 @@
 
-define(['models/todo'],
-	function (Todo) {
+define(['models/flow', 'models/flowlet'],
+	function (Flow, Flowlet) {
 		return {
-			Todo: Todo
+			Flow: Flow,
+			Flowlet: Flowlet
 		};
 	}
 );

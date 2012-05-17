@@ -7,15 +7,14 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title></title>
+  <title>Continuuity</title>
   <meta name="description" content="">
   <meta name="author" content="">
 
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  
+  <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/main.css">
-
-  <link rel="stylesheet" href="http://emberjs.com/examples/todos/css/style.css?v=2">
-  <link rel="stylesheet" href="http://emberjs.com/examples/todos/css/todos.css">
 
   <script type="text/javascript">
     ENV = {};
@@ -26,13 +25,128 @@
   <script type="text/javascript" src="/js/lib/jquery.min.js"></script>
   <script type="text/javascript" src="/js/lib/ember-latest.js"></script>
   <script type="text/javascript" src="/js/lib/ember-route-manager.js"></script>
+  <script type="text/javascript" src="/js/lib/bootstrap.min.js"></script>
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="/js/lib/jquery.timeago.js"></script>
+
+  <script type="text/javascript">
+    $.timeago = $.timeago || function () {};
+    $.timeago.settings.strings.seconds = 'A moment';
+    $.timeago.settings.strings.minute = 'A minute';
+    $.timeago.settings.refreshMillis = 0;
+
+    Date.prototype.ISO8601 = function (date) {
+      var date = this;
+      var pad_two = function(n) {
+          return (n < 10 ? '0' : '') + n;
+      };
+      var pad_three = function(n) {
+          return (n < 100 ? '0' : '') + (n < 10 ? '0' : '') + n;
+      };
+      return [
+          date.getUTCFullYear(),
+          '-',
+          pad_two(date.getUTCMonth() + 1),
+          '-',
+          pad_two(date.getUTCDate()),
+          'T',
+          pad_two(date.getUTCHours()),
+          ':',
+          pad_two(date.getUTCMinutes()),
+          ':',
+          pad_two(date.getUTCSeconds()),
+          '.',
+          pad_three(date.getUTCMilliseconds()),
+          'Z',
+      ].join('');
+    }
+  </script>
 
   <script data-main="js/main" src="/js/lib/require.js"></script>
 </head>
 <body>
 
-<div id="container"></div> 
+<div id="header" class="container navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a href="#/flows" class="brand"></a>
+      <ul class="nav">
+        <li><a href="#/flows">Home</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Showcase</a></li>
+      </ul><ul class="nav pull-right">
+        <li><a href="#">Docs</a></li>
+        <li><a href="#">Support</a></li>
+        <li class="dropdown">
+        <a href="#"
+        class="dropdown-toggle"
+        data-toggle="dropdown">Demo User <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">Profile</a></li>
+          <li class="divider"></li>
+          <li><a href="#">Logout</a></li>
+        </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
 
+<div id="wrapper" class="container container-fluid">
+  <div class="row-fluid">
+    <div class="span2 well" style="padding: 8px 0px;">
+
+      <ul class="nav nav-list">
+        <li>
+          <a href="#"><i class="icon-th"></i> Dashboard</a>
+        </li>
+        <li class="nav-header">
+          Overlord
+        </li>
+        <li>
+          <a href="#"><i class="icon-tasks"></i> Analytics</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-globe"></i> Clouds</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-user"></i> Accounts</a>
+        </li>
+        <li class="nav-header">
+          Big Flow
+        </li>
+        <li>
+          <a href="#"><i class="icon-th"></i> Applications</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-random"></i> Flows</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-book"></i> Library</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-list-alt"></i> Reports</a>
+        </li>
+        <li class="nav-header">
+          Admin
+        </li>
+        <li>
+          <a href="#"><i class="icon-user"></i> Users</a>
+        </li>
+        <li>
+          <a href="#"><i class="icon-check"></i> Account</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+          <a href="#"><i class="icon-flag"></i> Help</a>
+        </li>
+      </ul>
+    </div>
+    <div id="content" class="span10">
+      <div id="content-body"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

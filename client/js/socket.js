@@ -1,30 +1,28 @@
 
 define([], function () {
 
-	return function (hostname) {
+	return function (hostname, connected) {
 
 		var socket = io.connect(hostname);
+		var pending = {};
+		var current_id = 0;
 
-		socket.on('createTodo', function (todo) {
-			// Need to wrap raw JSON objects as Ember objects
-			todo = App.Models.Todo.create(todo);
-			App.Controllers.Todos.pushObject(todo);
+		socket.on('exec', function (response) {
+			
+			if (typeof pending[response.id] == 'function') {
+				pending[response.id](response);
+				delete pending[response.id];
+			}
+
 		});
 
-		socket.on('removeTodo', function (todo) {
-			App.Controllers.Todos.removeObject(
-			App.Controllers.Todos.filterProperty('title', todo.title)[0]);
-		});
+		socket.on('connect', connected);
 
-		socket.on('isDone', function (updated) {
-			var todos = App.Controllers.Todos.get('content');
-			for (var t = 0; t < updated.length; t ++) {
-				var a = null;
-				for (var i = 0; i < todos.length; i ++) {
-					if (todos[i].title === updated[t].title) {
-						todos[i].set('isDone', updated[t].isDone);
-					}
-				}
+		$.extend(socket, {
+			request: function (service, request, response) {
+				request.id = current_id ++;
+				pending[request.id] = response;
+				this.emit(service, request);
 			}
 		});
 

@@ -1,10 +1,10 @@
 
-define(['views/list', 'views/create', 'views/stats'],
-	function (ListView, CreateView, StatsView) {
+define(['views/flows', 'views/flow', 'views/flowviz'],
+	function (Flows, Flow, FlowViz) {
 		return {
-			List: ListView,
-			Create: CreateView,
-			Stats: StatsView
+			Flows: Flows,
+			Flow: Flow,
+			FlowViz: FlowViz
 		};
 	}
 );

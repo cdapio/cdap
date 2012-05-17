@@ -4,13 +4,27 @@
 
 define(['models', 'views', 'controllers', 'router', 'socket'],
 function(Models, Views, Controllers, Router, Socket){
-
-	// Create an Ember application.
-
+	
 	var App = window.App = Ember.Application.create({
 		ready: function () {
-			(this.router = new Router(Views)).start();
-			this.socket = new Socket(document.location.hostname);
+			this.router = new Router(Views);
+			this.socket = new Socket(document.location.hostname, function () {
+				
+				// Connected and ready.
+				App.router.start();
+				App.router.set('location', '/flows');
+
+				// Hack: Keep timestamps updated.
+				$('.timeago').timeago();
+				var trigger = 0;
+				setInterval( function () {
+					trigger++;
+					App.Controllers.Flows.forEach(function (model) {
+						model.set('timeTrigger', trigger);
+					})
+				}, 100);
+
+			});
 		}
 	});
 	

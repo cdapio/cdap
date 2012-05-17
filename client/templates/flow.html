@@ -1,0 +1,68 @@
+{{#view App.Views.FlowViz tagName="div"}}
+<div class="btn-group pull-left" style="margin: 8px 10px 0px;">
+	<div class="btn-group"><button class="btn dropdown-toggle" data-toggle="dropdown">
+		<span class="caret"></span>
+		</button>
+		<ul class="dropdown-menu">
+			<li><a href="#">Duplicate Flow</a></li>
+			<li><a href="#">Upload New FAR</a></li>
+			<li class="divider"></li>
+			<li><a href="#">Delete Flow</a></li>
+		</ul></div>
+</div>
+<div class="btn-group pull-right" style="margin: 8px 10px 0px;">
+	<a class="btn btn-success" href="#">
+		Running
+	</a>
+  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+    Instance 1
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu">
+    <li><a href="#">Stop This Instance</a></li>
+    <li class="divider"></li>
+    <li><a href="#"><i class="icon-check"></i> Instance 1</a></li>
+    <li class="divider"></li>
+    <li><a href="#"> Start New Instance</a></li>
+  </ul>
+</div>
+<h2 id="content-header">{{name}} <span>Flow</span></h2>
+
+<div id="flowviz" class="well">
+		<div>[ Source: Twitter ]</div>
+		{{#each App.Controllers.Flow tagName="ol"}}
+			<div>↓ <strong>{{tuplesIn}}</strong></div>
+			<li>{{name}}</li>
+		{{/each}}
+</div>
+{{/view}}
+
+<h3>Activity Log</h3>
+<div style="margin: 0px 3px;">
+<table class="table table-condensed">
+	<thead>
+		<th style="width: 215px;">Action</th>
+		<th>Instance</th>
+		<th>Time</th>
+		<th>User</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Started</td>
+			<td>Instance 1</td>
+			<td></td>
+			<td>demo-user</td>
+		</tr><tr>
+			<td>Stopped</td>
+			<td>Instance 1</td>
+			<td></td>
+			<td>demo-user</td>
+		</tr><tr>
+			<td>Started</td>
+			<td>Instance 1</td>
+			<td></td>
+			<td>demo-user</td>
+		</tr>
+	</tbody>
+</table>
+</div>

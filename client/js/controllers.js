@@ -1,8 +1,9 @@
 
-define(['controllers/todos'],
-	function (Todos) {
+define(['controllers/flows', 'controllers/flow'],
+	function (Flows, Flow) {
 		return {
-			Todos: Todos
+			Flows: Flows,
+			Flow: Flow
 		};
 	}
 );
