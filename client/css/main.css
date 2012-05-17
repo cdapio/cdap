@@ -77,9 +77,11 @@ th {
 	font-weight: normal !important;
 }
 #footer {
+	text-transform: uppercase;
 	text-align: center;
 	padding: 16px 10px;
 	color: #aaa;
+	font-size: 10px;
 }
 #footer a, #footer span {
 	color: #777;
