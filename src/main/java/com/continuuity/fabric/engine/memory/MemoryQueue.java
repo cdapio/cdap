@@ -44,11 +44,13 @@ public class MemoryQueue {
     return true;
   }
 
+  boolean sync = true;
+  
   public QueueEntry pop(QueueConsumer consumer, QueuePartitioner partitioner)
   throws InterruptedException {
     // Anything in the queue at all?  Wait for a push if so
     if (head == null) {
-      waitForPush();
+      if (sync) waitForPush(); else return null;
       return pop(consumer, partitioner);
     }
     
@@ -70,7 +72,7 @@ public class MemoryQueue {
     
     // If group has no entries available, wait for a push
     if (group.getHead() == null) {
-      waitForPush();
+      if (sync) waitForPush(); else return null;
       return pop(consumer, partitioner);
     }
     
@@ -98,7 +100,7 @@ public class MemoryQueue {
     }
       
     // Didn't find anything.  Wait and try again.
-    waitForPush();
+    if (sync) waitForPush(); else return null;
     return pop(consumer, partitioner);
   }
 

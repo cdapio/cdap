@@ -50,6 +50,11 @@ public class TestMemoryQueue {
 
     // ack
     assertTrue(queue.ack(entry));
+    
+    // verify queue is empty
+    queue.sync = false;
+    assertNull(queue.pop(consumer, partitioner));
+    queue.sync = true;
   }
 
   @Test
@@ -82,7 +87,6 @@ public class TestMemoryQueue {
     assertTrue(queue.push(valueOne));
     assertNotNull(queue.pop(consumer, partitioner));
     
-    Thread.sleep(1000);
     // popper should hit now
     entry = popper.blockPop(100);
     assertNotNull(entry);
