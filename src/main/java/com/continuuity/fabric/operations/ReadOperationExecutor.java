@@ -21,6 +21,7 @@ public interface ReadOperationExecutor {
 
   // Queues
 
-  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException;
+  public QueueEntry execute(QueuePop pop)
+  throws SyncReadTimeoutException, InterruptedException;
 
 }

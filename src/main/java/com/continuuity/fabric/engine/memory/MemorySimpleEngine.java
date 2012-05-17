@@ -1,16 +1,17 @@
 package com.continuuity.fabric.engine.memory;
 
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.fabric.engine.Engine;
 import com.continuuity.fabric.operations.impl.Modifier;
+import com.continuuity.fabric.operations.queues.QueueConsumer;
 import com.continuuity.fabric.operations.queues.QueueEntry;
+import com.continuuity.fabric.operations.queues.QueuePartitioner;
 
 public class MemorySimpleEngine implements Engine {
 
@@ -20,8 +21,8 @@ public class MemorySimpleEngine implements Engine {
   private final TreeMap<byte[],Count> countermap =
       new TreeMap<byte[],Count>(new ByteArrayComparator());
 
-  private final Map<byte[],Queue<byte[]>> queuemap =
-      new TreeMap<byte[],Queue<byte[]>>(new ByteArrayComparator());
+  private final ConcurrentHashMap<ByteArray,MemoryQueue> queuemap =
+      new ConcurrentHashMap<ByteArray,MemoryQueue>();
 
   public byte[] get(byte[] key) {
     return this.kvmap.get(key);
@@ -92,29 +93,32 @@ public class MemorySimpleEngine implements Engine {
   }
 
   public boolean queuePush(byte [] queueName, byte [] queueEntry) {
-    Queue<byte[]> queue = this.queuemap.get(queueName);
-    if (queue == null) {
-      queue = new LinkedList<byte[]>();
-      this.queuemap.put(queueName, queue);
-    }
-    queue.add(queueEntry);
-    return true;
+    MemoryQueue queue = initQueue(queueName);
+    return queue.push(queueEntry);
   }
 
   public boolean queueAck(byte[] queueName, QueueEntry queueEntry) {
-    
-    // TODO Auto-generated method stub
-    return false;
+    MemoryQueue queue = this.queuemap.get(new ByteArray(queueName));
+    if (queue == null) return false;
+    return queue.ack(queueEntry);
   }
 
-  public QueueEntry queuePop(byte [] queueName) {
-    Queue<byte[]> queue = this.queuemap.get(queueName);
-    if (queue == null) {
-      return null;
-    }
-    return new QueueEntry(queue.poll(), 0);
-    
+  public QueueEntry queuePop(byte [] queueName, QueueConsumer consumer,
+      QueuePartitioner partitioner) throws InterruptedException {
+    MemoryQueue queue = initQueue(queueName);
+    return queue.pop(consumer, partitioner);
   }
+
+  private MemoryQueue initQueue(byte[] queueName) {
+    MemoryQueue queue = this.queuemap.get(new ByteArray(queueName));
+    if (queue != null) return queue;
+    queue = new MemoryQueue();
+    MemoryQueue raceQueue =
+        this.queuemap.putIfAbsent(new ByteArray(queueName), queue);
+    if (raceQueue != null) queue = raceQueue;
+    return queue;
+  }
+
   public static class ByteArrayComparator implements Comparator<byte[]> {
     @Override
     public int compare(byte[] o1, byte[] o2) {
@@ -125,5 +129,32 @@ public class MemorySimpleEngine implements Engine {
 
   public static class Count {
     public long count = 0;
+  }
+
+  public static class ByteArray implements Comparable<ByteArray> {
+    private final byte [] bytes;
+    private final int hash;
+    public ByteArray(byte [] bytes) {
+      this.bytes = bytes;
+      this.hash = Bytes.hashCode(bytes);
+    }
+    @Override
+    public int hashCode() {
+      return this.hash;
+    }
+    @Override
+    public boolean equals(Object o) {
+      ByteArray ob = (ByteArray)o;
+      if (ob.hashCode() != this.hash) return false;
+      return Bytes.equals(this.bytes, ob.getBytes());
+    }
+    public byte[] getBytes() {
+      return this.bytes;
+    }
+    @Override
+    public int compareTo(ByteArray o) {
+      return Bytes.compareTo(getBytes(), o.getBytes());
+    }
+
   }
 }

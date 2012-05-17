@@ -85,8 +85,9 @@ public class MemorySimpleExecutor implements NativeSimpleExecutor {
   }
 
   public QueueEntry queuePop(byte [] queueName, QueueConsumer consumer,
-      QueuePartitioner partitioner) {
-    return this.engine.queuePop(generateRandomOrderKey(queueName));
+      QueuePartitioner partitioner) throws InterruptedException {
+    return this.engine.queuePop(generateRandomOrderKey(queueName), consumer,
+        partitioner);
   }
 
   // Private helper methods

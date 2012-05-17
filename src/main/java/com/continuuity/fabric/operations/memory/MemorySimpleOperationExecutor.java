@@ -47,12 +47,14 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
       if (!execute((OrderedWrite)write)) return false;
     } else if (write instanceof ReadModifyWrite) {
       if (!execute((ReadModifyWrite)write)) return false;
-    } else if (write instanceof QueuePush) {
-      if (!execute((QueuePush)write)) return false;
     } else if (write instanceof Increment) {
       if (!execute((Increment)write)) return false;
     } else if (write instanceof CompareAndSwap) {
       if (!execute((CompareAndSwap)write)) return false;
+    } else if (write instanceof QueuePush) {
+      if (!execute((QueuePush)write)) return false;
+    } else if (write instanceof QueueAck) {
+      if (!execute((QueueAck)write)) return false;
     }
     return true;
   }
@@ -141,16 +143,16 @@ public class MemorySimpleOperationExecutor implements SimpleOperationExecutor {
   }
 
   @Override
-  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException {
+  public boolean execute(QueueAck ack) {
+    return this.executor.queueAck(ack.getQueueName(), ack.getQueueEntry());
+  }
+
+  @Override
+  public QueueEntry execute(QueuePop pop)
+      throws SyncReadTimeoutException, InterruptedException {
     QueueEntry entry = this.executor.queuePop(pop.getQueueName(),
         pop.getConsumer(), pop.getPartitioner());
     pop.setResult(entry);
     return entry;
-  }
-
-  @Override
-  public boolean execute(QueueAck ack) {
-    // TODO Auto-generated method stub
-    return false;
   }
 }
