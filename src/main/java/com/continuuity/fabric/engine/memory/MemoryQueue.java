@@ -5,11 +5,12 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.continuuity.fabric.operations.queues.PowerQueue;
 import com.continuuity.fabric.operations.queues.QueueConsumer;
 import com.continuuity.fabric.operations.queues.QueueEntry;
 import com.continuuity.fabric.operations.queues.QueuePartitioner;
 
-public class MemoryQueue {
+public class MemoryQueue implements PowerQueue {
 
   /** Maximum default timeout of 5 minutes (can be changed by tests) */
   static long TIMEOUT = 5 * 60 * 1000;
@@ -29,6 +30,7 @@ public class MemoryQueue {
     this.tail = null;
   }
 
+  @Override
   public boolean push(byte [] value) {
     Entry entry = new Entry(value, entryIds.incrementAndGet());
     synchronized(this.entryIds) {
@@ -46,6 +48,7 @@ public class MemoryQueue {
 
   boolean sync = true;
   
+  @Override
   public QueueEntry pop(QueueConsumer consumer, QueuePartitioner partitioner)
   throws InterruptedException {
     // Anything in the queue at all?  Wait for a push if so
@@ -104,6 +107,7 @@ public class MemoryQueue {
     return pop(consumer, partitioner);
   }
 
+  @Override
   public boolean ack(QueueEntry entry) {
     // Queue should not be empty
     if (this.head == null) return false;
