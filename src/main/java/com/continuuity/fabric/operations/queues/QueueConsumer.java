@@ -28,6 +28,11 @@ public class QueueConsumer {
   public int getGroupSize() {
     return groupSize;
   }
+  @Override
+  public String toString() {
+    return "QueueConsumer consumerId=" + consumerId + ", groupId=" + groupId +
+        ", groupSize=" + groupSize;
+  }
 
 
 }

@@ -1,6 +1,7 @@
 package com.continuuity.fabric.engine.memory;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -59,6 +60,7 @@ public class MemoryQueue implements PowerQueue {
     
     // Determine the current state for this consumer group
     ConsumerGroup group = null;
+    System.out.println("[" + consumer + "] checking " + consumer.getGroupId() + " (" + consumer.toString() + ")");
     if (!this.consumerGroups.containsKey(consumer.getGroupId())) {
       // This group has not consumed before, set group head = head
       group = new ConsumerGroup(consumer.getGroupId());
@@ -68,9 +70,17 @@ public class MemoryQueue implements PowerQueue {
       if (existingGroup != null) {
         // Someone else added the group concurrently with us, use theirs
         group = existingGroup;
+        System.out.println("[" + consumer + "] someone else accessing concurrently groupid=" + consumer.getGroupId() + ", now group=" + group.toString() + " (" + consumer.toString() + ")");
+      } else {
+        System.out.println("[" + consumer + "] inserted new group for groupid=" + consumer.getGroupId() + " (" + group.toString() + ")");
       }
     } else {
-      group = this.consumerGroups.get(consumer.getConsumerId());
+      group = this.consumerGroups.get(consumer.getGroupId());
+      System.out.println("[" + consumer + "] found existing " + consumer.getGroupId() + " (" + group.toString() + ") (" + consumer.toString() + ")");
+    }
+    
+    if (group.getId() != consumer.getGroupId()) {
+      System.out.println("[" + consumer + "] ERROR!  (" + group + ") (" + consumer + ")");
     }
     
     // If group has no entries available, wait for a push
@@ -159,12 +169,16 @@ public class MemoryQueue implements PowerQueue {
     }
   }
 
+  private Random rand = new Random();
+
   class ConsumerGroup {
     private final int id;
     private Entry head;
+    private final long uuid;
     ConsumerGroup(int id) {
       this.id = id;
       this.head = null;
+      this.uuid = rand.nextLong();
     }
     public void setHead(Entry head) {
       this.head = head;
@@ -174,6 +188,10 @@ public class MemoryQueue implements PowerQueue {
     }
     int getId() {
       return this.id;
+    }
+    @Override
+    public String toString() {
+      return "ConsumerGroup {" + uuid + "} id=" + id + ", head.id=" + head.getId();
     }
   }
 
@@ -217,6 +235,10 @@ public class MemoryQueue implements PowerQueue {
       if (other.getId() == getId()) return true;
       return false;
     }
+    @Override
+    public String toString() {
+      return "Entry id=" + id + ", next.id=" + next.getId();
+    }
   }
   
   class GroupConsumptionInfo {
@@ -227,6 +249,11 @@ public class MemoryQueue implements PowerQueue {
       this.consumerId = -1;
       this.state = ConsumptionState.AVAILABLE;
       this.updateStamp();
+    }
+    @Override
+    public String toString() {
+      return "GroupConsumptionInfo consumerId=" + consumerId +
+          ", stamp=" + stamp + ", state=" + state.name();
     }
     /**
      * @return

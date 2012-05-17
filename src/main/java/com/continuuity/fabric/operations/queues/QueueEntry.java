@@ -1,5 +1,7 @@
 package com.continuuity.fabric.operations.queues;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 public class QueueEntry {
 
   private final byte [] value;
@@ -28,5 +30,10 @@ public class QueueEntry {
 
   public QueueConsumer getConsumer() {
     return this.consumer;
+  }
+  @Override
+  public String toString() {
+    return "QueueEntry id=" + id + ", value=" + Bytes.toString(value) +
+        ", consumer=" + consumer.toString();
   }
 }
