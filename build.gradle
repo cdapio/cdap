@@ -1,5 +1,23 @@
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
+def componentName = 'Data Fabric'
+def globalVersion = new Version(currentVersion)
+
+group = 'com.continuuity'
+version = globalVersion
+status = version.status
+
+def artifactId = projectDir.name
+def groupId = group
+def versionNumber = version
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'sonar'
+apply plugin: 'maven'
+
+defaultTasks 'build'
 
 test {
 	testLogging.showStandardStreams = true
@@ -48,4 +66,93 @@ repositories {
    }
    url "http://repository.continuuity.com:8081/artifactory/libs-release"
  }
+}
+
+/**
+ * Upload to continuuity repository
+ */
+uploadArchives {
+  repositories {
+    repositories.mavenDeployer {
+      repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
+        authentication(userName: USER, password: PASSWORD)
+      }
+      pom.version = versionNumber
+      pom.artifactId = artifactId
+      pom.groupId = groupId
+    }
+  }
+}
+
+/**
+ * Creates source jar
+ */
+task sourcesJar(type: Jar, dependsOn:classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+/**
+ * Creates javadoc jar
+ */
+task javadocJar(type: Jar, dependsOn:javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+/**
+ * Builds jar, source and docs
+ */
+artifacts {
+  archives jar
+  archives sourcesJar
+  archives javadocJar
+}
+
+/**
+ * Configure sonar settings.
+ */
+sonar {
+  server {
+    url = "https://sonar.continuuity.com"
+  }
+  database {
+    url = "jdbc:mysql://sonar.continuuity.com/sonar"
+    driverClassName = "com.mysql.jdbc.Driver"
+    username = "sonar"
+    password = "09u0ru2039ur203r9u"
+  }
+  withGlobalProperties { props ->
+    props["sonar.projectName"] = componentName
+  }
+}
+
+class Version {
+  String originalVersion
+  String thisVersion
+  String status
+  Date buildTime
+
+  Version(String versionValue) {
+    buildTime = new Date()
+    originalVersion = versionValue
+    if (originalVersion.endsWith('-SNAPSHOT')) {
+      status = 'integration'
+      thisVersion = originalVersion.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
+    } else {
+      status = 'release'
+      thisVersion = versionValue
+    }
+  }
+
+  String getTimestamp() {
+    // Convert local file timestamp to UTC
+    def format = new SimpleDateFormat('yyyyMMddHHmmss')
+    format.setCalendar(Calendar.getInstance(TimeZone.getTimeZone('UTC')));
+    return format.format(buildTime)
+  }
+
+  String toString() {
+    thisVersion
+  }
 }
