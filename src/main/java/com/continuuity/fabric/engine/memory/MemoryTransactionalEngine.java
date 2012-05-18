@@ -1,24 +1,26 @@
 package com.continuuity.fabric.engine.memory;
 
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.fabric.engine.Engine;
+import com.continuuity.fabric.engine.memory.MemoryOmidTransactionEngine.ReadPointer;
 
 public class MemoryTransactionalEngine implements Engine {
 
   private final TreeMap<TransactionalByteArray,byte[]> kvmap =
       new TreeMap<TransactionalByteArray,byte[]>();
-      
+
   /**
    * @param key
    * @param value
    * @param txid
    */
   public void write(byte[] key, byte[] value, long txid) {
-    kvmap.put(new TransactionalByteArray(key, txid), value);
+    this.kvmap.put(new TransactionalByteArray(key, txid), value);
   }
 
   /**
@@ -26,12 +28,17 @@ public class MemoryTransactionalEngine implements Engine {
    * @param readTxid
    * @return
    */
-  public byte[] read(byte[] key, long readTxid) {
-    NavigableMap<TransactionalByteArray,byte[]> map = kvmap.subMap(
-        new TransactionalByteArray(key, readTxid), true,
+  public byte[] read(byte[] key, ReadPointer readPointer) {
+    NavigableMap<TransactionalByteArray,byte[]> map = this.kvmap.subMap(
+        new TransactionalByteArray(key, readPointer.readPoint), true,
         new TransactionalByteArray(key, 0L), true);
     if (map.isEmpty()) return null;
-    return map.firstEntry().getValue();
+    for (Map.Entry<TransactionalByteArray,byte[]> entry : map.entrySet()) {
+      if (readPointer.isVisible(entry.getKey().getTxid())) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 
   /**
@@ -43,8 +50,8 @@ public class MemoryTransactionalEngine implements Engine {
    * @return
    */
   public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue,
-      long readTxid, long txid) {
-    byte [] readValue = read(key, readTxid);
+      ReadPointer readPointer, long txid) {
+    byte [] readValue = read(key, readPointer);
     if (!Bytes.equals(readValue, oldValue)) return false;
     write(key, newValue, txid);
     return true;
@@ -55,7 +62,7 @@ public class MemoryTransactionalEngine implements Engine {
    * @param txid
    */
   public void delete(byte[] row, long txid) {
-    kvmap.remove(new TransactionalByteArray(row, txid));
+    this.kvmap.remove(new TransactionalByteArray(row, txid));
   }
 
   public static class TransactionalByteArray
@@ -100,25 +107,25 @@ public class MemoryTransactionalEngine implements Engine {
       if (o.getTxid() > getTxid()) return 1;
       return 0;
     }
-  
+
   }
 }
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
 //  old shit before trying MemoryOmid
-//  
+//
 //  private final AtomicLong txid = new AtomicLong(0);
 //
 //  private final AtomicLong readPoint = new AtomicLong(0);
 //
 //  private final Set<Long> includedExceptions = new HashSet<Long>();
-//  
+//
 //  private final Set<Long> excludedExceptions = new HashSet<Long>();
-//  
+//
 //  private final TreeMap<TransactionalByteArray,byte[]> kvmap =
 //      new TreeMap<TransactionalByteArray,byte[]>();
 //
@@ -134,7 +141,7 @@ public class MemoryTransactionalEngine implements Engine {
 //        this.kvmap.tailMap(txKey).entrySet()) {
 //      if (!entry.getKey().equals(txKey)) return null;
 //      // Lots of race conditions w/ concurrent writers here
-////      if (entry.getKey().getTxid() 
+////      if (entry.getKey().getTxid()
 //    }
 //    return this.kvmap.get(key);
 //  }

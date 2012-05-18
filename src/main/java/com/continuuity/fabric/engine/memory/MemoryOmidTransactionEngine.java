@@ -3,6 +3,7 @@
  */
 package com.continuuity.fabric.engine.memory;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -29,59 +30,86 @@ public class MemoryOmidTransactionEngine {
     this.engine = engine;
   }
 
-  private final TreeMap<Long,RowSet> rowSets = new TreeMap<Long,RowSet>();
+  private final TreeMap<Long,RowSet> inProgress = new TreeMap<Long,RowSet>();
 
   public long startTransaction() {
-    long txid = oracle.getWriteTxid();
-    rowSets.put(txid, new RowSet());
+    long txid = this.oracle.getWriteTxid();
+    this.inProgress.put(txid, new RowSet());
     return txid;
   }
 
   public void write(byte [] key, byte [] value, long txid)
   throws TransactionException {
-    RowSet rows = rowSets.get(txid);
+    RowSet rows = this.inProgress.get(txid);
     if (rows == null) throw new TransactionException(
         "Invalid transaction, not currently in progress");
-    engine.write(key, value, txid);
+    this.engine.write(key, value, txid);
     rows.addRow(key);
   }
 
   public byte [] read(byte [] key) {
-    return engine.read(key, oracle.getReadTxid());
+    return this.engine.read(key, this.oracle.getReadPointer());
+  }
+
+  byte [] read(byte [] key, long readTxid) {
+    return this.engine.read(key, new ReadPointer(readTxid));
   }
 
   public boolean compareAndSwap(byte [] key, byte [] oldValue, byte [] newValue,
       long txid)
   throws TransactionException {
-    RowSet rows = rowSets.get(txid);
+    RowSet rows = this.inProgress.get(txid);
     if (rows == null) throw new TransactionException(
         "Invalid transaction, not currently in progress");
-    long readTxid = oracle.getReadTxid();
+    ReadPointer readPointer = this.oracle.getReadPointer();
     boolean ret =
-        engine.compareAndSwap(key, oldValue, newValue, readTxid, txid);
+        this.engine.compareAndSwap(key, oldValue, newValue, readPointer, txid);
     rows.addRow(key);
     return ret;
   }
 
   void abortTransaction(long txid) throws TransactionException {
-    RowSet rows = rowSets.get(txid);
+    RowSet rows = this.inProgress.get(txid);
     if (rows == null) throw new TransactionException(
         "Invalid transaction, not currently in progress");
     for (byte [] row : rows.rows) {
-      engine.delete(row, txid);
+      this.engine.delete(row, txid);
     }
-    oracle.aborted(txid);
+    this.inProgress.remove(txid);
+    this.oracle.aborted(txid);
   }
 
   public boolean commitTransaction(long txid) throws TransactionException {
-    RowSet rows = rowSets.get(txid);
+    RowSet rows = this.inProgress.get(txid);
     if (rows == null) throw new TransactionException(
         "Invalid transaction, not currently in progress");
-    boolean ret = oracle.commit(txid, rows);
+    boolean ret = this.oracle.commit(txid, rows);
     if (!ret) {
       abortTransaction(txid);
+    } else {
+      this.inProgress.remove(txid);
     }
     return ret;
+  }
+
+  class ReadPointer {
+    final long readPoint;
+    final Set<Long> excludes;
+    ReadPointer(long readPoint) {
+      this(readPoint, null);
+    }
+    ReadPointer(long readPoint, Set<Long> excludes) {
+      this.readPoint = readPoint;
+      this.excludes = excludes;
+    }
+    boolean isVisible(long txid) {
+      if (txid > readPoint) return false;
+      return !isExcluded(txid);
+    }
+    boolean isExcluded(long txid) {
+      if (excludes != null && excludes.contains(txid)) return true;
+      return false;
+    }
   }
 
   class Oracle {
@@ -96,60 +124,55 @@ public class MemoryOmidTransactionEngine {
 
     Oracle() {
       this.timestampOracle = new TimestampOracle();
-      this.readPoint = timestampOracle.getTimestamp();
+      this.readPoint = this.timestampOracle.getTimestamp();
     }
 
-    public synchronized long getReadTxid() {
-      return readPoint;
+    public synchronized ReadPointer getReadPointer() {
+      return new ReadPointer(this.readPoint, new HashSet<Long>(inProgress));
     }
 
     public synchronized long getWriteTxid() {
-      long txid = timestampOracle.getTimestamp();
-      inProgress.add(txid);
+      long txid = this.timestampOracle.getTimestamp();
+      this.inProgress.add(txid);
       return txid;
     }
 
     synchronized boolean commit(long txid, RowSet rows)
         throws TransactionException {
-      if (!inProgress.contains(txid))
+      if (!this.inProgress.contains(txid))
         throw new TransactionException("Transaction not in progress");
       // see if there are any conflicting rows between txid and now
-      long now = timestampOracle.getTimestamp();
+      long now = this.timestampOracle.getTimestamp();
       NavigableMap<Long,RowSet> rowsToCheck =
-          rowSets.subMap(txid, false, now, false);
+          this.rowSets.subMap(txid, false, now, false);
       for (Map.Entry<Long,RowSet> entry : rowsToCheck.entrySet()) {
         if (entry.getValue().conflictsWith(rows)) {
           return false;
         }
       }
       // No conflicts found!
-      rowSets.put(now, rows);
+      this.rowSets.put(now, rows);
       moveReadPointer(txid);
       return true;
     }
 
     void aborted(long txid) throws TransactionException {
-      if (!inProgress.contains(txid))
+      if (!this.inProgress.contains(txid))
         throw new TransactionException("Transaction not in progress");
       moveReadPointer(txid);
     }
 
     private synchronized void moveReadPointer(long txid) {
-      inProgress.remove(txid);
-      if (inProgress.isEmpty()) {
-        readPoint = timestampOracle.getTimestamp();
-        return;
-      }
-      long first = inProgress.first();
-      if (first < txid) return;
-      else readPoint = first - 1;
+      this.inProgress.remove(txid);
+      this.readPoint = this.timestampOracle.getTimestamp();
+      return;
     }
 
     private class TimestampOracle {
       final AtomicLong time = new AtomicLong(1);
       /** Returns a monotonically increasing "timestamp" (unrelated to time) */
       long getTimestamp() {
-        return time.incrementAndGet();
+        return this.time.incrementAndGet();
       }
     }
   }
@@ -159,7 +182,7 @@ public class MemoryOmidTransactionEngine {
     Set<byte[]> rows = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
 
     void addRow(byte [] row) {
-      rows.add(row);
+      this.rows.add(row);
     }
 
     private boolean contains(byte [] row) {
