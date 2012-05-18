@@ -74,16 +74,15 @@ public class TestMemoryOmidTransactionEngine {
     // commit tx two, should succeed
     assertTrue(omidEngine.commitTransaction(txidTwo));
     
-    // even though committed, tx one still not complete so read
-    // is not visible!
+    // even though tx one not committed, we can see two already
     byte [] readValue = omidEngine.read(key);
-    assertNull(readValue);
+    assertNotNull(readValue);
+    assertTrue(Bytes.equals(readValue, valueTwo));
     
     // commit tx one, should fail
     assertFalse(omidEngine.commitTransaction(txidOne));
     
-    // but now tx one is committed, read point should move and
-    // we should see tx two
+    // should still see two
     readValue = omidEngine.read(key);
     assertNotNull(readValue);
     assertTrue(Bytes.equals(readValue, valueTwo));
