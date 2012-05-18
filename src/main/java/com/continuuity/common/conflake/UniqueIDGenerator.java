@@ -14,7 +14,7 @@ package com.continuuity.common.conflake;
  * </p>
  *
  */
-public final class UniqueIDGenerator {
+final class UniqueIDGenerator {
   private final long twepoch = 1288834974657L;
 
   private final long workerIdBits = 5L;
