@@ -1,6 +1,5 @@
 package com.continuuity.fabric.engine.memory;
 
-import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +15,10 @@ import com.continuuity.fabric.operations.queues.QueuePartitioner;
 public class MemorySimpleEngine implements Engine {
 
   private final TreeMap<byte[],byte[]> kvmap =
-      new TreeMap<byte[],byte[]>(new ByteArrayComparator());
+      new TreeMap<byte[],byte[]>(new Bytes.ByteArrayComparator());
 
   private final TreeMap<byte[],Count> countermap =
-      new TreeMap<byte[],Count>(new ByteArrayComparator());
+      new TreeMap<byte[],Count>(new Bytes.ByteArrayComparator());
 
   private final ConcurrentHashMap<ByteArray,MemoryQueue> queuemap =
       new ConcurrentHashMap<ByteArray,MemoryQueue>();
@@ -40,7 +39,7 @@ public class MemorySimpleEngine implements Engine {
     byte [] value = get(key);
     if (value == null) return null;
     Map<byte[],byte[]> map =
-        new TreeMap<byte[],byte[]>(new ByteArrayComparator());
+        new TreeMap<byte[],byte[]>(new Bytes.ByteArrayComparator());
     map.put(key, value);
     return map;
   }
@@ -49,7 +48,7 @@ public class MemorySimpleEngine implements Engine {
     Map<byte[],byte[]> map = this.kvmap.tailMap(startKey);
     if (map == null || map.size() <= limit) return map;
     Map<byte[],byte[]> limitMap =
-        new TreeMap<byte[],byte[]>(new ByteArrayComparator());
+        new TreeMap<byte[],byte[]>(new Bytes.ByteArrayComparator());
     int n = 0;
     for (Map.Entry<byte[],byte[]> entry : map.entrySet()) {
       limitMap.put(entry.getKey(), entry.getValue());
@@ -117,14 +116,6 @@ public class MemorySimpleEngine implements Engine {
         this.queuemap.putIfAbsent(new ByteArray(queueName), queue);
     if (raceQueue != null) queue = raceQueue;
     return queue;
-  }
-
-  public static class ByteArrayComparator implements Comparator<byte[]> {
-    @Override
-    public int compare(byte[] o1, byte[] o2) {
-      // hehe :)
-      return new String(o1).compareTo(new String(o2));
-    }
   }
 
   public static class Count {
