@@ -34,6 +34,8 @@ public class ConflakeServiceTest {
       Assert.assertNotNull(ids);
       ids = ConflakeService.getIds(10);
       Assert.assertTrue(ids.size() == 10);
+      ids = ConflakeService.getIds(100000);
+      Assert.assertTrue(ids.size() == 100000);
     } finally {
       ConflakeService.stop();
       Collections.reverse(closeables);
