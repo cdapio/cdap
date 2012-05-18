@@ -19,7 +19,7 @@ import com.continuuity.fabric.operations.queues.QueuePartitioner;
 
 public class TestMemoryQueue {
 
-  private static final long POP_BLOCK_TIMEOUT_MS = 100;
+  private static final long POP_BLOCK_TIMEOUT_MS = 200;
   @Test
   public void testSingleConsumerSimple() throws Exception {
     MemoryQueue queue = new MemoryQueue();
