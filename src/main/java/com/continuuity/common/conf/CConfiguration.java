@@ -30,7 +30,7 @@ public class CConfiguration extends Configuration {
 
   /**
    * Creates an instance of configuration.
-   * @return
+   * @return an instance of CConfiguration.
    */
   public static Configuration create() {
     Configuration conf = new Configuration();
@@ -39,8 +39,8 @@ public class CConfiguration extends Configuration {
 
   /**
    * Creates an instance of configuration.
-   * @param that
-   * @return
+   * @param that Other configuration.
+   * @return merged CConfiguration instance.
    */
   public static Configuration create(final Configuration that) {
     return new Configuration(that);

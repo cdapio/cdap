@@ -35,8 +35,8 @@ public class ActorSyncCall<T> {
   /**
    * Makes a sync (blocking) call passing in the <code>message</code> with a specified <code>timeout</code>
    * @param message to be passed to the actor.
-   * @param timeout
-   * @return
+   * @param timeout for sync call.
+   * @return instance of type T
    * @throws ClassCastException
    */
   public T get(Object message, Timeout timeout) throws ClassCastException {

@@ -53,7 +53,7 @@ public final class OptionsParser {
    * @param object instance of class that contains @Option annotations.
    * @param args command line arguments.
    * @param out  stream available to dump outputs.
-   * @return
+   * @return List of arguments that were not definied by annotations.
    */
   public static List<String> init(Object object, String[] args, PrintStream out) {
     List<String> nonOptionArgs = new ArrayList<String>();
