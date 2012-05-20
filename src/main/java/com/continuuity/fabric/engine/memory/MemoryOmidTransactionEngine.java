@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.fabric.engine.memory.MemoryTransactionalExecutor.TransactionException;
+import com.continuuity.fabric.engine.transactions.ReadPointer;
 
 /**
  * An in-memory transaction engine inspired by the Omid design.
@@ -52,7 +53,7 @@ public class MemoryOmidTransactionEngine {
   }
 
   byte [] read(byte [] key, long readTxid) {
-    return this.engine.read(key, new ReadPointer(readTxid));
+    return this.engine.read(key, new MemoryReadPointer(readTxid));
   }
 
   public boolean compareAndSwap(byte [] key, byte [] oldValue, byte [] newValue,
@@ -92,26 +93,6 @@ public class MemoryOmidTransactionEngine {
     return ret;
   }
 
-  class ReadPointer {
-    final long readPoint;
-    final Set<Long> excludes;
-    ReadPointer(long readPoint) {
-      this(readPoint, null);
-    }
-    ReadPointer(long readPoint, Set<Long> excludes) {
-      this.readPoint = readPoint;
-      this.excludes = excludes;
-    }
-    boolean isVisible(long txid) {
-      if (txid > readPoint) return false;
-      return !isExcluded(txid);
-    }
-    boolean isExcluded(long txid) {
-      if (excludes != null && excludes.contains(txid)) return true;
-      return false;
-    }
-  }
-
   class Oracle {
 
     private final TimestampOracle timestampOracle;
@@ -128,7 +109,7 @@ public class MemoryOmidTransactionEngine {
     }
 
     public synchronized ReadPointer getReadPointer() {
-      return new ReadPointer(this.readPoint, new HashSet<Long>(inProgress));
+      return new MemoryReadPointer(this.readPoint, new HashSet<Long>(inProgress));
     }
 
     public synchronized long getWriteTxid() {

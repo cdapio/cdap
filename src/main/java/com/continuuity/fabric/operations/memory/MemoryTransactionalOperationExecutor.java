@@ -3,8 +3,11 @@ package com.continuuity.fabric.operations.memory;
 import java.util.List;
 import java.util.Map;
 
-import com.continuuity.fabric.engine.memory.MemoryTransactionalExecutor;
+import com.continuuity.fabric.access.DelegationToken;
+import com.continuuity.fabric.engine.NativeTransactionalExecutor;
 import com.continuuity.fabric.engine.memory.MemoryTransactionalExecutor.Transaction;
+import com.continuuity.fabric.engine.transactions.RowTracker;
+import com.continuuity.fabric.engine.transactions.TransactionOracle;
 import com.continuuity.fabric.operations.SyncReadTimeoutException;
 import com.continuuity.fabric.operations.TransactionalOperationExecutor;
 import com.continuuity.fabric.operations.WriteOperation;
@@ -22,21 +25,28 @@ import com.continuuity.fabric.operations.queues.QueuePush;
 public abstract class MemoryTransactionalOperationExecutor
 implements TransactionalOperationExecutor {
 
-  @SuppressWarnings("unused")
-  private final MemoryTransactionalExecutor executor;
+  private final NativeTransactionalExecutor executor;
+
+  private final TransactionOracle oracle;
+  
+  private final RowTracker rowTracker;
 
   public MemoryTransactionalOperationExecutor(
-      MemoryTransactionalExecutor executor) {
+      NativeTransactionalExecutor executor,
+      TransactionOracle oracle,
+      RowTracker rowTracker) {
     this.executor = executor;
+    this.oracle = oracle;
+    this.rowTracker = rowTracker;
   }
 
   @Override
   public boolean execute(List<WriteOperation> writes) {
     // Open the transaction
-    Transaction tx = this.executor.startTransaction();
+    long txid = oracle.getWriteTxid();
     // Write them in order, for now
     for (WriteOperation write : writes) {
-      
+      DelegationToken token;
     }
     // TODO Auto-generated method stub
     return false;

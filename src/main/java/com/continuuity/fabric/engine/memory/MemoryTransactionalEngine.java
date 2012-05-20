@@ -1,116 +1,127 @@
 package com.continuuity.fabric.engine.memory;
 
-import java.util.Map;
-import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.fabric.engine.Engine;
-import com.continuuity.fabric.engine.memory.MemoryOmidTransactionEngine.ReadPointer;
+import com.continuuity.fabric.engine.table.MemoryVersionedTable;
+import com.continuuity.fabric.engine.table.VersionedTable;
+import com.continuuity.fabric.engine.transactions.TransactionalEngine;
 
-public class MemoryTransactionalEngine implements Engine {
+public class MemoryTransactionalEngine implements TransactionalEngine {
 
-  private final TreeMap<TransactionalByteArray,byte[]> kvmap =
-      new TreeMap<TransactionalByteArray,byte[]>();
+  final TreeMap<byte[],MemoryVersionedTable> map =
+      new TreeMap<byte[],MemoryVersionedTable>(Bytes.BYTES_COMPARATOR);
 
-  /**
-   * @param key
-   * @param value
-   * @param txid
-   */
-  public void write(byte[] key, byte[] value, long txid) {
-    this.kvmap.put(new TransactionalByteArray(key, txid), value);
-  }
-
-  /**
-   * @param key
-   * @param readTxid
-   * @return
-   */
-  public byte[] read(byte[] key, ReadPointer readPointer) {
-    NavigableMap<TransactionalByteArray,byte[]> map = this.kvmap.subMap(
-        new TransactionalByteArray(key, readPointer.readPoint), true,
-        new TransactionalByteArray(key, 0L), true);
-    if (map.isEmpty()) return null;
-    for (Map.Entry<TransactionalByteArray,byte[]> entry : map.entrySet()) {
-      if (readPointer.isVisible(entry.getKey().getTxid())) {
-        return entry.getValue();
-      }
-    }
+  @Override
+  public VersionedTable getTable(byte[] tableName) {
+    // TODO Auto-generated method stub
     return null;
   }
-
-  /**
-   * @param key
-   * @param oldValue
-   * @param newValue
-   * @param readTxid
-   * @param txid
-   * @return
-   */
-  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue,
-      ReadPointer readPointer, long txid) {
-    byte [] readValue = read(key, readPointer);
-    if (!Bytes.equals(readValue, oldValue)) return false;
-    write(key, newValue, txid);
-    return true;
-  }
-
-  /**
-   * @param row
-   * @param txid
-   */
-  public void delete(byte[] row, long txid) {
-    this.kvmap.remove(new TransactionalByteArray(row, txid));
-  }
-
-  public static class TransactionalByteArray
-  implements Comparable<TransactionalByteArray> {
-    private final byte [] bytes;
-    private final int hash;
-    private final long txid;
-    public TransactionalByteArray(byte [] bytes, long txid) {
-      this.bytes = bytes;
-      this.hash = Bytes.hashCode(bytes);
-      this.txid = txid;
-    }
-    /**
-     * Constructs a transactional byte array using Long.MAX_VALUE as the txid.
-     * @param bytes
-     */
-    public TransactionalByteArray(byte[] bytes) {
-      this(bytes, Long.MAX_VALUE);
-    }
-    @Override
-    public int hashCode() {
-      return this.hash;
-    }
-    @Override
-    public boolean equals(Object o) {
-      TransactionalByteArray ob = (TransactionalByteArray)o;
-      if (ob.hashCode() != this.hash) return false;
-      return Bytes.equals(this.bytes, ob.getBytes());
-    }
-    public byte[] getBytes() {
-      return this.bytes;
-    }
-    public long getTxid() {
-      return this.txid;
-    }
-    @Override
-    public int compareTo(TransactionalByteArray o) {
-      int ret = Bytes.compareTo(getBytes(), o.getBytes());
-      if (ret != 0) return ret;
-      // order later transactions first
-      if (o.getTxid() < getTxid()) return -1;
-      if (o.getTxid() > getTxid()) return 1;
-      return 0;
-    }
-
-  }
+  
+  
 }
 
+//  private final TreeMap<TransactionalByteArray,byte[]> kvmap =
+//      new TreeMap<TransactionalByteArray,byte[]>();
+//
+//  /**
+//   * @param key
+//   * @param value
+//   * @param txid
+//   */
+//  public void write(byte[] key, byte[] value, long txid) {
+//    this.kvmap.put(new TransactionalByteArray(key, txid), value);
+//  }
+//
+//  /**
+//   * @param key
+//   * @param readTxid
+//   * @return
+//   */
+//  public byte[] read(byte[] key, ReadPointer readPointer) {
+//    NavigableMap<TransactionalByteArray,byte[]> map = this.kvmap.subMap(
+//        new TransactionalByteArray(key, readPointer.readPoint), true,
+//        new TransactionalByteArray(key, 0L), true);
+//    if (map.isEmpty()) return null;
+//    for (Map.Entry<TransactionalByteArray,byte[]> entry : map.entrySet()) {
+//      if (readPointer.isVisible(entry.getKey().getTxid())) {
+//        return entry.getValue();
+//      }
+//    }
+//    return null;
+//  }
+//
+//  /**
+//   * @param key
+//   * @param oldValue
+//   * @param newValue
+//   * @param readTxid
+//   * @param txid
+//   * @return
+//   */
+//  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue,
+//      ReadPointer readPointer, long txid) {
+//    byte [] readValue = read(key, readPointer);
+//    if (!Bytes.equals(readValue, oldValue)) return false;
+//    write(key, newValue, txid);
+//    return true;
+//  }
+//
+//  /**
+//   * @param row
+//   * @param txid
+//   */
+//  public void delete(byte[] row, long txid) {
+//    this.kvmap.remove(new TransactionalByteArray(row, txid));
+//  }
+//
+//  public static class TransactionalByteArray
+//  implements Comparable<TransactionalByteArray> {
+//    private final byte [] bytes;
+//    private final int hash;
+//    private final long txid;
+//    public TransactionalByteArray(byte [] bytes, long txid) {
+//      this.bytes = bytes;
+//      this.hash = Bytes.hashCode(bytes);
+//      this.txid = txid;
+//    }
+//    /**
+//     * Constructs a transactional byte array using Long.MAX_VALUE as the txid.
+//     * @param bytes
+//     */
+//    public TransactionalByteArray(byte[] bytes) {
+//      this(bytes, Long.MAX_VALUE);
+//    }
+//    @Override
+//    public int hashCode() {
+//      return this.hash;
+//    }
+//    @Override
+//    public boolean equals(Object o) {
+//      TransactionalByteArray ob = (TransactionalByteArray)o;
+//      if (ob.hashCode() != this.hash) return false;
+//      return Bytes.equals(this.bytes, ob.getBytes());
+//    }
+//    public byte[] getBytes() {
+//      return this.bytes;
+//    }
+//    public long getTxid() {
+//      return this.txid;
+//    }
+//    @Override
+//    public int compareTo(TransactionalByteArray o) {
+//      int ret = Bytes.compareTo(getBytes(), o.getBytes());
+//      if (ret != 0) return ret;
+//      // order later transactions first
+//      if (o.getTxid() < getTxid()) return -1;
+//      if (o.getTxid() > getTxid()) return 1;
+//      return 0;
+//    }
+//
+//  }
+//}
+//
 
 
 

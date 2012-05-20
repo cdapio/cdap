@@ -1,19 +1,18 @@
 package com.continuuity.fabric.engine.memory;
 
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.continuuity.fabric.engine.NativeTransactionalExecutor;
+import com.continuuity.fabric.engine.memory.MemoryOmidTransactionEngine.Oracle;
 
 public class MemoryTransactionalExecutor implements NativeTransactionalExecutor {
 
   private final MemoryTransactionalEngine engine;
 
-  private final AtomicLong txid = new AtomicLong(0);
-
-  private final TreeSet<Transaction> txInProgress = new TreeSet<Transaction>();
-
-  public MemoryTransactionalExecutor(MemoryTransactionalEngine engine) {
+  private final Oracle oracle;
+  
+  private final MemoryRowTracker rowTracker;
+  
+  public MemoryTransactionalExecutor(MemoryTransactionalEngine engine,
+      ) {
     this.engine = engine;
   }
 
