@@ -62,4 +62,6 @@ public class JSONSerializerTest {
     MySimpleclass h = serializer.deserialize(b, MySimpleclass.class);
     Assert.assertTrue(h.equals(m));
   }
+
+
 }
