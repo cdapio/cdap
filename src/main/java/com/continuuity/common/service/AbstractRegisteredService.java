@@ -43,7 +43,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * Base class constructor with service name being provided.
    * @param service name
    */
-  AbstractRegisteredService(String service) {
+  public AbstractRegisteredService(String service) {
     this.service = service;
   }
 
@@ -101,10 +101,17 @@ public abstract class AbstractRegisteredService implements RegisteredService {
       });
 
       ImmutablePair<Map<String, String>, Integer> serviceArgs = configure(args, conf);
+      if(serviceArgs == null) {
+        throw new RegisteredServiceException("configuration of service failed.");
+      }
+
       ServiceDiscoveryClient client = new ServiceDiscoveryClientImpl(zkEnsemble);
       client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
       serviceThread = start();
+      if(serviceThread == null) {
+        throw new RegisteredServiceException("Thread returned from start is null");
+      }
       serviceThread.start();
       server.serve();
     } catch (ServiceDiscoveryClientException e) {
