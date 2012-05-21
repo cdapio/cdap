@@ -8,7 +8,8 @@ import static org.junit.Assert.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.continuuity.fabric.engine.memory.MemoryTransactionalExecutor.TransactionException;
+import com.continuuity.fabric.deadpool.MemoryTransactionalEngine;
+import com.continuuity.fabric.deadpool.MemoryTransactionalExecutor.TransactionException;
 
 public class TestMemoryOmidTransactionEngine {
 

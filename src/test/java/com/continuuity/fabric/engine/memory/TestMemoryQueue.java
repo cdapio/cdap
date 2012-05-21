@@ -13,9 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.continuuity.fabric.operations.queues.QueueConsumer;
-import com.continuuity.fabric.operations.queues.QueueEntry;
-import com.continuuity.fabric.operations.queues.QueuePartitioner;
+import com.continuuity.data.engine.memory.MemoryQueue;
+import com.continuuity.data.operation.queue.QueueConsumer;
+import com.continuuity.data.operation.queue.QueueEntry;
+import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class TestMemoryQueue {
 

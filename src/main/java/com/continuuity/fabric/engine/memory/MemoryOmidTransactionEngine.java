@@ -13,8 +13,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.fabric.engine.memory.MemoryTransactionalExecutor.TransactionException;
-import com.continuuity.fabric.engine.transactions.ReadPointer;
+import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.fabric.deadpool.MemoryTransactionalEngine;
+import com.continuuity.fabric.deadpool.MemoryTransactionalExecutor.TransactionException;
 
 /**
  * An in-memory transaction engine inspired by the Omid design.
@@ -158,23 +160,4 @@ public class MemoryOmidTransactionEngine {
     }
   }
 
-  class RowSet {
-
-    Set<byte[]> rows = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-
-    void addRow(byte [] row) {
-      this.rows.add(row);
-    }
-
-    private boolean contains(byte [] row) {
-      return this.rows.contains(row);
-    }
-
-    public boolean conflictsWith(RowSet rows) {
-      for (byte [] row : this.rows) {
-        if (rows.contains(row)) return true;
-      }
-      return false;
-    }
-  }
 }

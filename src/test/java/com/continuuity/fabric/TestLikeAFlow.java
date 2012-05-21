@@ -7,8 +7,8 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-import com.continuuity.fabric.operations.TransactionalOperationExecutor;
-import com.continuuity.fabric.operations.memory.MemoryTransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.fabric.deadpool.MemoryTransactionalOperationExecutor;
 
 /**
  * Test that mimics the level of access/behavior of the fabric from flows.
@@ -20,9 +20,9 @@ public class TestLikeAFlow {
   @Test
   public void testMemorySetupAndTeardown() {
 
-    // Use the in-memory 
-    TransactionalOperationExecutor executor =
-        new MemoryTransactionalOperationExecutor();
+//    // Use the in-memory 
+//    TransactionalOperationExecutor executor =
+//        new MemoryTransactionalOperationExecutor();
     
     fail("Not yet implemented");
   }
