@@ -5,15 +5,22 @@ import com.continuuity.data.operation.type.ReadOperation;
 public class QueuePop implements ReadOperation<QueueEntry> {
   private final byte [] name;
   private final QueueConsumer consumer;
-  private final QueuePartitioner partitioner;
+  private final QueueConfig config;
+  private boolean drain;
 
   private QueueEntry result;
 
   public QueuePop(byte [] queueName, QueueConsumer consumer,
-      QueuePartitioner partitioner) {
+      QueueConfig config) {
+    this(queueName, consumer, config, false);
+  }
+  
+  public QueuePop(byte [] queueName, QueueConsumer consumer,
+      QueueConfig config, boolean drain) {
     this.name = queueName;
     this.consumer = consumer;
-    this.partitioner = partitioner;
+    this.config = config;
+    this.drain = drain;
   }
 
   public byte [] getQueueName() {
@@ -34,8 +41,15 @@ public class QueuePop implements ReadOperation<QueueEntry> {
     return consumer;
   }
 
-  public QueuePartitioner getPartitioner() {
-    return partitioner;
+  public QueueConfig getConfig() {
+    return config;
   }
 
+  public boolean getDrain() {
+    return drain;
+  }
+  
+  public void setDrain(boolean drain) {
+    this.drain = drain;
+  }
 }

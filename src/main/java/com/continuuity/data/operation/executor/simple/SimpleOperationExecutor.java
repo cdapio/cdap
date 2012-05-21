@@ -169,7 +169,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
   public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
       InterruptedException {
     return this.queueTable.pop(pop.getQueueName(), pop.getConsumer(),
-        pop.getPartitioner());
+        pop.getConfig(), pop.getDrain());
   }
 
   @Override

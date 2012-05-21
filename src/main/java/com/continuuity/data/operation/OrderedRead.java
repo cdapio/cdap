@@ -29,7 +29,7 @@ public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
     this.endKey = endKey;
     this.limit = limit;
   }
-
+  
   public byte [] getStartKey() {
     return this.startKey;
   }

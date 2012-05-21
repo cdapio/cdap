@@ -5,4 +5,6 @@ package com.continuuity.data.operation.type;
  */
 public interface WriteOperation extends Operation {
 
+  public byte [] getKey();
+
 }

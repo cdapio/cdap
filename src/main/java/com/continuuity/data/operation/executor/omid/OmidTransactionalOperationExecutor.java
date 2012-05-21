@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor.omid;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.queue.QueueAck;
 import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePop;
@@ -81,18 +83,69 @@ public class OmidTransactionalOperationExecutor implements
   @Override
   public boolean execute(List<WriteOperation> writes)
   throws OmidTransactionException {
-    ImmutablePair<ReadPointer,Long> pointer = this.oracle.getNewPointer();
-    ReadPointer readPointer = pointer.getFirst();
-    long txid = pointer.getSecond();
+    // Open transaction
+    ImmutablePair<ReadPointer,Long> pointer = startTransaction();
     
-    // TODO Auto-generated method stub
-    return false;
+    // Execute operations (in order for now)
+    RowSet rows = new MemoryRowSet();
+    List<WriteOperation> deletes = new ArrayList<WriteOperation>(writes.size());
+    for (WriteOperation write : writes) {
+      ImmutablePair<WriteOperation,Boolean> deleteAndReturnCode =
+          dispatchWrite(write, pointer);
+      if (deleteAndReturnCode == null ||
+          !deleteAndReturnCode.getSecond().booleanValue()) {
+        // Write operation failed
+        abortTransaction(pointer, deletes);
+        return false;
+      } else {
+        // Write was successful.  Store delete if we need to abort and continue
+        deletes.add(deleteAndReturnCode.getFirst());
+        rows.addRow(write.getKey());
+      }
+    }
+    
+    // All operations completed successfully, commit transaction
+    if (!commitTransaction(pointer, rows)) {
+      // Commit failed, abort
+      abortTransaction(pointer, deletes);
+      return false;
+    }
+    
+    // Transaction was successfully committed
+    return true;
+  }
+
+  private ImmutablePair<ReadPointer, Long> startTransaction() {
+    return this.oracle.getNewPointer();
+  }
+
+  private boolean commitTransaction(ImmutablePair<ReadPointer, Long> pointer,
+      RowSet rows) throws OmidTransactionException {
+    return this.oracle.commit(pointer.getSecond(), rows);
+  }
+
+  private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
+      List<WriteOperation> deletes) {
+    
+  }
+
+  private ImmutablePair<WriteOperation, Boolean> dispatchWrite(
+      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
+    WriteOperation delete = null;
+    boolean success = false;
+    return new ImmutablePair<WriteOperation,Boolean>(delete, success);
   }
 
   @Override
   public boolean execute(QueueAck ack) {
+    unsupported();
+    // NOT SUPPORTED STILL!
     // only one supported individually (still done in a transaction!)
-    return execute(Arrays.asList(new WriteOperation [] { ack }));
+    try {
+      return execute(Arrays.asList(new WriteOperation [] { ack }));
+    } catch (OmidTransactionException e) {
+      return false;
+    }
   }
 
   // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)

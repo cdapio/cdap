@@ -7,9 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.continuuity.data.operation.queue.PowerQueue;
+import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class MemoryQueue implements PowerQueue {
 
@@ -50,12 +50,13 @@ public class MemoryQueue implements PowerQueue {
   boolean sync = true;
   
   @Override
-  public QueueEntry pop(QueueConsumer consumer, QueuePartitioner partitioner)
+  public QueueEntry pop(QueueConsumer consumer, QueueConfig config,
+      boolean drain)  
   throws InterruptedException {
     // Anything in the queue at all?  Wait for a push if so
     if (head == null) {
       if (sync) waitForPush(); else return null;
-      return pop(consumer, partitioner);
+      return pop(consumer, config, drain);
     }
     
     // Determine the current state for this consumer group
@@ -86,7 +87,7 @@ public class MemoryQueue implements PowerQueue {
     // If group has no entries available, wait for a push
     if (group.getHead() == null) {
       if (sync) waitForPush(); else return null;
-      return pop(consumer, partitioner);
+      return pop(consumer, config, drain);
     }
     
     // Iterate entries to see if we should emit one
@@ -101,7 +102,7 @@ public class MemoryQueue implements PowerQueue {
             (info.getConsumerId() == consumer.getConsumerId() &&
             !info.isAcked())) {
           QueueEntry entry = curEntry.makeQueueEntry();
-          if (partitioner.shouldEmit(consumer, entry)) {
+          if (config.getPartitioner().shouldEmit(consumer, entry)) {
             entry.setConsumer(consumer);
             info.setPopConsumer(consumer);
             return entry;
@@ -114,7 +115,7 @@ public class MemoryQueue implements PowerQueue {
       
     // Didn't find anything.  Wait and try again.
     if (sync) waitForPush(); else return null;
-    return pop(consumer, partitioner);
+    return pop(consumer, config, drain);
   }
 
   @Override
@@ -175,6 +176,9 @@ public class MemoryQueue implements PowerQueue {
     private final int id;
     private Entry head;
     private final long uuid;
+    
+    private long drainPoint = -1;
+    
     ConsumerGroup(int id) {
       this.id = id;
       this.head = null;
@@ -188,6 +192,12 @@ public class MemoryQueue implements PowerQueue {
     }
     int getId() {
       return this.id;
+    }
+    long getDrainPoint() {
+      return this.drainPoint;
+    }
+    void setDrainPoint(long drainPoint) {
+      this.drainPoint = drainPoint;
     }
     @Override
     public String toString() {

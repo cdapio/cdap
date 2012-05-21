@@ -6,9 +6,9 @@ import java.util.TreeMap;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.SimpleQueueTable;
+import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class MemoryQueueTable implements SimpleQueueTable {
 
@@ -33,8 +33,8 @@ public class MemoryQueueTable implements SimpleQueueTable {
 
   @Override
   public QueueEntry pop(byte[] queueName, QueueConsumer consumer,
-      QueuePartitioner partitioner) throws InterruptedException {
-    return getQueue(queueName).pop(consumer, partitioner);
+      QueueConfig config, boolean drain) throws InterruptedException {
+    return getQueue(queueName).pop(consumer, config, drain);
   }
 
   @Override

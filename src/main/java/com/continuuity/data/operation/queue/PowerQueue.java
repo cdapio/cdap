@@ -21,8 +21,9 @@ public interface PowerQueue {
    * @return
    * @throws InterruptedException
    */
-  public QueueEntry pop(QueueConsumer consumer, QueuePartitioner partitioner)
-      throws InterruptedException;
+  public QueueEntry pop(QueueConsumer consumer, QueueConfig config,
+      boolean drain)
+  throws InterruptedException;
 
   /**
    * @param entry

@@ -11,5 +11,7 @@ public interface RowSet {
 
   public void addRow(byte [] row);
 
+  public boolean contains(byte [] row);
+
   public boolean conflictsWith(RowSet rows);
 }

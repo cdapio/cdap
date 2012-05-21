@@ -8,10 +8,12 @@ import java.util.TreeSet;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.continuuity.data.operation.executor.omid.RowSet;
+
 /**
  * A set of rows (byte arrays).
  */
-public class MemoryRowSet {
+public class MemoryRowSet implements RowSet {
 
   private Set<byte[]> rows = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
 
@@ -19,11 +21,13 @@ public class MemoryRowSet {
     this.rows.add(row);
   }
 
-  private boolean contains(byte [] row) {
+  @Override
+  public boolean contains(byte [] row) {
     return this.rows.contains(row);
   }
 
-  public boolean conflictsWith(MemoryRowSet rows) {
+  @Override
+  public boolean conflictsWith(RowSet rows) {
     for (byte [] row : this.rows) {
       if (rows.contains(row)) return true;
     }
