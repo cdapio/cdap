@@ -2,6 +2,7 @@ package com.continuuity.common.discovery;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
@@ -11,7 +12,6 @@ import com.netflix.curator.x.discovery.ServiceDiscoveryBuilder;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.ServiceType;
 import com.netflix.curator.x.discovery.details.InstanceProvider;
-import com.netflix.curator.x.discovery.details.JsonInstanceSerializer;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import java.util.*;
 public class ServiceDiscoveryClient implements Closeable {
   private final String connectionString;
   private final List<Closeable> closeables;
-  private static ServiceDiscovery<Map> discovery = null;
+  private static ServiceDiscovery<ServicePayload> discovery = null;
   private static final String servicePath = "/continuuity/system/services";
   private static final int sessionTimeout = 10*1000;
   private static final int connectionTimeout = 5*1000;
@@ -33,6 +33,31 @@ public class ServiceDiscoveryClient implements Closeable {
   private static final int timeBetweenRetries = 10;
   private static boolean started = false;
 
+  /**
+   * Defines the payload that is played under every service.
+   */
+  public static class ServicePayload {
+    private Map<String, String> values = Maps.newHashMap();
+
+    /**
+     * Default constructor
+     */
+    public ServicePayload() {}
+
+    /**
+     * Adds a key and value as service payload.
+     *
+     * @param key to be stored.
+     * @param value to be associated with key.
+     */
+    public void add(String key, String value) {
+      values.put(key, value);
+    }
+
+    public String get(String key) {
+      return values.get(key);
+    }
+  }
 
   /**
    * Constructs a service registration using an connection string.
@@ -60,10 +85,11 @@ public class ServiceDiscoveryClient implements Closeable {
       client.start();
 
       // Create a service discovery that allocated ServiceProviders.
-      discovery = ServiceDiscoveryBuilder.builder(Map.class)
+      discovery = ServiceDiscoveryBuilder.builder(ServicePayload.class)
           .client(client)
           .basePath(servicePath)
-          .serializer(new JsonInstanceSerializer<Map>(Map.class))
+//          .serializer(new JsonInstanceSerializer<ServicePayload>(ServicePayload.class))
+          .serializer(new ServicePayloadSerializer())
           .build();
       discovery.start();
       closeables.add(discovery);
@@ -84,7 +110,7 @@ public class ServiceDiscoveryClient implements Closeable {
    * @param payload associated with the service.
    * @throws ServiceDiscoveryClientException
    */
-  public void register(String name, int port, Map<String, String> payload)
+  public void register(String name, int port, ServicePayload payload)
       throws ServiceDiscoveryClientException {
     name = Preconditions.checkNotNull(name);
     port = Preconditions.checkNotNull(port);
@@ -94,8 +120,8 @@ public class ServiceDiscoveryClient implements Closeable {
     }
 
     try {
-      ServiceInstance<Map> instance =
-          ServiceInstance.<Map>builder()
+      ServiceInstance<ServicePayload> instance =
+          ServiceInstance.<ServicePayload>builder()
             .payload(payload)
             .name(name)
             .port(port)
@@ -119,8 +145,8 @@ public class ServiceDiscoveryClient implements Closeable {
       throw new ServiceDiscoveryClientException("ServiceDiscoveryClient#start has not been called.");
     }
     try {
-      ServiceInstance<Map> instance =
-        ServiceInstance.<Map>builder()
+      ServiceInstance<ServicePayload> instance =
+        ServiceInstance.<ServicePayload>builder()
           .name(name)
           .serviceType(ServiceType.DYNAMIC)
           .build();
@@ -131,7 +157,8 @@ public class ServiceDiscoveryClient implements Closeable {
   }
 
   /**
-   *  Returns number of providers for a service
+   * Returns number of providers for a service
+   *
    * @param name of the service
    * @return count of service providers for the name requested.
    * @throws ServiceDiscoveryClientException
@@ -148,6 +175,7 @@ public class ServiceDiscoveryClient implements Closeable {
 
   /**
    * Closes all the closeables registered.
+   *
    * @throws IOException
    */
   public void close() throws IOException {
@@ -157,8 +185,19 @@ public class ServiceDiscoveryClient implements Closeable {
     }
   }
 
-  public static class ServiceProvider implements InstanceProvider<Map> {
-    Collection<ServiceInstance<Map>> instances;
+  /**
+   * Returns an instance of service provider
+   *
+   * @param name of the service
+   * @return ServiceProvider instance.
+   * @throws ServiceDiscoveryClientException
+   */
+  ServiceProvider getServiceProvider(String name) throws ServiceDiscoveryClientException {
+    return new ServiceProvider(name);
+  }
+
+  public static class ServiceProvider implements InstanceProvider<ServicePayload> {
+    Collection<ServiceInstance<ServicePayload>> instances;
 
     public ServiceProvider(final String name)
         throws ServiceDiscoveryClientException {
@@ -168,10 +207,9 @@ public class ServiceDiscoveryClient implements Closeable {
         throw new ServiceDiscoveryClientException(e);
       }
     }
-
     @Override
-    public List<ServiceInstance<Map>> getInstances() throws Exception {
-      return new ArrayList<ServiceInstance<Map>>(instances);
+    public List<ServiceInstance<ServicePayload>> getInstances() throws Exception {
+      return new ArrayList<ServiceInstance<ServicePayload>>(instances);
     }
   }
 

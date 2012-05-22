@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * This abstract class makes it easy to build a registered service.
@@ -104,12 +103,14 @@ public abstract class AbstractRegisteredService implements RegisteredService {
         }
       });
 
-      ImmutablePair<Map<String, String>, Integer> serviceArgs = configure(args, conf);
+      ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
+        serviceArgs = configure(args, conf);
       if(serviceArgs == null) {
         throw new RegisteredServiceException("configuration of service failed.");
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
+      client.start();
       client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
       serviceThread = start();
@@ -169,8 +170,8 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * @param conf Configuration instance passed around.
    * @return Pair of args for registering the service and the port service is running on.
    */
-  protected abstract
-  ImmutablePair<Map<String, String>, Integer> configure(String[] args, Configuration conf);
+  protected abstract ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
+    configure(String[] args, Configuration conf);
 
 
 }
