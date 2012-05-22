@@ -2,7 +2,6 @@ package com.continuuity.common.service;
 
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.common.discovery.ServiceDiscoveryClientImpl;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
@@ -22,6 +21,11 @@ import java.util.Map;
  */
 public abstract class AbstractRegisteredService implements RegisteredService {
   private static final Logger Log = LoggerFactory.getLogger(AbstractRegisteredService.class);
+
+  /**
+   * Service registration client.
+   */
+  private ServiceDiscoveryClient client;
 
   /**
    * Name of the service
@@ -105,7 +109,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
         throw new RegisteredServiceException("configuration of service failed.");
       }
 
-      ServiceDiscoveryClient client = new ServiceDiscoveryClientImpl(zkEnsemble);
+      client = new ServiceDiscoveryClient(zkEnsemble);
       client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
       serviceThread = start();
@@ -133,6 +137,11 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * @param now true specifies non-graceful shutdown; false otherwise.
    */
   public final void stop(boolean now) {
+    try {
+      client.close();
+    } catch (IOException e) {
+      Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
+    }
     stop();
   }
 

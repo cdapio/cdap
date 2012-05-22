@@ -9,13 +9,13 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
- *  Testing of ServiceDiscoveryClientImpl.
+ *  Testing of ServiceDiscoveryClient.
  */
 public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
 
   @Test
   public void testRegistration() throws Exception {
-    ServiceDiscoveryClientImpl client = new ServiceDiscoveryClientImpl(server.getConnectionString());
+    ServiceDiscoveryClient client = new ServiceDiscoveryClient(server.getConnectionString());
     try {
       client.start();
 
@@ -42,9 +42,9 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
 
   //  @Test
   //  public void testRandom() throws Exception {
-  //    ServiceDiscoveryClientImpl client = new ServiceDiscoveryClientImpl(server.getConnectionString());
+  //    ServiceDiscoveryClient client = new ServiceDiscoveryClient(server.getConnectionString());
   //    ProviderStrategy<Map<String, String>> strategy = new RandomStrategy<Map<String, String>>();
-  //    ServiceDiscoveryClientImpl.ServiceProvider provider = new ServiceDiscoveryClientImpl.ServiceProvider("flow-manager");
+  //    ServiceDiscoveryClient.ServiceProvider provider = new ServiceDiscoveryClient.ServiceProvider("flow-manager");
   //    try {
   //      client.start();
   //
