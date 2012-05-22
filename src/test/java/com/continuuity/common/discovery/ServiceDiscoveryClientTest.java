@@ -69,7 +69,7 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
         }
         int sum = stats[0] + stats[1];
         int diff = Math.abs(stats[0] - stats[1]);
-        Assert.assertTrue(diff > 0 && diff < 10);
+        Assert.assertTrue(diff > 0 && diff < 20);
         Assert.assertTrue(sum == 100);
       } finally {
         if(client != null) {
