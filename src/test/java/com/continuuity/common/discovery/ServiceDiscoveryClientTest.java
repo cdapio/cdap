@@ -17,8 +17,6 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
   public void testRegistration() throws Exception {
     ServiceDiscoveryClient client = new ServiceDiscoveryClient(server.getConnectionString());
     try {
-      client.start();
-
       ServiceDiscoveryClient.ServicePayload payload =
         new ServiceDiscoveryClient.ServicePayload();
       payload.add("A1", "1");
@@ -45,7 +43,6 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
       ServiceDiscoveryClient client = null;
       try {
         client = new ServiceDiscoveryClient(server.getConnectionString());
-        client.start();
         ServiceDiscoveryClient.ServicePayload payload = new ServiceDiscoveryClient.ServicePayload();
         payload.add("A1", "1");
         payload.add("A2", "2");

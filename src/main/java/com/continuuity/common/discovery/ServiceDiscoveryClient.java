@@ -26,7 +26,7 @@ public class ServiceDiscoveryClient implements Closeable {
   private final String connectionString;
   private final List<Closeable> closeables;
   private static ServiceDiscovery<ServicePayload> discovery = null;
-  private static final String servicePath = "/continuuity/system/services";
+  private static final String SERVICE_PATH = "/continuuity/system/services";
   private static final int sessionTimeout = 10*1000;
   private static final int connectionTimeout = 5*1000;
   private static final int numberOfRetry = 5;
@@ -34,7 +34,7 @@ public class ServiceDiscoveryClient implements Closeable {
   private static boolean started = false;
 
   /**
-   * Defines the payload that is played under every service.
+   * Defines the payload that is placed for every service.
    */
   public static class ServicePayload {
     private Map<String, String> values = Maps.newHashMap();
@@ -65,17 +65,18 @@ public class ServiceDiscoveryClient implements Closeable {
    * @param connectionString the connect string to ZK ensemble.
    * @throws IOException
    */
-  public ServiceDiscoveryClient(String connectionString) {
+  public ServiceDiscoveryClient(String connectionString) throws ServiceDiscoveryClientException {
     connectionString = Preconditions.checkNotNull(connectionString);
     this.connectionString = connectionString;
     closeables = Lists.newArrayList();
+    start();
   }
 
   /**
    * Starts the curator framework and discovery mechanism.
    * @throws ServiceDiscoveryClientException
    */
-  public void start() throws ServiceDiscoveryClientException {
+  private void start() throws ServiceDiscoveryClientException {
     CuratorFramework client;
     try {
       // Create a curator client.
@@ -87,8 +88,7 @@ public class ServiceDiscoveryClient implements Closeable {
       // Create a service discovery that allocated ServiceProviders.
       discovery = ServiceDiscoveryBuilder.builder(ServicePayload.class)
           .client(client)
-          .basePath(servicePath)
-//          .serializer(new JsonInstanceSerializer<ServicePayload>(ServicePayload.class))
+          .basePath(SERVICE_PATH)
           .serializer(new ServicePayloadSerializer())
           .build();
       discovery.start();
@@ -192,7 +192,7 @@ public class ServiceDiscoveryClient implements Closeable {
    * @return ServiceProvider instance.
    * @throws ServiceDiscoveryClientException
    */
-  ServiceProvider getServiceProvider(String name) throws ServiceDiscoveryClientException {
+  public ServiceProvider getServiceProvider(String name) throws ServiceDiscoveryClientException {
     return new ServiceProvider(name);
   }
 

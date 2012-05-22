@@ -110,7 +110,6 @@ public abstract class AbstractRegisteredService implements RegisteredService {
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.start();
       client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
       serviceThread = start();
