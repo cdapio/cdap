@@ -139,6 +139,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   public final void stop(boolean now) {
     try {
       client.close();
+      server.stop();
     } catch (IOException e) {
       Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
     }

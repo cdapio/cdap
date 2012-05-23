@@ -16,7 +16,7 @@ public class JarClassLoader extends MultiClassLoader {
    * Create the JarResource and suck in the jar file.
    * @param jarName Name of the jar file.
    */
-  public JarClassLoader (String jarName) {
+  public JarClassLoader (String jarName) throws JarResourceException {
     jarResources = new JarResources (jarName);
   }
 

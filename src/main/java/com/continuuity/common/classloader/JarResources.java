@@ -27,7 +27,7 @@ public final class JarResources {
    * into an internal hashtable, keyed by resource names.
    * @param jarFileName a jar or zip file
    */
-  public JarResources(String jarFileName) {
+  public JarResources(String jarFileName) throws JarResourceException {
     this.jarFileName=jarFileName;
     init();
   }
@@ -44,7 +44,7 @@ public final class JarResources {
   /**
    * initializes internal hash tables with Jar file resources.
    */
-  private void init() {
+  private void init() throws JarResourceException {
     try {
       // extracts just sizes only.
       ZipFile zf=new ZipFile(jarFileName);
@@ -92,11 +92,11 @@ public final class JarResources {
         LOG.debug(ze.getName() + " rb=" + rb + ",size=" + size + ",csize=" + ze.getCompressedSize());
       }
     } catch (NullPointerException e){
-      LOG.info("Done");
+      throw new JarResourceException(e.getMessage());
     } catch (FileNotFoundException e) {
-      LOG.error("File not found " + e.getMessage());
+      throw new JarResourceException(e.getMessage());
     } catch (IOException e) {
-      LOG.error("I/O exception " + e.getMessage());
+      throw new JarResourceException(e.getMessage());
     }
   }
 
@@ -127,4 +127,5 @@ public final class JarResources {
 
     return (sb.toString());
   }
+
 }
