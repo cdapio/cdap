@@ -22,6 +22,8 @@ public class MemoryQueue implements PowerQueue {
   /** Used for locking, generating ids, and tracking the total queue size */
   private final AtomicLong entryIds = new AtomicLong(0);
 
+  final AtomicLong wakeUps = new AtomicLong(0);
+
   /** Map from GroupID to GroupHead */
   private final ConcurrentHashMap<Integer,ConsumerGroup> consumerGroups =
       new ConcurrentHashMap<Integer,ConsumerGroup>();
@@ -167,6 +169,7 @@ public class MemoryQueue implements PowerQueue {
       while (this.entryIds.get() == start) {
         this.entryIds.wait();
       }
+      this.wakeUps.incrementAndGet();
     }
   }
 

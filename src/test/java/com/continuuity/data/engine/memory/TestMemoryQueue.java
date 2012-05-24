@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
@@ -20,7 +21,8 @@ import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class TestMemoryQueue {
 
-  private static final long POP_BLOCK_TIMEOUT_MS = 20;
+  private static final long MAX_TIMEOUT_MS = 20;
+  private static final long POP_BLOCK_TIMEOUT_MS = 1;
   private static final boolean sync = true;
   private static final boolean drain = false;
   
@@ -188,14 +190,28 @@ public class TestMemoryQueue {
       }
     }
     
+    // no pops yet
+    long numPops = 0L;
+    for (int i=0; i<n; i++) {
+      for (int j=0; j<n; j++) {
+        assertEquals(numPops, poppers[i][j].pops.get());
+      }
+    }
+    
     // push the first four values
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<n; i++) {
       assertTrue(queue.push(values[i]));
     }
     
+    // wait for 16 queuePop() wake-ups
+    long expectedQueuePops = 16;
+    waitForAndAssertCount(expectedQueuePops, queue.wakeUps);
+    
     // every popper/consumer should have one entry
+    numPops++;
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
+        waitForAndAssertCount(numPops, poppers[i][j].pops);
         QueueEntry entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
         assertNotNull(entry);
         assertEquals((long)j, Bytes.toLong(entry.getValue()));
@@ -203,12 +219,13 @@ public class TestMemoryQueue {
     }
     
     // trigger pops again, should get the same entries
+    numPops++;
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         assertTrue(poppers[i][j].triggerPop());
+        waitForAndAssertCount(numPops, poppers[i][j].pops);
       }
     }
-    
     
     // every popper/consumer should have one entry
     for (int i=0; i<n; i++) {
@@ -240,9 +257,12 @@ public class TestMemoryQueue {
     }
     
     // trigger poppers
+    numPops++;
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
+        waitForAndAssertCount(numPops, poppers[i][j].popRunLoop);
         assertTrue(poppers[i][j].triggerPop());
+        waitForAndAssertCount(numPops, poppers[i][j].triggers);
       }
     }
     
@@ -259,6 +279,7 @@ public class TestMemoryQueue {
           assertEquals((long)j, Bytes.toLong(entry.getValue()));
           assertTrue(queue.ack(entry));
           // buffer of popper should still have that entry
+          waitForAndAssertCount(numPops, poppers[i][j].pops);
           entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
           assertNotNull(entry);
           assertEquals((long)j, Bytes.toLong(entry.getValue()));
@@ -280,6 +301,13 @@ public class TestMemoryQueue {
         }
       }
     }
+    // re-align counters so we can keep testing sanely
+    // for groups(0,1) consumers(2,3)
+    for (int i=0; i<n/2; i++) {
+      for (int j=n/2; j<n; j++) {
+        poppers[i][j].pops.incrementAndGet();
+      }
+    }
     
     // everyone should be empty
     for (int i=0; i<n; i++) {
@@ -293,15 +321,23 @@ public class TestMemoryQueue {
       assertTrue(queue.push(values[i]));
     }
     
+    // wait for 16 more queuePop() wake-ups
+    expectedQueuePops += 16;
+    waitForAndAssertCount(expectedQueuePops, queue.wakeUps);
+    numPops++;
+    
     // pop and ack everything.  each consumer should have 4 things!
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
+        long localPops = numPops;
         for (int k=0; k<n; k++) {
+          waitForAndAssertCount(localPops, poppers[i][j].pops);
           QueueEntry entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
           assertNotNull(entry);
           assertEquals((long)(k*n)+j, Bytes.toLong(entry.getValue()));
           assertTrue(queue.ack(entry));
           poppers[i][j].triggerPop();
+          localPops++;
         }
       }
     }
@@ -320,13 +356,33 @@ public class TestMemoryQueue {
       }
     }
   }
-  static class QueuePopper extends Thread {
+  
+  private void waitForAndAssertCount(long expected, AtomicLong wakeUps) {
+    long start = System.currentTimeMillis();
+    long end = start + MAX_TIMEOUT_MS;
+    while (expected > wakeUps.get() &&
+        System.currentTimeMillis() < end) {
+      try {
+        Thread.sleep(POP_BLOCK_TIMEOUT_MS);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    assertEquals("Exiting waitForWakeUps (expected=" + expected + ", " +
+        "actual=" + wakeUps.get(), expected, wakeUps.get());
+  }
+
+  class QueuePopper extends Thread {
     
     private final MemoryQueue queue;
     private final QueueConsumer consumer;
     private final QueueConfig config;
     
     private AtomicBoolean popTrigger = new AtomicBoolean(false);
+    
+    AtomicLong triggers = new AtomicLong(0);
+    AtomicLong pops = new AtomicLong(0);
+    AtomicLong popRunLoop = new AtomicLong(0);
     
     private QueueEntry entry;
     
@@ -395,6 +451,7 @@ public class TestMemoryQueue {
     public void run() {
       while (keepgoing) {
         synchronized (popTrigger) {
+          popRunLoop.incrementAndGet();
           while (!popTrigger.get() && keepgoing) {
             try {
               popTrigger.wait();
@@ -402,6 +459,7 @@ public class TestMemoryQueue {
               if (keepgoing) e.printStackTrace();
             }
           }
+          triggers.incrementAndGet();
         }
         QueueEntry entry = null;
         while (entry == null && keepgoing) {
@@ -413,6 +471,7 @@ public class TestMemoryQueue {
         }
         popTrigger.set(false);
         this.entry = entry;
+        pops.incrementAndGet();
       }
     }
   }
