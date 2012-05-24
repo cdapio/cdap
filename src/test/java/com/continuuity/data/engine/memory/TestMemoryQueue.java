@@ -269,6 +269,8 @@ public class TestMemoryQueue {
         if ((i == 0 || i == 1) && (j == 2 || j == 3)) {
           assertFalse(popStatus);
         } else {
+          if (!popStatus) System.out.println("Failed Trigger Pop {i=" +
+              i + ", j=" + j + "}");
           assertTrue("Expected to be able to trigger a pop but was not {i=" +
               i + ", j=" + j +"}", popStatus);
         }
