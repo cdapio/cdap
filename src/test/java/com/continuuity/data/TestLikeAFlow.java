@@ -3,8 +3,6 @@
  */
 package com.continuuity.data;
 
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
 
 /**
@@ -20,8 +18,7 @@ public class TestLikeAFlow {
 //    // Use the in-memory 
 //    TransactionalOperationExecutor executor =
 //        new MemoryTransactionalOperationExecutor();
-    
-    fail("Not yet implemented");
+
   }
 
 }
