@@ -20,7 +20,7 @@ import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class TestMemoryQueue {
 
-  private static final long POP_BLOCK_TIMEOUT_MS = 200;
+  private static final long POP_BLOCK_TIMEOUT_MS = 20;
   private static final boolean sync = true;
   private static final boolean drain = false;
   
@@ -258,6 +258,10 @@ public class TestMemoryQueue {
           assertNotNull(entry);
           assertEquals((long)j, Bytes.toLong(entry.getValue()));
           assertTrue(queue.ack(entry));
+          // buffer of popper should still have that entry
+          entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
+          assertNotNull(entry);
+          assertEquals((long)j, Bytes.toLong(entry.getValue()));
         }
       }
     }
@@ -407,8 +411,8 @@ public class TestMemoryQueue {
             if (keepgoing) e.printStackTrace();
           }
         }
-        this.entry = entry;
         popTrigger.set(false);
+        this.entry = entry;
       }
     }
   }
