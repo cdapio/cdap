@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -152,23 +153,61 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
   @Override
   public Map<byte[], byte[]> get(byte[] row, byte[][] columns,
       ReadPointer readPointer) {
-    // TODO Auto-generated method stub
-    return null;
+    try {
+      Get get = new Get(row);
+      for (byte [] column : columns) get.addColumn(this.family, column);
+      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setMaxVersions();
+      Result result = this.table.get(get);
+      Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
+          Bytes.BYTES_COMPARATOR);
+      byte[] last = null;
+      for (KeyValue kv : result.raw()) {
+        long version = kv.getTimestamp();
+        if (!readPointer.isVisible(version)) continue;
+        byte [] column = kv.getQualifier();
+        if (Bytes.equals(last, column)) continue;
+        map.put(column, kv.getValue());
+        last = column;
+      }
+      return map;
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return null;
+    }
   }
 
   @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
-    // TODO Auto-generated method stub
-    return 0;
+    try {
+      // TODO: This currently does not support passing a read pointer or a write
+      //       pointer!
+      Increment increment = new Increment(row);
+      increment.addColumn(family, column, amount);
+      increment.setTimeRange(0, readPointer.getMaximum());
+      Result result = this.table.increment(increment);
+      if (result.isEmpty()) return 0L;
+      return Bytes.toLong(result.value());
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return -1L;
+    }
   }
 
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) {
-    // TODO Auto-generated method stub
-    return false;
+    try {
+      // TODO: This currently does not support passing a read pointer!
+      Put put = new Put(row);
+      put.add(family, column, writeVersion, newValue);
+      return this.table.checkAndPut(row, family, column, expectedValue, put);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return false;
+    }
   }
 
   @Override
@@ -194,7 +233,7 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
   public class HBaseScanner implements Scanner {
 
     public HBaseScanner(Scanner scanner) {
-      
+
     }
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
@@ -205,16 +244,16 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
     @Override
     public void close() {
       // TODO Auto-generated method stub
-      
+
     }
-    
+
   }
   public static interface IOExceptionHandler {
     public void handle(IOException e);
   }
 
   public static class IOExceptionToRuntimeExceptionHandler implements
-      IOExceptionHandler {
+  IOExceptionHandler {
     @Override
     public void handle(IOException e) {
       e.printStackTrace();
