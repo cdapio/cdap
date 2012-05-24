@@ -18,6 +18,7 @@ public class MemoryRowSet implements RowSet {
 
   private Set<byte[]> rows = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
 
+  @Override
   public void addRow(byte [] row) {
     this.rows.add(row);
   }

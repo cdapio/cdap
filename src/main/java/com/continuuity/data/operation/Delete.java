@@ -16,6 +16,7 @@ public class Delete implements WriteOperation {
     this.column = column;
   }
 
+  @Override
   public byte [] getKey() {
     return this.row;
   }

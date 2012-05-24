@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2012 Continuuity, Inc.
  */
-package com.continuuity.data.engine;
+package com.continuuity.data.table;
 
 import java.util.Map;
 

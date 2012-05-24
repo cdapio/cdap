@@ -17,6 +17,7 @@ public class Read implements ReadOperation<byte[]> {
     return this.key;
   }
 
+  @Override
   public byte [] getResult() {
     return null;
   }

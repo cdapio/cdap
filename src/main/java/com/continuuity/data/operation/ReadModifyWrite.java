@@ -12,6 +12,7 @@ public class ReadModifyWrite implements ConditionalWriteOperation {
     this.modifier = modifier;
   }
 
+  @Override
   public byte [] getKey() {
     return key;
   }

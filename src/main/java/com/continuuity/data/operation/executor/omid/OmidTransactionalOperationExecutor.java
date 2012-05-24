@@ -14,7 +14,6 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.engine.VersionedQueueTable;
-import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.VersionedTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -33,6 +32,7 @@ import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePop;
 import com.continuuity.data.operation.queue.QueuePush;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.table.VersionedTable;
 
 /**
  *

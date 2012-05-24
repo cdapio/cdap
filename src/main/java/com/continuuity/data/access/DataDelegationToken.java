@@ -10,6 +10,7 @@ import com.continuuity.data.FabricHandle;
  */
 public class DataDelegationToken implements DelegationToken {
 
+  @Override
   public FabricHandle getFabricHandle() {
     return null;
   }

@@ -13,6 +13,7 @@ import com.continuuity.data.operation.type.ReadOperation;
 public interface OperationExecutor
 extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor {
 
+  @Override
   boolean execute(Write write);
 
 }

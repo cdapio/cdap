@@ -3,7 +3,7 @@
  */
 package com.continuuity.data;
 
-import com.continuuity.data.engine.VersionedTable;
+import com.continuuity.data.table.VersionedTable;
 
 /**
  * 

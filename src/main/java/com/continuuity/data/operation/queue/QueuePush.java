@@ -19,6 +19,7 @@ public class QueuePush implements WriteOperation {
     return this.value;
   }
 
+  @Override
   public byte[] getKey() {
     return queueName;
   }

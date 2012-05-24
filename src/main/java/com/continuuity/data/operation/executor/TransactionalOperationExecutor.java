@@ -2,7 +2,6 @@ package com.continuuity.data.operation.executor;
 
 import java.util.List;
 
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.type.WriteOperation;
 
 public interface TransactionalOperationExecutor extends OperationExecutor {

@@ -16,10 +16,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
-import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.table.VersionedTable;
+import com.google.common.base.Objects;
 
 /**
  * An in-memory implementation of a column-oriented table similar to HBase.
@@ -106,14 +107,12 @@ public class MemoryVersionedTable implements VersionedTable {
    * that currently exists in some way.
    */
   @Override
-  public void deleteAll(byte [] row, long version) {
+  public void deleteAll(byte [] row, byte [] column, long version) {
     Row r = new Row(row);
     ImmutablePair<RowLock,NavigableMap<Column,NavigableMap<Version,Value>>> p =
         getAndLockRow(r);
-    Version v = Version.delete(version);
-    for (NavigableMap<Version,Value> versions : p.getSecond().values()) {
-      versions.put(v, Value.delete());
-    }
+    NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
+    columnMap.put(Version.deleteAll(version), Value.delete());
     unlockRow(r);
   }
 
@@ -169,8 +168,8 @@ public class MemoryVersionedTable implements VersionedTable {
         getAndLockRow(r);
     NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
     ImmutablePair<Long,byte[]> latest = filteredLatest(columnMap, readPointer);
-    if (latest == null) return null;
     unlockRow(r);
+    if (latest == null) return null;
     return latest.getSecond();
   }
 
@@ -256,16 +255,24 @@ public class MemoryVersionedTable implements VersionedTable {
     Row r = new Row(row);
     ImmutablePair<RowLock,NavigableMap<Column,NavigableMap<Version,Value>>> p =
         getAndLockRow(r);
-    NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
-    ImmutablePair<Long,byte[]> latest = filteredLatest(columnMap, readPointer);
-    if (latest == null && expectedValue != null) return false;
-    if (latest != null && expectedValue == null) return false;
-    if (latest != null && expectedValue != null &&
-        !Bytes.equals(latest.getSecond(), expectedValue)) {
-      return false;
+    try {
+      NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
+      ImmutablePair<Long,byte[]> latest = filteredLatest(columnMap, readPointer);
+      if (latest == null && expectedValue != null) return false;
+      if (latest != null && expectedValue == null) return false;
+      if (latest != null && expectedValue != null &&
+          !Bytes.equals(latest.getSecond(), expectedValue)) {
+        return false;
+      }
+      if (newValue == null || newValue.length == 0) {
+        p.getSecond().remove(new Column(column));
+      } else {
+        columnMap.put(new Version(writeVersion), new Value(newValue));
+      }
+      return true;
+    } finally {
+      unlockRow(r);
     }
-    columnMap.put(new Version(writeVersion), new Value(newValue));
-    return true;
   }
 
   // Private helpers
@@ -285,6 +292,7 @@ public class MemoryVersionedTable implements VersionedTable {
     for (Map.Entry<Version,Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
+      if (curVersion.isDeleteAll()) break;
       if (curVersion.isDelete()) {
         lastDelete = entry.getKey().stamp;
         continue;
@@ -296,7 +304,7 @@ public class MemoryVersionedTable implements VersionedTable {
   }
 
   /**
-   * Returns the latest Makes a copy of all visible versions of columns within the specified column
+   * Returns the latest version of a column within the specified column
    * map, filtering out deleted values and everything with a version higher than
    * the specified version.
    * @param columnMap
@@ -310,6 +318,7 @@ public class MemoryVersionedTable implements VersionedTable {
     for (Map.Entry<Version,Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
+      if (curVersion.isDeleteAll()) break;
       if (curVersion.isDelete()) {
         lastDelete = entry.getKey().stamp;
         continue;
@@ -373,8 +382,7 @@ public class MemoryVersionedTable implements VersionedTable {
     NavigableMap<Version,Value> columnMap = rowMap.get(new Column(column));
     if (columnMap == null) {
       columnMap = new TreeMap<Version,Value>();
-      NavigableMap<Version,Value> existingMap = rowMap.get(new Column(column));
-      if (existingMap != null) return existingMap;
+      rowMap.put(new Column(column), columnMap);
     }
     return columnMap;
   }
@@ -407,11 +415,23 @@ public class MemoryVersionedTable implements VersionedTable {
     public int compareTo(Row r) {
       return Bytes.compareTo(this.value, r.value);
     }
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("rowkey", Bytes.toString(value))
+        .toString();
+    }
   }
 
   static class Column extends Row {
     Column(byte[] key) {
       super(key);
+    }
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("column", Bytes.toString(super.value))
+        .toString();
     }
   }
 
@@ -430,6 +450,12 @@ public class MemoryVersionedTable implements VersionedTable {
     }
     enum ValueType {
       DATA, DELETE
+    }
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("type", type)
+        .toString();
     }
   }
 
@@ -469,7 +495,16 @@ public class MemoryVersionedTable implements VersionedTable {
       return this.id == ((RowLock)o).id &&
           Bytes.equals(this.row.value, ((RowLock)o).row.value);
     }
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("row", row)
+        .add("id", id)
+        .add("locked", locked)
+        .toString();
+    }
   }
+  
   static class Version implements Comparable<Version> {
     final long stamp;
     final Type type;
@@ -483,6 +518,9 @@ public class MemoryVersionedTable implements VersionedTable {
     public static Version delete(long stamp) {
       return new Version(stamp, Type.DELETE);
     }
+    public static Version deleteAll(long stamp) {
+      return new Version(stamp, Type.DELETE_ALL);
+    }
     @Override
     public boolean equals(Object o) {
       return this.stamp == ((Version)o).stamp;
@@ -495,16 +533,28 @@ public class MemoryVersionedTable implements VersionedTable {
       if (this.type == Type.VALUE && v.type == Type.DELETE) return 1;
       return 0;
     }
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("stamp", stamp)
+        .add("type", type)
+        .toString();
+    }
+    public boolean isDeleteAll() {
+      return this.type == Type.DELETE_ALL;
+    }
     public boolean isDelete() {
       return this.type == Type.DELETE;
     }
     enum Type {
-      DELETE, VALUE;
+      DELETE, DELETE_ALL, VALUE;
     }
   }
 
   @Override
   public String toString() {
-    return "MemoryVersionedTable [name=" + Bytes.toString(this.name) + "]";
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .toString();
   }
 }

@@ -13,6 +13,7 @@ public class ColumnWrite implements WriteOperation {
     this.values = values;
   }
 
+  @Override
   public byte [] getKey() {
     return this.key;
   }

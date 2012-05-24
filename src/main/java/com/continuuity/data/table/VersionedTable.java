@@ -1,9 +1,11 @@
 /**
  * Copyright (C) 2012 Continuuity, Inc.
  */
-package com.continuuity.data.engine;
+package com.continuuity.data.table;
 
 import java.util.Map;
+
+import com.continuuity.data.engine.ReadPointer;
 
 /**
  * 
@@ -16,19 +18,12 @@ public interface VersionedTable extends SimpleTable {
       byte [][] values);
 
   /**
-   * Deletes all of the existing columns with a delete marker with the specified
-   * version.
+   * Deletes all versions of all existing columns with a delete marker with the
+   * specified version.
    * @param row
    * @param version
    */
-  public void deleteAll(byte[] row, long version);
-
-//  /**
-//   * Deletes the latest existing version of the specified column.
-//   * @param row
-//   * @param column
-//   */
-//  public void deleteLatest(byte[] row, byte[] column);
+  public void deleteAll(byte[] row, byte [] column, long version);
   
   /**
    * Deletes the specified column at the specified version.

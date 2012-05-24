@@ -21,6 +21,7 @@ public class MemoryReadPointer implements ReadPointer {
     this.readPoint = readPoint;
     this.excludes = excludes;
   }
+  @Override
   public boolean isVisible(long txid) {
     if (txid > readPoint) return false;
     return !isExcluded(txid);

@@ -19,6 +19,7 @@ public class QueueAck implements WriteOperation {
     return this.queueEntry;
   }
 
+  @Override
   public byte[] getKey() {
     return queueName;
   }

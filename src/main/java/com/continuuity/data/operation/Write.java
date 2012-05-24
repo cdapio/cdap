@@ -15,6 +15,7 @@ public class Write implements WriteOperation {
     this.value = value;
   }
 
+  @Override
   public byte [] getKey() {
     return this.key;
   }

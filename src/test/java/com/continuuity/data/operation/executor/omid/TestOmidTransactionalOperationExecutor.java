@@ -16,7 +16,7 @@ import org.junit.rules.TestName;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
-import com.continuuity.data.engine.memory.MemoryTableHandle;
+import com.continuuity.data.engine.memory.MemoryVersionedTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
@@ -27,7 +27,7 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 public class TestOmidTransactionalOperationExecutor {
 
   @Rule
-  private final TestName testName = new TestName();
+  public final TestName testName = new TestName();
   
   private final TransactionOracle oracle =
       new MemoryOracle(new MemoryStrictlyMonotonicOracle());
@@ -37,7 +37,8 @@ public class TestOmidTransactionalOperationExecutor {
     
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryTableHandle(Bytes.toBytes(testName.getMethodName())));
+            new MemoryVersionedTableHandle(
+                Bytes.toBytes(testName.getMethodName())));
     
     byte [] key = Bytes.toBytes("key");
     byte [] value = Bytes.toBytes("value");
@@ -66,7 +67,8 @@ public class TestOmidTransactionalOperationExecutor {
   public void testOverlappingConcurrentWrites() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryTableHandle(Bytes.toBytes(testName.getMethodName())));
+            new MemoryVersionedTableHandle(
+                Bytes.toBytes(testName.getMethodName())));
     
     byte [] key = Bytes.toBytes("key");
     byte [] valueOne = Bytes.toBytes("value1");
@@ -118,7 +120,8 @@ public class TestOmidTransactionalOperationExecutor {
   public void testClosedTransactionsThrowExceptions() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryTableHandle(Bytes.toBytes(testName.getMethodName())));
+            new MemoryVersionedTableHandle(
+                Bytes.toBytes(testName.getMethodName())));
     
     byte [] key = Bytes.toBytes("key");
     
@@ -161,7 +164,8 @@ public class TestOmidTransactionalOperationExecutor {
   public void testOverlappingConcurrentReadersAndWriters() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryTableHandle(Bytes.toBytes(testName.getMethodName())));
+            new MemoryVersionedTableHandle(
+                Bytes.toBytes(testName.getMethodName())));
     
     byte [] key = Bytes.toBytes("key");
     
@@ -244,7 +248,7 @@ public class TestOmidTransactionalOperationExecutor {
     
     // now read with long-running read 1, should see value = 1
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadTwo.getFirst()),
+        Bytes.equals(executor.read(new Read(key), pointerReadOne.getFirst()),
             Bytes.toBytes(1)));
     
     // now do the same thing but in reverse order of conflict

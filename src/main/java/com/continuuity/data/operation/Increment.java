@@ -16,6 +16,7 @@ public class Increment implements WriteOperation, ReadOperation<Long> {
     this.amount = amount;
   }
 
+  @Override
   public byte [] getKey() {
     return this.key;
   }
