@@ -18,4 +18,8 @@ public class QueuePush implements WriteOperation {
   public byte [] getValue() {
     return this.value;
   }
+
+  public byte[] getKey() {
+    return queueName;
+  }
 }

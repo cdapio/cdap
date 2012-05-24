@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.type.ReadOperation;
 
 /**
@@ -11,5 +12,7 @@ import com.continuuity.data.operation.type.ReadOperation;
  */
 public interface OperationExecutor
 extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor {
+
+  boolean execute(Write write);
 
 }

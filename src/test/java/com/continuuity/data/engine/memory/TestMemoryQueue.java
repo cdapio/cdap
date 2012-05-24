@@ -1,4 +1,4 @@
-package com.continuuity.fabric.engine.memory;
+package com.continuuity.data.engine.memory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.continuuity.data.engine.memory.MemoryQueue;
+import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePartitioner;
@@ -21,6 +21,9 @@ import com.continuuity.data.operation.queue.QueuePartitioner;
 public class TestMemoryQueue {
 
   private static final long POP_BLOCK_TIMEOUT_MS = 200;
+  private static final boolean sync = true;
+  private static final boolean drain = false;
+  
   @Test
   public void testSingleConsumerSimple() throws Exception {
     MemoryQueue queue = new MemoryQueue();
@@ -33,22 +36,23 @@ public class TestMemoryQueue {
     assertTrue(queue.push(valueTwo));
 
     // pop it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueEntry entry = queue.pop(consumer, partitioner);
+    QueueConfig config = new QueueConfig(partitioner, drain);
+    QueueEntry entry = queue.pop(consumer, config, drain);
 
     // verify it's the first value
     assertTrue(Bytes.equals(entry.getValue(), valueOne));
 
     // pop again without acking, should still get first value
-    entry = queue.pop(consumer, partitioner);
+    entry = queue.pop(consumer, config, drain);
     assertTrue(Bytes.equals(entry.getValue(), valueOne));
 
     // ack
     assertTrue(queue.ack(entry));
 
     // pop, should get second value
-    entry = queue.pop(consumer, partitioner);
+    entry = queue.pop(consumer, config, drain);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
 
     // ack
@@ -56,7 +60,7 @@ public class TestMemoryQueue {
     
     // verify queue is empty
     queue.sync = false;
-    assertNull(queue.pop(consumer, partitioner));
+    assertNull(queue.pop(consumer, config, drain));
     queue.sync = true;
   }
 
@@ -69,8 +73,9 @@ public class TestMemoryQueue {
 
 
     // pop it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, drain);
     
     // spawn a thread to pop
     QueuePopper popper = new QueuePopper(queue, consumer, partitioner);
@@ -90,7 +95,7 @@ public class TestMemoryQueue {
     assertTrue(queue.push(valueOne));
     
     // popper will pop, but we should still be able to pop!
-    entry = queue.pop(consumer, partitioner);
+    entry = queue.pop(consumer, config, drain);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueOne));
     
@@ -128,7 +133,7 @@ public class TestMemoryQueue {
     
     // verify queue is empty
     queue.sync = false;
-    assertNull(queue.pop(consumer, partitioner));
+    assertNull(queue.pop(consumer, config, drain));
     queue.sync = true;
     
     // shut down
@@ -145,7 +150,7 @@ public class TestMemoryQueue {
     for (int i=0; i<n; i++) {
       consumers[i] = new QueueConsumer[n];
       for (int j=0; j<n; j++) {
-        consumers[i][j] = new QueueConsumer(j, i, n);
+        consumers[i][j] = new QueueConsumer(j, i, n, sync, drain);
       }
     }
 
@@ -163,6 +168,7 @@ public class TestMemoryQueue {
         return (val % consumer.getGroupSize()) == consumer.getConsumerId();
       }
     };
+    QueueConfig config = new QueueConfig(partitioner, drain);
     
     // Start a popper for every consumer!
     QueuePopper [][] poppers = new QueuePopper[n][];
@@ -216,7 +222,7 @@ public class TestMemoryQueue {
     // directly popping should also yield the same entry
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        QueueEntry entry = queue.pop(consumers[i][j], partitioner);
+        QueueEntry entry = queue.pop(consumers[i][j], config, drain);
         assertNotNull(entry);
         assertEquals((long)j, Bytes.toLong(entry.getValue()));
       }
@@ -225,7 +231,7 @@ public class TestMemoryQueue {
     // ack it for groups(0,1) consumers(2,3)
     for (int i=0; i<n/2; i++) {
       for (int j=n/2; j<n; j++) {
-        QueueEntry entry = queue.pop(consumers[i][j], partitioner);
+        QueueEntry entry = queue.pop(consumers[i][j], config, drain);
         assertNotNull(entry);
         assertEquals((long)j, Bytes.toLong(entry.getValue()));
         assertTrue(queue.ack(entry));
@@ -248,7 +254,7 @@ public class TestMemoryQueue {
           assertNull(poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS));
         } else {
           System.out.println("POP: i=" + i + ", j=" + j);
-          QueueEntry entry = queue.pop(consumers[i][j], partitioner);
+          QueueEntry entry = queue.pop(consumers[i][j], config, drain);
           assertNotNull(entry);
           assertEquals((long)j, Bytes.toLong(entry.getValue()));
           assertTrue(queue.ack(entry));
@@ -311,7 +317,7 @@ public class TestMemoryQueue {
     
     private final MemoryQueue queue;
     private final QueueConsumer consumer;
-    private final QueuePartitioner partitioner;
+    private final QueueConfig config;
     
     private AtomicBoolean popTrigger = new AtomicBoolean(false);
     
@@ -328,7 +334,7 @@ public class TestMemoryQueue {
         QueuePartitioner partitioner) {
       this.queue = queue;
       this.consumer = consumer;
-      this.partitioner = partitioner;
+      this.config = new QueueConfig(partitioner, drain);
       this.entry = null;
     }
 
@@ -393,7 +399,7 @@ public class TestMemoryQueue {
         QueueEntry entry = null;
         while (entry == null && keepgoing) {
           try {
-            entry = queue.pop(consumer, partitioner);
+            entry = queue.pop(consumer, config, drain);
           } catch (InterruptedException e) {
             if (keepgoing) e.printStackTrace();
           }

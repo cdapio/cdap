@@ -1,3 +1,6 @@
+/**
+ * Copyright (C) 2012 Continuuity, Inc.
+ */
 package com.continuuity.data.operation.executor.omid;
 
 import java.util.ArrayList;
@@ -14,7 +17,9 @@ import com.continuuity.data.engine.VersionedQueueTable;
 import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.VersionedTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OperationGenerator;
 import com.continuuity.data.operation.OrderedRead;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.Read;
@@ -45,6 +50,8 @@ public class OmidTransactionalOperationExecutor implements
 
   final VersionedQueueTable queueTable;
 
+  static final byte [] COLUMN = Bytes.toBytes("c");
+
   public OmidTransactionalOperationExecutor(TransactionOracle oracle,
       VersionedTableHandle tableHandle) {
     this.oracle = oracle;
@@ -56,28 +63,19 @@ public class OmidTransactionalOperationExecutor implements
 
   @Override
   public byte[] execute(Read read) throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return null;
+    return read(read, this.oracle.getReadPointer());
   }
 
+  byte [] read(Read read, ReadPointer pointer) {
+    return this.randomTable.get(read.getKey(), COLUMN, pointer);
+  }
+  
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return 0;
-  }
-
-  @Override
-  public Map<byte[], byte[]> execute(OrderedRead orderedRead)
-      throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
-      InterruptedException {
-    // TODO Auto-generated method stub
-    return null;
+    byte [] value = this.randomTable.get(readCounter.getKey(), COLUMN,
+        this.oracle.getReadPointer());
+    if (value == null || value.length != 8) return 0;
+    return Bytes.toLong(value);
   }
 
   @Override
@@ -88,18 +86,16 @@ public class OmidTransactionalOperationExecutor implements
     
     // Execute operations (in order for now)
     RowSet rows = new MemoryRowSet();
-    List<WriteOperation> deletes = new ArrayList<WriteOperation>(writes.size());
+    List<Delete> deletes = new ArrayList<Delete>(writes.size());
     for (WriteOperation write : writes) {
-      ImmutablePair<WriteOperation,Boolean> deleteAndReturnCode =
-          dispatchWrite(write, pointer);
-      if (deleteAndReturnCode == null ||
-          !deleteAndReturnCode.getSecond().booleanValue()) {
+      WriteTransactionResult writeTxReturn = dispatchWrite(write, pointer);
+      if (!writeTxReturn.success) {
         // Write operation failed
         abortTransaction(pointer, deletes);
         return false;
       } else {
         // Write was successful.  Store delete if we need to abort and continue
-        deletes.add(deleteAndReturnCode.getFirst());
+        deletes.addAll(writeTxReturn.deletes);
         rows.addRow(write.getKey());
       }
     }
@@ -115,32 +111,115 @@ public class OmidTransactionalOperationExecutor implements
     return true;
   }
 
-  private ImmutablePair<ReadPointer, Long> startTransaction() {
+  private class WriteTransactionResult {
+    final boolean success;
+    final List<Delete> deletes;
+    WriteTransactionResult(boolean success) {
+      this(success, new ArrayList<Delete>());
+    }
+    WriteTransactionResult(boolean success, Delete delete) {
+      this(success, Arrays.asList(new Delete [] { delete } ));
+    }
+    WriteTransactionResult(boolean success, List<Delete> deletes) {
+      this.success = success;
+      this.deletes = deletes;
+    }
+  }
+  /**
+   * Actually perform the various write operations.
+   * @param write
+   * @param pointer
+   * @return
+   */
+  WriteTransactionResult dispatchWrite(
+      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
+    if (write instanceof Write) {
+      return write((Write)write, pointer);
+    } else if (write instanceof ReadModifyWrite) {
+      return write((ReadModifyWrite)write, pointer);
+    } else if (write instanceof Increment) {
+      return write((Increment)write, pointer);
+    } else if (write instanceof CompareAndSwap) {
+      return write((CompareAndSwap)write, pointer);
+    }
+    return new WriteTransactionResult(false);
+  }
+  
+  WriteTransactionResult write(Write write,
+      ImmutablePair<ReadPointer,Long> pointer) {
+    this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
+        write.getValue());
+    return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
+  }
+  
+  WriteTransactionResult write(ReadModifyWrite write,
+      ImmutablePair<ReadPointer,Long> pointer) {
+    // read
+    byte [] value = this.randomTable.get(write.getKey(), COLUMN,
+        pointer.getFirst());
+    // modify
+    byte [] newValue = write.getModifier().modify(value);
+    // write
+    this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(), newValue);
+    return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
+  }
+  
+  WriteTransactionResult write(Increment increment,
+      ImmutablePair<ReadPointer,Long> pointer) {
+    long incremented = this.randomTable.increment(increment.getKey(), COLUMN,
+        increment.getAmount(), pointer.getFirst(), pointer.getSecond());
+    List<Delete> deletes = new ArrayList<Delete>(2);
+    deletes.add(new Delete(increment.getKey(), COLUMN));
+    OperationGenerator<Long> generator =
+        increment.getPostIncrementOperationGenerator();
+    if (generator != null) {
+      WriteOperation writeOperation =
+          generator.generateWriteOperation(incremented);
+      if (writeOperation != null) {
+        WriteTransactionResult result = dispatchWrite(writeOperation, pointer);
+        deletes.addAll(result.deletes);
+        return new WriteTransactionResult(result.success, deletes);
+      }
+    }
+    return new WriteTransactionResult(true, deletes);
+  }
+  
+  WriteTransactionResult write(CompareAndSwap write,
+      ImmutablePair<ReadPointer,Long> pointer) {
+    boolean casReturn = this.randomTable.compareAndSwap(write.getKey(), COLUMN,
+        write.getExpectedValue(), write.getNewValue(), pointer.getFirst(),
+        pointer.getSecond());
+    return new WriteTransactionResult(casReturn,
+        new Delete(write.getKey(), COLUMN));
+  }
+  
+  ImmutablePair<ReadPointer, Long> startTransaction() {
     return this.oracle.getNewPointer();
   }
 
-  private boolean commitTransaction(ImmutablePair<ReadPointer, Long> pointer,
+  boolean commitTransaction(ImmutablePair<ReadPointer, Long> pointer,
       RowSet rows) throws OmidTransactionException {
     return this.oracle.commit(pointer.getSecond(), rows);
   }
 
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
-      List<WriteOperation> deletes) {
-    
+      List<Delete> deletes) throws OmidTransactionException {
+    // Perform deletes
+    for (Delete delete : deletes) {
+      assert(delete != null);
+      this.randomTable.delete(delete.getKey(), delete.getColumn(),
+          pointer.getSecond());
+    }
+    // Notify oracle
+    this.oracle.aborted(pointer.getSecond());
   }
-
-  private ImmutablePair<WriteOperation, Boolean> dispatchWrite(
-      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
-    WriteOperation delete = null;
-    boolean success = false;
-    return new ImmutablePair<WriteOperation,Boolean>(delete, success);
-  }
+  
+  // Queue operations also not supported right now
 
   @Override
   public boolean execute(QueueAck ack) {
     unsupported();
-    // NOT SUPPORTED STILL!
-    // only one supported individually (still done in a transaction!)
+    // NOT SUPPORTED!
     try {
       return execute(Arrays.asList(new WriteOperation [] { ack }));
     } catch (OmidTransactionException e) {
@@ -148,6 +227,19 @@ public class OmidTransactionalOperationExecutor implements
     }
   }
 
+  @Override
+  public Map<byte[], byte[]> execute(OrderedRead orderedRead)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
+      InterruptedException {
+    // TODO Auto-generated method stub
+    return null;
+  }
   // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)
 
   private void unsupported() {
@@ -157,6 +249,12 @@ public class OmidTransactionalOperationExecutor implements
 
   @Override
   public boolean execute(Write write) {
+    unsupported();
+    return false;
+  }
+
+  @Override
+  public boolean execute(Delete delete) {
     unsupported();
     return false;
   }

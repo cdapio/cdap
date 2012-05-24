@@ -18,4 +18,8 @@ public class QueueAck implements WriteOperation {
   public QueueEntry getQueueEntry() {
     return this.queueEntry;
   }
+
+  public byte[] getKey() {
+    return queueName;
+  }
 }

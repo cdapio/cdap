@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor;
 
 import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
@@ -15,6 +16,8 @@ public interface WriteOperationExecutor {
    */
   public boolean execute(Write write);
 
+  public boolean execute(Delete delete);
+  
   public boolean execute(OrderedWrite write);
 
   public boolean execute(ReadModifyWrite rmw);

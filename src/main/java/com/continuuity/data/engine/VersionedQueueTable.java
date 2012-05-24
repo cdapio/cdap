@@ -4,7 +4,7 @@ import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePartitioner;
 
-public interface VersionedQueueTable {
+public interface VersionedQueueTable extends SimpleQueueTable {
 
   public boolean push(byte [] queueName, byte [] value, ReadPointer readPointer,
       long writeVersion);

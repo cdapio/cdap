@@ -1,4 +1,4 @@
-package com.continuuity.fabric.deadpool;
+package com.continuuity.data;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -8,11 +8,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.memory.MemoryQueue;
 import com.continuuity.data.operation.Modifier;
+import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePartitioner;
 
-public class MemorySimpleEngine implements Engine {
+public class OldMemorySimpleEngine {
 
   private final TreeMap<byte[],byte[]> kvmap =
       new TreeMap<byte[],byte[]>(new Bytes.ByteArrayComparator());
@@ -103,9 +103,9 @@ public class MemorySimpleEngine implements Engine {
   }
 
   public QueueEntry queuePop(byte [] queueName, QueueConsumer consumer,
-      QueuePartitioner partitioner) throws InterruptedException {
+      QueueConfig config, boolean drain) throws InterruptedException {
     MemoryQueue queue = initQueue(queueName);
-    return queue.pop(consumer, partitioner);
+    return queue.pop(consumer, config, drain);
   }
 
   private MemoryQueue initQueue(byte[] queueName) {

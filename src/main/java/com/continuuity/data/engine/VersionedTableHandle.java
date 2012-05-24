@@ -1,6 +1,6 @@
 package com.continuuity.data.engine;
 
-public interface VersionedTableHandle {
+public interface VersionedTableHandle extends SimpleTableHandle {
 
   public VersionedTable getTable(byte [] tableName);
 

@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.continuuity.fabric;
+package com.continuuity.data.operation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -18,19 +18,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.Modifier;
-import com.continuuity.data.operation.OperationGenerator;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadCounter;
-import com.continuuity.data.operation.ReadModifyWrite;
-import com.continuuity.data.operation.Write;
+import com.continuuity.data.engine.memory.MemorySimpleTableHandle;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.fabric.deadpool.MemorySimpleEngine;
-import com.continuuity.fabric.deadpool.MemorySimpleExecutor;
-import com.continuuity.fabric.deadpool.MemorySimpleOperationExecutor;
 
 /**
  * Simple test of operations stuff.
@@ -41,12 +32,8 @@ public class OperationsSimpleExecutorTest {
 
 	@Before
 	public void setUp() throws Exception {
-    MemorySimpleEngine memoryEngine = new MemorySimpleEngine();
-    MemorySimpleExecutor memoryExecutor =
-        new MemorySimpleExecutor(memoryEngine);
-    MemorySimpleOperationExecutor memoryOperationExecutor =
-        new MemorySimpleOperationExecutor(memoryExecutor);
-    this.executor = memoryOperationExecutor;
+	  this.executor = new SimpleOperationExecutor(
+	      new MemorySimpleTableHandle(Bytes.toBytes(this.getClass().getName())));
 	}
 
 	@After
@@ -375,14 +362,10 @@ public class OperationsSimpleExecutorTest {
     byte [][] keys = new byte [][] { "key0".getBytes(), "key1".getBytes() };
     byte [][] values = new byte [][] {"value0".getBytes(), "value1".getBytes()};
 
-    // Fabric : We are using a MemoryEngine and its NativeSimpleExecutor
-    MemorySimpleEngine memoryEngine = new MemorySimpleEngine();
-    MemorySimpleExecutor memoryExecutor =
-        new MemorySimpleExecutor(memoryEngine);
 
-    // Runner : Create Memory SimpleOperationExecutor using NativeMemorySimpExec
-    MemorySimpleOperationExecutor memoryOperationExecutor =
-        new MemorySimpleOperationExecutor(memoryExecutor);
+    SimpleOperationExecutor memoryOperationExecutor =
+        new SimpleOperationExecutor(new MemorySimpleTableHandle(
+            Bytes.toBytes("testSimpleMemoryReadWrite")));
 
     // Client Developer : Make two write operations
     List<WriteOperation> writes = new ArrayList<WriteOperation>(2);

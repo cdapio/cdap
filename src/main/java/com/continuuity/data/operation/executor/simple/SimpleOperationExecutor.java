@@ -11,6 +11,7 @@ import com.continuuity.data.engine.SimpleQueueTable;
 import com.continuuity.data.engine.SimpleTable;
 import com.continuuity.data.engine.SimpleTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OperationGenerator;
 import com.continuuity.data.operation.OrderedRead;
@@ -94,6 +95,16 @@ public class SimpleOperationExecutor implements OperationExecutor {
   public boolean execute(Write write) {
     this.randomTable.put(
         DataHelper.prependHash(write.getKey()), COLUMN, write.getValue());
+    return true;
+  }
+
+  @Override
+  public boolean execute(Delete delete) {
+    if (delete.hasColumn()) {
+      this.randomTable.delete(delete.getKey(), delete.getColumn());
+    } else {
+      this.randomTable.delete(delete.getKey());
+    }
     return true;
   }
 

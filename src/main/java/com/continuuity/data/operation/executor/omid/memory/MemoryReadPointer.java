@@ -6,6 +6,7 @@ package com.continuuity.data.operation.executor.omid.memory;
 import java.util.Set;
 
 import com.continuuity.data.engine.ReadPointer;
+import com.google.common.base.Objects;
 
 /**
  * 
@@ -27,5 +28,12 @@ public class MemoryReadPointer implements ReadPointer {
   boolean isExcluded(long txid) {
     if (excludes != null && excludes.contains(txid)) return true;
     return false;
+  }
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("readPoint", readPoint)
+        .add("excludes", excludes)
+        .toString();
   }
 }

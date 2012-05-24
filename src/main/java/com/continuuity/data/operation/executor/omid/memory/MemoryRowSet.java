@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.operation.executor.omid.RowSet;
+import com.google.common.base.Objects;
 
 /**
  * A set of rows (byte arrays).
@@ -32,5 +33,12 @@ public class MemoryRowSet implements RowSet {
       if (rows.contains(row)) return true;
     }
     return false;
+  }
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("numrows", rows.size())
+        .add("rows", rows)
+        .toString();
   }
 }

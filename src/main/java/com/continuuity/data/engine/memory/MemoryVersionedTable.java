@@ -17,6 +17,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.engine.VersionedTable;
+import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 
 /**
@@ -377,8 +379,11 @@ public class MemoryVersionedTable implements VersionedTable {
     return columnMap;
   }
 
+  private final TimestampOracle oracle =
+      new MemoryStrictlyMonotonicTimeOracle();
+  
   private long now() {
-    return System.currentTimeMillis();
+    return oracle.getTimestamp();
   }
 
   private ReadPointer nowRP() {

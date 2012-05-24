@@ -3,7 +3,7 @@
  */
 package com.continuuity.data.access;
 
-import com.continuuity.fabric.deadpool.FabricHandle;
+import com.continuuity.data.FabricHandle;
 
 /**
  * 
