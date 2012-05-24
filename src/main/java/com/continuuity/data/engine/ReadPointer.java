@@ -10,4 +10,5 @@ public interface ReadPointer {
 
   public boolean isVisible(long txid);
 
+  public long getMaximum();
 }

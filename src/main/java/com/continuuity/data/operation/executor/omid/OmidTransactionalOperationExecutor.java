@@ -14,6 +14,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.engine.VersionedQueueTable;
+import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.VersionedTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -32,7 +33,6 @@ import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePop;
 import com.continuuity.data.operation.queue.QueuePush;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.table.VersionedTable;
 
 /**
  *
@@ -218,7 +218,7 @@ public class OmidTransactionalOperationExecutor implements
 
   @Override
   public boolean execute(QueueAck ack) {
-    unsupported();
+    unsupported("Queue operations not currently supported");
     // NOT SUPPORTED!
     try {
       return execute(Arrays.asList(new WriteOperation [] { ack }));
@@ -230,21 +230,25 @@ public class OmidTransactionalOperationExecutor implements
   @Override
   public Map<byte[], byte[]> execute(OrderedRead orderedRead)
       throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
+    unsupported("Ordered operations not currently supported");
     return null;
   }
 
   @Override
   public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
       InterruptedException {
-    // TODO Auto-generated method stub
+    unsupported("Queue operations not currently supported");
     return null;
   }
   // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)
 
   private void unsupported() {
-    throw new RuntimeException(
+    unsupported(
         "Single write operations are not supported by transactional executors");
+  }
+
+  private void unsupported(String msg) {
+    throw new RuntimeException(msg);
   }
 
   @Override

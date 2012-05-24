@@ -6,8 +6,8 @@ import java.util.TreeMap;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.SimpleQueueTable;
+import com.continuuity.data.engine.SimpleTable;
 import com.continuuity.data.engine.SimpleTableHandle;
-import com.continuuity.data.table.SimpleTable;
 
 public class MemorySimpleTableHandle implements SimpleTableHandle {
 

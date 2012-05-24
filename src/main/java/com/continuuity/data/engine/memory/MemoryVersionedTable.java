@@ -16,10 +16,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.VersionedTable;
 import com.google.common.base.Objects;
 
 /**

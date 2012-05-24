@@ -1,14 +1,8 @@
-/**
- * Copyright (C) 2012 Continuuity, Inc.
- */
 package com.continuuity.data.table;
 
 import java.util.Map;
 
-/**
- * 
- */
-public interface SimpleTable {
+public interface ColumnarTable {
 
   public void put(byte [] row, byte [] column, byte [] value);
   
@@ -21,6 +15,9 @@ public interface SimpleTable {
   public Map<byte[], byte[]> get(byte[] row);
 
   public byte [] get(byte [] row, byte [] column);
+
+  public Map<byte[],byte[]> get(byte [] row, byte [] startColumn,
+      byte [] stopColumn);
 
   public Map<byte[],byte[]> get(byte [] row, byte [][] columns);
   

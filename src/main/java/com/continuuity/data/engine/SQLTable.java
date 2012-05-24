@@ -1,4 +1,4 @@
-package com.continuuity.data.table;
+package com.continuuity.data.engine;
 
 public interface SQLTable {
 

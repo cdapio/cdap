@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.engine.SimpleQueueTable;
+import com.continuuity.data.engine.SimpleTable;
 import com.continuuity.data.engine.SimpleTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -24,7 +25,6 @@ import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePop;
 import com.continuuity.data.operation.queue.QueuePush;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.table.SimpleTable;
 
 public class SimpleOperationExecutor implements OperationExecutor {
 

@@ -37,4 +37,8 @@ public class MemoryReadPointer implements ReadPointer {
         .add("excludes", excludes)
         .toString();
   }
+  @Override
+  public long getMaximum() {
+    return readPoint;
+  }
 }

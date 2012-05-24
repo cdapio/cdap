@@ -1,11 +1,10 @@
 /**
  * Copyright (C) 2012 Continuuity, Inc.
  */
-package com.continuuity.data.table;
+package com.continuuity.data.engine;
 
 import java.util.Map;
 
-import com.continuuity.data.engine.ReadPointer;
 
 /**
  * 
