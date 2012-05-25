@@ -223,9 +223,125 @@ public class TestMemoryQueue {
     MemoryQueue.TIMEOUT = oldTimeout;
   }
 
-  public void testSingleConsumerSyncDrain() {}
+  @Test
+  public void testSingleConsumerAsyncDrain() throws Exception {
+    final boolean sync = false;
+    boolean drain = false;
+    MemoryQueue queue = new MemoryQueue();
 
-  public void testSingleConsumerAsyncDrain() {}
+    // push ten entries
+    int n=10;
+    for (int i=0;i<n;i++) {
+      assertTrue(queue.push(Bytes.toBytes(i+1)));
+    }
+
+    // pop it with the single consumer and random partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, sync);
+
+    // verify it's the first value
+    QueueEntry entryOne = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryOne.getValue(), Bytes.toBytes(1)));
+
+    // pop again without acking, async mode should get the second value
+    QueueEntry entryTwo = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryTwo.getValue(), Bytes.toBytes(2)));
+
+    // ack entry two
+    assertTrue(queue.ack(entryTwo));
+
+    // drain!
+    drain = true;
+    
+    // pop should now give us back the un-ack'd stuff
+    QueueEntry entryOneB = queue.pop(consumer, config, drain);
+    assertNotNull(entryOneB);
+    assertTrue("expected 1, actual " + Bytes.toInt(entryOneB.getValue()),
+        Bytes.equals(entryOneB.getValue(), Bytes.toBytes(1)));
+    
+    // same thing again
+    QueueEntry entryOneC = queue.pop(consumer, config, drain);
+    assertNotNull(entryOneC);
+    assertTrue(Bytes.equals(entryOneC.getValue(), Bytes.toBytes(1)));
+    
+    // ack
+    assertTrue(queue.ack(entryOne));
+    
+    // should be null now without hacking sync mode
+    assertNull(queue.pop(consumer, config, drain));
+    
+    // move off drain mode
+    drain = false;
+    
+    // should get entry three now
+    QueueEntry entryThree = queue.pop(consumer, config, drain);
+    assertNotNull(entryThree);
+    assertTrue(Bytes.equals(entryThree.getValue(), Bytes.toBytes(3)));
+
+  }
+
+  @Test
+  public void testSingleConsumerSyncDrain() throws Exception {
+    final boolean sync = true;
+    boolean drain = false;
+    MemoryQueue queue = new MemoryQueue();
+
+    // push ten entries
+    int n=10;
+    for (int i=0;i<n;i++) {
+      assertTrue(queue.push(Bytes.toBytes(i+1)));
+    }
+
+    // pop it with the single consumer and random partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, sync);
+
+    // verify it's the first value
+    QueueEntry entryOne = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryOne.getValue(), Bytes.toBytes(1)));
+
+    // pop again without acking, sync mode should get the first value again
+    QueueEntry entryOneB = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryOneB.getValue(), Bytes.toBytes(1)));
+
+    // ack entry one
+    assertTrue(queue.ack(entryOne));
+
+    // pop again without acking, get second value
+    QueueEntry entryTwo = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryTwo.getValue(), Bytes.toBytes(2)));
+    
+    // drain!
+    drain = true;
+    
+    // pop should give us back the un-ack'd stuff still
+    QueueEntry entryTwoB = queue.pop(consumer, config, drain);
+    assertNotNull(entryTwoB);
+    assertTrue("expected 2, actual " + Bytes.toInt(entryTwoB.getValue()),
+        Bytes.equals(entryTwoB.getValue(), Bytes.toBytes(2)));
+    
+    // same thing again
+    QueueEntry entryTwoC = queue.pop(consumer, config, drain);
+    assertNotNull(entryTwoC);
+    assertTrue(Bytes.equals(entryTwoC.getValue(), Bytes.toBytes(2)));
+    
+    // ack
+    assertTrue(queue.ack(entryTwoB));
+    
+    // should be null now without hacking sync mode
+    assertNull(queue.pop(consumer, config, drain));
+    
+    // move off drain mode
+    drain = false;
+    
+    // should get entry three now
+    QueueEntry entryThree = queue.pop(consumer, config, drain);
+    assertNotNull(entryThree);
+    assertTrue(Bytes.equals(entryThree.getValue(), Bytes.toBytes(3)));
+
+  }
   
   public void testMultipleConsumerSyncDrain() {}
   

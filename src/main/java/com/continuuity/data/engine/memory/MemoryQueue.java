@@ -86,23 +86,26 @@ public class MemoryQueue implements PowerQueue {
       System.out.println("[" + consumer + "] ERROR!  (" + group + ") (" + consumer + ")");
     }
     
-    // If group has no entries available, wait for a push
-    if (group.getHead() == null) {
-      if (popSync) waitForPush(); else return null;
-      return pop(consumer, config, drain);
-    }
-    
     // Iterate entries to see if we should emit one
     synchronized (group) {
+      // Drain mode check
+      if (drain && !group.hasDrainPoint()) {
+        group.setDrainPoint(findDrainPoint(group));
+      } else if (!drain && group.hasDrainPoint()) {
+        group.clearDrainPoint();
+      }
       Entry curEntry = group.getHead();
-      while (curEntry != null) {
+      while (curEntry != null && curEntry.id <= group.getDrainPoint()) {
         // Check if this is already assigned to someone else in the same group
         // or if it's already assigned to us
         GroupConsumptionInfo info =
             curEntry.getConsumerInfo(consumer.getGroupId());
         if (info.isAvailable() ||
             (info.getConsumerId() == consumer.getConsumerId() &&
-            !info.isAcked() && config.isSyncMode())) {
+              !info.isAcked() &&
+              (config.isSyncMode() || drain)
+            )
+        ) {
           QueueEntry entry = curEntry.makeQueueEntry();
           if (config.getPartitioner().shouldEmit(consumer, entry)) {
             entry.setConsumer(consumer);
@@ -116,8 +119,27 @@ public class MemoryQueue implements PowerQueue {
     }
       
     // Didn't find anything.  Wait and try again.
-    if (popSync) waitForPush(); else return null;
+    if (popSync && !drain) waitForPush(); else return null;
     return pop(consumer, config, drain);
+  }
+
+  /**
+   * Called with group already locked.
+   * @param group
+   * @return
+   */
+  private long findDrainPoint(ConsumerGroup group) {
+    Entry curEntry = group.getHead();
+    long drainPoint = 0;
+    while (curEntry != null) {
+      if (curEntry.hasGroupConsumerInfo(group.id)) {
+        drainPoint = curEntry.id;
+      } else {
+        return drainPoint;
+      }
+      curEntry = curEntry.getNext();
+    }
+    return drainPoint;
   }
 
   @Override
@@ -181,7 +203,7 @@ public class MemoryQueue implements PowerQueue {
     private Entry head;
     private final long uuid;
     
-    private long drainPoint = -1;
+    private long drainPoint = Long.MAX_VALUE;
     
     ConsumerGroup(int id) {
       this.id = id;
@@ -197,11 +219,17 @@ public class MemoryQueue implements PowerQueue {
     int getId() {
       return this.id;
     }
+    boolean hasDrainPoint() {
+      return this.drainPoint != Long.MAX_VALUE;
+    }
     long getDrainPoint() {
       return this.drainPoint;
     }
     void setDrainPoint(long drainPoint) {
       this.drainPoint = drainPoint;
+    }
+    void clearDrainPoint() {
+      this.drainPoint = Long.MAX_VALUE;
     }
     @Override
     public String toString() {
@@ -234,6 +262,11 @@ public class MemoryQueue implements PowerQueue {
     Entry getNext() {
       return this.next;
     }
+    
+    synchronized boolean hasGroupConsumerInfo(int groupid) {
+      return this.consumers.containsKey(groupid);
+    }
+    
     synchronized GroupConsumptionInfo getConsumerInfo(int groupId) {
       GroupConsumptionInfo info = this.consumers.get(groupId);
       if (info == null) {
