@@ -21,8 +21,8 @@ import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class TestMemoryQueue {
 
-  private static final long MAX_TIMEOUT_MS = 20;
-  private static final long POP_BLOCK_TIMEOUT_MS = 1;
+  private static final long MAX_TIMEOUT_MS = 1000;
+  private static final long POP_BLOCK_TIMEOUT_MS = 2;
   
   @Test
   public void testSingleConsumerSimple() throws Exception {
@@ -194,6 +194,7 @@ public class TestMemoryQueue {
     queue.popSync = true;
     
     // now set the timeout and sleep for timeout + 1
+    long oldTimeout = MemoryQueue.TIMEOUT;
     MemoryQueue.TIMEOUT = 50;
     Thread.sleep(51);
     
@@ -217,6 +218,9 @@ public class TestMemoryQueue {
     // using other entry version should fail second time
     assertFalse(queue.ack(entryOneB));
     assertFalse(queue.ack(entryFour));
+    
+    // restore timeout
+    MemoryQueue.TIMEOUT = oldTimeout;
   }
 
   public void testSingleConsumerSyncDrain() {}
@@ -513,7 +517,7 @@ public class TestMemoryQueue {
           QueueEntry entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
           assertNotNull(entry);
           assertEquals((long)(k*n)+j, Bytes.toLong(entry.getValue()));
-          assertTrue(queue.ack(entry));
+          assertTrue("i=" + i + ",j=" + j + ",k=" + k, queue.ack(entry));
           poppers[i][j].triggerPop();
           localPops++;
         }
