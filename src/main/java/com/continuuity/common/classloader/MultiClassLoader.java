@@ -1,7 +1,5 @@
 package com.continuuity.common.classloader;
 
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.classification.InterfaceStability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +13,6 @@ import java.util.Hashtable;
  * http://www.javaworld.com/javaworld/jw-10-1996/indepth.src.html
  * with large modifications.
  */
-@InterfaceAudience.Public
-@InterfaceStability.Evolving
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
   private Hashtable classes = new Hashtable();
@@ -89,6 +85,10 @@ public abstract class MultiClassLoader extends ClassLoader {
   protected abstract byte[] loadClassBytes(String className);
 
   protected String formatClassName(String className) {
+    if(className.contains("$")) {
+      return className;
+    }
+
     if (classNameReplacementChar == '\u0000') {
       // '/' is used to map the package to the path
       return className.replace('.', '/') + ".class";

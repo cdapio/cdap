@@ -175,7 +175,7 @@ class Version {
     originalVersion = versionValue
     if (originalVersion.endsWith('-SNAPSHOT')) {
       status = 'integration'
-      thisVersion = originalVersion.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
+      thisVersion = originalVersion; //.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
     } else {
       status = 'release'
       thisVersion = versionValue

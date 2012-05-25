@@ -3,21 +3,26 @@ package com.continuuity.common.classloader;
 /**
  * JarClassLoader extends {@link MultiClassLoader}
  */
-
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.classification.InterfaceStability;
-
-@InterfaceAudience.Private
-@InterfaceStability.Evolving
 public class JarClassLoader extends MultiClassLoader {
   private JarResources    jarResources;
 
   /**
    * Create the JarResource and suck in the jar file.
+   *
    * @param jarName Name of the jar file.
    */
   public JarClassLoader (String jarName) throws JarResourceException {
     jarResources = new JarResources (jarName);
+  }
+
+  /**
+   * Creates an instance of classloader with provided jar resources.
+   *
+   * @param jarResources instance of jar resources
+   * @throws JarResourceException
+   */
+  public JarClassLoader(JarResources jarResources) throws JarResourceException {
+    this.jarResources = jarResources;
   }
 
   /**

@@ -37,7 +37,7 @@ public final class JarResources {
    * @param name a resource name.
    */
   public byte[] getResource(String name) {
-    LOG.info("Resource name = " + name);
+    LOG.debug("Resource name = " + name);
     return (byte[])htJarContents.get(name);
   }
 
@@ -92,11 +92,14 @@ public final class JarResources {
         LOG.debug(ze.getName() + " rb=" + rb + ",size=" + size + ",csize=" + ze.getCompressedSize());
       }
     } catch (NullPointerException e){
-      throw new JarResourceException(e.getMessage());
+      LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
+      throw new JarResourceException("Null pointer while loading jar file " + jarFileName);
     } catch (FileNotFoundException e) {
-      throw new JarResourceException(e.getMessage());
+      LOG.warn("File {} not found. Reason : {}", jarFileName, e.getMessage());
+      throw new JarResourceException("Jar file " + jarFileName + " requested to be loaded is not found");
     } catch (IOException e) {
-      throw new JarResourceException(e.getMessage());
+      LOG.warn("Error while reading file {}. Reason : {}", jarFileName, e.getMessage());
+      throw new JarResourceException("Error reading file " + jarFileName + ".");
     }
   }
 

@@ -23,7 +23,7 @@ public class CuratorServiceTest {
 
   @Test
   public void testBasicCuratorService() throws Exception {
-    final int TIMEOUT = 5 * 1000;
+    final int TIMEOUT = 10 * 1000;
     List<Closeable> closeables = Lists.newArrayList();
     InMemoryZookeeper server = new InMemoryZookeeper();
     closeables.add(server);
