@@ -253,6 +253,8 @@ public class TestMemoryQueue {
     
     // trigger a pop
     assertTrue(popper.triggerPop());
+    waitForAndAssertCount(1, popper.popRunLoop);
+    waitForAndAssertCount(0, popper.pops);
 
     // nothing in queue so popper should be empty
     QueueEntry entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
@@ -260,6 +262,8 @@ public class TestMemoryQueue {
 
     // push
     assertTrue(queue.push(valueOne));
+    waitForAndAssertCount(1, popper.popRunLoop);
+    waitForAndAssertCount(1, popper.pops);
     
     // popper will pop, but we should still be able to pop!
     entry = queue.pop(consumer, config, drain);
@@ -276,6 +280,8 @@ public class TestMemoryQueue {
     
     // trigger another pop
     assertTrue(popper.triggerPop());
+    waitForAndAssertCount(2, popper.popRunLoop);
+    waitForAndAssertCount(1, popper.pops);
 
     // nothing in queue so popper should be empty
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
@@ -283,6 +289,8 @@ public class TestMemoryQueue {
 
     // push
     assertTrue(queue.push(valueTwo));
+    waitForAndAssertCount(2, popper.popRunLoop);
+    waitForAndAssertCount(2, popper.pops);
     
     // popper should have value2
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
@@ -291,6 +299,8 @@ public class TestMemoryQueue {
     
     // trigger popper again, should get the same one back
     assertTrue(popper.triggerPop());
+    waitForAndAssertCount(3, popper.popRunLoop);
+    waitForAndAssertCount(3, popper.pops);
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
