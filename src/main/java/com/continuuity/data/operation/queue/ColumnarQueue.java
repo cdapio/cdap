@@ -24,7 +24,7 @@ public class ColumnarQueue implements PowerQueue {
 
   @Override
   public boolean push(byte[] value) {
-    long entryId = this.table.increment(this.key, COUNT_COL, 1);
+//    long entryId = this.table.increment(this.key, COUNT_COL, 1);
 //    this.table.put(this.key, makeEntryCol(entryId), value);
     return true;
   }
@@ -42,7 +42,7 @@ public class ColumnarQueue implements PowerQueue {
       groupInfo.clearDrainPoint();
     }
     // Iterate entries from head
-    Entry curEntry = Entry.getNext(this.table, this.key, groupInfo.headId);
+//    Entry curEntry = Entry.getNext(this.table, this.key, groupInfo.headId);
 //    while (curEntry != null && curEntry.id <= groupInfo.getDrainPoint()) {
 //      
 //      
@@ -133,6 +133,7 @@ public class ColumnarQueue implements PowerQueue {
 
   // Private helpers
 
+  @SuppressWarnings("unused")
   private static byte[] makeEntryCol(long entryId, byte [] suffix) {
     return Bytes.add(ENTRY_PREFIX, Bytes.toBytes(entryId), suffix);
   }
