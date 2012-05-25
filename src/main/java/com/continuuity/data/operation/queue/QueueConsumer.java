@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.queue;
 
+import com.google.common.base.Objects;
+
 public class QueueConsumer {
 
   private final int consumerId;
@@ -22,38 +24,41 @@ public class QueueConsumer {
   }
 
   public int getConsumerId() {
-    return consumerId;
+    return this.consumerId;
   }
 
   public int getGroupId() {
-    return groupId;
+    return this.groupId;
   }
 
   public int getGroupSize() {
-    return groupSize;
+    return this.groupSize;
   }
-  
+
   public boolean isSync() {
-    return sync;
+    return this.sync;
   }
-  
+
   public boolean isAsync() {
-    return !sync;
+    return !this.sync;
   }
 
   public boolean isInDrainMode() {
-    return drain;
+    return this.drain;
   }
-  
+
   public void setDrainMode(boolean drain) {
     this.drain = drain;
   }
 
   @Override
   public String toString() {
-    return "QueueConsumer consumerId=" + consumerId + ", groupId=" + groupId +
-        ", groupSize=" + groupSize;
+    return Objects.toStringHelper(this)
+        .add("consumerid", this.consumerId)
+        .add("groupid", this.groupId)
+        .add("groupsize", this.groupSize)
+        .add("syncmode", this.sync)
+        .add("drainmode", this.drain)
+        .toString();
   }
-
-
 }

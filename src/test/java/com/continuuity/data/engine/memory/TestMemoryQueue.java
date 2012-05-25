@@ -23,11 +23,12 @@ public class TestMemoryQueue {
 
   private static final long MAX_TIMEOUT_MS = 20;
   private static final long POP_BLOCK_TIMEOUT_MS = 1;
-  private static final boolean sync = true;
-  private static final boolean drain = false;
   
   @Test
   public void testSingleConsumerSimple() throws Exception {
+    final boolean sync = true;
+    final boolean drain = false;
+    
     MemoryQueue queue = new MemoryQueue();
 
     byte [] valueOne = Bytes.toBytes("value1");
@@ -40,7 +41,7 @@ public class TestMemoryQueue {
     // pop it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, drain);
+    QueueConfig config = new QueueConfig(partitioner, sync);
     QueueEntry entry = queue.pop(consumer, config, drain);
 
     // verify it's the first value
@@ -48,7 +49,9 @@ public class TestMemoryQueue {
 
     // pop again without acking, should still get first value
     entry = queue.pop(consumer, config, drain);
-    assertTrue(Bytes.equals(entry.getValue(), valueOne));
+    assertTrue("Expected (" + Bytes.toString(valueOne) + ") Got (" +
+        Bytes.toString(entry.getValue()) + ")",
+        Bytes.equals(entry.getValue(), valueOne));
 
     // ack
     assertTrue(queue.ack(entry));
@@ -61,13 +64,174 @@ public class TestMemoryQueue {
     assertTrue(queue.ack(entry));
     
     // verify queue is empty
-    queue.sync = false;
+    queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
-    queue.sync = true;
+    queue.popSync = true;
+  }
+  
+  @Test
+  public void testSingleConsumerAsync() throws Exception {
+    final boolean sync = false;
+    final boolean drain = false;
+    MemoryQueue queue = new MemoryQueue();
+
+    // push ten entries
+    int n=10;
+    for (int i=0;i<n;i++) {
+      assertTrue(queue.push(Bytes.toBytes(i+1)));
+    }
+
+    // pop it with the single consumer and random partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, sync);
+
+    // verify it's the first value
+    QueueEntry entryOne = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryOne.getValue(), Bytes.toBytes(1)));
+
+    // pop again without acking, async mode should get the second value
+    QueueEntry entryTwo = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryTwo.getValue(), Bytes.toBytes(2)));
+
+    // ack entry two
+    assertTrue(queue.ack(entryTwo));
+
+    // pop, should get third value
+    QueueEntry entryThree = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryThree.getValue(), Bytes.toBytes(3)));
+
+    // ack
+    assertTrue(queue.ack(entryThree));
+    
+    // pop fourth
+    QueueEntry entryFour = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryFour.getValue(), Bytes.toBytes(4)));
+    
+    // pop five through ten, and ack them
+    for (int i=5; i<11; i++) {
+      QueueEntry entry = queue.pop(consumer, config, drain);
+      assertTrue(Bytes.equals(entry.getValue(), Bytes.toBytes(i)));
+      assertTrue(queue.ack(entry));
+    }
+    
+    // verify queue is empty (first and fourth not ackd but still popd)
+    queue.popSync = false;
+    assertNull(queue.pop(consumer, config, drain));
+    queue.popSync = true;
+    
+    // second and third ackd, another ack should fail
+    assertFalse(queue.ack(entryTwo));
+    assertFalse(queue.ack(entryThree));
+    // first and fourth are not acked, ack should pass
+    assertTrue(queue.ack(entryOne));
+    assertTrue(queue.ack(entryFour));
+
+    // queue still empty
+    queue.popSync = false;
+    assertNull(queue.pop(consumer, config, drain));
+    queue.popSync = true;
+  }
+  
+  @Test
+  public void testMultipleConsumerAsyncTimeouts() throws Exception {
+    final boolean sync = false;
+    final boolean drain = false;
+    MemoryQueue queue = new MemoryQueue();
+
+    // push ten entries
+    int n=10;
+    for (int i=0;i<n;i++) {
+      assertTrue(queue.push(Bytes.toBytes(i+1)));
+    }
+
+    // pop it with the single consumer and random partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, sync);
+
+    // verify it's the first value
+    QueueEntry entryOne = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryOne.getValue(), Bytes.toBytes(1)));
+
+    // pop again without acking, async mode should get the second value
+    QueueEntry entryTwo = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryTwo.getValue(), Bytes.toBytes(2)));
+
+    // ack entry two
+    assertTrue(queue.ack(entryTwo));
+
+    // pop, should get third value
+    QueueEntry entryThree = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryThree.getValue(), Bytes.toBytes(3)));
+
+    // ack
+    assertTrue(queue.ack(entryThree));
+    
+    // pop fourth
+    QueueEntry entryFour = queue.pop(consumer, config, drain);
+    assertTrue(Bytes.equals(entryFour.getValue(), Bytes.toBytes(4)));
+    
+    // pop five through ten, and ack them
+    for (int i=5; i<11; i++) {
+      QueueEntry entry = queue.pop(consumer, config, drain);
+      assertTrue(Bytes.equals(entry.getValue(), Bytes.toBytes(i)));
+      assertTrue(queue.ack(entry));
+    }
+    
+    // verify queue is empty (first and fourth not ackd but still popd)
+    queue.popSync = false;
+    assertNull(queue.pop(consumer, config, drain));
+    queue.popSync = true;
+    
+    // second and third ackd, another ack should fail
+    assertFalse(queue.ack(entryTwo));
+    assertFalse(queue.ack(entryThree));;
+
+    // queue still empty
+    queue.popSync = false;
+    assertNull(queue.pop(consumer, config, drain));
+    queue.popSync = true;
+    
+    // now set the timeout and sleep for timeout + 1
+    MemoryQueue.TIMEOUT = 50;
+    Thread.sleep(51);
+    
+    // two pops in a row should give values one and four
+    QueueEntry entryOneB = queue.pop(consumer, config, drain);
+    assertNotNull(entryOneB);
+    assertTrue(Bytes.equals(entryOneB.getValue(), Bytes.toBytes(1)));
+    QueueEntry entryFourB = queue.pop(consumer, config, drain);
+    assertNotNull(entryFourB);
+    assertTrue(Bytes.equals(entryFourB.getValue(), Bytes.toBytes(4)));
+    
+    // and then queue should be empty again
+    queue.popSync = false;
+    assertNull(queue.pop(consumer, config, drain));
+    queue.popSync = true;
+    
+    // first and fourth are not acked, ack should pass using either entry
+    assertTrue(queue.ack(entryOne));
+    assertTrue(queue.ack(entryFourB));
+    
+    // using other entry version should fail second time
+    assertFalse(queue.ack(entryOneB));
+    assertFalse(queue.ack(entryFour));
   }
 
+  public void testSingleConsumerSyncDrain() {}
+
+  public void testSingleConsumerAsyncDrain() {}
+  
+  public void testMultipleConsumerSyncDrain() {}
+  
+  public void testMultipleConsumerAsyncDrain() {}
+  
+  
   @Test
   public void testSingleConsumerThreaded() throws Exception {
+    final boolean sync = true;
+    final boolean drain = false;
     MemoryQueue queue = new MemoryQueue();
 
     byte [] valueOne = Bytes.toBytes("value1");
@@ -77,10 +241,11 @@ public class TestMemoryQueue {
     // pop it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, drain);
+    QueueConfig config = new QueueConfig(partitioner, sync);
     
     // spawn a thread to pop
-    QueuePopper popper = new QueuePopper(queue, consumer, partitioner);
+    QueuePopper popper = new QueuePopper(queue, consumer, partitioner, sync,
+        drain);
     popper.start();
     
     // popper should be empty
@@ -134,9 +299,9 @@ public class TestMemoryQueue {
     queue.ack(entry);
     
     // verify queue is empty
-    queue.sync = false;
+    queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
-    queue.sync = true;
+    queue.popSync = true;
     
     // shut down
     popper.shutdown();
@@ -144,6 +309,8 @@ public class TestMemoryQueue {
 
   @Test
   public void testMultiConsumerMultiGroup() throws Exception {
+    final boolean sync = true;
+    final boolean drain = false;
     MemoryQueue queue = new MemoryQueue();
 
     // Create 4 consumer groups with 4 consumers each
@@ -170,14 +337,15 @@ public class TestMemoryQueue {
         return (val % consumer.getGroupSize()) == consumer.getConsumerId();
       }
     };
-    QueueConfig config = new QueueConfig(partitioner, drain);
+    QueueConfig config = new QueueConfig(partitioner, sync);
     
     // Start a popper for every consumer!
     QueuePopper [][] poppers = new QueuePopper[n][];
     for (int i=0; i<n; i++) {
       poppers[i] = new QueuePopper[n];
       for (int j=0; j<n; j++) {
-        poppers[i][j] = new QueuePopper(queue, consumers[i][j], partitioner);
+        poppers[i][j] = new QueuePopper(queue, consumers[i][j], partitioner,
+            sync, drain);
         poppers[i][j].start();
         assertTrue(poppers[i][j].triggerPop());
       }
@@ -377,6 +545,7 @@ public class TestMemoryQueue {
     private final MemoryQueue queue;
     private final QueueConsumer consumer;
     private final QueueConfig config;
+    private final boolean drain;
     
     private AtomicBoolean popTrigger = new AtomicBoolean(false);
     
@@ -394,10 +563,11 @@ public class TestMemoryQueue {
      * @param partitioner
      */
     QueuePopper(MemoryQueue queue, QueueConsumer consumer,
-        QueuePartitioner partitioner) {
+        QueuePartitioner partitioner, boolean sync, boolean drain) {
       this.queue = queue;
       this.consumer = consumer;
-      this.config = new QueueConfig(partitioner, drain);
+      this.config = new QueueConfig(partitioner, sync);
+      this.drain = drain;
       this.entry = null;
     }
 

@@ -17,7 +17,8 @@ public interface PowerQueue {
 
   /**
    * @param consumer
-   * @param partitioner
+   * @param config
+   * @paramd drain
    * @return
    * @throws InterruptedException
    */

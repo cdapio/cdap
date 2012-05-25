@@ -2,14 +2,16 @@ package com.continuuity.data.operation.queue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.common.base.Objects;
+
 public class QueueEntry {
 
   private final byte [] value;
-  
+
   private final long id;
-  
+
   private QueueConsumer consumer;
-  
+
   public QueueEntry(byte [] value, long id) {
     this.value = value;
     this.id = id;
@@ -17,11 +19,11 @@ public class QueueEntry {
   }
 
   public byte [] getValue() {
-    return value;
+    return this.value;
   }
 
   public long getId() {
-    return id;
+    return this.id;
   }
 
   public void setConsumer(QueueConsumer consumer) {
@@ -31,9 +33,13 @@ public class QueueEntry {
   public QueueConsumer getConsumer() {
     return this.consumer;
   }
+
   @Override
   public String toString() {
-    return "QueueEntry id=" + id + ", value=" + Bytes.toString(value) +
-        ", consumer=" + consumer.toString();
+    return Objects.toStringHelper(this)
+        .add("id", this.id)
+        .add("value", Bytes.toString(this.value))
+        .add("consumer", this.consumer)
+        .toString();
   }
 }

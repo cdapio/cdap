@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.queue;
 
+import com.google.common.base.Objects;
+
 
 public class QueueConfig {
 
@@ -29,5 +31,13 @@ public class QueueConfig {
   
   public enum ExecutionMode {
     SYNC, ASYNC
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("execmode", execMode.name())
+        .add("partitioner", partitioner)
+        .toString();
   }
 }

@@ -49,7 +49,7 @@ public class MemoryQueue implements PowerQueue {
     return true;
   }
 
-  boolean sync = true;
+  boolean popSync = true;
   
   @Override
   public QueueEntry pop(QueueConsumer consumer, QueueConfig config,
@@ -57,7 +57,7 @@ public class MemoryQueue implements PowerQueue {
   throws InterruptedException {
     // Anything in the queue at all?  Wait for a push if so
     if (head == null) {
-      if (sync) waitForPush(); else return null;
+      if (popSync) waitForPush(); else return null;
       return pop(consumer, config, drain);
     }
     
@@ -88,7 +88,7 @@ public class MemoryQueue implements PowerQueue {
     
     // If group has no entries available, wait for a push
     if (group.getHead() == null) {
-      if (sync) waitForPush(); else return null;
+      if (popSync) waitForPush(); else return null;
       return pop(consumer, config, drain);
     }
     
@@ -102,7 +102,7 @@ public class MemoryQueue implements PowerQueue {
             curEntry.getConsumerInfo(consumer.getGroupId());
         if (info.isAvailable() ||
             (info.getConsumerId() == consumer.getConsumerId() &&
-            !info.isAcked())) {
+            !info.isAcked() && config.isSyncMode())) {
           QueueEntry entry = curEntry.makeQueueEntry();
           if (config.getPartitioner().shouldEmit(consumer, entry)) {
             entry.setConsumer(consumer);
@@ -116,7 +116,7 @@ public class MemoryQueue implements PowerQueue {
     }
       
     // Didn't find anything.  Wait and try again.
-    if (sync) waitForPush(); else return null;
+    if (popSync) waitForPush(); else return null;
     return pop(consumer, config, drain);
   }
 
@@ -137,7 +137,8 @@ public class MemoryQueue implements PowerQueue {
         // Check if this is the entry we want to ack
         GroupConsumptionInfo info =
             curEntry.getConsumerInfo(consumer.getGroupId());
-        if (info.isPopped() &&
+        if (curEntry.id == entry.getId() &&
+            info.isPopped() &&
             info.getConsumerId() == consumer.getConsumerId()) {
           // Verified it was previously popped and owned by us, ack
           info.ack();
