@@ -104,7 +104,7 @@ public class MemoryQueue implements PowerQueue {
             (info.getConsumerId() == consumer.getConsumerId() &&
               !info.isAcked() &&
               (config.isSyncMode() || drain)
-            )
+              )
         ) {
           QueueEntry entry = curEntry.makeQueueEntry();
           if (config.getPartitioner().shouldEmit(consumer, entry)) {
