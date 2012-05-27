@@ -1,0 +1,11 @@
+/// TODO: Get clover plugin from artifactory instead.
+repositories {
+    add(new org.apache.ivy.plugins.resolver.URLResolver()) {
+        name = 'GitHub'
+        addArtifactPattern 'http://cloud.github.com/downloads/[organisation]/[module]/[module]-[revision].[ext]'
+    }
+}
+
+dependencies {
+    runtime 'bmuschko:gradle-clover-plugin:0.5.2'
+}

@@ -1,0 +1,16 @@
+# Ignore basic Java files
+*.jar
+*.class
+
+# Ignore Intellij files
+*.iml
+.idea/
+
+# Ignore Eclipse files
+.classpath
+.project
+.settings/
+
+# Ignore Gradle files
+.gradle/
+build/

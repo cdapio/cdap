@@ -1,0 +1,48 @@
+/// Define common configuration for all projects including the root project.
+allprojects
+{
+    /// Define artifact repositories.
+    repositories {
+        maven {
+            credentials {
+                username "nitin"
+                password "{DESede}Yug50BdPbFdcDnu9GwGmcg=="
+            }
+            url "https://repository.continuuity.com/remote-repos"
+        }
+        maven {
+            credentials {
+                username "nitin"
+                password "{DESede}Yug50BdPbFdcDnu9GwGmcg=="
+            }
+            url "https://repository.continuuity.com/continuuity-releases"
+        }
+        maven {
+            credentials {
+                username "nitin"
+                password "{DESede}Yug50BdPbFdcDnu9GwGmcg=="
+            }
+            url "https://repository.continuuity.com/continuuity-snapshot"
+        }
+    }
+}
+
+/// Define common subproject config and tasks.
+subprojects
+{
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'maven'
+
+    defaultTasks 'build'
+
+    /// Define common dependencies.
+    dependencies
+    {
+        compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+        compile "org.slf4j:slf4j-api:${slf4jVersion}"
+        compile "org.slf4j:slf4j-simple:${slf4jVersion}"
+        testCompile "org.mockito:mockito-core:${mockitoVersion}"
+        testCompile "junit:junit:${junitVersion}"
+    }
+}

@@ -1,0 +1,42 @@
+apply plugin: 'sonar'
+
+/// Configure sonar settings.
+sonar {
+    server {
+        url = "https://sonar.continuuity.com"
+    }
+    database {
+        url = "jdbc:mysql://sonar.continuuity.com/sonar"
+        driverClassName = "com.mysql.jdbc.Driver"
+        username = "sonar"
+        password = "09u0ru2039ur203r9u"
+    }
+    withGlobalProperties { props ->
+        props["sonar.projectName"] = "$projectName"
+        props["sonar.projectKey"] = "$projectKey"
+    }
+}
+
+/// Define common subproject config and tasks.
+subprojects
+{
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'maven'
+
+    /// Define common dependencies.
+    dependencies
+            {
+                compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+                compile "org.slf4j:slf4j-api:${slf4jVersion}"
+                compile "org.slf4j:slf4j-simple:${slf4jVersion}"
+                testCompile "org.mockito:mockito-core:${mockitoVersion}"
+                testCompile "junit:junit:${junitVersion}"
+            }
+
+    sonar {
+        project {
+            cloverReportPath = file("$reportsDir/clover/clover.xml")
+        }
+    }
+}
