@@ -22,7 +22,7 @@ class ContinuuityPlugin implements Plugin<Project> {
             ClasspathHandler.register();
             if(!p.getSubprojects().isEmpty())
             {
-                println "Applying Continuuity Plugin (Multi-module)"
+                println ":continuuity plugin:multi-module"
 
                 p.allprojects {
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
@@ -34,14 +34,18 @@ class ContinuuityPlugin implements Plugin<Project> {
 
                 applyFrom(p, "classpath:com/continuuity/gradle/sonar.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
+
+                displayProjectInfo(p);
             }
             else
             {
-                println "Applying Continuutiy Plugin (Standalone)"
+                println ":continuuity plugin:standalone"
 
                 applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/subprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
+
+                displayProjectInfo(p);
             }
 
             p.allprojects
@@ -49,6 +53,22 @@ class ContinuuityPlugin implements Plugin<Project> {
                 extensions.getExtraProperties().set(pluginName, 'true');
             }
         }
+    }
+
+    void displayProjectInfo (Project project)
+    {
+        println "-------------------------------------------------------------------------------------"
+        println "PROJECT_NAME:    " + project.getProperties().get("artifactId");
+        println "ROOT_DIR:        " + project.projectDir
+        println "JAVA_VERSION:    " + System.properties.get("java.version") + " " +
+                System.properties.get("java.version") + " " +
+                System.properties.get("java.vendor") + " " +
+                System.properties.get("os.name") + " " +
+                System.properties.get("os.version") + " " +
+                System.properties.get("os.arch");
+        println "GRADLE_VERSION:  " + project.getGradle().getGradleVersion();
+        println "VERSION:         " + project.getProperties().get("version");
+        println "-------------------------------------------------------------------------------------"
     }
 
     void applyFrom (Project p, String uri)

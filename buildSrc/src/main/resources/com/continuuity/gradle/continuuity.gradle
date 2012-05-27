@@ -4,20 +4,24 @@
 // This script should only contain the bare essentials to load the
 // continuuity plugin.
 project.buildscript {
-    repositories {
-        maven {
-            credentials {
-                username "gradle"
-                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+    if (!ext.has("com.continuuity.gradle.ContinuuityPlugin"))
+    {
+        repositories {
+            maven {
+                credentials {
+                    username "gradle"
+                    password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+                }
+                url "https://repository.continuuity.com/buildsrc"
             }
-            url "https://repository.continuuity.com/buildsrc"
+        }
+        configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+        dependencies {
+            classpath "com.continuuity:buildSrc:1.0-SNAPSHOT"
         }
     }
-    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
-    dependencies {
-          classpath "com.continuuity:buildSrc:1.0-SNAPSHOT"
-    }
 }
+
 
 
 

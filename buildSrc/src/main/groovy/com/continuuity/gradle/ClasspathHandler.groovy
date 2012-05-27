@@ -1,6 +1,8 @@
 package com.continuuity.gradle
 
 import org.gradle.api.Project
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,6 +13,8 @@ import org.gradle.api.Project
  */
 class ClasspathHandler extends URLStreamHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final ClassLoader classLoader;
 
     public ClasspathHandler() {
@@ -20,7 +24,7 @@ class ClasspathHandler extends URLStreamHandler {
     @Override
     protected URLConnection openConnection(URL u) throws IOException {
         String resourcePath = u.getHost() + u.getPath();
-        println "Loading resource: $resourcePath"
+        logger.info("Loading resource: $resourcePath")
         final URL resourceUrl = classLoader.getResource(resourcePath);
         return resourceUrl.openConnection();
     }
@@ -36,7 +40,7 @@ class ClasspathHandler extends URLStreamHandler {
         }
         catch (Throwable t)
         {
-            t.printStackTrace();
+            logger.error("Unable to register streamHandlerFactory used for loading resources from the classpath." , t);
         }
     }
 
