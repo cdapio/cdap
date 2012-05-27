@@ -14,6 +14,8 @@ class ContinuuityPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project t) {
+
+        // Enables URLs that start with "classpath" to be used so that resources can be loaded from jars.
         ConfigurableStreamHandlerFactory streamHandlerFactory = new ConfigurableStreamHandlerFactory("classpath",
                 new ClasspathHandler());
         URL.setURLStreamHandlerFactory(streamHandlerFactory);
@@ -40,9 +42,9 @@ class ContinuuityPlugin implements Plugin<Project> {
 
         @Override
         protected URLConnection openConnection(URL u) throws IOException {
-            String scriptPath = u.getHost() + u.getPath();
-            //println "Loading gradle script: $scriptPath"
-            final URL resourceUrl = classLoader.getResource(scriptPath);
+            String resourcePath = u.getHost() + u.getPath();
+            println "Loading resource: $resourcePath"
+            final URL resourceUrl = classLoader.getResource(resourcePath);
             return resourceUrl.openConnection();
         }
     }

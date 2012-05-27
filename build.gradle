@@ -1,4 +1,3 @@
-
 import com.continuuity.gradle.GitRepo;
 
 apply plugin: 'continuuity'
@@ -8,9 +7,11 @@ gitRepos << new GitRepo(name: "common");
 gitRepos << new GitRepo(name: "data-fabric");
 gitRepos << new GitRepo(name: "flow");
 
-task updateRepos {
+defaultTasks 'loadRepos', 'build'
+
+task loadRepos << {
     for (g in gitRepos) {
-        g.update();
+        g.load();
     }
 }
 

@@ -20,23 +20,17 @@ class GitRepo {
 
     private String shellOption;
 
-    public update ()
+    public void load ()
     {
         init();
-        File target = new File(dir);
-        if(!target.exists())
+        File destination = new File(dir);
+        if(!destination.exists())
         {
-            cloneRepo();
+            File file = new File(dir);
+            String cmd = "git clone -v --branch $branch $origin $file.canonicalPath";
+            println "Cloning $name ($cmd)...";
+            runCommand(cmd);
         }
-    }
-
-    public void cloneRepo ()
-    {
-        init();
-        File file = new File(dir);
-        String cmd = "git clone -v --branch $branch $origin $file.canonicalPath";
-        println "Cloning $name ($cmd)...";
-        runCommand(cmd);
     }
 
     private void runCommand (String cmd)
