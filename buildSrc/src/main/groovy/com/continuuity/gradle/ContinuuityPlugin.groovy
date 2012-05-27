@@ -14,8 +14,6 @@ class ContinuuityPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project t) {
-        println "Continuuity Build System"
-
         ConfigurableStreamHandlerFactory streamHandlerFactory = new ConfigurableStreamHandlerFactory("classpath",
                 new ClasspathHandler());
         URL.setURLStreamHandlerFactory(streamHandlerFactory);

@@ -1,3 +1,6 @@
+apply plugin: 'groovy'
+apply plugin: 'idea'
+
 /// TODO: Get clover plugin from artifactory instead.
 repositories {
     add(new org.apache.ivy.plugins.resolver.URLResolver()) {
@@ -7,5 +10,7 @@ repositories {
 }
 
 dependencies {
+    compile gradleApi()
+    groovy localGroovy()
     runtime 'bmuschko:gradle-clover-plugin:0.5.2'
 }
