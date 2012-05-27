@@ -1,0 +1,23 @@
+// The purpose of this script is to bootstrap the continuuity build system.
+// This script is maintained in the continuuity repo and is copied to each
+// submodule to allow them to be developed independent of the continuuity.
+// This script should only contain the bare essentials to load the
+// continuuity plugin.
+project.buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "https://repository.continuuity.com/buildsrc"
+        }
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    dependencies {
+          classpath "com.continuuity:buildSrc:1.0-SNAPSHOT"
+    }
+}
+
+
+

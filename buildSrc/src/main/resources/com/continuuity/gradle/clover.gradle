@@ -9,7 +9,7 @@ allprojects
 
     clover
     {
-        //licenseLocation = 'classpath:com/continuuity/gradle/clover.license'
+        licenseLocation = 'classpath://com/continuuity/gradle/clover.license'
         // Exclude all generated classes from the test report.
         excludes = ['**/generated/*.java']
         // This makes sure the gradle clover plugin doesn't set the default includeTest path to '**/*Test.java'.

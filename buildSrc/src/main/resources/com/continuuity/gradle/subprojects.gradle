@@ -1,0 +1,39 @@
+apply plugin: 'java'
+
+/// Define common dependencies.
+dependencies
+{
+    compile "org.slf4j:slf4j-log4j12:1.6.4"
+    compile "org.slf4j:slf4j-api:1.6.4"
+    compile "org.slf4j:slf4j-simple:1.6.4"
+    testCompile "org.mockito:mockito-core:1.9.+"
+    testCompile "junit:junit:4.+"
+}
+
+/**
+ * Creates source jar
+ */
+task sourcesJar(type: Jar, dependsOn:classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+/**
+ * Creates javadoc jar
+ */
+task javadocJar(type: Jar, dependsOn:javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+/**
+ * Builds jar, source and docs
+ */
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+}
+
+
+

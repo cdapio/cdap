@@ -1,13 +1,5 @@
 apply plugin: 'groovy'
-apply plugin: 'idea'
-
-/// TODO: Get clover plugin from artifactory instead.
-repositories {
-    add(new org.apache.ivy.plugins.resolver.URLResolver()) {
-        name = 'GitHub'
-        addArtifactPattern 'http://cloud.github.com/downloads/[organisation]/[module]/[module]-[revision].[ext]'
-    }
-}
+apply from: 'src/main/resources/com/continuuity/gradle/allprojects.gradle'
 
 dependencies {
     compile gradleApi()

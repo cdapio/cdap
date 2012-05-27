@@ -1,0 +1,48 @@
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+group = 'com.continuuity'
+version = '1.0.0-SNAPSHOT'
+ext.artifactId = projectDir.name
+
+defaultTasks 'build'
+
+void setDefault (String name, Object value)
+{
+    if(!project.hasProperty (name))
+    {
+        project.ext.set(name, value);
+    }
+}
+
+setDefault('artifactoryUsername', 'gradle');
+setDefault('artifactoryPassword', '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy');
+
+/// Define artifact repositories.
+repositories {
+    maven {
+        credentials {
+            username artifactoryUsername
+            password artifactoryPassword
+        }
+        url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
+    }
+    maven {
+        credentials {
+            username artifactoryUsername
+            password artifactoryPassword
+        }
+        url "http://repository.continuuity.com:8081/artifactory/libs-snapshot"
+    }
+    maven {
+        credentials {
+            username artifactoryUsername
+            password artifactoryPassword
+        }
+        url "http://repository.continuuity.com:8081/artifactory/libs-release"
+    }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+}

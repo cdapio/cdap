@@ -13,56 +13,48 @@ import org.gradle.api.Plugin
 class ContinuuityPlugin implements Plugin<Project> {
 
     @Override
-    void apply(Project t) {
+    void apply(Project p) {
 
-        // Enables URLs that start with "classpath" to be used so that resources can be loaded from jars.
-        ConfigurableStreamHandlerFactory streamHandlerFactory = new ConfigurableStreamHandlerFactory("classpath",
-                new ClasspathHandler());
-        URL.setURLStreamHandlerFactory(streamHandlerFactory);
+        String pluginName = getClass().getName();
+        // Only apply if not already applied.
+        if(!p.extensions.getExtraProperties().has(pluginName))
+        {
+            ClasspathHandler.register();
+            if(!p.getSubprojects().isEmpty())
+            {
+                println "Applying Continuuity Plugin (Multi-module)"
 
+                p.allprojects {
+                    applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
+                }
+
+                p.subprojects {
+                    applyFrom(getProject(), "classpath:com/continuuity/gradle/subprojects.gradle")
+                }
+
+                applyFrom(p, "classpath:com/continuuity/gradle/sonar.gradle")
+                applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
+            }
+            else
+            {
+                println "Applying Continuutiy Plugin (Standalone)"
+
+                applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
+                applyFrom(p, "classpath:com/continuuity/gradle/subprojects.gradle")
+                applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
+            }
+
+            p.allprojects
+            {
+                extensions.getExtraProperties().set(pluginName, 'true');
+            }
+        }
+    }
+
+    void applyFrom (Project p, String uri)
+    {
         Map map = new HashMap();
-        map.put("from", new URL("classpath:com/continuuity/gradle/common.gradle"));
-        t.apply(map);
-
-        map.put("from", new URL("classpath:com/continuuity/gradle/sonar.gradle"));
-        t.apply(map);
-
-        map.put("from", new URL("classpath:com/continuuity/gradle/clover.gradle"));
-        t.apply(map);
-    }
-
-    /** A {@link URLStreamHandler} that handles resources on the classpath. */
-    public class ClasspathHandler extends URLStreamHandler {
-        /** The classloader to find resources from. */
-        private final ClassLoader classLoader;
-
-        public ClasspathHandler() {
-            this.classLoader = getClass().getClassLoader();
-        }
-
-        @Override
-        protected URLConnection openConnection(URL u) throws IOException {
-            String resourcePath = u.getHost() + u.getPath();
-            println "Loading resource: $resourcePath"
-            final URL resourceUrl = classLoader.getResource(resourcePath);
-            return resourceUrl.openConnection();
-        }
-    }
-
-    class ConfigurableStreamHandlerFactory implements URLStreamHandlerFactory {
-        private final Map<String, URLStreamHandler> protocolHandlers;
-
-        public ConfigurableStreamHandlerFactory(String protocol, URLStreamHandler urlHandler) {
-            protocolHandlers = new HashMap<String, URLStreamHandler>();
-            addHandler(protocol, urlHandler);
-        }
-
-        public void addHandler(String protocol, URLStreamHandler urlHandler) {
-            protocolHandlers.put(protocol, urlHandler);
-        }
-
-        public URLStreamHandler createURLStreamHandler(String protocol) {
-            return protocolHandlers.get(protocol);
-        }
+        map.put("from", new URL(uri));
+        p.apply (map);
     }
 }
