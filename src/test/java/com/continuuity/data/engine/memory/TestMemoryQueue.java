@@ -382,9 +382,9 @@ public class TestMemoryQueue {
 
     // push
     assertTrue(queue.push(valueOne));
-    waitForAndAssertCount(1, popper.popRunLoop);
-    waitForAndAssertCount(1, popper.pops);
-    
+		waitForAndAssertCount(1, popper.pops);
+		waitForAndAssertCount(2, popper.popRunLoop);
+
     // popper will pop, but we should still be able to pop!
     entry = queue.pop(consumer, config, drain);
     assertNotNull(entry);
@@ -400,27 +400,30 @@ public class TestMemoryQueue {
     
     // trigger another pop
     assertTrue(popper.triggerPop());
-    waitForAndAssertCount(2, popper.popRunLoop);
-    waitForAndAssertCount(1, popper.pops);
+		waitForAndAssertCount(1, popper.pops);
+		// popper had popped and goes into its next loop
+		waitForAndAssertCount(2, popper.popRunLoop);
 
     // nothing in queue so popper should be empty
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNull(entry);
 
-    // push
+		// push
     assertTrue(queue.push(valueTwo));
-    waitForAndAssertCount(2, popper.popRunLoop);
-    waitForAndAssertCount(2, popper.pops);
-    
-    // popper should have value2
+		waitForAndAssertCount(2, popper.pops);
+		// popper had popped and goes into its next loop
+		waitForAndAssertCount(3, popper.popRunLoop);
+
+		// popper should have value2
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
-    
-    // trigger popper again, should get the same one back
-    assertTrue(popper.triggerPop());
-    waitForAndAssertCount(3, popper.popRunLoop);
-    waitForAndAssertCount(3, popper.pops);
+
+		// trigger popper again, should get the same one back
+		assertTrue(popper.triggerPop());
+		waitForAndAssertCount(3, popper.pops);
+		// popper had popped and goes into its next loop
+		waitForAndAssertCount(4, popper.popRunLoop);
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
