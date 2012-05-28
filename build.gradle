@@ -1,14 +1,11 @@
-group = 'com.continuuity'
-artifactId = 'data-fabric'
-version = currentVersion
-
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'sonar'
-apply plugin: 'maven'
 apply plugin: 'continuuity'
 
-defaultTasks 'build'
+/**
+ * Add continuuity plugin to the classpath.
+ */
+buildscript {
+   apply from: 'continuuity.gradle'
+}
 
 test {
 	testLogging.showStandardStreams = false
@@ -26,42 +23,7 @@ dependencies {
   compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
   compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
   compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-  testCompile group: 'junit', name: 'junit', version: '4.+'
-  testCompile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1', classifier: 'tests'
 }
 
-/**
-* Define artifact repositories.
-*/
-repositories {
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
- }
 
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/libs-snapshot"
- }
 
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/libs-release"
- }
-}
-
-/**
- * Define build dependency stuff.jdbc:derby://localhost:1527/sonar;create=true
- */
-buildscript {
- apply from: 'continuuity.gradle'
-}
