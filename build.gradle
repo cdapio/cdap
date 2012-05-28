@@ -2,11 +2,10 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 
 def componentName = 'Data Fabric'
-def globalVersion = new Version(currentVersion)
+def globalVersion = currentVersion
 
 group = 'com.continuuity'
 version = globalVersion
-status = version.status
 
 def artifactId = projectDir.name
 def groupId = group
@@ -19,6 +18,10 @@ apply plugin: 'sonar'
 apply plugin: 'maven'
 
 defaultTasks 'build'
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+}
 
 test {
 	testLogging.showStandardStreams = false
@@ -36,8 +39,8 @@ dependencies {
 //  clover  group: 'com.cenqua.clover', name:'clover', version:'3.1.3'
   compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
   compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
-  compile group: 'com.continuuity', name: 'common', version: '0.1.0-20120523172057'
-	testCompile group: 'junit', name: 'junit', version: '4.+'
+  compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+  testCompile group: 'junit', name: 'junit', version: '4.+'
   testCompile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1', classifier: 'tests'
 }
 
@@ -161,33 +164,3 @@ sonar {
 //}
 
 //task clover (dependsOn: cloverGenerateReport)
-
-class Version {
-  String originalVersion
-  String thisVersion
-  String status
-  Date buildTime
-
-  Version(String versionValue) {
-    buildTime = new Date()
-    originalVersion = versionValue
-    if (originalVersion.endsWith('-SNAPSHOT')) {
-      status = 'integration'
-      thisVersion = originalVersion.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
-    } else {
-      status = 'release'
-      thisVersion = versionValue
-    }
-  }
-
-  String getTimestamp() {
-    // Convert local file timestamp to UTC
-    def format = new SimpleDateFormat('yyyyMMddHHmmss')
-    format.setCalendar(Calendar.getInstance(TimeZone.getTimeZone('UTC')));
-    return format.format(buildTime)
-  }
-
-  String toString() {
-    thisVersion
-  }
-}
