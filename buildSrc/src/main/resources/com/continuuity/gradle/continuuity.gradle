@@ -17,9 +17,9 @@ project.buildscript {
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
         configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
-        if(!ext.has(buildSrcVersion))
+        if(!ext.has('buildSrcVersion'))
         {
-            ext.buildSrcVersion = 'latest.integration'
+            ext.buildSrcVersion = '1.0.0-SNAPSHOT'
         }
         dependencies {
             classpath "com.continuuity:buildSrc:$buildSrcVersion"

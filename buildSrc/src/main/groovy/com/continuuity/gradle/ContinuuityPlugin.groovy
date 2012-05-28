@@ -61,7 +61,6 @@ class ContinuuityPlugin implements Plugin<Project> {
         println "PROJECT_NAME:    " + project.getProperties().get("artifactId");
         println "ROOT_DIR:        " + project.projectDir
         println "JAVA_VERSION:    " + System.properties.get("java.version") + " " +
-                System.properties.get("java.version") + " " +
                 System.properties.get("java.vendor") + " " +
                 System.properties.get("os.name") + " " +
                 System.properties.get("os.version") + " " +
