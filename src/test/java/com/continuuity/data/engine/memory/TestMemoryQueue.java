@@ -23,12 +23,12 @@ public class TestMemoryQueue {
 
   private static final long MAX_TIMEOUT_MS = 1000;
   private static final long POP_BLOCK_TIMEOUT_MS = 2;
-  
+
   @Test
   public void testSingleConsumerSimple() throws Exception {
     final boolean sync = true;
     final boolean drain = false;
-    
+
     MemoryQueue queue = new MemoryQueue();
 
     byte [] valueOne = Bytes.toBytes("value1");
@@ -62,13 +62,13 @@ public class TestMemoryQueue {
 
     // ack
     assertTrue(queue.ack(entry));
-    
+
     // verify queue is empty
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
   }
-  
+
   @Test
   public void testSingleConsumerAsync() throws Exception {
     final boolean sync = false;
@@ -103,23 +103,23 @@ public class TestMemoryQueue {
 
     // ack
     assertTrue(queue.ack(entryThree));
-    
+
     // pop fourth
     QueueEntry entryFour = queue.pop(consumer, config, drain);
     assertTrue(Bytes.equals(entryFour.getValue(), Bytes.toBytes(4)));
-    
+
     // pop five through ten, and ack them
     for (int i=5; i<11; i++) {
       QueueEntry entry = queue.pop(consumer, config, drain);
       assertTrue(Bytes.equals(entry.getValue(), Bytes.toBytes(i)));
       assertTrue(queue.ack(entry));
     }
-    
+
     // verify queue is empty (first and fourth not ackd but still popd)
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
-    
+
     // second and third ackd, another ack should fail
     assertFalse(queue.ack(entryTwo));
     assertFalse(queue.ack(entryThree));
@@ -132,7 +132,7 @@ public class TestMemoryQueue {
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
   }
-  
+
   @Test
   public void testMultipleConsumerAsyncTimeouts() throws Exception {
     final boolean sync = false;
@@ -167,23 +167,23 @@ public class TestMemoryQueue {
 
     // ack
     assertTrue(queue.ack(entryThree));
-    
+
     // pop fourth
     QueueEntry entryFour = queue.pop(consumer, config, drain);
     assertTrue(Bytes.equals(entryFour.getValue(), Bytes.toBytes(4)));
-    
+
     // pop five through ten, and ack them
     for (int i=5; i<11; i++) {
       QueueEntry entry = queue.pop(consumer, config, drain);
       assertTrue(Bytes.equals(entry.getValue(), Bytes.toBytes(i)));
       assertTrue(queue.ack(entry));
     }
-    
+
     // verify queue is empty (first and fourth not ackd but still popd)
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
-    
+
     // second and third ackd, another ack should fail
     assertFalse(queue.ack(entryTwo));
     assertFalse(queue.ack(entryThree));;
@@ -192,12 +192,12 @@ public class TestMemoryQueue {
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
-    
+
     // now set the timeout and sleep for timeout + 1
     long oldTimeout = MemoryQueue.TIMEOUT;
     MemoryQueue.TIMEOUT = 50;
     Thread.sleep(51);
-    
+
     // two pops in a row should give values one and four
     QueueEntry entryOneB = queue.pop(consumer, config, drain);
     assertNotNull(entryOneB);
@@ -205,20 +205,20 @@ public class TestMemoryQueue {
     QueueEntry entryFourB = queue.pop(consumer, config, drain);
     assertNotNull(entryFourB);
     assertTrue(Bytes.equals(entryFourB.getValue(), Bytes.toBytes(4)));
-    
+
     // and then queue should be empty again
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
-    
+
     // first and fourth are not acked, ack should pass using either entry
     assertTrue(queue.ack(entryOne));
     assertTrue(queue.ack(entryFourB));
-    
+
     // using other entry version should fail second time
     assertFalse(queue.ack(entryOneB));
     assertFalse(queue.ack(entryFour));
-    
+
     // restore timeout
     MemoryQueue.TIMEOUT = oldTimeout;
   }
@@ -253,27 +253,27 @@ public class TestMemoryQueue {
 
     // drain!
     drain = true;
-    
+
     // pop should now give us back the un-ack'd stuff
     QueueEntry entryOneB = queue.pop(consumer, config, drain);
     assertNotNull(entryOneB);
     assertTrue("expected 1, actual " + Bytes.toInt(entryOneB.getValue()),
         Bytes.equals(entryOneB.getValue(), Bytes.toBytes(1)));
-    
+
     // same thing again
     QueueEntry entryOneC = queue.pop(consumer, config, drain);
     assertNotNull(entryOneC);
     assertTrue(Bytes.equals(entryOneC.getValue(), Bytes.toBytes(1)));
-    
+
     // ack
     assertTrue(queue.ack(entryOne));
-    
+
     // should be null now without hacking sync mode
     assertNull(queue.pop(consumer, config, drain));
-    
+
     // move off drain mode
     drain = false;
-    
+
     // should get entry three now
     QueueEntry entryThree = queue.pop(consumer, config, drain);
     assertNotNull(entryThree);
@@ -312,42 +312,42 @@ public class TestMemoryQueue {
     // pop again without acking, get second value
     QueueEntry entryTwo = queue.pop(consumer, config, drain);
     assertTrue(Bytes.equals(entryTwo.getValue(), Bytes.toBytes(2)));
-    
+
     // drain!
     drain = true;
-    
+
     // pop should give us back the un-ack'd stuff still
     QueueEntry entryTwoB = queue.pop(consumer, config, drain);
     assertNotNull(entryTwoB);
     assertTrue("expected 2, actual " + Bytes.toInt(entryTwoB.getValue()),
         Bytes.equals(entryTwoB.getValue(), Bytes.toBytes(2)));
-    
+
     // same thing again
     QueueEntry entryTwoC = queue.pop(consumer, config, drain);
     assertNotNull(entryTwoC);
     assertTrue(Bytes.equals(entryTwoC.getValue(), Bytes.toBytes(2)));
-    
+
     // ack
     assertTrue(queue.ack(entryTwoB));
-    
+
     // should be null now without hacking sync mode
     assertNull(queue.pop(consumer, config, drain));
-    
+
     // move off drain mode
     drain = false;
-    
+
     // should get entry three now
     QueueEntry entryThree = queue.pop(consumer, config, drain);
     assertNotNull(entryThree);
     assertTrue(Bytes.equals(entryThree.getValue(), Bytes.toBytes(3)));
 
   }
-  
+
   public void testMultipleConsumerSyncDrain() {}
-  
+
   public void testMultipleConsumerAsyncDrain() {}
-  
-  
+
+
   @Test
   public void testSingleConsumerThreaded() throws Exception {
     final boolean sync = true;
@@ -362,15 +362,15 @@ public class TestMemoryQueue {
     QueueConsumer consumer = new QueueConsumer(0, 0, 1, sync, drain);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
     QueueConfig config = new QueueConfig(partitioner, sync);
-    
+
     // spawn a thread to pop
     QueuePopper popper = new QueuePopper(queue, consumer, partitioner, sync,
         drain);
     popper.start();
-    
+
     // popper should be empty
     assertNull(popper.nonBlockPop());
-    
+
     // trigger a pop
     assertTrue(popper.triggerPop());
     waitForAndAssertCount(1, popper.popRunLoop);
@@ -382,14 +382,14 @@ public class TestMemoryQueue {
 
     // push
     assertTrue(queue.push(valueOne));
-		waitForAndAssertCount(1, popper.pops);
-		waitForAndAssertCount(2, popper.popRunLoop);
+    waitForAndAssertCount(1, popper.pops);
+    waitForAndAssertCount(2, popper.popRunLoop);
 
     // popper will pop, but we should still be able to pop!
     entry = queue.pop(consumer, config, drain);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueOne));
-    
+
     // popper should also have this loaded
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
@@ -397,45 +397,45 @@ public class TestMemoryQueue {
 
     // ack it!
     queue.ack(entry);
-    
+
     // trigger another pop
     assertTrue(popper.triggerPop());
-		waitForAndAssertCount(1, popper.pops);
-		// popper had popped and goes into its next loop
-		waitForAndAssertCount(2, popper.popRunLoop);
+    waitForAndAssertCount(1, popper.pops);
+    // popper had popped and goes into its next loop
+    waitForAndAssertCount(2, popper.popRunLoop);
 
     // nothing in queue so popper should be empty
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNull(entry);
 
-		// push
+    // push
     assertTrue(queue.push(valueTwo));
-		waitForAndAssertCount(2, popper.pops);
-		// popper had popped and goes into its next loop
-		waitForAndAssertCount(3, popper.popRunLoop);
+    waitForAndAssertCount(2, popper.pops);
+    // popper had popped and goes into its next loop
+    waitForAndAssertCount(3, popper.popRunLoop);
 
-		// popper should have value2
+    // popper should have value2
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
 
-		// trigger popper again, should get the same one back
-		assertTrue(popper.triggerPop());
-		waitForAndAssertCount(3, popper.pops);
-		// popper had popped and goes into its next loop
-		waitForAndAssertCount(4, popper.popRunLoop);
+    // trigger popper again, should get the same one back
+    assertTrue(popper.triggerPop());
+    waitForAndAssertCount(3, popper.pops);
+    // popper had popped and goes into its next loop
+    waitForAndAssertCount(4, popper.popRunLoop);
     entry = popper.blockPop(POP_BLOCK_TIMEOUT_MS);
     assertNotNull(entry);
     assertTrue(Bytes.equals(entry.getValue(), valueTwo));
 
     // ack it!
     queue.ack(entry);
-    
+
     // verify queue is empty
     queue.popSync = false;
     assertNull(queue.pop(consumer, config, drain));
     queue.popSync = true;
-    
+
     // shut down
     popper.shutdown();
   }
@@ -461,7 +461,7 @@ public class TestMemoryQueue {
     for (int i=0; i<n*n; i++) {
       values[i] = Bytes.toBytes((long)i);
     }
-    
+
     // Make a partitioner that just converts value to long and modulos it
     QueuePartitioner partitioner = new QueuePartitioner() {
       @Override
@@ -471,7 +471,7 @@ public class TestMemoryQueue {
       }
     };
     QueueConfig config = new QueueConfig(partitioner, sync);
-    
+
     // Start a popper for every consumer!
     QueuePopper [][] poppers = new QueuePopper[n][];
     for (int i=0; i<n; i++) {
@@ -483,14 +483,18 @@ public class TestMemoryQueue {
         assertTrue(poppers[i][j].triggerPop());
       }
     }
-    
+
+    // No queue pop returns yet
+    long expectedQueuePops = 0;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // verify everyone is empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         assertNull(poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS));
       }
     }
-    
+
     // no pops yet
     long numPops = 0L;
     for (int i=0; i<n; i++) {
@@ -498,16 +502,16 @@ public class TestMemoryQueue {
         assertEquals(numPops, poppers[i][j].pops.get());
       }
     }
-    
+
     // push the first four values
     for (int i=0; i<n; i++) {
       assertTrue(queue.push(values[i]));
     }
-    
-    // wait for 16 queuePop() wake-ups
-    long expectedQueuePops = 16;
-    waitForAndAssertCount(expectedQueuePops, queue.wakeUps);
-    
+
+    // wait for 16 more queuePop() returns
+    expectedQueuePops += 16;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // every popper/consumer should have one entry
     numPops++;
     for (int i=0; i<n; i++) {
@@ -515,10 +519,10 @@ public class TestMemoryQueue {
         waitForAndAssertCount(numPops, poppers[i][j].pops);
         QueueEntry entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
         assertNotNull(entry);
-        assertEquals((long)j, Bytes.toLong(entry.getValue()));
+        assertEquals(j, Bytes.toLong(entry.getValue()));
       }
     }
-    
+
     // trigger pops again, should get the same entries
     numPops++;
     for (int i=0; i<n; i++) {
@@ -527,36 +531,48 @@ public class TestMemoryQueue {
         waitForAndAssertCount(numPops, poppers[i][j].pops);
       }
     }
-    
+
+    // wait for 16 more queuePop() returns
+    expectedQueuePops += 16;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // every popper/consumer should have one entry
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         QueueEntry entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
         assertNotNull(entry);
-        assertEquals((long)j, Bytes.toLong(entry.getValue()));
+        assertEquals(j, Bytes.toLong(entry.getValue()));
       }
     }
-    
+
     // directly popping should also yield the same entry
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         QueueEntry entry = queue.pop(consumers[i][j], config, drain);
         assertNotNull(entry);
-        assertEquals((long)j, Bytes.toLong(entry.getValue()));
+        assertEquals(j, Bytes.toLong(entry.getValue()));
       }
     }
-    
+
+    // wait for 16 more queuePop() returns
+    expectedQueuePops += 16;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // ack it for groups(0,1) consumers(2,3)
     for (int i=0; i<n/2; i++) {
       for (int j=n/2; j<n; j++) {
         QueueEntry entry = queue.pop(consumers[i][j], config, drain);
         assertNotNull(entry);
-        assertEquals((long)j, Bytes.toLong(entry.getValue()));
+        assertEquals(j, Bytes.toLong(entry.getValue()));
         assertTrue(queue.ack(entry));
         System.out.println("ACK: i=" + i + ", j=" + j);
       }
     }
-    
+
+    // wait for 4 more queuePop() returns
+    expectedQueuePops += 4;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // trigger poppers
     numPops++;
     for (int i=0; i<n; i++) {
@@ -566,7 +582,11 @@ public class TestMemoryQueue {
         waitForAndAssertCount(numPops, poppers[i][j].triggers);
       }
     }
-    
+
+    // wait for 12 more queuePop() returns
+    expectedQueuePops += 12;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // expect null for groups(0,1) consumers(2,3), same value for others
     // ack everyone not ackd
     for (int i=0; i<n; i++) {
@@ -577,17 +597,21 @@ public class TestMemoryQueue {
           System.out.println("POP: i=" + i + ", j=" + j);
           QueueEntry entry = queue.pop(consumers[i][j], config, drain);
           assertNotNull(entry);
-          assertEquals((long)j, Bytes.toLong(entry.getValue()));
+          assertEquals(j, Bytes.toLong(entry.getValue()));
           assertTrue(queue.ack(entry));
           // buffer of popper should still have that entry
           waitForAndAssertCount(numPops, poppers[i][j].pops);
           entry = poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS);
           assertNotNull(entry);
-          assertEquals((long)j, Bytes.toLong(entry.getValue()));
+          assertEquals(j, Bytes.toLong(entry.getValue()));
         }
       }
     }
-    
+
+    // wait for 12 more queuePop() returns
+    expectedQueuePops += 12;
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
+
     // trigger pops again, will get false for groups(0,1) consumers(2,3)
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
@@ -609,24 +633,24 @@ public class TestMemoryQueue {
         poppers[i][j].pops.incrementAndGet();
       }
     }
-    
+
     // everyone should be empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         assertNull(poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS));
       }
     }
-    
+
     // push everything!
     for (int i=0; i<n*n; i++) {
       assertTrue(queue.push(values[i]));
     }
-    
+
     // wait for 16 more queuePop() wake-ups
     expectedQueuePops += 16;
-    waitForAndAssertCount(expectedQueuePops, queue.wakeUps);
+    waitForAndAssertCount(expectedQueuePops, queue.popReturns);
     numPops++;
-    
+
     // pop and ack everything.  each consumer should have 4 things!
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
@@ -649,7 +673,7 @@ public class TestMemoryQueue {
         assertNull(poppers[i][j].blockPop(POP_BLOCK_TIMEOUT_MS));
       }
     }
-    
+
     // everyone should be empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
@@ -657,7 +681,7 @@ public class TestMemoryQueue {
       }
     }
   }
-  
+
   private void waitForAndAssertCount(long expected, AtomicLong wakeUps) {
     long start = System.currentTimeMillis();
     long end = start + MAX_TIMEOUT_MS;
@@ -674,22 +698,22 @@ public class TestMemoryQueue {
   }
 
   class QueuePopper extends Thread {
-    
+
     private final MemoryQueue queue;
     private final QueueConsumer consumer;
     private final QueueConfig config;
     private final boolean drain;
-    
-    private AtomicBoolean popTrigger = new AtomicBoolean(false);
-    
+
+    private final AtomicBoolean popTrigger = new AtomicBoolean(false);
+
     AtomicLong triggers = new AtomicLong(0);
     AtomicLong pops = new AtomicLong(0);
     AtomicLong popRunLoop = new AtomicLong(0);
-    
+
     private QueueEntry entry;
-    
+
     private boolean keepgoing = true;
-    
+
     /**
      * @param queue
      * @param consumer
@@ -710,16 +734,16 @@ public class TestMemoryQueue {
       this.entry = null;
       return ret;
     }
-    
+
     QueueEntry blockPop(long timeout) {
       QueueEntry entry = nonBlockPop();
       if (entry != null) return entry;
       long cur = System.currentTimeMillis();
       long end = cur + timeout;
       while (entry == null && cur < end) {
-        synchronized (popTrigger) {
+        synchronized (this.popTrigger) {
           try {
-            popTrigger.wait(timeout);
+            this.popTrigger.wait(timeout);
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
@@ -734,47 +758,47 @@ public class TestMemoryQueue {
      * @return true if a pop was triggered, false if not
      */
     boolean triggerPop() {
-      synchronized (popTrigger) {
-        if (popTrigger.get()) {
+      synchronized (this.popTrigger) {
+        if (this.popTrigger.get()) {
           return false;
         }
         this.entry = null;
-        popTrigger.set(true);
-        popTrigger.notifyAll();
+        this.popTrigger.set(true);
+        this.popTrigger.notifyAll();
         return true;
       }
     }
-    
+
     public void shutdown() {
       this.keepgoing = false;
-      this.interrupt();
+      interrupt();
     }
 
     @Override
     public void run() {
-      while (keepgoing) {
-        synchronized (popTrigger) {
-          popRunLoop.incrementAndGet();
-          while (!popTrigger.get() && keepgoing) {
+      while (this.keepgoing) {
+        synchronized (this.popTrigger) {
+          this.popRunLoop.incrementAndGet();
+          while (!this.popTrigger.get() && this.keepgoing) {
             try {
-              popTrigger.wait();
+              this.popTrigger.wait();
             } catch (InterruptedException e) {
-              if (keepgoing) e.printStackTrace();
+              if (this.keepgoing) e.printStackTrace();
             }
           }
-          triggers.incrementAndGet();
+          this.triggers.incrementAndGet();
         }
         QueueEntry entry = null;
-        while (entry == null && keepgoing) {
+        while (entry == null && this.keepgoing) {
           try {
-            entry = queue.pop(consumer, config, drain);
+            entry = this.queue.pop(this.consumer, this.config, this.drain);
           } catch (InterruptedException e) {
-            if (keepgoing) e.printStackTrace();
+            if (this.keepgoing) e.printStackTrace();
           }
         }
-        popTrigger.set(false);
+        this.popTrigger.set(false);
         this.entry = entry;
-        pops.incrementAndGet();
+        this.pops.incrementAndGet();
       }
     }
   }

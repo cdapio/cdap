@@ -28,7 +28,7 @@ public class MemoryQueue implements PowerQueue {
   /** Used for locking, generating ids, and tracking the total queue size */
   private final AtomicLong entryIds = new AtomicLong(0);
 
-  final AtomicLong wakeUps = new AtomicLong(0);
+  final AtomicLong popReturns = new AtomicLong(0);
 
   /** Map from GroupID to GroupHead */
   private final ConcurrentHashMap<Integer,ConsumerGroup> consumerGroups =
@@ -116,6 +116,7 @@ public class MemoryQueue implements PowerQueue {
           if (config.getPartitioner().shouldEmit(consumer, entry)) {
             entry.setConsumer(consumer);
             info.setPopConsumer(consumer);
+            this.popReturns.incrementAndGet();
             return entry;
           }
         }
@@ -198,7 +199,6 @@ public class MemoryQueue implements PowerQueue {
       while (this.entryIds.get() == start) {
         this.entryIds.wait();
       }
-      this.wakeUps.incrementAndGet();
     }
   }
 
