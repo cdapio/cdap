@@ -1,9 +1,9 @@
 apply plugin: 'idea'
 apply plugin: 'maven'
 
-group = 'com.continuuity'
 version = '1.0.0-SNAPSHOT'
-ext.artifactId = projectDir.name
+ext.groupId = 'com.continuuity'
+ext.artifactId = projectDir.name;
 
 defaultTasks 'build'
 
@@ -45,4 +45,17 @@ repositories {
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+}
+
+uploadArchives {
+    repositories {
+        repositories.mavenDeployer {
+            repository(url: "https://repository.continuuity.com/continuuity-gradle-local") {
+                authentication(userName: artifactoryUsername, password: artifactoryPassword)
+            }
+            pom.version = version
+            pom.artifactId = artifactId
+            pom.groupId = groupId
+        }
+    }
 }
