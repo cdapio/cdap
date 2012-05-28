@@ -5,11 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Created with IntelliJ IDEA.
- * User: Eric
- * Date: 5/27/12
- * Time: 9:42 AM
- * To change this template use File | Settings | File Templates.
+ * Enables URLs that start with "classpath" to connect to resources
+ * using the class loader.
  */
 class ClasspathHandler extends URLStreamHandler {
 

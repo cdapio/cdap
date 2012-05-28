@@ -1,3 +1,5 @@
+// The contents of this file applies to all subprojects.
+
 apply plugin: 'java'
 
 /// Define common dependencies.

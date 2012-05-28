@@ -4,11 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.Plugin
 
 /**
- * Created with IntelliJ IDEA.
- * User: Eric
- * Date: 5/26/12
- * Time: 5:13 PM
- * To change this template use File | Settings | File Templates.
+ * Main class for continuuity plugin.
  */
 class ContinuuityPlugin implements Plugin<Project> {
 
@@ -19,19 +15,26 @@ class ContinuuityPlugin implements Plugin<Project> {
         // Only apply if not already applied.
         if(!p.extensions.getExtraProperties().has(pluginName))
         {
+            /// Register the classpath protocol handler.
             ClasspathHandler.register();
+
+            // Check if a mult-module build or standalone build.
             if(!p.getSubprojects().isEmpty())
             {
+                // multi-module build.
                 println ":continuuity plugin:multi-module"
 
+                /// Apply the allproject.gradle file to all projects.
                 p.allprojects {
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
                 }
 
+                /// Apply the subproject.gradle file to all subprojects.
                 p.subprojects {
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/subprojects.gradle")
                 }
 
+                /// Apply sonar and clover.
                 applyFrom(p, "classpath:com/continuuity/gradle/sonar.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
 
@@ -39,8 +42,10 @@ class ContinuuityPlugin implements Plugin<Project> {
             }
             else
             {
+                // standalone build.
                 println ":continuuity plugin:standalone"
 
+                /// Apply the allprojects, clover, and subprojects settings directly to the standalone project.
                 applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/subprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
@@ -48,6 +53,7 @@ class ContinuuityPlugin implements Plugin<Project> {
                 displayProjectInfo(p);
             }
 
+            /// Flag the plugin as already loaded.
             p.allprojects
             {
                 extensions.getExtraProperties().set(pluginName, 'true');
@@ -55,6 +61,10 @@ class ContinuuityPlugin implements Plugin<Project> {
         }
     }
 
+    /**
+     * Displays useful project information to the console.
+     * @param project the project being built.
+     */
     void displayProjectInfo (Project project)
     {
         String projectName = project.getProperties().get("projectName");
@@ -75,6 +85,11 @@ class ContinuuityPlugin implements Plugin<Project> {
         println "-------------------------------------------------------------------------------------"
     }
 
+    /**
+     * Applies gradle files to the specified project.
+     * @param p   the project to apply the gradle project to.
+     * @param uri  the location of the gradle file.
+     */
     void applyFrom (Project p, String uri)
     {
         Map map = new HashMap();

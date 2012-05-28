@@ -1,31 +1,52 @@
 package com.continuuity.gradle
+
 /**
- * Created with IntelliJ IDEA.
- * User: Eric
- * Date: 5/26/12
- * Time: 8:35 PM
- * To change this template use File | Settings | File Templates.
+ *  Provides git functionality from Gradle.
  */
 class GitRepo {
 
+    /**
+     * The name of the repo.
+     */
     private String name;
 
+    /**
+     * The branch the repo should point to.
+     */
     private String branch;
 
+    /**
+     * The URL where the repo was cloned from.
+     */
     private String origin;
 
+    /**
+     * The directory location of the repo.
+     */
     private String dir;
 
+    /**
+     * The shell to use to run git commands.
+     */
     private String shell;
 
+    /**
+     * The options to pass to the shell.
+     */
     private String shellOption;
 
+    /**
+     * @return  the directory path associated with the repo.
+     */
     String getDirectory ()
     {
         init();
         return dir;
     }
 
+    /**
+     * Clones the repo if it doesn' already exist.
+     */
     void load ()
     {
         init();
@@ -39,6 +60,25 @@ class GitRepo {
         }
     }
 
+    /**
+     * Checks out a branch.
+     */
+    void checkout ()
+    {
+        init();
+        File destination = new File(dir);
+        if(destination.exists())
+        {
+            File file = new File(dir);
+            String cmd = "git checkout ${branch}";
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    /**
+     * Pulls from a repo.
+     */
     void pull ()
     {
         init();
@@ -52,6 +92,9 @@ class GitRepo {
         }
     }
 
+    /**
+     * Runs status on a repo.
+     */
     void status ()
     {
         init();
@@ -65,6 +108,11 @@ class GitRepo {
         }
     }
 
+    /**
+     * Runs a shell command.
+     * @param cmd   the command to run.
+     * @param dir   the working directory to use.
+     */
     private void runCommand (String cmd, File dir = null)
     {
         ProcessBuilder processBuilder = new ProcessBuilder(shell, shellOption, cmd)
@@ -87,6 +135,9 @@ class GitRepo {
         }
     }
 
+    /**
+     * Initializes defaults for options.
+     */
     private void init ()
     {
         if(name == null)

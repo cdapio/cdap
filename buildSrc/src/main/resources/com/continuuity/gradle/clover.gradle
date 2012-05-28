@@ -1,3 +1,5 @@
+// Configures clover for monitoring code coverage.
+
 /// Define common configuration for all projects including the root project.
 allprojects
 {
