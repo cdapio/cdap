@@ -10,7 +10,6 @@ buildscript {
 dependencies {
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.1'
     compile group: 'com.google.guava', name: 'guava', version: '11.+'
-    compile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
     compile group: 'com.netflix.curator', name: 'curator-framework', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-client', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-x-discovery', version: '1.1.+'
