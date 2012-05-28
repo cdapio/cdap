@@ -12,7 +12,7 @@ project.buildscript {
                     username "gradle"
                     password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
                 }
-                url "https://repository.continuuity.com/buildsrc"
+                url "http://repository.continuuity.com:8081/artifactory/buildsrc"
             }
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'

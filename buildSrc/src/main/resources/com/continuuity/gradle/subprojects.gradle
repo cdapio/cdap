@@ -35,17 +35,5 @@ artifacts {
     archives javadocJar
 }
 
-uploadArchives {
-    repositories {
-        repositories.mavenDeployer {
-            repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
-                authentication(userName: artifactoryUsername, password: artifactoryPassword)
-            }
-            pom.version = version
-            pom.artifactId = artifactId
-            pom.groupId = group
-        }
-    }
-}
 
 

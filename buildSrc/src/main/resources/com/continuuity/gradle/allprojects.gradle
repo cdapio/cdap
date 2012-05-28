@@ -11,7 +11,7 @@ void setDefault (String name, Object value)
     }
 }
 
-if (version == 'unspecified')
+if (version == null || version.isEmpty() || version == 'unspecified')
 {
     version = '0.1.0-SNAPSHOT'
 }

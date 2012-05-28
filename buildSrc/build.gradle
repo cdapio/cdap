@@ -1,3 +1,4 @@
+ext.artifactId='buildSrc'
 version='1.0.0-SNAPSHOT'
 
 apply plugin: 'groovy'
