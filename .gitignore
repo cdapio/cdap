@@ -19,3 +19,4 @@ lib/
 build/
 .gradle/
 .stickyStorage
+clover.license
