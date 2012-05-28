@@ -12,8 +12,8 @@ sonar {
         password = "09u0ru2039ur203r9u"
     }
     withGlobalProperties { props ->
-        props["sonar.projectName"] = "$projectName"
-        props["sonar.projectKey"] = "$projectKey"
+        props["sonar.projectName"] = projectName
+        props["sonar.projectKey"] = projectKey
     }
 }
 
