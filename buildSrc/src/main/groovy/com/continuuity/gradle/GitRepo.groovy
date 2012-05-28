@@ -28,14 +28,44 @@ class GitRepo {
         {
             File file = new File(dir);
             String cmd = "git clone -v --branch $branch $origin $file.canonicalPath";
-            println "Cloning $name ($cmd)...";
+            println "$name: $cmd";
             runCommand(cmd);
         }
     }
 
-    private void runCommand (String cmd)
+    public void pull ()
+    {
+        init();
+        File destination = new File(dir);
+        if(destination.exists())
+        {
+            File file = new File(dir);
+            String cmd = "git pull";
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    public void status ()
+    {
+        init();
+        File destination = new File(dir);
+        if(destination.exists())
+        {
+            File file = new File(dir);
+            String cmd = "git status";
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    private void runCommand (String cmd, File dir = null)
     {
         ProcessBuilder processBuilder = new ProcessBuilder(shell, shellOption, cmd)
+        if(dir != null)
+        {
+            processBuilder.directory(dir)
+        }
         processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
         BufferedReader cmdOut = new BufferedReader(new InputStreamReader(p.getInputStream()));
