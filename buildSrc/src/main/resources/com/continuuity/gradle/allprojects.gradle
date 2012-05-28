@@ -27,21 +27,21 @@ repositories {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "https://repository.continuuity.com/continuuity-gradle-local/"
+        url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
     }
     maven {
         credentials {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "https://repository.continuuity.com/libs-snapshot"
+        url "http://repository.continuuity.com:8081/artifactorylibs-snapshot"
     }
     maven {
         credentials {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "https://repository.continuuity.com/libs-release"
+        url "http://repository.continuuity.com:8081/artifactory/libs-release"
     }
 }
 
@@ -52,7 +52,7 @@ configurations.all {
 uploadArchives {
     repositories {
         repositories.mavenDeployer {
-            repository(url: "https://repository.continuuity.com/continuuity-gradle-local") {
+            repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
                 authentication(userName: artifactoryUsername, password: artifactoryPassword)
             }
             pom.version = version
