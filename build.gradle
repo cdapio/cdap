@@ -22,9 +22,25 @@ task gitClone  {
     }
 }
 
-task gitPull << {
+task gitCheckout << {
+    description = 'Checkout the specified branch.'
+    for (g in gitRepos) {
+        g.checkout();
+    }
+}
+
+task gitPull  << {
     description = 'Pulls the latest commits for all git repos.'
     for (g in gitRepos) {
+        g.pull();
+    }
+}
+
+task gitUpdate << {
+    description = 'Performs a clone, checkout, and pull on all repositories.'
+    for (g in gitRepos) {
+        g.load();
+        g.checkout();
         g.pull();
     }
 }
