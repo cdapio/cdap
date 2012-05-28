@@ -10,10 +10,16 @@ import com.continuuity.data.operation.queue.PowerQueue;
 import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MemoryQueue implements PowerQueue {
 
-  /** Maximum default timeout of 5 minutes (can be changed by tests) */
+	private static final Logger LOG = LoggerFactory
+			.getLogger(MemoryQueue.class);
+
+
+	/** Maximum default timeout of 5 minutes (can be changed by tests) */
   static long TIMEOUT = 5 * 60 * 1000;
   
   Entry head;
@@ -63,7 +69,7 @@ public class MemoryQueue implements PowerQueue {
     
     // Determine the current state for this consumer group
     ConsumerGroup group = null;
-    System.out.println("[" + consumer + "] checking " + consumer.getGroupId() + " (" + consumer.toString() + ")");
+    LOG.debug("[" + consumer + "] checking " + consumer.getGroupId() + " (" + consumer.toString() + ")");
     if (!this.consumerGroups.containsKey(consumer.getGroupId())) {
       // This group has not consumed before, set group head = head
       group = new ConsumerGroup(consumer.getGroupId());
@@ -73,17 +79,17 @@ public class MemoryQueue implements PowerQueue {
       if (existingGroup != null) {
         // Someone else added the group concurrently with us, use theirs
         group = existingGroup;
-        System.out.println("[" + consumer + "] someone else accessing concurrently groupid=" + consumer.getGroupId() + ", now group=" + group.toString() + " (" + consumer.toString() + ")");
+        LOG.debug("[" + consumer + "] someone else accessing concurrently groupid=" + consumer.getGroupId() + ", now group=" + group.toString() + " (" + consumer.toString() + ")");
       } else {
-        System.out.println("[" + consumer + "] inserted new group for groupid=" + consumer.getGroupId() + " (" + group.toString() + ")");
+				LOG.debug("[" + consumer + "] inserted new group for groupid=" + consumer.getGroupId() + " (" + group.toString() + ")");
       }
     } else {
       group = this.consumerGroups.get(consumer.getGroupId());
-      System.out.println("[" + consumer + "] found existing " + consumer.getGroupId() + " (" + group.toString() + ") (" + consumer.toString() + ")");
+			LOG.debug("[" + consumer + "] found existing " + consumer.getGroupId() + " (" + group.toString() + ") (" + consumer.toString() + ")");
     }
     
     if (group.getId() != consumer.getGroupId()) {
-      System.out.println("[" + consumer + "] ERROR!  (" + group + ") (" + consumer + ")");
+			LOG.debug("[" + consumer + "] ERROR!  (" + group + ") (" + consumer + ")");
     }
     
     // Iterate entries to see if we should emit one
