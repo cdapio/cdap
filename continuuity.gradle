@@ -17,7 +17,7 @@ project.buildscript {
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
         configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
-        if(!ext.has(buildSrcVersion))
+        if(!ext.has('buildSrcVersion'))
         {
             ext.buildSrcVersion = 'latest.integration'
         }
