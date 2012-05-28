@@ -1,24 +1,11 @@
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+apply plugin: 'continuuity'
 
-def componentName = 'Data Fabric'
-def globalVersion = new Version(currentVersion)
-
-group = 'com.continuuity'
-version = globalVersion
-status = version.status
-
-def artifactId = projectDir.name
-def groupId = group
-def versionNumber = version
-
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'sonar'
-//apply plugin: 'clover'
-apply plugin: 'maven'
-
-defaultTasks 'build'
+/**
+ * Add continuuity plugin to the classpath.
+ */
+buildscript {
+   apply from: 'continuuity.gradle'
+}
 
 test {
 	testLogging.showStandardStreams = false
@@ -33,161 +20,10 @@ test {
 }
 
 dependencies {
-//  clover  group: 'com.cenqua.clover', name:'clover', version:'3.1.3'
   compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
   compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
-  compile group: 'com.continuuity', name: 'common', version: '0.1.0-20120523172057'
-	testCompile group: 'junit', name: 'junit', version: '4.+'
-  testCompile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1', classifier: 'tests'
+  compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
 }
 
-/**
-* Define artifact repositories.
-*/
-repositories {
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
- }
 
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/libs-snapshot"
- }
 
- maven {
-   credentials {
-     username USER
-     password PASSWORD
-   }
-   url "http://repository.continuuity.com:8081/artifactory/libs-release"
- }
-}
-
-/**
- * Upload to continuuity repository
- */
-uploadArchives {
-  repositories {
-    repositories.mavenDeployer {
-      repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
-        authentication(userName: USER, password: PASSWORD)
-      }
-      pom.version = versionNumber
-      pom.artifactId = artifactId
-      pom.groupId = groupId
-    }
-  }
-}
-
-/**
- * Creates source jar
- */
-task sourcesJar(type: Jar, dependsOn:classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
-
-/**
- * Creates javadoc jar
- */
-task javadocJar(type: Jar, dependsOn:javadoc) {
-  classifier = 'javadoc'
-  from javadoc.destinationDir
-}
-
-/**
- * Builds jar, source and docs
- */
-artifacts {
-  archives jar
-  archives sourcesJar
-  archives javadocJar
-}
-
-/**
- * Configure sonar settings.
- */
-sonar {
-  server {
-    url = "https://sonar.continuuity.com"
-  }
-  database {
-    url = "jdbc:mysql://sonar.continuuity.com/sonar"
-    driverClassName = "com.mysql.jdbc.Driver"
-    username = "sonar"
-    password = "09u0ru2039ur203r9u"
-  }
-  withGlobalProperties { props ->
-    props["sonar.projectName"] = componentName
-  }
-}
-
-/**
- * Define build dependency stuff.jdbc:derby://localhost:1527/sonar;create=true
- */
-/*buildscript {
-  repositories {
-    add(new org.apache.ivy.plugins.resolver.URLResolver()) {
-      name = 'GitHub'
-      addArtifactPattern 'http://cloud.github.com/downloads/[organisation]/[module]/[module]-[revision].[ext]'
-    }
-  }
-
-  dependencies {
-    classpath 'bmuschko:gradle-clover-plugin:0.5.2'
-  }
-}
-*/
-/**
- * Clover settings
- */
-
-//clover {
-  // Exclude all generated classes from the test report.
-//  excludes = ['**/generated/*.java']
-  // This makes sure the gradle clover plugin doesn't set the default includeTest path to '**/*Test.java'.
-//  testIncludes = ['**/*.java']
-  //targetPercentage = '85%'
-//  report {
-//    html = true
-//  }
-//}
-
-//task clover (dependsOn: cloverGenerateReport)
-
-class Version {
-  String originalVersion
-  String thisVersion
-  String status
-  Date buildTime
-
-  Version(String versionValue) {
-    buildTime = new Date()
-    originalVersion = versionValue
-    if (originalVersion.endsWith('-SNAPSHOT')) {
-      status = 'integration'
-      thisVersion = originalVersion.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
-    } else {
-      status = 'release'
-      thisVersion = versionValue
-    }
-  }
-
-  String getTimestamp() {
-    // Convert local file timestamp to UTC
-    def format = new SimpleDateFormat('yyyyMMddHHmmss')
-    format.setCalendar(Calendar.getInstance(TimeZone.getTimeZone('UTC')));
-    return format.format(buildTime)
-  }
-
-  String toString() {
-    thisVersion
-  }
-}
