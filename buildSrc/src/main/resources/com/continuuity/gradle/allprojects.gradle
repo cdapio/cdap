@@ -1,5 +1,4 @@
 // The contents of this file applies to all project.
-
 apply plugin: 'idea'
 apply plugin: 'maven'
 
