@@ -20,7 +20,13 @@ class GitRepo {
 
     private String shellOption;
 
-    public void load ()
+    String getDirectory ()
+    {
+        init();
+        return dir;
+    }
+
+    void load ()
     {
         init();
         File destination = new File(dir);
@@ -33,7 +39,7 @@ class GitRepo {
         }
     }
 
-    public void pull ()
+    void pull ()
     {
         init();
         File destination = new File(dir);
@@ -46,7 +52,7 @@ class GitRepo {
         }
     }
 
-    public void status ()
+    void status ()
     {
         init();
         File destination = new File(dir);
@@ -116,6 +122,5 @@ class GitRepo {
                 shellOption = "-c"
             }
         }
-
     }
 }

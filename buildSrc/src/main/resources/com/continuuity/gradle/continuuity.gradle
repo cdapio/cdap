@@ -16,8 +16,13 @@ project.buildscript {
             }
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+        configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+        if(!ext.has(buildSrcVersion))
+        {
+            ext.buildSrcVersion = 'latest.integration'
+        }
         dependencies {
-            classpath "com.continuuity:buildSrc:1.0.0-SNAPSHOT"
+            classpath "com.continuuity:buildSrc:$buildSrcVersion"
         }
     }
 }

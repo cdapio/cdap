@@ -9,19 +9,28 @@ gitRepos << new GitRepo(name: "flow");
 
 defaultTasks 'gitClone', 'build'
 
-task gitClone << {
+task gitClone  {
+    description = 'Clones the continuuity git repos required for a product release build'
+    // Flags the task as up-to-date if all the directories have already been cloned.
     for (g in gitRepos) {
-        g.load();
+        outputs.dir g.directory;
+    }
+    doLast {
+        for (g in gitRepos) {
+            g.load();
+        }
     }
 }
 
 task gitPull << {
+    description = 'Pulls the latest commits for all git repos.'
     for (g in gitRepos) {
         g.pull();
     }
 }
 
 task gitStatus << {
+    descriptions = 'Checks the status of all git repos'
     for (g in gitRepos) {
         g.status();
     }
@@ -29,6 +38,7 @@ task gitStatus << {
 
 subprojects {
     task sync << {
+        description = 'Synchronizes files that must exsist in each repo.'
         copy {
             from "$rootDir/buildSrc/src/main/resources/com/continuuity/gradle/continuuity.gradle"
             into projectDir

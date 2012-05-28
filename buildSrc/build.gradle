@@ -1,6 +1,8 @@
 apply plugin: 'groovy'
 apply from: 'src/main/resources/com/continuuity/gradle/allprojects.gradle'
 
+version='1.0.0-SNAPSHOT'
+
 dependencies {
     compile gradleApi()
     groovy localGroovy()

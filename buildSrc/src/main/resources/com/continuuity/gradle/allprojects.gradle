@@ -1,7 +1,7 @@
 apply plugin: 'idea'
 apply plugin: 'maven'
 
-version = '1.0.0-SNAPSHOT'
+version = '0.1.0-SNAPSHOT'
 ext.groupId = 'com.continuuity'
 ext.artifactId = projectDir.name;
 
@@ -25,21 +25,21 @@ repositories {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
+        url "https://repository.continuuity.com/continuuity-gradle-local/"
     }
     maven {
         credentials {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "http://repository.continuuity.com:8081/artifactory/libs-snapshot"
+        url "https://repository.continuuity.com/libs-snapshot"
     }
     maven {
         credentials {
             username artifactoryUsername
             password artifactoryPassword
         }
-        url "http://repository.continuuity.com:8081/artifactory/libs-release"
+        url "https://repository.continuuity.com/libs-release"
     }
 }
 
