@@ -261,9 +261,9 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
     }
   }
 
-  @Override
-  public void deleteAll(byte[] row, byte[] column, long version) {
-    // TODO Auto-generated method stub
-
-  }
+//  @Override
+//  public void deleteAll(byte[] row, byte[] column, long version) {
+//    // TODO Auto-generated method stub
+//
+//  }
 }

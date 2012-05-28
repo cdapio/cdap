@@ -16,6 +16,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.engine.SimpleTable;
 import com.continuuity.data.engine.VersionedTable;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -32,7 +33,7 @@ import com.google.common.base.Objects;
  *
  * This version of MemoryTable is currently NOT sorted by row.
  */
-public class MemoryVersionedTable implements VersionedTable {
+public class MemoryVersionedTable implements VersionedTable, SimpleTable {
 
   private final byte [] name;
 

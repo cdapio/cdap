@@ -1,7 +1,12 @@
 package com.continuuity.data.engine.hbase;
 
-import com.continuuity.data.engine.VersionedTable;
+import org.apache.hadoop.hbase.client.HTable;
 
-public abstract class HBaseVersionedTable implements VersionedTable {
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
+
+public abstract class HBaseVersionedTable
+implements OrderedVersionedColumnarTable {
+
+  public HBaseVersionedTable(HTable table, byte [] family) {}
 
 }
