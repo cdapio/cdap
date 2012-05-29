@@ -21,8 +21,8 @@ import com.continuuity.data.operation.queue.QueuePartitioner;
 
 public class TestMemoryQueue {
 
-  private static final long MAX_TIMEOUT_MS = 1000;
-  private static final long POP_BLOCK_TIMEOUT_MS = 2;
+  private static final long MAX_TIMEOUT_MS = 10000;
+  private static final long POP_BLOCK_TIMEOUT_MS = 1;
 
   @Test
   public void testSingleConsumerSimple() throws Exception {
