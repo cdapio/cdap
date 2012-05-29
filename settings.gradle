@@ -1,1 +1,1 @@
-include 'common', 'data-fabric', 'flow'
+include 'common', 'data-fabric', 'flow', 'gateway'
