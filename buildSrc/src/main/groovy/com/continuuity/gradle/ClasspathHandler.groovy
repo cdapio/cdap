@@ -37,8 +37,7 @@ class ClasspathHandler extends URLStreamHandler {
         }
         catch (Throwable t)
         {
-            logger.info("Skipping register of streamHandlerFactory:  " + t.message);
-
+            logger.error("Unable to register streamHandlerFactory used for loading resources from the classpath." , t);
         }
     }
 

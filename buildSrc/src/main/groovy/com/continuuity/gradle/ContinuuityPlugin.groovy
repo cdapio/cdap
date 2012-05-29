@@ -24,14 +24,14 @@ class ContinuuityPlugin implements Plugin<Project> {
                 // multi-module build.
                 println ":continuuity plugin:multi-module"
 
+                /// Apply the subproject.gradle file to all subprojects (this is done first).
+                p.subprojects {
+                    applyFrom(getProject(), "classpath:com/continuuity/gradle/subprojects.gradle")
+                }
+
                 /// Apply the allproject.gradle file to all projects.
                 p.allprojects {
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
-                }
-
-                /// Apply the subproject.gradle file to all subprojects.
-                p.subprojects {
-                    applyFrom(getProject(), "classpath:com/continuuity/gradle/subprojects.gradle")
                 }
 
                 /// Apply sonar and clover.
@@ -46,8 +46,8 @@ class ContinuuityPlugin implements Plugin<Project> {
                 println ":continuuity plugin:standalone"
 
                 /// Apply the allprojects, clover, and subprojects settings directly to the standalone project.
-                applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/subprojects.gradle")
+                applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
 
                 displayProjectInfo(p);
