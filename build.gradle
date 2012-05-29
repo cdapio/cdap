@@ -1,0 +1,24 @@
+apply plugin: 'continuuity'
+
+/**
+ * Add continuuity plugin to the classpath.
+ */
+buildscript {
+   apply from: 'continuuity.gradle'
+}
+
+def avroVersion = '1.6.2'
+def continuuityVersion = '0.1.0-SNAPSHOT'
+def flumeVersion = '1.1.0-cdh4.0.0'
+
+dependencies {
+    compile "org.apache.avro:avro:$avroVersion"
+    compile "org.apache.avro:avro-ipc:$avroVersion"
+    compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$flumeVersion"
+
+    compile "com.continuuity:data-fabric:$continuuityVersion"
+}
+
+
+
