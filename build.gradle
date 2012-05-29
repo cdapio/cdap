@@ -46,7 +46,7 @@ task gitUpdate << {
 }
 
 task gitStatus << {
-    descriptions = 'Checks the status of all git repos'
+    description = 'Checks the status of all git repos'
     for (g in gitRepos) {
         g.status();
     }
@@ -54,7 +54,7 @@ task gitStatus << {
 
 subprojects {
     task sync << {
-        description = 'Synchronizes files that must exsist in each repo.'
+        description = 'Synchronizes files that must exist in each repo.'
         copy {
             from "$rootDir/buildSrc/src/main/resources/com/continuuity/gradle/continuuity.gradle"
             into projectDir
