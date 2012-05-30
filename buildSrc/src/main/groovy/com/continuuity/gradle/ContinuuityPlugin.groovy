@@ -38,6 +38,10 @@ class ContinuuityPlugin implements Plugin<Project> {
                 applyFrom(p, "classpath:com/continuuity/gradle/sonar.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
 
+                /// Load git repo information from setting.gradle file.
+                //applyFrom(p, "classpath:com/continuuity/gradle/include.gradle");
+                //p.apply(["from":"settings.gradle"])
+
                 displayProjectInfo(p);
             }
             else
