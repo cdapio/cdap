@@ -1,3 +1,5 @@
+/// This file is also imported by the continuuity plugin
+/// to obtain the repository list.
 import com.continuuity.gradle.GitRepo;
 
 // Declare the git repos that will comprise the master build.
@@ -9,7 +11,12 @@ gitRepos << new GitRepo(name: "gateway");
 
 for (g in gitRepos) {
     g.load();
-    include g.getDirectory()
+    try {
+        settings.include(g.getDirectory())
+    }
+    catch (MissingPropertyException e)
+    {
+        // This is expected when imported from the continuuity plugin.
+    }
 }
-
 
