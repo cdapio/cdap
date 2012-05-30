@@ -52,6 +52,7 @@ class ContinuuityPlugin implements Plugin<Project> {
                 applyFrom(p, "classpath:com/continuuity/gradle/subprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/allprojects.gradle")
                 applyFrom(p, "classpath:com/continuuity/gradle/clover.gradle")
+                applyFrom(p, "classpath:com/continuuity/gradle/sonar.gradle")
 
                 displayProjectInfo(p);
             }
