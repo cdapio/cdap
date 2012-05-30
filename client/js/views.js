@@ -1,10 +1,10 @@
 
-define(['views/flows', 'views/flow', 'views/flowviz'],
-	function (Flows, Flow, FlowViz) {
+define(['views/flows', 'views/flow', 'views/dashboard'],
+	function (Flows, Flow, Dashboard) {
 		return {
 			Flows: Flows,
 			Flow: Flow,
-			FlowViz: FlowViz
+			Dashboard: Dashboard
 		};
 	}
 );

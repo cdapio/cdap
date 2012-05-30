@@ -7,7 +7,6 @@ gem install foreman
 
 NODE_ENV=development
 
-npm link ./simulators/
 npm link ./server/
 
 rm -rf ./node_modules/

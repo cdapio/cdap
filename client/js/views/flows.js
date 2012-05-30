@@ -1,6 +1,6 @@
 
 define([
-	'lib/text!../../templates/flows.html',
+	'lib/text!../../templates/flows.html'
 	], function (Template) {
 	
 	return Em.View.create({

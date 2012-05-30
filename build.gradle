@@ -22,13 +22,22 @@ task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS'
 	
 	// Uses app.build.js configuration file
 	"mkdir ./build/js".execute()
-	"cp -r ./client/js/lib ./build/js/".execute()
 	commandLine = ['r.js', '-o', 'app.build.js']
+}
+
+task jslibs(type:Copy, dependsOn: 'js') {
+    from 'client/js/lib'
+    into 'build/js/lib'
 }
 
 task css(type: Exec, dependsOn: 'js', description: 'Process and minify LESS -> CSS') {
 	"mkdir ./build/css".execute()
 	commandLine = ['cp', '-r', './client/css', './build/']
+}
+
+task images(type:Copy) {
+    from 'client/img'
+    into 'build/img'
 }
 
 task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless browser environment') {
@@ -40,11 +49,14 @@ task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless b
 task docs(type: Exec, dependsOn: 'css', description: 'Generates Groc documentation') {
 	
 	// Uses .groc.json configuration file
-    "rm -rf ./docs/*".execute()
     commandLine = ['groc']
 }
 
-task all(dependsOn: ['clean', 'syntax', 'js', 'css', 'docs']) {
+task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') {
+    commandLine = ['./upload.sh']
+}
+
+task all(dependsOn: ['clean', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs', 'upload']) {
 	doLast {
 		println "Done!"
 	}

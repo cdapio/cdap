@@ -8,20 +8,17 @@ define([], function () {
 			rootElement: '#content-body',
 			enableLogging: true,
 			initialState: 'dashboard',
+
 			dashboard: Em.ViewState.create({
-				route: '/',
-				enter: function (stateManager, transition) {
-					$('#content-header').html('Dashboard');
-				}
+				view: Views.Dashboard
 			}),
 			flows: Em.ViewState.create({
 				route: 'flows',
 				view: Views.Flows,
 				enter: function (stateManager, transition) {
 					this._super(stateManager, transition);
-					$('#content-header').html('Flows');
 					App.Controllers.Flows.load();
-				},
+				}
 			}),
 			flow: Em.ViewState.create({
 				route: 'flows/:id',
@@ -29,8 +26,18 @@ define([], function () {
 				enter: function(stateManager, transition) {
 					this._super(stateManager, transition);
 					var params = stateManager.get('params');
-					var id = params.id;
-					App.Controllers.Flow.load(id);
+					var id = parseInt(params.id, 10);
+					if (id) {
+						App.Controllers.Flow.load(id);
+					} else {
+						App.Controllers.Flows.load();
+					}
+				},
+				exit: function (stateManager, transition) {
+					this._super(stateManager, transition);
+
+					App.Controllers.Flow.unload();
+
 				}
 			})
 		});

@@ -26,10 +26,10 @@ define([], function () {
 		}.property('status'),
 		defaultActionClass: function () {
 			return {
-				'stopped': 'btn',
+				'stopped': 'btn btn-danger',
 				'stopping': 'btn',
-				'running': 'btn',
-				'error': 'btn'
+				'running': 'btn btn-success',
+				'error': 'btn btn-warning'
 			}[this.status];
 		}.property('status'),
 		defaultAction: function () {
@@ -37,7 +37,7 @@ define([], function () {
 				'stopped': 'Start',
 				'stopping': 'Wait',
 				'running': 'Stop',
-				'error': 'Detail'
+				'error': 'Start'
 			}[this.status];
 		}.property('status')
 	});

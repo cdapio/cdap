@@ -2,7 +2,14 @@
   <button class="btn">Logs</button>
   <button class="btn">Add a Flow</button>
 </div>
-<h2 id="content-header">Twitter Demo <span>Application</span></h2>
+<h2 id="content-header">Demo <span>Application</span></h2>
+
+<ul class="breadcrumb">
+  <li>
+    <a href="#/flows">Applications</a> <span class="divider">/</span>
+  </li>
+  <li class="active">Demo</li>
+</ul>
 
 <table class="table">
 	<thead>
@@ -26,13 +33,13 @@
 				<li><a href="#">Delete Flow</a></li>
 			</ul></div>
 		</td>
-		<td><a {{bindAttr href="href"}}><strong>{{name}}</strong></a></td>
+		<td><a {{bindAttr href="href"}}><strong>{{meta.name}}</strong></a></td>
 		<td style="width: 140px;">{{lastStarted}}</td>
 		<td style="width: 140px;">{{lastStopped}}</td>
 		<td>{{runs}}</td>
 		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentStatus}}</span></td>
 		<td style="width: 64px;">
-			<button {{action "exec" on="click"}} {{bindAttr flow-id="id"}} {{bindAttr flow-action="defaultAction"}} {{bindAttr class="defaultActionClass"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-id="id"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
 			</div>
 		</td>
 	</tr>

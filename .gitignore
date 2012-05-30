@@ -1,5 +1,3 @@
-simulators/node_modules
 server/node_modules
 build/
-docs/
 .gradle/

@@ -12,16 +12,14 @@ function(Models, Views, Controllers, Router, Socket){
 				
 				// Connected and ready.
 				App.router.start();
-				App.router.set('location', '/flows');
-
+				
 				// Hack: Keep timestamps updated.
-				$('.timeago').timeago();
 				var trigger = 0;
 				setInterval( function () {
 					trigger++;
 					App.Controllers.Flows.forEach(function (model) {
 						model.set('timeTrigger', trigger);
-					})
+					});
 				}, 100);
 
 			});

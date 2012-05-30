@@ -16,17 +16,30 @@ define([], function () {
 					flows[i] = App.Models.Flow.create(flows[i]);
 					App.Controllers.Flows.pushObject(flows[i]);
 				}
-				$('.timeago').timeago();
 			});
 		},
 		start: function (id) {
 			App.socket.request('rest', {
-				method: 'flows',
-				params: id + '/start'
+				method: 'start',
+				params: id
 			}, function (response) {
+
+				if (App.Controllers.Flow.current) {
+					App.Controllers.Flow.current.set('status', 'running');
+					App.Controllers.Flow.current.set('running', new Date().ISO8601());
+
+					App.Controllers.Flow.history.pushObject(Em.Object.create({
+						"act": "start",
+						"result": "success",
+						"user": "dmosites",
+						"time": new Date().ISO8601()
+					}));
+
+				}
+
 				var flows = App.Controllers.Flows.content;
 				for (var i = 0; i < flows.length; i ++) {
-					if (flows[i].id == id) {
+					if (flows[i].id === id) {
 						flows[i].set('status', 'running');
 						flows[i].set('started', new Date().ISO8601());
 						flows[i].set('runs', flows[i].runs + 1);
@@ -37,12 +50,27 @@ define([], function () {
 		},
 		stop: function (id) {
 			App.socket.request('rest', {
-				method: 'flows',
-				params: id + '/stop'
+				method: 'stop',
+				params: id
 			}, function (response) {
+
+				if (App.Controllers.Flow.current) {
+					App.Controllers.Flow.current.set('status', 'stopped');
+					App.Controllers.Flow.current.set('stopped', new Date().ISO8601());
+
+					App.Controllers.Flow.history.pushObject(Em.Object.create({
+						"act": "stop",
+						"result": "success",
+						"user": "dmosites",
+						"time": new Date().ISO8601()
+					}));
+
+					App.Controllers.Flow.stop_spin();
+				}
+
 				var flows = App.Controllers.Flows.content;
 				for (var i = 0; i < flows.length; i ++) {
-					if (flows[i].id == id) {
+					if (flows[i].id === id) {
 						flows[i].set('status', 'stopped');
 						flows[i].set('stopped', new Date().ISO8601());
 						return;
@@ -51,7 +79,7 @@ define([], function () {
 			});
 		},
 		detail: function (id) {
-			App.router.set('location', 'flows/' + id);
+			App.router.set('location', '/flows/' + id);
 		}
 
 	});

@@ -1,58 +1,45 @@
-{{#view App.Views.FlowViz tagName="div"}}
-<div class="btn-group pull-left" style="margin: 8px 10px 0px;">
-	<div class="btn-group"><button class="btn dropdown-toggle" data-toggle="dropdown">
-		<span class="caret"></span>
-		</button>
-		<ul class="dropdown-menu">
-			<li><a href="#">Duplicate Flow</a></li>
-			<li><a href="#">Upload New FAR</a></li>
-			<li class="divider"></li>
-			<li><a href="#">Delete Flow</a></li>
-		</ul></div>
+<div class="btn-group pull-right" style="width:155px;margin: 8px 10px 0px;">
+	<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentStatus}}</button>
+  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-id="current.id"}}>{{current.defaultAction}}</button>
+  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+	<span class="caret"></span>
+	</button>
+	<ul class="dropdown-menu">
+		<li><a href="#">Duplicate Flow</a></li>
+		<li><a href="#">Upload New FAR</a></li>
+		<li class="divider"></li>
+		<li><a href="#">Delete Flow</a></li>
+	</ul>
 </div>
-<div class="btn-group pull-right" style="margin: 8px 10px 0px;">
-	<a class="btn btn-success" href="#">
-		Running
-	</a>
-  <a class="btn" href="#">Stop</a>
-</div>
-<h2 id="content-header">{{name}} <span>Flow</span></h2>
+<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
 
-<div id="flowviz" class="well">
-		<div>[ Source: Twitter ]</div>
-		{{#each App.Controllers.Flow tagName="ol"}}
-			<div>↓ <strong>{{tuplesIn}}</strong></div>
-			<li>{{name}}</li>
-		{{/each}}
-</div>
-{{/view}}
+<ul class="breadcrumb">
+  <li>
+    <a href="#/flows">Applications</a> <span class="divider">/</span>
+  </li>
+  <li>
+    <a href="#/flows">Demo</a> <span class="divider">/</span>
+  </li>
+  <li class="active">{{current.meta.name}}</li>
+</ul>
 
-<h3>Activity Log</h3>
+<div id="flowviz" class="well clearfix"></div>
+
 <div style="margin: 0px 3px;">
 <table class="table table-condensed">
 	<thead>
-		<th style="width: 215px;">Action</th>
+		<tr><th style="width: 215px;">Activity Log</th>
 		<th>Result</th>
-		<th>Time</th>
 		<th>User</th>
-	</thead>
-	<tbody>
+		<th>Time</th>
+	</tr></thead>
+	{{#each history tagName="tbody"}}
 		<tr>
-			<td>Started</td>
-			<td>Success</td>
-			<td></td>
-			<td>demo-user</td>
-		</tr><tr>
-			<td>Stopped</td>
-			<td>Success</td>
-			<td></td>
-			<td>demo-user</td>
-		</tr><tr>
-			<td>Started</td>
-			<td>Success</td>
-			<td></td>
-			<td>demo-user</td>
+			<td><strong>{{act}}</strong></td>
+			<td>{{result}}</td>
+			<td>{{username}}</td>
+			<td>{{time}}</td>
 		</tr>
-	</tbody>
+	{{/each}}
 </table>
 </div>

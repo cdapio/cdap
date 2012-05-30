@@ -59,6 +59,9 @@ a strong {
 .navbar-inner .container {
 	padding: 6px 10px;
 }
+.breadcrumb {
+	padding: 4px 8px;
+}
 /*
  * Rules
  */
@@ -75,6 +78,9 @@ a strong {
 th {
 	font-style: italic;
 	font-weight: normal !important;
+}
+td a {
+	display: block;
 }
 #footer {
 	text-transform: uppercase;
@@ -97,8 +103,9 @@ th {
 
 }
 #flowviz {
-	margin: 15px 10px 15px 5px;
+	margin: 0px 10px 15px 5px;
 	background-color: #FEFEFE;
+	position: relative;
 }
 h2 {
 	padding: 4px 6px 6px;
@@ -114,3 +121,37 @@ ol {
 	padding: 0;
 	padding-left: 32px;
 }
+/*
+ * jsplumb
+ */
+.window { 
+	border:1px solid #BBB;
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+	border-radius:4px;
+	width:75px; 
+	height:50px;
+	text-align:center;
+	z-index:20; 
+	background-color:#eeeeef;
+	color:black;
+	font-family:helvetica;
+	padding:20px 10px 5px;
+	font-size:12px;
+	margin-left: 60px;
+	float: left;
+	cursor: pointer;
+}
+
+.window.source {
+	background-image: -webkit-linear-gradient(top, #152C52, #061C35) !important;
+	color: white;
+	border-color: #152C52;
+}
+
+.window:hover {
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+._jsPlumb_connector { z-index:4; }
+._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:21;cursor:pointer; }
+.hl { border:3px solid red; }
+#debug { position:absolute; background-color:black; color:red; z-index:5000 }
