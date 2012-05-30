@@ -1,7 +1,8 @@
 package com.continuuity.common.service;
 
-import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -32,6 +33,8 @@ import java.util.Map;
  * </code>
  */
 public class CommandPortServer {
+  private static final Logger Log = LoggerFactory.getLogger(CommandPortServer.class);
+
   /**
    * Mappings of commands to their listener.
    */

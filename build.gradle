@@ -13,12 +13,10 @@ dependencies {
     compile group: 'com.netflix.curator', name: 'curator-framework', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-client', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-x-discovery', version: '1.1.+'
-    compile group: 'com.googlecode', name: 'kryo', version: '1.+'
     compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.+'
     compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
 }
 
-
-
-
-
+task mappings << {
+    println conf2ScopeMappings.mappings
+}
