@@ -2,8 +2,6 @@ import com.continuuity.gradle.GitRepo;
 
 apply plugin: 'continuuity'
 
-defaultTasks 'build'
-
 task gitCheckout {
     group = 'Git'
     description = 'Checkout the specified branch.'
