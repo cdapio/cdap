@@ -22,5 +22,11 @@ allprojects
         }
     }
 
-    task clover (dependsOn: cloverGenerateReport)
+    task clover (dependsOn: cloverGenerateReport) {
+        group = 'Report'
+        description = 'Short cut for the cloverGenerateReport task.'
+    }
+
+
+
 }

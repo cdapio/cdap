@@ -19,6 +19,11 @@ sonar {
     }
 }
 
+sonarAnalyze {
+    group = 'Report'
+    description = 'Uploads code metrics to https://sonar.continuuity.com'
+}
+
 /// Define common subproject config and tasks.
 subprojects
 {
