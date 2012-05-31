@@ -2,6 +2,7 @@ package com.continuuity.data.operation.queue;
 
 import com.continuuity.data.operation.type.WriteOperation;
 
+@Deprecated
 public class QueueAck implements WriteOperation {
   private byte [] queueName;
   private QueueEntry queueEntry;

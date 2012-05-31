@@ -2,6 +2,7 @@ package com.continuuity.data.operation.queue;
 
 import com.continuuity.data.engine.ReadPointer;
 
+@Deprecated
 public interface PowerVersionedQueue {
 
   public boolean push(byte [] value, ReadPointer readPointer,

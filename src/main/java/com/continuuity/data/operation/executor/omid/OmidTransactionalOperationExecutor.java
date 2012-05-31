@@ -32,6 +32,11 @@ import com.continuuity.data.operation.queue.QueueAck;
 import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePop;
 import com.continuuity.data.operation.queue.QueuePush;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueInvalidate;
 import com.continuuity.data.operation.type.WriteOperation;
 
 /**
@@ -289,6 +294,37 @@ public class OmidTransactionalOperationExecutor implements
   @Override
   public boolean execute(QueuePush push) {
     unsupported();
+    return false;
+  }
+
+  @Override
+  public DequeueResult execute(QueueDequeue dequeue)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public boolean execute(com.continuuity.data.operation.ttqueue.QueueAck ack) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean execute(QueueEnqueue enqueue) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean execute(QueueInvalidate invalidate) {
+    // TODO Auto-generated method stub
     return false;
   }
 }

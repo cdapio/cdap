@@ -2,7 +2,7 @@ package com.continuuity.data.operation.queue;
 
 import com.google.common.base.Objects;
 
-
+@Deprecated
 public class QueueConfig {
 
   private final QueuePartitioner partitioner;

@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.continuuity.data.engine.SimpleQueueTable;
 import com.continuuity.data.engine.SimpleTableHandle;
 
+@Deprecated
 public class MemoryTableHandle implements SimpleTableHandle {
 
   private static final Map<byte[],MemoryVersionedTable> TABLES =

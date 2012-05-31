@@ -11,6 +11,7 @@ import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 
+@Deprecated
 public class MemoryVersionedQueueTable implements VersionedQueueTable {
 
   final Map<byte[],MemoryQueue> queues =

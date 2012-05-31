@@ -11,6 +11,7 @@ import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 
+@Deprecated
 public class MemoryVersionedQueue implements PowerQueue {
 
   /** Maximum default timeout of 5 minutes (can be changed by tests) */

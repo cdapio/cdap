@@ -4,6 +4,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.base.Objects;
 
+@Deprecated
 public class QueueEntry {
 
   private final byte [] value;

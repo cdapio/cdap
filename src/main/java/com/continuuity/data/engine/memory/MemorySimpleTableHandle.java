@@ -9,6 +9,7 @@ import com.continuuity.data.engine.SimpleQueueTable;
 import com.continuuity.data.engine.SimpleTable;
 import com.continuuity.data.engine.SimpleTableHandle;
 
+@Deprecated
 public class MemorySimpleTableHandle implements SimpleTableHandle {
 
   private static final Map<byte[],MemoryVersionedTable> TABLES =

@@ -4,6 +4,7 @@ import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 
+@Deprecated
 public interface SimpleQueueTable {
 
   public boolean push(byte [] queueName, byte [] value);

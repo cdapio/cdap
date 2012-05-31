@@ -19,6 +19,7 @@ import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePartitioner;
 
+@Deprecated
 public class TestMemoryQueue {
 
   private static final long MAX_TIMEOUT_MS = 10000;

@@ -6,8 +6,10 @@ import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.queue.QueueAck;
 import com.continuuity.data.operation.queue.QueuePush;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueInvalidate;
 
 public interface WriteOperationExecutor {
 
@@ -17,7 +19,7 @@ public interface WriteOperationExecutor {
   public boolean execute(Write write);
 
   public boolean execute(Delete delete);
-  
+
   public boolean execute(OrderedWrite write);
 
   public boolean execute(ReadModifyWrite rmw);
@@ -30,5 +32,13 @@ public interface WriteOperationExecutor {
 
   public boolean execute(QueuePush push);
 
+  public boolean execute(com.continuuity.data.operation.queue.QueueAck ack);
+
+  // TTQueues
+
+  public boolean execute(QueueEnqueue enqueue);
+
   public boolean execute(QueueAck ack);
+
+  public boolean execute(QueueInvalidate invalidate);
 }

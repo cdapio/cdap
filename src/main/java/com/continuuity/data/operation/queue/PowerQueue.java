@@ -8,6 +8,7 @@ package com.continuuity.data.operation.queue;
  * 
  * This is the interface for queues utilized by flows.
  */
+@Deprecated
 public interface PowerQueue {
   /**
    * @param value

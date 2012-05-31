@@ -2,6 +2,7 @@ package com.continuuity.data.operation.queue;
 
 import com.continuuity.data.operation.type.ReadOperation;
 
+@Deprecated
 public class QueuePop implements ReadOperation<QueueEntry> {
   private final byte [] name;
   private final QueueConsumer consumer;

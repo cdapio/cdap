@@ -2,6 +2,7 @@ package com.continuuity.data.operation.queue;
 
 import com.google.common.base.Objects;
 
+@Deprecated
 public class QueueConsumer {
 
   private final int consumerId;

@@ -10,6 +10,7 @@ import com.continuuity.data.operation.queue.QueueConfig;
 import com.continuuity.data.operation.queue.QueueConsumer;
 import com.continuuity.data.operation.queue.QueueEntry;
 
+@Deprecated
 public class MemoryQueueTable implements SimpleQueueTable {
 
   final Map<byte[],MemoryQueue> queues =

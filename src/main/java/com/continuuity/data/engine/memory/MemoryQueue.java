@@ -13,6 +13,7 @@ import com.continuuity.data.operation.queue.QueueEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Deprecated
 public class MemoryQueue implements PowerQueue {
 
 	private static final Logger LOG = LoggerFactory

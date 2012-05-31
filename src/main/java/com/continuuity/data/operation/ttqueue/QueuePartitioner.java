@@ -1,10 +1,13 @@
-package com.continuuity.data.operation.queue;
+package com.continuuity.data.operation.ttqueue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.base.Objects;
 
-@Deprecated
+/**
+ * Interface used to determine whether a queue entry should be returned to a
+ * given consumer.
+ */
 public interface QueuePartitioner {
 
   /**
@@ -14,11 +17,13 @@ public interface QueuePartitioner {
    * @param entry
    * @return true if entry should be emitted to consumer, false if not
    */
-  public boolean shouldEmit(QueueConsumer consumer, QueueEntry entry);
+  public boolean shouldEmit(QueueConsumer consumer, long entryId,
+      byte [] value);
 
   public static class RandomPartitioner implements QueuePartitioner {
     @Override
-    public boolean shouldEmit(QueueConsumer consumer, QueueEntry entry) {
+    public boolean shouldEmit(QueueConsumer consumer, long entryId,
+        byte [] value) {
       return true;
     }
 
@@ -30,9 +35,10 @@ public interface QueuePartitioner {
 
   public static class HashPartitioner implements QueuePartitioner {
     @Override
-    public boolean shouldEmit(QueueConsumer consumer, QueueEntry entry) {
-      int hash = Bytes.hashCode(entry.getValue());
-      return (hash % consumer.getGroupSize() == consumer.getConsumerId());
+    public boolean shouldEmit(QueueConsumer consumer, long entryId,
+        byte [] value) {
+      int hash = Bytes.hashCode(value);
+      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
     }
 
     @Override

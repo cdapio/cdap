@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.table.ColumnarTable;
 
+@Deprecated
 public class ColumnarQueue implements PowerQueue {
 
   private static final byte [] COUNT_COL = new byte [] { 0 , 1 };
