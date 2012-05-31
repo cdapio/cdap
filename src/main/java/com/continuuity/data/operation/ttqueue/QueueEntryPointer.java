@@ -1,0 +1,32 @@
+package com.continuuity.data.operation.ttqueue;
+
+import com.google.common.base.Objects;
+
+/**
+ * A pointer which completely addresses an entry in a queue.
+ */
+public class QueueEntryPointer {
+  private final long entryId;
+  private final long shardId;
+  
+  public QueueEntryPointer(final long entryId, final long shardId) {
+    this.entryId = entryId;
+    this.shardId = shardId;
+  }
+
+  public long getEntryId() {
+    return this.entryId;
+  }
+  
+  public long getShardId() {
+    return this.shardId;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("entryId", this.entryId)
+        .add("shardId", this.shardId)
+        .toString();
+  }
+}

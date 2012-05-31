@@ -1,5 +1,9 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.base.Objects;
+
 public class GroupState {
 
   private final int groupSize;
@@ -24,6 +28,26 @@ public class GroupState {
   public ExecutionMode getMode() {
     return this.mode;
   }
+  
+  public byte [] getBytes() {
+    return Bytes.add(
+        Bytes.toBytes(groupSize), // 4 bytes
+        head.getBytes(),          // 16 bytes
+        mode.getBytes());         // 1 byte
+  }
+  
+  public static GroupState fromBytes(byte [] bytes) {
+    return new GroupState(Bytes.toInt(bytes),
+        new EntryPointer(Bytes.toLong(bytes, 4), Bytes.toLong(bytes, 12)),
+        ExecutionMode.fromBytes(Bytes.tail(bytes, 1)));
+  }
 
-
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("groupSize", this.groupSize)
+        .add("headPointer", this.head)
+        .add("execMode", this.mode.name())
+        .toString();
+  }
 }

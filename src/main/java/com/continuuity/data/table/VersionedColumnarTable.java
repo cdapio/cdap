@@ -31,5 +31,4 @@ public interface VersionedColumnarTable {
   public boolean compareAndSwap(byte [] row, byte [] column,
       byte [] expectedValue, byte [] newValue, ReadPointer readPointer,
       long writeVersion);
-
 }

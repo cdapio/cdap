@@ -8,7 +8,7 @@ import com.google.common.base.Objects;
 public class QueueConsumer {
 
   private final int instanceId;
-  private final int groupId;
+  private final long groupId;
   private final int groupSize;
 
   /**
@@ -16,7 +16,7 @@ public class QueueConsumer {
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
    */
-  public QueueConsumer(int instanceId, int groupId, int groupSize) {
+  public QueueConsumer(int instanceId, long groupId, int groupSize) {
     this.instanceId = instanceId;
     this.groupId = groupId;
     this.groupSize = groupSize;
@@ -26,7 +26,7 @@ public class QueueConsumer {
     return this.instanceId;
   }
 
-  public int getGroupId() {
+  public long getGroupId() {
     return this.groupId;
   }
 

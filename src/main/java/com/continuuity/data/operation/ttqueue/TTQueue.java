@@ -22,11 +22,11 @@ public interface TTQueue {
   /**
    * Invalidates an entry that was enqueued into the queue.  This is used only
    * as part of a transaction rollback.
-   * @param entryId entry id of enqueued entry to invalidate
+   * @param entryPointer entry id and shard id of enqueued entry to invalidate
    * @param writeVersion version entry was written with and version invalidated
    *                     entry will be written with
    */
-  public void invalidate(long entryId, long writeVersion);
+  public void invalidate(QueueEntryPointer entryPointer, long writeVersion);
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -43,9 +43,9 @@ public interface TTQueue {
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
-   * @param entryId
+   * @param entryPointer
    * @param consumer
    * @return
    */
-  public boolean ack(long entryId, QueueConsumer consumer);
+  public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer);
 }

@@ -8,19 +8,20 @@ import com.google.common.base.Objects;
 public class EnqueueResult {
 
   private final EnqueueStatus status;
-  private final long entryId;
+  private final QueueEntryPointer entryPointer;
 
-  public EnqueueResult(final EnqueueStatus status, final long entryId) {
+  public EnqueueResult(final EnqueueStatus status,
+      final QueueEntryPointer entryPointer) {
     this.status = status;
-    this.entryId = entryId;
+    this.entryPointer = entryPointer;
   }
 
   public boolean isSuccess() {
     return this.status == EnqueueStatus.SUCCESS;
   }
 
-  public long getEntryId() {
-    return this.entryId;
+  public QueueEntryPointer getEntryPointer() {
+    return this.entryPointer;
   }
 
   public static enum EnqueueStatus {
@@ -31,7 +32,7 @@ public class EnqueueResult {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("status", this.status)
-        .add("entryId", this.entryId)
+        .add("entryPointer", this.entryPointer)
         .toString();
   }
 }

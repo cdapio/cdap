@@ -18,7 +18,7 @@ public class EntryGroupMeta {
     this.instanceId = instanceId;
   }
 
-  public boolean isAvailabe() {
+  public boolean isAvailable() {
     return state == EntryGroupState.AVAILABLE;
   }
   
