@@ -13,7 +13,7 @@ import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public class GatewayWithQueue {
 

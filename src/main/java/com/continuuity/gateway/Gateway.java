@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by: andreas, having fun since April 2012
- *
  * The Gateway provides a data interface for external clients to the data fabric
  * <ul>
  *   <li>To send events to a named queue. This is supported via various protocols. Every protocol

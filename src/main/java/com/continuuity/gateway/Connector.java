@@ -7,7 +7,7 @@ package com.continuuity.gateway;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public abstract class Connector {
 

@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public class QueueWritingConsumer extends Consumer {
 

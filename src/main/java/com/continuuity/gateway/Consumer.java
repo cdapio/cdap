@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public abstract class Consumer {
 

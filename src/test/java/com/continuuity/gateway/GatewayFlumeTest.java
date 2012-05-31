@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by: andreas, having fun since April 2012
+ * This tests whether Flume events are properly transmitted through the gateway
  */
 public class GatewayFlumeTest {
 

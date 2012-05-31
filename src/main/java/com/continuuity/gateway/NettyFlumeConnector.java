@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public class NettyFlumeConnector extends FlumeConnector {
 

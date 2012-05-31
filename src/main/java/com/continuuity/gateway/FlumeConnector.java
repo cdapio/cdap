@@ -5,7 +5,7 @@
 package com.continuuity.gateway;
 
 /**
- * Created by: andreas, having fun since April 2012
+ *
  */
 public abstract class FlumeConnector extends Connector {
 
