@@ -59,15 +59,16 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
           new RandomStrategy<ServiceDiscoveryClient.ServicePayload>();
         ServiceDiscoveryClient.ServiceProvider provider = client.getServiceProvider("flow-manager");
         int[] stats = new int[] { 0, 0};
-        for(int i = 0; i < 100; ++i) {
+        int trials = 10000;
+        for(int i = 0; i < trials; ++i) {
           ServiceInstance<ServiceDiscoveryClient.ServicePayload> instance = strategy.getInstance(provider);
           int k = instance.getPort() - 8080;
           stats[k]++;
         }
         int sum = stats[0] + stats[1];
         int diff = Math.abs(stats[0] - stats[1]);
-        Assert.assertTrue(diff > 0 && diff < 20);
-        Assert.assertTrue(sum == 100);
+        Assert.assertTrue(diff < (trials*0.20));  /** is 20% tolerance ok */
+        Assert.assertTrue(sum == 10000);
       } finally {
         if(client != null) {
           Closeables.closeQuietly(client);
