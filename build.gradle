@@ -18,7 +18,13 @@ dependencies {
     compile "org.apache.flume:flume-ng-core:$flumeVersion"
 
     compile "com.continuuity:data-fabric:$continuuityVersion"
+    compile "com.continuuity:flow:$continuuityVersion"
 }
 
-
+task dist(type: Copy, dependsOn: jar){
+    into "$buildDir/dist"
+    from jar.outputs.files
+    from configurations.runtime.files
+    from sourceSets.main.output.resourcesDir
+}
 
