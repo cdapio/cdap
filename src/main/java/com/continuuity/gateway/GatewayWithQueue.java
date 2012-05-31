@@ -17,7 +17,7 @@ import com.continuuity.flow.flowlet.impl.EventSerializer;
  */
 public class GatewayWithQueue {
 
-	private static final int defaultSecondsToLive = 60;
+	private static final int defaultSecondsToLive = 10;
 
 	private static void usage(boolean isError) {
 		System.err.println("Usage: GatewayWithQueue [ --host <host> ] [ --port <number> ]");

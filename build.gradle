@@ -12,13 +12,16 @@ def continuuityVersion = '0.1.0-SNAPSHOT'
 def flumeVersion = '1.1.0-cdh4.0.0'
 
 dependencies {
+    // this is needed to ensure that kryo uses its packaged asm classes and 
+    // and not the ones from the asm jar that guice pulls in
+    compile group: 'kryo', name: 'kryo', version: '2.09', classifier: 'all'
+    compile "com.continuuity:flow:$continuuityVersion"
+    compile "com.continuuity:data-fabric:$continuuityVersion"
+    
     compile "org.apache.avro:avro:$avroVersion"
     compile "org.apache.avro:avro-ipc:$avroVersion"
     compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
     compile "org.apache.flume:flume-ng-core:$flumeVersion"
-
-    compile "com.continuuity:data-fabric:$continuuityVersion"
-    compile "com.continuuity:flow:$continuuityVersion"
 }
 
 task dist(type: Copy, dependsOn: jar){
