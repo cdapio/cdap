@@ -11,6 +11,7 @@ import org.apache.hadoop.conf.Configuration;
  */
 public abstract class Connector {
 
+	protected String name;
 	protected Consumer consumer;
 
 	public void setConsumer(Consumer consumer) {
@@ -18,6 +19,13 @@ public abstract class Connector {
 	}
 	public Consumer getConsumer() {
 		return  this.consumer;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getName() {
+		return this.name;
 	}
 
 	public abstract void configure(Configuration configuration);

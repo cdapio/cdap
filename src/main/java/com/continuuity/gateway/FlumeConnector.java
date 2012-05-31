@@ -21,7 +21,7 @@ public abstract class FlumeConnector extends Connector {
 	public void setConsumer(Consumer consumer) {
 		super.setConsumer(consumer);
 		if (this.flumeAdapter == null) {
-			this.flumeAdapter = new FlumeAdapter();
+			this.flumeAdapter = new FlumeAdapter(this);
 		}
 		this.flumeAdapter.setConsumer(consumer);
 	}

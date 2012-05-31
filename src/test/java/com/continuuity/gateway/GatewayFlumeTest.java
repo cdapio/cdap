@@ -56,7 +56,8 @@ public class GatewayFlumeTest {
 		FlumeConnector connector = new NettyFlumeConnector();
 		connector.setHost(hostname);
 		connector.setPort(port);
-		gateway.addConnector("flume", connector);
+		connector.setName("flume");
+		gateway.addConnector(connector);
 		return gateway;
 	}
 
@@ -67,7 +68,9 @@ public class GatewayFlumeTest {
 		for (int remaining = eventsToSend; remaining > 0; --remaining) {
 			QueueEntry entry = queues.pop("default".getBytes(), consumer, config, false);
 			Event event = deserializer.deserialize(entry.getValue());
+			Assert.assertEquals("flume", event.getHeader(Constants.HEADER_FROM_CONNECTOR));
 			String header = event.getHeader("messageNumber");
+			Assert.assertNotNull(header);
 			int messageNumber = Integer.valueOf(header);
 			LOG.info("Popped one event number: " + messageNumber);
 			Assert.assertTrue(messageNumber >= 0 && messageNumber < eventsToSend);

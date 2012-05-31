@@ -3,7 +3,9 @@ package com.continuuity.gateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +26,31 @@ public class Gateway {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(Gateway.class);
 
-	private Map<String, Connector> connectors = new HashMap<String, Connector>();
+	private List<Connector> connectors = new ArrayList<Connector>();
 	private Consumer consumer = null;
+
+	/**
+	 * Add a connector to the gateway. This connector must be in pristine state and not started yet.
+	 * The gateway will start the connector when it starts itself.
+	 * @param connector The connector to register
+	 * @throws Exception iff a connector with the same name is already registered
+	 */
+	public void addConnector(Connector connector) throws Exception {
+		String name = connector.getName();
+		if (name == null) {
+			Exception e = new IllegalArgumentException("Connector name cannot be null.");
+			LOG.error(e.getMessage());
+			throw e;
+		}
+		LOG.info("Adding connector '" + name + "' of type " + connector.getClass().getName() + ".");
+		if (this.hasNamedConnector(name)) {
+			Exception e = new Exception("Connector with name '" + name + "' already registered. ");
+			LOG.error(e.getMessage());
+			throw e;
+		} else {
+			this.connectors.add(connector);
+		}
+	}
 
 	/**
 	 *  Set the consumer that all events are routed to. This should be called before the
@@ -35,28 +60,23 @@ public class Gateway {
 	 */
 	public void setConsumer(Consumer consumer) {
 		LOG.info("Setting consumer to " + consumer.getClass().getName() + ".");
-		for (Connector connector : this.connectors.values()) {
+		for (Connector connector : this.connectors) {
 			connector.setConsumer(consumer);
 		}
 		this.consumer = consumer;
 	}
 
 	/**
-	 * Add a connector to the gateway. This connector must be in pristine state and not started yet.
-	 * The gateway will start the connector when it starts itself.
-	 * @param name A name for the connector
-	 * @param connector The connector to register
-	 * @throws Exception iff a connector with that name is already registered
+	 * check whether a connector with the given name is already registered
+	 * @param name the name to be checked
+	 * @return true iff a connector with the same name exists
 	 */
-	public void addConnector(String name, Connector connector) throws Exception {
-		LOG.info("Adding connector '" + name + "' of type " + connector.getClass().getName() + ".");
-		if (this.connectors.containsKey(name)) {
-			Exception e = new Exception("Connector with name '" + name + "' already registered. ");
-			LOG.error(e.getMessage());
-			throw e;
-		} else {
-			this.connectors.put(name, connector);
+	private boolean hasNamedConnector(String name) {
+		for (Connector connector : this.connectors) {
+			if (connector.getName().equals(name))
+				return true;
 		}
+		return false;
 	}
 
 	/**
@@ -72,7 +92,7 @@ public class Gateway {
 			throw e;
 		}
 		this.consumer.startConsumer();
-		for (Connector connector : this.connectors.values()) {
+		for (Connector connector : this.connectors) {
 			connector.start();
 		}
 	}
@@ -82,7 +102,7 @@ public class Gateway {
 	 */
 	public void stop() {
 		LOG.info("Shutting down.");
-		for (Connector connector : this.connectors.values()) {
+		for (Connector connector : this.connectors) {
 			connector.stop();
 		}
 		this.consumer.stopConsumer();
