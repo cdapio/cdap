@@ -44,6 +44,20 @@ task gitStatus  {
     }
 }
 
+
+task javadoc(type: Javadoc) {
+    group = 'Documentation' 
+    description = 'Aggregates javadocs for all projects.'
+    source subprojects.collect { project ->
+        project.sourceSets.main.allJava
+    }
+    destinationDir = new File(buildDir, 'javadoc')
+    // Might need a classpath
+    classpath = files(subprojects.collect { project ->
+        project.sourceSets.main.compileClasspath
+    })
+}
+
 subprojects {
     task syncGradles {
         group = 'Continuuity'
