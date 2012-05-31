@@ -32,6 +32,10 @@ public class GatewayFlumeTest {
 	static final int batchSize = 4;
 	static final int eventsToSend = 10;
 
+	static byte[] createMessage(int messageNo) {
+		return ("This is message " + messageNo + ".").getBytes();
+	}
+
 	void sendFlumeEvents () throws EventDeliveryException {
 		RpcClient client = RpcClientFactory.
 				getDefaultInstance(hostname, port, batchSize);
@@ -41,7 +45,7 @@ public class GatewayFlumeTest {
 			Map<String, String> headers = new HashMap<String, String>();
 			headers.put("messageNumber", Integer.toString(i));
 			event.setHeaders(headers);
-			event.setBody(("This is message " + i + ".").getBytes());
+			event.setBody(createMessage(i));
 			client.append(event);
 		}
 		client.close();
@@ -67,7 +71,7 @@ public class GatewayFlumeTest {
 			int messageNumber = Integer.valueOf(header);
 			LOG.info("Popped one event number: " + messageNumber);
 			Assert.assertTrue(messageNumber >= 0 && messageNumber < eventsToSend);
-			Assert.assertArrayEquals(event.getBody(), ("This is message " + messageNumber + ".").getBytes());
+			Assert.assertArrayEquals(event.getBody(), createMessage(messageNumber));
 			queues.ack("default".getBytes(), entry);
 		}
 	}
