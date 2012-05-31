@@ -69,6 +69,13 @@ subprojects {
             }
         }
     }
+
+    if(!Boolean.valueOf(failfast))
+    {	
+    	test {
+       	    ignoreFailures = true
+  	}
+    }
 }
 
 
