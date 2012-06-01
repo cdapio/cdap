@@ -21,7 +21,6 @@ import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueInvalidate;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.ColumnarTable;
@@ -202,12 +201,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public boolean execute(QueueEnqueue enqueue) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  @Override
-  public boolean execute(QueueInvalidate invalidate) {
     // TODO Auto-generated method stub
     return false;
   }

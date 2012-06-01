@@ -25,11 +25,11 @@ implements WriteOperation, ReadOperation<EnqueueResult> {
     this.writeVersion = writeVersion;
   }
 
-  byte [] getData() {
+  public byte [] getData() {
     return this.data;
   }
 
-  long getWriteVersion() {
+  public long getWriteVersion() {
     return this.writeVersion;
   }
 

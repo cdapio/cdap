@@ -8,7 +8,6 @@ import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueInvalidate;
 
 public interface WriteOperationExecutor {
 
@@ -32,6 +31,4 @@ public interface WriteOperationExecutor {
   public boolean execute(QueueEnqueue enqueue);
 
   public boolean execute(QueueAck ack);
-
-  public boolean execute(QueueInvalidate invalidate);
 }

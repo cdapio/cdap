@@ -11,9 +11,7 @@ import static org.junit.Assert.fail;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
@@ -26,9 +24,6 @@ import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.handles.SimpleOVCTableHandle;
 
 public class TestOmidTransactionalOperationExecutor {
-
-  @Rule
-  public final TestName testName = new TestName();
   
   private final TimestampOracle timeOracle = new MemoryStrictlyMonotonicOracle();
   private final TransactionOracle oracle = new MemoryOracle(timeOracle);

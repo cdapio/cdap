@@ -25,6 +25,8 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.EnqueueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -88,15 +90,18 @@ public class OmidTransactionalOperationExecutor implements
     // Execute operations (in order for now)
     RowSet rows = new MemoryRowSet();
     List<Delete> deletes = new ArrayList<Delete>(writes.size());
+    List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();
     for (WriteOperation write : writes) {
       WriteTransactionResult writeTxReturn = dispatchWrite(write, pointer);
       if (!writeTxReturn.success) {
         // Write operation failed
-        abortTransaction(pointer, deletes);
+        abortTransaction(pointer, deletes, invalidates);
         return false;
       } else {
         // Write was successful.  Store delete if we need to abort and continue
         deletes.addAll(writeTxReturn.deletes);
+        if (writeTxReturn.invalidate != null)
+          invalidates.add(writeTxReturn.invalidate);
         rows.addRow(write.getKey());
       }
     }
@@ -104,7 +109,7 @@ public class OmidTransactionalOperationExecutor implements
     // All operations completed successfully, commit transaction
     if (!commitTransaction(pointer, rows)) {
       // Commit failed, abort
-      abortTransaction(pointer, deletes);
+      abortTransaction(pointer, deletes, invalidates);
       return false;
     }
     
@@ -115,6 +120,7 @@ public class OmidTransactionalOperationExecutor implements
   private class WriteTransactionResult {
     final boolean success;
     final List<Delete> deletes;
+    final QueueInvalidate invalidate;
     WriteTransactionResult(boolean success) {
       this(success, new ArrayList<Delete>());
     }
@@ -122,8 +128,17 @@ public class OmidTransactionalOperationExecutor implements
       this(success, Arrays.asList(new Delete [] { delete } ));
     }
     WriteTransactionResult(boolean success, List<Delete> deletes) {
+      this(success, deletes, null);
+    }
+    public WriteTransactionResult(boolean success,
+        QueueInvalidate invalidate) {
+      this(success, new ArrayList<Delete>(), invalidate);
+    }
+    WriteTransactionResult(boolean success, List<Delete> deletes,
+        QueueInvalidate invalidate) {
       this.success = success;
       this.deletes = deletes;
+      this.invalidate = invalidate;
     }
   }
   /**
@@ -142,10 +157,16 @@ public class OmidTransactionalOperationExecutor implements
       return write((Increment)write, pointer);
     } else if (write instanceof CompareAndSwap) {
       return write((CompareAndSwap)write, pointer);
+    } else if (write instanceof QueueEnqueue) {
+      return write((QueueEnqueue)write, pointer);
+    } else if (write instanceof QueueAck) {
+      return write((QueueAck)write, pointer);
+    } else if (write instanceof QueueEnqueue) {
+      throw new RuntimeException("Enqueues should happen in their own tx");
     }
     return new WriteTransactionResult(false);
   }
-  
+
   WriteTransactionResult write(Write write,
       ImmutablePair<ReadPointer,Long> pointer) {
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
@@ -193,6 +214,43 @@ public class OmidTransactionalOperationExecutor implements
     return new WriteTransactionResult(casReturn,
         new Delete(write.getKey(), COLUMN));
   }
+ 
+  // TTQueues
+  
+  /**
+   * Enqueue operations always succeed but can be rolled back.
+   * 
+   * They are rolled back with an invalidate.
+   * 
+   * @param write
+   * @param pointer
+   * @return
+   */
+  WriteTransactionResult write(QueueEnqueue enqueue,
+      ImmutablePair<ReadPointer, Long> pointer) {
+    EnqueueResult result = this.queueTable.enqueue(enqueue.getKey(),
+        enqueue.getData(), pointer.getSecond());
+    enqueue.setResult(result);
+    return new WriteTransactionResult(true,
+        new QueueInvalidate(enqueue.getKey(), result.getEntryPointer(),
+            pointer.getSecond()));
+  }
+  
+  WriteTransactionResult write(QueueAck ack,
+      ImmutablePair<ReadPointer, Long> pointer) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public DequeueResult execute(QueueDequeue dequeue)
+      throws SyncReadTimeoutException {
+    DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
+        dequeue.getConsumer(), dequeue.getConfig(),
+        this.oracle.getReadPointer());
+    dequeue.setResult(result);
+    return result;
+  }
   
   ImmutablePair<ReadPointer, Long> startTransaction() {
     return this.oracle.getNewPointer();
@@ -204,7 +262,13 @@ public class OmidTransactionalOperationExecutor implements
   }
 
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
-      List<Delete> deletes) throws OmidTransactionException {
+      List<Delete> deletes, List<QueueInvalidate> invalidates)
+  throws OmidTransactionException {
+    // Perform queue invalidates
+    for (QueueInvalidate invalidate : invalidates) {
+      this.queueTable.invalidate(invalidate.getKey(),
+          invalidate.getEntryPointer(), pointer.getSecond());
+    }
     // Perform deletes
     for (Delete delete : deletes) {
       assert(delete != null);
@@ -271,33 +335,20 @@ public class OmidTransactionalOperationExecutor implements
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue)
-      throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
   public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return 0;
+    unsupported();
+    return 0L;
   }
 
   @Override
-  public boolean execute(com.continuuity.data.operation.ttqueue.QueueAck ack) {
-    // TODO Auto-generated method stub
+  public boolean execute(QueueAck ack) {
+    unsupported();
     return false;
   }
 
   @Override
   public boolean execute(QueueEnqueue enqueue) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  @Override
-  public boolean execute(QueueInvalidate invalidate) {
-    // TODO Auto-generated method stub
+    unsupported();
     return false;
   }
 }
