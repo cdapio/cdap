@@ -7,11 +7,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.table.ReadPointer;
 
 public class MemoryOracle implements TransactionOracle {
 

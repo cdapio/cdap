@@ -3,7 +3,7 @@
  */
 package com.continuuity.data;
 
-import com.continuuity.data.engine.VersionedTable;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 
 /**
  * 
@@ -16,7 +16,7 @@ public class FabricHandle {
     this.username = username;
   }
   
-  public VersionedTable getPrimaryTable() {
+  public OrderedVersionedColumnarTable getPrimaryTable() {
     return null;//getTable(Bytes.toBytes("__USER_" + username));
   }
 }

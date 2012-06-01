@@ -21,4 +21,8 @@ public class ReadModifyWrite implements ConditionalWriteOperation {
     return modifier;
   }
 
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

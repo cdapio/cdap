@@ -1,4 +1,4 @@
-package com.continuuity.data.table.impl;
+package com.continuuity.data.engine.hbase;
 
 import java.io.IOException;
 import java.util.Map;
@@ -14,8 +14,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
 
 public class HBaseOVCTable implements OrderedVersionedColumnarTable {

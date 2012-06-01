@@ -4,7 +4,7 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.table.ReadPointer;
 
 
 /**

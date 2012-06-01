@@ -1,6 +1,5 @@
 package com.continuuity.data.table;
 
-import com.continuuity.data.engine.ReadPointer;
 
 public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
   

@@ -27,4 +27,9 @@ public class CompareAndSwap implements ConditionalWriteOperation {
   public byte [] getNewValue() {
     return this.newValue;
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

@@ -6,8 +6,6 @@ import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.operation.OrderedRead;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadCounter;
-import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePop;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -24,12 +22,7 @@ public interface ReadOperationExecutor {
 
   public Map<byte[], byte[]> execute(OrderedRead orderedRead)
       throws SyncReadTimeoutException;
-
-  // Queues
-
-  public QueueEntry execute(QueuePop pop)
-      throws SyncReadTimeoutException, InterruptedException;
-
+  
   // TTQueues
 
   public DequeueResult execute(QueueDequeue dequeue)

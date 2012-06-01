@@ -1,4 +1,4 @@
-package com.continuuity.data.engine;
+package com.continuuity.data.table;
 
 public class SimpleReadPointer implements ReadPointer {
 

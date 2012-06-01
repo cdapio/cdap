@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2012 Continuuity, Inc.
  */
-package com.continuuity.data.table.impl;
+package com.continuuity.data.engine.memory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -20,11 +20,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 

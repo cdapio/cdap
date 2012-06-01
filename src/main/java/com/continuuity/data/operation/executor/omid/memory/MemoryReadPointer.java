@@ -5,7 +5,7 @@ package com.continuuity.data.operation.executor.omid.memory;
 
 import java.util.Set;
 
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.table.ReadPointer;
 import com.google.common.base.Objects;
 
 /**

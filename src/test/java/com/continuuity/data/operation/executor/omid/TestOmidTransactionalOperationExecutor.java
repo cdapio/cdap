@@ -9,36 +9,37 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
-import com.continuuity.data.engine.memory.MemoryVersionedTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
+import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.table.handles.SimpleOVCTableHandle;
 
 public class TestOmidTransactionalOperationExecutor {
 
   @Rule
   public final TestName testName = new TestName();
   
-  private final TransactionOracle oracle =
-      new MemoryOracle(new MemoryStrictlyMonotonicOracle());
+  private final TimestampOracle timeOracle = new MemoryStrictlyMonotonicOracle();
+  private final TransactionOracle oracle = new MemoryOracle(timeOracle);
+  private final Configuration conf = new Configuration();
 
   @Test
   public void testSimple() throws Exception {
     
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryVersionedTableHandle(
-                Bytes.toBytes(testName.getMethodName())));
+            new SimpleOVCTableHandle(timeOracle, conf));
     
     byte [] key = Bytes.toBytes("key");
     byte [] value = Bytes.toBytes("value");
@@ -67,8 +68,7 @@ public class TestOmidTransactionalOperationExecutor {
   public void testOverlappingConcurrentWrites() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryVersionedTableHandle(
-                Bytes.toBytes(testName.getMethodName())));
+            new SimpleOVCTableHandle(timeOracle, conf));
     
     byte [] key = Bytes.toBytes("key");
     byte [] valueOne = Bytes.toBytes("value1");
@@ -120,8 +120,7 @@ public class TestOmidTransactionalOperationExecutor {
   public void testClosedTransactionsThrowExceptions() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryVersionedTableHandle(
-                Bytes.toBytes(testName.getMethodName())));
+            new SimpleOVCTableHandle(timeOracle, conf));
     
     byte [] key = Bytes.toBytes("key");
     
@@ -164,8 +163,7 @@ public class TestOmidTransactionalOperationExecutor {
   public void testOverlappingConcurrentReadersAndWriters() throws Exception {
     OmidTransactionalOperationExecutor executor =
         new OmidTransactionalOperationExecutor(oracle,
-            new MemoryVersionedTableHandle(
-                Bytes.toBytes(testName.getMethodName())));
+            new SimpleOVCTableHandle(timeOracle, conf));
     
     byte [] key = Bytes.toBytes("key");
     

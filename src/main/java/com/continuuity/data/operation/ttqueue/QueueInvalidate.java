@@ -39,4 +39,9 @@ public class QueueInvalidate implements WriteOperation {
         .add("writeVersion", this.writeVersion)
         .toString();
   }
+
+  @Override
+  public int getPriority() {
+    return 0;
+  }
 }

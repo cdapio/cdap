@@ -2,9 +2,9 @@ package com.continuuity.data.table.converter;
 
 import java.util.Map;
 
-import com.continuuity.data.engine.SimpleReadPointer;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.ColumnarTable;
+import com.continuuity.data.table.SimpleReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 
 public class ColumnarOnVersionedColumnarTable implements ColumnarTable {

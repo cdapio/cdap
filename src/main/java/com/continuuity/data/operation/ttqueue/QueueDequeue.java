@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.operation.type.ReadOperation;
+import com.continuuity.data.table.ReadPointer;
 
 /**
  * Marks and retrieves the next entry in the queue for the specified consumer,

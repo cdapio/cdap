@@ -25,4 +25,9 @@ public class ColumnWrite implements WriteOperation {
   public byte [][] getValues() {
     return this.values;
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

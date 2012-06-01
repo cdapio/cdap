@@ -43,4 +43,9 @@ public class Increment implements WriteOperation, ReadOperation<Long> {
   public OperationGenerator<Long> getPostIncrementOperationGenerator() {
     return this.postOperationGenerator;
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

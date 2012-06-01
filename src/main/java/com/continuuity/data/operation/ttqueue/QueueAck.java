@@ -43,4 +43,9 @@ public class QueueAck implements ConditionalWriteOperation {
         .add("queueConsumer", this.consumer)
         .toString();
   }
+
+  @Override
+  public int getPriority() {
+    return 3;
+  }
 }

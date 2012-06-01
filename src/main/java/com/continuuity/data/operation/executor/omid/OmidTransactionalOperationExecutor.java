@@ -12,10 +12,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.SyncReadTimeoutException;
-import com.continuuity.data.engine.ReadPointer;
-import com.continuuity.data.engine.VersionedQueueTable;
-import com.continuuity.data.engine.VersionedTable;
-import com.continuuity.data.engine.VersionedTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
@@ -28,16 +24,16 @@ import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.queue.QueueAck;
-import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePop;
-import com.continuuity.data.operation.queue.QueuePush;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueInvalidate;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.ReadPointer;
 
 /**
  *
@@ -47,18 +43,18 @@ public class OmidTransactionalOperationExecutor implements
 
   final TransactionOracle oracle;
 
-  final VersionedTableHandle tableHandle;
+  final OVCTableHandle tableHandle;
 
-  final VersionedTable randomTable;
+  final OrderedVersionedColumnarTable randomTable;
 
-  final VersionedTable orderedTable;
+  final OrderedVersionedColumnarTable orderedTable;
 
-  final VersionedQueueTable queueTable;
+  final TTQueueTable queueTable;
 
   static final byte [] COLUMN = Bytes.toBytes("c");
 
   public OmidTransactionalOperationExecutor(TransactionOracle oracle,
-      VersionedTableHandle tableHandle) {
+      OVCTableHandle tableHandle) {
     this.oracle = oracle;
     this.tableHandle = tableHandle;
     this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
@@ -222,29 +218,12 @@ public class OmidTransactionalOperationExecutor implements
   // Queue operations also not supported right now
 
   @Override
-  public boolean execute(QueueAck ack) {
-    unsupported("Queue operations not currently supported");
-    // NOT SUPPORTED!
-    try {
-      return execute(Arrays.asList(new WriteOperation [] { ack }));
-    } catch (OmidTransactionException e) {
-      return false;
-    }
-  }
-
-  @Override
   public Map<byte[], byte[]> execute(OrderedRead orderedRead)
       throws SyncReadTimeoutException {
     unsupported("Ordered operations not currently supported");
     return null;
   }
-
-  @Override
-  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
-      InterruptedException {
-    unsupported("Queue operations not currently supported");
-    return null;
-  }
+  
   // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)
 
   private void unsupported() {
@@ -287,12 +266,6 @@ public class OmidTransactionalOperationExecutor implements
 
   @Override
   public boolean execute(CompareAndSwap cas) {
-    unsupported();
-    return false;
-  }
-
-  @Override
-  public boolean execute(QueuePush push) {
     unsupported();
     return false;
   }

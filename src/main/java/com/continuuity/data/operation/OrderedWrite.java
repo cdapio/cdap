@@ -19,4 +19,9 @@ public class OrderedWrite implements WriteOperation {
   public byte [] getValue() {
     return this.value;
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

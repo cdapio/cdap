@@ -28,4 +28,9 @@ public class Delete implements WriteOperation {
   public byte [] getColumn() {
     return this.column;
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

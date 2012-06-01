@@ -3,7 +3,6 @@ package com.continuuity.data.table;
 import java.util.Map;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
 
 public interface VersionedColumnarTable {
 

@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.queue;
 
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.table.ReadPointer;
 
 @Deprecated
 public interface PowerVersionedQueue {

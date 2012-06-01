@@ -1,6 +1,6 @@
 package com.continuuity.data.table.converter;
 
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data.table.VersionedKVTable;
 

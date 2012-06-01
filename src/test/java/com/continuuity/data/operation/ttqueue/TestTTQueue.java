@@ -13,11 +13,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.impl.MemoryOVCTable;
+import com.continuuity.data.table.ReadPointer;
 
 public class TestTTQueue {
 

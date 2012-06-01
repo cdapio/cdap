@@ -6,9 +6,6 @@ import java.util.Map;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.SyncReadTimeoutException;
-import com.continuuity.data.engine.SimpleQueueTable;
-import com.continuuity.data.engine.SimpleTable;
-import com.continuuity.data.engine.SimpleTableHandle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
@@ -20,28 +17,27 @@ import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.queue.QueueAck;
-import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePop;
-import com.continuuity.data.operation.queue.QueuePush;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueueInvalidate;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.table.ColumnarTable;
+import com.continuuity.data.table.ColumnarTableHandle;
 
 public class SimpleOperationExecutor implements OperationExecutor {
 
-  final SimpleTableHandle tableHandle;
+  final ColumnarTableHandle tableHandle;
 
-  final SimpleTable randomTable;
+  final ColumnarTable randomTable;
 
-  final SimpleTable orderedTable;
+  final ColumnarTable orderedTable;
 
-  final SimpleQueueTable queueTable;
+  final TTQueueTable queueTable;
 
-  public SimpleOperationExecutor(SimpleTableHandle tableHandle) {
+  public SimpleOperationExecutor(ColumnarTableHandle tableHandle) {
     this.tableHandle = tableHandle;
     this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
     this.orderedTable = tableHandle.getTable(Bytes.toBytes("ordered"));
@@ -79,10 +75,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
       if (!execute((Increment)write)) return false;
     } else if (write instanceof CompareAndSwap) {
       if (!execute((CompareAndSwap)write)) return false;
-    } else if (write instanceof QueuePush) {
-      if (!execute((QueuePush)write)) return false;
-    } else if (write instanceof QueueAck) {
-      if (!execute((QueueAck)write)) return false;
     }
     return true;
   }
@@ -112,11 +104,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public boolean execute(QueuePush push) {
-    return this.queueTable.push(push.getQueueName(), push.getValue());
-  }
-
-  @Override
   public boolean execute(OrderedWrite write) {
     throw new RuntimeException("Ordered operations not currently supported");
   }
@@ -127,11 +114,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
   public boolean execute(CompareAndSwap cas) {
     return this.randomTable.compareAndSwap(cas.getKey(), COLUMN,
         cas.getExpectedValue(), cas.getNewValue());
-  }
-
-  @Override
-  public boolean execute(QueueAck ack) {
-    return this.queueTable.ack(ack.getQueueName(), ack.getQueueEntry());
   }
 
   // Value Returning Read-Modify-Writes
@@ -177,13 +159,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
     return this.randomTable.increment(readCounter.getKey(), COLUMN, 0);
-  }
-
-  @Override
-  public QueueEntry execute(QueuePop pop) throws SyncReadTimeoutException,
-      InterruptedException {
-    return this.queueTable.pop(pop.getQueueName(), pop.getConsumer(),
-        pop.getConfig(), pop.getDrain());
   }
 
   @Override

@@ -18,10 +18,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.continuuity.data.engine.memory.MemorySimpleTableHandle;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.table.handles.SimpleColumnarTableHandle;
 
 /**
  * Simple test of operations stuff.
@@ -33,7 +33,7 @@ public class OperationsSimpleExecutorTest {
 	@Before
 	public void setUp() throws Exception {
 	  this.executor = new SimpleOperationExecutor(
-	      new MemorySimpleTableHandle(Bytes.toBytes(this.getClass().getName())));
+	      new SimpleColumnarTableHandle());
 	}
 
 	@After
@@ -364,8 +364,7 @@ public class OperationsSimpleExecutorTest {
 
 
     SimpleOperationExecutor memoryOperationExecutor =
-        new SimpleOperationExecutor(new MemorySimpleTableHandle(
-            Bytes.toBytes("testSimpleMemoryReadWrite")));
+        new SimpleOperationExecutor(new SimpleColumnarTableHandle());
 
     // Client Developer : Make two write operations
     List<WriteOperation> writes = new ArrayList<WriteOperation>(2);

@@ -31,4 +31,9 @@ public class Write implements WriteOperation {
         .add("value", Bytes.toString(value))
         .toString();
   }
+
+  @Override
+  public int getPriority() {
+    return 1;
+  }
 }

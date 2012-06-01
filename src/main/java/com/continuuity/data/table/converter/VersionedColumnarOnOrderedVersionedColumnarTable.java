@@ -3,8 +3,8 @@ package com.continuuity.data.table.converter;
 import java.util.Map;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data.util.KeyMapper;
 

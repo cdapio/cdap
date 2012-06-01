@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.engine.ReadPointer;
+import com.continuuity.data.table.ReadPointer;
 
 /**
  * A Transactional Tabular Queue interface.
