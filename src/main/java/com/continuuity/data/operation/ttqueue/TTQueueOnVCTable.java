@@ -546,7 +546,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   private void log(String msg) {
-    System.out.println(msg);
+//    System.out.println(msg);
     // LOG.debug(msg);
   }
 
