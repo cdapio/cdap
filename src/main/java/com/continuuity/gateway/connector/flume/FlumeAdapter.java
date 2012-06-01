@@ -2,10 +2,13 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway;
+package com.continuuity.gateway.connector.flume;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.Consumer;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;

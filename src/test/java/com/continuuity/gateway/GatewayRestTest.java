@@ -7,12 +7,15 @@ import com.continuuity.data.operation.queue.QueueEntry;
 import com.continuuity.data.operation.queue.QueuePartitioner;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
-import com.continuuity.gateway.connector.flume.FlumeConnector;
-import com.continuuity.gateway.connector.flume.NettyFlumeConnector;
+import com.continuuity.gateway.connector.rest.RestConnector;
+import com.continuuity.gateway.connector.rest.RestHandler;
 import org.apache.flume.EventDeliveryException;
-import org.apache.flume.api.RpcClient;
-import org.apache.flume.api.RpcClientFactory;
-import org.apache.flume.event.SimpleEvent;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -21,46 +24,56 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * This tests whether Flume events are properly transmitted through the gateway
- */
-public class GatewayFlumeTest {
+public class GatewayRestTest {
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(GatewayFlumeTest.class);
+			.getLogger(GatewayRestTest.class);
 
-	static final String hostname = "localhost";
-	static final int port = 8765;
-	static final int batchSize = 4;
+	static final int port = 4321;
 	static final int eventsToSend = 10;
+	static final String dest = "pfunk";
 
 	static byte[] createMessage(int messageNo) {
 		return ("This is message " + messageNo + ".").getBytes();
 	}
 
-	void sendFlumeEvents () throws EventDeliveryException {
-		RpcClient client = RpcClientFactory.
-				getDefaultInstance(hostname, port, batchSize);
-
-		for (int i = 0; i < eventsToSend; i++) {
-			SimpleEvent event = new SimpleEvent();
-			Map<String, String> headers = new HashMap<String, String>();
-			headers.put("messageNumber", Integer.toString(i));
-			event.setHeaders(headers);
-			event.setBody(createMessage(i));
-			client.append(event);
-		}
-		client.close();
-	}
-
 	Gateway setupGateway() throws Exception {
 		Gateway gateway = new Gateway();
-		FlumeConnector connector = new NettyFlumeConnector();
-		connector.setHost(hostname);
+		RestConnector connector = new RestConnector();
 		connector.setPort(port);
-		connector.setName("flume");
+		connector.setName("rest");
 		gateway.addConnector(connector);
 		return gateway;
+	}
+
+	void sendRestEvents () throws EventDeliveryException {
+		String path = RestHandler.PATH_PREFIX + dest;
+		for (int i = 0; i < eventsToSend; i++) {
+			Map<String, String> headers = new HashMap<String, String>();
+			headers.put(dest + ".messageNumber", Integer.toString(i));
+			byte[] body = createMessage(i);
+			send(port, path, headers, body);
+		}
+	}
+
+	private void send(int port, String path, Map<String, String> headers, byte[] body) {
+		try {
+			String url = "http://localhost:" + port + path;
+			HttpPost post = new HttpPost(url);
+			for (String header : headers.keySet()) {
+				post.setHeader(header, headers.get(header));
+			}
+			post.setEntity(new ByteArrayEntity(body));
+			HttpClient client = new DefaultHttpClient();
+			HttpResponse response = client.execute(post);
+			int status = response.getStatusLine().getStatusCode();
+			if (status != HttpStatus.SC_OK) {
+				LOG.error("Error sending event: " + response.getStatusLine());
+			}
+			client.getConnectionManager().shutdown();
+		} catch (Exception e) {
+			LOG.error("Exception while sending event: " + e.getMessage());
+		}
 	}
 
 	void consumeQueue(MemoryQueueTable queues) throws Exception {
@@ -68,16 +81,16 @@ public class GatewayFlumeTest {
 		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
 		EventSerializer deserializer = new EventSerializer();
 		for (int remaining = eventsToSend; remaining > 0; --remaining) {
-			QueueEntry entry = queues.pop("default".getBytes(), consumer, config, false);
+			QueueEntry entry = queues.pop(dest.getBytes(), consumer, config, false);
 			Event event = deserializer.deserialize(entry.getValue());
-			Assert.assertEquals("flume", event.getHeader(Constants.HEADER_FROM_CONNECTOR));
+			Assert.assertEquals("rest", event.getHeader(Constants.HEADER_FROM_CONNECTOR));
 			String header = event.getHeader("messageNumber");
 			Assert.assertNotNull(header);
 			int messageNumber = Integer.valueOf(header);
 			LOG.info("Popped one event number: " + messageNumber);
 			Assert.assertTrue(messageNumber >= 0 && messageNumber < eventsToSend);
 			Assert.assertArrayEquals(event.getBody(), createMessage(messageNumber));
-			queues.ack("default".getBytes(), entry);
+			queues.ack(dest.getBytes(), entry);
 		}
 	}
 
@@ -89,7 +102,7 @@ public class GatewayFlumeTest {
 		gateway.setConsumer(consumer);
 
 		gateway.start();
-		this.sendFlumeEvents();
+		this.sendRestEvents();
 		gateway.stop();
 
 		Assert.assertEquals(eventsToSend, consumer.eventsReceived());
@@ -98,4 +111,5 @@ public class GatewayFlumeTest {
 
 		consumeQueue(queues);
 	}
+
 }

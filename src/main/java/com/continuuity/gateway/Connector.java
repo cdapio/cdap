@@ -29,6 +29,6 @@ public abstract class Connector {
 	}
 
 	public abstract void configure(Configuration configuration);
-	public abstract void start();
+	public abstract void start() throws Exception;
 	public abstract void stop();
 }

@@ -43,7 +43,9 @@ public class QueueWritingConsumer extends Consumer {
 			LOG.warn("Could not serialize event: " + event);
 			throw new Exception("Could not serialize event: " + event);
 		}
-		this.queues.push("default".getBytes(), bytes);
+		String destination = event.getHeader(Constants.HEADER_DESTINATION_ENDPOINT);
+		if (destination == null) destination = "default";
+		this.queues.push(destination.getBytes(), bytes);
 	}
 
 	// @todo implement batch as transaction as soon as transactional queues are ready

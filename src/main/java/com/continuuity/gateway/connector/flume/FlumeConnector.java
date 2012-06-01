@@ -2,7 +2,10 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway;
+package com.continuuity.gateway.connector.flume;
+
+import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Consumer;
 
 /**
  *

@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway;
+package com.continuuity.gateway.connector.flume;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
@@ -32,7 +32,6 @@ public class NettyFlumeConnector extends FlumeConnector {
 		this.server = new NettyServer(
 				new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
 				new InetSocketAddress(this.host, this.port));
-		this.consumer.start();
 		this.server.start();
 
 		LOG.debug("Started successfully", this);
@@ -46,7 +45,6 @@ public class NettyFlumeConnector extends FlumeConnector {
 		} catch (InterruptedException e) {
 			LOG.info("Received interrupt during join.");
 		}
-		this.consumer.stop();
 		LOG.debug("Stopped. ", this);
 	}
 

@@ -69,7 +69,7 @@ public abstract class Consumer {
 		LOG.info("  Calls/Events Failed:    " + this.callsFailed + "/" + this.eventsFailed);
 	}
 
-	final void consumeEvent(Event event) throws Exception {
+	final public void consumeEvent(Event event) throws Exception {
 		this.callsReceived.incrementAndGet();
 		this.eventsReceived.incrementAndGet();
 		try {
@@ -83,7 +83,7 @@ public abstract class Consumer {
 		this.eventsSucceeded.incrementAndGet();
 	}
 
-	final void consumeEvents(List<Event> events) throws Exception {
+	final public void consumeEvents(List<Event> events) throws Exception {
 		this.callsReceived.incrementAndGet();
 		this.eventsReceived.addAndGet(events.size());
 		try {
