@@ -238,8 +238,15 @@ public class OmidTransactionalOperationExecutor implements
   
   WriteTransactionResult write(QueueAck ack,
       ImmutablePair<ReadPointer, Long> pointer) {
-    // TODO Auto-generated method stub
-    return null;
+    boolean result = this.queueTable.ack(ack.getKey(), ack.getEntryPointer(),
+        ack.getConsumer());
+    if (!result) {
+      // Ack failed, roll back transaction
+      return new WriteTransactionResult(false);
+    }
+    return new WriteTransactionResult(true,
+        new QueueInvalidate(ack.getKey(), ack.getEntryPointer(),
+            pointer.getSecond()));
   }
 
   @Override

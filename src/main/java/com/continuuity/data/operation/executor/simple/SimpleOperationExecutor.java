@@ -18,6 +18,7 @@ import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -194,7 +195,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public boolean execute(com.continuuity.data.operation.ttqueue.QueueAck ack) {
+  public boolean execute(QueueAck ack) {
     // TODO Auto-generated method stub
     return false;
   }

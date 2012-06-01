@@ -12,18 +12,18 @@ import com.google.common.base.Objects;
 public class QueueAck implements ConditionalWriteOperation {
 
   private final byte [] queueName;
-  private final long entryId;
+  private final QueueEntryPointer entryPointer;
   private final QueueConsumer consumer;
   
-  public QueueAck(final byte [] queueName, final long entryId,
+  public QueueAck(final byte [] queueName, final QueueEntryPointer entryPointer,
       final QueueConsumer consumer) {
     this.queueName = queueName;
-    this.entryId = entryId;
+    this.entryPointer = entryPointer;
     this.consumer = consumer;
   }
   
-  public long getEntryId() {
-    return this.entryId;
+  public QueueEntryPointer getEntryPointer() {
+    return this.entryPointer;
   }
   
   public QueueConsumer getConsumer() {
@@ -39,7 +39,7 @@ public class QueueAck implements ConditionalWriteOperation {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("queueName", Bytes.toString(this.queueName))
-        .add("entryId", this.entryId)
+        .add("entryPointer", this.entryPointer)
         .add("queueConsumer", this.consumer)
         .toString();
   }
