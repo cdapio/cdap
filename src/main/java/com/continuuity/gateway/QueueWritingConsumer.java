@@ -4,7 +4,6 @@
 
 package com.continuuity.gateway;
 
-import com.continuuity.data.engine.SimpleQueueTable;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
@@ -20,10 +19,10 @@ public class QueueWritingConsumer extends Consumer {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(QueueWritingConsumer.class);
 
-	SimpleQueueTable queues;
+	MemoryQueueTable queues;
 	Configuration configuration;
 
-	public QueueWritingConsumer(SimpleQueueTable queues) {
+	public QueueWritingConsumer(MemoryQueueTable queues) {
 		this.queues = queues;
 	}
 
