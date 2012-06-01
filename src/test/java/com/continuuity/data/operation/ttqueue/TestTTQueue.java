@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.engine.ReadPointer;
@@ -23,7 +22,7 @@ import com.continuuity.data.table.impl.MemoryOVCTable;
 public class TestTTQueue {
 
   private static final long MAX_TIMEOUT_MS = 10000;
-  private static final long dequeue_BLOCK_TIMEOUT_MS = 1;
+  private static final long DEQUEUE_BLOCK_TIMEOUT_MS = 1;
 
   private static TimestampOracle timeOracle =
       new MemoryStrictlyMonotonicTimeOracle();
@@ -447,7 +446,7 @@ public class TestTTQueue {
     waitForAndAssertCount(0, dequeuer.dequeues);
 
     // nothing in queue so dequeuer should be empty
-    DequeueResult result = dequeuer.blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+    DequeueResult result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
     assertNull(result);
 
     // enqueue
@@ -461,7 +460,7 @@ public class TestTTQueue {
     assertTrue(Bytes.equals(result.getValue(), valueOne));
 
     // dequeuer should also have this loaded
-    result = dequeuer.blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
     assertNotNull(result);
     assertTrue(Bytes.equals(result.getValue(), valueOne));
 
@@ -475,7 +474,7 @@ public class TestTTQueue {
     waitForAndAssertCount(2, dequeuer.dequeueRunLoop);
 
     // nothing in queue so dequeuer should be empty
-    result = dequeuer.blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
     assertNull(result);
 
     // enqueue
@@ -485,7 +484,7 @@ public class TestTTQueue {
     waitForAndAssertCount(3, dequeuer.dequeueRunLoop);
 
     // dequeuer should have value2
-    result = dequeuer.blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
     assertNotNull(result);
     assertTrue(Bytes.equals(result.getValue(), valueTwo));
 
@@ -494,7 +493,7 @@ public class TestTTQueue {
     waitForAndAssertCount(3, dequeuer.dequeues);
     // dequeuer had dequeueped and goes into its next loop
     waitForAndAssertCount(4, dequeuer.dequeueRunLoop);
-    result = dequeuer.blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+    result = dequeuer.blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
     assertNotNull(result);
     assertTrue(Bytes.equals(result.getValue(), valueTwo));
 
@@ -509,12 +508,13 @@ public class TestTTQueue {
   }
   
   // TODO: Fix and enable
-  @Test @Ignore
+  @Test
   public void testMultiConsumerMultiGroup() throws Exception {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = new MemoryReadPointer(version);
+    AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
 
     // Create 4 consumer groups with 4 consumers each
     int n = 4;
@@ -555,14 +555,14 @@ public class TestTTQueue {
       }
     }
 
-//      // No queue dequeue returns yet
-//      long expectedQueuedequeues = 0;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // No queue dequeue returns yet
+    long expectedQueuedequeues = 0;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // verify everyone is empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        assertNull(dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS));
+        assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
@@ -579,16 +579,16 @@ public class TestTTQueue {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
     }
 
-//      // wait for 16 more queuedequeue() returns
-//      expectedQueuedequeues += 16;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 16 more queuedequeue() returns
+    expectedQueuedequeues += 16;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
     numdequeues++;
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeues);
-        DequeueResult result = dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+        DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getValue()));
       }
@@ -603,14 +603,14 @@ public class TestTTQueue {
       }
     }
 
-//      // wait for 16 more queuedequeue() returns
-//      expectedQueuedequeues += 16;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 16 more queuedequeue() returns
+    expectedQueuedequeues += 16;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        DequeueResult result = dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+        DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getValue()));
       }
@@ -627,9 +627,9 @@ public class TestTTQueue {
       }
     }
 
-//      // wait for 16 more queuedequeue() returns
-//      expectedQueuedequeues += 16;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 16 more queuedequeue() returns
+    expectedQueuedequeues += 16;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // ack it for groups(0,1) consumers(2,3)
     for (int i=0; i<n/2; i++) {
@@ -643,9 +643,9 @@ public class TestTTQueue {
       }
     }
 
-//      // wait for 4 more queuedequeue() returns
-//      expectedQueuedequeues += 4;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 4 more queuedequeue() returns
+    expectedQueuedequeues += 4;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // trigger dequeuers
     numdequeues++;
@@ -657,16 +657,16 @@ public class TestTTQueue {
       }
     }
 
-//      // wait for 12 more queuedequeue() returns
-//      expectedQueuedequeues += 12;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 12 more queuedequeue() returns
+    expectedQueuedequeues += 12;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // expect null for groups(0,1) consumers(2,3), same value for others
     // ack everyone not ackd
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
         if ((i == 0 || i == 1) && (j == 2 || j == 3)) {
-          assertNull(dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS));
+          assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
         } else {
           System.out.println("dequeue: i=" + i + ", j=" + j);
           DequeueResult result = queue.dequeue(consumers[i][j], config,
@@ -676,16 +676,16 @@ public class TestTTQueue {
           assertTrue(queue.ack(result.getEntryPointer(), consumers[i][j]));
           // buffer of dequeuer should still have that result
           waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeues);
-          result = dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+          result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
           assertNotNull(result);
           assertEquals(j, Bytes.toLong(result.getValue()));
         }
       }
     }
 
-//      // wait for 12 more queuedequeue() returns
-//      expectedQueuedequeues += 12;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 12 more queuedequeue() returns
+    expectedQueuedequeues += 12;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // trigger dequeues again, will get false for groups(0,1) consumers(2,3)
     for (int i=0; i<n; i++) {
@@ -712,7 +712,7 @@ public class TestTTQueue {
     // everyone should be empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        assertNull(dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS));
+        assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
@@ -721,9 +721,9 @@ public class TestTTQueue {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
     }
 
-//      // wait for 16 more queuedequeue() wake-ups
-//      expectedQueuedequeues += 16;
-//      waitForAndAssertCount(expectedQueuedequeues, queue.dequeueReturns);
+    // wait for 16 more queuedequeue() wake-ups
+    expectedQueuedequeues += 16;
+    waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
     numdequeues++;
 
     // dequeue and ack everything.  each consumer should have 4 things!
@@ -732,7 +732,7 @@ public class TestTTQueue {
         long localdequeues = numdequeues;
         for (int k=0; k<n; k++) {
           waitForAndAssertCount(localdequeues, dequeuers[i][j].dequeues);
-          DequeueResult result = dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS);
+          DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
           assertNotNull(result);
           assertEquals((long)(k*n)+j, Bytes.toLong(result.getValue()));
           assertTrue("i=" + i + ",j=" + j + ",k=" + k,
@@ -746,7 +746,7 @@ public class TestTTQueue {
     // everyone should be empty
     for (int i=0; i<n; i++) {
       for (int j=0; j<n; j++) {
-        assertNull(dequeuers[i][j].blockdequeue(dequeue_BLOCK_TIMEOUT_MS));
+        assertNull(dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS));
       }
     }
 
@@ -764,7 +764,7 @@ public class TestTTQueue {
     while (expected > wakeUps.get() &&
         System.currentTimeMillis() < end) {
       try {
-        Thread.sleep(dequeue_BLOCK_TIMEOUT_MS);
+        Thread.sleep(DEQUEUE_BLOCK_TIMEOUT_MS);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

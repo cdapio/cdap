@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -35,7 +37,10 @@ public class TTQueueOnVCTable implements TTQueue {
   long maxEntriesPerShard;
   long maxBytesPerShard;
   long maxAgeBeforeExpirationInMillis;
-
+  
+  // For testing
+  AtomicLong dequeueReturns = new AtomicLong(0);
+  
   // Row header names and flags
   static final byte [] GLOBAL_ENTRY_HEADER = bytes((byte)10);
   static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = bytes((byte)20);
@@ -181,8 +186,8 @@ public class TTQueueOnVCTable implements TTQueue {
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) {
 
-    log("Attempting dequeue(" + consumer + ", " + config + ", " +
-        readPointer + ")");
+    log("Attempting dequeue [curNumDequeues=" + dequeueReturns.get() + "] (" +
+        consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
@@ -394,6 +399,7 @@ public class TTQueueOnVCTable implements TTQueue {
                 entryGroupMetaData, newEntryGroupMeta.getBytes(),
                 dirty.getFirst(), dirty.getSecond())) {
               // Successfully updated timestamp, still own it, return this
+              dequeueReturns.incrementAndGet();
               return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
                   this.table.get(shardRow,
                       makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
@@ -437,6 +443,7 @@ public class TTQueueOnVCTable implements TTQueue {
           entryGroupMetaData, newEntryGroupMeta.getBytes(),
           dirty.getFirst(), dirty.getSecond())) {
         // We own it!  Return it.
+        dequeueReturns.incrementAndGet();
         return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
       } else {
         // Someone else has grabbed it, on to the next one
