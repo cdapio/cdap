@@ -2,6 +2,7 @@ package com.continuuity.data.table.converter;
 
 import java.util.Map;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.VersionedColumnarTable;
@@ -48,6 +49,12 @@ public class VersionedColumnarOnOrderedVersionedColumnarTable implements
   @Override
   public byte[] get(byte[] row, byte[] column, ReadPointer readPointer) {
     return table.get(mapper.map(row), column, readPointer);
+  }
+
+  @Override
+  public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
+      ReadPointer readPointer) {
+    return table.getWithVersion(mapper.map(row), column, readPointer);
   }
 
   @Override

@@ -18,7 +18,7 @@ import com.continuuity.data.engine.ReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.Scanner;
 
-public class HBaseTable implements OrderedVersionedColumnarTable {
+public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   private final HTable table;
 
@@ -26,7 +26,7 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
 
   private final IOExceptionHandler exceptionHandler;
 
-  public HBaseTable(HTable table, byte[] family,
+  public HBaseOVCTable(HTable table, byte[] family,
       IOExceptionHandler exceptionHandler) {
     this.table = table;
     this.family = family;
@@ -116,6 +116,26 @@ public class HBaseTable implements OrderedVersionedColumnarTable {
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
         return kv.getValue();
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return null;
+  }
+
+  @Override
+  public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
+      ReadPointer readPointer) {
+    try {
+      Get get = new Get(row);
+      get.addColumn(this.family, column);
+      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setMaxVersions();
+      Result result = this.table.get(get);
+      for (KeyValue kv : result.raw()) {
+        long version = kv.getTimestamp();
+        if (!readPointer.isVisible(version)) continue;
+        return new ImmutablePair<byte[],Long>(kv.getValue(), kv.getTimestamp());
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);

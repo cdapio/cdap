@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
+import com.google.common.base.Objects;
+
 
 /**
  * Meta data about a queue entry.
@@ -32,6 +34,13 @@ public class EntryMeta {
     return new EntryMeta(EntryState.fromBytes(bytes));
   }
 
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("state", this.state)
+        .toString();
+  }
+
   public static enum EntryState {
     VALID, INVALID, SHARD_END;
 
@@ -55,6 +64,13 @@ public class EntryMeta {
         if (bytes[0] == SHARD_END_BYTES[0]) return SHARD_END;
       }
       throw new RuntimeException("Invalid deserialization of EntryState");
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+          .add("state", this.name())
+          .toString();
     }
   }
 }

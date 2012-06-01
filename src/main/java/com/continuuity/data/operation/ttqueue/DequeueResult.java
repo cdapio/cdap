@@ -8,25 +8,31 @@ import com.google.common.base.Objects;
 public class DequeueResult {
 
   private final DequeueStatus status;
-  private final long entryId;
+  private final QueueEntryPointer pointer;
   private final byte [] value;
   private final String msg;
 
-  public DequeueResult(final DequeueStatus status, String msg) {
-    this.status = status;
-    this.msg = msg;
-    this.entryId = -1;
-    this.value = null;
-  }
-  
-  public DequeueResult(final DequeueStatus status, final long entryId,
-      final byte [] value) {
-    this.status = status;
-    this.entryId = entryId;
-    this.value = value;
-    this.msg = null;
+  public DequeueResult(final DequeueStatus status) {
+    this(status, null, null, null);
   }
 
+  public DequeueResult(final DequeueStatus status, String msg) {
+    this(status, msg, null, null);
+  }
+  
+  public DequeueResult(final DequeueStatus status,
+      final QueueEntryPointer pointer, final byte [] value) {
+    this(status, null, pointer, value);
+  }
+
+  private DequeueResult(final DequeueStatus status, final String msg,
+      final QueueEntryPointer pointer, final byte [] value) {
+    this.status = status;
+    this.msg = msg;
+    this.pointer = pointer;
+    this.value = value;
+  }
+  
   public boolean isSuccess() {
     return this.status == DequeueStatus.SUCCESS;
   }
@@ -47,8 +53,12 @@ public class DequeueResult {
     return this.status;
   }
 
-  public long getEntryId() {
-    return this.entryId;
+  public QueueEntryPointer getEntryPointer() {
+    return this.pointer;
+  }
+  
+  public byte [] getValue() {
+    return this.value;
   }
 
   public static enum DequeueStatus {
@@ -59,8 +69,9 @@ public class DequeueResult {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("status", this.status)
-        .add("entryId", this.entryId)
-        .add("value.length", this.value.length)
+        .add("entryPointer", this.pointer)
+        .add("value.length", this.value != null ? this.value.length : 0)
+        .add("msg", this.msg)
         .toString();
   }
 

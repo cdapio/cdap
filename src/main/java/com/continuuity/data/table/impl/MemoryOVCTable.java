@@ -142,6 +142,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     return latest.getSecond();
   }
 
+  @Override
+  public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
+      ReadPointer readPointer) {
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+    ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
+    unlockRow(r);
+    if (latest == null) return null;
+    return new ImmutablePair<byte[],Long>(latest.getSecond(), latest.getFirst());
+  }
+
   // @Override
   // public Map<Long,byte[]> getAllVersions(byte [] row, byte [] column,
   // ReadPointer readPointer) {
@@ -606,6 +618,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("name", this.name).toString();
+    return Objects.toStringHelper(this)
+        .add("name", Bytes.toString(this.name))
+        .add("numrows", this.map.size())
+        .add("numlocks", this.locks.size())
+        .toString();
   }
 }

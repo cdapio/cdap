@@ -2,6 +2,8 @@ package com.continuuity.data.operation.ttqueue.internal;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.common.base.Objects;
+
 /**
  * Meta data for a group about a queue entry.
  */
@@ -34,18 +36,27 @@ public class EntryGroupMeta {
     return this.timestamp;
   }
   
-  public long getInstanceId() {
+  public int getInstanceId() {
     return this.instanceId;
   }
   
   public byte [] getBytes() {
-    return Bytes.add(Bytes.toBytes(instanceId), Bytes.toBytes(timestamp),
-        this.state.getBytes());
+    return Bytes.add(this.state.getBytes(), Bytes.toBytes(timestamp),
+        Bytes.toBytes(instanceId));
   }
   
   public static EntryGroupMeta fromBytes(byte [] bytes) {
-    return new EntryGroupMeta(EntryGroupState.fromBytes(new byte[] {bytes[12]}),
-        Bytes.toLong(bytes, 0), Bytes.toInt(bytes, 8));
+    return new EntryGroupMeta(EntryGroupState.fromBytes(new byte[] {bytes[0]}),
+        Bytes.toLong(bytes, 1), Bytes.toInt(bytes, 9));
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("state", this.state)
+        .add("timestamp", this.timestamp)
+        .add("instanceId", this.instanceId)
+        .toString();
   }
   
   public static enum EntryGroupState {
@@ -71,6 +82,13 @@ public class EntryGroupMeta {
         if (bytes[0] == DEQUEUED_BYTES[0]) return DEQUEUED;
       }
       throw new RuntimeException("Invalid deserialization of EntryGroupState");
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+          .add("state", this.name())
+          .toString();
     }
   }
 }

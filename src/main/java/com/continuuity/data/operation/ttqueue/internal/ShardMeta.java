@@ -2,6 +2,8 @@ package com.continuuity.data.operation.ttqueue.internal;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.common.base.Objects;
+
 /**
  * Meta data about the current shard.
  */
@@ -38,5 +40,14 @@ public class ShardMeta {
   public static ShardMeta fromBytes(byte [] bytes) {
     return new ShardMeta(Bytes.toLong(bytes, 0), Bytes.toLong(bytes, 8),
         Bytes.toLong(bytes, 16));
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("shardId", this.shardId)
+        .add("shardBytes", this.shardBytes)
+        .add("shardEntries", this.shardEntries)
+        .toString();
   }
 }

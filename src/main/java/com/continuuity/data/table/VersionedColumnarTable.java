@@ -2,6 +2,7 @@ package com.continuuity.data.table;
 
 import java.util.Map;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.ReadPointer;
 
 public interface VersionedColumnarTable {
@@ -18,6 +19,9 @@ public interface VersionedColumnarTable {
   public Map<byte [], byte []> get(byte [] row, ReadPointer readPointer);
 
   public byte [] get(byte [] row, byte [] column, ReadPointer readPointer);
+
+  public ImmutablePair<byte[],Long> getWithVersion(byte [] row, byte [] column,
+      ReadPointer readPointer);
 
   public Map<byte [], byte []> get(byte [] row, byte [] startColumn,
       byte [] stopColumn, ReadPointer readPointer);

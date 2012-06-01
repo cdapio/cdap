@@ -6,8 +6,8 @@ import com.google.common.base.Objects;
  * A pointer which completely addresses an entry in a queue.
  */
 public class QueueEntryPointer {
-  private final long entryId;
-  private final long shardId;
+  protected final long entryId;
+  protected final long shardId;
   
   public QueueEntryPointer(final long entryId, final long shardId) {
     this.entryId = entryId;
@@ -22,6 +22,12 @@ public class QueueEntryPointer {
     return this.shardId;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    return entryId == ((QueueEntryPointer)o).entryId &&
+        shardId == ((QueueEntryPointer)o).shardId;
+  }
+  
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
