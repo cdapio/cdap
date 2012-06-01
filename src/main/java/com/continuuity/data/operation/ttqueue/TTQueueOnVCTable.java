@@ -400,10 +400,10 @@ public class TTQueueOnVCTable implements TTQueue {
                       dirty.getFirst()));
             } else {
               // Failed to update group meta, someone else must own it now,
-              // hit the retry just to be safe
-              // TODO: don't retry, move to next entry?
-              return new DequeueResult(DequeueStatus.RETRY, "In singleEntry " +
-                  "mode, found entry owned by me, failed on updating timestamp");
+              // move to next entry in shard
+              entryPointer = new EntryPointer(
+                  entryPointer.getEntryId() + 1, entryPointer.getShardId());
+              continue;
             }
           }
 

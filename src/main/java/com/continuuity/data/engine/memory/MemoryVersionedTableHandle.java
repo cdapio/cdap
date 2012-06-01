@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import com.continuuity.data.engine.VersionedQueueTable;
 import com.continuuity.data.engine.VersionedTableHandle;
 
+@Deprecated
 public class MemoryVersionedTableHandle implements VersionedTableHandle {
 
   private static final Map<byte[],MemoryVersionedTable> TABLES =
