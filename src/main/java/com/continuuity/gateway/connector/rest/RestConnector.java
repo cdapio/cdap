@@ -29,16 +29,6 @@ public class RestConnector extends Connector {
 	private boolean chunk = true;
 	private boolean ssl = false;
 
-	public void setPort(int port) {
-		this.port = port;
-	}
-	public void setChunking(boolean doChunk) {
-		this.chunk = doChunk;
-	}
-	public void setSsl(boolean doSsl) {
-		this.ssl = doSsl;
-	}
-
 	public int getPort() {
 		return this.port;
 	}
@@ -63,9 +53,9 @@ public class RestConnector extends Connector {
 		this.port = configuration.getInt(Constants.connectorConfigName(
 				this.name, Constants.CONFIG_PORTNUMBER), DefaultPort);
 		this.chunk = configuration.getBoolean(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_CHUNKING), true);
+				this.name, Constants.CONFIG_CHUNKING), DefaultChunking);
 		this.ssl = configuration.getBoolean(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_SSL), false);
+				this.name, Constants.CONFIG_SSL), DefaultSsl);
 		this.prefix = configuration.get(Constants.connectorConfigName(
 				this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
 		this.path = configuration.get(Constants.connectorConfigName(

@@ -41,9 +41,6 @@ public abstract class FlumeConnector extends Connector {
 				this.name, Constants.CONFIG_PORTNUMBER), DefaultPort);
 	}
 
-	public void setPort(int port) {
-		this.port = port;
-	}
 	public int getPort() {
 		return this.port;
 	}
