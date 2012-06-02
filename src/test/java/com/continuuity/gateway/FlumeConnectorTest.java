@@ -37,7 +37,7 @@ public class FlumeConnectorTest {
 	@Test
 	public void testStartStop() throws Exception {
 		String name = "other";
-		int port = 9090;
+		int port = 9099;
 		String stream = "pfunk";
 		// configure connector but don't start
 		Configuration configuration = new Configuration();
