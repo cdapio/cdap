@@ -2,7 +2,6 @@ package com.continuuity.gateway.connector.rest;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Connector;
 import com.continuuity.gateway.Constants;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
@@ -17,12 +16,13 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
 
-	public static final String PATH_PREFIX = "/data/";
+	private RestConnector connector;
+	private String pathPrefix;
 
-	private Connector connector;
-
-	RestHandler(Connector connector) {
+	private RestHandler() { };
+	RestHandler(RestConnector connector) {
 		this.connector = connector;
+		this.pathPrefix = connector.getPrefix()	+ connector.getPath();
 	}
 
 	/**
@@ -83,8 +83,9 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 
 		String destination = null;
 		String path = decoder.getPath();
-		if (path.startsWith(PATH_PREFIX)) {
-			String resourceName = path.substring(PATH_PREFIX.length());
+
+		if (path.startsWith(this.pathPrefix)) {
+			String resourceName = path.substring(this.pathPrefix.length());
 			if (!resourceName.contains("/")) {
 				destination = resourceName;
 			}
@@ -131,7 +132,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
-		e.getCause().printStackTrace();
+		LOG.error("Exception caught for connector '" + this.connector.getName() + "'. ", e.getCause());
 		e.getChannel().close();
 	}
 }

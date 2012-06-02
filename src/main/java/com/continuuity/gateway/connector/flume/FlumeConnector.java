@@ -5,19 +5,18 @@
 package com.continuuity.gateway.connector.flume;
 
 import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  *
  */
 public abstract class FlumeConnector extends Connector {
 
-	public static final String DefaultHost = "localhost";
 	public static final int DefaultPort = 8765;
 
 	protected int port = DefaultPort;
-	protected String host = DefaultHost;
-
 	protected FlumeAdapter flumeAdapter;
 
 	@Override
@@ -35,13 +34,22 @@ public abstract class FlumeConnector extends Connector {
 		return this.flumeAdapter.getConsumer();
 	}
 
+	@Override
+	public void configure(Configuration configuration) throws Exception {
+		super.configure(configuration);
+		this.port = configuration.getInt(Constants.connectorConfigName(
+				this.name, Constants.CONFIG_PORTNUMBER), DefaultPort);
+	}
+
 	public void setPort(int port) {
 		this.port = port;
 	}
-	public void setHost(String host) {
-		this.host = host;
+	public int getPort() {
+		return this.port;
 	}
-	protected String getAddress() {
-		return this.host + ":" + this.port;
+
+	public String toString() {
+		return this.getClass().getName() + " at :" + this.getPort() + " (" +
+				(this.consumer == null ? "no consumer set" : this.consumer.getClass().getName()) + ")";
 	}
 }

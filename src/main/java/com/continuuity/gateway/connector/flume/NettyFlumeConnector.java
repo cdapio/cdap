@@ -8,7 +8,6 @@ import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.source.avro.AvroSourceProtocol;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,19 +23,19 @@ public class NettyFlumeConnector extends FlumeConnector {
 
 	private Server server; // the netty server
 
-	public void configure(Configuration configuration) {	}
-
+	@Override
 	public void start() {
 		LOG.info("Starting: ", this);
 
 		this.server = new NettyServer(
 				new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
-				new InetSocketAddress(this.host, this.port));
+				new InetSocketAddress(this.getPort()));
 		this.server.start();
 
 		LOG.debug("Started successfully", this);
 	}
 
+	@Override
 	public void stop() {
 		LOG.info("Stopping: ", this);
 		try {
@@ -46,10 +45,5 @@ public class NettyFlumeConnector extends FlumeConnector {
 			LOG.info("Received interrupt during join.");
 		}
 		LOG.debug("Stopped. ", this);
-	}
-
-	public String toString() {
-		return this.getClass().getName() + " at " + this.getAddress()
-				+ "(" + this.consumer.getClass().getName() + ")";
 	}
 }

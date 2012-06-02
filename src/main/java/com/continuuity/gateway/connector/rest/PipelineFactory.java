@@ -1,6 +1,5 @@
 package com.continuuity.gateway.connector.rest;
 
-import com.continuuity.gateway.Connector;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -16,21 +15,18 @@ public class PipelineFactory implements ChannelPipelineFactory {
 			.getLogger(PipelineFactory.class);
 
 	private boolean ssl = false, chunk = false;
-	private Connector connector;
+	private RestConnector connector;
 
 	/** disallow default constructor */
 	private PipelineFactory() { }
 
 	/** constructor requires settings whether to use ssl and/or chunking */
-	public PipelineFactory(Connector connector,
-												 boolean doSsl, boolean doChunk) throws Exception {
-		if (doSsl) {
-			LOG.error("Attempt to create an SSL server, which is not implemented yet.");
-			throw new UnsupportedOperationException("SSL is not yetr supported");
-		}
-		this.ssl = doSsl;
-		this.chunk = doChunk;
+	public PipelineFactory(RestConnector connector) throws Exception {
 		this.connector = connector;
+		if (connector.isSsl()) {
+			LOG.error("Attempt to create an SSL server, which is not implemented yet.");
+			throw new UnsupportedOperationException("SSL is not yet supported");
+		}
 	}
 
 	public ChannelPipeline getPipeline() throws Exception {
@@ -38,7 +34,7 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		ChannelPipeline pipeline = Channels.pipeline();
 
 		// SSL is not yet implemented but this is where we would insert it
-		if (this.ssl) {
+		if (this.connector.isSsl()) {
 			// SSLEngine engine = ...
 			// engine.setUseClientMode(false);
 			// pipeline.addLast("ssl", new SslHandler(engine));
@@ -47,7 +43,7 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		// use the default HTTP decoder from netty
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// use netty's default de-chunker
-		if (this.chunk) {
+		if (this.connector.isChunking()) {
 			pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		}
 		// use the default HTTP encoder from netty

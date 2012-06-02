@@ -13,6 +13,7 @@ public abstract class Connector {
 
 	protected String name;
 	protected Consumer consumer;
+	protected Configuration configuration;
 
 	public void setConsumer(Consumer consumer) {
 		this.consumer = consumer;
@@ -28,7 +29,10 @@ public abstract class Connector {
 		return this.name;
 	}
 
-	public abstract void configure(Configuration configuration);
+	public void configure(Configuration configuration) throws Exception {
+		this.configuration = configuration;
+	}
+
 	public abstract void start() throws Exception;
-	public abstract void stop();
+	public abstract void stop() throws Exception;
 }

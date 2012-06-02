@@ -1,12 +1,12 @@
 package com.continuuity.gateway;
 
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The Gateway provides a data interface for external clients to the data fabric
@@ -25,7 +25,53 @@ public class Gateway {
 			.getLogger(Gateway.class);
 
 	private List<Connector> connectors = new ArrayList<Connector>();
+	private Configuration configuration;
 	private Consumer consumer = null;
+
+	/**
+	 * Set the gateway's configuration, the create and configure the connectors.
+	 * @param configuration the configuration object that contains the option
+	 *                      for the gateway and all its connectors
+	 */
+	public void configure(Configuration configuration) {
+		this.configuration = configuration;
+		Collection<String> connectorNames = configuration.
+				getStringCollection(Constants.CONFIG_CONNECTORS);
+		for (String connectorName : connectorNames) {
+			String configName = Constants.connectorConfigName(connectorName, Constants.CONFIG_CLASSNAME);
+			String connectorClassName = configuration.get(configName);
+			if (connectorClassName == null) {
+				LOG.error("Required property '" + configName +
+						"' missing. Skipping connector '" + connectorName + "'.");
+				continue;
+			}
+			Connector connector = null;
+			try {
+				connector = (Connector)Class.forName(connectorClassName).newInstance();
+				connector.setName(connectorName);
+			} catch (Exception e) {
+				LOG.error("Cannot instantiate class " + connectorClassName + "(" +
+						e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+				continue;
+			}
+			try {
+				connector.configure(configuration);
+			} catch (Exception e) {
+				LOG.error("Error configuring connector '" + connectorName + "' (" +
+						e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+				continue;
+			}
+			this.connectors.add(connector);
+		}
+	}
+
+	/**
+	 * Get the gateway's configuration
+	 * @return the configuration
+	 */
+	public Configuration getConfiguration() {
+		return this.configuration;
+	}
 
 	/**
 	 * Add a connector to the gateway. This connector must be in pristine state and not started yet.
@@ -98,7 +144,7 @@ public class Gateway {
 	/**
 	 * Stop the gateway. This will first stop all connectors, and the stop the consumer.
 	 */
-	public void stop() {
+	public void stop() throws Exception {
 		LOG.info("Shutting down.");
 		for (Connector connector : this.connectors) {
 			connector.stop();
