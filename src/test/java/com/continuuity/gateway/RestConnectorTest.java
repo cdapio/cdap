@@ -53,7 +53,7 @@ public class RestConnectorTest {
 		String prefix = "/continuuity";
 		String path = "/q/";
 		String stream = "pfunk";
-		int port = 5757;
+		int port = Util.findFreePort();
 		// configure connector but don't start
 		Configuration configuration = new Configuration();
 		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
@@ -90,7 +90,7 @@ public class RestConnectorTest {
 		String path = "/stream/";
 		String stream = "foo";
 		int eventsToSend = 10;
-		int port = 1789;
+		int port = Util.findFreePort();
 		Configuration configuration = new Configuration();
 		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
 		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_PREFIX), prefix);

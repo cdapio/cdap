@@ -22,14 +22,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.Socket;
+import java.util.*;
 
 public class Util {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Util.class);
+
+	static int findFreePort() throws IOException {
+		Socket socket = new Socket();
+		socket.bind(null);
+		int port = socket.getLocalPort();
+		socket.close();
+		return port;
+	}
 
 	static SimpleEvent createFlumeEvent(int messageNumber, String dest) {
 		SimpleEvent event = new SimpleEvent();

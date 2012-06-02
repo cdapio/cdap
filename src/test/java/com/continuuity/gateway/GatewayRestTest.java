@@ -13,7 +13,6 @@ public class GatewayRestTest {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GatewayRestTest.class);
 
-	static final int port = 4321;
 	static final String name = "rest";
 	static final String prefix = "";
 	static final String path = "/stream/";
@@ -24,7 +23,7 @@ public class GatewayRestTest {
 		return ("This is message " + messageNo + ".").getBytes();
 	}
 
-	Gateway setupGateway() throws Exception {
+	Gateway setupGateway(int port) throws Exception {
 		Configuration configuration = new Configuration();
 		configuration.set(Constants.CONFIG_CONNECTORS, name);
 		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_CLASSNAME), RestConnector.class.getCanonicalName());
@@ -38,7 +37,8 @@ public class GatewayRestTest {
 
 	@Test
 	public void testRestToQueue() throws Exception {
-		Gateway gateway = setupGateway();
+		int port = Util.findFreePort();
+		Gateway gateway = setupGateway(port);
 		MemoryQueueTable queues = new MemoryQueueTable();
 		Consumer consumer = new QueueWritingConsumer(queues);
 		gateway.setConsumer(consumer);

@@ -19,11 +19,10 @@ public class GatewayFlumeTest {
 	static final String hostname = "localhost";
 	static final String name = "fume";
 	static final String stream = "foo";
-	static final int port = 8765;
 	static final int batchSize = 4;
 	static final int eventsToSend = 10;
 
-	Gateway setupGateway() throws Exception {
+	Gateway setupGateway(int port) throws Exception {
 		Configuration configuration = new Configuration();
 		configuration.set(Constants.CONFIG_CONNECTORS, name);
 		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_CLASSNAME), NettyFlumeConnector.class.getCanonicalName());
@@ -35,7 +34,8 @@ public class GatewayFlumeTest {
 
 	@Test
 	public void testFlumeToQueue() throws Exception {
-		Gateway gateway = setupGateway();
+		int port = Util.findFreePort();
+		Gateway gateway = setupGateway(port);
 		MemoryQueueTable queues = new MemoryQueueTable();
 		Consumer consumer = new QueueWritingConsumer(queues);
 		gateway.setConsumer(consumer);

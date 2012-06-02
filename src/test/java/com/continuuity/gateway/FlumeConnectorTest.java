@@ -37,7 +37,7 @@ public class FlumeConnectorTest {
 	@Test
 	public void testStartStop() throws Exception {
 		String name = "other";
-		int port = 9099;
+		int port = Util.findFreePort();
 		String stream = "pfunk";
 		// configure connector but don't start
 		Configuration configuration = new Configuration();
@@ -69,7 +69,7 @@ public class FlumeConnectorTest {
 	@Test
 	public void testTransformEvent() throws Exception {
 		String name = "other";
-		int port = 4242;
+		int port = Util.findFreePort();
 		String stream = "foo";
 		int eventsToSend = 10;
 		Configuration configuration = new Configuration();
