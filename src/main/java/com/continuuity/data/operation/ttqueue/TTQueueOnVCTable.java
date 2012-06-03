@@ -37,6 +37,7 @@ public class TTQueueOnVCTable implements TTQueue {
   long maxEntriesPerShard;
   long maxBytesPerShard;
   long maxAgeBeforeExpirationInMillis;
+  long maxAgeBeforeSemiAckedToAcked;
   
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
@@ -85,6 +86,9 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max",
         10 * 1000); // 10 seconds default
+    this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
+        "ttqueue.entry.semiacked.max",
+        1 * 1000); // 1 second default
   }
 
   @Override
@@ -360,12 +364,13 @@ public class TTQueueOnVCTable implements TTQueue {
       } else {
         entryGroupMeta = EntryGroupMeta.fromBytes(entryGroupMetaData);
 
-        // Check if group has already acked this entry
-        if (entryGroupMeta.isAcked()) {
+        // Check if group has already acked/semi-acked this entry
+        if (entryGroupMeta.isAckedOrSemiAcked()) {
           // Group has acked this, check head, move to next entry in shard
           EntryPointer nextEntryPointer = new EntryPointer(
               entryPointer.getEntryId() + 1, entryPointer.getShardId());
-          if (entryPointer.equals(groupState.getHead())) {
+          if (entryPointer.equals(groupState.getHead()) &&
+              safeToMoveHead(entryGroupMeta)) {
             // The head is acked for this group, attempt to move head down
             GroupState newGroupState = new GroupState(groupState.getGroupSize(),
                 nextEntryPointer, groupState.getMode());
@@ -457,6 +462,13 @@ public class TTQueueOnVCTable implements TTQueue {
     throw new RuntimeException("Somehow broke from loop, bug in TTQueue");
     //    return new DequeueResult(DequeueStatus.FAILURE,
     //        "Somehow broke from loop, bug in TTQueue");
+  }
+
+  private boolean safeToMoveHead(EntryGroupMeta entryGroupMeta) {
+    return entryGroupMeta.isAcked() ||
+        (entryGroupMeta.isSemiAcked() &&
+            entryGroupMeta.getTimestamp() + this.maxAgeBeforeSemiAckedToAcked <
+            now());
   }
 
   @Override
