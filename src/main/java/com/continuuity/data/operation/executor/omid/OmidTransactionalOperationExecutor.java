@@ -5,6 +5,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
@@ -88,7 +90,11 @@ TransactionalOperationExecutor {
     // Open transaction
     ImmutablePair<ReadPointer,Long> pointer = startTransaction();
 
-    // Execute operations (in order for now)
+    // Re-order operations (create a copy for now)
+    List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes); 
+    Collections.sort(orderedWrites, new WriteOperationComparator());
+    
+    // Execute operations
     RowSet rows = new MemoryRowSet();
     List<Delete> deletes = new ArrayList<Delete>(writes.size());
     List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();

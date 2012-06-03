@@ -307,7 +307,11 @@ public class TestOmidTransactionalOperationExecutor {
   }
 
   @Test @Ignore
-  public void testAbortedOperationsWithQueues() throws Exception {
+  public void testAbortedOperationsWithQueueAck() throws Exception {
+    
+    
+    
+    
 //    OmidTransactionalOperationExecutor executor =
 //        new OmidTransactionalOperationExecutor(this.oracle,
 //            new SimpleOVCTableHandle(this.timeOracle, this.conf));
