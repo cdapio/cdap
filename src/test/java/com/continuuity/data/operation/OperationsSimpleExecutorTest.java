@@ -15,7 +15,6 @@ import java.util.Random;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -30,18 +29,18 @@ public class OperationsSimpleExecutorTest {
 
   private OperationExecutor executor;
 
-	@Before
-	public void setUp() throws Exception {
-	  this.executor = new SimpleOperationExecutor(
-	      new SimpleColumnarTableHandle());
-	}
+  @Before
+  public void setUp() throws Exception {
+    this.executor = new SimpleOperationExecutor(
+        new SimpleColumnarTableHandle());
+  }
 
-	@After
-	public void tearDown() throws Exception {
-	  this.executor = null;
-	}
+  @After
+  public void tearDown() throws Exception {
+    this.executor = null;
+  }
 
-	@Test
+  @Test
   public void testSimpleReadWrite() throws Exception {
     byte [][] keys = new byte [][] { "key0".getBytes(), "key1".getBytes() };
     byte [][] values = new byte [][] {"value0".getBytes(), "value1".getBytes()};
@@ -62,7 +61,7 @@ public class OperationsSimpleExecutorTest {
     assertEquals(new String(values[1]), new String(value));
   }
 
-	@Test
+  @Test
   public void testCompareAndSwap() throws Exception {
 
     byte [] key = Bytes.toBytes("somekey");
@@ -133,7 +132,7 @@ public class OperationsSimpleExecutorTest {
         this.executor.execute(new Read(valueChainKey))));
   }
 
-	@Test
+  @Test
   public void testIncrement() throws Exception {
 
 
@@ -232,83 +231,17 @@ public class OperationsSimpleExecutorTest {
     assertEquals(20L, this.executor.execute(new ReadCounter(stepCounterKey)));
   }
 
-  @Test @Ignore
-  public void testQueues() throws Exception {
-
-//    byte [] queueName = Bytes.toBytes("testQueue");
-//    byte [][] values = generateRandomByteArrays(10, 10);
-//
-//    // nothing should be in the queue yet
-//    assertNull(executor.execute(new QueuePop(queueName)));
-//
-//    // push one thing one queue, pop it, then queue empty again
-//    assertTrue(executor.execute(new QueuePush(queueName, values[0])));
-//    assertTrue(Bytes.equals(values[0],
-//        executor.execute(new QueuePop(queueName))));
-//    assertNull(executor.execute(new QueuePop(queueName)));
-//
-//    // push twice, pop once, push twice, pop three times, then queue empty
-//    assertTrue(executor.execute(new QueuePush(queueName, values[1])));
-//    assertTrue(executor.execute(new QueuePush(queueName, values[2])));
-//
-//    assertTrue(Bytes.equals(values[1],
-//        executor.execute(new QueuePop(queueName))));
-//
-//    assertTrue(executor.execute(new QueuePush(queueName, values[3])));
-//    assertTrue(executor.execute(new QueuePush(queueName, values[4])));
-//
-//    assertTrue(Bytes.equals(values[2],
-//        executor.execute(new QueuePop(queueName))));
-//    assertTrue(Bytes.equals(values[3],
-//        executor.execute(new QueuePop(queueName))));
-//    assertTrue(Bytes.equals(values[4],
-//        executor.execute(new QueuePop(queueName))));
-//
-//    assertNull(executor.execute(new QueuePop(queueName)));
-//
-//
-//    // try with a bunch of queues at once
-//
-//    byte [][] queueNames = generateRandomByteArrays(10, 8);
-//    byte [][] queueValues = generateRandomByteArrays(queueNames.length, 8);
-//
-//    // queues should be empty
-//    for (byte [] curQueueName : queueNames) {
-//      assertNull(executor.execute(new QueuePop(curQueueName)));
-//    }
-//
-//    // add i entries to each queue
-//    for (int i=0; i<queueNames.length; i++) {
-//      for (int j=0; j<i; j++) {
-//        assertTrue(executor.execute(
-//            new QueuePush(queueNames[i], queueValues[j])));
-//      }
-//    }
-//
-//    // each queue should get i pops and then null
-//    for (int i=0; i<queueNames.length; i++) {
-//      int numEntriesFound = 0;
-//      while (true) {
-//        byte [] value = executor.execute(new QueuePop(queueNames[i]));
-//        if (value == null) break;
-//        assertTrue(Bytes.equals(value, queueValues[numEntriesFound]));
-//        numEntriesFound++;
-//      }
-//      assertEquals(i, numEntriesFound);
-//    }
-  }
-
-	@Test
+  @Test
   public void testReadModifyWrite() throws Exception {
 
-	  byte [] key = Bytes.toBytes("keyrmw");
-	  byte [] value = Bytes.toBytes(0L);
+    byte [] key = Bytes.toBytes("keyrmw");
+    byte [] value = Bytes.toBytes(0L);
 
-	  // write the first value (0)
-	  assertTrue(this.executor.execute(new Write(key, value)));
+    // write the first value (0)
+    assertTrue(this.executor.execute(new Write(key, value)));
 
-	  // create two modifiers.  an incrementer and decrementer.
-	  Modifier<byte[]> incrementer = new Modifier<byte[]>() {
+    // create two modifiers.  an incrementer and decrementer.
+    Modifier<byte[]> incrementer = new Modifier<byte[]>() {
       @Override
       public byte [] modify(byte [] bytes) {
         return Bytes.toBytes(Bytes.toLong(bytes)+1);
@@ -335,11 +268,6 @@ public class OperationsSimpleExecutorTest {
     // verify value is -2L
     assertEquals(-2L, Bytes.toLong(this.executor.execute(new Read(key))));
 
-  }
-
-	@Test @Ignore
-  public void testOrderedReadWrite() {
-    // TODO Implement ordered read-write test
   }
 
   // Private helpers
