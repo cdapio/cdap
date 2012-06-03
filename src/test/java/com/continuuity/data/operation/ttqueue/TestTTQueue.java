@@ -27,8 +27,6 @@ public class TestTTQueue {
   private static TimestampOracle timeOracle =
       new MemoryStrictlyMonotonicTimeOracle();
 
-  // TODO: insert fancy ioc hotness here
-
   private static TTQueue createQueue() {
     return createQueue(new Configuration());
   }
@@ -90,6 +88,84 @@ public class TestTTQueue {
     // verify queue is empty
     result = queue.dequeue(consumer, config, dirtyReadPointer);
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testSingleConsumerAckSemantics() throws Exception {
+    final boolean singleEntry = true;
+    Configuration conf = new Configuration();
+    long semiAckedTimeout = 50L;
+    conf.setLong("ttqueue.entry.semiacked.max", semiAckedTimeout);
+    TTQueue queue = createQueue(conf);
+    long dirtyVersion = 1;
+    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+
+    byte [] valueSemiAckedTimeout = Bytes.toBytes("semiAckedTimeout");
+    byte [] valueSemiAckedToDequeued = Bytes.toBytes("semiAckedToDequeued");
+    byte [] valueSemiAckedToAcked = Bytes.toBytes("semiAckedToAcked");
+    
+    // enqueue three entries
+    assertTrue(queue.enqueue(valueSemiAckedTimeout, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueSemiAckedToDequeued, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueSemiAckedToAcked, dirtyVersion).isSuccess());
+
+    // dequeue with the single consumer and random partitioner
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    
+    // get the first entry
+    DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
+    assertTrue(result.toString(), result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), valueSemiAckedTimeout));
+    // ack it but that's it
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    
+    
+    // dequeue again, should get second entry (first is semi-acked)
+    result = queue.dequeue(consumer, config, dirtyReadPointer);
+    assertTrue(result.toString(), result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToDequeued));
+    // ack it, then unack it
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.unack(result.getEntryPointer(), consumer));
+    
+    
+    // dequeue again, should get second entry again
+    result = queue.dequeue(consumer, config, dirtyReadPointer);
+    assertTrue(result.toString(), result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToDequeued));
+    // ack it, then finalize it
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.finalize(result.getEntryPointer(), consumer));
+    
+    
+    // dequeue again, should get third entry
+    result = queue.dequeue(consumer, config, dirtyReadPointer);
+    assertTrue(result.toString(), result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToAcked));
+    // ack it, then finalize it
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.finalize(result.getEntryPointer(), consumer));
+
+    
+    // queue should be empty
+    assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
+    
+    // but should not actually be "empty"
+    // if we change config it should break
+    QueueConfig badConfig = new QueueConfig(partitioner, !singleEntry);
+    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isFailure());
+    
+    
+    // now sleep timeout+1 to allow semi-ack to timeout
+    Thread.sleep(semiAckedTimeout + 1);
+    
+    // queue should be empty still
+    assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
+    
+    // now actually empty, changing config works and still empty!
+    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isEmpty());
   }
 
   @Test
@@ -534,7 +610,6 @@ public class TestTTQueue {
     dequeuer.shutdown();
   }
   
-  // TODO: Fix and enable
   @Test
   public void testMultiConsumerMultiGroup() throws Exception {
     final boolean singleEntry = true;
