@@ -9,21 +9,15 @@ public class QueueInvalidate implements WriteOperation {
 
   private final byte [] queueName;
   private final QueueEntryPointer entryPointer;
-  private final long writeVersion;
 
   public QueueInvalidate(final byte [] queueName,
-      final QueueEntryPointer entryPointer, final long writeVersion) {
+      final QueueEntryPointer entryPointer) {
     this.queueName = queueName;
     this.entryPointer = entryPointer;
-    this.writeVersion = writeVersion;
   }
 
   public QueueEntryPointer getEntryPointer() {
     return this.entryPointer;
-  }
-
-  public long getWriteVersion() {
-    return this.writeVersion;
   }
 
   @Override
@@ -36,7 +30,6 @@ public class QueueInvalidate implements WriteOperation {
     return Objects.toStringHelper(this)
         .add("queueName", Bytes.toString(this.queueName))
         .add("entryPointer", this.entryPointer)
-        .add("writeVersion", this.writeVersion)
         .toString();
   }
 

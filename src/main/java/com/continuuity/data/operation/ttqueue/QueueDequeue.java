@@ -1,7 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.data.operation.type.ReadOperation;
-import com.continuuity.data.table.ReadPointer;
 
 /**
  * Marks and retrieves the next entry in the queue for the specified consumer,
@@ -13,20 +12,14 @@ public class QueueDequeue implements ReadOperation<DequeueResult> {
   private final byte [] queueName;
   private final QueueConsumer consumer;
   private final QueueConfig config;
-  private final ReadPointer readPointer;
 
   private DequeueResult result;
 
   public QueueDequeue(final byte [] queueName, final QueueConsumer consumer,
-      final QueueConfig config, final ReadPointer readPointer) {
+      final QueueConfig config) {
     this.queueName = queueName;
     this.consumer = consumer;
     this.config = config;
-    this.readPointer = readPointer;
-  }
-
-  ReadPointer getReadPointer() {
-    return this.readPointer;
   }
 
   public byte[] getKey() {

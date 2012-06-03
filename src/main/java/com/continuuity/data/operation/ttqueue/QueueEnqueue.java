@@ -14,23 +14,16 @@ implements WriteOperation, ReadOperation<EnqueueResult> {
 
   private final byte [] queueName;
   private final byte [] data;
-  private final long writeVersion;
 
   private EnqueueResult result;
   
-  public QueueEnqueue(final byte [] queueName, final byte [] data,
-      final long writeVersion) {
+  public QueueEnqueue(final byte [] queueName, final byte [] data) {
     this.queueName = queueName;
     this.data = data;
-    this.writeVersion = writeVersion;
   }
 
   public byte [] getData() {
     return this.data;
-  }
-
-  public long getWriteVersion() {
-    return this.writeVersion;
   }
 
   @Override
@@ -53,7 +46,6 @@ implements WriteOperation, ReadOperation<EnqueueResult> {
     return Objects.toStringHelper(this)
         .add("queueName", Bytes.toString(this.queueName))
         .add("data.length", this.data != null ? this.data.length : 0)
-        .add("writeVersion", this.writeVersion)
         .toString();
   }
 

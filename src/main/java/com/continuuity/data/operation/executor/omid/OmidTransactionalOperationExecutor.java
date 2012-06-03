@@ -232,8 +232,7 @@ public class OmidTransactionalOperationExecutor implements
         enqueue.getData(), pointer.getSecond());
     enqueue.setResult(result);
     return new WriteTransactionResult(true,
-        new QueueInvalidate(enqueue.getKey(), result.getEntryPointer(),
-            pointer.getSecond()));
+        new QueueInvalidate(enqueue.getKey(), result.getEntryPointer()));
   }
   
   WriteTransactionResult write(QueueAck ack,
@@ -245,8 +244,7 @@ public class OmidTransactionalOperationExecutor implements
       return new WriteTransactionResult(false);
     }
     return new WriteTransactionResult(true,
-        new QueueInvalidate(ack.getKey(), ack.getEntryPointer(),
-            pointer.getSecond()));
+        new QueueInvalidate(ack.getKey(), ack.getEntryPointer()));
   }
 
   @Override
