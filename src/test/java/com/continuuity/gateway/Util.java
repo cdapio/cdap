@@ -51,14 +51,16 @@ public class Util {
 		return ("This is message " + messageNo + ".").getBytes();
 	}
 
-	static void sendFlumeEvents(int port, String dest, int numMesssages, int batchSize) throws EventDeliveryException {
+	static void sendFlumeEvents(int port, String dest, int numMessages, int batchSize)
+      throws EventDeliveryException {
+
 		RpcClient client = RpcClientFactory.
 				getDefaultInstance("localhost", port, batchSize);
 		try {
 			List<org.apache.flume.Event> events = new ArrayList<org.apache.flume.Event>();
-			for (int i = 0; i < numMesssages; ) {
+			for (int i = 0; i < numMessages; ) {
 				events.clear();
-				int bound = Math.min(i + batchSize, numMesssages);
+				int bound = Math.min(i + batchSize, numMessages);
 				for (; i < bound; i++) {
 					events.add(createFlumeEvent(i, dest));
 				}

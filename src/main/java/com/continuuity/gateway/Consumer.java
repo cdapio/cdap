@@ -49,7 +49,7 @@ public abstract class Consumer {
 	}
 
 	final void startConsumer() {
-		LOG.info("Starting up.");
+		LOG.info("Consumer Starting up.");
 
 		this.callsReceived.set(0L);
 		this.callsSucceeded.set(0L);
@@ -63,7 +63,7 @@ public abstract class Consumer {
 
 	final void stopConsumer() {
 		this.stop();
-		LOG.info("Shutting down.");
+		LOG.info("Consumer Shutting down.");
 		LOG.info("  Calls/Events Received : " + this.callsReceived + "/" + this.eventsReceived);
 		LOG.info("  Calls/Events Succeeded: " + this.callsSucceeded + "/" + this.eventsSucceeded);
 		LOG.info("  Calls/Events Failed:    " + this.callsFailed + "/" + this.eventsFailed);

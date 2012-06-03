@@ -39,8 +39,9 @@ public class GatewayRestTest {
 	public void testRestToQueue() throws Exception {
 		int port = Util.findFreePort();
 		Gateway gateway = setupGateway(port);
-		MemoryQueueTable queues = new MemoryQueueTable();
-		Consumer consumer = new QueueWritingConsumer(queues);
+    QueueWritingConsumer consumer = new QueueWritingConsumer();
+    MemoryQueueTable queues = new MemoryQueueTable();
+    consumer.setQueueTable(queues);
 		gateway.setConsumer(consumer);
 
 		gateway.start();

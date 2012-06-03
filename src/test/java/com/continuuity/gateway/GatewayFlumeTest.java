@@ -36,9 +36,10 @@ public class GatewayFlumeTest {
 	public void testFlumeToQueue() throws Exception {
 		int port = Util.findFreePort();
 		Gateway gateway = setupGateway(port);
-		MemoryQueueTable queues = new MemoryQueueTable();
-		Consumer consumer = new QueueWritingConsumer(queues);
-		gateway.setConsumer(consumer);
+    QueueWritingConsumer consumer = new QueueWritingConsumer();
+    MemoryQueueTable queues = new MemoryQueueTable();
+    consumer.setQueueTable(queues);
+    gateway.setConsumer(consumer);
 
 		gateway.start();
 		Util.sendFlumeEvents(port, stream, eventsToSend, batchSize);

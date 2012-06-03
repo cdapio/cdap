@@ -7,32 +7,78 @@ package com.continuuity.gateway;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
+import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * QueueWritingConsumer is an implementation of Consumer that writes all
+ * events to an instance of (Memory)QueueTable.
  */
 public class QueueWritingConsumer extends Consumer {
 
+  /**
+   * This is our Logger class
+   */
 	private static final Logger LOG = LoggerFactory
-			.getLogger(QueueWritingConsumer.class);
+      .getLogger(QueueWritingConsumer.class);
 
-	MemoryQueueTable queues;
-	Configuration configuration;
+  /**
+   * This is our QueueTable object.
+   *
+   * TODO: Replace this with a an interface and NOT a concrete class (when there
+   * is one!)
+   */
+  @Inject
+	MemoryQueueTable myQueues;
 
-	public QueueWritingConsumer(MemoryQueueTable queues) {
-		this.queues = queues;
-	}
+  /**
+   * Our Configuration object
+   */
+	Configuration myConfiguration;
 
+
+  /**
+   * The setter for our QueueTable implementation.
+   *
+   * TODO: This method should be removed once we have Guice working for all
+   * the tests too.
+   *
+   * @param queueTable  The new QueuesTable to use, can not be null.
+   * @throws IllegalArgumentException If 'queueTable' argument is null.
+   */
+  public void setQueueTable(MemoryQueueTable queueTable) {
+
+    // Check our pre conditions
+    if (queueTable == null) {
+      throw new IllegalArgumentException("queueTable argument is null");
+    }
+
+    // Assign it
+    myQueues = queueTable;
+
+  } // end of setQueueTable
+
+
+  /**
+   * Configure this Consumer with a 'Configuration' object.
+   *
+   * @param configuration  The previously formed myConfiguration object to use.
+   */
 	@Override
 	public void configure(Configuration configuration) {
-		this.configuration = configuration;
-		if (this.queues == null) {
-			this.queues = new MemoryQueueTable();
+
+    // Copy the configuration object
+		myConfiguration = configuration;
+
+    // Do we have any queues set up yet?
+		if (myQueues == null) {
+			setQueueTable(new MemoryQueueTable());
 		}
-	}
+
+	} // end of configure
+
 
 	@Override
 	protected void single(Event event) throws Exception {
@@ -44,8 +90,8 @@ public class QueueWritingConsumer extends Consumer {
 		}
 		String destination = event.getHeader(Constants.HEADER_DESTINATION_ENDPOINT);
 		if (destination == null) destination = "default";
-		this.queues.push(destination.getBytes(), bytes);
+		myQueues.push(destination.getBytes(), bytes);
 	}
 
-	// @todo implement batch as transaction as soon as transactional queues are ready
+	// @todo implement batch as transaction as soon as transactional myQueues are ready
 }

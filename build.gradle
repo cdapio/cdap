@@ -1,12 +1,18 @@
+// Load the default Continuuity plugin
 apply plugin: 'continuuity'
+
+// Set up the application plugin so we can launch the Gateway from gradle
+apply plugin: 'application'
+mainClassName = 'com.continuuity.gateway.runtime.Main'
 
 /**
  * Add continuuity plugin to the classpath.
  */
 buildscript {
-   apply from: 'continuuity.gradle'
+    apply from: 'continuuity.gradle'
 }
 
+// The versions of our dependencies
 def avroVersion = '1.6.2'
 def continuuityVersion = '0.1.0-SNAPSHOT'
 def flumeVersion = '1.1.0-cdh4.0.0'
@@ -18,9 +24,11 @@ tasks.withType(Compile) {
 */
 
 dependencies {
+
     // this is needed to ensure that kryo uses its packaged asm classes and 
     // and not the ones from the asm jar that guice pulls in
     compile group: 'kryo', name: 'kryo', version: '2.09', classifier: 'all'
+
     compile "com.continuuity:flow:$continuuityVersion"
     compile "com.continuuity:data-fabric:$continuuityVersion"
     
