@@ -29,6 +29,12 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
+  public synchronized ReadPointer getReadPointer(long writeTxid) {
+    return new MemoryReadPointer(this.readPoint, writeTxid,
+        new HashSet<Long>(this.inProgress));
+  }
+
+  @Override
   public synchronized ReadPointer getReadPointer() {
     return new MemoryReadPointer(this.readPoint,
         new HashSet<Long>(this.inProgress));
@@ -43,8 +49,9 @@ public class MemoryOracle implements TransactionOracle {
 
   @Override
   public synchronized ImmutablePair<ReadPointer, Long> getNewPointer() {
+    long writeTxid = getWriteTxid();
     return new ImmutablePair<ReadPointer,Long>(
-        getReadPointer(), getWriteTxid());
+        getReadPointer(writeTxid), writeTxid);
   }
 
   @Override

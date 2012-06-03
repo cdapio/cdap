@@ -4,13 +4,15 @@ import com.google.common.base.Objects;
 
 /**
  * Configuration of a queue that is fixed for lifetime of a consumer/flowlet.
+ *
+ * This object is immutable and can be reused across queue operations.
  */
 public class QueueConfig {
 
   private final QueuePartitioner partitioner;
   private final boolean singleEntry;
 
-  QueueConfig(QueuePartitioner partitioner, boolean singleEntry) {
+  public QueueConfig(QueuePartitioner partitioner, boolean singleEntry) {
     this.partitioner = partitioner;
     this.singleEntry = singleEntry;
   }

@@ -161,8 +161,6 @@ public class OmidTransactionalOperationExecutor implements
       return write((QueueEnqueue)write, pointer);
     } else if (write instanceof QueueAck) {
       return write((QueueAck)write, pointer);
-    } else if (write instanceof QueueEnqueue) {
-      throw new RuntimeException("Enqueues should happen in their own tx");
     }
     return new WriteTransactionResult(false);
   }

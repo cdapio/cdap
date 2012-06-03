@@ -14,6 +14,8 @@ public interface TransactionOracle {
 
   public ReadPointer getReadPointer();
 
+  public ReadPointer getReadPointer(long writeTxid);
+
   public long getWriteTxid();
   
   public ImmutablePair<ReadPointer,Long> getNewPointer();
