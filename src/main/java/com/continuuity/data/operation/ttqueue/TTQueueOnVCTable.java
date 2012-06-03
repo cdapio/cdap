@@ -464,13 +464,6 @@ public class TTQueueOnVCTable implements TTQueue {
     //        "Somehow broke from loop, bug in TTQueue");
   }
 
-  private boolean safeToMoveHead(EntryGroupMeta entryGroupMeta) {
-    return entryGroupMeta.isAcked() ||
-        (entryGroupMeta.isSemiAcked() &&
-            entryGroupMeta.getTimestamp() + this.maxAgeBeforeSemiAckedToAcked <
-            now());
-  }
-
   @Override
   public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer) {
     // Get a dirty pointer
@@ -559,6 +552,13 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   // Private helpers
+
+  private boolean safeToMoveHead(EntryGroupMeta entryGroupMeta) {
+    return entryGroupMeta.isAcked() ||
+        (entryGroupMeta.isSemiAcked() &&
+            entryGroupMeta.getTimestamp() + this.maxAgeBeforeSemiAckedToAcked <=
+            now());
+  }
 
   private boolean groupIsEmpty(GroupState groupState, long groupId,
       ReadPointer readPointer) {

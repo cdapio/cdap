@@ -30,11 +30,13 @@ public class TestTTQueue {
   // TODO: insert fancy ioc hotness here
 
   private static TTQueue createQueue() {
+    Configuration conf = new Configuration();
+    conf.setLong("ttqueue.entry.semiacked.max", 0L);
     return new TTQueueOnVCTable(
         new MemoryOVCTable(
             Bytes.toBytes("TestTTQueueTable")),
             Bytes.toBytes("TestTTQueue"),
-            timeOracle, new Configuration());
+            timeOracle, conf);
   }
 
   @Test
