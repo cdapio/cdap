@@ -50,7 +50,7 @@ public class OperationsSimpleExecutorTest {
     writes.add(new Write(keys[0], values[0]));
     writes.add(new Write(keys[1], values[1]));
 
-    assertTrue(this.executor.execute(writes));
+    assertTrue(this.executor.execute(writes).isSuccess());
 
     Read [] reads = new Read [] {
         new Read(keys[0]), new Read(keys[1]) };
@@ -372,7 +372,7 @@ public class OperationsSimpleExecutorTest {
     writes.add(new Write(keys[1], values[1]));
 
     // Runner : Execute writes through the SimpleMemoryOperationExecutor
-    assertTrue(memoryOperationExecutor.execute(writes));
+    assertTrue(memoryOperationExecutor.execute(writes).isSuccess());
     System.out.println("Wrote two key-values");
 
     // Client Developer : Make two read operations

@@ -16,6 +16,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
@@ -57,11 +58,12 @@ public class SimpleOperationExecutor implements OperationExecutor {
    * @return true if all operations succeeded, false if not
    */
   @Override
-  public boolean execute(List<WriteOperation> writes) {
+  public BatchOperationResult execute(List<WriteOperation> writes) {
     for (WriteOperation write : writes) {
-      if(!execute(write)) return false;
+      if(!execute(write)) return new BatchOperationResult(false,
+          "Write operation failed");
     }
-    return true;
+    return new BatchOperationResult(true);
   }
 
   private boolean execute(WriteOperation write) {
@@ -165,20 +167,20 @@ public class SimpleOperationExecutor implements OperationExecutor {
   public Map<byte[], byte[]> execute(OrderedRead orderedRead)
       throws SyncReadTimeoutException {
     throw new RuntimeException("Ordered operations not currently supported");
-//    Map<byte[], byte[]> result = null;
-//    if (orderedRead.getEndKey() == null) {
-//      if (orderedRead.getLimit() <= 1) {
-//        result = this.executor.readOrdered(orderedRead.getStartKey());
-//      } else {
-//        result = this.executor.readOrdered(orderedRead.getStartKey(),
-//            orderedRead.getLimit());
-//      }
-//    } else {
-//      result = this.executor.readOrdered(orderedRead.getStartKey(),
-//          orderedRead.getEndKey());
-//    }
-//    orderedRead.setResult(result);
-//    return result;
+    //    Map<byte[], byte[]> result = null;
+    //    if (orderedRead.getEndKey() == null) {
+    //      if (orderedRead.getLimit() <= 1) {
+    //        result = this.executor.readOrdered(orderedRead.getStartKey());
+    //      } else {
+    //        result = this.executor.readOrdered(orderedRead.getStartKey(),
+    //            orderedRead.getLimit());
+    //      }
+    //    } else {
+    //      result = this.executor.readOrdered(orderedRead.getStartKey(),
+    //          orderedRead.getEndKey());
+    //    }
+    //    orderedRead.setResult(result);
+    //    return result;
   }
 
   @Override

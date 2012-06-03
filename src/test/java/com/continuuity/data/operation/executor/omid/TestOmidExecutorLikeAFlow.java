@@ -56,7 +56,7 @@ public class TestOmidExecutorLikeAFlow {
     // Write to the queue
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueEnqueue(queueName, Bytes.toBytes(1L))
-    })));
+    })).isSuccess());
 
     // Dequeue entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -73,7 +73,7 @@ public class TestOmidExecutorLikeAFlow {
     // Ack it
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueAck(queueName, result.getEntryPointer(), consumer)
-    })));
+    })).isSuccess());
 
     // Queue should be empty again
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -100,7 +100,7 @@ public class TestOmidExecutorLikeAFlow {
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new CompareAndSwap(key, Bytes.toBytes(1L), Bytes.toBytes(3L)),
         new Increment(key, 1L)
-    })));
+    })).isSuccess());
 
     // verify value = 4
     // (value = 2 if no ReadOwnWrites)
@@ -113,7 +113,7 @@ public class TestOmidExecutorLikeAFlow {
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new Increment(key, 1L),
         new CompareAndSwap(key, Bytes.toBytes(5L), Bytes.toBytes(1L))
-    })));
+    })).isSuccess());
 
     // verify value = 1
     value = this.executor.execute(new Read(key));
@@ -136,7 +136,7 @@ public class TestOmidExecutorLikeAFlow {
     // Write to the queue
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueEnqueue(queueName, Bytes.toBytes(1L))
-    })));
+    })).isSuccess());
 
     // Dequeue entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -147,12 +147,12 @@ public class TestOmidExecutorLikeAFlow {
     // Ack it
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueAck(queueName, result.getEntryPointer(), consumer)
-    })));
+    })).isSuccess());
 
     // Can't ack it again
     assertFalse(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueAck(queueName, result.getEntryPointer(), consumer)
-    })));
+    })).isSuccess());
     
     // Queue should be empty again
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -188,6 +188,9 @@ public class TestOmidExecutorLikeAFlow {
     // Add two pushes to two dest queues
 
     // Add another user increment operation
+    
+    
+    
 
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
@@ -202,7 +205,7 @@ public class TestOmidExecutorLikeAFlow {
     // Write to the queue
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
         new QueueEnqueue(queueName, Bytes.toBytes(1L))
-    })));
+    })).isSuccess());
 
 
   }

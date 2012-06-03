@@ -22,6 +22,7 @@ import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -41,7 +42,7 @@ import com.continuuity.data.table.ReadPointer;
  *
  */
 public class OmidTransactionalOperationExecutor implements
-    TransactionalOperationExecutor {
+TransactionalOperationExecutor {
 
   final TransactionOracle oracle;
 
@@ -72,7 +73,7 @@ public class OmidTransactionalOperationExecutor implements
   byte [] read(Read read, ReadPointer pointer) {
     return this.randomTable.get(read.getKey(), COLUMN, pointer);
   }
-  
+
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
     byte [] value = this.randomTable.get(readCounter.getKey(), COLUMN,
@@ -82,11 +83,11 @@ public class OmidTransactionalOperationExecutor implements
   }
 
   @Override
-  public boolean execute(List<WriteOperation> writes)
-  throws OmidTransactionException {
+  public BatchOperationResult execute(List<WriteOperation> writes)
+      throws OmidTransactionException {
     // Open transaction
     ImmutablePair<ReadPointer,Long> pointer = startTransaction();
-    
+
     // Execute operations (in order for now)
     RowSet rows = new MemoryRowSet();
     List<Delete> deletes = new ArrayList<Delete>(writes.size());
@@ -96,7 +97,8 @@ public class OmidTransactionalOperationExecutor implements
       if (!writeTxReturn.success) {
         // Write operation failed
         abortTransaction(pointer, deletes, invalidates);
-        return false;
+        return new BatchOperationResult(false,
+            "A write operation failed, transaction aborted");
       } else {
         // Write was successful.  Store delete if we need to abort and continue
         deletes.addAll(writeTxReturn.deletes);
@@ -105,16 +107,17 @@ public class OmidTransactionalOperationExecutor implements
         rows.addRow(write.getKey());
       }
     }
-    
+
     // All operations completed successfully, commit transaction
     if (!commitTransaction(pointer, rows)) {
       // Commit failed, abort
       abortTransaction(pointer, deletes, invalidates);
-      return false;
+      return new BatchOperationResult(false,
+          "Commit of transaction failed, transaction aborted");
     }
-    
+
     // Transaction was successfully committed
-    return true;
+    return new BatchOperationResult(true);
   }
 
   private class WriteTransactionResult {
@@ -147,7 +150,7 @@ public class OmidTransactionalOperationExecutor implements
    * @param pointer
    * @return
    */
-  WriteTransactionResult dispatchWrite(
+  private WriteTransactionResult dispatchWrite(
       WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
     if (write instanceof Write) {
       return write((Write)write, pointer);
@@ -171,7 +174,7 @@ public class OmidTransactionalOperationExecutor implements
         write.getValue());
     return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
   }
-  
+
   WriteTransactionResult write(ReadModifyWrite write,
       ImmutablePair<ReadPointer,Long> pointer) {
     // read
@@ -183,7 +186,7 @@ public class OmidTransactionalOperationExecutor implements
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(), newValue);
     return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
   }
-  
+
   WriteTransactionResult write(Increment increment,
       ImmutablePair<ReadPointer,Long> pointer) {
     long incremented = this.randomTable.increment(increment.getKey(), COLUMN,
@@ -203,7 +206,7 @@ public class OmidTransactionalOperationExecutor implements
     }
     return new WriteTransactionResult(true, deletes);
   }
-  
+
   WriteTransactionResult write(CompareAndSwap write,
       ImmutablePair<ReadPointer,Long> pointer) {
     boolean casReturn = this.randomTable.compareAndSwap(write.getKey(), COLUMN,
@@ -212,9 +215,9 @@ public class OmidTransactionalOperationExecutor implements
     return new WriteTransactionResult(casReturn,
         new Delete(write.getKey(), COLUMN));
   }
- 
+
   // TTQueues
-  
+
   /**
    * Enqueue operations always succeed but can be rolled back.
    * 
@@ -232,7 +235,7 @@ public class OmidTransactionalOperationExecutor implements
     return new WriteTransactionResult(true,
         new QueueInvalidate(enqueue.getKey(), result.getEntryPointer()));
   }
-  
+
   WriteTransactionResult write(QueueAck ack,
       ImmutablePair<ReadPointer, Long> pointer) {
     boolean result = this.queueTable.ack(ack.getKey(), ack.getEntryPointer(),
@@ -254,7 +257,7 @@ public class OmidTransactionalOperationExecutor implements
     dequeue.setResult(result);
     return result;
   }
-  
+
   ImmutablePair<ReadPointer, Long> startTransaction() {
     return this.oracle.getNewPointer();
   }
@@ -266,7 +269,7 @@ public class OmidTransactionalOperationExecutor implements
 
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
       List<Delete> deletes, List<QueueInvalidate> invalidates)
-  throws OmidTransactionException {
+          throws OmidTransactionException {
     // Perform queue invalidates
     for (QueueInvalidate invalidate : invalidates) {
       this.queueTable.invalidate(invalidate.getKey(),
@@ -281,7 +284,7 @@ public class OmidTransactionalOperationExecutor implements
     // Notify oracle
     this.oracle.aborted(pointer.getSecond());
   }
-  
+
   // Queue operations also not supported right now
 
   @Override
@@ -290,7 +293,7 @@ public class OmidTransactionalOperationExecutor implements
     unsupported("Ordered operations not currently supported");
     return null;
   }
-  
+
   // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)
 
   private void unsupported() {

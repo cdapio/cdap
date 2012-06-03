@@ -22,10 +22,10 @@ public interface TransactionalOperationExecutor extends OperationExecutor {
    *
    * @param writes write operations to be performed in a transaction
    * @return true if all operations succeeded, false if transaction failed
-   * @throws TransactionException 
+   * @throws TransactionException
    */
   @Override
-  public boolean execute(List<WriteOperation> writes)
-  throws TransactionException;
+  public BatchOperationResult execute(List<WriteOperation> writes)
+      throws TransactionException;
 
 }

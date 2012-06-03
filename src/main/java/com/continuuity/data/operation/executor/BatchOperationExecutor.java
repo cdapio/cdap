@@ -26,9 +26,9 @@ public interface BatchOperationExecutor {
    * @see TransactionalOperationExecutor#execute(WriteOperation[])
    *
    * @param writes list of write operations to execute as a batch
-   * @return true if success, false if not
+   * @return result of batch operation (success/failure, msg, etc)
    */
-  public boolean execute(List<WriteOperation> writes)
+  public BatchOperationResult execute(List<WriteOperation> writes)
   throws BatchOperationException;
 
 }
