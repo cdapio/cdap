@@ -87,8 +87,12 @@ TransactionalOperationExecutor {
   @Override
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws OmidTransactionException {
-    // Open transaction
-    ImmutablePair<ReadPointer,Long> pointer = startTransaction();
+    return execute(writes, startTransaction());
+  }
+
+  BatchOperationResult execute(List<WriteOperation> writes,
+      ImmutablePair<ReadPointer,Long> pointer)
+      throws OmidTransactionException {
 
     // Re-order operations (create a copy for now)
     List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes); 

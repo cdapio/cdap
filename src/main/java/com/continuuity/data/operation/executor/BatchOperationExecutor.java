@@ -29,6 +29,5 @@ public interface BatchOperationExecutor {
    * @return result of batch operation (success/failure, msg, etc)
    */
   public BatchOperationResult execute(List<WriteOperation> writes)
-  throws BatchOperationException;
-
+      throws BatchOperationException;
 }

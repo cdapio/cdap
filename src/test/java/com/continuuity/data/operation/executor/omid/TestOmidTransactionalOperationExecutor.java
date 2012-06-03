@@ -3,11 +3,16 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -16,11 +21,20 @@ import org.junit.Test;
 
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.handles.SimpleOVCTableHandle;
 
@@ -308,15 +322,77 @@ public class TestOmidTransactionalOperationExecutor {
 
   @Test @Ignore
   public void testAbortedOperationsWithQueueAck() throws Exception {
-    
-    
-    
-    
-//    OmidTransactionalOperationExecutor executor =
-//        new OmidTransactionalOperationExecutor(this.oracle,
-//            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
-    //
+    OmidTransactionalOperationExecutor executor =
+        new OmidTransactionalOperationExecutor(this.oracle,
+            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
+    byte [] key = Bytes.toBytes("key");
+    byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
+
+    // Enqueue something
+    assertTrue(executor.execute(batch(new QueueEnqueue(queueName, queueName)))
+        .isSuccess());
+
+    // Dequeue it
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConfig config = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    DequeueResult dequeueResult = executor.execute(
+        new QueueDequeue(queueName, consumer, config));
+    assertTrue(dequeueResult.isSuccess());
+
+    // Start our ack operation
+    ImmutablePair<ReadPointer,Long> ackPointer = executor.startTransaction();
+
+    // Start a fake operation that will just conflict with our key
+    ImmutablePair<ReadPointer,Long> fakePointer = executor.startTransaction();
+    RowSet rows = new MemoryRowSet();
+    rows.addRow(key);
+
+    // Commit fake operation successfully
+    assertTrue(executor.commitTransaction(fakePointer, rows));
+
+    // Increment a counter and add our ack
+    List<WriteOperation> writes = new ArrayList<WriteOperation>(2);
+    writes.add(new Increment(key, 3));
+    writes.add(new QueueAck(queueName,
+        dequeueResult.getEntryPointer(), consumer));
+
+    // Execute should return failure
+    assertFalse(executor.execute(writes, ackPointer).isSuccess());
+
+    // Should still be able to dequeue
+    dequeueResult = executor.execute(
+        new QueueDequeue(queueName, consumer, config));
+    // THIS FAILS IF ACK NOT REALLY ROLLED BACK!
+    assertTrue(dequeueResult.isSuccess());
+
+
+    // Start new ack operation
+    ackPointer = executor.startTransaction();
+
+    // Same increment and ack
+    writes = new ArrayList<WriteOperation>(2);
+    writes.add(new Increment(key, 5));
+    writes.add(new QueueAck(queueName,
+        dequeueResult.getEntryPointer(), consumer));
+
+    // Execute should succeed
+    assertTrue(executor.execute(writes, ackPointer).isSuccess());
+
+
+    // Dequeue should now return empty
+    dequeueResult = executor.execute(
+        new QueueDequeue(queueName, consumer, config));
+    assertTrue(dequeueResult.isEmpty());
+
+    // Incremented value should be 5
+    assertEquals(5L, Bytes.toLong(executor.execute(new Read(key))));
+
+  }
+
+  private static List<WriteOperation> batch(WriteOperation ... ops) {
+    return Arrays.asList(ops);
   }
 }
