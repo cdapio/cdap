@@ -14,11 +14,11 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 
 public class SimpleOVCTableHandle implements OVCTableHandle {
   
-  private final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
+  private static final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
       new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
           Bytes.BYTES_COMPARATOR);
   
-  private final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
+  private static final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
   
@@ -32,11 +32,11 @@ public class SimpleOVCTableHandle implements OVCTableHandle {
   
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName) {
-    OrderedVersionedColumnarTable table = this.tables.get(tableName);
+    OrderedVersionedColumnarTable table = SimpleOVCTableHandle.tables.get(tableName);
     if (table != null) return table;
     table = new MemoryOVCTable(tableName);
     OrderedVersionedColumnarTable existing =
-        this.tables.putIfAbsent(tableName, table);
+        SimpleOVCTableHandle.tables.putIfAbsent(tableName, table);
     return existing != null ? existing : table;
   }
 
@@ -44,12 +44,12 @@ public class SimpleOVCTableHandle implements OVCTableHandle {
   
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName) {
-    TTQueueTable queueTable = this.queueTables.get(queueTableName);
+    TTQueueTable queueTable = SimpleOVCTableHandle.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
     
     queueTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
-    TTQueueTable existing = this.queueTables.putIfAbsent(
+    TTQueueTable existing = SimpleOVCTableHandle.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
