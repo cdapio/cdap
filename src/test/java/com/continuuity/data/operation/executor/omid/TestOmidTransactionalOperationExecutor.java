@@ -131,7 +131,7 @@ public class TestOmidTransactionalOperationExecutor {
         new OmidTransactionalOperationExecutor(this.oracle,
             new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
-    byte [] key = Bytes.toBytes("key");
+    byte [] key = Bytes.toBytes("testClosedTransactionsThrowExceptions");
 
     // start txwOne
     ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
@@ -174,7 +174,7 @@ public class TestOmidTransactionalOperationExecutor {
         new OmidTransactionalOperationExecutor(this.oracle,
             new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
-    byte [] key = Bytes.toBytes("key");
+    byte [] key = Bytes.toBytes("testOverlappingConcurrentReadersAndWriters");
 
     // start txwOne
     ImmutablePair<ReadPointer, Long> pointerWOne = executor.startTransaction();
@@ -326,7 +326,7 @@ public class TestOmidTransactionalOperationExecutor {
         new OmidTransactionalOperationExecutor(this.oracle,
             new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
-    byte [] key = Bytes.toBytes("key");
+    byte [] key = Bytes.toBytes("testAbortedAck");
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
     // Enqueue something
