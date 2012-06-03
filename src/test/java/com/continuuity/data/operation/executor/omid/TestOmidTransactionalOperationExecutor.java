@@ -16,7 +16,6 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -320,7 +319,7 @@ public class TestOmidTransactionalOperationExecutor {
             Bytes.toBytes(2)));
   }
 
-  @Test @Ignore
+  @Test
   public void testAbortedOperationsWithQueueAck() throws Exception {
 
     OmidTransactionalOperationExecutor executor =

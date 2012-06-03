@@ -476,11 +476,61 @@ public class TTQueueOnVCTable implements TTQueue {
     if (groupMeta.getInstanceId() != consumer.getInstanceId()) return false;
 
     // Instance ids match, check if in an invalid state for ack'ing
-    if (groupMeta.isAvailable() || groupMeta.isAcked()) return false;
+    if (groupMeta.isAvailable() || groupMeta.isAckedOrSemiAcked()) return false;
 
-    // It is in the right state, attempt atomic ack
+    // It is in the right state, attempt atomic semi_ack
     // (ack passed if this CAS works, fails if this CAS fails)
+    byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
+        now(), consumer.getInstanceId()).getBytes();
+    return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
+        newValue, dirty.getFirst(), dirty.getSecond());
+  }
+
+  @Override
+  public boolean finalize(QueueEntryPointer entryPointer,
+      QueueConsumer consumer) {
+    // Get a dirty pointer
+    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+    // Do a dirty read of EntryGroupMeta for this entry
+    byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
+    byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+        ENTRY_GROUP_META, consumer.getGroupId());
+    byte [] existingValue = this.table.get(shardRow, groupColumn,
+        dirty.getFirst());
+    if (existingValue == null || existingValue.length == 0) return false;
+    EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
+
+    // Should be in semiAcked state
+    if (groupMeta != null && !groupMeta.isSemiAcked()) return false;
+
+    // It is in the right state, attempt atomic semi_ack to ack
+    // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
+        now(), consumer.getInstanceId()).getBytes();
+    return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
+        newValue, dirty.getFirst(), dirty.getSecond());
+  }
+
+  @Override
+  public boolean unack(QueueEntryPointer entryPointer,
+      QueueConsumer consumer) {
+    // Get a dirty pointer
+    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+    // Do a dirty read of EntryGroupMeta for this entry
+    byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
+    byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+        ENTRY_GROUP_META, consumer.getGroupId());
+    byte [] existingValue = this.table.get(shardRow, groupColumn,
+        dirty.getFirst());
+    if (existingValue == null || existingValue.length == 0) return false;
+    EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
+
+    // Should be in semiAcked state
+    if (groupMeta != null && !groupMeta.isSemiAcked()) return false;
+
+    // It is in the right state, attempt atomic semi_ack to ack
+    // (finalize passed if this CAS works, fails if this CAS fails)
+    byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
     return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
         newValue, dirty.getFirst(), dirty.getSecond());

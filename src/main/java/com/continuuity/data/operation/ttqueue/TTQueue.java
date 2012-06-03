@@ -48,4 +48,21 @@ public interface TTQueue {
    * @return
    */
   public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer);
+
+  /**
+   * Finalizes an ack.
+   * @param entryPointer
+   * @param consumer
+   * @return
+   */
+  public boolean finalize(QueueEntryPointer entryPointer,
+      QueueConsumer consumer);
+
+  /**
+   * Unacknowledges a previously acknowledge ack.
+   * @param entryPointer
+   * @param consumer
+   * @return
+   */
+  boolean unack(QueueEntryPointer entryPointer, QueueConsumer consumer);
 }

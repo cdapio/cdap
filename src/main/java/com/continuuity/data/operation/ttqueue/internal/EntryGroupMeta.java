@@ -24,6 +24,15 @@ public class EntryGroupMeta {
     return state == EntryGroupState.AVAILABLE;
   }
   
+  public boolean isAckedOrSemiAcked() {
+    return state == EntryGroupState.SEMI_ACKED ||
+        state == EntryGroupState.ACKED;
+  }
+
+  public boolean isSemiAcked() {
+    return state == EntryGroupState.SEMI_ACKED;
+  }
+  
   public boolean isAcked() {
     return state == EntryGroupState.ACKED;
   }
@@ -60,15 +69,17 @@ public class EntryGroupMeta {
   }
   
   public static enum EntryGroupState {
-    AVAILABLE, ACKED, DEQUEUED;
+    AVAILABLE, SEMI_ACKED, ACKED, DEQUEUED;
     
     private static final byte [] AVAILABLE_BYTES = new byte [] { 0 };
-    private static final byte [] ACKED_BYTES = new byte [] { 1 };
-    private static final byte [] DEQUEUED_BYTES = new byte [] { 2 };
+    private static final byte [] SEMI_ACKED_BYTES = new byte [] { 1 };
+    private static final byte [] ACKED_BYTES = new byte [] { 2 };
+    private static final byte [] DEQUEUED_BYTES = new byte [] { 3 };
     
     public byte [] getBytes() {
       switch (this) {
         case AVAILABLE: return AVAILABLE_BYTES;
+        case SEMI_ACKED:return SEMI_ACKED_BYTES;
         case ACKED:     return ACKED_BYTES;
         case DEQUEUED:  return DEQUEUED_BYTES;
       }
@@ -78,6 +89,7 @@ public class EntryGroupMeta {
     public static EntryGroupState fromBytes(byte [] bytes) {
       if (bytes.length == 1) {
         if (bytes[0] == AVAILABLE_BYTES[0]) return AVAILABLE;
+        if (bytes[0] == SEMI_ACKED_BYTES[0]) return SEMI_ACKED;
         if (bytes[0] == ACKED_BYTES[0]) return ACKED;
         if (bytes[0] == DEQUEUED_BYTES[0]) return DEQUEUED;
       }

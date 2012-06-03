@@ -14,10 +14,10 @@ import com.continuuity.data.table.VersionedColumnarTable;
  */
 public class TTQueueTableOnVCTable implements TTQueueTable {
 
-  private VersionedColumnarTable table;
-  private TimestampOracle timeOracle;
-  private Configuration conf;
-  
+  private final VersionedColumnarTable table;
+  private final TimestampOracle timeOracle;
+  private final Configuration conf;
+
   private final ConcurrentSkipListMap<byte[], TTQueueOnVCTable> queues =
       new ConcurrentSkipListMap<byte[],TTQueueOnVCTable>(
           Bytes.BYTES_COMPARATOR);
@@ -28,15 +28,15 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
     this.timeOracle = timeOracle;
     this.conf = conf;
   }
-  
+
   private TTQueueOnVCTable getQueue(byte [] queueName) {
     TTQueueOnVCTable queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueOnVCTable(table, queueName, timeOracle, conf);
+    queue = new TTQueueOnVCTable(this.table, queueName, this.timeOracle, this.conf);
     TTQueueOnVCTable existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;
   }
-  
+
   @Override
   public EnqueueResult enqueue(byte [] queueName, byte [] data,
       long writeVersion) {
@@ -59,5 +59,17 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer) {
     return getQueue(queueName).ack(entryPointer, consumer);
+  }
+
+  @Override
+  public boolean finalize(byte[] queueName, QueueEntryPointer entryPointer,
+      QueueConsumer consumer) {
+    return getQueue(queueName).finalize(entryPointer, consumer);
+  }
+
+  @Override
+  public boolean unack(byte[] queueName, QueueEntryPointer entryPointer,
+      QueueConsumer consumer) {
+    return getQueue(queueName).unack(entryPointer, consumer);
   }
 }

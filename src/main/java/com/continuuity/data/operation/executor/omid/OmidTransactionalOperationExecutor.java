@@ -26,6 +26,9 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueFinalize;
+import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
+import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
@@ -33,7 +36,6 @@ import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueueInvalidate;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.OVCTableHandle;
@@ -92,17 +94,17 @@ TransactionalOperationExecutor {
 
   BatchOperationResult execute(List<WriteOperation> writes,
       ImmutablePair<ReadPointer,Long> pointer)
-      throws OmidTransactionException {
+          throws OmidTransactionException {
 
     // Re-order operations (create a copy for now)
-    List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes); 
+    List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes);
     Collections.sort(orderedWrites, new WriteOperationComparator());
-    
+
     // Execute operations
     RowSet rows = new MemoryRowSet();
     List<Delete> deletes = new ArrayList<Delete>(writes.size());
     List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();
-    for (WriteOperation write : writes) {
+    for (WriteOperation write : orderedWrites) {
       WriteTransactionResult writeTxReturn = dispatchWrite(write, pointer);
       if (!writeTxReturn.success) {
         // Write operation failed
@@ -124,6 +126,14 @@ TransactionalOperationExecutor {
       abortTransaction(pointer, deletes, invalidates);
       return new BatchOperationResult(false,
           "Commit of transaction failed, transaction aborted");
+    }
+
+    // If last operation was an ack, finalize it
+    if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
+      System.out.println("Last operation was a QueueAck!");
+      QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
+      new QueueFinalize(ack.getKey(), ack.getEntryPointer(), ack.getConsumer())
+          .execute(this.queueTable, pointer);
     }
 
     // Transaction was successfully committed
@@ -243,7 +253,7 @@ TransactionalOperationExecutor {
         enqueue.getData(), pointer.getSecond());
     enqueue.setResult(result);
     return new WriteTransactionResult(true,
-        new QueueInvalidate(enqueue.getKey(), result.getEntryPointer()));
+        new QueueUnenqueue(enqueue.getKey(), result.getEntryPointer()));
   }
 
   WriteTransactionResult write(QueueAck ack,
@@ -255,7 +265,7 @@ TransactionalOperationExecutor {
       return new WriteTransactionResult(false);
     }
     return new WriteTransactionResult(true,
-        new QueueInvalidate(ack.getKey(), ack.getEntryPointer()));
+        new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
   }
 
   @Override
@@ -282,8 +292,7 @@ TransactionalOperationExecutor {
           throws OmidTransactionException {
     // Perform queue invalidates
     for (QueueInvalidate invalidate : invalidates) {
-      this.queueTable.invalidate(invalidate.getKey(),
-          invalidate.getEntryPointer(), pointer.getSecond());
+      invalidate.execute(this.queueTable, pointer);
     }
     // Perform deletes
     for (Delete delete : deletes) {

@@ -45,10 +45,31 @@ public interface TTQueueTable {
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
+   * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
    * @return
    */
   public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
+      QueueConsumer consumer);
+
+  /**
+   * Finalizes an ack.
+   * @param queueName name of the queue
+   * @param entryPointer
+   * @param consumer
+   * @return
+   */
+  public boolean finalize(byte [] queueName, QueueEntryPointer entryPointer,
+      QueueConsumer consumer);
+
+  /**
+   * Unacknowledges a previously acknowledge ack.
+   * @param queueName name of the queue
+   * @param entryPointer
+   * @param consumer
+   * @return
+   */
+  boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
 }
