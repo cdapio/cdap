@@ -394,6 +394,8 @@ public class TestOmidExecutorLikeAFlow {
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
+    long MAX_TIMEOUT = 30000;
+    
     long startTime = System.currentTimeMillis();
     
     // Create P producer threads, each inserts N queue entries
@@ -448,7 +450,7 @@ public class TestOmidExecutorLikeAFlow {
 
     // Wait for producers to finish
     System.out.println("Waiting for producers to finish");
-    for (int i=0; i<p; i++) producers[i].join(5000);
+    for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
     System.out.println("Producers done");
 
     long producerTime = System.currentTimeMillis();
@@ -458,8 +460,8 @@ public class TestOmidExecutorLikeAFlow {
     
     // Wait for consumers to finish
     System.out.println("Waiting for consumers to finish");
-    for (int i=0; i<p; i++) consumerGroupOne[i].join(5000);
-    for (int i=0; i<p; i++) consumerGroupTwo[i].join(5000);
+    for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
+    for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
     System.out.println("Consumers done!");
 
     long stopTime = System.currentTimeMillis();
