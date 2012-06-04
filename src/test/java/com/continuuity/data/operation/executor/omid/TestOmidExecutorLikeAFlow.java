@@ -402,7 +402,7 @@ public class TestOmidExecutorLikeAFlow {
     
     // Create P producer threads, each inserts N queue entries
     int p = 5;
-    int n = 10000;
+    int n = 2000;
     Producer [] producers = new Producer[p];
     for (int i=0;i<p;i++) {
       producers[i] = new Producer(i, n);
