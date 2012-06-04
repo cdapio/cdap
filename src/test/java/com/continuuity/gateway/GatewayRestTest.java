@@ -1,58 +1,97 @@
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
+import com.continuuity.gateway.connector.flume.NettyFlumeConnector;
 import com.continuuity.gateway.connector.rest.RestConnector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This tests whether REST events are properly transmitted through the Gateway
+ */
 public class GatewayRestTest {
 
+  // Our logger object
 	private static final Logger LOG = LoggerFactory
 			.getLogger(GatewayRestTest.class);
 
-	static final String name = "rest";
+  // A set of constants we'll use in these tests
+	static  String name = "rest.RestConnect";
 	static final String prefix = "";
 	static final String path = "/stream/";
 	static final String dest = "pfunk";
 	static final int eventsToSend = 10;
+  static int port = 10000;
 
-	static byte[] createMessage(int messageNo) {
-		return ("This is message " + messageNo + ".").getBytes();
-	}
+  // This is the Gateway object we'll use for these tests
+  private Gateway theGateway = null;
 
-	Gateway setupGateway(int port) throws Exception {
-		Configuration configuration = new Configuration();
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_CLASSNAME), RestConnector.class.getCanonicalName());
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_STREAM), path);
-		Gateway gateway = new Gateway();
-		gateway.configure(configuration);
-		return gateway;
-	}
+  /**
+   * Create a new Gateway instance to use in these set of tests. This method
+   * is called before any of the test methods.
+   *
+   * @throws Exception If the Gateway can not be created.
+   */
+  @Before
+  public void setupGateway() throws Exception {
 
+    // Look for a free port
+    port = Util.findFreePort();
+
+    // Create and populate a new config object
+    Configuration configuration = CConfiguration.create();
+
+    configuration.set(Constants.CONFIG_CONNECTORS, name);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_CLASSNAME), RestConnector.class.getCanonicalName());
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PORT),port);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_STREAM), path);
+
+    // Now create our Gateway
+    theGateway = new Gateway();
+    theGateway.configure(configuration);
+
+  } // end of setupGateway
+
+
+  /**
+   * Test that we can send simulated REST events to a Queue
+   *
+   * @throws Exception If any exceptions happen during the test
+   */
 	@Test
 	public void testRestToQueue() throws Exception {
-		int port = Util.findFreePort();
-		Gateway gateway = setupGateway(port);
+
+    // Set up our consumer and queues
     QueueWritingConsumer consumer = new QueueWritingConsumer();
     MemoryQueueTable queues = new MemoryQueueTable();
     consumer.setQueueTable(queues);
-		gateway.setConsumer(consumer);
 
-		gateway.start();
+    // Initialize and start the Gateway
+    theGateway.setConsumer(consumer);
+    theGateway.start();
+
+    // Send some REST events
 		Util.sendRestEvents(port, prefix, path, dest, eventsToSend);
-		gateway.stop();
 
-		Assert.assertEquals(eventsToSend, consumer.eventsReceived());
+    // Stop the Gateway
+    theGateway.stop();
+
+    Assert.assertEquals(eventsToSend, consumer.eventsReceived());
 		Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
 		Assert.assertEquals(0, consumer.eventsFailed());
 
+    // Clean out the queue
 		Util.consumeQueue(queues, dest, name, eventsToSend);
 	}
 
-}
+} // end of GatewayRestTest

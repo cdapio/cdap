@@ -25,25 +25,26 @@ public class NettyFlumeConnector extends FlumeConnector {
 
 	@Override
 	public void start() {
-		LOG.info("Starting: ", this);
 
-		this.server = new NettyServer(
+    LOG.debug("Starting up " + this);
+
+    this.server = new NettyServer(
 				new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
 				new InetSocketAddress(this.getPort()));
 		this.server.start();
 
-		LOG.debug("Started successfully", this);
-	}
+    LOG.info("Connector '" + this.getName() + "' started on port " + port +".");
+  }
 
 	@Override
 	public void stop() {
-		LOG.info("Stopping: ", this);
+		LOG.debug("Stopping " + this);
 		try {
 			this.server.close();
 			this.server.join();
 		} catch (InterruptedException e) {
 			LOG.info("Received interrupt during join.");
 		}
-		LOG.debug("Stopped. ", this);
+		LOG.debug("Stopped " + this);
 	}
 }

@@ -37,8 +37,8 @@ public abstract class FlumeConnector extends Connector {
 	@Override
 	public void configure(Configuration configuration) throws Exception {
 		super.configure(configuration);
-		this.port = configuration.getInt(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_PORTNUMBER), DefaultPort);
+		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_PORT), DefaultPort);
 	}
 
 	public int getPort() {

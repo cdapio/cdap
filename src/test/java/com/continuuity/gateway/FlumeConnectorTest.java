@@ -1,11 +1,14 @@
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.connector.flume.FlumeConnector;
 import com.continuuity.gateway.connector.flume.NettyFlumeConnector;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class FlumeConnectorTest {
 
@@ -20,14 +23,14 @@ public class FlumeConnectorTest {
 	public void testConfiguration() throws Exception {
 		String name = "notflume"; // use a different name
 
-		Configuration configuration = new Configuration();
-		FlumeConnector connector = newConnector(name);
+    Configuration configuration = CConfiguration.create();
+    FlumeConnector connector = newConnector(name);
 		connector.configure(configuration);
 		Assert.assertEquals(FlumeConnector.DefaultPort, connector.getPort());
 
 		name = "otherflume";
 		int port = 9000;
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		connector = newConnector(name);
 		connector.configure(configuration);
 		Assert.assertEquals(port, connector.getPort());
@@ -40,8 +43,8 @@ public class FlumeConnectorTest {
 		int port = Util.findFreePort();
 		String stream = "pfunk";
 		// configure connector but don't start
-		Configuration configuration = new Configuration();
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
+		Configuration configuration = CConfiguration.create();
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Connector connector = newConnector(name);
 		connector.configure(configuration);
 		connector.setConsumer(new Util.NoopConsumer());
@@ -72,8 +75,8 @@ public class FlumeConnectorTest {
 		int port = Util.findFreePort();
 		String stream = "foo";
 		int eventsToSend = 10;
-		Configuration configuration = new Configuration();
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
+    Configuration configuration = CConfiguration.create();
+    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Connector connector = newConnector(name);
 		connector.configure(configuration);
 		connector.setConsumer(new Util.VerifyConsumer(17, name, stream));

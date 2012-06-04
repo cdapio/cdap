@@ -50,16 +50,16 @@ public class RestConnector extends Connector {
 	@Override
 	public void configure(Configuration configuration) throws Exception {
 		super.configure(configuration);
-		this.port = configuration.getInt(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_PORTNUMBER), DefaultPort);
-		this.chunk = configuration.getBoolean(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_CHUNKING), DefaultChunking);
-		this.ssl = configuration.getBoolean(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_SSL), DefaultSsl);
-		this.prefix = configuration.get(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
-		this.path = configuration.get(Constants.connectorConfigName(
-				this.name, Constants.CONFIG_PATH_STREAM), DefaultPath);
+		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_PORT), DefaultPort);
+		this.chunk = configuration.getBoolean(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_CHUNKING), DefaultChunking);
+		this.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_SSL), DefaultSsl);
+		this.prefix = configuration.get(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
+		this.path = configuration.get(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_PATH_STREAM), DefaultPath);
 		if (this.ssl) {
 			LOG.warn("SSL is not implemented yet. Ignoring configuration for connector '" + this.getName() + "'.");
 			this.ssl = false;
@@ -68,8 +68,8 @@ public class RestConnector extends Connector {
 
 	@Override
 	public void start() throws Exception {
-		LOG.info("Starting up.");
-		InetSocketAddress address = new InetSocketAddress(this.port);
+    LOG.debug("Starting up " + this);
+    InetSocketAddress address = new InetSocketAddress(this.port);
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap(
 					new NioServerSocketChannelFactory(
@@ -86,7 +86,8 @@ public class RestConnector extends Connector {
 
 	@Override
 	public void stop() {
-		LOG.info("Shutting down.");
-		this.serverChannel.close();
-	}
+    LOG.debug("Stopping " + this);
+    this.serverChannel.close();
+    LOG.debug("Stopped " + this);
+  }
 }

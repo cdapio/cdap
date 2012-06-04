@@ -30,7 +30,6 @@ public class Main {
     try {
 
       // Load our configuration from our resource files
-      // TODO: Figure out why this is not working as expected!
       Configuration configuration = CConfiguration.create();
 
       // Configure the Gateway
@@ -41,6 +40,7 @@ public class Main {
 
     } catch (Exception e) {
       e.printStackTrace();
+      System.exit(-1);
     }
 
   }

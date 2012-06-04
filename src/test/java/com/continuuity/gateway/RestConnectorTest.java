@@ -32,11 +32,11 @@ public class RestConnectorTest {
 		int port = 5555;
 		String prefix = "/continuuity";
 		String path = "/destination/";
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_STREAM), path);
-		configuration.setBoolean(Constants.connectorConfigName(name, Constants.CONFIG_CHUNKING), !RestConnector.DefaultChunking);
-		configuration.setBoolean(Constants.connectorConfigName(name, Constants.CONFIG_SSL), false);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setBoolean(Constants.buildConnectorPropertyName(name, Constants.CONFIG_CHUNKING), !RestConnector.DefaultChunking);
+		configuration.setBoolean(Constants.buildConnectorPropertyName(name, Constants.CONFIG_SSL), false);
 		connector = newConnector(name);
 		connector.configure(configuration);
 		Assert.assertEquals(port, connector.getPort());
@@ -56,9 +56,9 @@ public class RestConnectorTest {
 		int port = Util.findFreePort();
 		// configure connector but don't start
 		Configuration configuration = new Configuration();
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
 		Connector connector = newConnector(name);
 		connector.configure(configuration);
 		connector.setConsumer(new Util.NoopConsumer());
@@ -92,9 +92,9 @@ public class RestConnectorTest {
 		int eventsToSend = 10;
 		int port = Util.findFreePort();
 		Configuration configuration = new Configuration();
-		configuration.setInt(Constants.connectorConfigName(name, Constants.CONFIG_PORTNUMBER), port);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.connectorConfigName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
 		Connector connector = newConnector(name);
 		connector.configure(configuration);
 		connector.setConsumer(new Util.VerifyConsumer(17, name, stream));

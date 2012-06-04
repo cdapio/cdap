@@ -10,15 +10,20 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The Gateway provides a data interface for external clients to the data fabric
- * <ul>
- *   <li>To send events to a named queue. This is supported via various protocols. Every protocol
- *   is implemented as a Connector that it registered with the Gateway. The connector can implement
- *   any protocol, as long as it can convert the data from that protocol into events. All events are
- *   routed to a Consumer that is also registered with the gateway. The theConsumer is responsible for
- *   persisting the event before returning a response. </li>
- *   <li>To read data from the persistence storage</li>
- * </ul>
+ * The Gateway is the front door to the Continuuity platform. It provides a
+ * data interface for external clients to send events to the data fabric.
+ * It supports two main patterns:
+ * <dl>
+ *   <dt><strong>Send events to a named queue</strong></dt>
+ *   <dd>This is supported via various protocols. Every protocol is implemented
+ *   as a Connector that it registered with the Gateway. The connector can
+ *   implement any protocol, as long as it can convert the data from that
+ *   protocol into events. All events are routed to a Consumer that is also
+ *   registered with the gateway. The Consumer is responsible for persisting
+ *   the event before returning a response.</dd>
+ *   <dt><strong>To read data from the data fabric</strong></dt>
+ *   <dd>This is currently not implemented.</dd>
+ * </dl>
  */
 public class Gateway {
 
@@ -28,7 +33,15 @@ public class Gateway {
 	private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
   /**
-   * The list of Connectors for this Gateway
+   * This is the Consumer that we'll be using. Gateway can not function without
+   * a valid Consumer.
+   */
+  @Inject
+  private Consumer theConsumer;
+
+  /**
+   * The list of Connectors for this Gateway. This list is populated in
+   * the configure method.
    */
 	private List<Connector> connectorList = new ArrayList<Connector>();
 
@@ -39,62 +52,74 @@ public class Gateway {
    */
 	private Configuration myConfiguration;
 
-  /**
-   * This is the Consumer that we'll be using. Gateway can not function without
-   * a valid Consumer.
-   */
-  @Inject
-  private Consumer theConsumer;
-
 	/**
 	 * Set the gateway's Configuration, then create and configure the Connectors
    *
 	 * @param configuration The Configuration object that contains the options
-	 *                      for the Gateway and all its Connectors
+	 *                      for the Gateway and all its Connectors. This can not
+   *                      be null.
+   *
+   * @throws IllegalArgumentException If configuration argument is null.
 	 */
 	public void configure(Configuration configuration) {
 
-    // Save the configuration
+    if (configuration == null) {
+      throw new IllegalArgumentException("'configuration' argument was null");
+    }
+
+    LOG.info("Configuring Gateway..");
+
+    // Save the configuration so we can use it again later
 		myConfiguration = configuration;
 
-		Collection<String> connectorNames = configuration.
+    // Retrieve the list of Connectors that we will create
+		Collection<String> connectorNames = myConfiguration.
 				getStringCollection(Constants.CONFIG_CONNECTORS);
 
+    // For each Connector
     for (String connectorName : connectorNames) {
 
-			String configName = Constants.connectorConfigName
-          (connectorName, Constants.CONFIG_CLASSNAME);
+      // Retrieve the connector's Class
+			String connectorClassName = myConfiguration.get(
+          Constants.buildConnectorPropertyName(connectorName,
+                                               Constants.CONFIG_CLASSNAME));
 
-			String connectorClassName = configuration.get(configName);
-
+      // Has the user specified the Class? If not, skip this Connector
 			if (connectorClassName == null) {
-				LOG.error("Required property '" + configName +
-						"' missing. Skipping connector '" + connectorName + "'.");
-				continue;
-			}
+        LOG.error("No Class property defined for " + connectorName +
+            ". Can not create " + connectorName + ".");
+			} else {
 
-      // Instantiate a new Connector and then configure it
-			Connector connector = null;
+        // Instantiate a new Connector and then configure it
+        Connector newConnector = null;
 
-      try {
-				connector = (Connector)Class.forName(connectorClassName).newInstance();
-				connector.setName(connectorName);
-			} catch (Exception e) {
-				LOG.error("Cannot instantiate class " + connectorClassName + "(" +
-						e.getMessage() + "). Skipping connector '" + connectorName + "'.");
-				continue;
-			}
+        try {
 
-			try {
-				connector.configure(configuration);
-			} catch (Exception e) {
-				LOG.error("Error configuring connector '" + connectorName + "' (" +
-						e.getMessage() + "). Skipping connector '" + connectorName + "'.");
-				continue;
-			}
+          // Attempt to load the Class
+          newConnector =
+              (Connector)Class.forName(connectorClassName).newInstance();
 
-      // Add it to our list
-			connectorList.add(connector);
+          // Tell it what it's called
+          newConnector.setName(connectorName);
+
+        } catch (Exception e) {
+          LOG.error("Cannot instantiate class " + connectorClassName + "(" +
+              e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
+          continue;
+        }
+
+        // Now try to configure the Connector
+        try {
+          newConnector.configure(myConfiguration);
+        } catch (Exception e) {
+          LOG.error("Error configuring connector '" + connectorName + "' (" +
+              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+          continue;
+        }
+
+        // Add it to our Connector list
+        connectorList.add(newConnector);
+      }
 		}
 	}
 
@@ -122,6 +147,8 @@ public class Gateway {
     }
 
     LOG.info("Gateway Starting up.");
+
+    // Start our event consumer
     theConsumer.startConsumer();
 
     // Now start all our Connectors
@@ -133,7 +160,7 @@ public class Gateway {
 
       connector.start();
 
-      LOG.info(" Starting " + connector.getName() + " connector");
+      LOG.info(" Started " + connector.getName() + " connector");
     }
   }
 

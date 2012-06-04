@@ -19,8 +19,42 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>flume</value>
-        <description>Specifies the Flume connector</description>
+        <value>rest.RestConnector,flume.FlumeConnector</value>
+        <description>Specifies the list of Connectors we will use</description>
+    </property>
+
+    <!-- Todd: I'm really unhappy that we have to use so much XML to describe
+         the Connectors, but that's 'cos we are using the Hadoop config object -->
+    <property>
+        <name>rest.RestConnector.class</name>
+        <value>com.continuuity.gateway.connector.rest.RestConnector</value>
+        <description>Specifies the class for the REST connector</description>
+    </property>
+
+    <property>
+        <name>rest.RestConnector.port</name>
+        <value>10000</value>
+    </property>
+
+    <property>
+        <name>rest.RestConnector.stream</name>
+        <value>/rest-stream/</value>
+    </property>
+
+    <property>
+        <name>flume.FlumeConnector.class</name>
+        <value>com.continuuity.gateway.connector.flume.NettyFlumeConnector</value>
+        <description>Specifies the class for the Flume connector</description>
+    </property>
+
+    <property>
+        <name>rest.FlumeConnector.port</name>
+        <value>10001</value>
+    </property>
+
+    <property>
+        <name>rest.FlumeConnector.stream</name>
+        <value>/flume-stream/</value>
     </property>
 
 </configuration>
