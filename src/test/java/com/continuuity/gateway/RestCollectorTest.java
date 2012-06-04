@@ -109,4 +109,13 @@ public class RestCollectorTest {
 		Assert.assertEquals(eventsToSend, collector.getConsumer().eventsSucceeded());
 		Assert.assertEquals(0, collector.getConsumer().eventsFailed());
 	}
+
+	// @todo test that appropriate status codes are returned for
+  // - no api token
+	// - missing permission
+	// - unsupported query
+	// - stream does not exist
+	// - internal error?
+	// - wrong method (get, head, etc.)
+	// public void testHttpCodes() throws Exception
 }
