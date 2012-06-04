@@ -450,6 +450,11 @@ public class TestOmidExecutorLikeAFlow {
     System.out.println("Producers done");
     this.producersDone = true;
 
+    // Verify producers produced correct number
+    assertEquals(p * n , enqueuedMap.size());
+    System.out.println("Producers correctly enqueued " + enqueuedMap.size() +
+        " entries");
+
     long producerTime = System.currentTimeMillis();
     System.out.println("" + p + " producers generated " + (n*p) + " total " +
         "queue entries in " + (producerTime - startTime) + " millis (" +
@@ -467,11 +472,6 @@ public class TestOmidExecutorLikeAFlow {
         " total queue entries in " + (stopTime - startConsumers) + " millis (" +
         ((stopTime-startConsumers)/((float)(expectedDequeues*2))) +
         " ms/dequeue)");
-
-    // Verify producers produced correct number
-    assertEquals(p * n , enqueuedMap.size());
-    System.out.println("Producers correctly enqueued " + enqueuedMap.size() +
-        " entries");
     
     // Each group should total <expectedDequeues>
 
@@ -560,6 +560,7 @@ public class TestOmidExecutorLikeAFlow {
     @Override
     public void run() {
       while (true) {
+        boolean localProducersDone = TestOmidExecutorLikeAFlow.this.producersDone;
         QueueDequeue dequeue =
             new QueueDequeue(TestOmidExecutorLikeAFlow.this.threadedQueueName, this.consumer, this.config);
         try {
@@ -575,11 +576,11 @@ public class TestOmidExecutorLikeAFlow {
             this.dequeuedMap.put(result.getValue(), result.getValue());
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
-          } else if (result.isEmpty() && TestOmidExecutorLikeAFlow.this.producersDone) {
+          } else if (result.isEmpty() && localProducersDone) {
             System.out.println(this.consumer.toString() + " finished after " +
                 this.dequeued + " dequeues");
             return;
-          } else if (result.isEmpty() && !TestOmidExecutorLikeAFlow.this.producersDone) {
+          } else if (result.isEmpty() && !localProducersDone) {
             System.out.println(this.consumer.toString() + " empty but waiting");
             Thread.sleep(1);
           } else {
