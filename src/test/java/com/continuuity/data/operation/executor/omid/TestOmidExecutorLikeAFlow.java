@@ -8,10 +8,10 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.SyncReadTimeoutException;
@@ -394,12 +394,18 @@ public class TestOmidExecutorLikeAFlow {
 
   private volatile boolean producersDone = false;
 
-  @Test @Ignore
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
     OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
+    ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
+        new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
+        new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+        ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo =
+            new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
 
     long startTime = System.currentTimeMillis();
 
@@ -408,7 +414,7 @@ public class TestOmidExecutorLikeAFlow {
     int n = 2000;
     Producer [] producers = new Producer[p];
     for (int i=0;i<p;i++) {
-      producers[i] = new Producer(i, n);
+      producers[i] = new Producer(i, n, enqueuedMap);
     }
 
     // Create (P*2) consumer threads, two groups of (P)
@@ -417,11 +423,13 @@ public class TestOmidExecutorLikeAFlow {
     Consumer [] consumerGroupTwo = new Consumer[p];
     for (int i=0;i<p;i++) {
       consumerGroupOne[i] = new Consumer(new QueueConsumer(i, 0, p),
-          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true));
+          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
+          dequeuedMapOne);
     }
     for (int i=0;i<p;i++) {
       consumerGroupTwo[i] = new Consumer(new QueueConsumer(i, 1, p),
-          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true));
+          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
+          dequeuedMapTwo);
     }
 
     // Let the producing begin!
@@ -460,6 +468,11 @@ public class TestOmidExecutorLikeAFlow {
         ((stopTime-startConsumers)/((float)(expectedDequeues*2))) +
         " ms/dequeue)");
 
+    // Verify producers produced correct number
+    assertEquals(p * n , enqueuedMap.size());
+    System.out.println("Producers correctly enqueued " + enqueuedMap.size() +
+        " entries");
+    
     // Each group should total <expectedDequeues>
 
     long groupOneTotal = 0;
@@ -468,16 +481,47 @@ public class TestOmidExecutorLikeAFlow {
       groupOneTotal += consumerGroupOne[i].dequeued;
       groupTwoTotal += consumerGroupTwo[i].dequeued;
     }
+    if (expectedDequeues != groupOneTotal) {
+      System.out.println("Group One: totalDequeues=" + groupOneTotal +
+          ", DequeuedMap.size=" + dequeuedMapOne.size());
+      for (byte [] dequeuedValue : dequeuedMapOne.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there are " +
+          enqueuedMap.size() + " remaining entries produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+            Bytes.toInt(enqueuedValue) + ", entrynum=" +
+            Bytes.toInt(enqueuedValue, 4));
+      }
+    }
     assertEquals(expectedDequeues, groupOneTotal);
+    if (expectedDequeues != groupTwoTotal) {
+      System.out.println("Group Two: totalDequeues=" + groupTwoTotal +
+          ", DequeuedMap.size=" + dequeuedMapTwo.size());
+      for (byte [] dequeuedValue : dequeuedMapTwo.values()) {
+        enqueuedMap.remove(dequeuedValue);
+      }
+      System.out.println("After removing dequeued entries, there are " +
+          enqueuedMap.size() + " remaining entries produced");
+      for (byte [] enqueuedValue : enqueuedMap.values()) {
+        System.out.println("EnqueuedNotDequeued: instanceid=" +
+            Bytes.toInt(enqueuedValue) + ", entrynum=" +
+            Bytes.toInt(enqueuedValue, 4));
+      }
+    }
     assertEquals(expectedDequeues, groupTwoTotal);
   }
 
   class Producer extends Thread {
     int instanceid;
     int numentries;
-    Producer(int instanceid, int numentries) {
+    ConcurrentSkipListMap<byte[], byte[]> enqueuedMap;
+    Producer(int instanceid, int numentries,
+        ConcurrentSkipListMap<byte[], byte[]> enqueuedMap) {
       this.instanceid = instanceid;
       this.numentries = numentries;
+      this.enqueuedMap = enqueuedMap;
       System.out.println("Producer " + instanceid + " will enqueue " +
           numentries + " entries");
     }
@@ -486,11 +530,13 @@ public class TestOmidExecutorLikeAFlow {
       System.out.println("Producer " + this.instanceid + " running");
       for (int i=0; i<this.numentries; i++) {
         try {
+          byte [] entry = Bytes.add(Bytes.toBytes(this.instanceid),
+              Bytes.toBytes(i));
           assertTrue(TestOmidExecutorLikeAFlow.this.executor.execute(
               Arrays.asList(new WriteOperation [] {
                   new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName,
-                      Bytes.add(Bytes.toBytes(this.instanceid),
-                          Bytes.toBytes(i)))})).isSuccess());
+                      entry)})).isSuccess());
+          this.enqueuedMap.put(entry, entry);
         } catch (OmidTransactionException e) {
           e.printStackTrace();
           throw new RuntimeException(e);
@@ -504,9 +550,12 @@ public class TestOmidExecutorLikeAFlow {
     QueueConsumer consumer;
     QueueConfig config;
     long dequeued = 0;
-    Consumer(QueueConsumer consumer, QueueConfig config) {
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMap;
+    Consumer(QueueConsumer consumer, QueueConfig config,
+        ConcurrentSkipListMap<byte[], byte[]> dequeuedMap) {
       this.consumer = consumer;
       this.config = config;
+      this.dequeuedMap = dequeuedMap;
     }
     @Override
     public void run() {
@@ -523,6 +572,7 @@ public class TestOmidExecutorLikeAFlow {
           }
           if (result.isSuccess()) {
             this.dequeued++;
+            this.dequeuedMap.put(result.getValue(), result.getValue());
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
           } else if (result.isEmpty() && TestOmidExecutorLikeAFlow.this.producersDone) {
