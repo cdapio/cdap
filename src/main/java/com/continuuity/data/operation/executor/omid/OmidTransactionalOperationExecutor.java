@@ -272,17 +272,25 @@ TransactionalOperationExecutor {
         new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
   }
 
+  static int MAX_DEQUEUE_RETRIES = 10;
+  static long DEQUEUE_RETRY_SLEEP = 0;
+  
   @Override
   public DequeueResult execute(QueueDequeue dequeue)
       throws SyncReadTimeoutException {
-    int maxRetries = 10;
     int retries = 0;
-    while (retries < maxRetries) {
+    while (retries < MAX_DEQUEUE_RETRIES) {
       DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
           dequeue.getConsumer(), dequeue.getConfig(),
           this.oracle.getReadPointer());
       if (result.shouldRetry()) {
         retries++;
+        try {
+          if (DEQUEUE_RETRY_SLEEP > 0) Thread.sleep(DEQUEUE_RETRY_SLEEP);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+          // continue in loop
+        }
         continue;
       }
       dequeue.setResult(result);

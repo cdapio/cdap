@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.SyncReadTimeoutException;
@@ -393,14 +392,16 @@ public class TestOmidExecutorLikeAFlow {
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
   private volatile boolean producersDone = false;
-  
-  @Test @Ignore
+
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
-    
+    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
+    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
+
     long startTime = System.currentTimeMillis();
-    
+
     // Create P producer threads, each inserts N queue entries
     int p = 5;
     int n = 2000;
@@ -428,7 +429,7 @@ public class TestOmidExecutorLikeAFlow {
     long expectedDequeues = p * n;
 
     long startConsumers = System.currentTimeMillis();
-    
+
     // Start consumers!
     System.out.println("Starting consumers");
     for (int i=0; i<p; i++) consumerGroupOne[i].start();
@@ -438,13 +439,13 @@ public class TestOmidExecutorLikeAFlow {
     System.out.println("Waiting for producers to finish");
     for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
     System.out.println("Producers done");
-    producersDone = true;
+    this.producersDone = true;
 
     long producerTime = System.currentTimeMillis();
     System.out.println("" + p + " producers generated " + (n*p) + " total " +
         "queue entries in " + (producerTime - startTime) + " millis (" +
         ((producerTime-startTime)/((float)(n*p))) + " ms/enqueue)");
-    
+
     // Wait for consumers to finish
     System.out.println("Waiting for consumers to finish");
     for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
@@ -457,7 +458,7 @@ public class TestOmidExecutorLikeAFlow {
         " total queue entries in " + (stopTime - startConsumers) + " millis (" +
         ((stopTime-startConsumers)/((float)(expectedDequeues*2))) +
         " ms/dequeue)");
-    
+
     // Each group should total <expectedDequeues>
 
     long groupOneTotal = 0;
@@ -481,20 +482,20 @@ public class TestOmidExecutorLikeAFlow {
     }
     @Override
     public void run() {
-      System.out.println("Producer " + instanceid + " running");
+      System.out.println("Producer " + this.instanceid + " running");
       for (int i=0; i<this.numentries; i++) {
         try {
           assertTrue(TestOmidExecutorLikeAFlow.this.executor.execute(
               Arrays.asList(new WriteOperation [] {
-              new QueueEnqueue(threadedQueueName,
-                  Bytes.add(Bytes.toBytes(this.instanceid),
-                      Bytes.toBytes(i)))})).isSuccess());
+                  new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName,
+                      Bytes.add(Bytes.toBytes(this.instanceid),
+                          Bytes.toBytes(i)))})).isSuccess());
         } catch (OmidTransactionException e) {
           e.printStackTrace();
           throw new RuntimeException(e);
         }
       }
-      System.out.println("Producer " + instanceid + " done");
+      System.out.println("Producer " + this.instanceid + " done");
     }
   }
 
@@ -510,24 +511,24 @@ public class TestOmidExecutorLikeAFlow {
     public void run() {
       while (true) {
         QueueDequeue dequeue =
-            new QueueDequeue(threadedQueueName, this.consumer, this.config);
+            new QueueDequeue(TestOmidExecutorLikeAFlow.this.threadedQueueName, this.consumer, this.config);
         try {
-          DequeueResult result = executor.execute(dequeue);
+          DequeueResult result = TestOmidExecutorLikeAFlow.this.executor.execute(dequeue);
           if (result.isSuccess() && this.config.isSingleEntry()) {
-            assertTrue(executor.execute(
+            assertTrue(TestOmidExecutorLikeAFlow.this.executor.execute(
                 Arrays.asList(new WriteOperation [] {
-                    new QueueAck(threadedQueueName,
-                    result.getEntryPointer(), this.consumer)})).isSuccess());
+                    new QueueAck(TestOmidExecutorLikeAFlow.this.threadedQueueName,
+                        result.getEntryPointer(), this.consumer)})).isSuccess());
           }
           if (result.isSuccess()) {
             this.dequeued++;
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
-          } else if (result.isEmpty() && producersDone) {
+          } else if (result.isEmpty() && TestOmidExecutorLikeAFlow.this.producersDone) {
             System.out.println(this.consumer.toString() + " finished after " +
                 this.dequeued + " dequeues");
             return;
-          } else if (result.isEmpty() && !producersDone) {
+          } else if (result.isEmpty() && !TestOmidExecutorLikeAFlow.this.producersDone) {
             System.out.println(this.consumer.toString() + " empty but waiting");
             Thread.sleep(1);
           } else {
