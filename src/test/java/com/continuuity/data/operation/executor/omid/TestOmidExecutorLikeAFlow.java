@@ -391,6 +391,8 @@ public class TestOmidExecutorLikeAFlow {
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
+  private volatile boolean producersDone = false;
+  
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
@@ -452,6 +454,7 @@ public class TestOmidExecutorLikeAFlow {
     System.out.println("Waiting for producers to finish");
     for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
     System.out.println("Producers done");
+    producersDone = true;
 
     long producerTime = System.currentTimeMillis();
     System.out.println("" + p + " producers generated " + (n*p) + " total " +
@@ -536,10 +539,12 @@ public class TestOmidExecutorLikeAFlow {
             this.dequeued++;
           } else if (result.isFailure()) {
             fail("Dequeue failed");
-          } else if (result.isEmpty()) {
+          } else if (result.isEmpty() && producersDone) {
             System.out.println(this.consumer.toString() + " finished after " +
                 this.dequeued + " dequeues");
             return;
+          } else if (result.isEmpty() && !producersDone) {
+            Thread.sleep(1);
           } else {
             fail("What is this?");
           }
@@ -547,6 +552,9 @@ public class TestOmidExecutorLikeAFlow {
           e.printStackTrace();
           throw new RuntimeException(e);
         } catch (OmidTransactionException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        } catch (InterruptedException e) {
           e.printStackTrace();
           throw new RuntimeException(e);
         }
