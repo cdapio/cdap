@@ -292,7 +292,7 @@ public class TTQueueOnVCTable implements TTQueue {
         log("Data exists but is not yet visible at " + entryPointer +
             ", retrying");
         quickWait();
-        continue;
+        return new DequeueResult(DequeueStatus.RETRY);
       }
 
       // Queue entry exists and is visible, check the global state of it

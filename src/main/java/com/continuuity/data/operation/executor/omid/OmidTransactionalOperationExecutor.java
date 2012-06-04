@@ -33,6 +33,7 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -114,9 +115,13 @@ TransactionalOperationExecutor {
       } else {
         // Write was successful.  Store delete if we need to abort and continue
         deletes.addAll(writeTxReturn.deletes);
-        if (writeTxReturn.invalidate != null)
+        if (writeTxReturn.invalidate != null) {
+          // Queue operation
           invalidates.add(writeTxReturn.invalidate);
-        rows.addRow(write.getKey());
+        } else {
+          // Normal write operation
+          rows.addRow(write.getKey());
+        }
       }
     }
 
@@ -130,7 +135,6 @@ TransactionalOperationExecutor {
 
     // If last operation was an ack, finalize it
     if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
-      System.out.println("Last operation was a QueueAck!");
       QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
       new QueueFinalize(ack.getKey(), ack.getEntryPointer(), ack.getConsumer())
           .execute(this.queueTable, pointer);
@@ -271,11 +275,20 @@ TransactionalOperationExecutor {
   @Override
   public DequeueResult execute(QueueDequeue dequeue)
       throws SyncReadTimeoutException {
-    DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
-        dequeue.getConsumer(), dequeue.getConfig(),
-        this.oracle.getReadPointer());
-    dequeue.setResult(result);
-    return result;
+    int maxRetries = 10;
+    int retries = 0;
+    while (retries < maxRetries) {
+      DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
+          dequeue.getConsumer(), dequeue.getConfig(),
+          this.oracle.getReadPointer());
+      if (result.shouldRetry()) {
+        retries++;
+        continue;
+      }
+      dequeue.setResult(result);
+      return result;
+    }
+    return new DequeueResult(DequeueStatus.FAILURE, "Maximum retries");
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {

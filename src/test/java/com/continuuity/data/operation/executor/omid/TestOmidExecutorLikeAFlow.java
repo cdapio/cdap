@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.omid;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
+import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
@@ -256,7 +258,6 @@ public class TestOmidExecutorLikeAFlow {
 
   }
 
-
   @Test
   public void testWriteBatchWithMultiWritesMultiEnqueuesPlusUnsuccessfulAckRollback()
       throws Exception {
@@ -386,5 +387,168 @@ public class TestOmidExecutorLikeAFlow {
     destDequeueResult = this.executor.execute(
         new QueueDequeue(destQueueTwo, consumer, config));
     assertTrue(destDequeueResult.isEmpty());
+  }
+
+  final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
+
+  @Test
+  public void testThreadedProducersAndThreadedConsumers() throws Exception {
+
+    long startTime = System.currentTimeMillis();
+    
+    // Create P producer threads, each inserts N queue entries
+    int p = 5;
+    int n = 10000;
+    Producer [] producers = new Producer[p];
+    for (int i=0;i<p;i++) {
+      producers[i] = new Producer(i, n);
+    }
+
+    // Create (P*2) consumer threads, two groups of (P)
+    // Use synchronous execution first
+    Consumer [] consumerGroupOne = new Consumer[p];
+    Consumer [] consumerGroupTwo = new Consumer[p];
+    for (int i=0;i<p;i++) {
+      consumerGroupOne[i] = new Consumer(new QueueConsumer(i, 0, p),
+          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true));
+    }
+    for (int i=0;i<p;i++) {
+      consumerGroupTwo[i] = new Consumer(new QueueConsumer(i, 1, p),
+          new QueueConfig(new QueuePartitioner.RandomPartitioner(), true));
+    }
+
+    // Let the producing begin!
+    System.out.println("Starting producers");
+    for (int i=0; i<p; i++) producers[i].start();
+    long expectedDequeues = p * n;
+
+    // Don't start consuming until something is in queue
+    while (true) {
+      System.out.println("Entering dequeue loop");
+      DequeueResult result = this.executor.execute(new QueueDequeue(
+          this.threadedQueueName, consumerGroupOne[0].consumer,
+          consumerGroupOne[0].config));
+      if (result.isEmpty()) {
+        System.out.println("Nothing in queue, waiting...");
+        Thread.sleep(1);
+      }
+      else if (result.isFailure()) fail("Dequeue failed!");
+      else if (result.isSuccess()) {
+        System.out.println("Dequeued successfully : " + result);
+        break;
+      }
+    }
+
+    long startConsumers = System.currentTimeMillis();
+    
+    // Start consumers!
+    System.out.println("Starting consumers");
+    for (int i=0; i<p; i++) consumerGroupOne[i].start();
+    for (int i=0; i<p; i++) consumerGroupTwo[i].start();
+
+    // Wait for producers to finish
+    System.out.println("Waiting for producers to finish");
+    for (int i=0; i<p; i++) producers[i].join(5000);
+    System.out.println("Producers done");
+
+    long producerTime = System.currentTimeMillis();
+    System.out.println("" + p + " producers generated " + (n*p) + " total " +
+        "queue entries in " + (producerTime - startTime) + " millis (" +
+        ((producerTime-startTime)/((float)(n*p))) + " ms/enqueue)");
+    
+    // Wait for consumers to finish
+    System.out.println("Waiting for consumers to finish");
+    for (int i=0; i<p; i++) consumerGroupOne[i].join(5000);
+    for (int i=0; i<p; i++) consumerGroupTwo[i].join(5000);
+    System.out.println("Consumers done!");
+
+    long stopTime = System.currentTimeMillis();
+    System.out.println("" + (p*2) + " consumers dequeued " +
+        (expectedDequeues*2) +
+        " total queue entries in " + (stopTime - startConsumers) + " millis (" +
+        ((stopTime-startConsumers)/((float)(expectedDequeues*2))) +
+        " ms/dequeue)");
+    
+    // Each group should total <expectedDequeues>
+
+    long groupOneTotal = 0;
+    long groupTwoTotal = 0;
+    for (int i=0; i<p; i++) {
+      groupOneTotal += consumerGroupOne[i].dequeued;
+      groupTwoTotal += consumerGroupTwo[i].dequeued;
+    }
+    assertEquals(expectedDequeues, groupOneTotal);
+    assertEquals(expectedDequeues, groupTwoTotal);
+  }
+
+  class Producer extends Thread {
+    int instanceid;
+    int numentries;
+    Producer(int instanceid, int numentries) {
+      this.instanceid = instanceid;
+      this.numentries = numentries;
+      System.out.println("Producer " + instanceid + " will enqueue " +
+          numentries + " entries");
+    }
+    @Override
+    public void run() {
+      System.out.println("Producer " + instanceid + " running");
+      for (int i=0; i<this.numentries; i++) {
+        try {
+          assertTrue(TestOmidExecutorLikeAFlow.this.executor.execute(
+              Arrays.asList(new WriteOperation [] {
+              new QueueEnqueue(threadedQueueName,
+                  Bytes.add(Bytes.toBytes(this.instanceid),
+                      Bytes.toBytes(i)))})).isSuccess());
+        } catch (OmidTransactionException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }
+      System.out.println("Producer " + instanceid + " done");
+    }
+  }
+
+  class Consumer extends Thread {
+    QueueConsumer consumer;
+    QueueConfig config;
+    long dequeued = 0;
+    Consumer(QueueConsumer consumer, QueueConfig config) {
+      this.consumer = consumer;
+      this.config = config;
+    }
+    @Override
+    public void run() {
+      while (true) {
+        QueueDequeue dequeue =
+            new QueueDequeue(threadedQueueName, this.consumer, this.config);
+        try {
+          DequeueResult result = executor.execute(dequeue);
+          if (result.isSuccess() && this.config.isSingleEntry()) {
+            assertTrue(executor.execute(
+                Arrays.asList(new WriteOperation [] {
+                    new QueueAck(threadedQueueName,
+                    result.getEntryPointer(), this.consumer)})).isSuccess());
+          }
+          if (result.isSuccess()) {
+            this.dequeued++;
+          } else if (result.isFailure()) {
+            fail("Dequeue failed");
+          } else if (result.isEmpty()) {
+            System.out.println(this.consumer.toString() + " finished after " +
+                this.dequeued + " dequeues");
+            return;
+          } else {
+            fail("What is this?");
+          }
+        } catch (SyncReadTimeoutException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        } catch (OmidTransactionException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }
+    }
   }
 }
