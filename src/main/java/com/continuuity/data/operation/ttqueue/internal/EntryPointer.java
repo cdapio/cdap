@@ -9,8 +9,9 @@ import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
  */
 public class EntryPointer extends QueueEntryPointer {
 
-  public EntryPointer(final long entryId, final long shardId) {
-    super(entryId, shardId);
+  public EntryPointer(final long entryId,
+      final long shardId) {
+    super(null, entryId, shardId);
   }
 
   public EntryPointer makeCopy() {

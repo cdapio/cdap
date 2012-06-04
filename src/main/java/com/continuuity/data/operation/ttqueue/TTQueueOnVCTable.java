@@ -170,7 +170,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueStatus.SUCCESS,
-        new QueueEntryPointer(entryId, shardMeta.getShardId()));
+        new QueueEntryPointer(queueName, entryId, shardMeta.getShardId()));
   }
 
   @Override
