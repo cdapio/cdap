@@ -78,4 +78,7 @@ public class TestOVCTable {
         new MemoryReadPointer(9L))));
   }
 
+//  @Test
+//  public void testDeleteBehavior() {
+//  }
 }

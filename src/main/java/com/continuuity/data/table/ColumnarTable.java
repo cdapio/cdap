@@ -8,8 +8,6 @@ public interface ColumnarTable {
   
   public void put(byte [] row, byte [][] columns, byte [][] values);
   
-  public void delete(byte [] row);
-  
   public void delete(byte [] row, byte [] column);
 
   public Map<byte[], byte[]> get(byte[] row);

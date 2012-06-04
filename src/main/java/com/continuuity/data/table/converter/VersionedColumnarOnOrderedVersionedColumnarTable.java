@@ -32,11 +32,6 @@ public class VersionedColumnarOnOrderedVersionedColumnarTable implements
   }
 
   @Override
-  public void delete(byte[] row, long version) {
-    table.delete(mapper.map(row), version);
-  }
-
-  @Override
   public void delete(byte[] row, byte[] column, long version) {
     table.delete(mapper.map(row), column, version);
   }

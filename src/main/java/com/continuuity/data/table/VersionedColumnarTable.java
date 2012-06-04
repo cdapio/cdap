@@ -11,8 +11,6 @@ public interface VersionedColumnarTable {
   public void put(byte [] row, byte [][] columns, long version,
       byte [][] values);
 
-  public void delete(byte [] row, long version);
-
   public void delete(byte [] row, byte [] column, long version);
 
   public Map<byte [], byte []> get(byte [] row, ReadPointer readPointer);

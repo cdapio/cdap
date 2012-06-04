@@ -30,11 +30,6 @@ public class ColumnarOnVersionedColumnarTable implements ColumnarTable {
   }
 
   @Override
-  public void delete(byte[] row) {
-    this.table.delete(row, this.oracle.getTimestamp());
-  }
-
-  @Override
   public void delete(byte[] row, byte[] column) {
     this.table.delete(row, column, this.oracle.getTimestamp());
   }

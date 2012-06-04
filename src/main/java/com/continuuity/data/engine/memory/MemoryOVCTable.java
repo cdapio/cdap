@@ -71,14 +71,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     unlockRow(r);
   }
 
-  @Override
-  public void delete(byte[] row, long version) {
-    Row r = new Row(row);
-    lockRow(r);
-    this.map.remove(r);
-    unlockRow(r);
-  }
-
 //  /**
 //   * Inserts a delete marker at the specified timestamp for every column that
 //   * currently exists in some way.
