@@ -2,11 +2,11 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.connector.flume;
+package com.continuuity.gateway.collector.flume;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * This class serves as an intermediary between the Avro flume responder
  * and the event consumer. It receives (batches of) flume events, converts
- * them into Events and adds additional meta data (such as the connector
+ * them into Events and adds additional meta data (such as the collector
  * name) to the headers, then passes the events on to the consumer.
  */
 class FlumeAdapter implements AvroSourceProtocol {
@@ -30,21 +30,21 @@ class FlumeAdapter implements AvroSourceProtocol {
 			.getLogger(FlumeAdapter.class);
 
 	private Consumer consumer;
-	private Connector connector;
+	private Collector collector;
 
-	/** prevent using the default constructor, to ensure the connector is always set */
+	/** prevent using the default constructor, to ensure the collector is always set */
 	private FlumeAdapter() {
 		LOG.error("Attempt to call default constructor.");
 		throw new UnsupportedOperationException("Attempt to call default constructor for FlumeAdapter.");
 	}
 
 	/**
-	 * Constructor ensures that the connector is always set
-	 * @param connector the connector that this adapter belongs to
+	 * Constructor ensures that the collector is always set
+	 * @param collector the collector that this adapter belongs to
 	 */
 
-	public FlumeAdapter(Connector connector) {
-		this.connector = connector;
+	public FlumeAdapter(Collector collector) {
+		this.collector = collector;
 	}
 
 	/**
@@ -62,11 +62,11 @@ class FlumeAdapter implements AvroSourceProtocol {
 		return this.consumer;
 	}
 	/**
-	 * Get the connector that this adapter belongs to
-	 * @return the connector
+	 * Get the collector that this adapter belongs to
+	 * @return the collector
 	 */
-	public Connector getConnector() {
-		return this.connector;
+	public Collector getCollector() {
+		return this.collector;
 	}
 
 	@Override
@@ -97,7 +97,7 @@ class FlumeAdapter implements AvroSourceProtocol {
 
 	/**
 	 * Converts a Flume event to am Event. This is a pure copy of the headers and body.
-	 * In addition, the connector name header is set.
+	 * In addition, the collector name header is set.
 	 * @param flumeEvent the flume event to be converted
 	 * @return the resulting event
 	 */
@@ -107,7 +107,7 @@ class FlumeAdapter implements AvroSourceProtocol {
 		for (CharSequence header : flumeEvent.getHeaders().keySet()) {
 			builder.setHeader(header.toString(), flumeEvent.getHeaders().get(header).toString());
 		}
-		builder.setHeader(Constants.HEADER_FROM_CONNECTOR, this.getConnector().getName());
+		builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.getCollector().getName());
 		return builder.create();
 	}
 

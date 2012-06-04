@@ -1,4 +1,4 @@
-package com.continuuity.gateway.connector.rest;
+package com.continuuity.gateway.collector.rest;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
@@ -16,13 +16,13 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
 
-	private RestConnector connector;
+	private RestCollector collector;
 	private String pathPrefix;
 
 	private RestHandler() { };
-	RestHandler(RestConnector connector) {
-		this.connector = connector;
-		this.pathPrefix = connector.getPrefix()	+ connector.getPath();
+	RestHandler(RestCollector collector) {
+		this.collector = collector;
+		this.pathPrefix = collector.getPrefix()	+ collector.getPath();
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		}
 
 		EventBuilder builder = new EventBuilder();
-		builder.setHeader(Constants.HEADER_FROM_CONNECTOR, this.connector.getName());
+		builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
 		builder.setHeader(Constants.HEADER_DESTINATION_ENDPOINT, destination);
 
 		String prefix = destination + ".";
@@ -119,7 +119,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		Event event = builder.create();
 
 		try {
-			this.connector.getConsumer().consumeEvent(event);
+			this.collector.getConsumer().consumeEvent(event);
 		} catch (Exception e) {
 			LOG.warn("Error consuming single event: " + e.getMessage());
 			respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -132,7 +132,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
-		LOG.error("Exception caught for connector '" + this.connector.getName() + "'. ", e.getCause());
+		LOG.error("Exception caught for collector '" + this.collector.getName() + "'. ", e.getCause());
 		e.getChannel().close();
 	}
 }

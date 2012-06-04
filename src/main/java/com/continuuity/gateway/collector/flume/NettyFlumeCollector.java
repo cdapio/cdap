@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.connector.flume;
+package com.continuuity.gateway.collector.flume;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
@@ -16,10 +16,10 @@ import java.net.InetSocketAddress;
 /**
  *
  */
-public class NettyFlumeConnector extends FlumeConnector {
+public class NettyFlumeCollector extends FlumeCollector {
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(NettyFlumeConnector.class);
+			.getLogger(NettyFlumeCollector.class);
 
 	private Server server; // the netty server
 
@@ -33,7 +33,7 @@ public class NettyFlumeConnector extends FlumeConnector {
 				new InetSocketAddress(this.getPort()));
 		this.server.start();
 
-    LOG.info("Connector '" + this.getName() + "' started on port " + port +".");
+    LOG.info("Collector '" + this.getName() + "' started on port " + port + ".");
   }
 
 	@Override

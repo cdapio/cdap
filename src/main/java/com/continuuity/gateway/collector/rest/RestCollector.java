@@ -1,6 +1,6 @@
-package com.continuuity.gateway.connector.rest;
+package com.continuuity.gateway.collector.rest;
 
-import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-public class RestConnector extends Connector {
+public class RestCollector extends Collector {
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(RestConnector.class);
+			.getLogger(RestCollector.class);
 
 	public static final int DefaultPort = 8765;
 	public static String DefaultPrefix = "";
@@ -50,18 +50,18 @@ public class RestConnector extends Connector {
 	@Override
 	public void configure(Configuration configuration) throws Exception {
 		super.configure(configuration);
-		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_PORT), DefaultPort);
-		this.chunk = configuration.getBoolean(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_CHUNKING), DefaultChunking);
-		this.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_SSL), DefaultSsl);
-		this.prefix = configuration.get(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
-		this.path = configuration.get(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_PATH_STREAM), DefaultPath);
+		this.port = configuration.getInt(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_PORT), DefaultPort);
+		this.chunk = configuration.getBoolean(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_CHUNKING), DefaultChunking);
+		this.ssl = configuration.getBoolean(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_SSL), DefaultSsl);
+		this.prefix = configuration.get(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
+		this.path = configuration.get(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_PATH_STREAM), DefaultPath);
 		if (this.ssl) {
-			LOG.warn("SSL is not implemented yet. Ignoring configuration for connector '" + this.getName() + "'.");
+			LOG.warn("SSL is not implemented yet. Ignoring configuration for collector '" + this.getName() + "'.");
 			this.ssl = false;
 		}
 	}
@@ -78,10 +78,10 @@ public class RestConnector extends Connector {
 			bootstrap.setPipelineFactory(new PipelineFactory(this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
-			LOG.error("Failed to startup connector '" + this.getName() + "' at " + address + ".");
+			LOG.error("Failed to startup collector '" + this.getName() + "' at " + address + ".");
 			throw e;
 		}
-		LOG.info("Connector '" + this.getName() + "' started at " + address + ".");
+		LOG.info("Collector '" + this.getName() + "' started at " + address + ".");
 	}
 
 	@Override

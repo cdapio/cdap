@@ -110,11 +110,11 @@ public class Util {
 		}
 	}
 
-	static void verifyEvent(Event event, String connectorName, String destination, Integer expectedNo) {
+	static void verifyEvent(Event event, String collectorName, String destination, Integer expectedNo) {
 		Assert.assertNotNull(event.getHeader("messageNumber"));
 		int messageNumber = Integer.valueOf(event.getHeader("messageNumber"));
 		if (expectedNo != null) Assert.assertEquals(messageNumber, expectedNo.intValue());
-		if (connectorName != null) Assert.assertEquals(connectorName, event.getHeader(Constants.HEADER_FROM_CONNECTOR));
+		if (collectorName != null) Assert.assertEquals(collectorName, event.getHeader(Constants.HEADER_FROM_COLLECTOR));
 		if (destination != null) Assert.assertEquals(destination, event.getHeader(Constants.HEADER_DESTINATION_ENDPOINT));
 		Assert.assertArrayEquals(createMessage(messageNumber), event.getBody());
 	}
@@ -126,30 +126,30 @@ public class Util {
 
 	static class VerifyConsumer extends Consumer {
 		Integer expectedNumber = null;
-		String connectorName = null, destination = null;
+		String collectorName = null, destination = null;
 		VerifyConsumer(String name, String dest) {
-			this.connectorName = name;
+			this.collectorName = name;
 			this.destination = dest;
 		};
 		VerifyConsumer(int expected, String name, String dest) {
 			this.expectedNumber = expected;
-			this.connectorName = name;
+			this.collectorName = name;
 			this.destination = dest;
 		}
 		@Override
 		protected void single(Event event) throws Exception {
-			Util.verifyEvent(event, this.connectorName, this.destination, this.expectedNumber);
+			Util.verifyEvent(event, this.collectorName, this.destination, this.expectedNumber);
 		}
 	}
 
-	static void consumeQueue(MemoryQueueTable queues, String queueName, String connectorName, int eventsExpected) throws Exception {
+	static void consumeQueue(MemoryQueueTable queues, String queueName, String collectorName, int eventsExpected) throws Exception {
 		QueueConsumer consumer = new QueueConsumer(0, 0, 1, true, false);
 		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
 		EventSerializer deserializer = new EventSerializer();
 		for (int remaining = eventsExpected; remaining > 0; --remaining) {
 			QueueEntry entry = queues.pop(queueName.getBytes(), consumer, config, false);
 			Event event = deserializer.deserialize(entry.getValue());
-			Util.verifyEvent(event, connectorName, queueName, null);
+			Util.verifyEvent(event, collectorName, queueName, null);
 			LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
 			queues.ack(queueName.getBytes(), entry);
 		}

@@ -2,9 +2,9 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.connector.flume;
+package com.continuuity.gateway.collector.flume;
 
-import com.continuuity.gateway.Connector;
+import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import org.apache.hadoop.conf.Configuration;
@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 /**
  *
  */
-public abstract class FlumeConnector extends Connector {
+public abstract class FlumeCollector extends Collector {
 
 	public static final int DefaultPort = 8765;
 
@@ -37,8 +37,8 @@ public abstract class FlumeConnector extends Connector {
 	@Override
 	public void configure(Configuration configuration) throws Exception {
 		super.configure(configuration);
-		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_PORT), DefaultPort);
+		this.port = configuration.getInt(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_PORT), DefaultPort);
 	}
 
 	public int getPort() {

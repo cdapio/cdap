@@ -29,17 +29,17 @@ public class Constants {
       = CONTINUUITY_PREFIX + "destination";
 
 	/**
-   * Created by gateway to annotate each event with the name of the connector
+   * Created by gateway to annotate each event with the name of the collector
    * through which it was ingested
    */
-	public static final String HEADER_FROM_CONNECTOR
-      = CONTINUUITY_PREFIX + "connector";
+	public static final String HEADER_FROM_COLLECTOR
+      = CONTINUUITY_PREFIX + "collector";
 
 	/**
-   * List of named connectors for the gateway
+   * List of named collectors for the gateway
    */
-	public static final String CONFIG_CONNECTORS
-      = GATEWAY_PREFIX + "connectors";
+	public static final String CONFIG_COLLECTORS
+      = GATEWAY_PREFIX + "collectors";
 
   /**
    * The string used to identify configuration information
@@ -47,22 +47,22 @@ public class Constants {
   public static final String CONFIG_CONFIG = "config";
 
 	/**
-   * Class name of a named connector
+   * Class name of a named collector
    */
 	public static final String CONFIG_CLASSNAME = "class";
 
 	/**
-   * Port number of a connector
+   * Port number of a collector
    */
 	public static final String CONFIG_PORT = "port";
 
 	/**
-   * Whether an HTTP connector supports chunked requests
+   * Whether an HTTP collector supports chunked requests
    */
 	public static final String CONFIG_CHUNKING = "chunk";
 
 	/**
-   * Whether an HTTP connector supports SSL
+   * Whether an HTTP collector supports SSL
    */
 	public static final String CONFIG_SSL = "ssl" ;
 
@@ -72,11 +72,16 @@ public class Constants {
 	public static final String CONFIG_PATH_PREFIX = "prefix";
 
 	/**
-   * Path component in the HTTP URL for a stream
-   */
+	 * Path component in the HTTP URL for a stream
+	 */
 	public static final String CONFIG_PATH_STREAM = "stream";
 
-  /**
+	/**
+	 * Path component in the HTTP URL for a point read
+	 */
+	public static final String CONFIG_PATH_READ = "table";
+
+	/**
    * Generate the name of a property option for the Gateway. Basically concats
    * the GATEWAY_PREFIX to the property.
    *
@@ -90,18 +95,18 @@ public class Constants {
   }
 
   /**
-   * Generate the name of a property option for a named Connector. Basically
+   * Generate the name of a property option for a named Collector. Basically
    * a helper method that concats some strings.
    *
-   * @param connectorName  The name of the Connector
+   * @param collectorName  The name of the Collector
    * @param propertyName   The name of the property
    *
-   * @return  A fully composed connector configuration property
+   * @return  A fully composed collector configuration property
    */
-  public static String buildConnectorPropertyName(String connectorName,
+  public static String buildCollectorPropertyName(String collectorName,
                                                   String propertyName) {
 
-    return connectorName + "." + propertyName;
+    return collectorName + "." + propertyName;
   }
 
 } // end of Constants class

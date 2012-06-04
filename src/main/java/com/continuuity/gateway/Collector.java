@@ -9,7 +9,7 @@ import org.apache.hadoop.conf.Configuration;
 /**
  *
  */
-public abstract class Connector {
+public abstract class Collector {
 
 	protected String name;
 	protected Consumer consumer;

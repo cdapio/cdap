@@ -2,7 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
-import com.continuuity.gateway.connector.flume.NettyFlumeConnector;
+import com.continuuity.gateway.collector.flume.NettyFlumeCollector;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -22,7 +22,7 @@ public class GatewayFlumeTest {
 			.getLogger(GatewayFlumeTest.class);
 
   // A set of constants we'll use in this test
-	static final String name = "flume.FlumeConnector";
+	static final String name = "flume.FlumeCollector";
 	static final String stream = "foo";
 	static final int batchSize = 4;
 	static final int eventsToSend = 10;
@@ -46,12 +46,12 @@ public class GatewayFlumeTest {
     // Create and populate a new config object
     Configuration configuration = CConfiguration.create();
 
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
+		configuration.set(Constants.CONFIG_COLLECTORS, name);
 		configuration.set(
-        Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
-        NettyFlumeConnector.class.getCanonicalName() );
+        Constants.buildCollectorPropertyName(name, Constants.CONFIG_CLASSNAME),
+        NettyFlumeCollector.class.getCanonicalName() );
 	  configuration.setInt(
-        Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT),port);
+        Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT),port);
 
     // Now create our Gateway
 		theGateway = new Gateway();

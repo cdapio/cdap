@@ -1,4 +1,4 @@
-package com.continuuity.gateway.connector.rest;
+package com.continuuity.gateway.collector.rest;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -15,15 +15,15 @@ public class PipelineFactory implements ChannelPipelineFactory {
 			.getLogger(PipelineFactory.class);
 
 	private boolean ssl = false, chunk = false;
-	private RestConnector connector;
+	private RestCollector collector;
 
 	/** disallow default constructor */
 	private PipelineFactory() { }
 
 	/** constructor requires settings whether to use ssl and/or chunking */
-	public PipelineFactory(RestConnector connector) throws Exception {
-		this.connector = connector;
-		if (connector.isSsl()) {
+	public PipelineFactory(RestCollector collector) throws Exception {
+		this.collector = collector;
+		if (collector.isSsl()) {
 			LOG.error("Attempt to create an SSL server, which is not implemented yet.");
 			throw new UnsupportedOperationException("SSL is not yet supported");
 		}
@@ -34,7 +34,7 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		ChannelPipeline pipeline = Channels.pipeline();
 
 		// SSL is not yet implemented but this is where we would insert it
-		if (this.connector.isSsl()) {
+		if (this.collector.isSsl()) {
 			// SSLEngine engine = ...
 			// engine.setUseClientMode(false);
 			// pipeline.addLast("ssl", new SslHandler(engine));
@@ -43,13 +43,13 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		// use the default HTTP decoder from netty
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// use netty's default de-chunker
-		if (this.connector.isChunking()) {
+		if (this.collector.isChunking()) {
 			pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 		}
 		// use the default HTTP encoder from netty
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		// use our own request handler
-		pipeline.addLast("handler", new RestHandler(this.connector));
+		pipeline.addLast("handler", new RestHandler(this.collector));
 
 		return pipeline;
 	}

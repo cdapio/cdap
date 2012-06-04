@@ -2,8 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
-import com.continuuity.gateway.connector.flume.NettyFlumeConnector;
-import com.continuuity.gateway.connector.rest.RestConnector;
+import com.continuuity.gateway.collector.rest.RestCollector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,7 +20,7 @@ public class GatewayRestTest {
 			.getLogger(GatewayRestTest.class);
 
   // A set of constants we'll use in these tests
-	static  String name = "rest.RestConnect";
+	static  String name = "rest.RestCollect";
 	static final String prefix = "";
 	static final String path = "/stream/";
 	static final String dest = "pfunk";
@@ -46,14 +45,14 @@ public class GatewayRestTest {
     // Create and populate a new config object
     Configuration configuration = CConfiguration.create();
 
-    configuration.set(Constants.CONFIG_CONNECTORS, name);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_CLASSNAME), RestConnector.class.getCanonicalName());
-    configuration.setInt(Constants.buildConnectorPropertyName(name,
+    configuration.set(Constants.CONFIG_COLLECTORS, name);
+    configuration.set(Constants.buildCollectorPropertyName(name,
+        Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
+    configuration.setInt(Constants.buildCollectorPropertyName(name,
         Constants.CONFIG_PORT),port);
-    configuration.set(Constants.buildConnectorPropertyName(name,
+    configuration.set(Constants.buildCollectorPropertyName(name,
         Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name,
+    configuration.set(Constants.buildCollectorPropertyName(name,
         Constants.CONFIG_PATH_STREAM), path);
 
     // Now create our Gateway
