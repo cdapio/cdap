@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.SyncReadTimeoutException;
@@ -393,7 +394,7 @@ public class TestOmidExecutorLikeAFlow {
 
   private volatile boolean producersDone = false;
 
-  @Test
+  @Test @Ignore
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
