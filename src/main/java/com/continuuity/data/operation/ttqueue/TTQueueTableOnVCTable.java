@@ -72,4 +72,9 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
       QueueConsumer consumer) {
     return getQueue(queueName).unack(entryPointer, consumer);
   }
+
+  @Override
+  public String getInfo(byte[] queueName, int groupId) {
+    return getQueue(queueName).getInfo(groupId);
+  }
 }

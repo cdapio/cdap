@@ -615,4 +615,32 @@ public class TTQueueOnVCTable implements TTQueue {
   private static byte [] bytes(byte b) {
     return new byte [] { b };
   }
+
+  public String getInfo(int groupId) {
+    
+    StringBuilder sb = new StringBuilder();
+    sb.append("TTQueueONVCTable (" + Bytes.toString(queueName) + ")\n");
+    sb.append("DequeueReturns = " + dequeueReturns.get() + "\n");
+    
+    // Get global queue state information
+
+    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+    long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
+        GLOBAL_ENTRYID_COUNTER, dirty.getFirst()));
+    sb.append("Next available entryId: " + nextEntryId + "\n");
+
+    byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
+    long curEntryLock = getCounter(entryWritePointerRow,
+        GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, dirty.getFirst());
+    sb.append("Currently locked entryId: " + curEntryLock + "\n");
+
+    byte [] shardMetaRow = makeRow(GLOBAL_SHARDS_HEADER);
+    ShardMeta shardMeta = ShardMeta.fromBytes(this.table.get(shardMetaRow,
+        GLOBAL_SHARD_META, dirty.getFirst()));
+    sb.append("Shard meta: " + shardMeta.toString() + "\n");
+    
+    
+    // Get group sate information
+    return sb.toString();
+  }
 }

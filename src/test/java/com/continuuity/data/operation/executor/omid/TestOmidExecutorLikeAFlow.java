@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,6 +30,7 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.handles.SimpleOVCTableHandle;
@@ -393,8 +395,6 @@ public class TestOmidExecutorLikeAFlow {
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  private volatile boolean producersDone = false;
-
   @Test @Ignore
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
@@ -407,6 +407,8 @@ public class TestOmidExecutorLikeAFlow {
         new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
         ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo =
             new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+
+    AtomicBoolean producersDone = new AtomicBoolean(false);
 
     long startTime = System.currentTimeMillis();
 
@@ -425,12 +427,12 @@ public class TestOmidExecutorLikeAFlow {
     for (int i=0;i<p;i++) {
       consumerGroupOne[i] = new Consumer(new QueueConsumer(i, 0, p),
           new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
-          dequeuedMapOne);
+          dequeuedMapOne, producersDone);
     }
     for (int i=0;i<p;i++) {
       consumerGroupTwo[i] = new Consumer(new QueueConsumer(i, 1, p),
           new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
-          dequeuedMapTwo);
+          dequeuedMapTwo, producersDone);
     }
 
     // Let the producing begin!
@@ -447,9 +449,12 @@ public class TestOmidExecutorLikeAFlow {
 
     // Wait for producers to finish
     System.out.println("Waiting for producers to finish");
+    long start = System.currentTimeMillis();
     for (int i=0; i<p; i++) producers[i].join(MAX_TIMEOUT);
+    long stop = System.currentTimeMillis();
     System.out.println("Producers done");
-    this.producersDone = true;
+    if (stop - start >= MAX_TIMEOUT) fail("Timed out waiting for producers");
+    producersDone.set(true);
 
     // Verify producers produced correct number
     assertEquals(p * n , enqueuedMap.size());
@@ -463,9 +468,12 @@ public class TestOmidExecutorLikeAFlow {
 
     // Wait for consumers to finish
     System.out.println("Waiting for consumers to finish");
+    start = System.currentTimeMillis();
     for (int i=0; i<p; i++) consumerGroupOne[i].join(MAX_TIMEOUT);
     for (int i=0; i<p; i++) consumerGroupTwo[i].join(MAX_TIMEOUT);
+    stop = System.currentTimeMillis();
     System.out.println("Consumers done!");
+    if (stop - start >= MAX_TIMEOUT) fail("Timed out waiting for consumers");
 
     long stopTime = System.currentTimeMillis();
     System.out.println("" + (p*2) + " consumers dequeued " +
@@ -495,6 +503,7 @@ public class TestOmidExecutorLikeAFlow {
             Bytes.toInt(enqueuedValue) + ", entrynum=" +
             Bytes.toInt(enqueuedValue, 4));
       }
+      printQueueInfo(threadedQueueName, 0);
     }
     assertEquals(expectedDequeues, groupOneTotal);
     if (expectedDequeues != groupTwoTotal) {
@@ -510,8 +519,14 @@ public class TestOmidExecutorLikeAFlow {
             Bytes.toInt(enqueuedValue) + ", entrynum=" +
             Bytes.toInt(enqueuedValue, 4));
       }
+      printQueueInfo(threadedQueueName, 1);
     }
     assertEquals(expectedDequeues, groupTwoTotal);
+  }
+
+  private void printQueueInfo(byte[] queueName, int groupId) {
+    TTQueueTable table = this.handle.getQueueTable(Bytes.toBytes("queues"));
+    System.out.println(table.getInfo(queueName, groupId));
   }
 
   class Producer extends Thread {
@@ -552,16 +567,20 @@ public class TestOmidExecutorLikeAFlow {
     QueueConfig config;
     long dequeued = 0;
     ConcurrentSkipListMap<byte[], byte[]> dequeuedMap;
+    AtomicBoolean producersDone;
     Consumer(QueueConsumer consumer, QueueConfig config,
-        ConcurrentSkipListMap<byte[], byte[]> dequeuedMap) {
+        ConcurrentSkipListMap<byte[], byte[]> dequeuedMap,
+        AtomicBoolean producersDone) {
       this.consumer = consumer;
       this.config = config;
       this.dequeuedMap = dequeuedMap;
+      this.producersDone = producersDone;
     }
     @Override
     public void run() {
+      boolean gotEmptyAndDone = false;
       while (true) {
-        boolean localProducersDone = TestOmidExecutorLikeAFlow.this.producersDone;
+        boolean localProducersDone = producersDone.get();
         QueueDequeue dequeue =
             new QueueDequeue(TestOmidExecutorLikeAFlow.this.threadedQueueName, this.consumer, this.config);
         try {
@@ -575,12 +594,21 @@ public class TestOmidExecutorLikeAFlow {
           if (result.isSuccess()) {
             this.dequeued++;
             this.dequeuedMap.put(result.getValue(), result.getValue());
+            if (gotEmptyAndDone) {
+              System.out.println("Got empty+done then got another dequeue after sleep!");
+            }
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
           } else if (result.isEmpty() && localProducersDone) {
-            System.out.println(this.consumer.toString() + " finished after " +
-                this.dequeued + " dequeues");
-            return;
+            if (gotEmptyAndDone) {
+              System.out.println("Empty and done looped, result empty again");
+              return;
+            } else {
+              System.out.println(this.consumer.toString() + " finished after " +
+                  this.dequeued + " dequeues, sleeping and retrying dequeue");
+              Thread.sleep(10);
+              gotEmptyAndDone = true;
+            }
           } else if (result.isEmpty() && !localProducersDone) {
             System.out.println(this.consumer.toString() + " empty but waiting");
             Thread.sleep(1);
