@@ -426,23 +426,6 @@ public class TestOmidExecutorLikeAFlow {
     for (int i=0; i<p; i++) producers[i].start();
     long expectedDequeues = p * n;
 
-    // Don't start consuming until something is in queue
-    while (true) {
-      System.out.println("Entering dequeue loop");
-      DequeueResult result = this.executor.execute(new QueueDequeue(
-          this.threadedQueueName, consumerGroupOne[0].consumer,
-          consumerGroupOne[0].config));
-      if (result.isEmpty()) {
-        System.out.println("Nothing in queue, waiting...");
-        Thread.sleep(1);
-      }
-      else if (result.isFailure()) fail("Dequeue failed!");
-      else if (result.isSuccess()) {
-        System.out.println("Dequeued successfully : " + result);
-        break;
-      }
-    }
-
     long startConsumers = System.currentTimeMillis();
     
     // Start consumers!
@@ -538,12 +521,13 @@ public class TestOmidExecutorLikeAFlow {
           if (result.isSuccess()) {
             this.dequeued++;
           } else if (result.isFailure()) {
-            fail("Dequeue failed");
+            fail("Dequeue failed " + result);
           } else if (result.isEmpty() && producersDone) {
             System.out.println(this.consumer.toString() + " finished after " +
                 this.dequeued + " dequeues");
             return;
           } else if (result.isEmpty() && !producersDone) {
+            System.out.println(this.consumer.toString() + " empty but waiting");
             Thread.sleep(1);
           } else {
             fail("What is this?");
