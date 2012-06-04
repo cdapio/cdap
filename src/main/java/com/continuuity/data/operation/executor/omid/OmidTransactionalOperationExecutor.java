@@ -273,7 +273,7 @@ TransactionalOperationExecutor {
   }
 
   static int MAX_DEQUEUE_RETRIES = 10;
-  static long DEQUEUE_RETRY_SLEEP = 0;
+  static long DEQUEUE_RETRY_SLEEP = 1;
   
   @Override
   public DequeueResult execute(QueueDequeue dequeue)
