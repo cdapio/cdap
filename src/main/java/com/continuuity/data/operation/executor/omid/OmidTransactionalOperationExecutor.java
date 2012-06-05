@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -32,9 +31,9 @@ import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -43,6 +42,7 @@ import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
+import com.google.inject.Inject;
 
 /**
  *
@@ -64,6 +64,7 @@ public class OmidTransactionalOperationExecutor
 
   private OrderedVersionedColumnarTable randomTable;
 
+  @SuppressWarnings("unused")
   private OrderedVersionedColumnarTable orderedTable;
 
   private TTQueueTable queueTable;
@@ -297,6 +298,7 @@ public class OmidTransactionalOperationExecutor
       throws SyncReadTimeoutException {
     initialize();
     int retries = 0;
+    long start = System.currentTimeMillis();
     while (retries < MAX_DEQUEUE_RETRIES) {
       DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
           dequeue.getConsumer(), dequeue.getConfig(),
@@ -314,7 +316,10 @@ public class OmidTransactionalOperationExecutor
       dequeue.setResult(result);
       return result;
     }
-    return new DequeueResult(DequeueStatus.FAILURE, "Maximum retries");
+    long end = System.currentTimeMillis();
+    return new DequeueResult(DequeueStatus.FAILURE,
+        "Maximum retries (retried " + retries + " times over " + (end-start) +
+        " millis");
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {

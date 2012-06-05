@@ -2,17 +2,16 @@ package com.continuuity.data.table.handles;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.engine.memory.MemoryOVCTable;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.google.inject.Inject;
 
 public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   

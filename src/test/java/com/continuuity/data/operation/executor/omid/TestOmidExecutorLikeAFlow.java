@@ -11,25 +11,17 @@ import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
-import com.continuuity.data.table.handles.MemoryOVCTableHandle;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.SyncReadTimeoutException;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -39,15 +31,20 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.data.table.handles.SimpleOVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class TestOmidExecutorLikeAFlow {
 
+  @SuppressWarnings("unused")
   private TimestampOracle timeOracle;
 
+  @SuppressWarnings("unused")
   private TransactionOracle oracle;
 
+  @SuppressWarnings("unused")
   private Configuration conf = new CConfiguration();
 
   private OmidTransactionalOperationExecutor executor;
@@ -413,7 +410,7 @@ public class TestOmidExecutorLikeAFlow {
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  @Test @Ignore
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;

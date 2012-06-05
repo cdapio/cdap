@@ -14,24 +14,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.TransactionException;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
@@ -41,11 +34,14 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.data.table.ReadPointer;
-import com.continuuity.data.table.handles.SimpleOVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class TestOmidTransactionalOperationExecutor {
 
+  @SuppressWarnings("unused")
   private final Configuration conf = new CConfiguration();
 
   private OmidTransactionalOperationExecutor executor;

@@ -640,7 +640,22 @@ public class TTQueueOnVCTable implements TTQueue {
     sb.append("Shard meta: " + shardMeta.toString() + "\n");
     
     
-    // Get group sate information
+    // Get group state information
+    sb.append("\nGroup State Info (groupid= " + groupId + ")\n");
+
+    byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, groupId);
+      // Do a dirty read of the global group information
+    byte [] existingValue = this.table.get(groupRow, GROUP_STATE,
+        dirty.getFirst());
+
+    if (existingValue == null || existingValue.length == 0) {
+      sb.append("No group info exists!\n");
+    } else {
+      // Group information already existed, verify group state
+      GroupState groupState = GroupState.fromBytes(existingValue);
+      sb.append(groupState.toString() + "\n");
+    }
+    
     return sb.toString();
   }
 }
