@@ -696,7 +696,7 @@ public class TestOmidExecutorLikeAFlow {
             } else {
               System.out.println(this.consumer.toString() + " finished after " +
                   this.dequeued + " dequeues, sleeping and retrying dequeue");
-              Thread.sleep(1);
+              Thread.sleep(100);
               gotEmptyAndDone = true;
             }
           } else if (result.isEmpty() && !localProducersDone) {
