@@ -101,6 +101,12 @@ public class OmidTransactionalOperationExecutor
     return execute(writes, startTransaction());
   }
 
+  private boolean executeAsBatch(WriteOperation write)
+      throws OmidTransactionException {
+    List<WriteOperation> writes = Arrays.asList(write);
+    return execute(writes).isSuccess();
+  }
+
   BatchOperationResult execute(List<WriteOperation> writes,
       ImmutablePair<ReadPointer,Long> pointer)
           throws OmidTransactionException {
@@ -207,7 +213,6 @@ public class OmidTransactionalOperationExecutor
 
   WriteTransactionResult write(Write write,
       ImmutablePair<ReadPointer,Long> pointer) {
-
     initialize();
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
         write.getValue());
@@ -336,11 +341,9 @@ public class OmidTransactionalOperationExecutor
    * @return
    */
   TransactionOracle getOracle() {
-
     if (oracle == null) {
       throw new IllegalStateException("'oracle' field is null");
     }
-
     return oracle;
   }
 
@@ -371,68 +374,91 @@ public class OmidTransactionalOperationExecutor
     return null;
   }
 
-  // Single Write Operations (UNSUPPORTED IN TRANSACTIONAL!)
-
-  private void unsupported() {
-    unsupported(
-        "Single write operations are not supported by transactional executors");
-  }
+  // Single Write Operations (Wrapped and called in a transaction batch)
 
   private void unsupported(String msg) {
     throw new RuntimeException(msg);
   }
 
   @Override
+  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
+    unsupported("Getting group ID currently not implemented");
+    return 0L;
+  }
+
+  @Override
   public boolean execute(Write write) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(write);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public boolean execute(Delete delete) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(delete);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
   @Override
   public boolean execute(OrderedWrite write) {
-    unsupported();
+    unsupported("Ordered operations not currently supported");
     return false;
   }
 
   @Override
   public boolean execute(ReadModifyWrite rmw) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(rmw);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public boolean execute(Increment inc) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(inc);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public boolean execute(CompareAndSwap cas) {
-    unsupported();
-    return false;
-  }
-
-  @Override
-  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
-    unsupported();
-    return 0L;
+    try {
+      return executeAsBatch(cas);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public boolean execute(QueueAck ack) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(ack);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public boolean execute(QueueEnqueue enqueue) {
-    unsupported();
-    return false;
+    try {
+      return executeAsBatch(enqueue);
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   /**

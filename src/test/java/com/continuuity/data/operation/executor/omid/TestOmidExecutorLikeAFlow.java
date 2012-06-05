@@ -22,6 +22,7 @@ import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -408,6 +409,37 @@ public class TestOmidExecutorLikeAFlow {
     assertTrue(destDequeueResult.isEmpty());
   }
 
+  @Test
+  public void testLotsOfEnqueuesThenDequeues() throws Exception {
+
+    byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
+    int numEntries = 50000;
+    
+    long startTime = System.currentTimeMillis();
+    
+    for (int i=0; i<numEntries; i++) {
+      byte [] entry = Bytes.toBytes(i);
+      BatchOperationResult result = this.executor.execute(
+          Arrays.asList(new WriteOperation [] {
+              new QueueEnqueue(queueName, entry)}));
+      assertTrue(result.isSuccess());
+    }
+    
+    long enqueueStop = System.currentTimeMillis();
+    
+    System.out.println("Finished enqueue of " + numEntries + " entries in " +
+        (enqueueStop-startTime) + " ms");
+    
+    // First consume them all in sync mode
+//    
+//    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+//    for (int i=0; i<numEntries; i++) {
+//      this.executor.execute(new QueueDequeue())
+//    }
+//    
+    // Now consume them all in async mode, no ack
+  }
+  
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
   @Test
@@ -622,7 +654,7 @@ public class TestOmidExecutorLikeAFlow {
             } else {
               System.out.println(this.consumer.toString() + " finished after " +
                   this.dequeued + " dequeues, sleeping and retrying dequeue");
-              Thread.sleep(1);
+              Thread.sleep(100);
               gotEmptyAndDone = true;
             }
           } else if (result.isEmpty() && !localProducersDone) {
