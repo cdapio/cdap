@@ -40,18 +40,14 @@ public class MemoryOracle implements TransactionOracle {
 
   @Override
   public synchronized ReadPointer getReadPointer(long writeTxid) {
-
     initialize();
-
     return new MemoryReadPointer(this.readPoint, writeTxid,
         new HashSet<Long>(this.inProgress));
   }
 
   @Override
   public synchronized ReadPointer getReadPointer() {
-
     initialize();
-
     return new MemoryReadPointer(this.readPoint,
         new HashSet<Long>(this.inProgress));
   }
@@ -111,9 +107,9 @@ public class MemoryOracle implements TransactionOracle {
 
 
   private void moveReadPointer(long txid) {
-
     this.inProgress.remove(txid);
     this.readPoint = this.timeOracle.getTimestamp();
+    System.out.println("Oracle: ReadPoint = " + readPoint);
   }
 
   /**

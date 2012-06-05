@@ -83,7 +83,8 @@ public class TTQueueOnVCTable implements TTQueue {
     this.queueName = queueName;
     this.timeOracle = timeOracle;
     this.maxEntriesPerShard = conf.getLong("ttqueue.shard.max.entries", 1024);
-    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024);
+    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes",
+        1024*1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max",
         10 * 1000); // 10 seconds default
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
@@ -607,8 +608,10 @@ public class TTQueueOnVCTable implements TTQueue {
     return System.currentTimeMillis();
   }
 
+  public static boolean TRACE = false;
+  
   private void log(String msg) {
-//    System.out.println(msg);
+    if (TRACE) System.out.println(msg);
     // LOG.debug(msg);
   }
 
