@@ -411,7 +411,7 @@ public class TestOmidExecutorLikeAFlow {
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  @Test @Ignore
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
@@ -612,6 +612,7 @@ public class TestOmidExecutorLikeAFlow {
             this.dequeuedMap.put(result.getValue(), result.getValue());
             if (gotEmptyAndDone) {
               System.out.println("Got empty+done then got another dequeue after sleep!");
+              gotEmptyAndDone = false;
             }
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
