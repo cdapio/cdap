@@ -67,6 +67,7 @@ public class GatewayRestTest {
 
     // Now create our Gateway
     theGateway = new Gateway();
+		theGateway.setExecutor(this.executor);
     theGateway.configure(configuration);
 
   } // end of setupGateway

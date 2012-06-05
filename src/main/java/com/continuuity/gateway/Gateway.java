@@ -239,27 +239,33 @@ public class Gateway {
 
 	/**
 	 *  Set the Consumer that all events are routed to.
-   *
 	 *  @param consumer The Consumer that all events will be sent to
-   *
-   *  @throws IllegalArgumentException If the consumer object is null
+	 *  @throws IllegalArgumentException If the consumer object is null
 	 */
 	public void setConsumer(Consumer consumer) {
-
-    // Check our pre conditions
-    if (consumer == null) {
-      throw new IllegalArgumentException("'consumer' argument was null");
-    }
-
+		if (consumer == null) {
+			throw new IllegalArgumentException("'consumer' argument was null");
+		}
 		LOG.info("Setting Consumer to " + consumer.getClass().getName() + ".");
-    this.consumer = consumer;
+		this.consumer = consumer;
+	}
 
+	/**
+	 *  Set the operations executor thatis used for all data fabric access.
+	 *  @param executor The executor to use
+	 *  @throws IllegalArgumentException If the consumer object is null
+	 */
+	public void setExecutor(OperationExecutor executor) {
+		if (executor == null) {
+			throw new IllegalArgumentException("'executor' argument was null");
+		}
+		LOG.info("Setting Operations Executor to " + executor.getClass().getName() + ".");
+		this.executor = executor;
 	}
 
 	/**
 	 * Check whether a connector with the given name is already registered
-   *
-	 * @param name The name to be checked
+ 	 * @param name The name to be checked
 	 * @return true If a connector with the same name exists
 	 */
 	private boolean hasNamedConnector(String name) {

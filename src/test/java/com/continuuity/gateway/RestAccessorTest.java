@@ -73,7 +73,7 @@ public class RestAccessorTest {
 		System.out.println(url);
 
 		// keep it running for a while
-		Thread.sleep(100 * 1000);
+		//Thread.sleep(100 * 1000);
 	}
 
 }
