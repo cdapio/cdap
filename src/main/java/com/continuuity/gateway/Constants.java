@@ -57,9 +57,14 @@ public class Constants {
 	public static final String CONFIG_PORT = "port";
 
 	/**
-   * Whether an HTTP collector supports chunked requests
-   */
+	 * Whether an HTTP collector supports chunked requests
+	 */
 	public static final String CONFIG_CHUNKING = "chunk";
+
+	/**
+	 * The maximal supported size of the content of an Http request
+	 */
+	public static final String CONFIG_MAX_SIZE= "maxsize";
 
 	/**
    * Whether an HTTP collector supports SSL

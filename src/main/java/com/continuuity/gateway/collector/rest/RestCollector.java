@@ -21,11 +21,13 @@ public class RestCollector extends Collector {
 	public static String DefaultPrefix = "";
 	public static String DefaultPath = "/stream/";
 	public static boolean DefaultChunking = true;
+	public static int DefaultMaxContentSize = 1024 * 1024;
 	public static boolean DefaultSsl = false;
 
 	private int port = DefaultPort;
 	private String prefix = DefaultPrefix;
 	private String path = DefaultPath;
+	private int maxContentSize = DefaultMaxContentSize;
 	private boolean chunk = true;
 	private boolean ssl = false;
 
@@ -44,6 +46,9 @@ public class RestCollector extends Collector {
 	public boolean isSsl() {
 		return this.ssl;
 	}
+	public int getMaxContentSize() {
+		return this.maxContentSize;
+	}
 
 	private Channel serverChannel;
 
@@ -60,6 +65,9 @@ public class RestCollector extends Collector {
 				this.name, Constants.CONFIG_PATH_PREFIX), DefaultPrefix);
 		this.path = configuration.get(Constants.buildCollectorPropertyName(
 				this.name, Constants.CONFIG_PATH_STREAM), DefaultPath);
+		this.maxContentSize = configuration.getInt(Constants.buildCollectorPropertyName(
+				this.name, Constants.CONFIG_MAX_SIZE), DefaultMaxContentSize);
+
 		if (this.ssl) {
 			LOG.warn("SSL is not implemented yet. Ignoring configuration for collector '" + this.getName() + "'.");
 			this.ssl = false;

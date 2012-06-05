@@ -44,7 +44,7 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// use netty's default de-chunker
 		if (this.collector.isChunking()) {
-			pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
+			pipeline.addLast("aggregator", new HttpChunkAggregator(this.collector.getMaxContentSize()));
 		}
 		// use the default HTTP encoder from netty
 		pipeline.addLast("encoder", new HttpResponseEncoder());
