@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @todo write javadoc
+ * TODO write javadoc
  */
 public abstract class Consumer {
 

@@ -27,7 +27,7 @@
          the Collectors, but that's 'cos we are using the Hadoop config object -->
     <property>
         <name>rest.RestCollector.class</name>
-        <value>com.continuuity.gateway.collector.rest.RestCollector</value>
+        <value>com.continuuity.gateway.collector.RestCollector</value>
         <description>Specifies the class for the REST collector</description>
     </property>
 
@@ -43,7 +43,7 @@
 
     <property>
         <name>flume.FlumeCollector.class</name>
-        <value>com.continuuity.gateway.collector.flume.NettyFlumeCollector</value>
+        <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
         <description>Specifies the class for the Flume collector</description>
     </property>
 

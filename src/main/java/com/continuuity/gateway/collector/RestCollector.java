@@ -1,10 +1,10 @@
-package com.continuuity.gateway.accessor.rest;
+package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -16,16 +16,26 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 // @todo write javadoc
-public class RestAccessor extends Accessor implements NettyRequestHandlerFactory {
+public class RestCollector extends Collector implements NettyRequestHandlerFactory {
+
 	private static final Logger LOG = LoggerFactory
-			.getLogger(RestAccessor.class);
+			.getLogger(RestCollector.class);
 
 	private static final HttpConfig defaultConfig = new HttpConfig("rest")
-			.setPort(8080)
-			.setPath("/table/");
+			.setPort(8765)
+			.setPath("/stream/");
 
 	private HttpConfig config = defaultConfig;
 	private Channel serverChannel;
+
+	public HttpConfig getHttpConfig() {
+		return this.config;
+	}
+
+	@Override
+	public SimpleChannelUpstreamHandler newHandler() {
+		return new RestHandler(this);
+	}
 
 	@Override
 	public void configure(CConfiguration configuration) throws Exception {
@@ -35,8 +45,8 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
 
 	@Override
 	public void start() throws Exception {
-		LOG.debug("Starting up " + this);
-		InetSocketAddress address = new InetSocketAddress(this.config.getPort());
+    LOG.debug("Starting up " + this);
+    InetSocketAddress address = new InetSocketAddress(this.config.getPort());
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap(
 					new NioServerSocketChannelFactory(
@@ -45,21 +55,16 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
 			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.config, this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
-			LOG.error("Failed to startup accessor '" + this.getName() + "' at " + address + ".");
+			LOG.error("Failed to startup collector '" + this.getName() + "' at " + address + ".");
 			throw e;
 		}
-		LOG.info("Accessor '" + this.getName() + "' started at " + address + ".");
+		LOG.info("Collector '" + this.getName() + "' started at " + address + ".");
 	}
 
 	@Override
 	public void stop() {
-		LOG.debug("Stopping " + this);
-		this.serverChannel.close();
-		LOG.debug("Stopped " + this);
-	}
-
-	@Override
-	public SimpleChannelUpstreamHandler newHandler() {
-		return new RestHandler(this.config);
-	}
+    LOG.debug("Stopping " + this);
+    this.serverChannel.close();
+    LOG.debug("Stopped " + this);
+  }
 }

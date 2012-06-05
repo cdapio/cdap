@@ -1,8 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.collector.flume.FlumeCollector;
-import com.continuuity.gateway.collector.flume.NettyFlumeCollector;
+import com.continuuity.gateway.collector.FlumeCollector;
+import com.continuuity.gateway.collector.NettyFlumeCollector;
 import org.apache.flume.event.SimpleEvent;
 import org.junit.Assert;
 import org.junit.Test;

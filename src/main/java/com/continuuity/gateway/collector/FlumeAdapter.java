@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.collector.flume;
+package com.continuuity.gateway.collector;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;

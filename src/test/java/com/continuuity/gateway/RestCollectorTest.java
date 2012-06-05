@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.collector.rest.RestCollector;
+import com.continuuity.gateway.collector.RestCollector;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
 import org.junit.Test;

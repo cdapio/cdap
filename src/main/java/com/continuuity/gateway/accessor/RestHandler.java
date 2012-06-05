@@ -1,4 +1,4 @@
-package com.continuuity.gateway.accessor.rest;
+package com.continuuity.gateway.accessor;
 
 import com.continuuity.gateway.util.HttpConfig;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -59,7 +59,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		LOG.info("Request received");
 
 		HttpMethod method = request.getMethod();
-		if (method != HttpMethod.POST) {
+		if (method != HttpMethod.GET) {
 			LOG.info("Received a " + method + " request, which is not supported");
 			respondError(message.getChannel(), HttpResponseStatus.METHOD_NOT_ALLOWED);
 			// @todo according to HTTP 1.1 spec we must return an ALLOW header

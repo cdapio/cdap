@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.collector.flume;
+package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Collector;
@@ -10,7 +10,7 @@ import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 
 /**
- * @todo write javadoc
+ * TODO write javadoc
  */
 public abstract class FlumeCollector extends Collector {
 

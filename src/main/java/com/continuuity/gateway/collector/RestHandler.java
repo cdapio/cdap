@@ -1,4 +1,4 @@
-package com.continuuity.gateway.collector.rest;
+package com.continuuity.gateway.collector;
 
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;

@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.gateway.collector.flume;
+package com.continuuity.gateway.collector;
 
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * @todo write javadoc
+ * TODO write javadoc
  */
 public class NettyFlumeCollector extends FlumeCollector {
 

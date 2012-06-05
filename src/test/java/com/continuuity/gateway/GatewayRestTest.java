@@ -2,7 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
-import com.continuuity.gateway.collector.rest.RestCollector;
+import com.continuuity.gateway.collector.RestCollector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,13 +46,13 @@ public class GatewayRestTest {
 
     configuration.set(Constants.CONFIG_COLLECTORS, name);
     configuration.set(Constants.buildCollectorPropertyName(name,
-        Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
+				Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
     configuration.setInt(Constants.buildCollectorPropertyName(name,
-        Constants.CONFIG_PORT),port);
+				Constants.CONFIG_PORT),port);
     configuration.set(Constants.buildCollectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
+				Constants.CONFIG_PATH_PREFIX), prefix);
     configuration.set(Constants.buildCollectorPropertyName(name,
-        Constants.CONFIG_PATH_STREAM), path);
+				Constants.CONFIG_PATH_STREAM), path);
 
     // Now create our Gateway
     theGateway = new Gateway();
