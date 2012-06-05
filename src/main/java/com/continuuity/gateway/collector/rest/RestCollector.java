@@ -2,9 +2,9 @@ package com.continuuity.gateway.collector.rest;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Collector;
-import com.continuuity.gateway.util.HandlerFactory;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
+import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.PipelineFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-public class RestCollector extends Collector implements HandlerFactory {
+public class RestCollector extends Collector implements NettyRequestHandlerFactory {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestCollector.class);
@@ -51,7 +51,7 @@ public class RestCollector extends Collector implements HandlerFactory {
 					new NioServerSocketChannelFactory(
 							Executors.newCachedThreadPool(),
 							Executors.newCachedThreadPool()));
-			bootstrap.setPipelineFactory(new PipelineFactory(this.config, this));
+			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.config, this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
 			LOG.error("Failed to startup collector '" + this.getName() + "' at " + address + ".");

@@ -5,6 +5,7 @@ import com.continuuity.gateway.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// @todo write javadoc
 public class HttpConfig {
 
 	private static final Logger LOG = LoggerFactory

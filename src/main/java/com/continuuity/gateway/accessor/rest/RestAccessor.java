@@ -2,9 +2,9 @@ package com.continuuity.gateway.accessor.rest;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Accessor;
-import com.continuuity.gateway.util.HandlerFactory;
+import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.PipelineFactory;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-public class RestAccessor extends Accessor implements HandlerFactory {
+public class RestAccessor extends Accessor implements NettyRequestHandlerFactory {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestAccessor.class);
 
@@ -41,13 +41,13 @@ public class RestAccessor extends Accessor implements HandlerFactory {
 					new NioServerSocketChannelFactory(
 							Executors.newCachedThreadPool(),
 							Executors.newCachedThreadPool()));
-			bootstrap.setPipelineFactory(new PipelineFactory(this.config, this));
+			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.config, this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
-			LOG.error("Failed to startup collector '" + this.getName() + "' at " + address + ".");
+			LOG.error("Failed to startup accessor '" + this.getName() + "' at " + address + ".");
 			throw e;
 		}
-		LOG.info("Collector '" + this.getName() + "' started at " + address + ".");
+		LOG.info("Accessor '" + this.getName() + "' started at " + address + ".");
 	}
 
 	@Override
@@ -56,7 +56,6 @@ public class RestAccessor extends Accessor implements HandlerFactory {
 		this.serverChannel.close();
 		LOG.debug("Stopped " + this);
 	}
-
 
 	@Override
 	public SimpleChannelUpstreamHandler newHandler() {

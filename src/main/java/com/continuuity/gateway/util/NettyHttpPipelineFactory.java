@@ -9,20 +9,37 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelineFactory implements ChannelPipelineFactory {
+/**
+ * This class builds an http pipeline for Netty. Note that all of our Http
+ * pipelines have a common pipeline, implementing the Http protocol, with
+ * the main difference being their actual request handler (which has all
+ * the business logic, and) which is provided by a handler factory. All
+ * other features of the Http pipeline are configure via the HttpConfig.
+ */
+
+public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
 
 	private static final Logger LOG = LoggerFactory
-			.getLogger(PipelineFactory.class);
+			.getLogger(NettyHttpPipelineFactory.class);
 
-	private boolean ssl = false, chunk = false;
-	private HandlerFactory handlerFactory;
+	/** creates the request handler for each new instance of the pipeline */
+	private NettyRequestHandlerFactory handlerFactory;
+	/** provides all the http protocol specific configuration */
 	private HttpConfig config;
 
 	/** disallow default constructor */
-	private PipelineFactory() { }
+	private NettyHttpPipelineFactory() { }
 
-	/** constructor requires settings whether to use ssl and/or chunking */
-	public PipelineFactory(HttpConfig config, HandlerFactory handlerFactory) throws Exception {
+	/**
+	 * Only allowed constructor, to make sure we always have an HTTpConfig
+	 * and a handler factory
+	 * @param config provides all the options for the http protocol
+	 * @param handlerFactory to create an new request handler for each new
+	 *                       instance of the pipeline
+	 */
+	public NettyHttpPipelineFactory(HttpConfig config,
+																	NettyRequestHandlerFactory handlerFactory)
+			throws Exception {
 		this.handlerFactory = handlerFactory;
 		this.config = config;
 		if (this.config.isSsl()) {
@@ -31,7 +48,8 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		}
 	}
 
-	public ChannelPipeline getPipeline() throws Exception {
+	@Override // to implement the Netty PipelineFactory
+ 	public ChannelPipeline getPipeline() throws Exception {
 		// create a default (empty) pipeline
 		ChannelPipeline pipeline = Channels.pipeline();
 
