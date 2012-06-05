@@ -413,16 +413,6 @@ public class TestOmidExecutorLikeAFlow {
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     long MAX_TIMEOUT = 30000;
     OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
@@ -632,7 +622,7 @@ public class TestOmidExecutorLikeAFlow {
             } else {
               System.out.println(this.consumer.toString() + " finished after " +
                   this.dequeued + " dequeues, sleeping and retrying dequeue");
-              Thread.sleep(10);
+              Thread.sleep(100);
               gotEmptyAndDone = true;
             }
           } else if (result.isEmpty() && !localProducersDone) {
