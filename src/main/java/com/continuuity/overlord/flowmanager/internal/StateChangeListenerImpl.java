@@ -30,7 +30,7 @@ final class StateChangeListenerImpl implements StateChangeListener {
   }
 
   @Override
-  public void monitor(final String path, final StateChangeCallback callback) throws StateChangeListenerException {
+  public void listen(final String path, final StateChangeCallback callback) throws StateChangeListenerException {
     queue = new SimpleDistributedQueue(client, path);
     running = true;
     new Thread(new Runnable() {
