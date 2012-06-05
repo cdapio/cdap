@@ -40,6 +40,76 @@ public class TestTTQueue {
   }
 
   @Test
+  public void testLotsOfAsyncDequeueing() throws Exception {
+    TTQueueOnVCTable queue = (TTQueueOnVCTable)createQueue();
+    long dirtyVersion = 1;
+    
+    long startTime = System.currentTimeMillis();
+    
+    int numEntries = 5000;
+    
+    for (int i=1; i<numEntries+1; i++) {
+      queue.enqueue(Bytes.toBytes(i), dirtyVersion);
+    }
+    System.out.println("Done enqueueing");
+    
+    long enqueueStop = System.currentTimeMillis();
+    
+    System.out.println("Finished enqueue of " + numEntries + " entries in " +
+        (enqueueStop-startTime) + " ms (" +
+        (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
+    
+    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1);
+    QueueConfig configSync = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    for (int i=1; i<numEntries+1; i++) {
+      DequeueResult result =
+          queue.dequeue(consumerSync, configSync,
+              new MemoryReadPointer(queue.timeOracle.getTimestamp()));
+      assertTrue(result.isSuccess());
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(queue.ack(result.getEntryPointer(), consumerSync));
+      assertTrue(queue.finalize(result.getEntryPointer(), consumerSync));
+      if (i % 100 == 0) System.out.print(".");
+      if (i % 1000 == 0) System.out.println(" " + i);
+    }
+    
+    long dequeueSyncStop = System.currentTimeMillis();
+    
+    System.out.println("Finished sync dequeue of " + numEntries + " entries in " +
+        (dequeueSyncStop-enqueueStop) + " ms (" +
+        (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
+    
+    // Async
+    
+    QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1);
+    QueueConfig configAsync = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), false);
+    for (int i=1; i<numEntries+1; i++) {
+      DequeueResult result =
+          queue.dequeue(consumerAsync, configAsync,
+              new MemoryReadPointer(queue.timeOracle.getTimestamp()));
+      assertTrue(result.isSuccess());
+      assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getValue()),
+          Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      if (i % 100 == 0) System.out.print(".");
+      if (i % 1000 == 0) System.out.println(" " + i);
+    }
+    
+    long dequeueAsyncStop = System.currentTimeMillis();
+    
+    System.out.println("Finished async dequeue of " + numEntries + " entries in " +
+        (dequeueAsyncStop-dequeueSyncStop) + " ms (" +
+        (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
+    
+    // Both queues should be empty for each consumer
+//    assertTrue(queue.dequeue(consumerSync, configSync,
+//        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
+    assertTrue(queue.dequeue(consumerAsync, configAsync,
+        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
+  }
+  
+  @Test
   public void testSingleConsumerSimple() throws Exception {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
@@ -608,6 +678,25 @@ public class TestTTQueue {
 
     // shut down
     dequeuer.shutdown();
+  }
+  
+  @Test
+  public void testConcurrentEnqueueDequeue() throws Exception {
+    final boolean singleEntry = true;
+    TTQueue queue = createQueue();
+    long version = timeOracle.getTimestamp();
+    ReadPointer readPointer = new MemoryReadPointer(version);
+    AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+
+    // Create 4 consumer groups with 4 consumers each
+    int n = 4;
+    QueueConsumer [][] consumers = new QueueConsumer[n][];
+    for (int i=0; i<n; i++) {
+      consumers[i] = new QueueConsumer[n];
+      for (int j=0; j<n; j++) {
+        consumers[i][j] = new QueueConsumer(j, i, n);
+      }
+    }
   }
   
   @Test

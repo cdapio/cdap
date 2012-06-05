@@ -32,7 +32,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   private final VersionedColumnarTable table;
   private final byte [] queueName;
-  private final TimestampOracle timeOracle;
+  final TimestampOracle timeOracle;
 
   long maxEntriesPerShard;
   long maxBytesPerShard;
@@ -86,7 +86,7 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes",
         1024*1024*1024);
     this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max",
-        10 * 1000); // 10 seconds default
+        120 * 1000); // 120 seconds default
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
         "ttqueue.entry.semiacked.max",
         1 * 1000); // 1 second default
@@ -186,12 +186,13 @@ public class TTQueueOnVCTable implements TTQueue {
         makeColumn(entryPointer.getEntryId(), ENTRY_DATA), cleanWriteVersion);
     log("Invalidated " + entryPointer);
   }
-
+  
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) {
 
-    log("Attempting dequeue [curNumDequeues=" + dequeueReturns.get() + "] (" +
+    if (TRACE)
+      log("Attempting dequeue [curNumDequeues=" + dequeueReturns.get() + "] (" +
         consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a dirty pointer
@@ -226,7 +227,7 @@ public class TTQueueOnVCTable implements TTQueue {
       } else {
         // Group information already existed, verify group state
         groupState = GroupState.fromBytes(existingValue);
-        log("Group state already existed: " + groupState);
+        if (TRACE) log("Group state already existed: " + groupState);
 
         // Check group size and execution mode
         if (groupState.getGroupSize() == consumer.getGroupSize() &&
@@ -239,7 +240,7 @@ public class TTQueueOnVCTable implements TTQueue {
         if (!groupIsEmpty(groupState, consumer.getGroupId(),
             dirty.getFirst())) {
           // Group is not empty, cannot change group size or exec mode
-          log("Attempted to change group config but it is not empty");
+          if (TRACE) log("Attempted to change group config but it is not empty");
           return new DequeueResult(DequeueStatus.FAILURE,
               "Attempted to change group configuration when group not empty");
         }
@@ -298,11 +299,12 @@ public class TTQueueOnVCTable implements TTQueue {
 
       // Queue entry exists and is visible, check the global state of it
       entryMeta = EntryMeta.fromBytes(entryMetaDataAndStamp.getFirst());
+      if (TRACE) log("entryMeta : " + entryMeta.toString());
 
       // Check if entry has been invalidated
       if (entryMeta.isInvalid()) {
         // Invalidated.  Check head update and move to next entry in this shard
-        log("Found invalidated entry at " + entryPointer);
+        if (TRACE) log("Found invalidated entry at " + entryPointer);
         EntryPointer nextEntryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         if (entryPointer.equals(groupState.getHead())) {
@@ -329,6 +331,8 @@ public class TTQueueOnVCTable implements TTQueue {
       if (entryMeta.iEndOfShard()) {
         // Entry is an indicator that this is the end of the shard, move
         // to the next shardId with the same entryId, check head update
+        if (TRACE) log("Found endOfShard marker to jump from " + entryPointer.getShardId()
+            + " to " + (entryPointer.getShardId() + 1));
         EntryPointer nextEntryPointer = new EntryPointer(
             entryPointer.getEntryId(), entryPointer.getShardId() + 1);
         if (entryPointer.equals(groupState.getHead())) {
@@ -361,12 +365,16 @@ public class TTQueueOnVCTable implements TTQueue {
           dirty.getFirst());
       if (entryGroupMetaData == null || entryGroupMetaData.length == 0) {
         // Group has not processed this entry yet, consider available for now
+        if (TRACE) log("Group has not processed entry at id " + entryPointer.getEntryId());
         entryGroupMetaData = null;
       } else {
         entryGroupMeta = EntryGroupMeta.fromBytes(entryGroupMetaData);
+        if (TRACE) log("Group has already seen entry at id " + entryPointer.getEntryId() +
+            ", groupMeta = " + entryGroupMeta.toString());
 
         // Check if group has already acked/semi-acked this entry
         if (entryGroupMeta.isAckedOrSemiAcked()) {
+          if (TRACE) log("Entry is acked/semi-acked");
           // Group has acked this, check head, move to next entry in shard
           EntryPointer nextEntryPointer = new EntryPointer(
               entryPointer.getEntryId() + 1, entryPointer.getShardId());
@@ -394,10 +402,12 @@ public class TTQueueOnVCTable implements TTQueue {
         // Check if entry is currently dequeued by group
         if (entryGroupMeta.isDequeued()) {
           // Entry is dequeued, check if it is for us, expired, etc.
+          if (TRACE) log("Entry is dequeued already");
 
           if (config.isSingleEntry() &&
               entryGroupMeta.getInstanceId() == consumer.getInstanceId()) {
             // Sync mode, same consumer, try to update stamp and give it back
+            if (TRACE) log("Sync mode, same consumer, update and give back");
             EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
                 EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
             // Attempt to update with updated timestamp
@@ -421,6 +431,9 @@ public class TTQueueOnVCTable implements TTQueue {
 
           if (entryGroupMeta.getTimestamp() + this.maxAgeBeforeExpirationInMillis >=
               now()) {
+            log("Entry is dequeued but not expired! (entryGroupMetaTS=" +
+              entryGroupMeta.getTimestamp() + ", maxAge=" +
+                this.maxAgeBeforeExpirationInMillis + ", now=" + now());
             // Entry is dequeued and not expired, move to next entry in shard
             entryPointer = new EntryPointer(
                 entryPointer.getEntryId() + 1, entryPointer.getShardId());
@@ -430,6 +443,7 @@ public class TTQueueOnVCTable implements TTQueue {
       }
 
       // Entry is available for this consumer and group
+      if (TRACE) log("Fell through, entry is available!");
 
       // Get the data and check the partitioner
       byte [] data = this.table.get(shardRow,

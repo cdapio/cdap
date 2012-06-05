@@ -523,7 +523,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     public boolean unlock() {
       synchronized (this.locked) {
         boolean ret = this.locked.compareAndSet(true, false);
-        this.locked.notifyAll();
+//        this.locked.notify();
         return ret;
       }
     }
@@ -537,7 +537,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
             e.printStackTrace();
           }
         }
-        if (this.locked.compareAndSet(false, true)) return;
+        if (this.locked.compareAndSet(false, true)) {
+          return;
+        }
       }
     }
 

@@ -22,6 +22,7 @@ import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -408,14 +409,87 @@ public class TestOmidExecutorLikeAFlow {
     assertTrue(destDequeueResult.isEmpty());
   }
 
+  @Test
+  public void testLotsOfEnqueuesThenDequeues() throws Exception {
+
+    byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
+    int numEntries = 5000;
+    
+    long startTime = System.currentTimeMillis();
+    
+    for (int i=1; i<numEntries+1; i++) {
+      byte [] entry = Bytes.toBytes(i);
+      BatchOperationResult result = this.executor.execute(
+          Arrays.asList(new WriteOperation [] {
+              new QueueEnqueue(queueName, entry)}));
+      assertTrue(result.isSuccess());
+    }
+    
+    long enqueueStop = System.currentTimeMillis();
+    
+    System.out.println("Finished enqueue of " + numEntries + " entries in " +
+        (enqueueStop-startTime) + " ms (" +
+        (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
+    
+    // First consume them all in sync mode
+    
+    QueueConsumer consumerOne = new QueueConsumer(0, 0, 1);
+    QueueConfig configOne = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    for (int i=1; i<numEntries+1; i++) {
+      DequeueResult result =
+          this.executor.execute(new QueueDequeue(queueName, consumerOne, configOne));
+      assertTrue(result.isSuccess());
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(this.executor.execute(
+          new QueueAck(queueName, result.getEntryPointer(), consumerOne)));
+      if (i % 100 == 0) System.out.print(".");
+      if (i % 1000 == 0) System.out.println(" " + i);
+    }
+    
+    long dequeueSyncStop = System.currentTimeMillis();
+    
+    System.out.println("Finished sync dequeue of " + numEntries + " entries in " +
+        (dequeueSyncStop-enqueueStop) + " ms (" +
+        (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
+    
+    // Now consume them all in async mode, no ack
+    
+    QueueConsumer consumerTwo = new QueueConsumer(0, 2, 1);
+    QueueConfig configTwo = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), false);
+    for (int i=1; i<numEntries+1; i++) {
+      DequeueResult result =
+          this.executor.execute(new QueueDequeue(queueName, consumerTwo, configTwo));
+      assertTrue(result.isSuccess());
+      assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getValue()),
+          Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      if (i % 100 == 0) System.out.print(".");
+      if (i % 1000 == 0) System.out.println(" " + i);
+    }
+    
+    long dequeueAsyncStop = System.currentTimeMillis();
+    
+    System.out.println("Finished async dequeue of " + numEntries + " entries in " +
+        (dequeueAsyncStop-dequeueSyncStop) + " ms (" +
+        (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
+    
+    // Both queues should be empty for each consumer
+    assertTrue(this.executor.execute(
+        new QueueDequeue(queueName, consumerOne, configOne)).isEmpty());
+    assertTrue(this.executor.execute(
+        new QueueDequeue(queueName, consumerTwo, configTwo)).isEmpty());
+    
+  }
+  
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
-    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
-    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
+//    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
+//    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
     ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
         new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
