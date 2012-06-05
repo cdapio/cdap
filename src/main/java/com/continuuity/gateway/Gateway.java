@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +50,13 @@ public class Gateway {
    *
    * TODO: Figure out a way to populate this from an external file
    */
-	private Configuration myConfiguration;
+	private CConfiguration myConfiguration;
 
 	/**
 	 * Get the Gateway's current configuration
 	 * @return Our current Configuration
 	 */
-	public Configuration getConfiguration() {
+	public CConfiguration getConfiguration() {
 		return myConfiguration;
 	}
 
@@ -69,7 +69,7 @@ public class Gateway {
    *
    * @throws IllegalArgumentException If configuration argument is null.
 	 */
-	public void configure(Configuration configuration) {
+	public void configure(CConfiguration configuration) {
 
     if (configuration == null) {
       throw new IllegalArgumentException("'configuration' argument was null");
@@ -90,7 +90,7 @@ public class Gateway {
       // Retrieve the collector's Class
 			String collectorClassName = myConfiguration.get(
           Constants.buildCollectorPropertyName(collectorName,
-                                               Constants.CONFIG_CLASSNAME));
+							Constants.CONFIG_CLASSNAME));
 
       // Has the user specified the Class? If not, skip this Collector
 			if (collectorClassName == null) {

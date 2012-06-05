@@ -4,11 +4,10 @@
 
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.flow.flowlet.api.Event;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.util.LocaleServiceProviderPool;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,7 +34,7 @@ public abstract class Consumer {
 	public long eventsSucceeded() { return this.eventsSucceeded.get(); }
 	public long eventsFailed() { return this.eventsFailed.get(); }
 
-	public void configure(Configuration configuration) { }
+	public void configure(CConfiguration configuration) { }
 
 	protected void start() {	}
 	protected void stop() { }

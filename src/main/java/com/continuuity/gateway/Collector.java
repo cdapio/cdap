@@ -4,35 +4,33 @@
 
 package com.continuuity.gateway;
 
-import org.apache.hadoop.conf.Configuration;
-
 /**
- *
+ * This is the base class for all collectors. A collector is a type of Connector
+ * that receives events from external clients via RPC call and writes them to
+ * event streams in the data fabric. A collector can receive events over any
+ * protocol, as long as it can convert the events from that protocol into an
+ * Event, or a batch of List&lt;Event>. Events are passed to the Consumer, which
+ * writes them to the data fabric. The consumer is set during initialization,
+ * more precisely after configure() but before start().
  */
-public abstract class Collector {
+public abstract class Collector extends Connector {
 
-	protected String name;
+	/** The consumer to pass all events to. */
 	protected Consumer consumer;
-	protected Configuration configuration;
 
+	/**
+	 * Set the consumer for this collector. It may be shared with other collectors
+	 * @param consumer The consumer to use.
+	 */
 	public void setConsumer(Consumer consumer) {
 		this.consumer = consumer;
 	}
+
+	/**
+	 * Get the consumer of this collector.
+	 * @return the collector's consumer.
+	 */
 	public Consumer getConsumer() {
 		return  this.consumer;
 	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getName() {
-		return this.name;
-	}
-
-	public void configure(Configuration configuration) throws Exception {
-		this.configuration = configuration;
-	}
-
-	public abstract void start() throws Exception;
-	public abstract void stop() throws Exception;
 }

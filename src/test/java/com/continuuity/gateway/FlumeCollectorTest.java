@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.collector.flume.FlumeCollector;
 import com.continuuity.gateway.collector.flume.NettyFlumeCollector;
 import org.apache.flume.event.SimpleEvent;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +20,7 @@ public class FlumeCollectorTest {
 	public void testConfiguration() throws Exception {
 		String name = "notflume"; // use a different name
 
-    Configuration configuration = CConfiguration.create();
+    CConfiguration configuration = new CConfiguration();
     FlumeCollector collector = newCollector(name);
 		collector.configure(configuration);
 		Assert.assertEquals(FlumeCollector.DefaultPort, collector.getPort());
@@ -41,7 +40,7 @@ public class FlumeCollectorTest {
 		int port = Util.findFreePort();
 		String stream = "pfunk";
 		// configure collector but don't start
-		Configuration configuration = CConfiguration.create();
+		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
@@ -73,7 +72,7 @@ public class FlumeCollectorTest {
 		int port = Util.findFreePort();
 		String stream = "foo";
 		int eventsToSend = 10;
-    Configuration configuration = CConfiguration.create();
+    CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);

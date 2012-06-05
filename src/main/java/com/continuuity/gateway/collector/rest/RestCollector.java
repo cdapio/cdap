@@ -1,8 +1,8 @@
 package com.continuuity.gateway.collector.rest;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
-import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -48,7 +48,7 @@ public class RestCollector extends Collector {
 	private Channel serverChannel;
 
 	@Override
-	public void configure(Configuration configuration) throws Exception {
+	public void configure(CConfiguration configuration) throws Exception {
 		super.configure(configuration);
 		this.port = configuration.getInt(Constants.buildCollectorPropertyName(
 				this.name, Constants.CONFIG_PORT), DefaultPort);

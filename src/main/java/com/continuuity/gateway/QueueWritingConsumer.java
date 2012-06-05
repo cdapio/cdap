@@ -4,11 +4,11 @@
 
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +36,7 @@ public class QueueWritingConsumer extends Consumer {
   /**
    * Our Configuration object
    */
-	Configuration myConfiguration;
-
+	CConfiguration myConfiguration;
 
   /**
    * The setter for our QueueTable implementation.
@@ -56,7 +55,7 @@ public class QueueWritingConsumer extends Consumer {
     }
 
     // Assign it
-    myQueues = queueTable;
+    this.myQueues = queueTable;
 
   } // end of setQueueTable
 
@@ -67,13 +66,13 @@ public class QueueWritingConsumer extends Consumer {
    * @param configuration  The previously formed myConfiguration object to use.
    */
 	@Override
-	public void configure(Configuration configuration) {
+	public void configure(CConfiguration configuration) {
 
     // Copy the configuration object
-		myConfiguration = configuration;
+		this.myConfiguration = configuration;
 
     // Do we have any queues set up yet?
-		if (myQueues == null) {
+		if (this.myQueues == null) {
 			setQueueTable(new MemoryQueueTable());
 		}
 
@@ -90,7 +89,7 @@ public class QueueWritingConsumer extends Consumer {
 		}
 		String destination = event.getHeader(Constants.HEADER_DESTINATION_ENDPOINT);
 		if (destination == null) destination = "default";
-		myQueues.push(destination.getBytes(), bytes);
+		this.myQueues.push(destination.getBytes(), bytes);
 	}
 
 	// @todo implement batch as transaction as soon as transactional myQueues are ready

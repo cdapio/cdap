@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.collector.rest.RestCollector;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +19,7 @@ public class RestCollectorTest {
 	public void testConfiguration() throws Exception {
 		String name = "restful"; // use a different name
 
-		Configuration configuration = new Configuration();
+		CConfiguration configuration = new CConfiguration();
 		RestCollector collector = newCollector(name);
 		collector.configure(configuration);
 		Assert.assertEquals(RestCollector.DefaultPort, collector.getPort());
@@ -55,7 +55,7 @@ public class RestCollectorTest {
 		String stream = "pfunk";
 		int port = Util.findFreePort();
 		// configure collector but don't start
-		Configuration configuration = new Configuration();
+		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
 		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
 		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
@@ -91,7 +91,7 @@ public class RestCollectorTest {
 		String stream = "foo";
 		int eventsToSend = 10;
 		int port = Util.findFreePort();
-		Configuration configuration = new Configuration();
+		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
 		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
 		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);

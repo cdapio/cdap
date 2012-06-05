@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Gateway;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * Main is a simple class that allows us to launch the Gateway as a standalone
@@ -30,7 +29,7 @@ public class Main {
     try {
 
       // Load our configuration from our resource files
-      Configuration configuration = CConfiguration.create();
+      CConfiguration configuration = new CConfiguration();
 
       // Configure the Gateway
       theGateway.configure(configuration);

@@ -3,8 +3,6 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryQueueTable;
 import com.continuuity.gateway.collector.flume.NettyFlumeCollector;
-
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +42,7 @@ public class GatewayFlumeTest {
     port = Util.findFreePort();
 
     // Create and populate a new config object
-    Configuration configuration = CConfiguration.create();
+    CConfiguration configuration = new CConfiguration();
 
 		configuration.set(Constants.CONFIG_COLLECTORS, name);
 		configuration.set(

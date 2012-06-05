@@ -4,10 +4,10 @@
 
 package com.continuuity.gateway.collector.flume;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  *
@@ -35,7 +35,7 @@ public abstract class FlumeCollector extends Collector {
 	}
 
 	@Override
-	public void configure(Configuration configuration) throws Exception {
+	public void configure(CConfiguration configuration) throws Exception {
 		super.configure(configuration);
 		this.port = configuration.getInt(Constants.buildCollectorPropertyName(
 				this.name, Constants.CONFIG_PORT), DefaultPort);
