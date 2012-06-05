@@ -11,16 +11,33 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-// @todo write javadoc
+/**
+ * This is the http request handler for the rest collector. At this time it only accepts
+ * PUT requests to send an event to a stream.
+ */
+
 public class RestHandler extends SimpleChannelUpstreamHandler {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
 
+	/** The collector that created this handler. It has collector name and the consumer */
 	private RestCollector collector;
+	/**
+	 * All the paths have to be of the form http://host:port&lt;pathPrefix>&lt;stream>
+	 * For instance, if config(prefix="/v0.1/" path="stream/"), then pathPrefix will be
+	 * "/v0.1/stream/", and a valid request is POST http://host:port/v0.1/stream/mystream
+	 */
 	private String pathPrefix;
 
+	/** Disallow default constructor */
 	private RestHandler() { }
+
+	/**
+	 * Constructor requires to pass in the collector that created this handler.
+	 * @param collector The collector that created this handler
+	 * @return
+	 */
 	RestHandler(RestCollector collector) {
 		this.collector = collector;
 		this.pathPrefix = collector.getHttpConfig().getPrefix()
@@ -48,14 +65,26 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	private void respondSuccess(Channel channel, HttpRequest request) {
 		HttpResponse response = new DefaultHttpResponse(
 				HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-		boolean keepAlive = HttpHeaders.isKeepAlive(request);
+		// this is a post and the reponse has no body
 		response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+		// did the request ask for keepalive?
+		boolean keepAlive = HttpHeaders.isKeepAlive(request);
+		// send the response and possibly close the channel
 		ChannelFuture future = channel.write(response);
 		if (!keepAlive) {
 			future.addListener(ChannelFutureListener.CLOSE);
 		}
 	}
 
+	/**
+	 * Determines whether an HTTP header should be preserved in the persisted event,
+	 * and if so returns the (possibly transformed) header name. We pass through
+	 * all headers that start with the name of destination stream, but we strip of
+	 * the stream name.
+ 	 * @param destinationPrefix The name of the destination stream with . appended
+	 * @param name The nameof the header to check
+	 * @return the name to use for the header if it is perserved, or null otherwise.
+	 */
 	private String isPreservedHeader(String destinationPrefix, String name) {
 		if (Constants.HEADER_CLIENT_TOKEN.equals(name)) return name;
 		if (name.startsWith(destinationPrefix)) return name.substring(destinationPrefix.length());
@@ -68,6 +97,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 
 		LOG.info("Request received");
 
+		// we only support POST
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.POST) {
 			LOG.info("Received a " + method + " request, which is not supported");
@@ -76,6 +106,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
+		// we do not support a query or parameters in the URL
 		QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
 		if (decoder.getParameters() != null && !decoder.getParameters().isEmpty()) {
 			LOG.info("Received a request with query parameters, which is not supported");
@@ -83,9 +114,10 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
+		// does the path of the URL start with the correct prefix, and is it a single
+		// path component after that? Otherwise we will accept this request.
 		String destination = null;
 		String path = decoder.getPath();
-
 		if (path.startsWith(this.pathPrefix)) {
 			String resourceName = path.substring(this.pathPrefix.length());
 			if (!resourceName.contains("/")) {
@@ -98,10 +130,12 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
+		// build a new event from the request
 		EventBuilder builder = new EventBuilder();
+		// set some built-in headers
 		builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
 		builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
-
+		// and transfer all other headers that are to be preserved
 		String prefix = destination + ".";
 		Set<String> headers = request.getHeaderNames();
 		for (String header : headers) {
@@ -111,6 +145,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			}
 		}
 
+		// read the body of the request and add it to the event
 		ChannelBuffer content = request.getContent();
 		int length = content.readableBytes();
 		if (length > 0) {
@@ -120,6 +155,8 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		}
 		Event event = builder.create();
 
+		// let the consumer process the event.
+		// in case of exception, respond with internal error
 		try {
 			this.collector.getConsumer().consumeEvent(event);
 		} catch (Exception e) {
@@ -128,6 +165,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
+		// all good - respond success
 		respondSuccess(message.getChannel(), request);
 	}
 
