@@ -24,7 +24,7 @@ sonarAnalyze {
     description = 'Uploads code metrics to https://sonar.continuuity.com'
 }
 
-/// Define common subproject config and tasks.
+/// Define common config and tasks.
 subprojects
 {
     sonar {

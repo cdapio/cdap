@@ -5,6 +5,8 @@ package com.continuuity.gradle
  */
 class GitRepo {
 
+    private static File baseDir;
+
     /**
      * The name of the repo.
      */
@@ -50,11 +52,10 @@ class GitRepo {
     void load ()
     {
         init();
-        File destination = new File(dir);
+        File destination = new File(baseDir, dir);
         if(!destination.exists())
         {
-            File file = new File(dir);
-            String cmd = "git clone -v --branch $branch $origin $file.canonicalPath";
+            String cmd = "git clone -v --branch $branch $origin $destination.canonicalPath";
             println "$name: $cmd";
             runCommand(cmd);
         }
@@ -66,10 +67,9 @@ class GitRepo {
     void checkout ()
     {
         init();
-        File destination = new File(dir);
+        File destination = new File(baseDir, dir);
         if(destination.exists())
         {
-            File file = new File(dir);
             String cmd = "git checkout ${branch}";
             println "$name: $cmd";
             runCommand(cmd, destination);
@@ -82,10 +82,9 @@ class GitRepo {
     void pull ()
     {
         init();
-        File destination = new File(dir);
+        File destination = new File(baseDir, dir);
         if(destination.exists())
         {
-            File file = new File(dir);
             String cmd = "git pull";
             println "$name: $cmd";
             runCommand(cmd, destination);
@@ -98,10 +97,9 @@ class GitRepo {
     void status ()
     {
         init();
-        File destination = new File(dir);
+        File destination = new File(baseDir, dir);
         if(destination.exists())
         {
-            File file = new File(dir);
             String cmd = "git status";
             println "$name: $cmd";
             runCommand(cmd, destination);
@@ -158,6 +156,11 @@ class GitRepo {
         if(dir == null)
         {
             dir = name;
+        }
+
+        if(baseDir == null)
+        {
+            baseDir == new File(System.getProperty("user.dir"));
         }
 
         if (shell == null)
