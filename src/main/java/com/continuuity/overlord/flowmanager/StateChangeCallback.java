@@ -3,6 +3,6 @@ package com.continuuity.overlord.flowmanager;
 /**
  *
  */
-public interface StateChangeCallback {
-  public void process(StateChangeData data);
+public interface StateChangeCallback<T> {
+  public void process(T data);
 }

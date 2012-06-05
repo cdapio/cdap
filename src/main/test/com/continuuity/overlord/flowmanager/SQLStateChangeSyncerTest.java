@@ -13,10 +13,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 /**
  *
+ *
  */
-public class StateChangeTest {
+public class SQLStateChangeSyncerTest {
+
   private static final Logger Log = LoggerFactory.getLogger(StateChangeTest.class);
   private static InMemoryZookeeper zookeeper = null;
   private static String zkEnsemble;
@@ -27,6 +33,9 @@ public class StateChangeTest {
     zookeeper = new InMemoryZookeeper();
     zkEnsemble = zookeeper.getConnectionString();
     Log.info("Connection string {}", zkEnsemble);
+    org.hsqldb.util.DatabaseManagerSwing.main(new String[] {
+      "--url",  "jdbc:hsqldb:mem:testdb", "--noexit"
+    });
   }
 
   @AfterClass
@@ -37,37 +46,35 @@ public class StateChangeTest {
   }
 
   @Test
-  public void testSimpleEventsOrdered() throws Exception {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10));
-    client.start();
+  public void testHSQLStateChangeSyncer() throws Exception {
+    CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10)); client.start();
     StateChanger changer = StateChange.Client.newState(client, "/continuuity/system/queue");
     StateChangeListener listener = StateChange.Server.newListener(client);
+    SQLStateChangeSyncer stateChangeSyncer = new SQLStateChangeSyncer("jdbc:hsqldb:mem:testdb");
+    listener.monitor("/continuuity/system/queue", stateChangeSyncer);
 
     for(int i = 0; i < 100; ++i) {
       changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
         StateChangeType.DEPLOYED_FLOW));
     }
 
-
-    listener.monitor("/continuuity/system/queue", new StateChangeCallback<StateChangeData>() {
-      private int i = 0;
-      @Override
-      public void process(StateChangeData data) {
-        Assert.assertTrue(data.getAccountId().equals("A:" + i));
-        Assert.assertTrue(data.getApplication().equals("B"));
-        Assert.assertTrue(data.getType() == StateChangeType.DEPLOYED_FLOW);
-        ++i;
-        Log.info(data.toString());
-      }
-    });
-
     try {
-      Thread.sleep(1000);
+      Thread.sleep(5000);
     } catch (InterruptedException e) {
 
     }
+
+    Connection connection = stateChangeSyncer.getConnection();
+    String sql = "SELECT COUNT(*)  FROM flow_state;";
+    PreparedStatement stmt = connection.prepareStatement(sql);
+    ResultSet rs = stmt.executeQuery();
+
+    Assert.assertTrue(rs.getFetchSize() == 1);
+    rs.next();
+    int i = rs.getInt(1);
+    Assert.assertTrue(rs.getInt(1) == 100);
+    connection.close();
+    Closeables.closeQuietly(stateChangeSyncer);
     Closeables.closeQuietly(listener);
-
   }
-
 }
