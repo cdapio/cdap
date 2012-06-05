@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
+// @todo write javadoc
 public class RestHandler extends SimpleChannelUpstreamHandler {
 
 	private static final Logger LOG = LoggerFactory

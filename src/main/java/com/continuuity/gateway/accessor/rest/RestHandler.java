@@ -7,6 +7,7 @@ import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// @todo write javadoc
 public class RestHandler extends SimpleChannelUpstreamHandler {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);

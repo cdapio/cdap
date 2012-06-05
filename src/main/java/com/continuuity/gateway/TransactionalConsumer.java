@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+// @todo write javadoc
 public class TransactionalConsumer extends Consumer {
 
 	/** This is our Logger class */

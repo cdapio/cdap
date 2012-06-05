@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- *
+ * @todo write javadoc
  */
 public class NettyFlumeCollector extends FlumeCollector {
 

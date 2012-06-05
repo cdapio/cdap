@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+// @todo write javadoc
 public class RestAccessor extends Accessor implements NettyRequestHandlerFactory {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestAccessor.class);

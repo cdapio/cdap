@@ -10,7 +10,7 @@ import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 
 /**
- *
+ * @todo write javadoc
  */
 public abstract class FlumeCollector extends Collector {
 
