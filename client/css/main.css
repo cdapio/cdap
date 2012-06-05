@@ -2,7 +2,6 @@ html {
 	
 }
 body {
-	padding-top: 30px;
 	background-image: url(../img/groovepaper.png);
 }
 /*
@@ -15,9 +14,6 @@ body {
 }
 .navbar .nav > li > a {
 	color: #b8c0cc;
-}
-.breadcrumb {
-	margin: 5px 10px 10px 5px;
 }
 a {
 	color: #061c35;
@@ -66,11 +62,11 @@ a strong {
  * Rules
  */
 #header {
-	width: 980px;
+	margin: 16px;
 }
 #wrapper {
-	padding-top: 16px;
-	padding-bottom: 8px;
+	padding: 16px;
+	margin: 16px;
 	background-color: #FFF;
 	border-radius: 3px;
 	box-shadow: rgba(0, 0, 0, 0.2) 0 1px 3px 0px;
@@ -102,13 +98,75 @@ td a {
 #content-body {
 
 }
+.widget {
+	border-radius: 5px;
+	background-color: #fafafa;
+	margin-bottom: 16px;
+	padding-top: 6px;
+}
+.widget-header {
+	font-size: 18px;
+	margin: 0px 6px;
+	padding: 6px;
+	border-radius: 3px;
+	border: 1px solid #dfdfdf;
+	background-color: #eee;
+	font-weight: 200;
+	color: #333;
+}
+.widget-header span {
+	color: #999;
+}
+.widget-header i {
+	vertical-align: bottom;
+}
+.widget-body {
+	padding: 8px 12px 8px;
+	font-size: 11px;
+}
+.widget-body-empty {
+	padding: 16px;
+	text-align: center;
+}
+.widget-body-empty.widget-chart {
+	padding: 8px;
+}
+.widget-item {
+	margin-bottom: 3px;
+}
+.widget-chart {
+	border: 1px solid #ddd;
+	background-color: #fff;
+	margin: 6px 0px 12px;
+}
 #flowviz {
-	margin: 0px 10px 15px 5px;
-	background-color: #FEFEFE;
+	margin: 0 auto;
 	position: relative;
 }
+#flowviz-container {
+	margin: 0px 10px 15px 5px;
+	padding: 0px;
+	overflow: auto;
+	background-color: #f9f9f9;
+}
+#far-upload {
+	height: 200px;
+	padding: 32px;
+	text-align: center;
+}
+#sub-header {
+	max-width: 1024px;
+	margin: 0 auto 12px;
+}
+#object-list {
+	max-width: 1008px;
+	margin: 0 auto;
+	border: 1px solid #EDEDED;
+	border-radius: 4px;
+	padding: 8px;
+}
 h2 {
-	padding: 4px 6px 6px;
+	padding: 4px 0px 12px;
 }
 h3 {
 	padding-left: 8px;
@@ -124,6 +182,10 @@ ol {
 /*
  * jsplumb
  */
+.column {
+	padding: 42px 42px 26px;
+	float: left;
+}
 .window { 
 	border:1px solid #BBB;
 	box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
@@ -137,9 +199,10 @@ ol {
 	font-family:helvetica;
 	padding:20px 10px 5px;
 	font-size:12px;
-	margin-left: 60px;
 	float: left;
 	cursor: pointer;
+	clear: left;
+	margin-bottom: 16px;
 }
 
 .window.source {

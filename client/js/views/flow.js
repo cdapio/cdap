@@ -14,6 +14,9 @@ define([
 			var action = control.attr('flow-action');
 
 			App.Controllers.Flows[action.toLowerCase()](id);
+		},
+		logs: function (event) {
+			App.router.set('location', '#/flows/{id}/logs');
 		}
 	});
 

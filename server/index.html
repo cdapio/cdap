@@ -29,6 +29,7 @@
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/js/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/js/lib/jquery.jsPlumb-1.3.6-all.js"></script>
+  <script type="text/javascript" src="/js/lib/highcharts.js"></script>
 
   <script type="text/javascript">
     $.timeago = $.timeago || function () {};
@@ -67,10 +68,11 @@
 </head>
 <body>
 
-<div id="header" class="container navbar">
+<div id="header" class="navbar">
   <div class="navbar-inner">
     <div class="container">
-      <a href="#/flows" class="brand"></a>
+      <a href="#" class="brand"></a>
+      <!--
       <ul class="nav">
         <li><a href="#/flows">Home</a></li>
         <li><a href="#">Pricing</a></li>
@@ -90,18 +92,21 @@
         </ul>
         </li>
       </ul>
+    -->
+    <ul class="nav pull-right">
+      <li><a href="#">Send us Feedback!</a></li>
+    </ul>
     </div>
   </div>
 </div>
 
-<div id="wrapper" class="container container-fluid">
+<div id="wrapper" class="container-fluid">
   <div class="row-fluid">
+    <!--
     <div class="span2 well" style="padding: 8px 0px;">
 
       <ul class="nav nav-list">
-        <li>
-          <a href="#"><i class="icon-th"></i> Dashboard</a>
-        </li>
+      
         <li class="nav-header">
           Overlord
         </li>
@@ -114,37 +119,38 @@
         <li>
           <a href="#"><i class="icon-user"></i> Accounts</a>
         </li>
-        <li class="nav-header">
-          Big Flow
+      
+
+        <li>
+          <a href="#"> <i class="sicon-th"></i> Dashboard</a>
         </li>
         <li>
-          <a href="#"><i class="icon-th"></i> Applications</a>
+          <a href="#/applications"> <i class="sicon-th"></i> Applications</a>
         </li>
         <li>
-          <a href="#/flows"><i class="icon-random"></i> Flows</a>
+          <a href="#/flows"> <i class="sicon-random"></i> Flows</a>
         </li>
         <li>
-          <a href="#"><i class="icon-book"></i> Library</a>
+          <a href="#"> <i class="sicon-book"></i> Library</a>
         </li>
         <li>
-          <a href="#"><i class="icon-list-alt"></i> Reports</a>
-        </li>
-        <li class="nav-header">
-          Admin
-        </li>
-        <li>
-          <a href="#"><i class="icon-user"></i> Users</a>
-        </li>
-        <li>
-          <a href="#"><i class="icon-check"></i> Account</a>
+          <a href="#"> <i class="sicon-list-alt"></i> Reports</a>
         </li>
         <li class="divider"></li>
         <li>
-          <a href="#"><i class="icon-flag"></i> Help</a>
+          <a href="#/users"> <i class="sicon-user"></i> Users</a>
+        </li>
+        <li>
+          <a href="#/account"> <i class="sicon-check"></i> Account</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+          <a href="http://support.continuuity.com/"> <i class="sicon-flag"></i> Help</a>
         </li>
       </ul>
     </div>
-    <div id="content" class="span10">
+    -->
+    <div id="content" class="span12">
       <div id="content-body"></div>
     </div>
   </div>

@@ -2,6 +2,7 @@
 
 npm install jshint -g
 npm install groc -g
+npm install one -g
 
 gem install foreman
 

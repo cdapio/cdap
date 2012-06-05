@@ -9,6 +9,10 @@ Env.configure(app, express, io);
 
 app.listen(Env.PORT);
 
+app.post('/upload', function (req, res) {
+	Env.api.upload(req, res);
+});
+
 io.sockets.on('connection', function (socket) {
 
 	socket.on('rest', function (request) {

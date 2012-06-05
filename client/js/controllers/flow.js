@@ -27,9 +27,7 @@ define([], function () {
 			this.sourcespec = {
 				endpoint:"Dot",
 				paintStyle:{ fillStyle:"#51A351", radius:5 },
-				isSource:true,
-				connector:[ "Flowchart", { stub:40 } ],
-				connectorStyle:connectorPaintStyle
+				isSource:true
 			};
 
 			this.destspec = {
@@ -37,25 +35,14 @@ define([], function () {
 				paintStyle:{ fillStyle:"#51A351", radius:5 },
 				maxConnections:-1,
 				dropOptions:{ hoverClass:"hover", activeClass:"active" },
-				isTarget:true,
-				overlays:[
-					[ "Label", { location:[0.5, -0.5], label:"", cssClass:"endpointTargetLabel" } ]
-				]
+				isTarget:true
 			};
 
 			this.plumber = jsPlumb.getInstance();
 
 			this.plumber.importDefaults({
-				EndpointStyles:[
-					{ fillStyle:'#225588' },
-					{ fillStyle:'#558822' }
-				],
-				Endpoints:[
-					[ "Dot", { radius:5 } ],
-					[ "Dot", { radius:9 } ]
-				],
 				ConnectionOverlays:[
-					[ "Arrow", { location:1, width: 8, length: 10 } ]
+					[ "Arrow", { location:1, width: 20, length: 20 } ]
 				]
 			});
 		},
@@ -170,7 +157,7 @@ define([], function () {
 			$('#flowviz').html('');
 
 			var flowlets = App.Controllers.Flow.content;
-			var parent = $('#flowviz');
+			var cx = App.Controllers.Flow.current.connections;
 			var self = this;
 
 			function get_flowlet(id) {
@@ -182,20 +169,34 @@ define([], function () {
 				}
 			}
 
-			var fade_delay = 0;
+			var column = 1, columns = {}, rows = {}, numColumns = 0;
+
+			var column_map = {};
+
 			function append (id, column, connectTo) {
 				
 				var flowlet = get_flowlet(id);
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
-					'" class="window"><strong>' + flowlet.name +
+					'" class="window' + (column === 0 ? ' source' : '') + '"><strong>' + flowlet.name +
 					'</strong><div id="stat' + id + '"></div></div>');
-				parent.append(el);
-				if (column === 0) {
-					el.addClass('source');
-					el.css({marginLeft: 0});
+				
+				if (columns[column] === undefined) {
+					// Create a new column element.
+					columns[column] = $('<div class="column clearfix"></div>').appendTo($('#flowviz'));
+					rows[column] = 0;
+					// Stretch the canvas to fit additional columns.
+					$('#flowviz').css({width: (++numColumns * 184) + 'px'});
 				}
+				// Append the flowlet to the column.
+				columns[column].append(el);
+
+				// Associate the column with this flowlet.
+				column_map[id] = {
+					column: column,
+					row: rows[column] ++
+				};
 
 				for (var i = 0; i < cx[id].length; i ++) {
 					elId = "flowlet" + cx[id][i];
@@ -211,19 +212,15 @@ define([], function () {
 						uuid: elId + "LeftMiddle"
 					});
 				}
-
-				columns[column] = columns[column] !== undefined ? columns[column] + 1 : 0;
-				
+	
 			}
 
 			function connect(from, to) {
 				self.plumber.connect({uuids:['flowlet' + from + 'RightMiddle',
-					'flowlet' + to + 'LeftMiddle']});
+					'flowlet' + to + 'LeftMiddle'], 
+					connector: [ "Bezier", { gap: 5, curviness: 75 } ]});
 			}
 
-			var column = 1, columns = {};
-
-			var cx = App.Controllers.Flow.current.connections;
 			function connects_to(id) {
 				var i;
 				
@@ -240,11 +237,7 @@ define([], function () {
 					for (i in cx) {
 						for (var k = 0; k < cx[i].length; k ++) {
 							if (cx[i][k] === id) {
-								if (!atleastOne) {
-									column ++;
-									atleastOne = true;
-								}
-								append(i, column);
+								append(i, column_map[id].column + 1);
 								connect(id, i);
 								connects_to(i);
 							}

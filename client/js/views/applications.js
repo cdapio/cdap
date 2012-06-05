@@ -1,6 +1,6 @@
 
 define([
-	'lib/text!../../templates/flows.html'
+	'lib/text!../../templates/applications.html'
 	], function (Template) {
 	
 	return Em.View.create({
@@ -13,12 +13,6 @@ define([
 
 			App.Controllers.Flows[action.toLowerCase()](id);
 
-		},
-		upload: function (event) {
-			App.router.set('location', '#/upload/new');
-		},
-		logs: function (event) {
-			App.router.set('location', '#/logs');
 		}
 	});
 

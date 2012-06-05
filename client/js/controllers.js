@@ -1,9 +1,11 @@
 
-define(['controllers/flows', 'controllers/flow'],
-	function (Flows, Flow) {
+define(['controllers/applications', 'controllers/application', 'controllers/flows', 'controllers/flow'],
+	function (As, A, Fs, F) {
 		return {
-			Flows: Flows,
-			Flow: Flow
+			Applications: As,
+			Application: A,
+			Flows: Fs,
+			Flow: F
 		};
 	}
 );

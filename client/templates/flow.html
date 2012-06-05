@@ -1,41 +1,40 @@
-<div class="btn-group pull-right" style="width:155px;margin: 8px 10px 0px;">
-	<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentStatus}}</button>
-  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-id="current.id"}}>{{current.defaultAction}}</button>
-  	<button class="btn dropdown-toggle" data-toggle="dropdown">
-	<span class="caret"></span>
-	</button>
-	<ul class="dropdown-menu">
-		<li><a href="#">Duplicate Flow</a></li>
-		<li><a href="#">Upload New FAR</a></li>
-		<li class="divider"></li>
-		<li><a href="#">Delete Flow</a></li>
+<div id="sub-header">
+	<div class="btn-group pull-right" style="width:205px;margin: 8px 0px 0px;">
+		<button class="btn" {{action "logs" on="click"}}>Logs</button>
+		<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentStatus}}</button>
+	  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-id="current.id"}}>{{current.defaultAction}}</button>
+	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+		<span class="caret"></span>
+		</button>
+		<ul class="dropdown-menu">
+			<li><a href="#/flow/{id}/upload">Upload New FAR</a></li>
+			<li class="divider"></li>
+			<li><a href="#/flow/{id}/delete">Delete Flow</a></li>
+		</ul>
+	</div>
+	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
+	<ul class="breadcrumb">
+		<li><a href="#">Flows</a> <span class="divider">/</span></li>
+		<li class="selected">{{current.meta.name}}</li>
+		<li class="pull-right">By {{current.meta.author}} of {{current.meta.company}}</li>
 	</ul>
 </div>
-<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
 
-<ul class="breadcrumb">
-  <li>
-    <a href="#/flows">Applications</a> <span class="divider">/</span>
-  </li>
-  <li>
-    <a href="#/flows">Demo</a> <span class="divider">/</span>
-  </li>
-  <li class="active">{{current.meta.name}}</li>
-</ul>
+<div id="flowviz-container" class="well">
+<div id="flowviz" class="clearfix"></div>
+</div>
 
-<div id="flowviz" class="well clearfix"></div>
-
-<div style="margin: 0px 3px;">
+<div id="object-list">
 <table class="table table-condensed">
 	<thead>
-		<tr><th style="width: 215px;">Activity Log</th>
+		<tr><th style="width: 215px;">Run History</th>
 		<th>Result</th>
 		<th>User</th>
-		<th>Time</th>
+		<th style="width:250px;">Time</th>
 	</tr></thead>
 	{{#each history tagName="tbody"}}
 		<tr>
-			<td><strong>{{act}}</strong></td>
+			<td><strong>{{name}}</strong></td>
 			<td>{{result}}</td>
 			<td>{{username}}</td>
 			<td>{{time}}</td>

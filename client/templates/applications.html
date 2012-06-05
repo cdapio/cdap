@@ -1,0 +1,32 @@
+
+<h2 id="content-header">Demo, Inc. <span>Applications</span></h2>
+
+<table class="table">
+	<thead>
+		<th colspan="2" style="width: 215px;">Application</th>
+		<th style="width: 118px;">Flows Running</th>
+		<th colspan="2">&nbsp;</th>
+	</thead>
+	{{#each App.Controllers.Applications tagName="tbody"}}
+	<tr>
+		<td style="width: 18px;"><div class="btn-group"><button class="btn dropdown-toggle" data-toggle="dropdown">
+			<span class="caret"></span>
+			</button>
+			<ul class="dropdown-menu">
+				<li><a href="#">View Detail</a></li>
+				<li class="divider"></li>
+				<li><a href="#">Duplicate Flow</a></li>
+				<li><a href="#">Upload New FAR</a></li>
+				<li class="divider"></li>
+				<li><a href="#">Delete Flow</a></li>
+			</ul></div>
+		</td>
+		<td><a {{bindAttr href="href"}}><strong>{{name}}</strong></a></td>
+		<td style="width: 140px;">0 / 10</td>
+		<td style="width: 64px;">
+			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-id="id"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+			</div>
+		</td>
+	</tr>
+	{{/each}}
+</table>

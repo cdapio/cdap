@@ -7,13 +7,8 @@ define([], function () {
 
 			rootElement: '#content-body',
 			enableLogging: true,
-			initialState: 'dashboard',
-
-			dashboard: Em.ViewState.create({
-				view: Views.Dashboard
-			}),
+			
 			flows: Em.ViewState.create({
-				route: 'flows',
 				view: Views.Flows,
 				enter: function (stateManager, transition) {
 					this._super(stateManager, transition);
@@ -21,7 +16,7 @@ define([], function () {
 				}
 			}),
 			flow: Em.ViewState.create({
-				route: 'flows/:id',
+				route: 'apps/:aid/flows/:id',
 				view: Views.Flow,
 				enter: function(stateManager, transition) {
 					this._super(stateManager, transition);
@@ -39,6 +34,17 @@ define([], function () {
 					App.Controllers.Flow.unload();
 
 				}
+			}),
+			history: Em.ViewState.create({
+				route: 'flows/:id/'
+			}),
+			logs: Em.ViewState.create({
+				route: 'logs/:id',
+				view: Views.Logs
+			}),
+			upload: Em.ViewState.create({
+				route: 'upload/:id',
+				view: Views.Upload
 			})
 		});
 	};

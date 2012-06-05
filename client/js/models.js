@@ -1,9 +1,10 @@
 
-define(['models/flow', 'models/flowlet'],
-	function (Flow, Flowlet) {
+define(['models/application', 'models/flow', 'models/flowlet'],
+	function (A, F, Fl) {
 		return {
-			Flow: Flow,
-			Flowlet: Flowlet
+			Application: A,
+			Flow: F,
+			Flowlet: Fl
 		};
 	}
 );

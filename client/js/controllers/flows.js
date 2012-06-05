@@ -27,14 +27,6 @@ define([], function () {
 				if (App.Controllers.Flow.current) {
 					App.Controllers.Flow.current.set('status', 'running');
 					App.Controllers.Flow.current.set('running', new Date().ISO8601());
-
-					App.Controllers.Flow.history.pushObject(Em.Object.create({
-						"act": "start",
-						"result": "success",
-						"user": "dmosites",
-						"time": new Date().ISO8601()
-					}));
-
 				}
 
 				var flows = App.Controllers.Flows.content;
@@ -59,7 +51,7 @@ define([], function () {
 					App.Controllers.Flow.current.set('stopped', new Date().ISO8601());
 
 					App.Controllers.Flow.history.pushObject(Em.Object.create({
-						"act": "stop",
+						"name": 'Flow Run',
 						"result": "success",
 						"user": "dmosites",
 						"time": new Date().ISO8601()

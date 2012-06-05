@@ -5,7 +5,7 @@
 define([], function () {
 	return Em.Object.extend({
 		href: function () {
-			return '#/flows/' + this.get('id');
+			return '#/apps/' + this.get('app') + '/flows/' + this.get('id');
 		}.property(),
 		lastStarted: function () {
 			return this.started ? $.timeago(this.started) : 'Never';

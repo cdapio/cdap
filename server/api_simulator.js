@@ -11,6 +11,7 @@ var http = require('http');
 	var flows = [{
 		"id": "1",
 		"status": "stopped",
+		"app": "demoapp",
 		"runs": 0,
 		"meta": {
 			"name": "Twitter Zapper",
@@ -64,15 +65,89 @@ var http = require('http');
 				"out": {}
 			},
 			"tuples": 0
+		}, {
+			"id": "6",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "7",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "8",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "9",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "9",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "10",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
+		}, {
+			"id": "11",
+			"name": "Disk Spinner",
+			"className": "",
+			"schema": {
+				"in": {},
+				"out": {}
+			},
+			"tuples": 0
 		}],
 		"instances": [{ "id": "1" }],
 		"connections": {
 			"1": [],
 			"2": ["1"],
 			"3": ["2"],
-			"4": ["3"],
-			"5": ["4"]
+			"4": ["2"],
+			"5": ["3"],
+			"6": ["3"],
+			"7": ["4"],
+			"8": ["7"],
+			"9": ["7"],
+			"10": ["9"],
+			"11": ["1"]
 		}
+	}];
+
+	var apps = [{
+		name: 'demoapp',
+		flows: flows
 	}];
 
 	var history = {
@@ -93,6 +168,14 @@ var http = require('http');
 	}
 
 	var spec = {
+		"applications": function (id) {
+			if (id) {
+				id = id + "";
+				return get_app(id);
+			} else {
+				return apps;
+			}
+		},
 		"flows": function (id) {
 
 			if (id) {
@@ -110,13 +193,6 @@ var http = require('http');
 			flow.status = 'running';
 			flow.started = toISO8601(new Date());
 			flow.runs ++;
-			
-			history[id].push({
-				act: 'start',
-				result: 'success',
-				time: flow.started,
-				user: 'demouser'
-			});
 
 			timeout(flow);
 
@@ -132,7 +208,7 @@ var http = require('http');
 			flow.stopped = toISO8601(new Date());
 
 			history[id].push({
-				act: 'stop',
+				name: 'Flow Run',
 				result: 'success',
 				time: flow.stopped,
 				user: 'demouser'
@@ -184,6 +260,14 @@ var http = require('http');
 		}
 	}
 
+	function get_app(name) {
+		for(var i = 0; i < apps.length; i ++) {
+			if (apps[i].name === name) {
+				return apps[i];
+			}
+		}
+	}
+
 	function toISO8601(date) {
 		var pad_two = function(n) {
 			return (n < 10 ? '0' : '') + n;
@@ -204,8 +288,12 @@ var http = require('http');
 
 	this.request = function (method, params, done) {
 
-		done(spec[method].call(this, params));
+		done(null, spec[method].call(this, params));
 
+	};
+
+	this.upload = function (req, res) {
+		res.send('');
 	};
 
 	this.subscribe = function (object, callback) {

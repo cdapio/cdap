@@ -1,0 +1,26 @@
+
+<h2 id="content-header">Logs</h2>
+
+<ul class="breadcrumb">
+	<li><a>Logs</a> <span class="divider">/</span></li>
+	<li class="selected">{{current.meta.name}}</li>
+</ul>
+
+<table class="table table-condensed">
+	<thead>
+		<tr>
+			<th style="width: 215px;">Event</th>
+			<th>Detail</th>
+			<th>User</th>
+			<th>Time</th>
+		</tr>
+	</thead>
+	{{#each logs tagName="tbody"}}
+		<tr>
+			<td><strong>{{id}}</strong></td>
+			<td>{{result}}</td>
+			<td>{{username}}</td>
+			<td>{{time}}</td>
+		</tr>
+	{{/each}}
+</table>
