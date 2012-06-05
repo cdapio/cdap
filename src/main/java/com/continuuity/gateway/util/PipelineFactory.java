@@ -1,4 +1,4 @@
-package com.continuuity.gateway.collector.rest;
+package com.continuuity.gateway.util;
 
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -15,15 +15,17 @@ public class PipelineFactory implements ChannelPipelineFactory {
 			.getLogger(PipelineFactory.class);
 
 	private boolean ssl = false, chunk = false;
-	private RestCollector collector;
+	private HandlerFactory handlerFactory;
+	private HttpConfig config;
 
 	/** disallow default constructor */
 	private PipelineFactory() { }
 
 	/** constructor requires settings whether to use ssl and/or chunking */
-	public PipelineFactory(RestCollector collector) throws Exception {
-		this.collector = collector;
-		if (collector.isSsl()) {
+	public PipelineFactory(HttpConfig config, HandlerFactory handlerFactory) throws Exception {
+		this.handlerFactory = handlerFactory;
+		this.config = config;
+		if (this.config.isSsl()) {
 			LOG.error("Attempt to create an SSL server, which is not implemented yet.");
 			throw new UnsupportedOperationException("SSL is not yet supported");
 		}
@@ -34,7 +36,7 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		ChannelPipeline pipeline = Channels.pipeline();
 
 		// SSL is not yet implemented but this is where we would insert it
-		if (this.collector.isSsl()) {
+		if (this.config.isSsl()) {
 			// SSLEngine engine = ...
 			// engine.setUseClientMode(false);
 			// pipeline.addLast("ssl", new SslHandler(engine));
@@ -43,13 +45,13 @@ public class PipelineFactory implements ChannelPipelineFactory {
 		// use the default HTTP decoder from netty
 		pipeline.addLast("decoder", new HttpRequestDecoder());
 		// use netty's default de-chunker
-		if (this.collector.isChunking()) {
-			pipeline.addLast("aggregator", new HttpChunkAggregator(this.collector.getMaxContentSize()));
+		if (this.config.isChunking()) {
+			pipeline.addLast("aggregator", new HttpChunkAggregator(this.config.getMaxContentSize()));
 		}
 		// use the default HTTP encoder from netty
 		pipeline.addLast("encoder", new HttpResponseEncoder());
 		// use our own request handler
-		pipeline.addLast("handler", new RestHandler(this.collector));
+		pipeline.addLast("handler", this.handlerFactory.newHandler());
 
 		return pipeline;
 	}

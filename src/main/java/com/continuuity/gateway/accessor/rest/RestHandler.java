@@ -1,29 +1,23 @@
-package com.continuuity.gateway.collector.rest;
+package com.continuuity.gateway.accessor.rest;
 
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Constants;
-import org.jboss.netty.buffer.ChannelBuffer;
+import com.continuuity.gateway.util.HttpConfig;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
-
 public class RestHandler extends SimpleChannelUpstreamHandler {
-
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
 
-	private RestCollector collector;
+	private HttpConfig config;
 	private String pathPrefix;
 
 	private RestHandler() { };
-	RestHandler(RestCollector collector) {
-		this.collector = collector;
-		this.pathPrefix = collector.getHttpConfig().getPrefix()
-				+ collector.getHttpConfig().getPath();
+	RestHandler(HttpConfig config) {
+		this.config = config;
+		this.pathPrefix = this.config.getPrefix()	+ this.config.getPath();
 	}
 
 	/**
@@ -43,22 +37,18 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	 * unless specified otherwise in the original request.
 	 * @param channel the channel on which the request came
 	 * @param request the original request (to determine whether to keep the connection alive)
+	 * @param content the content of the response to send
 	 */
-	private void respondSuccess(Channel channel, HttpRequest request) {
+	private void respondSuccess(Channel channel, HttpRequest request, byte[] content) {
 		HttpResponse response = new DefaultHttpResponse(
 				HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		boolean keepAlive = HttpHeaders.isKeepAlive(request);
-		response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+		response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content.length);
+		response.setContent(ChannelBuffers.wrappedBuffer(content));
 		ChannelFuture future = channel.write(response);
 		if (!keepAlive) {
 			future.addListener(ChannelFutureListener.CLOSE);
 		}
-	}
-
-	private String isPreservedHeader(String destinationPrefix, String name) {
-		if (Constants.HEADER_CLIENT_TOKEN.equals(name)) return name;
-		if (name.startsWith(destinationPrefix)) return name.substring(destinationPrefix.length());
-		return null;
 	}
 
 	@Override
@@ -97,43 +87,23 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
-		EventBuilder builder = new EventBuilder();
-		builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
-		builder.setHeader(Constants.HEADER_DESTINATION_ENDPOINT, destination);
-
-		String prefix = destination + ".";
-		Set<String> headers = request.getHeaderNames();
-		for (String header : headers) {
-			String preservedHeader = isPreservedHeader(prefix, header);
-			if (preservedHeader != null) {
-				builder.setHeader(preservedHeader, request.getHeader(header));
-			}
-		}
-
-		ChannelBuffer content = request.getContent();
-		int length = content.readableBytes();
-		if (length > 0) {
-			byte[] bytes = new byte[length];
-			content.readBytes(bytes);
-			builder.setBody(bytes);
-		}
-		Event event = builder.create();
-
+		// ignore the content of the request - this is a GET
+		// get the value from the data fabric
+		byte[] value = null;
 		try {
-			this.collector.getConsumer().consumeEvent(event);
+			// @todo perform get from data fab fabric
 		} catch (Exception e) {
 			LOG.warn("Error consuming single event: " + e.getMessage());
 			respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			return;
 		}
-
-		respondSuccess(message.getChannel(), request);
+		respondSuccess(message.getChannel(), request, value);
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
-		LOG.error("Exception caught for collector '" + this.collector.getName() + "'. ", e.getCause());
+		LOG.error("Exception caught for connector '" + this.config.getName() + "'. ", e.getCause());
 		e.getChannel().close();
 	}
 }

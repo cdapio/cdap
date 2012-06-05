@@ -14,38 +14,6 @@ public class RestCollectorTest {
 		return collector;
 	}
 
-	/** verify that collector picks up the port, path and other options from config	*/
-	@Test
-	public void testConfiguration() throws Exception {
-		String name = "restful"; // use a different name
-
-		CConfiguration configuration = new CConfiguration();
-		RestCollector collector = newCollector(name);
-		collector.configure(configuration);
-		Assert.assertEquals(RestCollector.DefaultPort, collector.getPort());
-		Assert.assertEquals(RestCollector.DefaultPrefix, collector.getPrefix());
-		Assert.assertEquals(RestCollector.DefaultPath, collector.getPath());
-		Assert.assertEquals(RestCollector.DefaultChunking, collector.isChunking());
-		Assert.assertFalse(collector.isSsl()); // not yet implemented
-
-		name = "resty";
-		int port = 5555;
-		String prefix = "/continuuity";
-		String path = "/destination/";
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
-		configuration.setBoolean(Constants.buildCollectorPropertyName(name, Constants.CONFIG_CHUNKING), !RestCollector.DefaultChunking);
-		configuration.setBoolean(Constants.buildCollectorPropertyName(name, Constants.CONFIG_SSL), false);
-		collector = newCollector(name);
-		collector.configure(configuration);
-		Assert.assertEquals(port, collector.getPort());
-		Assert.assertEquals(prefix, collector.getPrefix());
-		Assert.assertEquals(path, collector.getPath());
-		Assert.assertEquals(!RestCollector.DefaultChunking, collector.isChunking());
-		Assert.assertFalse(collector.isSsl());
-	}
-
 	/** verify that collector does not bind to port until start() */
 	@Test
 	public void testStartStop() throws Exception {

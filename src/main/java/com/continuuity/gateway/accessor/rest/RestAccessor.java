@@ -1,7 +1,7 @@
-package com.continuuity.gateway.collector.rest;
+package com.continuuity.gateway.accessor.rest;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.Accessor;
 import com.continuuity.gateway.util.HandlerFactory;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.PipelineFactory;
@@ -15,26 +15,16 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-public class RestCollector extends Collector implements HandlerFactory {
-
+public class RestAccessor extends Accessor implements HandlerFactory {
 	private static final Logger LOG = LoggerFactory
-			.getLogger(RestCollector.class);
+			.getLogger(RestAccessor.class);
 
 	private static final HttpConfig defaultConfig = new HttpConfig("rest")
-			.setPort(8765)
-			.setPath("/stream/");
+			.setPort(8080)
+			.setPath("/table/");
 
 	private HttpConfig config = defaultConfig;
 	private Channel serverChannel;
-
-	public HttpConfig getHttpConfig() {
-		return this.config;
-	}
-
-	@Override
-	public SimpleChannelUpstreamHandler newHandler() {
-		return new RestHandler(this);
-	}
 
 	@Override
 	public void configure(CConfiguration configuration) throws Exception {
@@ -44,8 +34,8 @@ public class RestCollector extends Collector implements HandlerFactory {
 
 	@Override
 	public void start() throws Exception {
-    LOG.debug("Starting up " + this);
-    InetSocketAddress address = new InetSocketAddress(this.config.getPort());
+		LOG.debug("Starting up " + this);
+		InetSocketAddress address = new InetSocketAddress(this.config.getPort());
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap(
 					new NioServerSocketChannelFactory(
@@ -62,8 +52,14 @@ public class RestCollector extends Collector implements HandlerFactory {
 
 	@Override
 	public void stop() {
-    LOG.debug("Stopping " + this);
-    this.serverChannel.close();
-    LOG.debug("Stopped " + this);
-  }
+		LOG.debug("Stopping " + this);
+		this.serverChannel.close();
+		LOG.debug("Stopped " + this);
+	}
+
+
+	@Override
+	public SimpleChannelUpstreamHandler newHandler() {
+		return new RestHandler(this.config);
+	}
 }
