@@ -1,19 +1,18 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.type.ReadOperation;
+
+import com.continuuity.data.table.OVCTableHandle;
 
 /**
- * Executes read and write operations.
+ * TODO: Write some docs
  *
- * Reads return an object as specified by the type of {@link ReadOperation}.
+ * Executes read and write operations.
  *
  * Writes return true or false as to whether they succeeded or not.
  */
 public interface OperationExecutor
-extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor {
+  extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor {
 
-  @Override
-  boolean execute(Write write);
+  public OVCTableHandle getTableHandle();
 
 }

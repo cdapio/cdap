@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.simple;
 import java.util.List;
 import java.util.Map;
 
+import com.continuuity.data.table.OVCTableHandle;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.SyncReadTimeoutException;
@@ -202,5 +203,10 @@ public class SimpleOperationExecutor implements OperationExecutor {
   public boolean execute(QueueEnqueue enqueue) {
     // TODO Auto-generated method stub
     return false;
+  }
+
+  @Override
+  public OVCTableHandle getTableHandle() {
+    return null;
   }
 }

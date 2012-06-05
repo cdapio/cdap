@@ -11,8 +11,15 @@ import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.table.handles.MemoryOVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -37,18 +44,29 @@ import com.continuuity.data.table.handles.SimpleOVCTableHandle;
 
 public class TestOmidExecutorLikeAFlow {
 
-  // TODO: Pluggable/injectable of this stuff
+  private TimestampOracle timeOracle;
 
-  private final TimestampOracle timeOracle = new MemoryStrictlyMonotonicOracle();
-  private final TransactionOracle oracle = new MemoryOracle(this.timeOracle);
-  private final Configuration conf = new Configuration();
-  private final OVCTableHandle handle =
-      new SimpleOVCTableHandle(this.timeOracle, this.conf);
-  private final OmidTransactionalOperationExecutor executor =
-      new OmidTransactionalOperationExecutor(this.oracle, this.handle);
+  private TransactionOracle oracle;
+
+  private Configuration conf = new CConfiguration();
+
+  private OmidTransactionalOperationExecutor executor;
+
+  private OVCTableHandle handle;
+
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
+  }
+
+  @Before
+  public void initialize() {
+    Injector injector = Guice.createInjector(new DataFabricInMemoryModule());
+
+    timeOracle = injector.getInstance(TimestampOracle.class);
+    executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
+    oracle = executor.getOracle();
+    handle = executor.getTableHandle();
   }
 
   @Test

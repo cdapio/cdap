@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.google.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -46,32 +47,35 @@ import com.continuuity.data.table.ReadPointer;
 /**
  *
  */
-public class OmidTransactionalOperationExecutor implements
-TransactionalOperationExecutor {
+public class OmidTransactionalOperationExecutor
+    implements TransactionalOperationExecutor {
 
-  final TransactionOracle oracle;
+  /**
+   * This is the Transaction oracle that we will use
+   */
+  @Inject
+  TransactionOracle oracle;
 
-  final OVCTableHandle tableHandle;
+  /**
+   * This is the table handler that we will use.
+   */
+  @Inject
+  OVCTableHandle tableHandle;
 
-  final OrderedVersionedColumnarTable randomTable;
+  private OrderedVersionedColumnarTable randomTable;
 
-  final OrderedVersionedColumnarTable orderedTable;
+  private OrderedVersionedColumnarTable orderedTable;
 
-  final TTQueueTable queueTable;
+  private TTQueueTable queueTable;
 
   static final byte [] COLUMN = Bytes.toBytes("c");
 
-  public OmidTransactionalOperationExecutor(TransactionOracle oracle,
-      OVCTableHandle tableHandle) {
-    this.oracle = oracle;
-    this.tableHandle = tableHandle;
-    this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
-    this.orderedTable = tableHandle.getTable(Bytes.toBytes("ordered"));
-    this.queueTable = tableHandle.getQueueTable(Bytes.toBytes("queues"));
-  }
+  static int MAX_DEQUEUE_RETRIES = 10;
+  static long DEQUEUE_RETRY_SLEEP = 1;
 
   @Override
   public byte[] execute(Read read) throws SyncReadTimeoutException {
+    initialize();
     return read(read, this.oracle.getReadPointer());
   }
 
@@ -79,8 +83,10 @@ TransactionalOperationExecutor {
     return this.randomTable.get(read.getKey(), COLUMN, pointer);
   }
 
+
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
+    initialize();
     byte [] value = this.randomTable.get(readCounter.getKey(), COLUMN,
         this.oracle.getReadPointer());
     if (value == null || value.length != 8) return 0;
@@ -90,6 +96,7 @@ TransactionalOperationExecutor {
   @Override
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws OmidTransactionException {
+    initialize();
     return execute(writes, startTransaction());
   }
 
@@ -144,6 +151,11 @@ TransactionalOperationExecutor {
     return new BatchOperationResult(true);
   }
 
+  @Override
+  public OVCTableHandle getTableHandle() {
+    return tableHandle;
+  }
+
   private class WriteTransactionResult {
     final boolean success;
     final List<Delete> deletes;
@@ -194,6 +206,8 @@ TransactionalOperationExecutor {
 
   WriteTransactionResult write(Write write,
       ImmutablePair<ReadPointer,Long> pointer) {
+
+    initialize();
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
         write.getValue());
     return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
@@ -201,6 +215,7 @@ TransactionalOperationExecutor {
 
   WriteTransactionResult write(ReadModifyWrite write,
       ImmutablePair<ReadPointer,Long> pointer) {
+    initialize();
     // read
     byte [] value = this.randomTable.get(write.getKey(), COLUMN,
         pointer.getFirst());
@@ -213,6 +228,7 @@ TransactionalOperationExecutor {
 
   WriteTransactionResult write(Increment increment,
       ImmutablePair<ReadPointer,Long> pointer) {
+    initialize();
     long incremented = this.randomTable.increment(increment.getKey(), COLUMN,
         increment.getAmount(), pointer.getFirst(), pointer.getSecond());
     List<Delete> deletes = new ArrayList<Delete>(2);
@@ -233,6 +249,7 @@ TransactionalOperationExecutor {
 
   WriteTransactionResult write(CompareAndSwap write,
       ImmutablePair<ReadPointer,Long> pointer) {
+    initialize();
     boolean casReturn = this.randomTable.compareAndSwap(write.getKey(), COLUMN,
         write.getExpectedValue(), write.getNewValue(), pointer.getFirst(),
         pointer.getSecond());
@@ -244,15 +261,15 @@ TransactionalOperationExecutor {
 
   /**
    * Enqueue operations always succeed but can be rolled back.
-   * 
+   *
    * They are rolled back with an invalidate.
-   * 
-   * @param write
+   *
    * @param pointer
    * @return
    */
   WriteTransactionResult write(QueueEnqueue enqueue,
       ImmutablePair<ReadPointer, Long> pointer) {
+    initialize();
     EnqueueResult result = this.queueTable.enqueue(enqueue.getKey(),
         enqueue.getData(), pointer.getSecond());
     enqueue.setResult(result);
@@ -262,6 +279,7 @@ TransactionalOperationExecutor {
 
   WriteTransactionResult write(QueueAck ack,
       ImmutablePair<ReadPointer, Long> pointer) {
+    initialize();
     boolean result = this.queueTable.ack(ack.getKey(), ack.getEntryPointer(),
         ack.getConsumer());
     if (!result) {
@@ -272,12 +290,12 @@ TransactionalOperationExecutor {
         new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
   }
 
-  static int MAX_DEQUEUE_RETRIES = 10;
-  static long DEQUEUE_RETRY_SLEEP = 1;
-  
+
+
   @Override
   public DequeueResult execute(QueueDequeue dequeue)
       throws SyncReadTimeoutException {
+    initialize();
     int retries = 0;
     while (retries < MAX_DEQUEUE_RETRIES) {
       DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
@@ -308,6 +326,19 @@ TransactionalOperationExecutor {
     return this.oracle.commit(pointer.getSecond(), rows);
   }
 
+  /**
+   * Accessor to our Transaction Oracle instance
+   * @return
+   */
+  TransactionOracle getOracle() {
+
+    if (oracle == null) {
+      throw new IllegalStateException("'oracle' field is null");
+    }
+
+    return oracle;
+  }
+
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
       List<Delete> deletes, List<QueueInvalidate> invalidates)
           throws OmidTransactionException {
@@ -324,6 +355,7 @@ TransactionalOperationExecutor {
     // Notify oracle
     this.oracle.aborted(pointer.getSecond());
   }
+
 
   // Queue operations also not supported right now
 
@@ -397,4 +429,20 @@ TransactionalOperationExecutor {
     unsupported();
     return false;
   }
-}
+
+  /**
+   * A utility method that ensures this class is properly initialized before
+   * it can be used. This currently entails creating real objects for all
+   * our table handlers.
+   */
+  private synchronized void initialize() {
+
+    if (randomTable == null) {
+
+      this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
+      this.orderedTable = tableHandle.getTable(Bytes.toBytes("ordered"));
+      this.queueTable = tableHandle.getQueueTable(Bytes.toBytes("queues"));
+    }
+  }
+
+} // end of OmitTransactionalOperationExecutor

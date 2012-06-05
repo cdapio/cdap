@@ -2,6 +2,8 @@ package com.continuuity.data.table.handles;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -12,7 +14,7 @@ import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 
-public class SimpleOVCTableHandle implements OVCTableHandle {
+public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   
   private static final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
       new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
@@ -21,22 +23,28 @@ public class SimpleOVCTableHandle implements OVCTableHandle {
   private static final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
-  
+
+  /**
+   * This is the timestamp generator that we will use
+   */
+  @Inject
   private TimestampOracle timeOracle;
-  private Configuration conf;
-  
-  public SimpleOVCTableHandle(TimestampOracle timeOracle, Configuration conf) {
-    this.timeOracle = timeOracle;
-    this.conf = conf;
-  }
-  
+
+  /**
+   * A configuration object. Not currently used (for real)
+   */
+  private Configuration conf = new CConfiguration();
+
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName) {
     OrderedVersionedColumnarTable table = SimpleOVCTableHandle.tables.get(tableName);
+
     if (table != null) return table;
-    table = new MemoryOVCTable(tableName);
+    table = createNewTable(tableName);
+
     OrderedVersionedColumnarTable existing =
         SimpleOVCTableHandle.tables.putIfAbsent(tableName, table);
+
     return existing != null ? existing : table;
   }
 
@@ -53,5 +61,7 @@ public class SimpleOVCTableHandle implements OVCTableHandle {
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
   }
+
+  public abstract OrderedVersionedColumnarTable createNewTable(byte [] tableName);
 
 }

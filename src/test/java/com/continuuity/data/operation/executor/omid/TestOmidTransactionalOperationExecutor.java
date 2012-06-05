@@ -14,8 +14,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -39,18 +46,22 @@ import com.continuuity.data.table.handles.SimpleOVCTableHandle;
 
 public class TestOmidTransactionalOperationExecutor {
 
-  private final TimestampOracle timeOracle = new MemoryStrictlyMonotonicOracle();
-  private final TransactionOracle oracle = new MemoryOracle(this.timeOracle);
-  private final Configuration conf = new Configuration();
+  private final Configuration conf = new CConfiguration();
+
+  private OmidTransactionalOperationExecutor executor;
+
+
+  @Before
+  public void initialize() {
+
+    Injector injector = Guice.createInjector(new DataFabricInMemoryModule());
+    executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
+  }
 
   @Test
   public void testSimple() throws Exception {
 
-    OmidTransactionalOperationExecutor executor =
-        new OmidTransactionalOperationExecutor(this.oracle,
-            new SimpleOVCTableHandle(this.timeOracle, this.conf));
-
-    byte [] key = Bytes.toBytes("key");
+    byte [] key = Bytes.toBytes("keytestSimple");
     byte [] value = Bytes.toBytes("value");
 
     // start a transaction
@@ -75,11 +86,8 @@ public class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testOverlappingConcurrentWrites() throws Exception {
-    OmidTransactionalOperationExecutor executor =
-        new OmidTransactionalOperationExecutor(this.oracle,
-            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
-    byte [] key = Bytes.toBytes("key");
+    byte [] key = Bytes.toBytes("keytestOverlappingConcurrentWrites");
     byte [] valueOne = Bytes.toBytes("value1");
     byte [] valueTwo = Bytes.toBytes("value2");
 
@@ -127,9 +135,6 @@ public class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testClosedTransactionsThrowExceptions() throws Exception {
-    OmidTransactionalOperationExecutor executor =
-        new OmidTransactionalOperationExecutor(this.oracle,
-            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
     byte [] key = Bytes.toBytes("testClosedTransactionsThrowExceptions");
 
@@ -170,9 +175,6 @@ public class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testOverlappingConcurrentReadersAndWriters() throws Exception {
-    OmidTransactionalOperationExecutor executor =
-        new OmidTransactionalOperationExecutor(this.oracle,
-            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
     byte [] key = Bytes.toBytes("testOverlappingConcurrentReadersAndWriters");
 
@@ -321,10 +323,6 @@ public class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testAbortedOperationsWithQueueAck() throws Exception {
-
-    OmidTransactionalOperationExecutor executor =
-        new OmidTransactionalOperationExecutor(this.oracle,
-            new SimpleOVCTableHandle(this.timeOracle, this.conf));
 
     byte [] key = Bytes.toBytes("testAbortedAck");
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
