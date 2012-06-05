@@ -24,9 +24,9 @@ public class RestCollectorTest {
 		int port = Util.findFreePort();
 		// configure collector but don't start
 		CConfiguration configuration = new CConfiguration();
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.NoopConsumer());
@@ -60,9 +60,9 @@ public class RestCollectorTest {
 		int eventsToSend = 10;
 		int port = Util.findFreePort();
 		CConfiguration configuration = new CConfiguration();
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.VerifyConsumer(17, name, stream));

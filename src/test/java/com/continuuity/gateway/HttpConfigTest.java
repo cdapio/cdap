@@ -56,12 +56,12 @@ public class HttpConfigTest {
 		path = "/destination/";
 		int maxSize = 2 * HttpConfig.DefaultMaxContentSize;
 		configuration = new CConfiguration();
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
-		configuration.setBoolean(Constants.buildCollectorPropertyName(name, Constants.CONFIG_CHUNKING), !HttpConfig.DefaultChunking);
-		configuration.setBoolean(Constants.buildCollectorPropertyName(name, Constants.CONFIG_SSL), true);
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_MAX_SIZE), maxSize);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.setBoolean(Constants.buildConnectorPropertyName(name, Constants.CONFIG_CHUNKING), !HttpConfig.DefaultChunking);
+		configuration.setBoolean(Constants.buildConnectorPropertyName(name, Constants.CONFIG_SSL), true);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_MAX_SIZE), maxSize);
 		config = HttpConfig.configure(name, configuration, defaults);
 		Assert.assertEquals(port, config.getPort());
 		Assert.assertEquals(prefix, config.getPrefix());

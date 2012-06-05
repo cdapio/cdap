@@ -55,12 +55,12 @@ public class GatewayFlumeTest {
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();
 
-		configuration.set(Constants.CONFIG_COLLECTORS, name);
+		configuration.set(Constants.CONFIG_CONNECTORS, name);
 		configuration.set(
-        Constants.buildCollectorPropertyName(name, Constants.CONFIG_CLASSNAME),
+        Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
         NettyFlumeCollector.class.getCanonicalName() );
 	  configuration.setInt(
-        Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT),port);
+        Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT),port);
 
     // Now create our Gateway
 		theGateway = new Gateway();

@@ -70,17 +70,17 @@ public class HttpConfig {
 																		 CConfiguration configuration,
 																		 HttpConfig defaults) throws Exception {
 		HttpConfig config = new HttpConfig(name);
-		config.port = configuration.getInt(Constants.buildCollectorPropertyName(
+		config.port = configuration.getInt(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_PORT), defaults.getPort());
-		config.chunk = configuration.getBoolean(Constants.buildCollectorPropertyName(
+		config.chunk = configuration.getBoolean(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_CHUNKING), defaults.isChunking());
-		config.ssl = configuration.getBoolean(Constants.buildCollectorPropertyName(
+		config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_SSL), defaults.isSsl());
-		config.prefix = configuration.get(Constants.buildCollectorPropertyName(
+		config.prefix = configuration.get(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_PATH_PREFIX), defaults.getPrefix());
-		config.path = configuration.get(Constants.buildCollectorPropertyName(
+		config.path = configuration.get(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_PATH_STREAM), defaults.getPath());
-		config.maxContentSize = configuration.getInt(Constants.buildCollectorPropertyName(
+		config.maxContentSize = configuration.getInt(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
 
 		if (config.ssl) {

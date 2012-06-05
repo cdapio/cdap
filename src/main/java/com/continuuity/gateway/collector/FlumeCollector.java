@@ -37,7 +37,7 @@ public abstract class FlumeCollector extends Collector {
 	@Override
 	public void configure(CConfiguration configuration) throws Exception {
 		super.configure(configuration);
-		this.port = configuration.getInt(Constants.buildCollectorPropertyName(
+		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
 				this.name, Constants.CONFIG_PORT), DefaultPort);
 	}
 

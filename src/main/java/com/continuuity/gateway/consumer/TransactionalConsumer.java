@@ -36,12 +36,14 @@ public class TransactionalConsumer extends Consumer {
 		this.executor = executor;
 	}
 
+	@Override
 	protected void single(Event event) throws Exception {
 		List<Event> events = new LinkedList<Event>();
 		events.add(event);
 		this.batch(events);
 	}
 
+	@Override
 	protected void batch(List<Event> events) throws Exception {
 		List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
 		EventSerializer serializer = new EventSerializer();

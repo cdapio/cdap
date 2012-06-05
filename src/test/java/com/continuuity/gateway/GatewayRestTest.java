@@ -55,14 +55,14 @@ public class GatewayRestTest {
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();
 
-    configuration.set(Constants.CONFIG_COLLECTORS, name);
-    configuration.set(Constants.buildCollectorPropertyName(name,
+    configuration.set(Constants.CONFIG_CONNECTORS, name);
+    configuration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
-    configuration.setInt(Constants.buildCollectorPropertyName(name,
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PORT),port);
-    configuration.set(Constants.buildCollectorPropertyName(name,
+    configuration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildCollectorPropertyName(name,
+    configuration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PATH_STREAM), path);
 
     // Now create our Gateway

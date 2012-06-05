@@ -25,11 +25,11 @@ public class RestCollector extends Collector implements NettyRequestHandlerFacto
 			.setPort(8765)
 			.setPath("/stream/");
 
-	private HttpConfig config = defaultConfig;
+	private HttpConfig httpConfig = defaultConfig;
 	private Channel serverChannel;
 
 	public HttpConfig getHttpConfig() {
-		return this.config;
+		return this.httpConfig;
 	}
 
 	@Override
@@ -40,19 +40,19 @@ public class RestCollector extends Collector implements NettyRequestHandlerFacto
 	@Override
 	public void configure(CConfiguration configuration) throws Exception {
 		super.configure(configuration);
-		this.config = HttpConfig.configure(this.name, configuration, defaultConfig);
+		this.httpConfig = HttpConfig.configure(this.name, configuration, defaultConfig);
 	}
 
 	@Override
 	public void start() throws Exception {
     LOG.debug("Starting up " + this);
-    InetSocketAddress address = new InetSocketAddress(this.config.getPort());
+    InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap(
 					new NioServerSocketChannelFactory(
 							Executors.newCachedThreadPool(),
 							Executors.newCachedThreadPool()));
-			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.config, this));
+			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
 			LOG.error("Failed to startup collector '" + this.getName() + "' at " + address + ".");

@@ -24,30 +24,35 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
 			.setPort(8080)
 			.setPath("/table/");
 
-	private HttpConfig config = defaultConfig;
+	private HttpConfig httpConfig = defaultConfig;
+
+	public HttpConfig getHttpConfig() {
+		return this.httpConfig;
+	}
+
 	private Channel serverChannel;
 
 	@Override
 	public void configure(CConfiguration configuration) throws Exception {
 		super.configure(configuration);
-		this.config = HttpConfig.configure(this.name, configuration, defaultConfig);
+		this.httpConfig = HttpConfig.configure(this.name, configuration, defaultConfig);
 	}
 
 	@Override
 	public SimpleChannelUpstreamHandler newHandler() {
-		return new RestHandler(this.config);
+		return new RestHandler(this);
 	}
 
 	@Override
 	public void start() throws Exception {
 		LOG.debug("Starting up " + this);
-		InetSocketAddress address = new InetSocketAddress(this.config.getPort());
+		InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap(
 					new NioServerSocketChannelFactory(
 							Executors.newCachedThreadPool(),
 							Executors.newCachedThreadPool()));
-			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.config, this));
+			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
 			this.serverChannel = bootstrap.bind(address);
 		} catch (Exception e) {
 			LOG.error("Failed to startup accessor '" + this.getName() + "' at " + address + ".");

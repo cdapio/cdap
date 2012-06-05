@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,18 +33,25 @@ public class Gateway {
    */
 	private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
-  /**
-   * This is the Consumer that we'll be using. Gateway can not function without
-   * a valid Consumer.
-   */
-  @Inject
-  private Consumer theConsumer;
+	/**
+	 * This is the consumer that all collectors will use.
+	 * Gateway can not function without a valid Consumer.
+	 */
+	@Inject
+	private Consumer consumer;
 
-  /**
-   * The list of collectors for this Gateway. This list is populated in
+	/**
+	 * This is the executor that all accessors will use for the data fabric.
+	 * Gateway can not function withou a valid operation executor.
+	 */
+	@Inject
+	private OperationExecutor executor;
+
+	/**
+   * The list of connectors for this Gateway. This list is populated in
    * the configure method.
    */
-	private List<Collector> collectorList = new ArrayList<Collector>();
+	private List<Connector> connectorList = new ArrayList<Connector>();
 
   /**
    * Our Configuration object
@@ -61,10 +69,10 @@ public class Gateway {
 	}
 
 	/**
-	 * Set the gateway's Configuration, then create and configure the collectors
+	 * Set the gateway's Configuration, then create and configure the connectors
    *
 	 * @param configuration The Configuration object that contains the options
-	 *                      for the Gateway and all its collectors. This can not
+	 *                      for the Gateway and all its connectors. This can not
    *                      be null.
    *
    * @throws IllegalArgumentException If configuration argument is null.
@@ -80,144 +88,149 @@ public class Gateway {
     // Save the configuration so we can use it again later
 		myConfiguration = configuration;
 
-    // Retrieve the list of collectors that we will create
-		Collection<String> collectorNames = myConfiguration.
-				getStringCollection(Constants.CONFIG_COLLECTORS);
+    // Retrieve the list of connectors that we will create
+		Collection<String> connectorNames = myConfiguration.
+				getStringCollection(Constants.CONFIG_CONNECTORS);
 
-    // For each Collector
-    for (String collectorName : collectorNames) {
+    // For each Connector
+    for (String connectorName : connectorNames) {
 
-      // Retrieve the collector's Class
-			String collectorClassName = myConfiguration.get(
-          Constants.buildCollectorPropertyName(collectorName,
+      // Retrieve the connector's Class
+			String connectorClassName = myConfiguration.get(
+          Constants.buildConnectorPropertyName(connectorName,
 							Constants.CONFIG_CLASSNAME));
-
-      // Has the user specified the Class? If not, skip this Collector
-			if (collectorClassName == null) {
-        LOG.error("No Class property defined for " + collectorName +
-            ". Can not create " + collectorName + ".");
+      // Has the user specified the Class? If not, skip this Connector
+			if (connectorClassName == null) {
+        LOG.error("No Class property defined for " + connectorName +
+            ". Can not create " + connectorName + ".");
 			} else {
-
-        // Instantiate a new Collector and then configure it
-        Collector newCollector = null;
-
+        // Instantiate a new Connector and then configure it
+        Connector newConnector;
         try {
-
           // Attempt to load the Class
-          newCollector =
-              (Collector)Class.forName(collectorClassName).newInstance();
-
+          newConnector =
+              (Connector)Class.forName(connectorClassName).newInstance();
           // Tell it what it's called
-          newCollector.setName(collectorName);
+          newConnector.setName(connectorName);
 
         } catch (Exception e) {
-          LOG.error("Cannot instantiate class " + collectorClassName + "(" +
-              e.getMessage() + "). Skipping Collector '" + collectorName + "'.");
+          LOG.error("Cannot instantiate class " + connectorClassName + "(" +
+              e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
           continue;
         }
 
-        // Now try to configure the Collector
+        // Now try to configure the Connector
         try {
-          newCollector.configure(myConfiguration);
+          newConnector.configure(myConfiguration);
         } catch (Exception e) {
-          LOG.error("Error configuring collector '" + collectorName + "' (" +
-              e.getMessage() + "). Skipping collector '" + collectorName + "'.");
+          LOG.error("Error configuring connector '" + connectorName + "' (" +
+              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
           continue;
         }
 
-        // Add it to our Collector list
+        // Add it to our Connector list
 				try {
-	        this.addCollector(newCollector);
+	        this.addConnector(newConnector);
 				} catch (Exception e) {
-					LOG.error("Error adding collector '" + collectorName + "' (" +
-							e.getMessage() + "). Skipping collector '" + collectorName + "'.");
+					LOG.error("Error adding connector '" + connectorName + "' (" +
+							e.getMessage() + "). Skipping connector '" + connectorName + "'.");
 					continue;
-
 				}
       }
 		}
 	}
 
 	/**
-	 * Add a Collector to the Gateway. This collector must be in pristine state
-	 * and not started yet. The Gateway will start the collector when it starts
+	 * Add a Connector to the Gateway. This connector must be in pristine state
+	 * and not started yet. The Gateway will start the connector when it starts
 	 * itself.
 	 *
-	 * @param collector The collector to register
-	 * @throws Exception iff a collector with the same name is already registered
+	 * @param connector The connector to register
+	 * @throws Exception iff a connector with the same name is already registered
 	 */
-	public void addCollector(Collector collector) throws Exception {
+	public void addConnector(Connector connector) throws Exception {
 
-		String name = collector.getName();
+		String name = connector.getName();
 		if (name == null) {
 			Exception e =
-					new IllegalArgumentException("Collector name cannot be null.");
+					new IllegalArgumentException("Connector name cannot be null.");
 			LOG.error(e.getMessage());
 			throw e;
 		}
 
-		LOG.info("Adding collector '" + name + "' of type " +
-				collector.getClass().getName() + ".");
+		LOG.info("Adding connector '" + name + "' of type " +
+				connector.getClass().getName() + ".");
 
-		if (this.hasNamedCollector(name)) {
-			Exception e = new Exception("Collector with name '" + name
+		if (this.hasNamedConnector(name)) {
+			Exception e = new Exception("Connector with name '" + name
 					+ "' already registered. ");
 			LOG.error(e.getMessage());
 			throw e;
 		} else {
-			collectorList.add(collector);
+			connectorList.add(connector);
 		}
 	}
 
   /**
-   * Start the gateway. This will also start the Consumer and all the Collectors
+   * Start the gateway. This will also start the Consumer and all the Connectors
    *
    * @throws Exception If there is no Consumer, or whatever Exception a
-   * collector throws during start().
+   * connector throws during start().
    */
   public void start() throws Exception {
 
     // Check we are in the correct state
-    if (theConsumer == null) {
-      Exception e = new Exception("Cannot start Gateway without a Consumer.");
-      LOG.error(e.getMessage());
-      throw e;
-    }
+		if (this.consumer == null) {
+			Exception e = new Exception("Cannot start Gateway without a Consumer.");
+			LOG.error(e.getMessage());
+			throw e;
+		}
+		if (this.executor == null) {
+			Exception e = new Exception("Cannot start Gateway without an Operation Executor.");
+			LOG.error(e.getMessage());
+			throw e;
+		}
 
-    LOG.info("Gateway Starting up.");
+		LOG.info("Gateway Starting up.");
 
     // Start our event consumer
-    theConsumer.startConsumer();
+    this.consumer.startConsumer();
 
-    // Now start all our Collectors
-    for (Collector collector : this.collectorList) {
+    // Now start all our Connectors
+    for (Connector connector : this.connectorList) {
 
-      // First, set the Consumer for the Collector
-      // TODO: This should probably be done in the addCollector method?
-      collector.setConsumer(theConsumer);
+      // First, perform connector-type specific initialization
+      // For a collector, set the Consumer for its events
+			// For an accessor, set the operations executor for access to data fabric
+      // TODO: This should probably be done in the addConnector method?
+			if (connector instanceof Collector) {
+	      ((Collector)connector).setConsumer(this.consumer);
+			}
+			else if (connector instanceof Accessor) {
+				((Accessor)connector).setExecutor(this.executor);
+			}
+      connector.start();
 
-      collector.start();
-
-      LOG.info(" Started " + collector.getName() + " collector");
+      LOG.info(" Started " + connector.getName() + " connector");
     }
   }
 
   /**
-   * Stop the gateway. This will first stop all our Collectors, and then stop
+   * Stop the gateway. This will first stop all our Connectors, and then stop
    * the Consumer.
    */
   public void stop() throws Exception {
 
     LOG.info("Gateway Shutting down");
 
-    // Stop all our collectors
-    for (Collector collector : this.collectorList) {
-      collector.stop();
-      LOG.info(" " + collector.getName() + " stopped");
+    // Stop all our connectors
+    for (Connector connector : this.connectorList) {
+      connector.stop();
+      LOG.info(" " + connector.getName() + " stopped");
     }
 
     // Stop the consumer
-    theConsumer.stopConsumer();
+    this.consumer.stopConsumer();
     LOG.info(" Consumer stopped");
 
     LOG.info("Gateway successfully shut down");
@@ -239,19 +252,19 @@ public class Gateway {
     }
 
 		LOG.info("Setting Consumer to " + consumer.getClass().getName() + ".");
-    theConsumer = consumer;
+    this.consumer = consumer;
 
 	}
 
 	/**
-	 * Check whether a collector with the given name is already registered
+	 * Check whether a connector with the given name is already registered
    *
 	 * @param name The name to be checked
-	 * @return true If a collector with the same name exists
+	 * @return true If a connector with the same name exists
 	 */
-	private boolean hasNamedCollector(String name) {
-		for (Collector collector : this.collectorList) {
-			if (collector.getName().equals(name))
+	private boolean hasNamedConnector(String name) {
+		for (Connector connector : this.connectorList) {
+			if (connector.getName().equals(name))
 				return true;
 		}
 		return false;

@@ -27,7 +27,7 @@ public class FlumeCollectorTest {
 
 		name = "otherflume";
 		int port = 9000;
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		collector = newCollector(name);
 		collector.configure(configuration);
 		Assert.assertEquals(port, collector.getPort());
@@ -41,7 +41,7 @@ public class FlumeCollectorTest {
 		String stream = "pfunk";
 		// configure collector but don't start
 		CConfiguration configuration = new CConfiguration();
-		configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.NoopConsumer());
@@ -73,7 +73,7 @@ public class FlumeCollectorTest {
 		String stream = "foo";
 		int eventsToSend = 10;
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildCollectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.VerifyConsumer(17, name, stream));

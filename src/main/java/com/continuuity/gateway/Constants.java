@@ -38,7 +38,7 @@ public class Constants {
 	/**
    * List of named collectors for the gateway
    */
-	public static final String CONFIG_COLLECTORS
+	public static final String CONFIG_CONNECTORS
       = GATEWAY_PREFIX + "collectors";
 
   /**
@@ -108,8 +108,8 @@ public class Constants {
    *
    * @return  A fully composed collector configuration property
    */
-  public static String buildCollectorPropertyName(String collectorName,
-                                                  String propertyName) {
+  public static String buildConnectorPropertyName(String collectorName,
+																									String propertyName) {
 
     return collectorName + "." + propertyName;
   }

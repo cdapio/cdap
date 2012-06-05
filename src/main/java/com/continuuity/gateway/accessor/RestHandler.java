@@ -1,24 +1,44 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.gateway.util.HttpConfig;
+import com.continuuity.data.operation.Read;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// @todo write javadoc
+/**
+ * This is the http request handler for the rest accessor. At this time it only accepts
+ * GET requests to retrieve a value for a key from a named table.
+ */
 public class RestHandler extends SimpleChannelUpstreamHandler {
+
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
 
-	private HttpConfig config;
+	/**
+	 * Will help validate URL paths, and also has the name of the connector and
+	 * the data fabric executor.
+	 */
+	private RestAccessor accessor;
+
+	/**
+	 * All the paths have to be of the form http://host:port&lt;pathPrefix>&lt;table>/&lt;key>
+	 * For instance, if config(prefix="/v0.1/" path="table/"), then pathPrefix will be
+	 * "/v0.1/table/", and a valid request is GET http://host:port/v0.1/table/mytable/12345678
+	 */
 	private String pathPrefix;
 
-	private RestHandler() { };
-	RestHandler(HttpConfig config) {
-		this.config = config;
-		this.pathPrefix = this.config.getPrefix()	+ this.config.getPath();
+	/** Disallow default constructor */
+	private RestHandler() { }
+
+	/**
+	 * Constructor requires the accessor that created this
+	 * @param accessor  the accessor that created this
+	 */
+	RestHandler(RestAccessor accessor) {
+		this.accessor = accessor;
+		this.pathPrefix = accessor.getHttpConfig().getPrefix() + accessor.getHttpConfig().getPath();
 	}
 
 	/**
@@ -58,6 +78,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 
 		LOG.info("Request received");
 
+		// we only support get requests for now
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.GET) {
 			LOG.info("Received a " + method + " request, which is not supported");
@@ -66,6 +87,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
+		// we do not support a query or parameters in the URL
 		QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
 		if (decoder.getParameters() != null && !decoder.getParameters().isEmpty()) {
 			LOG.info("Received a request with query parameters, which is not supported");
@@ -73,16 +95,20 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			return;
 		}
 
-		String destination = null;
+		// we only support requests of the form POST http://host:port/prefix/path/<tablename>/<key>
+		String destination = null, key = null;
 		String path = decoder.getPath();
-
 		if (path.startsWith(this.pathPrefix)) {
-			String resourceName = path.substring(this.pathPrefix.length());
-			if (!resourceName.contains("/")) {
-				destination = resourceName;
+			String remainder = path.substring(this.pathPrefix.length());
+			int pos = remainder.indexOf("/");
+			if (pos > 0) {
+				destination = remainder.substring(0, pos);
+				if ("default".equals(destination)) {
+					key = remainder.substring(pos + 1);
+				}
 			}
 		}
-		if (destination == null) {
+		if (key == null) {
 			LOG.info("Received a request with invalid path " + path);
 			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
 			return;
@@ -92,19 +118,24 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		// get the value from the data fabric
 		byte[] value = null;
 		try {
-			// @todo perform get from data fab fabric
+			Read read = new Read(key.getBytes());
+			value = this.accessor.getExecutor().execute(read);
 		} catch (Exception e) {
-			LOG.warn("Error consuming single event: " + e.getMessage());
+			LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
 			respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			return;
 		}
-		respondSuccess(message.getChannel(), request, value);
+		if (value == null) {
+			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+		} else {
+			respondSuccess(message.getChannel(), request, value);
+		}
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
 			throws Exception {
-		LOG.error("Exception caught for connector '" + this.config.getName() + "'. ", e.getCause());
+		LOG.error("Exception caught for connector '" + this.accessor.getName() + "'. ", e.getCause());
 		e.getChannel().close();
 	}
 }
