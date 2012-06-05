@@ -1,10 +1,11 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.engine.memory.MemoryQueueTable;
-import com.continuuity.data.operation.queue.QueueConfig;
-import com.continuuity.data.operation.queue.QueueConsumer;
-import com.continuuity.data.operation.queue.QueueEntry;
-import com.continuuity.data.operation.queue.QueuePartitioner;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
 import org.apache.flume.EventDeliveryException;
@@ -23,7 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Util {
 
@@ -41,7 +45,7 @@ public class Util {
 		SimpleEvent event = new SimpleEvent();
 		Map<String, String> headers = new HashMap<String, String>();
 		headers.put("messageNumber", Integer.toString(messageNumber));
-		headers.put(Constants.HEADER_DESTINATION_ENDPOINT, dest);
+		headers.put(Constants.HEADER_DESTINATION_STREAM, dest);
 		event.setHeaders(headers);
 		event.setBody(createMessage(messageNumber));
 		return event;
@@ -115,7 +119,7 @@ public class Util {
 		int messageNumber = Integer.valueOf(event.getHeader("messageNumber"));
 		if (expectedNo != null) Assert.assertEquals(messageNumber, expectedNo.intValue());
 		if (collectorName != null) Assert.assertEquals(collectorName, event.getHeader(Constants.HEADER_FROM_COLLECTOR));
-		if (destination != null) Assert.assertEquals(destination, event.getHeader(Constants.HEADER_DESTINATION_ENDPOINT));
+		if (destination != null) Assert.assertEquals(destination, event.getHeader(Constants.HEADER_DESTINATION_STREAM));
 		Assert.assertArrayEquals(createMessage(messageNumber), event.getBody());
 	}
 
@@ -142,16 +146,26 @@ public class Util {
 		}
 	}
 
-	static void consumeQueue(MemoryQueueTable queues, String queueName, String collectorName, int eventsExpected) throws Exception {
-		QueueConsumer consumer = new QueueConsumer(0, 0, 1, true, false);
-		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+	static void consumeQueue(OperationExecutor executor, String queueName,
+													 String collectorName, int eventsExpected) throws Exception {
+
 		EventSerializer deserializer = new EventSerializer();
+		com.continuuity.data.operation.ttqueue.QueueConsumer consumer = new com.continuuity.data.operation.ttqueue.QueueConsumer(0, 0, 1);
+		com.continuuity.data.operation.ttqueue.QueueConfig config =
+				new com.continuuity.data.operation.ttqueue.QueueConfig(
+						new com.continuuity.data.operation.ttqueue.QueuePartitioner.RandomPartitioner(), true);
+		QueueDequeue dequeue = new QueueDequeue(queueName.getBytes(), consumer, config);
 		for (int remaining = eventsExpected; remaining > 0; --remaining) {
-			QueueEntry entry = queues.pop(queueName.getBytes(), consumer, config, false);
-			Event event = deserializer.deserialize(entry.getValue());
+			DequeueResult result = executor.execute(dequeue);
+			Assert.assertTrue(result.isSuccess());
+			QueueEntryPointer ackPointer = result.getEntryPointer();
+			Event event = deserializer.deserialize(result.getValue());
 			Util.verifyEvent(event, collectorName, queueName, null);
 			LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
-			queues.ack(queueName.getBytes(), entry);
+			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
+			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
+			operations.add(ack);
+			Assert.assertTrue(executor.execute(operations).isSuccess());
 		}
 	}
 }

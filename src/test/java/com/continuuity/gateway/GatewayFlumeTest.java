@@ -1,12 +1,15 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.memory.MemoryQueueTable;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.consumer.TransactionalConsumer;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,9 @@ public class GatewayFlumeTest {
   // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
 
+	// This is the data fabric operations executor
+	private OperationExecutor executor;
+
   /**
    * Create a new Gateway instance to use in these set of tests. This method
    * is called before any of the test methods.
@@ -38,7 +44,12 @@ public class GatewayFlumeTest {
   @Before
 	public void setupGateway() throws Exception {
 
-    // Look for a free port
+		// Set up our Guice injections
+		Injector injector = Guice.createInjector(
+				new DataFabricInMemoryModule());
+		this.executor = injector.getInstance(OperationExecutor.class);
+
+		// Look for a free port
     port = Util.findFreePort();
 
     // Create and populate a new config object
@@ -66,10 +77,8 @@ public class GatewayFlumeTest {
 	public void testFlumeToQueue() throws Exception {
 
     // Set up our consumer and queues
-    QueueWritingConsumer consumer = new QueueWritingConsumer();
-    MemoryQueueTable queues = new MemoryQueueTable();
-    consumer.setQueueTable(queues);
-
+		TransactionalConsumer consumer = new TransactionalConsumer();
+		consumer.setExecutor(this.executor);
     // Initialize and start the Gateway
     theGateway.setConsumer(consumer);
     theGateway.start();
@@ -86,7 +95,7 @@ public class GatewayFlumeTest {
 		Assert.assertEquals(0, consumer.eventsFailed());
 
     // Clean out the queue
-		Util.consumeQueue(queues, stream, name, eventsToSend);
+		Util.consumeQueue(this.executor, stream, name, eventsToSend);
 	}
 
 } // end of GatewayFlumeTest

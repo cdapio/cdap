@@ -25,7 +25,7 @@ public class Constants {
 	/**
    * Used by the external client to indicate what end point an event goes to
    */
-	public static final String HEADER_DESTINATION_ENDPOINT
+	public static final String HEADER_DESTINATION_STREAM
       = CONTINUUITY_PREFIX + "destination";
 
 	/**

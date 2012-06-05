@@ -20,7 +20,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	private RestCollector collector;
 	private String pathPrefix;
 
-	private RestHandler() { };
+	private RestHandler() { }
 	RestHandler(RestCollector collector) {
 		this.collector = collector;
 		this.pathPrefix = collector.getHttpConfig().getPrefix()
@@ -100,7 +100,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 
 		EventBuilder builder = new EventBuilder();
 		builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
-		builder.setHeader(Constants.HEADER_DESTINATION_ENDPOINT, destination);
+		builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
 
 		String prefix = destination + ".";
 		Set<String> headers = request.getHeaderNames();

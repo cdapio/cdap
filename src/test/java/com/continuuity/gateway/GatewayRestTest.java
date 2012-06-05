@@ -1,8 +1,12 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.memory.MemoryQueueTable;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.gateway.collector.RestCollector;
+import com.continuuity.gateway.consumer.TransactionalConsumer;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +33,9 @@ public class GatewayRestTest {
   // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
 
-  /**
+	private OperationExecutor executor;
+
+	/**
    * Create a new Gateway instance to use in these set of tests. This method
    * is called before any of the test methods.
    *
@@ -38,7 +44,12 @@ public class GatewayRestTest {
   @Before
   public void setupGateway() throws Exception {
 
-    // Look for a free port
+		// Set up our Guice injections
+		Injector injector = Guice.createInjector(
+				new DataFabricInMemoryModule());
+		this.executor = injector.getInstance(OperationExecutor.class);
+
+		// Look for a free port
     port = Util.findFreePort();
 
     // Create and populate a new config object
@@ -70,9 +81,8 @@ public class GatewayRestTest {
 	public void testRestToQueue() throws Exception {
 
     // Set up our consumer and queues
-    QueueWritingConsumer consumer = new QueueWritingConsumer();
-    MemoryQueueTable queues = new MemoryQueueTable();
-    consumer.setQueueTable(queues);
+    TransactionalConsumer consumer = new TransactionalConsumer();
+		consumer.setExecutor(this.executor);
 
     // Initialize and start the Gateway
     theGateway.setConsumer(consumer);
@@ -89,7 +99,7 @@ public class GatewayRestTest {
 		Assert.assertEquals(0, consumer.eventsFailed());
 
     // Clean out the queue
-		Util.consumeQueue(queues, dest, name, eventsToSend);
+		Util.consumeQueue(this.executor, dest, name, eventsToSend);
 	}
 
 } // end of GatewayRestTest
