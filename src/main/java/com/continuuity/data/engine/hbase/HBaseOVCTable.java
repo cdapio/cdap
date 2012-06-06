@@ -60,11 +60,22 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public void delete(byte[] row, byte[] column, long version) {
     try {
       Delete delete = new Delete(row);
-      delete.deleteFamily(this.family, version);
+      delete.deleteColumn(row, column, version);
       this.table.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }
+  }
+  
+  @Override
+  public void deleteAll(byte[] row, byte[] column, long version) {
+    try {
+      Delete delete = new Delete(row);
+      delete.deleteColumns(row, column, version);
+      this.table.delete(delete);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }    
   }
 
   @Override
@@ -270,9 +281,5 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
-//  @Override
-//  public void deleteAll(byte[] row, byte[] column, long version) {
-//    // TODO Auto-generated method stub
-//
-//  }
+
 }

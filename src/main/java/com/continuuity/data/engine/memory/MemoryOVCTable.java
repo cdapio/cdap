@@ -73,18 +73,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     unlockRow(r);
   }
 
-//  /**
-//   * Inserts a delete marker at the specified timestamp for every column that
-//   * currently exists in some way.
-//   */
-//  @Override
-//  public void deleteAll(byte[] row, byte[] column, long version) {
-//    Row r = new Row(row);
-//    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-//    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-//    columnMap.put(Version.deleteAll(version), Value.delete());
-//    unlockRow(r);
-//  }
+
 
   // @Override
   // public void deleteLatest(byte [] row, byte [] column) {
@@ -104,6 +93,19 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
     NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
     columnMap.put(Version.delete(version), Value.delete());
+    unlockRow(r);
+  }
+  
+  /**
+   * Inserts a delete marker at the specified timestamp for every column that
+   * currently exists in some way.
+   */
+  @Override
+  public void deleteAll(byte[] row, byte[] column, long version) {
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+    columnMap.put(Version.deleteAll(version), Value.delete());
     unlockRow(r);
   }
 

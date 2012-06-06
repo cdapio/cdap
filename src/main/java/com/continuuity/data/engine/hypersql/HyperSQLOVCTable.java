@@ -113,6 +113,30 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void deleteAll(byte[] row, byte[] column, long version) {
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement(
+          "DELETE FROM " + this.tableName +
+          " WHERE row = ? AND qualifier = ? AND version <= ?");
+      ps.setBytes(1, row);
+      ps.setBytes(2, column);
+      ps.setLong(3, version);
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException("SQL Exception", e);
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
     PreparedStatement ps = null;

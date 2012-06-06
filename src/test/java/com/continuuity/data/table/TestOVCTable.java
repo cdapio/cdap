@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.hadoop.hbase.util.Bytes;
@@ -89,7 +90,64 @@ public class TestOVCTable {
         new MemoryReadPointer(9L))));
   }
 
-//  @Test
-//  public void testDeleteBehavior() {
-//  }
+  @Test
+  public void testDeleteBehavior() {
+    
+    byte [] row = Bytes.toBytes("testDeleteBehavior");
+    
+    // Verify row dne
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    // Write values 1, 2, 3 @ ts 1, 2, 3
+    this.table.put(row, COL, 1L, Bytes.toBytes(1L));
+    this.table.put(row, COL, 3L, Bytes.toBytes(3L));
+    this.table.put(row, COL, 2L, Bytes.toBytes(2L));
+    
+    // Read value, should be 3
+    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    // Point delete at 2
+    this.table.delete(row, COL, 2L);
+    
+    // Read value, should be 3
+    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    // Point delete at 3
+    this.table.delete(row, COL, 3L);
+    
+    // Read value, should be 1 (2 and 3 point deleted)
+    assertEquals(1L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    // DeleteAll at 3
+    this.table.deleteAll(row, COL, 3L);
+    
+    // Read value, should not exist
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    // Write at 3 (overwrites existing delete @ 3)
+    this.table.put(row, COL, 3L, Bytes.toBytes(3L));
+    
+    // Read value, should be 3 (fails with null if can't override delete)
+    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    // DeleteAll at 5
+    this.table.deleteAll(row, COL, 5L);
+    
+    // Read value, should not exist
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    // Write at 4
+    this.table.put(row, COL, 4L, Bytes.toBytes(4L));
+    
+    // Read value, should not exist
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    // Write at 6
+    this.table.put(row, COL, 6L, Bytes.toBytes(6L));
+    
+    // Read value, should be 6
+    assertEquals(6L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    
+  }
 }

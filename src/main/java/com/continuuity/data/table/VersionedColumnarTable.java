@@ -38,13 +38,21 @@ public interface VersionedColumnarTable {
       byte [][] values);
 
   /**
+   * Deletes the specified version of the specified row and column.
+   * @param row
+   * @param column
+   * @param version
+   */
+  public void delete(byte [] row, byte [] column, long version);
+
+  /**
    * Deletes all versions of the specified row and column that have a version
    * less than or equal to the specified version.
    * @param row
    * @param column
    * @param version
    */
-  public void delete(byte [] row, byte [] column, long version);
+  public void deleteAll(byte [] row, byte [] column, long version);
 
   /**
    * Reads the latest version of all columns in the specified row, utilizing
@@ -62,7 +70,8 @@ public interface VersionedColumnarTable {
    * @param row
    * @param column
    * @param readPointer
-   * @return value of the latest visible column in the specified row
+   * @return value of the latest visible column in the specified row, or null if
+   *         none exists
    */
   public byte [] get(byte [] row, byte [] column, ReadPointer readPointer);
 
@@ -129,7 +138,7 @@ public interface VersionedColumnarTable {
    * @param newValue
    * @param readPointer
    * @param writeVersion
-   * @return
+   * @return true if atomic CAS was successful, false if not
    */
   public boolean compareAndSwap(byte [] row, byte [] column,
       byte [] expectedValue, byte [] newValue, ReadPointer readPointer,
