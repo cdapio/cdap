@@ -575,6 +575,8 @@ public class TestOmidExecutorLikeAFlow {
     System.out.println("DequeueThread is done.  Set size is " +
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
 
+    TTQueueOnVCTable.TRACE = false;
+
     // Should have dequeued n entries
     assertEquals(n, dequeued.size());
   }

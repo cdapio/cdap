@@ -708,7 +708,8 @@ public class TTQueueOnVCTable implements TTQueue {
       
       if (curEntry == entryId) {
         return "Found entry at " + entryId + " in shard " + curShard + " (" +
-            entryMeta.toString() + ")";
+            entryMeta.toString() + ") with timestamp = " +
+            entryMetaDataAndStamp.getSecond();
       }
       
       if (entryMeta.isInvalid() || entryMeta.isValid()) {
