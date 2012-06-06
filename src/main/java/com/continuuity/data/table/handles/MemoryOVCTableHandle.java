@@ -1,7 +1,7 @@
-package com.continuuity.data.table.handles;
 /*
- * com.continuuity.data.table.handles - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ * Copyright (c) 2012 Continuuity Inc. All rights reserved.
  */
+package com.continuuity.data.table.handles;
 
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;

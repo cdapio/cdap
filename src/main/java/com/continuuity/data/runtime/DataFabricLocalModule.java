@@ -11,15 +11,15 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.data.table.handles.MemoryColumnarTableHandle;
-import com.continuuity.data.table.handles.MemoryOVCTableHandle;
+import com.continuuity.data.table.handles.HyperSQLColumnarTableHandle;
+import com.continuuity.data.table.handles.HyperSQLOVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 
 /**
- * DataFabricInMemoryModule defines the InMemory bindings for the data fabric.
+ * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
-public class DataFabricInMemoryModule extends AbstractModule {
+public class DataFabricLocalModule extends AbstractModule {
 
   public void configure() {
 
@@ -31,8 +31,8 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     bind(TransactionOracle.class).to(MemoryOracle.class);
 
-    bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
-    bind(ColumnarTableHandle.class).to(MemoryColumnarTableHandle.class);
+    bind(OVCTableHandle.class).to(HyperSQLOVCTableHandle.class);
+    bind(ColumnarTableHandle.class).to(HyperSQLColumnarTableHandle.class);
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 

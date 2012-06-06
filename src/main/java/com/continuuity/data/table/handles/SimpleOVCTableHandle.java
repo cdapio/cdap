@@ -2,7 +2,6 @@ package com.continuuity.data.table.handles;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -32,7 +31,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   /**
    * A configuration object. Not currently used (for real)
    */
-  private Configuration conf = new CConfiguration();
+  private CConfiguration conf = new CConfiguration();
 
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName) {
@@ -61,6 +60,7 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     return existing != null ? existing : queueTable;
   }
 
-  public abstract OrderedVersionedColumnarTable createNewTable(byte [] tableName);
+  public abstract OrderedVersionedColumnarTable createNewTable(
+      byte [] tableName);
 
 }
