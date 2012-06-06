@@ -217,7 +217,7 @@ define([], function () {
 
 			function connect(from, to) {
 				self.plumber.connect({uuids:['flowlet' + from + 'RightMiddle',
-					'flowlet' + to + 'LeftMiddle'], 
+					'flowlet' + to + 'LeftMiddle'],
 					connector: [ "Bezier", { gap: 5, curviness: 75 } ]});
 			}
 

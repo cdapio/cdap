@@ -1,6 +1,6 @@
 
-define(['views/dashboard', 'views/applications', 
-	'views/application', 'views/flows', 
+define(['views/dashboard', 'views/applications',
+	'views/application', 'views/flows',
 	'views/flow', 'views/logs', 'views/upload'],
 	function (D, As, A, Fs, F, L, U) {
 		return {

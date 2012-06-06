@@ -12,6 +12,10 @@ define([], function () {
 				method: 'flows'
 			}, function (response) {
 				var flows = response.params;
+				if (!flows) {
+					return;
+				}
+
 				for (var i = 0; i < flows.length; i ++) {
 					flows[i] = App.Models.Flow.create(flows[i]);
 					App.Controllers.Flows.pushObject(flows[i]);

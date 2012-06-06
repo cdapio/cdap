@@ -27,7 +27,7 @@ task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS'
 
 task jslibs(type:Copy, dependsOn: 'js') {
     from 'client/js/lib'
-    into 'build/js/lib'
+    into 'build/client/js/lib'
 }
 
 task css(type: Exec, dependsOn: 'js', description: 'Process and minify LESS -> CSS') {
@@ -56,8 +56,14 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-task all(dependsOn: ['clean', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs', 'upload']) {
+task all(dependsOn: ['clean', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
+	}
+}
+
+task deploy(dependsOn: ['all', 'upload']) {
+	doLast {
+		println "Deployed!"
 	}
 }

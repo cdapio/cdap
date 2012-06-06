@@ -25,22 +25,26 @@ define([
 
 			function sendFile(file) {
 
-				var formData = new FormData();
-				formData.append(file.name, file);
-	
-				var xhr = new XMLHttpRequest();
+				$('#far-upload').html('');
 
-				if (xhr.upload) {
-					xhr.upload.onprogress = function () {
-						console.log(arguments);
+				var reader = new FileReader();
+				reader.onload = function (evt) {
+
+					var xhr = new XMLHttpRequest();
+					if (xhr.upload) {
+						xhr.upload.onprogress = function () {
+							console.log(arguments);
+						};
+					}
+					xhr.open('POST', '/upload', true);
+					xhr.setRequestHeader("Content-type", "application/octet-stream");
+					xhr.onload = function(e) {
+						console.log('done', e);
 					};
-				}
-
-				xhr.open('POST', '/upload', true);
-				xhr.onload = function(e) {
+					xhr.send(evt.target.result);
 
 				};
-				xhr.send(formData);
+				reader.readAsArrayBuffer(file);
 
 			}
 
@@ -49,6 +53,27 @@ define([
 				.bind('dragover', ignoreDrag)
 				.bind('drop', drop);
 
+		},
+		identifier: null,
+		update: function (response) {
+					console.log(response);
+			var html;
+			switch(response) {
+				case 'sent':
+					html = 'Sending data...';
+				break;
+				case 'verifying':
+					html = 'Verifying...';
+				break;
+				default:
+					if (response.version) {
+						this.identifier = response;
+						html = 'Initializing version ' + response.version + '...';
+					} else {
+						html = response.message + '<br /><br /><a href="#">View this Flow</a>';
+					}
+			}
+			$('#far-upload').append('<h2>' + html + '</h2>');
 		}
 	});
 

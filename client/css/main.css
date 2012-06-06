@@ -150,9 +150,11 @@ td a {
 	background-color: #f9f9f9;
 }
 #far-upload {
-	height: 200px;
-	padding: 32px;
+	padding: 48px;
 	text-align: center;
+}
+#far-upload a {
+	text-decoration: underline;
 }
 #sub-header {
 	max-width: 1024px;

@@ -35,6 +35,13 @@
 			this.api.configure('127.0.0.1', 8082);
 			app.use(express['static'](__dirname + '/../build/'));
 
+		} else if (process.env.NODE_ENV === 'localstaging') {
+
+			this.PORT = 8081;
+			this.api = require('./api_wrapper');
+			this.api.configure('127.0.0.1', 45000);
+			app.use(express['static'](__dirname + '/../client/'));
+
 		} else {
 
 			this.PORT = 8081;

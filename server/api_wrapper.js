@@ -3,29 +3,47 @@ var http = require('http'),
 	thrift = require('thrift'),
 	fs = require('fs');
 
-var ManagerService = require('./gen-nodejs/ManagerService.js'),
-	MonitorService = require('./gen-nodejs/MonitorService.js'),
-	SubscriptionService = require('./gen-nodejs/SubscriptionService.js'),
-	engine_types = require('./gen-nodejs/engine_types.js');
+var FARService = require('./gen-nodejs/FARService.js'),
+	FlowService = require('./gen-nodejs/FlowService.js'),
+	flowservices_types = require('./gen-nodejs/flowservices_types.js');
+
+var ttransport;
+try {
+ttransport = require('thrift/lib/thrift/transport');
+} catch (e) {
+ttransport = require('thrift/transport');
+}
+
+var tprotocol;
+try {
+tprotocol = require('thrift/lib/thrift/protocol');
+} catch (e) {
+tprotocol = require('thrift/protocol');
+}
 
 (function () {
 
 	this.configure = function (host, port) {
 
+		/*
 		this.connection = thrift.createConnection(host, port);
 		this.connection.on('error', function (error) {
 			console.log('THRIFT ERROR', error);
 		});
 
-		this.Manager = thrift.createClient(ManagerService, this.connection);
-		this.Monitor = thrift.createClient(MonitorService, this.connection);
-
-		Subscriber.start();
+		this.FlowService = thrift.createClient(FlowService, this.connection);
+	
+		 Subscriber.start();
+		*/
 
 	};
 
 	this.request = function (method, params, done) {
 		
+		done(true);
+
+		return;
+
 		if (method in this.Manager) {
 			done('Unknown method for service Manager: ' + method, null);
 		} else {
@@ -40,65 +58,119 @@ var ManagerService = require('./gen-nodejs/ManagerService.js'),
 
 	};
 
-	this.upload = function (req, res) {
-		var body = '';
+	this.upload = function (req, res, socket) {
+
+		console.log('Receiving Upload');
+
+		var auth_token = new flowservices_types.DelegationToken({ token: null });
+
+		var body = null;
 		var header = '';
 
 		var content_type = req.headers['content-type'];
-		var boundary = '';//content_type.split('; ')[1].split('=')[1];
 		var content_length = parseInt(req.headers['content-length'], 10);
 		var headerFlag = true;
-		var filename = 'dummy.bin';
+		var filename = 'upload.jar';
 		var filenameRegexp = /filename="(.*)"/m;
 		console.log('content-type: ' + content_type);
-		console.log('boundary: ' + boundary);
 		console.log('content-length: ' + content_length);
 
 		req.on('data', function(raw) {
 			console.log('received data length: ' + raw.length);
-			var i = 0;
-			while (i < raw.length) {
-				if (headerFlag) {
-					var chars = raw.slice(i, i+4).toString();
-					if (chars === '\r\n\r\n') {
-						headerFlag = false;
-						header = raw.slice(0, i+4).toString();
-						console.log('header length: ' + header.length);
-						console.log('header: ');
-						console.log(header);
-						i = i + 4;
-						// get the filename
-						var result = filenameRegexp.exec(header);
-						if (result[1]) {
-							filename = result[1];
-						}
-						console.log('filename: ' + filename);
-						console.log('header done');
-					}
-					else {
-						i += 1;
-					}
-				}
-				else {
-					// parsing body including footer
-					body += raw.toString('binary', i, raw.length);
-					i = raw.length;
-					console.log('actual file size: ' + body.length);
-				}
+
+			if (body === null) {
+				body = raw;
+			} else {
+				body += raw;
 			}
+
 		});
 
 		req.on('end', function() {
-			// removing footer '\r\n'--boundary--\r\n' = (boundary.length + 8)
-			body = body.slice(0, body.length - (boundary.length + 8));
-			console.log(body);
+
 			console.log('final file size: ' + body.length);
-			fs.writeFileSync('files/' + filename, body, 'binary');
+
+			var conn = thrift.createConnection('127.0.0.1', 45000, {
+				transport: ttransport.TFramedTransport,
+				protocol: tprotocol.TBinaryProtocol
+			});
+			conn.on('error', function (error) {
+				console.log('FARService: THRIFT ERROR', error);
+			});
+			
+			var FAR = thrift.createClient(FARService, conn);
+			FAR.init(auth_token, new flowservices_types.ResourceInfo({
+				'filename': filename,
+				'size': body.length,
+				'modtime': new Date().getTime()
+			}), function (error, resource_identifier) {
+				if (error) {
+
+				} else {
+
+					socket.emit('upload', resource_identifier);
+
+					FAR.chunk(auth_token, resource_identifier, body, function (error, result) {
+						if (error) {
+
+						} else {
+
+							socket.emit('upload', 'sent');
+
+							console.log('Chunk result', error, result);						
+							FAR.deploy(auth_token, resource_identifier, function (error, result) {
+								if (error) {
+									console.log(error);
+								} else {
+
+									socket.emit('upload', 'verifying');
+
+//									var FAR_STATUS = {
+//										0: 'Not found',
+//										1: 'Registered',
+//										2: 'Uploading',
+//										3: 'Verifying',
+//										4: 'Failed',
+//										5: 'Success',
+//										6: 'Undeployed'
+//									};
+
+									var status_interval = setInterval(function () {
+
+										FAR.status(auth_token, resource_identifier, function (error, result) {
+
+											if (error) {
+												console.log(error);
+											} else {
+												if (result.overall === 0 ||
+													result.overall === 4 ||
+													result.overall === 5 ||
+													result.overall === 6) {
+
+													socket.emit('upload', result);
+													clearInterval(status_interval);
+												}
+											}
+										});
+
+									}, 100);
+
+									console.log('Deploy result', error, result);
+
+								}
+							});
+
+						}
+					});
+			
+				}
+			});
+
 			console.log('done');
 			res.redirect('back');
 		});
 	};
-
+	/*
 	var Subscriber = {
 		server: thrift.createServer(SubscriptionService, {
 			fire: function (id, event) {
@@ -147,5 +219,5 @@ var ManagerService = require('./gen-nodejs/ManagerService.js'),
 		});
 
 	};
-
+	*/
 }).call(exports);

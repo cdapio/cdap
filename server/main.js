@@ -4,16 +4,25 @@ var Env, express = require('express'),
 	})),
 	io = require('socket.io').listen(app);
 
+app.use(express.bodyParser());
+
 Env = require('./env');
 Env.configure(app, express, io);
 
 app.listen(Env.PORT);
 
+var id = "default";
+var sockets = {};
+
 app.post('/upload', function (req, res) {
-	Env.api.upload(req, res);
+
+	Env.api.upload(req, res, sockets[id]);
+
 });
 
 io.sockets.on('connection', function (socket) {
+
+	sockets[id] = socket;
 
 	socket.on('rest', function (request) {
 		console.log('Received', request);

@@ -16,6 +16,12 @@ define([], function () {
 
 		});
 
+		socket.on('upload', function (response) {
+
+			App.Views.Upload.update(response);
+
+		});
+
 		socket.on('connect', connected);
 
 		$.extend(socket, {
