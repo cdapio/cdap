@@ -1,0 +1,15 @@
+# WARNING : This script is temporary and should be moved to common place or removed if not need. 
+
+bin=`dirname "$0"`
+bin=`cd "$bin">/dev/null; pwd`
+
+pushd ${bin}/../libs >/dev/null
+libdir=`pwd`
+popd >/dev/null
+
+CLASSPATH=
+for file in `ls -1 ${libdir}`
+do
+  CLASSPATH=${libdir}/${file}:${CLASSPATH}
+done
+echo $CLASSPATH

@@ -1,9 +1,9 @@
-package com.continuuity.flowmanager.internal;
+package com.continuuity.observer.internal;
 
-import com.continuuity.flowmanager.StateChangeData;
-import com.continuuity.flowmanager.StateChangeListener;
-import com.continuuity.flowmanager.StateChangeType;
-import com.continuuity.flowmanager.StateChanger;
+import com.continuuity.observer.StateChangeData;
+import com.continuuity.observer.StateChangeListener;
+import com.continuuity.observer.StateChangeType;
+import com.continuuity.observer.StateChanger;
 
 import com.netflix.curator.framework.CuratorFramework;
 

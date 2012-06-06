@@ -1,5 +1,7 @@
-package com.continuuity.flowmanager;
+package com.continuuity.observer.internal;
 
+import com.continuuity.observer.StateChangeCallback;
+import com.continuuity.observer.StateChangeData;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +15,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * SQLStateChangeSyncer is called everytime there is a state change observed by {@link StateChangeListener}.
- * On callback, the {@link #process(StateChangeData)} gets called with {@link StateChangeData} that contains
+ * SQLStateChangeSyncer is called everytime there is a state change observed by {@link com.continuuity.observer.StateChangeListener}.
+ * On callback, the {@link #process(com.continuuity.observer.StateChangeData)} gets called with {@link com.continuuity.observer.StateChangeData} that contains
  * information for the state of the flow.
  */
-public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData>, Closeable {
+class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   private static final Logger Log = LoggerFactory.getLogger(SQLStateChangeSyncer.class);
   private final Connection connection;
 
@@ -37,9 +39,7 @@ public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData
        "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
          " payload VARCHAR, state INTEGER)"
       ).execute();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
+    } catch (SQLException e) {}
   }
 
   @Override

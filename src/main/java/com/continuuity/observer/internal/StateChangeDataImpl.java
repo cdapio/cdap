@@ -1,7 +1,7 @@
-package com.continuuity.flowmanager.internal;
+package com.continuuity.observer.internal;
 
-import com.continuuity.flowmanager.StateChangeData;
-import com.continuuity.flowmanager.StateChangeType;
+import com.continuuity.observer.StateChangeData;
+import com.continuuity.observer.StateChangeType;
 import com.google.common.base.Objects;
 
 /**

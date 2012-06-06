@@ -3,7 +3,7 @@ package com.continuuity.metrics.service;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.RegisteredService;
 import com.continuuity.common.service.RegisteredServiceException;
-import com.continuuity.flowmanager.StateChangeCallback;
+import com.continuuity.observer.StateChangeCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

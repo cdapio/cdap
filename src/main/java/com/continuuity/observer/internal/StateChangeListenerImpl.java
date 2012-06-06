@@ -1,9 +1,9 @@
-package com.continuuity.flowmanager.internal;
+package com.continuuity.observer.internal;
 
-import com.continuuity.flowmanager.StateChangeCallback;
-import com.continuuity.flowmanager.StateChangeData;
-import com.continuuity.flowmanager.StateChangeListenerException;
-import com.continuuity.flowmanager.StateChangeListener;
+import com.continuuity.observer.StateChangeCallback;
+import com.continuuity.observer.StateChangeData;
+import com.continuuity.observer.StateChangeListenerException;
+import com.continuuity.observer.StateChangeListener;
 import com.google.gson.Gson;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.recipes.queue.SimpleDistributedQueue;

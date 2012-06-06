@@ -1,8 +1,8 @@
-package com.continuuity.overlord.flowmanager;
+package com.continuuity.observer;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.flowmanager.*;
-import com.continuuity.flowmanager.internal.StateChange;
+import com.continuuity.observer.*;
+import com.continuuity.observer.internal.StateChange;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
@@ -13,6 +13,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  *
@@ -46,7 +48,7 @@ public class StateChangeTest {
 
     for(int i = 0; i < 100; ++i) {
       changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
-        StateChangeType.DEPLOYED_FLOW));
+        StateChangeType.DEPLOYED));
     }
 
 
@@ -56,9 +58,13 @@ public class StateChangeTest {
       public void process(StateChangeData data) {
         Assert.assertTrue(data.getAccountId().equals("A:" + i));
         Assert.assertTrue(data.getApplication().equals("B"));
-        Assert.assertTrue(data.getType() == StateChangeType.DEPLOYED_FLOW);
+        Assert.assertTrue(data.getType() == StateChangeType.DEPLOYED);
         ++i;
         Log.info(data.toString());
+      }
+
+      @Override
+      public void close() throws IOException {
       }
     });
 

@@ -5,12 +5,13 @@ import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredService;
 import com.continuuity.common.service.Stoppables;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.flowmanager.StateChangeCallback;
-import com.continuuity.flowmanager.StateChangeListener;
-import com.continuuity.flowmanager.StateChangeListenerException;
-import com.continuuity.flowmanager.internal.StateChange;
+import com.continuuity.observer.StateChangeCallback;
+import com.continuuity.observer.StateChangeListener;
+import com.continuuity.observer.StateChangeListenerException;
+import com.continuuity.observer.internal.StateChange;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryUntilElapsed;
@@ -39,6 +40,7 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
   private final StateChangeCallback callback;
   private StateChangeListener listener;
 
+  @Inject
   public FlowMonitorRegisteredService(FlowMonitorHandler handler, StateChangeCallback callback) {
     super("flow-monitor");
     this.handler = handler;

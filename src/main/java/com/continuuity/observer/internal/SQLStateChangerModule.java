@@ -1,14 +1,13 @@
-package com.continuuity.flowmanager.internal;
+package com.continuuity.observer.internal;
 
-import com.continuuity.flowmanager.StateChangeCallback;
-import com.continuuity.flowmanager.SQLStateChangeSyncer;
+import com.continuuity.observer.StateChangeCallback;
 import com.google.inject.AbstractModule;
 
 /**
  *
  *
  */
-public class InMemoryHSQLStateChangerModule extends AbstractModule {
+public class SQLStateChangerModule extends AbstractModule {
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.

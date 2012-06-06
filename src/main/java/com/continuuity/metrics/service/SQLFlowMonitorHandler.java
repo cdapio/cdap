@@ -1,7 +1,12 @@
 package com.continuuity.metrics.service;
 
+import com.continuuity.metrics.stubs.FlowEvent;
 import com.continuuity.metrics.stubs.FlowMetric;
+import com.continuuity.metrics.stubs.Metric;
+import com.continuuity.metrics.stubs.MetricType;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import java.sql.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  *
@@ -33,11 +39,15 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     return connection;
   }
 
-  public void initialization() throws SQLException {
-    connection.prepareStatement(
-      "CREATE TABLE flow_metrics (timestamp INTEGER, accountid VARCHAR, " +
-        " app VARCHAR, flow VARCHAR, rid VARCHAR, version VARCHAR, flowlet VARCHAR, instance VARCHAR, metric VARCHAR, value INTEGER )"
-    ).execute();
+  public void initialization()  {
+    try {
+      connection.prepareStatement(
+        "CREATE TABLE flow_metrics (timestamp INTEGER, accountid VARCHAR, " +
+          " app VARCHAR, flow VARCHAR, rid VARCHAR, version VARCHAR, flowlet VARCHAR, instance VARCHAR, metric VARCHAR, value INTEGER )"
+      ).execute();
+    } catch (SQLException e) {
+      /** Ignore this for now - as this is for dual purpose */
+    }
   }
 
   @Override
@@ -61,6 +71,47 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     } catch (SQLException e) {
       Log.error("Failed to write the metric to SQL DB (state : {}). Reason : {}", metric.toString(), e.getMessage());
     }
+  }
+
+  @Override
+  public List<FlowEvent> getFlowHistory(String accountId, String app, String flow) {
+    return null;
+  }
+
+
+  /**
+   *
+   * @param accountId
+   * @param app
+   * @param flow
+   * @param rid
+   * @return
+   */
+  @Override
+  public List<Metric> getFlowMetric(String accountId, String app, String flow, String rid) {
+    List<Metric> results = Lists.newArrayList();
+    String sql = "SELECT flowlet, metric, rid, SUM(value) AS total FROM flow_metrics WHERE accountId = ? AND app = ? AND " +
+      "flow = ? AND rid = ? GROUP by flowlet, metric, rid";
+    try {
+      PreparedStatement stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      stmt.setString(2, app);
+      stmt.setString(3, flow);
+      stmt.setString(4, rid);
+      ResultSet rs  = stmt.executeQuery();
+      while(rs.next()) {
+        Metric metric = new Metric();
+        metric.setId(rs.getString("flowlet"));
+        metric.setType(MetricType.FLOWLET);
+        metric.setName(rs.getString("metric"));
+        metric.setValue(rs.getLong("total"));
+        results.add(metric);
+      }
+    } catch (SQLException e) {
+      Log.warn("Unable to retrieve flow metrics. Application '{}', Flow '{}', Run ID '{}'",
+        new Object[] {app, flow, rid});
+    }
+    return results;
   }
 
   @Override

@@ -1,4 +1,4 @@
-package com.continuuity.flowmanager;
+package com.continuuity.observer;
 
 import java.io.Closeable;
 

@@ -24,7 +24,6 @@ dependencies {
 /**
  * Generate thrift files.
  */
-/*
 task thrift
 thrift {
     group = 'Continuuity'
@@ -41,7 +40,6 @@ thrift {
       println 'Thrift stubs generation done ...'
     }
 }
-*/
 
 /**
  * Create Release TAR ball
@@ -50,14 +48,14 @@ task dist(type:  Tar, dependsOn: jar) {
     group = 'Continuuity'
     description = 'Generates distribution tar file.'
     from('bin') {
-     into('flow/bin')
+     into('overlord/bin')
     }
 
-    into('flow/conf') {
+    into('overlord/conf') {
      from sourceSets.main.output.resourcesDir
     }
 
-    into('flow/libs') {
+    into('overlord/libs') {
       from configurations.compile
       from jar.outputs.files
     }
