@@ -52,6 +52,7 @@ task docs(type: Exec, dependsOn: 'css', description: 'Generates Groc documentati
 	// Uses .groc.json configuration file
     commandLine = ['./tools/groc']
 }
+// disabling docs for now due to issue with groc/pygmentize 
 docs.enabled = false
 
 task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') {
