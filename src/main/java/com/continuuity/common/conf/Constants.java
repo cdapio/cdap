@@ -27,8 +27,8 @@ public class Constants {
   /**
    * Default constants defined for resource manager
    */
-  public static final int DEFAULT_RESOURCE_MANAGER_SERVER_PORT = 45000;
-  public static final int DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = 2;
+  public static final String DEFAULT_RESOURCE_MANAGER_SERVER_PORT = "45000";
+  public static final String DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = "2";
 
   /**
    * Configuration key names used flow monitor.
@@ -39,6 +39,6 @@ public class Constants {
   /**
    * Default constants defined for flow monitor
    */
-  public static final int DEFAULT_FLOW_MONITOR_SERVER_PORT = 45002;
-  public static final int DEFAULT_FLOW_MONITOR_SERVER_THREADS = 2;
+  public static final String DEFAULT_FLOW_MONITOR_SERVER_PORT = "45002";
+  public static final String DEFAULT_FLOW_MONITOR_SERVER_THREADS = "2";
 }
