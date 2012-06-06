@@ -1,5 +1,5 @@
 
-defaultTasks 'all'
+defaultTasks 'build'
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '1.0-milestone-5'
@@ -58,13 +58,13 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-task all(dependsOn: ['clean', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs']) {
+task build(dependsOn: ['clean', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
 	}
 }
 
-task deploy(dependsOn: ['all', 'upload']) {
+task deploy(dependsOn: ['build', 'upload']) {
 	doLast {
 		println "Deployed!"
 	}
