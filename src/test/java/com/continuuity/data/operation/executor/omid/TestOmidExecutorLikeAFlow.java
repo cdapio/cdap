@@ -14,20 +14,19 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConfig;
@@ -43,17 +42,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-@Ignore
 public class TestOmidExecutorLikeAFlow {
-
-  @SuppressWarnings("unused")
-  private TimestampOracle timeOracle;
-
-  @SuppressWarnings("unused")
-  private TransactionOracle oracle;
-
-  @SuppressWarnings("unused")
-  private final Configuration conf = new CConfiguration();
 
   private OmidTransactionalOperationExecutor executor;
 
@@ -72,9 +61,9 @@ public class TestOmidExecutorLikeAFlow {
   
   @Before
   public void initializeBefore() {
-    this.timeOracle = injector.getInstance(TimestampOracle.class);
-    this.executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
-    this.oracle = this.executor.getOracle();
+    this.executor =
+        (OmidTransactionalOperationExecutor)injector.getInstance(
+            OperationExecutor.class);
     this.handle = this.executor.getTableHandle();
   }
 
@@ -159,6 +148,9 @@ public class TestOmidExecutorLikeAFlow {
   public void testWriteBatchJustAck() throws Exception {
 
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
+
+    TTQueueOnVCTable.TRACE = true;
+    MemoryOracle.TRACE = true;
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), true);
@@ -178,6 +170,9 @@ public class TestOmidExecutorLikeAFlow {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1L)));
 
+    TTQueueOnVCTable.TRACE = false;
+    MemoryOracle.TRACE = false;
+    
     // Ack it
     assertTrue(this.executor.execute(batch(new QueueAck(queueName,
         result.getEntryPointer(), consumer))).isSuccess());
@@ -539,7 +534,6 @@ public class TestOmidExecutorLikeAFlow {
           System.out.println("Dequeuer stopped before it finished!");
           if (!retried.get()) {
             System.out.println("Trying loop once more");
-            TTQueueOnVCTable.TRACE = true;
             retried.set(true);
             lastSuccess.set(true);
             run();
@@ -580,8 +574,6 @@ public class TestOmidExecutorLikeAFlow {
     dequeueThread.join();
     System.out.println("DequeueThread is done.  Set size is " +
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
-
-    TTQueueOnVCTable.TRACE = false;
 
     // Should have dequeued n entries
     assertEquals(n, dequeued.size());
@@ -718,14 +710,16 @@ public class TestOmidExecutorLikeAFlow {
     assertEquals(expectedDequeues, groupTwoTotal);
   }
 
+  private TTQueueTable getQueueTable() {
+    return this.handle.getQueueTable(Bytes.toBytes("queues"));
+  }
+  
   private void printQueueInfo(byte[] queueName, int groupId) {
-    TTQueueTable table = this.handle.getQueueTable(Bytes.toBytes("queues"));
-    System.out.println(table.getGroupInfo(queueName, groupId));
+    System.out.println(getQueueTable().getGroupInfo(queueName, groupId));
   }
 
   private void printEntryInfo(byte[] queueName, long entryId) {
-    TTQueueTable table = this.handle.getQueueTable(Bytes.toBytes("queues"));
-    System.out.println(table.getEntryInfo(queueName, entryId));
+    System.out.println(getQueueTable().getEntryInfo(queueName, entryId));
   }
 
   class Producer extends Thread {

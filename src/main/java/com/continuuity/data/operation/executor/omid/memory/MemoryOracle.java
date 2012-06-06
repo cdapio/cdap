@@ -72,6 +72,8 @@ public class MemoryOracle implements TransactionOracle {
         getReadPointer(writeTxid), writeTxid);
   }
 
+  public static boolean TRACE = false;
+  
   @Override
   public synchronized boolean commit(long txid, RowSet rows)
     throws OmidTransactionException {
@@ -109,7 +111,6 @@ public class MemoryOracle implements TransactionOracle {
   private void moveReadPointer(long txid) {
     this.inProgress.remove(txid);
     this.readPoint = this.timeOracle.getTimestamp();
-//    System.out.println("Oracle: ReadPoint = " + readPoint);
   }
 
   /**
