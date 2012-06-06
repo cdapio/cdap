@@ -9,7 +9,8 @@ public class CompareAndSwap implements ConditionalWriteOperation {
   private byte [] expectedValue;
   private byte [] newValue;
  
-  public CompareAndSwap(byte [] key, byte [] expectedValue, byte [] newValue) {
+  public CompareAndSwap(final byte [] key, final byte [] expectedValue,
+      final byte [] newValue) {
     this.key = key;
     this.expectedValue = expectedValue;
     this.newValue = newValue;

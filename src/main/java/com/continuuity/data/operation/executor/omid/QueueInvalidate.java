@@ -32,7 +32,8 @@ public abstract class QueueInvalidate {
       ImmutablePair<ReadPointer,Long> txPointer);
 
   public static class QueueUnenqueue extends QueueInvalidate {
-    public QueueUnenqueue(byte[] queueName, QueueEntryPointer entryPointer) {
+    public QueueUnenqueue(final byte[] queueName,
+        QueueEntryPointer entryPointer) {
       super(queueName, entryPointer);
     }
     @Override
@@ -44,7 +45,7 @@ public abstract class QueueInvalidate {
 
   public static class QueueFinalize extends QueueInvalidate {
     private final QueueConsumer consumer;
-    public QueueFinalize(byte[] queueName, QueueEntryPointer entryPointer,
+    public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer,
         QueueConsumer consumer) {
       super(queueName, entryPointer);
       this.consumer = consumer;
@@ -58,7 +59,7 @@ public abstract class QueueInvalidate {
 
   public static class QueueUnack extends QueueInvalidate {
     private final QueueConsumer consumer;
-    public QueueUnack(byte[] queueName, QueueEntryPointer entryPointer,
+    public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
         QueueConsumer consumer) {
       super(queueName, entryPointer);
       this.consumer = consumer;

@@ -7,7 +7,8 @@ public class ColumnWrite implements WriteOperation {
   private final byte [][] columns;
   private final byte [][] values;
  
-  public ColumnWrite(byte [] key, byte [][] columns, byte [][] values) {
+  public ColumnWrite(final byte [] key, final byte [][] columns,
+      final byte [][] values) {
     this.key = key;
     this.columns = columns;
     this.values = values;

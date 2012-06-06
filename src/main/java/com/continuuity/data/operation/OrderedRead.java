@@ -12,19 +12,19 @@ public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
 
   private Map<byte[], byte[]> result;
 
-  public OrderedRead(byte [] key) {
+  public OrderedRead(final byte [] key) {
     this(key, null, 1);
   }
 
-  public OrderedRead(byte [] startKey, byte [] endKey) {
+  public OrderedRead(final byte [] startKey, final byte [] endKey) {
     this(startKey, endKey, Integer.MAX_VALUE);
   }
 
-  public OrderedRead(byte [] startKey, int limit) {
+  public OrderedRead(final byte [] startKey, int limit) {
     this(startKey, null, limit);
   }
 
-  public OrderedRead(byte [] startKey, byte [] endKey, int limit) {
+  public OrderedRead(final byte [] startKey, final byte [] endKey, int limit) {
     this.startKey = startKey;
     this.endKey = endKey;
     this.limit = limit;

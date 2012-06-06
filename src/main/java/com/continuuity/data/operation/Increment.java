@@ -11,7 +11,7 @@ public class Increment implements WriteOperation, ReadOperation<Long> {
  
   private OperationGenerator<Long> postOperationGenerator;
 
-  public Increment(byte [] key, long amount) {
+  public Increment(final byte [] key, long amount) {
     this.key = key;
     this.amount = amount;
   }

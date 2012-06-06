@@ -10,7 +10,7 @@ public class Write implements WriteOperation {
   private byte [] key;
   private byte [] value;
  
-  public Write(byte [] key, byte [] value) {
+  public Write(final byte [] key, final byte [] value) {
     this.key = key;
     this.value = value;
   }

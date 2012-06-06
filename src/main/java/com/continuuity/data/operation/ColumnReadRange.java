@@ -13,16 +13,17 @@ public class ColumnReadRange implements ReadOperation<Map<byte[], byte[]>> {
 
   private Map<byte[], byte[]> result;
 
-  public ColumnReadRange(byte [] key, byte [] startColumn) {
+  public ColumnReadRange(final byte [] key, final byte [] startColumn) {
     this(key, startColumn, null, -1);
   }
 
-  public ColumnReadRange(byte [] key, byte [] startColumn, byte [] stopColumn) {
+  public ColumnReadRange(final byte [] key, final byte [] startColumn,
+      final byte [] stopColumn) {
     this(key, startColumn, stopColumn, -1);
   }
 
-  public ColumnReadRange(byte [] key, byte [] startColumn, byte [] stopColumn,
-      int limit) {
+  public ColumnReadRange(final byte [] key, final byte [] startColumn,
+      final byte [] stopColumn, int limit) {
     this.key = key;
     this.startColumn = startColumn;
     this.stopColumn = stopColumn;

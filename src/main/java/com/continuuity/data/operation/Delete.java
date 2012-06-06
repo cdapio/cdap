@@ -6,7 +6,7 @@ public class Delete implements WriteOperation {
 
   private final byte [] key;
 
-  public Delete(byte [] key) {
+  public Delete(final byte [] key) {
     this.key = key;
   }
 

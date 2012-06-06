@@ -26,7 +26,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   private final IOExceptionHandler exceptionHandler;
 
-  public HBaseOVCTable(HTable table, byte[] family,
+  public HBaseOVCTable(HTable table, final byte[] family,
       IOExceptionHandler exceptionHandler) {
     this.table = table;
     this.family = family;

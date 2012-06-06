@@ -7,7 +7,7 @@ public class ColumnDelete implements WriteOperation {
   private final byte [] row;
   private final byte [] column;
 
-  public ColumnDelete(byte [] row, byte [] column) {
+  public ColumnDelete(final byte [] row, final byte [] column) {
     this.row = row;
     this.column = column;
   }

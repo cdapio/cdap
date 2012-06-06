@@ -11,11 +11,11 @@ public class ColumnRead implements ReadOperation<Map<byte[], byte[]>> {
 
   private Map<byte[], byte[]> result;
 
-  public ColumnRead(byte [] key) {
+  public ColumnRead(final byte [] key) {
     this(key, null);
   }
 
-  public ColumnRead(byte [] key, byte [][] columns) {
+  public ColumnRead(final byte [] key, final byte [][] columns) {
     this.key = key;
     this.columns = columns;
   }

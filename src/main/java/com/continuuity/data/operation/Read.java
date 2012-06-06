@@ -9,7 +9,7 @@ public class Read implements ReadOperation<byte[]> {
 
   private final byte [] key;
 
-  public Read(byte [] key) {
+  public Read(final byte [] key) {
     this.key = key;
   }
 

@@ -6,7 +6,7 @@ public class ReadCounter implements ReadOperation<Long> {
 
   private byte [] key;
  
-  public ReadCounter(byte [] key) {
+  public ReadCounter(final byte [] key) {
     this.key = key;
   }
 

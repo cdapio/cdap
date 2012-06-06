@@ -6,7 +6,7 @@ public class OrderedWrite implements WriteOperation {
   private byte [] key;
   private byte [] value;
  
-  public OrderedWrite(byte [] key, byte [] value) {
+  public OrderedWrite(final byte [] key, final byte [] value) {
     this.key = key;
     this.value = value;
   }

@@ -50,7 +50,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final ConcurrentHashMap<Row, RowLock> locks = new ConcurrentHashMap<Row, RowLock>();
 
-  public MemoryOVCTable(byte[] tableName, TimestampOracle timeOracle) {
+  public MemoryOVCTable(final byte [] tableName, TimestampOracle timeOracle) {
     this.name = tableName;
     this.timeOracle = timeOracle;
   }
@@ -442,7 +442,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   static class Row implements Comparable<Row> {
     final byte[] value;
 
-    Row(byte[] value) {
+    Row(final byte[] value) {
       this.value = value;
     }
 
@@ -469,7 +469,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   static class Column extends Row {
-    Column(byte[] key) {
+    Column(final byte[] key) {
       super(key);
     }
 
@@ -483,7 +483,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   static class Value extends Row {
     final ValueType type;
 
-    Value(byte[] value) {
+    Value(final byte[] value) {
       super(value);
       this.type = ValueType.DATA;
     }
