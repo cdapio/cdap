@@ -3,6 +3,7 @@ package com.continuuity.gateway.collector;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.NettyRestHandler;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.*;
@@ -13,13 +14,15 @@ import java.util.Set;
 
 /**
  * This is the http request handler for the rest collector. At this time it only accepts
- * PUT requests to send an event to a stream.
+ * POST requests to send an event to a stream.
  */
-
-public class RestHandler extends SimpleChannelUpstreamHandler {
+public class RestHandler extends NettyRestHandler {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
+
+	/** The allowed methods for this handler */
+	HttpMethod[] allowedMethods = { HttpMethod.POST };
 
 	/** The collector that created this handler. It has collector name and the consumer */
 	private RestCollector collector;
@@ -40,40 +43,8 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	 */
 	RestHandler(RestCollector collector) {
 		this.collector = collector;
-		this.pathPrefix = collector.getHttpConfig().getPrefix()
-				+ collector.getHttpConfig().getPath();
-	}
-
-	/**
-	 * Respond to the client with an error. That closes the connection.
-	 * @param channel the channel on which the request came
-	 * @param status the HTTP status to return
-	 */
-	private void respondError(Channel channel, HttpResponseStatus status) {
-		HttpResponse response = new DefaultHttpResponse(
-				HttpVersion.HTTP_1_1, status);
-		ChannelFuture future = channel.write(response);
-		future.addListener(ChannelFutureListener.CLOSE);
-	}
-
-	/**
-	 * Respond to the client with success. This keeps the connection alive
-	 * unless specified otherwise in the original request.
-	 * @param channel the channel on which the request came
-	 * @param request the original request (to determine whether to keep the connection alive)
-	 */
-	private void respondSuccess(Channel channel, HttpRequest request) {
-		HttpResponse response = new DefaultHttpResponse(
-				HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-		// this is a post and the reponse has no body
-		response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
-		// did the request ask for keepalive?
-		boolean keepAlive = HttpHeaders.isKeepAlive(request);
-		// send the response and possibly close the channel
-		ChannelFuture future = channel.write(response);
-		if (!keepAlive) {
-			future.addListener(ChannelFutureListener.CLOSE);
-		}
+		this.pathPrefix = collector.getHttpConfig().getPathPrefix()
+				+ collector.getHttpConfig().getPathMiddle();
 	}
 
 	/**
@@ -101,8 +72,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.POST) {
 			LOG.debug("Received a " + method + " request, which is not supported");
-			respondError(message.getChannel(), HttpResponseStatus.METHOD_NOT_ALLOWED);
-			// @todo according to HTTP 1.1 spec we must return an ALLOW header
+			respondNotAllowed(message.getChannel(), allowedMethods);
 			return;
 		}
 
@@ -120,7 +90,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		String path = decoder.getPath();
 		if (path.startsWith(this.pathPrefix)) {
 			String resourceName = path.substring(this.pathPrefix.length());
-			if (!resourceName.contains("/")) {
+			if (resourceName.length() > 0 && !resourceName.contains("/")) {
 				destination = resourceName;
 			}
 		}
@@ -166,7 +136,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		}
 
 		// all good - respond success
-		respondSuccess(message.getChannel(), request);
+		respondSuccess(message.getChannel(), request, null);
 	}
 
 	@Override

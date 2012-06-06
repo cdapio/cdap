@@ -14,20 +14,26 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * TODO write javadoc
+ * This is a Flume collector built directly on Netty using Avro IPC.
+ * It relies on a FlumeAdapter to do the actual ingestion of events
+ * (see FlumeCollector).
  */
 public class NettyFlumeCollector extends FlumeCollector {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(NettyFlumeCollector.class);
 
-	private Server server; // the netty server
+	/** the avro server */
+	private Server server;
 
 	@Override
 	public void start() {
 
     LOG.debug("Starting up " + this);
 
+		// this is all standard avro ipc. The key is to pass in Flume's avro
+		// source protocol as the interface, and the FlumeAdapter as its
+		// implementation.
     this.server = new NettyServer(
 				new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
 				new InetSocketAddress(this.getPort()));

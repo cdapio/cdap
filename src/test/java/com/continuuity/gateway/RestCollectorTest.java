@@ -26,7 +26,7 @@ public class RestCollectorTest {
 		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.NoopConsumer());
@@ -62,7 +62,7 @@ public class RestCollectorTest {
 		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
 		collector.setConsumer(new Util.VerifyConsumer(17, name, stream));

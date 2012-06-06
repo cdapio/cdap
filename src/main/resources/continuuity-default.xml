@@ -18,13 +18,29 @@
     </property>
 
     <property>
-        <name>gateway.collectors</name>
-        <value>rest.RestCollector,flume.FlumeCollector</value>
+        <name>gateway.connectors</name>
+        <value>rest.RestCollector,flume.FlumeCollector,rest.RestAccessor</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
     <!-- Todd: I'm really unhappy that we have to use so much XML to describe
          the Collectors, but that's 'cos we are using the Hadoop config object -->
+    <property>
+        <name>rest.RestAccessor.class</name>
+        <value>com.continuuity.gateway.accessor.RestAccessor</value>
+        <description>Specifies the class for the REST accessor</description>
+    </property>
+
+    <property>
+        <name>rest.RestAccessor.port</name>
+        <value>10002</value>
+    </property>
+
+    <property>
+        <name>rest.RestAccessor.middle</name>
+        <value>/rest-data/</value>
+    </property>
+
     <property>
         <name>rest.RestCollector.class</name>
         <value>com.continuuity.gateway.collector.RestCollector</value>
@@ -37,7 +53,7 @@
     </property>
 
     <property>
-        <name>rest.RestCollector.stream</name>
+        <name>rest.RestCollector.middle</name>
         <value>/rest-stream/</value>
     </property>
 
@@ -50,11 +66,6 @@
     <property>
         <name>rest.FlumeCollector.port</name>
         <value>10001</value>
-    </property>
-
-    <property>
-        <name>rest.FlumeCollector.stream</name>
-        <value>/flume-stream/</value>
     </property>
 
 </configuration>

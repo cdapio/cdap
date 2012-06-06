@@ -65,7 +65,7 @@ public class RestAccessorTest {
 		CConfiguration configuration = new CConfiguration();
 		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_STREAM), path);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
 		Accessor accessor = newAccessor(name);
 		accessor.configure(configuration);
 		accessor.setExecutor(this.executor);

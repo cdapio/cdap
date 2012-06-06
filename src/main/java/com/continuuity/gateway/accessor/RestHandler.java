@@ -1,9 +1,14 @@
 package com.continuuity.gateway.accessor;
 
 import com.continuuity.data.operation.Read;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.*;
+import com.continuuity.gateway.util.NettyRestHandler;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,10 +18,13 @@ import java.net.URLDecoder;
  * This is the http request handler for the rest accessor. At this time it only accepts
  * GET requests to retrieve a value for a key from a named table.
  */
-public class RestHandler extends SimpleChannelUpstreamHandler {
+public class RestHandler extends NettyRestHandler {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(RestHandler.class);
+
+	/** The allowed methods for this handler */
+	HttpMethod[] allowedMethods = { HttpMethod.GET };
 
 	/**
 	 * Will help validate URL paths, and also has the name of the connector and
@@ -40,38 +48,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	 */
 	RestHandler(RestAccessor accessor) {
 		this.accessor = accessor;
-		this.pathPrefix = accessor.getHttpConfig().getPrefix() + accessor.getHttpConfig().getPath();
-	}
-
-	/**
-	 * Respond to the client with an error. That closes the connection.
-	 * @param channel the channel on which the request came
-	 * @param status the HTTP status to return
-	 */
-	private void respondError(Channel channel, HttpResponseStatus status) {
-		HttpResponse response = new DefaultHttpResponse(
-				HttpVersion.HTTP_1_1, status);
-		ChannelFuture future = channel.write(response);
-		future.addListener(ChannelFutureListener.CLOSE);
-	}
-
-	/**
-	 * Respond to the client with success. This keeps the connection alive
-	 * unless specified otherwise in the original request.
-	 * @param channel the channel on which the request came
-	 * @param request the original request (to determine whether to keep the connection alive)
-	 * @param content the content of the response to send
-	 */
-	private void respondSuccess(Channel channel, HttpRequest request, byte[] content) {
-		HttpResponse response = new DefaultHttpResponse(
-				HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-		boolean keepAlive = HttpHeaders.isKeepAlive(request);
-		response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content.length);
-		response.setContent(ChannelBuffers.wrappedBuffer(content));
-		ChannelFuture future = channel.write(response);
-		if (!keepAlive) {
-			future.addListener(ChannelFutureListener.CLOSE);
-		}
+		this.pathPrefix = accessor.getHttpConfig().getPathPrefix() + accessor.getHttpConfig().getPathMiddle();
 	}
 
 	@Override
@@ -84,8 +61,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.GET) {
 			LOG.debug("Received a " + method + " request, which is not supported");
-			respondError(message.getChannel(), HttpResponseStatus.METHOD_NOT_ALLOWED);
-			// @todo according to HTTP 1.1 spec we must return an ALLOW header
+			respondNotAllowed(message.getChannel(), allowedMethods);
 			return;
 		}
 

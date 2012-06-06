@@ -19,10 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class serves as an intermediary between the Avro flume responder
- * and the event consumer. It receives (batches of) flume events, converts
- * them into Events and adds additional meta data (such as the collector
- * name) to the headers, then passes the events on to the consumer.
+ /**
+ * This class is the intermediary between the Flume Avro receiver (Flume
+ * events come in through Avro RPC) and the consumer that persists the
+ * events into a stream/queue. In particular, it is responsible for
+ * <ul>
+ *   <li>Mapping a flume event to a flow event, including the filtering and
+ *   mapping and adding of headers</li>
+ *   <li>Depending on the sucess of the consumer, create an Avro response
+ *   for the client (the Avro sink in a customer's Flume flow) to indicate
+ *   success or failure of the ingestion of the event.
+ *   </li>
+ * </ul>
  */
 class FlumeAdapter implements AvroSourceProtocol {
 

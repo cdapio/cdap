@@ -39,7 +39,7 @@ public class Constants {
    * List of named collectors for the gateway
    */
 	public static final String CONFIG_CONNECTORS
-      = GATEWAY_PREFIX + "collectors";
+      = GATEWAY_PREFIX + "connectors";
 
   /**
    * The string used to identify configuration information
@@ -72,19 +72,16 @@ public class Constants {
 	public static final String CONFIG_SSL = "ssl" ;
 
 	/**
-   * Path prefix in an HTTP URL
+   * Path prefix in an HTTP URL.
+	 * For instance, in http://g.d.c/rest/stream/myStream the prefix is /rest
    */
 	public static final String CONFIG_PATH_PREFIX = "prefix";
 
 	/**
-	 * Path component in the HTTP URL for a stream
+	 * Middle component in the HTTP URL
+	 * For instance, in http://g.d.c/rest/stream/myStream the middle is /stream/
 	 */
-	public static final String CONFIG_PATH_STREAM = "stream";
-
-	/**
-	 * Path component in the HTTP URL for a point read
-	 */
-	public static final String CONFIG_PATH_READ = "table";
+	public static final String CONFIG_PATH_MIDDLE = "middle";
 
 	/**
    * Generate the name of a property option for the Gateway. Basically concats

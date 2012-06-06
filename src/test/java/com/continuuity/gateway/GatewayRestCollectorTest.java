@@ -63,7 +63,7 @@ public class GatewayRestCollectorTest {
     configuration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PATH_PREFIX), prefix);
     configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_STREAM), path);
+				Constants.CONFIG_PATH_MIDDLE), path);
 
     // Now create our Gateway
     theGateway = new Gateway();

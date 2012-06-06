@@ -37,10 +37,10 @@ public class HttpConfig {
 	public int getPort() {
 		return this.port;
 	}
-	public String getPrefix() {
+	public String getPathPrefix() {
 		return this.prefix;
 	}
-	public String getPath() {
+	public String getPathMiddle() {
 		return this.path;
 	}
 	public boolean isChunking() {
@@ -77,9 +77,9 @@ public class HttpConfig {
 		config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_SSL), defaults.isSsl());
 		config.prefix = configuration.get(Constants.buildConnectorPropertyName(
-				name, Constants.CONFIG_PATH_PREFIX), defaults.getPrefix());
+				name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
 		config.path = configuration.get(Constants.buildConnectorPropertyName(
-				name, Constants.CONFIG_PATH_STREAM), defaults.getPath());
+				name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
 		config.maxContentSize = configuration.getInt(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
 
@@ -91,4 +91,12 @@ public class HttpConfig {
 		return config;
 	}
 
+	/**
+	 * Get the base URL that this HttpConfig describes
+	 * @return the base URL
+	 */
+	public String getBaseUrl() {
+		return (this.isSsl() ? "https" : "http") + "://localhost:"
+				+ this.getPort() + this.getPathPrefix() + this.getPathMiddle();
+	}
 }
