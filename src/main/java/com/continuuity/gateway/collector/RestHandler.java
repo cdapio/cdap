@@ -95,12 +95,12 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
 		HttpRequest request = (HttpRequest) message.getMessage();
 
-		LOG.info("Request received");
+		LOG.debug("Request received");
 
 		// we only support POST
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.POST) {
-			LOG.info("Received a " + method + " request, which is not supported");
+			LOG.debug("Received a " + method + " request, which is not supported");
 			respondError(message.getChannel(), HttpResponseStatus.METHOD_NOT_ALLOWED);
 			// @todo according to HTTP 1.1 spec we must return an ALLOW header
 			return;
@@ -109,7 +109,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		// we do not support a query or parameters in the URL
 		QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
 		if (decoder.getParameters() != null && !decoder.getParameters().isEmpty()) {
-			LOG.info("Received a request with query parameters, which is not supported");
+			LOG.debug("Received a request with query parameters, which is not supported");
 			respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
 			return;
 		}
@@ -125,7 +125,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			}
 		}
 		if (destination == null) {
-			LOG.info("Received a request with invalid path " + path);
+			LOG.debug("Received a request with invalid path " + path);
 			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
 			return;
 		}
@@ -160,7 +160,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		try {
 			this.collector.getConsumer().consumeEvent(event);
 		} catch (Exception e) {
-			LOG.warn("Error consuming single event: " + e.getMessage());
+			LOG.error("Error consuming single event: " + e.getMessage());
 			respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			return;
 		}
