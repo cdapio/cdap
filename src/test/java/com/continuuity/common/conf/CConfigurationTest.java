@@ -11,7 +11,7 @@ public class CConfigurationTest {
 
   @Test
   public void testConfiguration() throws Exception {
-    Configuration conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     String a = conf.get("continuuity.test.A");
     String b = conf.get("continuuity.test.B");
     Assert.assertNotNull(a);
@@ -22,7 +22,7 @@ public class CConfigurationTest {
 
   @Test
   public void testAddedConfiguration() throws Exception {
-    Configuration conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     conf.set("continuuity.test.addedA", "AddedA");
     conf.set("continuuity.test.addedB", "AddedB");
     conf.set("continuuity.test.A", "A+");

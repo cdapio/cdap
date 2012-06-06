@@ -32,7 +32,7 @@ public class CConfiguration extends Configuration {
    * @param conf  The configuration object to add the resources to.
    * @return Configuration object.
    */
-  public static Configuration addResources(Configuration conf) {
+  public static CConfiguration addResources(CConfiguration conf) {
 
     // Clear any default properties
     conf.clear();
@@ -49,23 +49,13 @@ public class CConfiguration extends Configuration {
    *
    * @return an instance of CConfiguration.
    */
-  public static Configuration create() {
+  public static CConfiguration create() {
 
     // Create a new configuration instance, but do NOT initialize with
     // the Hadoop default properties.
-    Configuration conf = new Configuration(false);
+    CConfiguration conf = new CConfiguration();
 
     return addResources(conf);
-  }
-
-  /**
-   * Clone a Configuration and create a new instance from existing values.
-   *
-   * @param that  Other configuration.
-   * @return A cloned Configuration instance.
-   */
-  public static Configuration clone(final Configuration that) {
-    return new Configuration(that);
   }
 
 } // end of CConfiguration class
