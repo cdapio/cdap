@@ -98,7 +98,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public boolean execute(Delete delete) {
-    this.randomTable.delete(delete.getKey(), delete.getColumn());
+    this.randomTable.delete(delete.getKey(), COLUMN);
     return true;
   }
 

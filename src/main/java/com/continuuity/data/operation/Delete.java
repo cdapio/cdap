@@ -4,21 +4,15 @@ import com.continuuity.data.operation.type.WriteOperation;
 
 public class Delete implements WriteOperation {
 
-  private final byte [] row;
-  private final byte [] column;
+  private final byte [] key;
 
-  public Delete(byte [] row, byte [] column) {
-    this.row = row;
-    this.column = column;
+  public Delete(byte [] key) {
+    this.key = key;
   }
 
   @Override
   public byte [] getKey() {
-    return this.row;
-  }
-
-  public byte [] getColumn() {
-    return this.column;
+    return this.key;
   }
 
   @Override

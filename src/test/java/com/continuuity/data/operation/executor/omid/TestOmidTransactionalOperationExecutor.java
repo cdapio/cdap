@@ -393,7 +393,7 @@ public class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testDeletesCantBeTransacted");
     
     List<WriteOperation> ops = new ArrayList<WriteOperation>();
-    Delete delete = new Delete(key, key);
+    Delete delete = new Delete(key);
     ops.add(delete);
     
     // Executing in a batch should fail

@@ -218,7 +218,7 @@ public class OmidTransactionalOperationExecutor
     initialize();
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
         write.getValue());
-    return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
+    return new WriteTransactionResult(true, new Delete(write.getKey()));
   }
 
   WriteTransactionResult write(ReadModifyWrite write,
@@ -231,7 +231,7 @@ public class OmidTransactionalOperationExecutor
     byte [] newValue = write.getModifier().modify(value);
     // write
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(), newValue);
-    return new WriteTransactionResult(true, new Delete(write.getKey(), COLUMN));
+    return new WriteTransactionResult(true, new Delete(write.getKey()));
   }
 
   WriteTransactionResult write(Increment increment,
@@ -240,7 +240,7 @@ public class OmidTransactionalOperationExecutor
     long incremented = this.randomTable.increment(increment.getKey(), COLUMN,
         increment.getAmount(), pointer.getFirst(), pointer.getSecond());
     List<Delete> deletes = new ArrayList<Delete>(2);
-    deletes.add(new Delete(increment.getKey(), COLUMN));
+    deletes.add(new Delete(increment.getKey()));
     OperationGenerator<Long> generator =
         increment.getPostIncrementOperationGenerator();
     if (generator != null) {
@@ -262,7 +262,7 @@ public class OmidTransactionalOperationExecutor
         write.getExpectedValue(), write.getNewValue(), pointer.getFirst(),
         pointer.getSecond());
     return new WriteTransactionResult(casReturn,
-        new Delete(write.getKey(), COLUMN));
+        new Delete(write.getKey()));
   }
 
   // TTQueues
@@ -357,8 +357,7 @@ public class OmidTransactionalOperationExecutor
     // Perform deletes
     for (Delete delete : deletes) {
       assert(delete != null);
-      this.randomTable.delete(delete.getKey(), delete.getColumn(),
-          pointer.getSecond());
+      this.randomTable.delete(delete.getKey(), COLUMN, pointer.getSecond());
     }
     // Notify oracle
     this.oracle.aborted(pointer.getSecond());
