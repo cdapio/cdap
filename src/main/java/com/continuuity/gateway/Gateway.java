@@ -55,8 +55,6 @@ public class Gateway {
 
   /**
    * Our Configuration object
-   *
-   * TODO: Figure out a way to populate this from an external file
    */
 	private CConfiguration myConfiguration;
 

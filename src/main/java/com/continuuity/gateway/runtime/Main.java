@@ -32,7 +32,7 @@ public class Main {
     try {
 
       // Load our configuration from our resource files
-      CConfiguration configuration = new CConfiguration();
+      CConfiguration configuration = CConfiguration.create();
 
       // Configure the Gateway
       theGateway.configure(configuration);
