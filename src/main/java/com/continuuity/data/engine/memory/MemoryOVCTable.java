@@ -550,6 +550,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
 
     @Override
+    public int hashCode() {
+      return Bytes.hashCode(this.row.value);
+    }
+
+    @Override
     public String toString() {
       return Objects.toStringHelper(this).add("row", this.row)
           .add("id", this.id).add("locked", this.locked).toString();
@@ -580,6 +585,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     @Override
     public boolean equals(Object o) {
       return this.stamp == ((Version) o).stamp;
+    }
+
+    @Override
+    public int hashCode() {
+      return (int)this.stamp;
     }
 
     @Override

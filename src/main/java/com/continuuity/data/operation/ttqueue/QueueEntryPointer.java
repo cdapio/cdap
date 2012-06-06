@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.common.base.Objects;
 
 /**
@@ -33,6 +35,12 @@ public class QueueEntryPointer {
   public boolean equals(Object o) {
     return this.entryId == ((QueueEntryPointer)o).entryId &&
         this.shardId == ((QueueEntryPointer)o).shardId;
+  }
+
+  @Override
+  public int hashCode() {
+    return Bytes.hashCode(
+        Bytes.toBytes(entryId)) ^ Bytes.hashCode(Bytes.toBytes(shardId));
   }
 
   @Override
