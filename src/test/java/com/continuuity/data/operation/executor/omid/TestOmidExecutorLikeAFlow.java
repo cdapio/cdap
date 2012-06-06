@@ -173,7 +173,7 @@ public class TestOmidExecutorLikeAFlow {
     // Dequeue entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(dequeue);
-    assertTrue(result.isSuccess());
+    assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1L)));
 
     // Ack it
