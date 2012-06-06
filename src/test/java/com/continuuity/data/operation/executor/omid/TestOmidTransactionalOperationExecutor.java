@@ -21,9 +21,11 @@ import org.junit.Test;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -383,6 +385,23 @@ public class TestOmidTransactionalOperationExecutor {
     // Incremented value should be 5
     assertEquals(5L, Bytes.toLong(executor.execute(new Read(key))));
 
+  }
+
+  @Test
+  public void testDeletesCantBeTransacted() throws Exception {
+
+    byte [] key = Bytes.toBytes("testDeletesCantBeTransacted");
+    
+    List<WriteOperation> ops = new ArrayList<WriteOperation>();
+    Delete delete = new Delete(key, key);
+    ops.add(delete);
+    
+    // Executing in a batch should fail
+    BatchOperationResult result = executor.execute(ops);
+    assertFalse(result.isSuccess());
+
+    // Executing singly should also fail
+    assertFalse(executor.execute(delete));
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {
