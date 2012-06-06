@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ./bin/node
 
 require('groc').CLI(process.argv.slice(2), function(error) {
   if (error) {

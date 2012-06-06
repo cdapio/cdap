@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ./bin/node
 /**
  * @license r.js 2.0.1 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.

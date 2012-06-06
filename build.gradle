@@ -13,7 +13,7 @@ task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS fil
 	
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
-	commandLine = ["jshint", 
+	commandLine = ["./tools/jshint/bin/hint", 
 		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/"
 		, "--config", 'jshint.json']
 }
@@ -22,7 +22,8 @@ task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS'
 	
 	// Uses app.build.js configuration file
 	"mkdir ./build/js".execute()
-	commandLine = ['r.js', '-o', 'app.build.js']
+	commandLine = ['./tools/requirejs/bin/r.js', '-o', 'app.build.js']
+
 }
 
 task jslibs(type:Copy, dependsOn: 'js') {
@@ -49,8 +50,9 @@ task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless b
 task docs(type: Exec, dependsOn: 'css', description: 'Generates Groc documentation') {
 	
 	// Uses .groc.json configuration file
-    commandLine = ['groc']
+    commandLine = ['./tools/groc']
 }
+docs.enabled = false
 
 task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') {
     commandLine = ['./upload.sh']
