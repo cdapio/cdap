@@ -43,10 +43,12 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  *
  */
+@Singleton
 public class OmidTransactionalOperationExecutor
     implements TransactionalOperationExecutor {
 

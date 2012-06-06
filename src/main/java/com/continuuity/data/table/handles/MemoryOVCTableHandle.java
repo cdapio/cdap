@@ -4,13 +4,17 @@ package com.continuuity.data.table.handles;
  */
 
 import com.continuuity.data.engine.memory.MemoryOVCTable;
+import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.google.inject.Inject;
 
 public class MemoryOVCTableHandle extends SimpleOVCTableHandle {
 
+  @Inject
+  private TimestampOracle timeOracle;
+  
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
-
-    return new MemoryOVCTable(tableName);
+    return new MemoryOVCTable(tableName, timeOracle);
   }
 }

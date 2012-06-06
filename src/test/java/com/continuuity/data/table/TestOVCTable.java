@@ -1,12 +1,16 @@
 package com.continuuity.data.table;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
-import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * Tests the contract and semantics of {@link OrderedVersionedColumnarTable}
@@ -17,8 +21,15 @@ public class TestOVCTable {
   // TODO: As part of ENG-211, add testing of HBaseOVCTable
   // TODO: As part of ENG-272, add testing of HyperSQLOVCTable
 
-  private final OrderedVersionedColumnarTable table =
-      new MemoryOVCTable(Bytes.toBytes("TestOVCTable"));
+  private OVCTableHandle tableHandle;
+  private OrderedVersionedColumnarTable table;
+
+  @Before
+  public void initialize() {
+    Injector injector = Guice.createInjector(new DataFabricInMemoryModule());
+    tableHandle = injector.getInstance(OVCTableHandle.class);
+    table = tableHandle.getTable(Bytes.toBytes("TestOVCTable"));
+  }
 
   private static final byte [] COL = new byte [] { (byte)0 };
   private static final MemoryReadPointer RP_MAX =

@@ -15,24 +15,37 @@ import java.util.Random;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.table.handles.SimpleColumnarTableHandle;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.table.ColumnarTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * Simple test of operations stuff.
  */
 public class OperationsSimpleExecutorTest {
 
+  private static Injector injector;
+
+  private ColumnarTableHandle handle;
+
   private OperationExecutor executor;
 
+  @BeforeClass
+  public static void initializeClass() {
+    injector = Guice.createInjector(new DataFabricInMemoryModule());
+  }
+  
   @Before
   public void setUp() throws Exception {
-    this.executor = new SimpleOperationExecutor(
-        new SimpleColumnarTableHandle());
+    this.handle = injector.getInstance(ColumnarTableHandle.class);
+    this.executor = new SimpleOperationExecutor(handle);
   }
 
   @After
@@ -292,7 +305,7 @@ public class OperationsSimpleExecutorTest {
 
 
     SimpleOperationExecutor memoryOperationExecutor =
-        new SimpleOperationExecutor(new SimpleColumnarTableHandle());
+        new SimpleOperationExecutor(handle);
 
     // Client Developer : Make two write operations
     List<WriteOperation> writes = new ArrayList<WriteOperation>(2);

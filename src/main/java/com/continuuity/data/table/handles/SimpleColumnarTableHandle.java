@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.memory.MemoryOVCTable;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
@@ -14,6 +13,7 @@ import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data.table.converter.ColumnarOnVersionedColumnarTable;
+import com.google.inject.Inject;
 
 public class SimpleColumnarTableHandle implements ColumnarTableHandle {
   
@@ -25,17 +25,19 @@ public class SimpleColumnarTableHandle implements ColumnarTableHandle {
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
   
+  @Inject
+  private TimestampOracle timeOracle;
+  
   private Object queueTableLock = new Object();
   private VersionedColumnarTable queueTable = null;
-  private TimestampOracle timeOracle = new MemoryStrictlyMonotonicOracle();
   private Configuration conf = new Configuration();
   
   @Override
   public ColumnarTable getTable(byte[] tableName) {
     ColumnarTable table = this.tables.get(tableName);
     if (table != null) return table;
-    table = new ColumnarOnVersionedColumnarTable(new MemoryOVCTable(tableName),
-        timeOracle);
+    table = new ColumnarOnVersionedColumnarTable(
+        new MemoryOVCTable(tableName, timeOracle), timeOracle);
     ColumnarTable existing = this.tables.putIfAbsent(tableName, table);
     return existing != null ? existing : table;
   }
@@ -47,7 +49,8 @@ public class SimpleColumnarTableHandle implements ColumnarTableHandle {
     if (queueTable == null) {
       synchronized (queueTableLock) {
         if (queueTable == null) {
-          queueTable = new MemoryOVCTable(Bytes.toBytes("queueTable"));
+          queueTable = new MemoryOVCTable(Bytes.toBytes("queueTable"),
+              timeOracle);
         }
       }
     }

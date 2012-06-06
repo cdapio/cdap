@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -42,6 +41,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final byte[] name;
 
+  private final TimestampOracle timeOracle;
+  
   private final ConcurrentNavigableMap<Row, // row to
   NavigableMap<Column, // column to
   NavigableMap<Version, Value>>> map = // version to value
@@ -49,8 +50,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final ConcurrentHashMap<Row, RowLock> locks = new ConcurrentHashMap<Row, RowLock>();
 
-  public MemoryOVCTable(byte[] tableName) {
+  public MemoryOVCTable(byte[] tableName, TimestampOracle timeOracle) {
     this.name = tableName;
+    this.timeOracle = timeOracle;
   }
 
   @Override
@@ -429,10 +431,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     return columnMap;
   }
 
-  private final TimestampOracle oracle = new MemoryStrictlyMonotonicTimeOracle();
-
   private long now() {
-    return this.oracle.getTimestamp();
+    return this.timeOracle.getTimestamp();
   }
 
   private ReadPointer nowRP() {

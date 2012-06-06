@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -57,15 +57,19 @@ public class TestOmidExecutorLikeAFlow {
 
   private OVCTableHandle handle;
 
+  private static Injector injector;
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
   }
 
+  @BeforeClass
+  public static void initializeClass() {
+    injector = Guice.createInjector(new DataFabricInMemoryModule());
+  }
+  
   @Before
-  public void initialize() {
-    Injector injector = Guice.createInjector(new DataFabricInMemoryModule());
-
+  public void initializeBefore() {
     this.timeOracle = injector.getInstance(TimestampOracle.class);
     this.executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
     this.oracle = this.executor.getOracle();
@@ -487,7 +491,7 @@ public class TestOmidExecutorLikeAFlow {
 
   }
 
-  @Test @Ignore
+  @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
@@ -583,7 +587,7 @@ public class TestOmidExecutorLikeAFlow {
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  @Test @Ignore
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
