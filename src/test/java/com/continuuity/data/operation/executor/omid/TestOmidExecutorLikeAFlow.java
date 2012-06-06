@@ -501,12 +501,12 @@ public class TestOmidExecutorLikeAFlow {
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
+    final AtomicBoolean lastSuccess = new AtomicBoolean(false);
     final AtomicBoolean retried = new AtomicBoolean(false);
     Thread dequeueThread = new Thread() {
       @Override
       public void run() {
-        boolean lastSuccess = false;
-        while (lastSuccess || !stop.get()) {
+        while (lastSuccess.get() || !stop.get()) {
           DequeueResult result;
           try {
             result = executorFinal.execute(
@@ -523,9 +523,9 @@ public class TestOmidExecutorLikeAFlow {
             dequeued.add(result.getValue());
             assertTrue(executorFinal.execute(
                 new QueueAck(queueName, result.getEntryPointer(), consumer)));
-            lastSuccess = true;
+            lastSuccess.set(true);
           } else {
-            lastSuccess = false;
+            lastSuccess.set(false);
             numEmpty.incrementAndGet();
           }
         }
@@ -535,7 +535,7 @@ public class TestOmidExecutorLikeAFlow {
             System.out.println("Trying loop once more");
             TTQueueOnVCTable.TRACE = true;
             retried.set(true);
-            lastSuccess = true;
+            lastSuccess.set(true);
             run();
           }
         }
