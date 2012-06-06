@@ -1,7 +1,8 @@
 package com.continuuity.overlord.flowmanager;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.overlord.flowmanager.internal.StateChange;
+import com.continuuity.flowmanager.flowmanager.*;
+import com.continuuity.flowmanager.flowmanager.internal.StateChange;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;

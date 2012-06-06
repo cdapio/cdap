@@ -1,14 +1,15 @@
 package com.continuuity.overlord.flowmanager;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.overlord.flowmanager.internal.StateChange;
+import com.continuuity.flowmanager.flowmanager.SQLStateChangeSyncer;
+import com.continuuity.flowmanager.flowmanager.StateChangeListener;
+import com.continuuity.flowmanager.flowmanager.StateChangeType;
+import com.continuuity.flowmanager.flowmanager.StateChanger;
+import com.continuuity.flowmanager.flowmanager.internal.StateChange;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryOneTime;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.MetricName;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
