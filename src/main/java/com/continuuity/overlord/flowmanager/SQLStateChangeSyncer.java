@@ -1,8 +1,10 @@
 package com.continuuity.overlord.flowmanager;
 
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,7 +21,8 @@ public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData
   private static final Logger Log = LoggerFactory.getLogger(SQLStateChangeSyncer.class);
   private final Connection connection;
 
-  public SQLStateChangeSyncer(String url) throws SQLException {
+  @Inject
+  public SQLStateChangeSyncer(@Named("Flow Monitor JDBC URL") final String url) throws SQLException {
     connection = DriverManager.getConnection(url, "sa", "");
     initialization();
   }

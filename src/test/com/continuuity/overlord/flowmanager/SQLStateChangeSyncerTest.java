@@ -50,7 +50,7 @@ public class SQLStateChangeSyncerTest {
 
   @Test
   public void testHSQLStateChangeSyncerSave() throws Exception {
-      CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10)); client.start();
+    CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10)); client.start();
 
 
     StateChanger changer = StateChange.Client.newState(client, "/continuuity/system/queue");
