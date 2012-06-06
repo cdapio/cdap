@@ -13,40 +13,92 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * TODO write javadoc
+ * The consumer is responsible for the actual ingestion of an event
+ * or a batch of events received by a collector. For this it needs
+ * to provide abstract methods single() and batch(), and in addition
+ * to methods start() and stop() to - guess what - start and stop
+ * the consumer. These methods are protected and cannot be called
+ * directly by the collector.
+ *
+ * Instead, this base class for all consumers wraps the four
+ * abstract methods into four methods start/stopConsumer and
+ * consumeEvent/Events, which we can use to inject code into
+ * every consumer (these methods are final and cannot be overridden
+ * by implementing classes).
+ *
+ * At this point, all we do here is count the number of events and calls
+ * that were received, processed successfully, or failed to process.
  */
 public abstract class Consumer {
 
 	private final Logger LOG = LoggerFactory
 			.getLogger(this.getClass());
 
+	/** the number of calls that were received since the consumer started */
 	private AtomicLong callsReceived = new AtomicLong();
+	/** the number of calls that succeeded since the consumer started */
 	private AtomicLong callsSucceeded = new AtomicLong();
+	/** the number of calls that failed since the consumer started */
 	private AtomicLong callsFailed = new AtomicLong();
+	/** the number of events that were received since the consumer started */
 	private AtomicLong eventsReceived = new AtomicLong();
+	/** the number of events that were successfully consumed since the consumer started */
 	private AtomicLong eventsSucceeded = new AtomicLong();
+	/** the number of events that failed to be consumed since the consumer started */
 	private AtomicLong eventsFailed = new AtomicLong();
 
+	/** @return the number of calls that were received since the consumer started */
 	public long callsReceived() { return this.callsReceived.get(); }
+	/** @return the number of calls that succeeded since the consumer started */
 	public long callsSucceeded() { return this.callsSucceeded.get(); }
+	/** @return the number of calls that failed since the consumer started */
 	public long callsFailed() { return this.callsFailed.get(); }
+	/** @return the number of events that were received since the consumer started */
 	public long eventsReceived() { return this.eventsReceived.get(); }
+	/** @return the number of events that were successfully consumed since the consumer started */
 	public long eventsSucceeded() { return this.eventsSucceeded.get(); }
+	/** @return the number of events that failed to be consumed since the consumer started */
 	public long eventsFailed() { return this.eventsFailed.get(); }
 
+	/**
+	 * Configure the consumer. By default does nothing.
+	 * @param configuration The configuration that has all the options
+	 */
 	public void configure(CConfiguration configuration) { }
 
+	/**
+	 * Start the consumer. This is where any initialization of state happens.
+	 * By default does nothing.
+	 */
 	protected void start() {	}
+	/**
+	 * Start the consumer. This is where de-initialization of state happens.
+	 * By default does nothing.
+	 */
 	protected void stop() { }
 
+	/**
+	 * Consume a single event. This method is abstract and must be overridden
+	 * @param event the event to be consumed
+	 * @throws Exception if anything goes wrong
+	 */
 	protected abstract void single(Event event) throws Exception;
 
+	/**
+	 * Consume a batch of events. By default calls single() for every event in the batch.
+	 * @param events the batch of events to be consumed
+	 * @throws Exception if anything goes wrong
+	 */
 	protected void batch(List<Event> events) throws Exception {
 		for (Event event : events) {
 			this.single(event);
 		}
 	}
 
+	/**
+	 * Start the consumer. This is called by the collector/gateway that owns the
+	 * consumer, and itself calls start() which can be overridden by subclasses.
+	 */
 	final void startConsumer() {
 		LOG.info("Consumer Starting up.");
 
@@ -60,6 +112,10 @@ public abstract class Consumer {
 		this.start();
 	}
 
+	/**
+	 * Start the consumer. This is called by the collector/gateway that owns the
+	 * consumer, and itself calls stop() which can be overridden by subclasses.
+	 */
 	final void stopConsumer() {
 		this.stop();
 		LOG.info("Consumer Shutting down.");
@@ -68,6 +124,13 @@ public abstract class Consumer {
 		LOG.info("  Calls/Events Failed:    " + this.callsFailed + "/" + this.eventsFailed);
 	}
 
+	/**
+	 * Consume one event. This is called by the collector/gateway that owns the
+	 * consumer. It does some counting and then calls single() which can be
+	 * overridden by subclasses.
+	 * @param event The event to be consumed
+	 * @throws Exception if anything goes wrong
+	 */
 	final public void consumeEvent(Event event) throws Exception {
 		this.callsReceived.incrementAndGet();
 		this.eventsReceived.incrementAndGet();
@@ -82,6 +145,13 @@ public abstract class Consumer {
 		this.eventsSucceeded.incrementAndGet();
 	}
 
+	/**
+	 * Consume a batch of event. This is called by the collector/gateway that
+	 * owns the consumer. It does some counting and then calls batch() which
+	 * can be overridden by subclasses.
+	 * @param events The events to be consumed
+	 * @throws Exception if anything goes wrong
+	 */
 	final public void consumeEvents(List<Event> events) throws Exception {
 		this.callsReceived.incrementAndGet();
 		this.eventsReceived.addAndGet(events.size());

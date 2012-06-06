@@ -28,7 +28,7 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
 	/** this will provide defaults for the HTTP service, such as port and paths */
 	private static final HttpConfig defaultHttpConfig = new HttpConfig("rest")
 			.setPort(8080)
-			.setPath("/table/");
+			.setPathMiddle("/table/");
 
 	/** this will provide the actual HTTP configuration, backed by the default */
 	private HttpConfig httpConfig = defaultHttpConfig;

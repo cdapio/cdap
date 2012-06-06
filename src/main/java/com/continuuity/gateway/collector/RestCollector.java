@@ -28,7 +28,7 @@ public class RestCollector extends Collector implements NettyRequestHandlerFacto
 	/** this will provide defaults for the HTTP service, such as port and paths */
 	private static final HttpConfig defaultConfig = new HttpConfig("rest")
 			.setPort(8765)
-			.setPath("/stream/");
+			.setPathMiddle("/stream/");
 
 	/** this will provide the actual HTTP configuration, backed by the default */
 	private HttpConfig httpConfig = defaultConfig;
