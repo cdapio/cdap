@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -680,24 +682,75 @@ public class TestTTQueue {
     dequeuer.shutdown();
   }
   
-  @SuppressWarnings("unused")
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
-    final boolean singleEntry = true;
-    TTQueue queue = createQueue();
-    long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    final TTQueue queue = createQueue();
+    final long version = timeOracle.getTimestamp();
+    final ReadPointer readPointer = new MemoryReadPointer(version);
     AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
 
-    // Create 4 consumer groups with 4 consumers each
-    int n = 4;
-    QueueConsumer [][] consumers = new QueueConsumer[n][];
-    for (int i=0; i<n; i++) {
-      consumers[i] = new QueueConsumer[n];
-      for (int j=0; j<n; j++) {
-        consumers[i][j] = new QueueConsumer(j, i, n);
+    final int n = 50000;
+    
+    // Create and start a thread that dequeues in a loop
+    final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    final QueueConfig config = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    final AtomicBoolean stop = new AtomicBoolean(false);
+    final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
+    final AtomicLong numEmpty = new AtomicLong(0);
+    Thread dequeueThread = new Thread() {
+      @Override
+      public void run() {
+        boolean lastSuccess = false;
+        while (lastSuccess || !stop.get()) {
+          DequeueResult result = queue.dequeue(consumer, config, readPointer);
+          if (result.isFailure()) {
+            System.out.println("Dequeue failed! " + result);
+            return;
+          }
+          if (result.isSuccess()) {
+            dequeued.add(result.getValue());
+            assertTrue(queue.ack(result.getEntryPointer(), consumer));
+            assertTrue(queue.finalize(result.getEntryPointer(), consumer));
+            lastSuccess = true;
+          } else {
+            lastSuccess = false;
+            numEmpty.incrementAndGet();
+          }
+        }
       }
-    }
+    };
+    dequeueThread.start();
+    
+    // After 10ms, should still have zero entries
+    assertEquals(0, dequeued.size());
+    
+    // Start an enqueueThread to enqueue N entries
+    Thread enqueueThread = new Thread() {
+      @Override
+      public void run() {
+        for (int i=0; i<n; i++) {
+          EnqueueResult result = queue.enqueue(Bytes.toBytes(i), version);
+          assertTrue(result.isSuccess());
+        }
+      }
+    };
+    enqueueThread.start();
+    
+    // Join the enqueuer
+    enqueueThread.join();
+    
+    // Tell the dequeuer to stop (once he gets an empty)
+    stop.set(true);
+    dequeueThread.join();
+    System.out.println("DequeueThread is done.  Set size is " +
+        dequeued.size() + ", Number of empty returns is " + numEmpty.get());
+    
+    // Should have dequeued n entries
+    assertEquals(n, dequeued.size());
+    
+    // And dequeuedEntries should be >= n
+    assertTrue(n <= dequeueReturns.get());
   }
   
   @Test
