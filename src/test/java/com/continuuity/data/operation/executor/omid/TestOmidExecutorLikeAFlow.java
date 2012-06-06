@@ -502,12 +502,11 @@ public class TestOmidExecutorLikeAFlow {
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
-    final AtomicBoolean lastSuccess = new AtomicBoolean(false);
-    final AtomicBoolean retried = new AtomicBoolean(false);
     Thread dequeueThread = new Thread() {
       @Override
       public void run() {
-        while (lastSuccess.get() || !stop.get()) {
+        boolean lastSuccess = false;
+        while (lastSuccess || !stop.get()) {
           DequeueResult result;
           try {
             result = executorFinal.execute(
@@ -524,28 +523,20 @@ public class TestOmidExecutorLikeAFlow {
             dequeued.add(result.getValue());
             assertTrue(executorFinal.execute(
                 new QueueAck(queueName, result.getEntryPointer(), consumer)));
-            lastSuccess.set(true);
+            lastSuccess = true;
           } else {
-            lastSuccess.set(false);
             numEmpty.incrementAndGet();
+            lastSuccess = false;
           }
         }
         if (dequeued.size() < n) {
           System.out.println("Dequeuer stopped before it finished!");
-          if (!retried.get()) {
-            System.out.println("Trying loop once more");
-            retried.set(true);
-            lastSuccess.set(true);
-            run();
-          } else {
-            System.out.println("Retried again and still no go");
-            long lastEntryId = dequeued.size();
-            System.out.println("Last success was entry id " + lastEntryId);
-            printQueueInfo(queueName, 0);
-            printEntryInfo(queueName, lastEntryId);
-            printEntryInfo(queueName, lastEntryId+1);
-            printEntryInfo(queueName, lastEntryId+2);
-          }
+          long lastEntryId = dequeued.size();
+          System.out.println("Last success was entry id " + lastEntryId);
+          printQueueInfo(queueName, 0);
+          printEntryInfo(queueName, lastEntryId);
+          printEntryInfo(queueName, lastEntryId+1);
+          printEntryInfo(queueName, lastEntryId+2);
         }
       }
     };
@@ -771,7 +762,6 @@ public class TestOmidExecutorLikeAFlow {
     }
     @Override
     public void run() {
-      boolean gotEmptyAndDone = false;
       while (true) {
         boolean localProducersDone = this.producersDone.get();
         QueueDequeue dequeue =
@@ -787,22 +777,12 @@ public class TestOmidExecutorLikeAFlow {
           if (result.isSuccess()) {
             this.dequeued++;
             this.dequeuedMap.put(result.getValue(), result.getValue());
-            if (gotEmptyAndDone) {
-              System.out.println("Got empty+done then got another dequeue after sleep!");
-              gotEmptyAndDone = false;
-            }
           } else if (result.isFailure()) {
             fail("Dequeue failed " + result);
           } else if (result.isEmpty() && localProducersDone) {
-            if (gotEmptyAndDone) {
-              System.out.println("Empty and done looped, result empty again");
-              return;
-            } else {
-              System.out.println(this.consumer.toString() + " finished after " +
-                  this.dequeued + " dequeues, sleeping and retrying dequeue");
-              Thread.sleep(100);
-              gotEmptyAndDone = true;
-            }
+            System.out.println(this.consumer.toString() + " finished after " +
+                this.dequeued + " dequeues, consumer thread exiting");
+            return;
           } else if (result.isEmpty() && !localProducersDone) {
             System.out.println(this.consumer.toString() + " empty but waiting");
             Thread.sleep(1);
