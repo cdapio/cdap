@@ -53,7 +53,7 @@ public class FlowMonitorServerTest {
     }
   }
 
-  @Test  @Ignore
+  @Test
   public void testFlowMonitorServer() throws Exception {
     Injector injector = Guice.createInjector(DIModules.getInMemoryHSQLBindings());
     FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
