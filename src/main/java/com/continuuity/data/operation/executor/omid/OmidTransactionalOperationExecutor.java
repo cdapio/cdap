@@ -298,8 +298,6 @@ public class OmidTransactionalOperationExecutor
         new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
   }
 
-
-
   @Override
   public DequeueResult execute(QueueDequeue dequeue)
       throws SyncReadTimeoutException {
