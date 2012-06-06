@@ -73,5 +73,7 @@ public interface TTQueueTable {
   boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
 
-  public String getInfo(byte[] queueName, int groupId);
+  public String getGroupInfo(byte[] queueName, int groupId);
+
+  public String getEntryInfo(byte[] queueName, long entryId);
 }

@@ -537,6 +537,14 @@ public class TestOmidExecutorLikeAFlow {
             retried.set(true);
             lastSuccess.set(true);
             run();
+          } else {
+            System.out.println("Retried again and still no go");
+            long lastEntryId = dequeued.size();
+            System.out.println("Last success was entry id " + lastEntryId);
+            printQueueInfo(queueName, 0);
+            printEntryInfo(queueName, lastEntryId);
+            printEntryInfo(queueName, lastEntryId+1);
+            printEntryInfo(queueName, lastEntryId+2);
           }
         }
       }
@@ -704,7 +712,12 @@ public class TestOmidExecutorLikeAFlow {
 
   private void printQueueInfo(byte[] queueName, int groupId) {
     TTQueueTable table = this.handle.getQueueTable(Bytes.toBytes("queues"));
-    System.out.println(table.getInfo(queueName, groupId));
+    System.out.println(table.getGroupInfo(queueName, groupId));
+  }
+
+  private void printEntryInfo(byte[] queueName, long entryId) {
+    TTQueueTable table = this.handle.getQueueTable(Bytes.toBytes("queues"));
+    System.out.println(table.getEntryInfo(queueName, entryId));
   }
 
   class Producer extends Thread {

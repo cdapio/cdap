@@ -689,7 +689,7 @@ public class TestTTQueue {
     final ReadPointer readPointer = new MemoryReadPointer(version);
     AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
 
-    final int n = 50000;
+    final int n = 5000;
     
     // Create and start a thread that dequeues in a loop
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1);

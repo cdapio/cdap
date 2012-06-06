@@ -89,7 +89,7 @@ public class TTQueueOnVCTable implements TTQueue {
         120 * 1000); // 120 seconds default
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
         "ttqueue.entry.semiacked.max",
-        1 * 1000); // 1 second default
+        10 * 1000); // 10 second default
   }
 
   @Override
@@ -676,5 +676,48 @@ public class TTQueueOnVCTable implements TTQueue {
     }
     
     return sb.toString();
+  }
+
+  public String getEntryInfo(long entryId) {
+    
+    long curShard = 1;
+    long curEntry = 1;
+    ReadPointer rp = new MemoryReadPointer(Long.MAX_VALUE);
+    while (true) {
+
+      byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, curShard);
+      byte [] entryMetaColumn = makeColumn(curEntry, ENTRY_META);
+
+      // Do a dirty read of the entry meta data
+      ImmutablePair<byte[],Long> entryMetaDataAndStamp =
+          this.table.getWithVersion(shardRow, entryMetaColumn, rp);
+      
+      if (entryMetaDataAndStamp == null) {
+        if (entryId == curEntry) {
+          return "Iterated all the way to specified entry but that did not " +
+              "exist (entry " + curEntry + " in shard " + curShard + ")";
+        } else {
+          return "Didn't iterate to the specified entry (" + entryId + ") ," +
+              "tripped over empty entry at (entry " + curEntry + " in shard " +
+              curShard + ")";
+        }
+      }
+      
+      EntryMeta entryMeta =
+          EntryMeta.fromBytes(entryMetaDataAndStamp.getFirst());
+      
+      if (curEntry == entryId) {
+        return "Found entry at " + entryId + " in shard " + curShard + " (" +
+            entryMeta.toString() + ")";
+      }
+      
+      if (entryMeta.isInvalid() || entryMeta.isValid()) {
+        // Move to next entry
+        curEntry++;
+      } else if (entryMeta.iEndOfShard()) {
+        // Move to next shard
+        curShard++;
+      }
+    }
   }
 }

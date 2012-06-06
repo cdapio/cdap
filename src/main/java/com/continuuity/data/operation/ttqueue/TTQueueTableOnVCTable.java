@@ -74,7 +74,12 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public String getInfo(byte[] queueName, int groupId) {
+  public String getGroupInfo(byte[] queueName, int groupId) {
     return getQueue(queueName).getInfo(groupId);
+  }
+
+  @Override
+  public String getEntryInfo(byte[] queueName, long entryId) {
+    return getQueue(queueName).getEntryInfo(entryId);
   }
 }
