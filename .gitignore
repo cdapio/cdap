@@ -4,7 +4,11 @@
 
 # Ignore Intellij files
 *.iml
+*.ipr
+*.iws
 .idea/
+out/
+atlassian-ide-plugin.xml
 
 # Ignore Eclipse files
 .classpath
