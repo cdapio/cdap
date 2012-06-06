@@ -487,7 +487,7 @@ public class TestOmidExecutorLikeAFlow {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testConcurrentEnqueueDequeue() throws Exception {
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
