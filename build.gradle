@@ -12,7 +12,16 @@ task gitCheckout {
     }
 }
 
-task gitPull  {
+task gitPullSelf(type:Exec) {
+    group = 'Git'
+    description = 'Intended for master project only, runs a git pull on .'
+    workingDir projectDir
+    commandLine 'git'
+    args 'pull', project.projectDir
+    ignoreExitValue true
+}
+
+task gitPull(dependsOn: gitPullSelf)  {
     group = 'Git'
     description = 'Pulls the latest commits for all git repos.'
     doLast {
@@ -22,7 +31,7 @@ task gitPull  {
     }
 }
 
-task gitUpdate  {
+task gitUpdate(dependsOn: gitPullSelf)  {
     group = 'Git'
     description = 'Performs a clone, checkout, and pull on all repositories.'
     doLast {
