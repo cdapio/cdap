@@ -103,8 +103,8 @@ public class TestTTQueue {
         (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
     
     // Both queues should be empty for each consumer
-//    assertTrue(queue.dequeue(consumerSync, configSync,
-//        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
+    assertTrue(queue.dequeue(consumerSync, configSync,
+        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
     assertTrue(queue.dequeue(consumerAsync, configAsync,
         new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
   }

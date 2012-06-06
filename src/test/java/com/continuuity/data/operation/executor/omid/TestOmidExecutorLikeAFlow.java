@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -413,7 +414,7 @@ public class TestOmidExecutorLikeAFlow {
   public void testLotsOfEnqueuesThenDequeues() throws Exception {
 
     byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
-    int numEntries = 5000;
+    int numEntries = 1000;
     
     long startTime = System.currentTimeMillis();
     
@@ -484,7 +485,7 @@ public class TestOmidExecutorLikeAFlow {
   
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  @Test
+  @Test @Ignore
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
