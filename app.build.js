@@ -3,9 +3,5 @@
     locale: "en-us",  
     inlineText: true,
     out: './build/js/main.js',
-    modules: [
-        {
-            name: 'main'
-        }
-    ]
+    name: 'main'
 })
