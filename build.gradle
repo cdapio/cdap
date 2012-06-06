@@ -18,6 +18,7 @@ task gitPullSelf(type:Exec) {
     workingDir projectDir
     commandLine 'git'
     args 'pull', project.projectDir
+    ignoreExitValue true
 }
 
 task gitPull(dependsOn: gitPullSelf)  {
