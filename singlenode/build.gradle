@@ -1,0 +1,24 @@
+apply plugin: 'continuuity'
+
+apply plugin: 'application'
+mainClassName = 'com.continuuity.SingleNodeMain'
+
+
+buildscript {
+  apply from: 'continuuity.gradle'
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+    compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+    compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
+    compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+    compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+    compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
+}
+
