@@ -698,7 +698,6 @@ public class TestTTQueue {
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
-    final AtomicBoolean retried = new AtomicBoolean(false);
     Thread dequeueThread = new Thread() {
       @Override
       public void run() {
@@ -717,16 +716,6 @@ public class TestTTQueue {
           } else {
             lastSuccess = false;
             numEmpty.incrementAndGet();
-          }
-        }
-        if (dequeued.size() < n) {
-          System.out.println("Dequeuer stopped before it finished!");
-          if (!retried.get()) {
-            System.out.println("Trying loop once more");
-            TTQueueOnVCTable.TRACE = true;
-            retried.set(true);
-            lastSuccess = true;
-            run();
           }
         }
       }
