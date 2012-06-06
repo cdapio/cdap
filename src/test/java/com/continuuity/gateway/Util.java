@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
@@ -15,6 +16,7 @@ import org.apache.flume.event.SimpleEvent;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -23,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -168,4 +172,60 @@ public class Util {
 			Assert.assertTrue(executor.execute(operations).isSuccess());
 		}
 	}
+
+	/**
+	 * Verify that a given value can be retrieved for a given key via http GET request
+	 * @param executor the operation executor to use for access to data fabric
+	 * @param baseUri The URI for get request, without the key
+	 * @param key The key
+	 * @param value The value
+	 * @throws Exception if an exception occurs
+	 */
+	static void testKeyValue(OperationExecutor executor,
+										String baseUri, byte[] key, byte[] value) throws Exception {
+		// add the key/value to the data fabric
+		Write write = new Write(key, value);
+		List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
+		operations.add(write);
+		Assert.assertTrue(executor.execute(operations).isSuccess());
+
+		// make a get URL
+		String getUrl = baseUri + URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
+		LOG.info("GET request URI for key '" + new String(key) + "' is " + getUrl);
+
+		// and issue a GET request to the server
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(new HttpGet(getUrl));
+		client.getConnectionManager().shutdown();
+
+		// verify the response is ok
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+
+		// verify the length of the return value is the same as the original value's
+		int length = (int)response.getEntity().getContentLength();
+		Assert.assertEquals(value.length, length);
+
+		// verify that the value is actually the same
+		InputStream content = response.getEntity().getContent();
+		byte[] bytes = new byte[length];
+		content.read(bytes);
+		Assert.assertArrayEquals(value, bytes);
+	}
+
+	/**
+	 * Verify that a given value can be retrieved for a given key via http GET request.
+	 * This converts the key and value from String to bytes and calls the byte-based
+	 * method testKeyValue.
+	 * @param executor the operation executor to use for access to data fabric
+	 * @param baseUri The URI for get request, without the key
+	 * @param key The key
+	 * @param value The value
+	 * @throws Exception if an exception occurs
+	 */
+	static void testKeyValue(OperationExecutor executor,
+										String baseUri, String key, String value) throws Exception {
+		testKeyValue(executor, baseUri, key.getBytes(), value.getBytes());
+	}
+
+
 }
