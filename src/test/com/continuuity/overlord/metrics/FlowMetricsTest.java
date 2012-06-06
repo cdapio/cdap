@@ -1,9 +1,9 @@
 package com.continuuity.overlord.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.flowmanager.metrics.CMetrics;
-import com.continuuity.flowmanager.metrics.FlowMonitorReporter;
-import com.continuuity.flowmanager.metrics.internal.FlowMetricFactory;
+import com.continuuity.metrics.CMetrics;
+import com.continuuity.metrics.FlowMonitorReporter;
+import com.continuuity.metrics.internal.FlowMetricFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Test;

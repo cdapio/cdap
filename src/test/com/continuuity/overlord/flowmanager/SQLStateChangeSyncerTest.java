@@ -1,11 +1,11 @@
 package com.continuuity.overlord.flowmanager;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.flowmanager.flowmanager.SQLStateChangeSyncer;
-import com.continuuity.flowmanager.flowmanager.StateChangeListener;
-import com.continuuity.flowmanager.flowmanager.StateChangeType;
-import com.continuuity.flowmanager.flowmanager.StateChanger;
-import com.continuuity.flowmanager.flowmanager.internal.StateChange;
+import com.continuuity.flowmanager.SQLStateChangeSyncer;
+import com.continuuity.flowmanager.StateChangeListener;
+import com.continuuity.flowmanager.StateChangeType;
+import com.continuuity.flowmanager.StateChanger;
+import com.continuuity.flowmanager.internal.StateChange;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
