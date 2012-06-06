@@ -17,7 +17,7 @@ task gitPullSelf(type:Exec) {
     description = 'Intended for master project only, runs a git pull on .'
     workingDir projectDir
     commandLine 'git'
-    args 'pull'
+    args 'pull', project.projectDir
 }
 
 task gitPull(dependsOn: gitPullSelf)  {
