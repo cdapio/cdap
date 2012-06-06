@@ -8,13 +8,15 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -47,7 +49,7 @@ public class TestOmidExecutorLikeAFlow {
   private TransactionOracle oracle;
 
   @SuppressWarnings("unused")
-  private Configuration conf = new CConfiguration();
+  private final Configuration conf = new CConfiguration();
 
   private OmidTransactionalOperationExecutor executor;
 
@@ -62,10 +64,10 @@ public class TestOmidExecutorLikeAFlow {
   public void initialize() {
     Injector injector = Guice.createInjector(new DataFabricInMemoryModule());
 
-    timeOracle = injector.getInstance(TimestampOracle.class);
-    executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
-    oracle = executor.getOracle();
-    handle = executor.getTableHandle();
+    this.timeOracle = injector.getInstance(TimestampOracle.class);
+    this.executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
+    this.oracle = this.executor.getOracle();
+    this.handle = this.executor.getTableHandle();
   }
 
   @Test
@@ -415,9 +417,9 @@ public class TestOmidExecutorLikeAFlow {
 
     byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
     int numEntries = 1000;
-    
+
     long startTime = System.currentTimeMillis();
-    
+
     for (int i=1; i<numEntries+1; i++) {
       byte [] entry = Bytes.toBytes(i);
       BatchOperationResult result = this.executor.execute(
@@ -425,15 +427,15 @@ public class TestOmidExecutorLikeAFlow {
               new QueueEnqueue(queueName, entry)}));
       assertTrue(result.isSuccess());
     }
-    
+
     long enqueueStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished enqueue of " + numEntries + " entries in " +
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
-    
+
     // First consume them all in sync mode
-    
+
     QueueConsumer consumerOne = new QueueConsumer(0, 0, 1);
     QueueConfig configOne = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), true);
@@ -447,15 +449,15 @@ public class TestOmidExecutorLikeAFlow {
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
     }
-    
+
     long dequeueSyncStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished sync dequeue of " + numEntries + " entries in " +
         (dequeueSyncStop-enqueueStop) + " ms (" +
         (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
-    
+
     // Now consume them all in async mode, no ack
-    
+
     QueueConsumer consumerTwo = new QueueConsumer(0, 2, 1);
     QueueConfig configTwo = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), false);
@@ -468,35 +470,108 @@ public class TestOmidExecutorLikeAFlow {
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
     }
-    
+
     long dequeueAsyncStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished async dequeue of " + numEntries + " entries in " +
         (dequeueAsyncStop-dequeueSyncStop) + " ms (" +
         (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
-    
+
     // Both queues should be empty for each consumer
     assertTrue(this.executor.execute(
         new QueueDequeue(queueName, consumerOne, configOne)).isEmpty());
     assertTrue(this.executor.execute(
         new QueueDequeue(queueName, consumerTwo, configTwo)).isEmpty());
-    
+
   }
-  
+
+  @Test
+  public void testConcurrentEnqueueDequeue() throws Exception {
+
+    final OmidTransactionalOperationExecutor executorFinal = this.executor;
+    final int n = 50000;
+    final byte [] queueName = Bytes.toBytes("testConcurrentEnqueueDequeue");
+
+    // Create and start a thread that dequeues in a loop
+    final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    final QueueConfig config = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    final AtomicBoolean stop = new AtomicBoolean(false);
+    final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
+    final AtomicLong numEmpty = new AtomicLong(0);
+    Thread dequeueThread = new Thread() {
+      @Override
+      public void run() {
+        boolean lastSuccess = false;
+        while (lastSuccess || !stop.get()) {
+          DequeueResult result;
+          try {
+            result = executorFinal.execute(
+                new QueueDequeue(queueName, consumer, config));
+          } catch (SyncReadTimeoutException e) {
+            e.printStackTrace();
+            return;
+          }
+          if (result.isFailure()) {
+            System.out.println("Dequeue failed! " + result);
+            return;
+          }
+          if (result.isSuccess()) {
+            dequeued.add(result.getValue());
+            assertTrue(executorFinal.execute(
+                new QueueAck(queueName, result.getEntryPointer(), consumer)));
+            lastSuccess = true;
+          } else {
+            lastSuccess = false;
+            numEmpty.incrementAndGet();
+          }
+        }
+      }
+    };
+    dequeueThread.start();
+
+    // After 10ms, should still have zero entries
+    assertEquals(0, dequeued.size());
+
+    // Start an enqueueThread to enqueue N entries
+    Thread enqueueThread = new Thread() {
+      @Override
+      public void run() {
+        for (int i=0; i<n; i++) {
+          assertTrue(executorFinal.execute(
+              new QueueEnqueue(queueName, Bytes.toBytes(i))));
+        }
+      }
+    };
+    enqueueThread.start();
+
+    // Join the enqueuer
+    enqueueThread.join();
+
+    // Tell the dequeuer to stop (once he gets an empty)
+    stop.set(true);
+    dequeueThread.join();
+    System.out.println("DequeueThread is done.  Set size is " +
+        dequeued.size() + ", Number of empty returns is " + numEmpty.get());
+
+    // Should have dequeued n entries
+    assertEquals(n, dequeued.size());
+  }
+
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
-  @Test @Ignore
+  @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
 
     long MAX_TIMEOUT = 30000;
-//    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
-//    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
+    //    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
+    //    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
     ConcurrentSkipListMap<byte[], byte[]> enqueuedMap =
         new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     ConcurrentSkipListMap<byte[], byte[]> dequeuedMapOne =
         new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
-        ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo =
-            new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    ConcurrentSkipListMap<byte[], byte[]> dequeuedMapTwo =
+        new ConcurrentSkipListMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
 
     AtomicBoolean producersDone = new AtomicBoolean(false);
 
@@ -571,7 +646,7 @@ public class TestOmidExecutorLikeAFlow {
         " total queue entries in " + (stopTime - startConsumers) + " millis (" +
         ((stopTime-startConsumers)/((float)(expectedDequeues*2))) +
         " ms/dequeue)");
-    
+
     // Each group should total <expectedDequeues>
 
     long groupOneTotal = 0;
@@ -593,7 +668,7 @@ public class TestOmidExecutorLikeAFlow {
             Bytes.toInt(enqueuedValue) + ", entrynum=" +
             Bytes.toInt(enqueuedValue, 4));
       }
-      printQueueInfo(threadedQueueName, 0);
+      printQueueInfo(this.threadedQueueName, 0);
     }
     assertEquals(expectedDequeues, groupOneTotal);
     if (expectedDequeues != groupTwoTotal) {
@@ -609,7 +684,7 @@ public class TestOmidExecutorLikeAFlow {
             Bytes.toInt(enqueuedValue) + ", entrynum=" +
             Bytes.toInt(enqueuedValue, 4));
       }
-      printQueueInfo(threadedQueueName, 1);
+      printQueueInfo(this.threadedQueueName, 1);
     }
     assertEquals(expectedDequeues, groupTwoTotal);
   }
@@ -670,7 +745,7 @@ public class TestOmidExecutorLikeAFlow {
     public void run() {
       boolean gotEmptyAndDone = false;
       while (true) {
-        boolean localProducersDone = producersDone.get();
+        boolean localProducersDone = this.producersDone.get();
         QueueDequeue dequeue =
             new QueueDequeue(TestOmidExecutorLikeAFlow.this.threadedQueueName, this.consumer, this.config);
         try {
