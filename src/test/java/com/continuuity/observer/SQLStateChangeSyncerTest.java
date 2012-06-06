@@ -37,9 +37,11 @@ public class SQLStateChangeSyncerTest {
     zookeeper = new InMemoryZookeeper();
     zkEnsemble = zookeeper.getConnectionString();
     Log.info("Connection string {}", zkEnsemble);
-    org.hsqldb.util.DatabaseManagerSwing.main(new String[] {
-      "--url",  "jdbc:hsqldb:mem:testdb", "--noexit"
-    });
+    try {
+      Class.forName("org.hsqldb.jdbcDriver");
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
   @AfterClass
