@@ -1,5 +1,7 @@
 package com.continuuity.common.service;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
@@ -78,8 +80,8 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * @param conf instance of configuration object.
    * @throws RegisteredServiceException
    */
-  public final void start(String[] args, Configuration conf) throws RegisteredServiceException {
-    String zkEnsemble = conf.get("zookeeper.quorum");
+  public final void start(String[] args, CConfiguration conf) throws RegisteredServiceException {
+    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     Preconditions.checkNotNull(zkEnsemble);
 
     try {

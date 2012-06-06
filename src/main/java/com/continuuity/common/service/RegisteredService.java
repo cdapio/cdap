@@ -1,6 +1,6 @@
 package com.continuuity.common.service;
 
-import org.apache.hadoop.conf.Configuration;
+import com.continuuity.common.conf.CConfiguration;
 
 /**
  * RegisteredService provides ability to registered service
@@ -11,7 +11,7 @@ public interface RegisteredService {
    * @param args arguments for the service
    * @param conf instance of configuration object.
    */
-  public void start(String[] args, Configuration conf) throws RegisteredServiceException;
+  public void start(String[] args, CConfiguration conf) throws RegisteredServiceException;
 
   /**
    * Stops the service
