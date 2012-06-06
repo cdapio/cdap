@@ -598,9 +598,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     public int compareTo(Version v) {
       if (this.stamp > v.stamp) return -1;
       if (this.stamp < v.stamp) return 1;
-      if (this.type == Type.DELETE && v.type == Type.VALUE) return -1;
-      if (this.type == Type.VALUE && v.type == Type.DELETE) return 1;
-      return 0;
+      return this.type.compareTo(v.type);
     }
 
     @Override
@@ -618,7 +616,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
 
     enum Type {
-      DELETE, DELETE_ALL, VALUE;
+      DELETE_ALL, DELETE, VALUE;
     }
   }
 

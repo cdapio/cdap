@@ -124,11 +124,14 @@ public class TestOVCTable {
     // Read value, should not exist
     assertNull(this.table.get(row, COL, RP_MAX));
     
-    // Write at 3 (overwrites existing delete @ 3)
+    // Write at 3 (trying to overwrite existing deletes @ 3)
     this.table.put(row, COL, 3L, Bytes.toBytes(3L));
     
-    // Read value, should be 3 (fails with null if can't override delete)
-    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    // Read value
+    // If writes can overwrite deletes at the same timestamp:
+    // assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    // Currently, a delete cannot be overwritten on the same version:
+    assertNull(this.table.get(row, COL, RP_MAX));
     
     // DeleteAll at 5
     this.table.deleteAll(row, COL, 5L);
