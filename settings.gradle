@@ -23,6 +23,3 @@ for (g in gitRepos) {
     }
 }
 
-// Broken - Lastly, add . to GitRepos so that gitUpdate will be run for master project
-//gitRepos << new GitRepo(name: ".");
-
