@@ -43,6 +43,7 @@ task gitStatus  {
     group = 'Git'
     description = 'Checks the status of all git repos'
     doLast {
+        masterRepo.status();
         for (g in gitRepos) {
             g.status();
         }
