@@ -69,8 +69,7 @@ public class SingleNodeMain {
   /**
    * This is our universal configurations object.
    */
-  private Configuration myConfiguration;
-
+  private CConfiguration myConfiguration;
 
 
   /**
