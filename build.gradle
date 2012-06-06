@@ -2,6 +2,8 @@ import com.continuuity.gradle.GitRepo;
 
 apply plugin: 'continuuity'
 
+ext.masterRepo = new GitRepo(name: "continuuity", dir: ".")
+
 task gitCheckout {
     group = 'Git'
     description = 'Checkout the specified branch.'
@@ -12,29 +14,23 @@ task gitCheckout {
     }
 }
 
-task gitPullSelf(type:Exec) {
-    group = 'Git'
-    description = 'Intended for master project only, runs a git pull on .'
-    workingDir projectDir
-    commandLine 'git'
-    args 'pull', project.projectDir
-    ignoreExitValue true
-}
-
-task gitPull(dependsOn: gitPullSelf)  {
+task gitPull {
     group = 'Git'
     description = 'Pulls the latest commits for all git repos.'
     doLast {
+        masterRepo.pull();
         for (g in gitRepos) {
             g.pull();
         }
+
     }
 }
 
-task gitUpdate(dependsOn: gitPullSelf)  {
+task gitUpdate {
     group = 'Git'
     description = 'Performs a clone, checkout, and pull on all repositories.'
     doLast {
+        masterRepo.pull();
         for (g in gitRepos) {
             g.load();
             g.checkout();
@@ -83,7 +79,7 @@ subprojects {
     {	
     	test {
        	    ignoreFailures = true
-  	}
+  	    }
     }
 }
 

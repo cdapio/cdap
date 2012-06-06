@@ -83,7 +83,8 @@ class GitRepo {
     {
         init();
         File destination = new File(baseDir, dir);
-        if(destination.exists())
+        File gitDir = new File(destination, ".git");
+        if(gitDir.exists())
         {
             String cmd = "git pull";
             println "$name: $cmd";
