@@ -7,6 +7,8 @@ import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URLDecoder;
+
 /**
  * This is the http request handler for the rest accessor. At this time it only accepts
  * GET requests to retrieve a value for a key from a named table.
@@ -76,12 +78,12 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 	public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
 		HttpRequest request = (HttpRequest) message.getMessage();
 
-		LOG.info("Request received");
+		LOG.debug("Request received");
 
 		// we only support get requests for now
 		HttpMethod method = request.getMethod();
 		if (method != HttpMethod.GET) {
-			LOG.info("Received a " + method + " request, which is not supported");
+			LOG.debug("Received a " + method + " request, which is not supported");
 			respondError(message.getChannel(), HttpResponseStatus.METHOD_NOT_ALLOWED);
 			// @todo according to HTTP 1.1 spec we must return an ALLOW header
 			return;
@@ -90,7 +92,7 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 		// we do not support a query or parameters in the URL
 		QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
 		if (decoder.getParameters() != null && !decoder.getParameters().isEmpty()) {
-			LOG.info("Received a request with query parameters, which is not supported");
+			LOG.debug("Received a request with query parameters, which is not supported");
 			respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
 			return;
 		}
@@ -109,16 +111,17 @@ public class RestHandler extends SimpleChannelUpstreamHandler {
 			}
 		}
 		if (key == null) {
-			LOG.info("Received a request with invalid path " + path);
+			LOG.debug("Received a request with invalid path " + path);
 			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
 			return;
 		}
-
+		key = URLDecoder.decode(key, "ISO8859_1");
+		LOG.debug("Received GET request for key '" + key + "'.");
 		// ignore the content of the request - this is a GET
 		// get the value from the data fabric
 		byte[] value = null;
 		try {
-			Read read = new Read(key.getBytes());
+			Read read = new Read(key.getBytes("ISO8859_1"));
 			value = this.accessor.getExecutor().execute(read);
 		} catch (Exception e) {
 			LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);

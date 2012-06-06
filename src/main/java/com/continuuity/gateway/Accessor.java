@@ -22,7 +22,7 @@ public abstract class Accessor extends Connector {
 
 	/**
 	 * Get the executor to use for all data fabric access
-	 * @returns the operations executor to use
+	 * @return the operations executor to use
 	 */
 	public OperationExecutor getExecutor() {
 		return this.executor;
