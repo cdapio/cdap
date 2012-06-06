@@ -283,7 +283,8 @@ public class TTQueueOnVCTable implements TTQueue {
               dirty.getFirst());
       if (entryMetaDataAndStamp == null) {
         // This entry doesn't exist, queue is empty for this consumer
-        log("Queue is empty, nothing found at " + entryPointer);
+        log("Queue is empty, nothing found at " + entryPointer + " using " +
+            "read pointer " + dirty.getFirst());
         return new DequeueResult(DequeueStatus.EMPTY);
       }
 
