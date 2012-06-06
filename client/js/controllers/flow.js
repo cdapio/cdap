@@ -216,9 +216,15 @@ define([], function () {
 			}
 
 			function connect(from, to) {
+
+				var connector = [ "Bezier", { gap: 0, curviness: 75 } ];
+				if (column_map[from].row === column_map[to].row) {
+					connector = [ "Flowchart", { gap: 0, stub: 75 } ];
+				}
+
 				self.plumber.connect({uuids:['flowlet' + from + 'RightMiddle',
 					'flowlet' + to + 'LeftMiddle'],
-					connector: [ "Bezier", { gap: 5, curviness: 75 } ]});
+					connector: connector});
 			}
 
 			function connects_to(id) {
