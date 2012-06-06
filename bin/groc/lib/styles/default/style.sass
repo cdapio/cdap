@@ -1,0 +1,597 @@
+@import "compass"
+@import "code_styles"
+
+@import "compass/reset"
+
+
+// ## Configuration
+
+// ### Sizing
+
+// * Margin between segments in two-column mode, padding for code/comments in single-column mode.
+$common-margin: 1em
+// * Additional padding to each column in two-column mode
+$column-padding: 1em
+// * The `line length` of the commentary column in both modes.
+$commentary-width: 29em
+// * Width of the tools pulldown in two-column mode.  NOT scaled by tools-font.
+$tools-width: 20em
+// * Height of the main toolbar, scaled by the size of tools-font
+$tools-height: 2.1em
+
+// Smooth-scale the page in viewports that are between ideal widths for two-column and one-column
+// modes.  Scaling starts at the same width as $tools-width into the code column.
+$scale-steps: 136 // Approx 1 per pixel on a desktop (8.5em distance & 16px per em)
+$scale-min:   0.85
+
+//     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam cursus lorem at mi hendrerit pretium. Maecenas ultrices dolor dictum orci lobortis fringilla. Integer ut sem at libero scelerisque commodo quis a dui. Nulla pellentesque, purus non ultricies porta, diam est fringilla orci, dignissim mattis leo erat a urna. Donec fermentum orci nec magna vehicula consectetur. Vivamus a dui eget orci malesuada elementum. Cras tempor mi sit amet ligula mollis porta. Nulla eu purus eget dui aliquet iaculis in quis massa. Phasellus sed lectus ac augue tincidunt blandit. Pellentesque et aliquam neque. Donec faucibus ultricies sem, ut mattis ante consectetur sed. In sollicitudin consectetur nisl, nec malesuada diam dictum ut. Duis feugiat, lorem in pulvinar interdum, nibh turpis lobortis erat, dictum hendrerit massa nibh molestie odio. Ut ultricies, dui a lobortis aliquam, massa diam tempus eros, eu ornare risus mi vitae elit. Integer pretium vulputate eros vitae luctus. Mauris in rhoncus nisi.
+
+// ### Color Scheme
+
+$commentary-background-color: #f5fbff
+$commentary-foreground-color: #4a525a // Thank you, Mr. Gruber
+$commentary-shadow-color:     #ffffff
+
+$code-background-color: #4a525a
+$code-foreground-color: #cbd1d8
+$code-shadow-color:     darken($code-background-color, 15%)
+
+$link-color: #a8614e
+$link-hover-foreground-color: #a8614e
+$link-hover-background-color: lighten(#a8614e, 43%)
+$link-hover-shadow-color:     lighten(#a8614e, 60%)
+
+$tools-background-color: transparentize(#e6e6e6, 0.1)
+$tools-foreground-color: #4a525a
+$tools-shadow-color:     #f0f0f0
+
+$inline-code-background-color: #fbf8f3
+
+// ### Typography
+
+=commentary-font
+  font-family: "Helvetica Neue", Helvetica, "Droid Sans", sans-serif
+  font-weight: 300
+  font-size:   0.9375em
+  line-height: 1.35
+
+=code-font
+  font-family: "Droid Sans Mono", Menlo, Monaco, monospace
+  font-size:   0.75em
+  line-height: 1.4
+
+=header-font
+  font-family:    "HelveticaNeue-UltraLight", "Helvetica Neue", Helvetica, "Droid Sans", sans-serif
+  font-weight:    100
+  letter-spacing: 0.0625em
+  line-height:    1.75
+
+=tools-font
+  +commentary-font
+
+=header-font-sizes
+  h1
+    font-size: 2.5em
+  h2
+    font-size: 2em
+  h3
+    font-size: 1.6em
+  h4
+    font-size: 1.4em
+  h5
+    font-size: 1.3em
+  h6
+    font-size: 1.2em
+
+
+// ## Two-Column Layout
+
+// As a general tenet, we try to avoid using margins, as they get us into trouble.  Pparticularly,
+// when ensuring that our `html`/`body`/`#document` are full height and do not induce scrolling
+// unless their content grows past the page.
+$commentary-column-width: $commentary-width + ($common-margin + $column-padding) * 2
+
+html, body
+  height: 100%
+
+#document
+  min-height: 100%
+
+// Conceptually, the layout focuses the user on the commentary first, so we lay out that column.
+body
+  max-width: $commentary-column-width
+
+// In two-column mode, the segment is actually shifted over a full column to favor code fragments.
+// We may or may not have either .comment or .code sections, so we need to handle all three cases.
+.segment
+  padding:     ($common-margin / 2) 0 ($common-margin / 2) $commentary-column-width
+  white-space: nowrap
+
+  &:first-child
+    padding-top: $common-margin + $column-padding + $tools-height
+
+  &:last-child
+    padding-bottom: $common-margin + $column-padding
+
+  .comments, .code
+    display:        inline-block
+    vertical-align: top
+    padding:        0 ($common-margin + $column-padding)
+
+  .comments
+    margin-left: -$commentary-column-width
+    width:        $commentary-width
+    white-space:  normal
+
+  .code
+    white-space: pre
+
+// Fit the meta info into the code column
+#meta
+  position: absolute
+  left:     $commentary-column-width
+  padding:  $common-margin / 4 $common-margin
+
+
+// ## Two-Column Scaling
+
+// Before we swap over to a single column layout, we scale the page down a little bit in an effort
+// to squeeze some extra life out of it.
+//
+// Scaling starts once the toolbar is flush with the main column
+$scale-start-width: $commentary-column-width + $tools-width
+$scale-stop-width:  $scale-start-width * $scale-min
+
+@for $i from 0 through $scale-steps - 2 // Skip the last step; it's exactly $scale-stop-width
+  $scale: 1.0 - (1.0 - $scale-min) * ($i / ($scale-steps - 1))
+  @media (max-width: #{$scale-start-width * $scale})
+    html
+      font-size: 1em * $scale
+
+
+// ## Single-Column Layout
+
+// We swap over to the single column layout once we hit the edge of the scaling
+$single-column-toggle-width: $scale-stop-width
+
+// Switch modes at a little wider than a full (padded) column
+@media (max-width: #{$single-column-toggle-width})
+
+  html
+    font-size: 1em
+
+  body
+    margin: 0 auto
+
+  .segment
+    padding:     0
+    white-space: normal
+    max-width:   $commentary-width
+    margin:      0 auto
+
+    .comments, .code
+      display: block
+      padding: $common-margin
+
+    .comments
+      margin-left: 0
+      width:       auto
+
+    .code
+      display:    block
+      overflow-y: hidden
+      overflow-x: auto
+
+      .wrapper
+        display: inline-block
+
+
+// ## Navigation
+$tools-padding: ($tools-height - 1em) / 2
+
+nav
+  position: fixed
+  top:      0
+  right:    0
+  width:    $tools-width
+
+  // Nav should be full width in single column mode
+  @media (max-width: #{$single-column-toggle-width})
+    left:  0
+    width: 100%
+
+  .tools
+    position: relative
+    z-index:  100
+
+    li
+      display:        table-cell
+      vertical-align: middle
+      text-align:     center
+      white-space:    nowrap
+      height:         $tools-height
+      padding:        0 $tools-padding
+
+    .github
+      padding: 0
+
+      a
+        display:      block
+        height:       $tools-height
+        width:        $tools-height
+        text-indent: -9001em
+
+    .search
+      width: 100%
+
+      input
+        +box-sizing(border-box)
+        display: block
+        width: 100%
+
+  .toc
+    +box-sizing(border-box)
+    position:   absolute
+    top:        $tools-height
+    bottom:     0
+    width:      100%
+    overflow-x: hidden
+    overflow-y: auto
+
+    li
+      position: relative
+
+    .label
+      display:     block
+      line-height: 2em
+      padding:     0 $tools-padding 0 $tools-padding
+
+    li li .label
+      padding-left: $tools-padding * 2
+    li li li .label
+      padding-left: $tools-padding * 3
+    li li li li .label
+      padding-left: $tools-padding * 4
+    li li li li li .label
+      padding-left: $tools-padding * 5
+    li li li li li li .label
+      padding-left: $tools-padding * 6
+
+// ## Behavior
+$navigation-shift-duration: 150ms
+
+// In either mode, we need to expand the nav's height when showing the table of contents (we don't
+// want a blank div getting in the way of interaction)
+nav
+  +transition(height 0 $navigation-shift-duration)
+
+  .tools .toggle
+    +transition(background $navigation-shift-duration)
+
+  &.active
+    +transition(height 0 0)
+    height: 100%
+
+// In two-column mode, we slide the table of contents in from the right
+nav .toc
+  +transition(right $navigation-shift-duration)
+  right: -100%
+
+nav.active .toc
+  right: 0
+
+// In single column mode, we slide in from the left (and also pop the body)
+@media (max-width: #{$single-column-toggle-width})
+  nav .toc
+    +transition(left $navigation-shift-duration)
+    right: auto
+    left: -100%
+
+  nav.active .toc
+    left: 0
+
+// When we switch to the navigation in single column mode, "pop" the body off by sliding it off
+// screen to the right.
+@media (max-width: #{$single-column-toggle-width})
+  body
+    +transition(left $navigation-shift-duration)
+    position: relative
+    left:     0
+
+  html.popped
+    overflow: hidden
+
+    body
+      left: 100%
+      overflow: hidden
+
+nav .toc
+  // By default, all file lists are collapsed.
+  .children, .outline
+    display: none
+
+  // We only expand direct descendants for files, but outlines are fully expanded from the outset.
+  .expanded > .children, .expanded > .outline, .expanded > .outline .children
+    display: block
+
+  .discloser
+    +transition-property(-moz-transform -webkit-transform -o-transform transform) // bah.
+    +transition-duration(200ms)
+    +rotate(0deg)
+    display:         inline-block
+    height:          9px
+    width:           9px
+    padding:         0.2em
+    margin:          0.2em 0.2em -0.2em 0.2em
+    vertical-align:  baseline
+    background:      inline-image('disclosure-indicator.png') center center no-repeat
+    background-size: 9px 9px
+
+  // Every label gets one, but not all need to display them.
+  .discloser.placeholder, .expanded > .outline .discloser
+    background: none
+
+  .expanded > .label .discloser
+    +rotate(90deg)
+
+  // When searching, we only hide labels so that the hierarchy can still be shown to the user
+  .filtered > .label
+    display: none
+
+  .matched-child > .label
+    display: block
+
+  // Make sure that we expand to show any matched nodes
+  .matched-child > .children, .matched-child > .outline, .matched-child > .outline .children
+    display: block
+
+  .matched > .children, .matched > .outline, .matched > .outline .children
+    display: block
+
+// Disclosure indicators are confusing when we're searching
+nav.searching .toc .discloser
+  display: none
+
+
+// ## Typography
+
+.comments .wrapper
+  +commentary-font
+
+  h1, h2, h3, h4, h5, h6
+    +header-font
+  +header-font-sizes
+
+  p
+    margin: 1em 0
+
+  > *
+    &:first-child
+      margin-top: 0
+
+    &:last-child
+      margin-bottom: 0
+
+  ol, ul
+    padding-left: 1.75em
+
+  ol li
+    list-style: decimal
+
+  ul li
+    list-style: disc
+
+  li
+    margin: 1em 0
+
+    &:first-child
+      margin-top: 0
+    &:last-child
+      margin-bottom: 0
+
+  code
+    display: inline-block
+    padding: 0.25em 0.25em 0 0.25em
+
+  pre
+    display:    block
+    overflow-x: auto
+    overflow-y: hidden
+
+    code
+      padding: $common-margin
+
+  blockquote
+    padding: 0 $common-margin
+
+// ## Visual Design
+
+// We want a bit of depth between the columns, so make the code appear inset
+$code-column-shadow-width: 1em
+$background-gradient: linear-gradient(left, darken($code-background-color, 15%), darken($code-background-color, 5%) 0.3 * $code-column-shadow-width, $code-background-color $code-column-shadow-width)
+
+html
+  background: $code-background-color // Degrade gracefully
+
+// We cheat and use #document to display the shadow
+#document
+  +background($commentary-background-color $background-gradient $commentary-column-width no-repeat)
+  margin-right: -$code-column-shadow-width
+  padding-right: $code-column-shadow-width
+
+  @media (max-width: #{$single-column-toggle-width})
+    margin-right:  0
+    padding-right: 0
+
+#meta > *
+  +commentary-font
+  +text-shadow($code-shadow-color 1px 1px 0)
+
+  &, a
+    color: darken($code-foreground-color, 15%)
+
+  a
+    text-decoration: none
+
+// We apply font changes to .wrapper elements so that we do not resize the 'standard' em unit that
+// we are relying on for layout.
+.comments .wrapper
+  +commentary-font
+  +text-shadow($commentary-shadow-color 1px 1px 0)
+  color: $commentary-foreground-color
+
+.code
+  .wrapper
+    +code-styles
+    +code-font
+    +text-shadow($code-shadow-color 1px 1px 0)
+    color: $code-foreground-color
+
+  @media (max-width: #{$single-column-toggle-width})
+    +border-radius(0.4em)
+    +box-shadow(darken($code-background-color, 15%) 0 0 0.5em 0.2em inset)
+    background: $code-background-color
+
+    .wrapper
+      +box-shadow($code-background-color 0 0 0.25em 0.75em)
+      background: $code-background-color
+
+  @media (max-width: #{$commentary-width})
+    +border-radius(0)
+
+nav
+  +text-shadow($tools-shadow-color 1px 1px 0)
+  color: $tools-foreground-color
+
+  .tools, .toc
+    +tools-font
+
+  .tools
+    +box-shadow(rgba(0,0,0,0.3) 0 0 0.5em 0.1em)
+    +background(linear-gradient(top, lighten($tools-background-color, 10%), darken($tools-background-color, 10%)))
+    +border-bottom-left-radius(0.4em)
+    border-bottom: 1px solid $tools-foreground-color
+    border-left:   1px solid $tools-foreground-color
+
+    @media (max-width: #{$scale-start-width})
+      +border-bottom-left-radius(0)
+
+    li
+      border-right: 1px solid $tools-foreground-color
+
+      &:last-child
+        border-right: none
+
+    .toggle
+      cursor: pointer
+
+    .github a
+      +transition(opacity 200ms)
+      +opacity(0.5)
+      background:      inline-image('github-icon.png') center center no-repeat
+      background-size: 19.5px 24px
+
+      &:hover
+        +opacity(0.9)
+
+  &.active .tools
+    +border-bottom-left-radius(0)
+
+    .toggle
+      background:  darken($tools-background-color, 10%)
+      position:    relative
+
+  .toc
+    +box-shadow(rgba(0,0,0,0.3) 0 0 0.5em 0.1em)
+    background:  $tools-background-color
+    border-left: 1px solid $tools-foreground-color
+
+    .label
+      color:           $tools-foreground-color
+      text-decoration: none
+      border-top:      1px solid darken($tools-background-color, 15%)
+      border-bottom:   1px solid darken($tools-background-color, 15%)
+      margin-top:     -1px
+
+      &:hover
+        background: darken($tools-background-color, 10%)
+
+    .file > .label
+      font-weight: bold
+
+    .selected > .label
+      background: $commentary-background-color
+
+    // Search styling
+    .label em
+      font-weight: bold
+
+    // This isn't the best of signals...
+    .file > .label em
+      color: darken($tools-foreground-color, 25%)
+
+    .matched-child > .label
+      +opacity(0.65)
+      +text-shadow(none)
+      background: darken($tools-background-color, 15%)
+
+  @media (max-width: #{$single-column-toggle-width})
+    .tools, .toc
+      border-left-width: 0
+
+    // Make sure that our tools are opaque in single column mode so that the transitions aren't
+    // distracting
+    $opaque-tools-background-color: opacify($tools-background-color, 1.0)
+
+    .tools
+      +background(linear-gradient(top, lighten($opaque-tools-background-color, 10%), darken($opaque-tools-background-color, 10%)))
+
+    .toc
+      background: $opaque-tools-background-color
+
+// ### Commentary Elements
+
+.comments .wrapper
+  a
+    display:         inline-block
+    color:           $link-color
+    text-decoration: none
+
+    &:hover, &:hover *
+      text-decoration: underline
+
+  code
+    +code-font
+    border: 1px solid darken(desaturate($inline-code-background-color, 25%), 10%)
+
+  pre, code
+    +border-radius(0.4em)
+    background: $inline-code-background-color
+
+  pre
+    +box-shadow(darken(desaturate($inline-code-background-color, 15%), 5%) 0 0 0.4em 0.2em)
+    border: 1px solid darken(desaturate($inline-code-background-color, 15%), 20%)
+
+    code
+      border-width: 0
+      background:   transparent
+
+  blockquote
+    $blockquote-border-color: lighten($commentary-foreground-color, 30%)
+    border-left:  0.15em solid $blockquote-border-color
+    margin-left: -0.15em
+
+
+// ## Browser-Specific Tweaks
+
+// Don't allow mobile WebKit clients to mess with the font size
+body
+  -webkit-text-size-adjust: 100%
+
+// Replicate the WebKit type="search" appearance in other browsers if they don't have their own
+// search field styling
+input[type="search"]
+  +border-radius(1em)
+  +box-shadow(#dddddd 0 1px 1px 0 inset)
+  border: 1px solid #959595
+  padding: 0.15em 0.8em
