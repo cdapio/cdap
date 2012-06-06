@@ -46,7 +46,7 @@ public class TestTTQueue {
     
     long startTime = System.currentTimeMillis();
     
-    int numEntries = 5000;
+    int numEntries = 1000;
     
     for (int i=1; i<numEntries+1; i++) {
       queue.enqueue(Bytes.toBytes(i), dirtyVersion);
@@ -680,6 +680,7 @@ public class TestTTQueue {
     dequeuer.shutdown();
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
     final boolean singleEntry = true;
@@ -770,8 +771,8 @@ public class TestTTQueue {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
     }
 
-    // wait for 16 more queuedequeue() returns
-    expectedQueuedequeues += 16;
+    // wait for n^2 more queuedequeue() returns
+    expectedQueuedequeues += (n*n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
@@ -795,7 +796,7 @@ public class TestTTQueue {
     }
 
     // wait for 16 more queuedequeue() returns
-    expectedQueuedequeues += 16;
+    expectedQueuedequeues += (n*n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // every dequeuer/consumer should have one result
@@ -819,7 +820,7 @@ public class TestTTQueue {
     }
 
     // wait for 16 more queuedequeue() returns
-    expectedQueuedequeues += 16;
+    expectedQueuedequeues += (n*n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // ack it for groups(0,1) consumers(2,3)
@@ -835,8 +836,8 @@ public class TestTTQueue {
       }
     }
 
-    // wait for 4 more queuedequeue() returns
-    expectedQueuedequeues += 4;
+    // wait for n more queuedequeue() returns
+    expectedQueuedequeues += n;
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // trigger dequeuers
@@ -849,8 +850,8 @@ public class TestTTQueue {
       }
     }
 
-    // wait for 12 more queuedequeue() returns
-    expectedQueuedequeues += 12;
+    // wait for (n-1)(n) more queuedequeue() returns
+    expectedQueuedequeues += (n*(n-1));
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // expect null for groups(0,1) consumers(2,3), same value for others
@@ -876,8 +877,8 @@ public class TestTTQueue {
       }
     }
 
-    // wait for 12 more queuedequeue() returns
-    expectedQueuedequeues += 12;
+    // wait for (n*(n-1)) more queuedequeue() returns
+    expectedQueuedequeues += (n*(n-1));
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
 
     // trigger dequeues again, will get false for groups(0,1) consumers(2,3)
@@ -914,8 +915,8 @@ public class TestTTQueue {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
     }
 
-    // wait for 16 more queuedequeue() wake-ups
-    expectedQueuedequeues += 16;
+    // wait for n^2 more queuedequeue() wake-ups
+    expectedQueuedequeues += (n*n);
     waitForAndAssertCount(expectedQueuedequeues, dequeueReturns);
     numdequeues++;
 
@@ -1065,6 +1066,7 @@ public class TestTTQueue {
           result = this.queue.dequeue(this.consumer, this.config,
               this.readPointer);
           if (result.isFailure()) {
+            System.out.println("Result failed! (" + result + ")");
             throw new RuntimeException("Don't expect failures in Popper!");
           }
         }

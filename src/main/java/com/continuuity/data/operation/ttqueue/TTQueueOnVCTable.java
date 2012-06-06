@@ -464,9 +464,11 @@ public class TTQueueOnVCTable implements TTQueue {
           dirty.getFirst(), dirty.getSecond())) {
         // We own it!  Return it.
         dequeueReturns.incrementAndGet();
+        if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
         return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
       } else {
         // Someone else has grabbed it, on to the next one
+        if (TRACE) log("Got a collision trying to own " + entryPointer);
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;
@@ -625,7 +627,7 @@ public class TTQueueOnVCTable implements TTQueue {
   public static boolean TRACE = false;
   
   private void log(String msg) {
-    if (TRACE) System.out.println(msg);
+    if (TRACE) System.out.println(Thread.currentThread().getId() + " : " + msg);
     // LOG.debug(msg);
   }
 
