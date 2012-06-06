@@ -15,7 +15,6 @@ import com.continuuity.gateway.runtime.GatewayProductionModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +68,7 @@ public class SingleNodeMain {
   /**
    * This is our universal configurations object.
    */
-  private Configuration myConfiguration;
+  private CConfiguration myConfiguration;
 
 
 
@@ -109,6 +108,7 @@ public class SingleNodeMain {
       try {
 
         LOG.info(" Starting Gateway Service");
+        theGateway.configure(myConfiguration);
         theGateway.start();
 
       } catch (Exception e) {

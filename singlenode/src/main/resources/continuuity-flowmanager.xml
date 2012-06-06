@@ -53,5 +53,11 @@
         <description>Specifies the zookeeper data directory</description>
     </property>
 
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost:2181</value>
+        <description>Specifies the zookeeper host:port</description>
+    </property>
+
 
 </configuration>
