@@ -14,6 +14,7 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.handles.MemoryOVCTableHandle;
 import com.continuuity.data.table.handles.SimpleColumnarTableHandle;
 import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
 
 /**
  * DataFabricInMemoryModule defines the InMemory bindings for the data fabric.
@@ -26,14 +27,14 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // There is only one timestamp oracle for the whole system
     bind(TimestampOracle.class).
-        to(MemoryStrictlyMonotonicTimeOracle.class).asEagerSingleton();
+        to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
 
     bind(TransactionOracle.class).to(MemoryOracle.class);
 
     bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
     bind(ColumnarTableHandle.class).to(SimpleColumnarTableHandle.class);
     bind(OperationExecutor.class).
-        to(OmidTransactionalOperationExecutor.class).asEagerSingleton();
+        to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
 
   }
 
