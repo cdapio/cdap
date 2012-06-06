@@ -2,10 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
@@ -37,6 +34,11 @@ public class Util {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Util.class);
 
+	/**
+	 * Utility to find a free port to use for a server.
+	 * @return a free port number
+	 * @throws IOException if any socket exception occurs
+	 */
 	static int findFreePort() throws IOException {
 		Socket socket = new Socket();
 		socket.bind(null);
@@ -45,20 +47,44 @@ public class Util {
 		return port;
 	}
 
-	static SimpleEvent createFlumeEvent(int messageNumber, String dest) {
+	/**
+	 * Creates a string containing a number
+	 * @param i The number to use
+	 * @return a message as a byte a array
+	 */
+	static byte[] createMessage(int i) {
+		return ("This is message " + i + ".").getBytes();
+	}
+
+	/**
+	 * Creates a flume event that has
+	 * <ul>
+	 *   <li>a header named "messageNumber" with the string value of a number i</li>
+	 *   <li>a header named "HEADER_DESTINATION_STREAM" with the name of a stream</li>
+	 *   <li>a body with the text "This is message number i.</li>
+	 * </ul>
+	 * @param i The number to use
+	 * @param dest The stream name to use
+	 * @return a flume event
+	 */
+	static SimpleEvent createFlumeEvent(int i, String dest) {
 		SimpleEvent event = new SimpleEvent();
 		Map<String, String> headers = new HashMap<String, String>();
-		headers.put("messageNumber", Integer.toString(messageNumber));
+		headers.put("messageNumber", Integer.toString(i));
 		headers.put(Constants.HEADER_DESTINATION_STREAM, dest);
 		event.setHeaders(headers);
-		event.setBody(createMessage(messageNumber));
+		event.setBody(createMessage(i));
 		return event;
 	}
 
-	static byte[] createMessage(int messageNo) {
-		return ("This is message " + messageNo + ".").getBytes();
-	}
-
+	/**
+	 * Uses Flumes RPC client to send a number of flume events to a specified port.
+	 * @param port The port to use
+	 * @param dest The stream name to use as the destination
+	 * @param numMessages How many messages to send
+	 * @param batchSize Batch size to use for sending
+	 * @throws EventDeliveryException If sending fails for any reason
+	 */
 	static void sendFlumeEvents(int port, String dest, int numMessages, int batchSize)
       throws EventDeliveryException {
 
@@ -81,6 +107,12 @@ public class Util {
 		client.close();
 	}
 
+	/**
+	 * Uses Flume's RPC client to send a single event to a port
+	 * @param port The port to use
+	 * @param event The event
+	 * @throws EventDeliveryException If something went wrong while sending
+	 */
 	static void sendFlumeEvent(int port, SimpleEvent event) throws EventDeliveryException {
 		RpcClient client = RpcClientFactory.
 				getDefaultInstance("localhost", port, 1);
@@ -93,14 +125,28 @@ public class Util {
 		client.close();
 	}
 
-	static HttpPost createHttpPost(int port, String prefix, String path, String dest, int messageNo) {
+	/**
+	 * Creates an HTTP post that has
+	 * <ul>
+	 *   <li>a header named "messageNumber" with the string value of a number i</li>
+	 *   <li>a body with the text "This is message number i.</li>
+	 * </ul>
+	 * @param i The number to use
+	 * @return a flume event
+	 */
+	static HttpPost createHttpPost(int port, String prefix, String path, String dest, int i) {
 		String url = "http://localhost:" + port + prefix + path + dest;
 		HttpPost post = new HttpPost(url);
-		post.setHeader(dest + ".messageNumber", Integer.toString(messageNo));
-		post.setEntity(new ByteArrayEntity(createMessage(messageNo)));
+		post.setHeader(dest + ".messageNumber", Integer.toString(i));
+		post.setEntity(new ByteArrayEntity(createMessage(i)));
 		return post;
 	}
 
+	/**
+	 * Send an event to rest collector
+	 * @param post The event as an Http post (see createHttpPost)
+	 * @throws IOException if sending fails
+	 */
 	static void sendRestEvent(HttpPost post) throws IOException {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -111,6 +157,14 @@ public class Util {
 		client.getConnectionManager().shutdown();
 	}
 
+	/**
+	 * Creates an HTTP post for an event and sends it to the rest collector
+	 * @param port The port as configured for the collector
+	 * @param prefix The path prefix as configured for the collector
+	 * @param path The path as configured for the collector
+	 * @param dest The stream name to use as the destination
+	 * @throws IOException if sending fails
+	 */
 	static void sendRestEvents(int port, String prefix, String path, String dest, int eventsToSend)
 			throws IOException {
 		for (int i = 0; i < eventsToSend; i++) {
@@ -118,6 +172,14 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Verify that an event corresponds to the form as created by createFlumeEvent or createHttpPost
+	 * @param event The event to verify
+	 * @param collectorName The name of the collector that the event was sent to
+	 * @param destination The name of the stream that the event was routed to
+	 * @param expectedNo The number of the event, it should be both in the messageNumber header and in the body.
+	 *                   If null, then this method checks whether the number in the header matches the body.
+	 */
 	static void verifyEvent(Event event, String collectorName, String destination, Integer expectedNo) {
 		Assert.assertNotNull(event.getHeader("messageNumber"));
 		int messageNumber = Integer.valueOf(event.getHeader("messageNumber"));
@@ -127,18 +189,25 @@ public class Util {
 		Assert.assertArrayEquals(createMessage(messageNumber), event.getBody());
 	}
 
+	/**
+	 * A consumer that does nothing
+	 */
 	static class NoopConsumer extends Consumer {
 		@Override
 		public void single(Event event) { }
 	}
 
+	/**
+	 * A consumer that verifies events, optionally for a fixed message number.
+	 * See verifyEvent for moire details.
+	 */
 	static class VerifyConsumer extends Consumer {
 		Integer expectedNumber = null;
 		String collectorName = null, destination = null;
 		VerifyConsumer(String name, String dest) {
 			this.collectorName = name;
 			this.destination = dest;
-		};
+		}
 		VerifyConsumer(int expected, String name, String dest) {
 			this.expectedNumber = expected;
 			this.collectorName = name;
@@ -150,22 +219,33 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Consume the events in a queue and verify that they correspond to the format as created by
+	 * createHttpPost() or createFlumeEvent()
+	 * @param executor The executor to use for access to the data fabric
+	 * @param queueName The name of the queue (stream) that the events were sent to
+	 * @param collectorName The name of the collector that received the events
+	 * @param eventsExpected How many events should be read
+	 * @throws Exception
+	 */
 	static void consumeQueue(OperationExecutor executor, String queueName,
 													 String collectorName, int eventsExpected) throws Exception {
-
+		// one deserializer to reuse
 		EventSerializer deserializer = new EventSerializer();
-		com.continuuity.data.operation.ttqueue.QueueConsumer consumer = new com.continuuity.data.operation.ttqueue.QueueConsumer(0, 0, 1);
-		com.continuuity.data.operation.ttqueue.QueueConfig config =
-				new com.continuuity.data.operation.ttqueue.QueueConfig(
-						new com.continuuity.data.operation.ttqueue.QueuePartitioner.RandomPartitioner(), true);
+		// prepare the queue consumer
+		QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
 		QueueDequeue dequeue = new QueueDequeue(queueName.getBytes(), consumer, config);
 		for (int remaining = eventsExpected; remaining > 0; --remaining) {
+			// dequeue one event and remember its ack pointer
 			DequeueResult result = executor.execute(dequeue);
 			Assert.assertTrue(result.isSuccess());
 			QueueEntryPointer ackPointer = result.getEntryPointer();
+			// deserialize and verify the event
 			Event event = deserializer.deserialize(result.getValue());
 			Util.verifyEvent(event, collectorName, queueName, null);
 			LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
+			// ack the event so that it disappers from the queue
 			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
 			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
 			operations.add(ack);
