@@ -8,9 +8,6 @@ public class MemoryStrictlyMonotonicTimeOracle implements TimestampOracle {
 
   long last = 0;
 
-  public MemoryStrictlyMonotonicTimeOracle() {
-    System.out.println(this);
-  }
   @Override
   public synchronized long getTimestamp() {
     long cur = System.currentTimeMillis();

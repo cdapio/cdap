@@ -10,8 +10,7 @@ public class MemoryStrictlyMonotonicOracle implements TimestampOracle {
 
   @Override
   public synchronized long getTimestamp() {
-    ++last;
-    return last;
+    return ++last;
   }
 
 }
