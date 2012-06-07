@@ -20,8 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
@@ -41,8 +39,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final byte[] name;
 
-  private final TimestampOracle timeOracle;
-
   private final ConcurrentNavigableMap<Row, // row to
   NavigableMap<Column, // column to
   NavigableMap<Version, Value>>> map = // version to value
@@ -50,9 +46,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   private final ConcurrentHashMap<Row, RowLock> locks = new ConcurrentHashMap<Row, RowLock>();
 
-  public MemoryOVCTable(final byte [] tableName, TimestampOracle timeOracle) {
+  public MemoryOVCTable(final byte [] tableName) {
     this.name = tableName;
-    this.timeOracle = timeOracle;
   }
 
   @Override
@@ -106,11 +101,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
     Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(
         Bytes.BYTES_COMPARATOR);
-    ReadPointer readPointer = nowRP();
     for (Map.Entry<Column, NavigableMap<Version, Value>> entry : p.getSecond()
         .entrySet()) {
       ImmutablePair<Long, byte[]> latest = filteredLatest(entry.getValue(),
-          readPointer);
+          pointer);
       if (latest == null) continue;
       ret.put(entry.getKey().value, latest.getSecond());
     }
@@ -415,14 +409,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       rowMap.put(new Column(column), columnMap);
     }
     return columnMap;
-  }
-
-  private long now() {
-    return this.timeOracle.getTimestamp();
-  }
-
-  private ReadPointer nowRP() {
-    return new MemoryReadPointer(now());
   }
 
   static class Row implements Comparable<Row> {

@@ -46,7 +46,7 @@ public abstract class SimpleColumnarTableHandle implements ColumnarTableHandle {
     if (queueTable == null) {
       synchronized (queueTableLock) {
         if (queueTable == null) {
-          queueTable = new MemoryOVCTable(queueCTable, timeOracle);
+          queueTable = new MemoryOVCTable(queueCTable);
         }
       }
     }

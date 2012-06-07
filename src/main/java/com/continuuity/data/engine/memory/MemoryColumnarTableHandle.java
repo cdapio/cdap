@@ -14,6 +14,6 @@ public class MemoryColumnarTableHandle extends SimpleColumnarTableHandle {
   public ColumnarTable createNewTable(byte[] tableName,
       TimestampOracle timeOracle) {
     return new ColumnarOnVersionedColumnarTable(
-        new MemoryOVCTable(tableName, timeOracle), timeOracle);
+        new MemoryOVCTable(tableName), timeOracle);
   }
 }

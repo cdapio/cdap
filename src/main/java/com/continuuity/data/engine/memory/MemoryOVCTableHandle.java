@@ -10,6 +10,6 @@ public class MemoryOVCTableHandle extends SimpleOVCTableHandle {
   
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
-    return new MemoryOVCTable(tableName, timeOracle);
+    return new MemoryOVCTable(tableName);
   }
 }

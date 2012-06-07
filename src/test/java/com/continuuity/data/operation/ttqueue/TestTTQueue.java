@@ -35,8 +35,7 @@ public class TestTTQueue {
   
   private static TTQueue createQueue(Configuration conf) {
     return new TTQueueOnVCTable(
-        new MemoryOVCTable(
-            Bytes.toBytes("TestTTQueueTable"), timeOracle),
+        new MemoryOVCTable(Bytes.toBytes("TestTTQueueTable")),
             Bytes.toBytes("TestTTQueue"),
             timeOracle, conf);
   }
