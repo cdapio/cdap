@@ -55,6 +55,15 @@ public interface VersionedColumnarTable {
   public void deleteAll(byte [] row, byte [] column, long version);
 
   /**
+   * Undeletes (invalidates) a previously executed
+   * {@link #deleteAll(byte[], byte[], long)} operation.
+   * @param row
+   * @param column
+   * @param version
+   */
+  public void undeleteAll(byte [] row, byte [] column, long version);
+
+  /**
    * Reads the latest version of all columns in the specified row, utilizing
    * the specified read pointer to enforce visibility constraints.
    * @param row

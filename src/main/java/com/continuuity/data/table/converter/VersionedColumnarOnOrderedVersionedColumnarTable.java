@@ -42,6 +42,11 @@ public class VersionedColumnarOnOrderedVersionedColumnarTable implements
   }
 
   @Override
+  public void undeleteAll(byte[] row, byte[] column, long version) {
+    table.deleteAll(mapper.map(row), column, version);
+  }
+
+  @Override
   public Map<byte[], byte[]> get(byte[] row, ReadPointer readPointer) {
     return table.get(mapper.map(row), readPointer);
   }

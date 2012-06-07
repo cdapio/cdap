@@ -133,6 +133,12 @@ public class TestOVCTable {
     // Currently, a delete cannot be overwritten on the same version:
     assertNull(this.table.get(row, COL, RP_MAX));
     
+    // Undelete the delete all at 3
+    this.table.undeleteAll(row, COL, 3L);
+    
+    // There is still a point delete at 3, should uncover 1
+    assertEquals(1L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
     // DeleteAll at 5
     this.table.deleteAll(row, COL, 5L);
     
@@ -151,6 +157,17 @@ public class TestOVCTable {
     // Read value, should be 6
     assertEquals(6L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
     
+    // Undelete the delete all at 5
+    this.table.undeleteAll(row, COL, 5L);
+    
+    // 6 still visible
+    assertEquals(6L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+    
+    // Point delete 6
+    this.table.delete(row, COL, 6L);
+    
+    // Read value, should now be 4
+    assertEquals(4L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
     
   }
 }

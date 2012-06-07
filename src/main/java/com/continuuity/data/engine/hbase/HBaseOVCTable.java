@@ -79,6 +79,11 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void undeleteAll(byte[] row, byte[] column, long version) {
+    throw new RuntimeException("undelete operation not supported by hbase");
+  }
+
+  @Override
   public Map<byte[], byte[]> get(byte[] row, ReadPointer readPointer) {
     try {
       Get get = new Get(row);

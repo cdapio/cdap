@@ -42,7 +42,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   private final byte[] name;
 
   private final TimestampOracle timeOracle;
-  
+
   private final ConcurrentNavigableMap<Row, // row to
   NavigableMap<Column, // column to
   NavigableMap<Version, Value>>> map = // version to value
@@ -73,20 +73,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     unlockRow(r);
   }
 
-
-
-  // @Override
-  // public void deleteLatest(byte [] row, byte [] column) {
-  // Row r = new Row(row);
-  // ImmutablePair<RowLock,NavigableMap<Column,NavigableMap<Version,Value>>> p =
-  // getAndLockRow(r);
-  // NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
-  // if (!columnMap.isEmpty()) {
-  // columnMap.put(Version.delete(columnMap.firstKey().stamp), Value.delete());
-  // }
-  // unlockRow(r);
-  // }
-
   @Override
   public void delete(byte[] row, byte[] column, long version) {
     Row r = new Row(row);
@@ -95,17 +81,22 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     columnMap.put(Version.delete(version), Value.delete());
     unlockRow(r);
   }
-  
-  /**
-   * Inserts a delete marker at the specified timestamp for every column that
-   * currently exists in some way.
-   */
+
   @Override
   public void deleteAll(byte[] row, byte[] column, long version) {
     Row r = new Row(row);
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
     NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
     columnMap.put(Version.deleteAll(version), Value.delete());
+    unlockRow(r);
+  }
+
+  @Override
+  public void undeleteAll(byte[] row, byte[] column, long version) {
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+    columnMap.put(Version.undeleteAll(version), Value.delete());
     unlockRow(r);
   }
 
@@ -149,29 +140,6 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     if (latest == null) return null;
     return new ImmutablePair<byte[],Long>(latest.getSecond(), latest.getFirst());
   }
-
-  // @Override
-  // public Map<Long,byte[]> getAllVersions(byte [] row, byte [] column,
-  // ReadPointer readPointer) {
-  // return getAllVersions(row, new byte[][] {column}, readPointer).get(column);
-  // }
-  //
-  // @Override
-  // public Map<byte[], Map<Long, byte[]>> getAllVersions(byte[] row,
-  // byte[][] columns, ReadPointer readPointer) {
-  // Row r = new Row(row);
-  // ImmutablePair<RowLock,NavigableMap<Column,NavigableMap<Version,Value>>> p =
-  // getAndLockRow(r);
-  // Map<byte[],Map<Long,byte[]>> ret =
-  // new TreeMap<byte[],Map<Long,byte[]>>(Bytes.BYTES_COMPARATOR);
-  // for (int i=0; i<columns.length; i++) {
-  // byte [] column = columns[i];
-  // NavigableMap<Version,Value> columnMap = getColumn(p.getSecond(), column);
-  // ret.put(column, filteredCopy(columnMap, readPointer));
-  // }
-  // unlockRow(r);
-  // return ret;
-  // }
 
   @Override
   public Map<byte[], byte[]> get(byte[] row, byte[][] columns,
@@ -249,7 +217,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       this.rows = rows;
       this.readPointer = readPointer;
       this.columnSet = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
-      if (columns != null) for (byte [] column : columns) columnSet.add(column);
+      if (columns != null) for (byte [] column : columns) this.columnSet.add(column);
     }
 
     @Override
@@ -261,7 +229,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           Bytes.BYTES_COMPARATOR);
       for (Map.Entry<Column, NavigableMap<Version,Value>> colEntry :
         rowEntry.getValue().entrySet()) {
-        if (!columnSet.contains(colEntry.getKey().value)) continue;
+        if (!this.columnSet.contains(colEntry.getKey().value)) continue;
         byte [] value =
             filteredLatest(colEntry.getValue(), this.readPointer).getSecond();
         if (value != null) columns.put(colEntry.getKey().value, value);
@@ -334,10 +302,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       NavigableMap<Version, Value> columnMap, ReadPointer readPointer) {
     NavigableMap<Long, byte[]> ret = new TreeMap<Long, byte[]>();
     long lastDelete = -1;
+    long undeleted = -1;
     for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
-      if (curVersion.isDeleteAll()) break;
+      if (curVersion.isUndeleteAll()) {
+        undeleted = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.isDeleteAll()) {
+        if (undeleted == curVersion.stamp) continue;
+        else break;
+      }
       if (curVersion.isDelete()) {
         lastDelete = entry.getKey().stamp;
         continue;
@@ -361,10 +337,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       NavigableMap<Version, Value> columnMap, ReadPointer readPointer) {
     if (columnMap == null || columnMap.isEmpty()) return null;
     long lastDelete = -1;
+    long undeleted = -1;
     for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
       Version curVersion = entry.getKey();
       if (!readPointer.isVisible(curVersion.stamp)) continue;
-      if (curVersion.isDeleteAll()) break;
+      if (curVersion.isUndeleteAll()){
+        undeleted = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.isDeleteAll()) {
+        if (undeleted == curVersion.stamp) continue;
+        else break;
+      }
       if (curVersion.isDelete()) {
         lastDelete = entry.getKey().stamp;
         continue;
@@ -382,8 +366,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
    * @param row
    * @return
    */
-  private ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> getAndLockRow(
-      Row row) {
+  private ImmutablePair<RowLock, NavigableMap<Column,
+          NavigableMap<Version, Value>>> getAndLockRow(Row row) {
     // Ensure row entry exists
     NavigableMap<Column, NavigableMap<Version, Value>> rowMap = this.map
         .get(row);
@@ -584,6 +568,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       return new Version(stamp, Type.DELETE_ALL);
     }
 
+    public static Version undeleteAll(long stamp) {
+      return new Version(stamp, Type.UNDELETE_ALL);
+    }
+
     @Override
     public boolean equals(Object o) {
       return this.stamp == ((Version) o).stamp;
@@ -603,8 +591,14 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this).add("stamp", this.stamp)
-          .add("type", this.type).toString();
+      return Objects.toStringHelper(this)
+          .add("stamp", this.stamp)
+          .add("type", this.type)
+          .toString();
+    }
+
+    public boolean isUndeleteAll() {
+      return this.type == Type.UNDELETE_ALL;
     }
 
     public boolean isDeleteAll() {
@@ -616,7 +610,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
 
     enum Type {
-      DELETE_ALL, DELETE, VALUE;
+      UNDELETE_ALL, DELETE_ALL, DELETE, VALUE;
     }
   }
 

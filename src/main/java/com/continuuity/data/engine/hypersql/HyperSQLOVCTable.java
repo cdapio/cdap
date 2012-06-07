@@ -137,6 +137,11 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void undeleteAll(byte[] row, byte[] column, long version) {
+    throw new RuntimeException("Unsupported by hypersql ovc table");
+  }
+
+  @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
     PreparedStatement ps = null;
