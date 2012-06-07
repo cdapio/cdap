@@ -24,6 +24,7 @@ dependencies {
 /**
  * Generate thrift files.
  */
+/*
 task thrift
 thrift {
     group = 'Continuuity'
@@ -40,6 +41,7 @@ thrift {
       println 'Thrift stubs generation done ...'
     }
 }
+*/
 
 /**
  * Create Release TAR ball
