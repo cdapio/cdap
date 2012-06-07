@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -88,14 +89,12 @@ public class TestOmidExecutorLikeAFlow {
     // Dequeue entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(dequeue);
-    assertTrue(result.isSuccess());
-    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1L)));
+    assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
     // Dequeue again should give same entry back
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(dequeue);
-    assertTrue(result.isSuccess());
-    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1L)));
+    assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
     // Ack it
     assertTrue(this.executor.execute(Arrays.asList(new WriteOperation [] {
@@ -106,6 +105,16 @@ public class TestOmidExecutorLikeAFlow {
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(dequeue);
     assertTrue(result.isEmpty());
+  }
+
+  private void assertDequeueResultSuccess(DequeueResult result, byte[] bytes) {
+    assertNotNull("Dequeue result was unexpectedly null", result);
+    assertTrue("Expected dequeue result to be successful but was " + result,
+        result.isSuccess());
+    assertTrue("Expected value (" + Bytes.toStringBinary(bytes) + ") but got " +
+        "(" + Bytes.toStringBinary(result.getValue()) + ")",
+        Bytes.equals(result.getValue(), bytes));
+    assertEquals("Incorrect length", bytes.length, result.getValue().length);
   }
 
   @Test
@@ -167,8 +176,7 @@ public class TestOmidExecutorLikeAFlow {
     // Dequeue entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(dequeue);
-    assertTrue(result.toString(), result.isSuccess());
-    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1L)));
+    assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
     TTQueueOnVCTable.TRACE = false;
     MemoryOracle.TRACE = false;
@@ -261,15 +269,13 @@ public class TestOmidExecutorLikeAFlow {
     // Dequeue from both dest queues, verify, ack
     DequeueResult destDequeueResult = this.executor.execute(
         new QueueDequeue(destQueueOne, consumer, config));
-    assertTrue(destDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(destQueueOneVal, destDequeueResult.getValue()));
+    assertDequeueResultSuccess(destDequeueResult, destQueueOneVal);
     assertTrue(this.executor.execute(batch(
         new QueueAck(destQueueOne,
             destDequeueResult.getEntryPointer(), consumer))).isSuccess());
     destDequeueResult = this.executor.execute(
         new QueueDequeue(destQueueTwo, consumer, config));
-    assertTrue(destDequeueResult.isSuccess());
-    assertTrue(Bytes.equals(destQueueTwoVal, destDequeueResult.getValue()));
+    assertDequeueResultSuccess(destDequeueResult, destQueueTwoVal);
     assertTrue(this.executor.execute(batch(
         new QueueAck(destQueueTwo,
             destDequeueResult.getEntryPointer(), consumer))).isSuccess());
