@@ -1,4 +1,4 @@
-package com.continuuity.data.table.handles;
+package com.continuuity.data.table;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -9,9 +9,6 @@ import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
-import com.continuuity.data.table.ColumnarTable;
-import com.continuuity.data.table.ColumnarTableHandle;
-import com.continuuity.data.table.VersionedColumnarTable;
 import com.google.inject.Inject;
 
 public abstract class SimpleColumnarTableHandle implements ColumnarTableHandle {

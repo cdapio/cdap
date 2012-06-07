@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2012 Continuuity Inc. All rights reserved.
  */
-package com.continuuity.data.table.handles;
+package com.continuuity.data.engine.hypersql;
 
 import java.sql.Connection;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.engine.hypersql.HyperSQLOVCTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.SimpleOVCTableHandle;
 
 public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   

@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2012 Continuuity Inc. All rights reserved.
  */
-package com.continuuity.data.table.handles;
+package com.continuuity.data.engine.memory;
 
-import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.SimpleOVCTableHandle;
 
 public class MemoryOVCTableHandle extends SimpleOVCTableHandle {
   
