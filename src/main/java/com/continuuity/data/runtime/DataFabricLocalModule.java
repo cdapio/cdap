@@ -15,14 +15,28 @@ import com.continuuity.data.table.ColumnarTableHandle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
 public class DataFabricLocalModule extends AbstractModule {
 
+  private final String hyperSqlJDCBString;
+  
+  public DataFabricLocalModule() {
+    this("jdbc:hsqldb:mem:dflmmem");
+  }
+  
+  public DataFabricLocalModule(String hyperSqlJDBCString) {
+    this.hyperSqlJDCBString = hyperSqlJDBCString;
+
+  }
   public void configure() {
 
+    // Load any necessary drivers
+    loadHsqlDriver();
+    
     // Bind our implementations
 
     // There is only one timestamp oracle for the whole system
@@ -35,7 +49,22 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(ColumnarTableHandle.class).to(HyperSQLColumnarTableHandle.class);
     bind(OperationExecutor.class).
         to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
+    
+    // Bind named fields
+    
+    bind(String.class)
+        .annotatedWith(Names.named("HyperSQLOVCTableHandleJDBCString"))
+        .toInstance(hyperSqlJDCBString);
 
   }
 
+  private void loadHsqlDriver() {
+    try {
+      Class.forName("org.hsqldb.jdbcDriver");
+    } catch (Exception e) {
+      System.err.println("ERROR: failed to load HSQLDB JDBC driver.");
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
 } // end of GatewayProductionModule

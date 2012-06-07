@@ -15,6 +15,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
+import com.google.common.base.Objects;
 
 
 public class HyperSQLOVCTable
@@ -23,21 +24,45 @@ implements OrderedVersionedColumnarTable {
   private final String tableName;
   private final Connection connection;
 
-  public HyperSQLOVCTable(final String tableName, Connection connection) {
+  HyperSQLOVCTable(final String tableName, Connection connection) {
     this.tableName = tableName;
     this.connection = connection;
   }
 
-  public static final String ROW_TYPE = "VARCHAR(1024)";
-  public static final String COLUMN_TYPE = "VARCHAR(1024)";
-  public static final String TIMESTAMP_TYPE = "BIGINT";
-  public static final String VALUE_TYPE = "VARBINARY(2)";
+  private static final String ROW_TYPE = "VARCHAR(1024)";
+  private static final String COLUMN_TYPE = "VARCHAR(1024)";
+  private static final String TIMESTAMP_TYPE = "BIGINT";
+  private static final String TYPE_TYPE = "INT";
+  private static final String VALUE_TYPE = "VARBINARY(2)";
 
-  public void initializeTable() {
+  private enum Type {
+    UNDELETE_ALL (0),
+    DELETE_ALL   (1),
+    DELETE       (2),
+    VALUE        (3);
+    int i;
+    Type(int i) {
+      this.i = i;
+    }
+    boolean isUndeleteAll() { return this == UNDELETE_ALL; };
+    boolean isDeleteAll() { return this == DELETE_ALL; };
+    boolean isDelete() { return this == DELETE; };
+    boolean isValue() { return this == VALUE; };
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+          .add("name", name())
+          .add("int", this.i)
+          .toString();
+    }
+  }
+
+  void initializeTable() {
     String createStatement = "CREATE TABLE " + this.tableName + " (" +
         "row " + ROW_TYPE + " NOT NULL, " +
         "qualifier " + COLUMN_TYPE + " NOT NULL, " +
         "timestamp " + TIMESTAMP_TYPE + " NOT NULL, " +
+        "type " + TYPE_TYPE + " NOT NULL, " +
         "value " + VALUE_TYPE + " NOT NULL, " +
         "PRIMARY KEY (row, qualifier, timestamp, value)";
 
@@ -47,6 +72,9 @@ implements OrderedVersionedColumnarTable {
       stmt.executeUpdate(createStatement);
     } catch (SQLException e) {
       // fail silent (table already exists)
+      System.out.println("HyperSQL exception on create (id = " +
+          e.getErrorCode() + ")");
+      e.printStackTrace();
     } finally {
       if (stmt != null) { try {
         stmt.close();
@@ -56,29 +84,35 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
-  @Override
-  public void put(byte[] row, byte[] column, long version, byte[] value) {
+  private void performInsert(byte [] row, byte [] qualifier, long version,
+      Type type, byte [] value) {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement(
           "INSERT INTO " + this.tableName +
-          " (row, qualifier, version, value) VALUES ( ? , ? , ? , ? )");
+          " (row, qualifier, version, type, value) VALUES ( ?, ?, ?, ?, ? )");
       ps.setBytes(1, row);
-      ps.setBytes(2, column);
+      ps.setBytes(2, qualifier);
       ps.setLong(3, version);
-      ps.setBytes(4, value);
+      ps.setInt(4, type.i);
+      ps.setBytes(5, value);
       ps.executeUpdate();
     } catch (SQLException e) {
-      throw new RuntimeException("SQL Exception", e);
+      handleSQLException(e);
     } finally {
       if (ps != null) {
         try {
           ps.close();
         } catch (SQLException e) {
-          throw new RuntimeException(e);
+          handleSQLException(e);
         }
       }
     }
+  }
+
+  @Override
+  public void put(byte[] row, byte[] column, long version, byte[] value) {
+    performInsert(row, column, version, Type.VALUE, value);
   }
 
   @Override
@@ -90,26 +124,7 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void delete(byte[] row, byte[] column, long version) {
-    PreparedStatement ps = null;
-    try {
-      ps = this.connection.prepareStatement(
-          "DELETE FROM " + this.tableName +
-          " WHERE row = ? AND qualifier = ? AND version = ?");
-      ps.setBytes(1, row);
-      ps.setBytes(2, column);
-      ps.setLong(3, version);
-      ps.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("SQL Exception", e);
-    } finally {
-      if (ps != null) {
-        try {
-          ps.close();
-        } catch (SQLException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
+    performInsert(row, column, version, Type.DELETE, null);
   }
 
   @Override
@@ -439,5 +454,11 @@ implements OrderedVersionedColumnarTable {
       map.put(column, result.getBytes(3));
     }
     return map;
+  }
+
+  // TODO: Let out exceptions?  These are only for code bugs since we are in
+  //       memory and file modes only so availability not an issue?
+  private void handleSQLException(SQLException e) {
+    throw new RuntimeException("Received a SQLException", e);
   }
 }
