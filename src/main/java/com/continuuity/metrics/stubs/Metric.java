@@ -5,32 +5,44 @@
  */
 package com.continuuity.metrics.stubs;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Metric");
 
-  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short) 1);
-  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short) 2);
-  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short) 3);
-  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.I64, (short) 4);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.I64, (short)4);
 
   private String id; // required
   private MetricType type; // required
   private String name; // required
   private long value; // required
 
-  /**
-   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
-   */
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ID((short) 1, "id"),
+    ID((short)1, "id"),
     /**
+     * 
      * @see MetricType
      */
-    TYPE((short) 2, "type"),
-    NAME((short) 3, "name"),
-    VALUE((short) 4, "value");
+    TYPE((short)2, "type"),
+    NAME((short)3, "name"),
+    VALUE((short)4, "value");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -44,7 +56,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch (fieldId) {
+      switch(fieldId) {
         case 1: // ID
           return ID;
         case 2: // TYPE
@@ -97,17 +109,16 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
   private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, MetricType.class)));
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, MetricType.class)));
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Metric.class, metaDataMap);
   }
@@ -119,7 +130,8 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     String id,
     MetricType type,
     String name,
-    long value) {
+    long value)
+  {
     this();
     this.id = id;
     this.type = type;
@@ -171,9 +183,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     this.id = null;
   }
 
-  /**
-   * Returns true if field id is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
   public boolean isSetId() {
     return this.id != null;
   }
@@ -185,6 +195,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
   }
 
   /**
+   * 
    * @see MetricType
    */
   public MetricType getType() {
@@ -192,6 +203,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
   }
 
   /**
+   * 
    * @see MetricType
    */
   public void setType(MetricType type) {
@@ -202,9 +214,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     this.type = null;
   }
 
-  /**
-   * Returns true if field type is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field type is set (has been assigned a value) and false otherwise */
   public boolean isSetType() {
     return this.type != null;
   }
@@ -227,9 +237,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     this.name = null;
   }
 
-  /**
-   * Returns true if field name is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field name is set (has been assigned a value) and false otherwise */
   public boolean isSetName() {
     return this.name != null;
   }
@@ -253,9 +261,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     __isset_bit_vector.clear(__VALUE_ISSET_ID);
   }
 
-  /**
-   * Returns true if field value is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field value is set (has been assigned a value) and false otherwise */
   public boolean isSetValue() {
     return __isset_bit_vector.get(__VALUE_ISSET_ID);
   }
@@ -266,76 +272,74 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-      case ID:
-        if (value == null) {
-          unsetId();
-        } else {
-          setId((String) value);
-        }
-        break;
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((String)value);
+      }
+      break;
 
-      case TYPE:
-        if (value == null) {
-          unsetType();
-        } else {
-          setType((MetricType) value);
-        }
-        break;
+    case TYPE:
+      if (value == null) {
+        unsetType();
+      } else {
+        setType((MetricType)value);
+      }
+      break;
 
-      case NAME:
-        if (value == null) {
-          unsetName();
-        } else {
-          setName((String) value);
-        }
-        break;
+    case NAME:
+      if (value == null) {
+        unsetName();
+      } else {
+        setName((String)value);
+      }
+      break;
 
-      case VALUE:
-        if (value == null) {
-          unsetValue();
-        } else {
-          setValue((Long) value);
-        }
-        break;
+    case VALUE:
+      if (value == null) {
+        unsetValue();
+      } else {
+        setValue((Long)value);
+      }
+      break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-      case ID:
-        return getId();
+    case ID:
+      return getId();
 
-      case TYPE:
-        return getType();
+    case TYPE:
+      return getType();
 
-      case NAME:
-        return getName();
+    case NAME:
+      return getName();
 
-      case VALUE:
-        return Long.valueOf(getValue());
+    case VALUE:
+      return Long.valueOf(getValue());
 
     }
     throw new IllegalStateException();
   }
 
-  /**
-   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-      case ID:
-        return isSetId();
-      case TYPE:
-        return isSetType();
-      case NAME:
-        return isSetName();
-      case VALUE:
-        return isSetValue();
+    case ID:
+      return isSetId();
+    case TYPE:
+      return isSetType();
+    case NAME:
+      return isSetName();
+    case VALUE:
+      return isSetValue();
     }
     throw new IllegalStateException();
   }
@@ -345,7 +349,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     if (that == null)
       return false;
     if (that instanceof Metric)
-      return this.equals((Metric) that);
+      return this.equals((Metric)that);
     return false;
   }
 
@@ -403,7 +407,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
     }
 
     int lastComparison = 0;
-    Metric typedOther = (Metric) other;
+    Metric typedOther = (Metric)other;
 
     lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
@@ -455,30 +459,31 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true) {
+    while (true)
+    {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) {
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
         case 1: // ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.id = iprot.readString();
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // TYPE
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.type = MetricType.findByValue(iprot.readI32());
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // NAME
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.name = iprot.readString();
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -486,7 +491,7 @@ public class Metric implements org.apache.thrift.TBase<Metric, Metric._Fields>, 
           if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.value = iprot.readI64();
             setValueIsSet(true);
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

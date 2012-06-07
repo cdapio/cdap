@@ -21,4 +21,30 @@ public enum StateChangeType {
   public int getType() {
     return this.type;
   }
+
+  /**
+   * Find a the enum type by its integer value, as defined in the Thrift IDL.
+   * @return null if the value is not found.
+   */
+  public static StateChangeType value(int value) {
+    switch (value) {
+      case 1:
+        return DEPLOYED;
+      case 2:
+        return STARTING;
+      case 3:
+        return STARTED;
+      case 4:
+        return RUNNING;
+      case 5:
+        return STOPPING;
+      case 6:
+        return STOPPED;
+      case 7:
+        return FAILED;
+      default:
+        return null;
+    }
+  }
+
 }

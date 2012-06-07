@@ -5,35 +5,49 @@
  */
 package com.continuuity.metrics.stubs;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Provides the state of flows.
+ */
 public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlowState");
 
-  private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short) 1);
-  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short) 2);
-  private static final org.apache.thrift.protocol.TField LAST_STOPPPED_FIELD_DESC = new org.apache.thrift.protocol.TField("lastStoppped", org.apache.thrift.protocol.TType.I32, (short) 3);
-  private static final org.apache.thrift.protocol.TField LAST_STARTED_FIELD_DESC = new org.apache.thrift.protocol.TField("lastStarted", org.apache.thrift.protocol.TType.I32, (short) 4);
-  private static final org.apache.thrift.protocol.TField CURRENT_STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("currentState", org.apache.thrift.protocol.TType.I32, (short) 5);
-  private static final org.apache.thrift.protocol.TField RUNS_FIELD_DESC = new org.apache.thrift.protocol.TField("runs", org.apache.thrift.protocol.TType.I32, (short) 6);
+  private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField FLOW_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowId", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField LAST_STOPPED_FIELD_DESC = new org.apache.thrift.protocol.TField("lastStopped", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField LAST_STARTED_FIELD_DESC = new org.apache.thrift.protocol.TField("lastStarted", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField CURRENT_STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("currentState", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField RUNS_FIELD_DESC = new org.apache.thrift.protocol.TField("runs", org.apache.thrift.protocol.TType.I32, (short)6);
 
-  private String application; // required
-  private String flow; // required
-  private int lastStoppped; // required
+  private String applicationId; // required
+  private String flowId; // required
+  private int lastStopped; // required
   private int lastStarted; // required
-  private int currentState; // required
+  private String currentState; // required
   private int runs; // required
 
-  /**
-   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
-   */
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    APPLICATION((short) 1, "application"),
-    FLOW((short) 2, "flow"),
-    LAST_STOPPPED((short) 3, "lastStoppped"),
-    LAST_STARTED((short) 4, "lastStarted"),
-    CURRENT_STATE((short) 5, "currentState"),
-    RUNS((short) 6, "runs");
+    APPLICATION_ID((short)1, "applicationId"),
+    FLOW_ID((short)2, "flowId"),
+    LAST_STOPPED((short)3, "lastStopped"),
+    LAST_STARTED((short)4, "lastStarted"),
+    CURRENT_STATE((short)5, "currentState"),
+    RUNS((short)6, "runs");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -47,13 +61,13 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch (fieldId) {
-        case 1: // APPLICATION
-          return APPLICATION;
-        case 2: // FLOW
-          return FLOW;
-        case 3: // LAST_STOPPPED
-          return LAST_STOPPPED;
+      switch(fieldId) {
+        case 1: // APPLICATION_ID
+          return APPLICATION_ID;
+        case 2: // FLOW_ID
+          return FLOW_ID;
+        case 3: // LAST_STOPPED
+          return LAST_STOPPED;
         case 4: // LAST_STARTED
           return LAST_STARTED;
         case 5: // CURRENT_STATE
@@ -100,28 +114,26 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
   }
 
   // isset id assignments
-  private static final int __LASTSTOPPPED_ISSET_ID = 0;
+  private static final int __LASTSTOPPED_ISSET_ID = 0;
   private static final int __LASTSTARTED_ISSET_ID = 1;
-  private static final int __CURRENTSTATE_ISSET_ID = 2;
-  private static final int __RUNS_ISSET_ID = 3;
-  private BitSet __isset_bit_vector = new BitSet(4);
+  private static final int __RUNS_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.LAST_STOPPPED, new org.apache.thrift.meta_data.FieldMetaData("lastStoppped", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.LAST_STARTED, new org.apache.thrift.meta_data.FieldMetaData("lastStarted", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.CURRENT_STATE, new org.apache.thrift.meta_data.FieldMetaData("currentState", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.RUNS, new org.apache.thrift.meta_data.FieldMetaData("runs", org.apache.thrift.TFieldRequirementType.DEFAULT,
-      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.FLOW_ID, new org.apache.thrift.meta_data.FieldMetaData("flowId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.LAST_STOPPED, new org.apache.thrift.meta_data.FieldMetaData("lastStopped", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.LAST_STARTED, new org.apache.thrift.meta_data.FieldMetaData("lastStarted", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.CURRENT_STATE, new org.apache.thrift.meta_data.FieldMetaData("currentState", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.RUNS, new org.apache.thrift.meta_data.FieldMetaData("runs", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlowState.class, metaDataMap);
   }
@@ -130,21 +142,21 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
   }
 
   public FlowState(
-    String application,
-    String flow,
-    int lastStoppped,
+    String applicationId,
+    String flowId,
+    int lastStopped,
     int lastStarted,
-    int currentState,
-    int runs) {
+    String currentState,
+    int runs)
+  {
     this();
-    this.application = application;
-    this.flow = flow;
-    this.lastStoppped = lastStoppped;
-    setLastStopppedIsSet(true);
+    this.applicationId = applicationId;
+    this.flowId = flowId;
+    this.lastStopped = lastStopped;
+    setLastStoppedIsSet(true);
     this.lastStarted = lastStarted;
     setLastStartedIsSet(true);
     this.currentState = currentState;
-    setCurrentStateIsSet(true);
     this.runs = runs;
     setRunsIsSet(true);
   }
@@ -155,15 +167,17 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
   public FlowState(FlowState other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetApplication()) {
-      this.application = other.application;
+    if (other.isSetApplicationId()) {
+      this.applicationId = other.applicationId;
     }
-    if (other.isSetFlow()) {
-      this.flow = other.flow;
+    if (other.isSetFlowId()) {
+      this.flowId = other.flowId;
     }
-    this.lastStoppped = other.lastStoppped;
+    this.lastStopped = other.lastStopped;
     this.lastStarted = other.lastStarted;
-    this.currentState = other.currentState;
+    if (other.isSetCurrentState()) {
+      this.currentState = other.currentState;
+    }
     this.runs = other.runs;
   }
 
@@ -173,90 +187,83 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
 
   @Override
   public void clear() {
-    this.application = null;
-    this.flow = null;
-    setLastStopppedIsSet(false);
-    this.lastStoppped = 0;
+    this.applicationId = null;
+    this.flowId = null;
+    setLastStoppedIsSet(false);
+    this.lastStopped = 0;
     setLastStartedIsSet(false);
     this.lastStarted = 0;
-    setCurrentStateIsSet(false);
-    this.currentState = 0;
+    this.currentState = null;
     setRunsIsSet(false);
     this.runs = 0;
   }
 
-  public String getApplication() {
-    return this.application;
+  public String getApplicationId() {
+    return this.applicationId;
   }
 
-  public void setApplication(String application) {
-    this.application = application;
+  public void setApplicationId(String applicationId) {
+    this.applicationId = applicationId;
   }
 
-  public void unsetApplication() {
-    this.application = null;
+  public void unsetApplicationId() {
+    this.applicationId = null;
   }
 
-  /**
-   * Returns true if field application is set (has been assigned a value) and false otherwise
-   */
-  public boolean isSetApplication() {
-    return this.application != null;
+  /** Returns true if field applicationId is set (has been assigned a value) and false otherwise */
+  public boolean isSetApplicationId() {
+    return this.applicationId != null;
   }
 
-  public void setApplicationIsSet(boolean value) {
+  public void setApplicationIdIsSet(boolean value) {
     if (!value) {
-      this.application = null;
+      this.applicationId = null;
     }
   }
 
-  public String getFlow() {
-    return this.flow;
+  public String getFlowId() {
+    return this.flowId;
   }
 
-  public void setFlow(String flow) {
-    this.flow = flow;
+  public void setFlowId(String flowId) {
+    this.flowId = flowId;
   }
 
-  public void unsetFlow() {
-    this.flow = null;
+  public void unsetFlowId() {
+    this.flowId = null;
   }
 
-  /**
-   * Returns true if field flow is set (has been assigned a value) and false otherwise
-   */
-  public boolean isSetFlow() {
-    return this.flow != null;
+  /** Returns true if field flowId is set (has been assigned a value) and false otherwise */
+  public boolean isSetFlowId() {
+    return this.flowId != null;
   }
 
-  public void setFlowIsSet(boolean value) {
+  public void setFlowIdIsSet(boolean value) {
     if (!value) {
-      this.flow = null;
+      this.flowId = null;
     }
   }
 
-  public int getLastStoppped() {
-    return this.lastStoppped;
+  public int getLastStopped() {
+    return this.lastStopped;
   }
 
-  public void setLastStoppped(int lastStoppped) {
-    this.lastStoppped = lastStoppped;
-    setLastStopppedIsSet(true);
+  public void setLastStopped(int lastStopped) {
+    this.lastStopped = lastStopped;
+    setLastStoppedIsSet(true);
   }
 
-  public void unsetLastStoppped() {
-    __isset_bit_vector.clear(__LASTSTOPPPED_ISSET_ID);
+  public void unsetLastStopped() {
+    __isset_bit_vector.clear(__LASTSTOPPED_ISSET_ID);
   }
 
-  /**
-   * Returns true if field lastStoppped is set (has been assigned a value) and false otherwise
-   */
-  public boolean isSetLastStoppped() {
-    return __isset_bit_vector.get(__LASTSTOPPPED_ISSET_ID);
+  /** Returns true if field lastStopped is set (has been assigned a value) and false otherwise */
+  public boolean isSetLastStopped() {
+    return __isset_bit_vector.get(__LASTSTOPPED_ISSET_ID);
   }
 
-  public void setLastStopppedIsSet(boolean value) {
-    __isset_bit_vector.set(__LASTSTOPPPED_ISSET_ID, value);
+  public void setLastStoppedIsSet(boolean value) {
+    __isset_bit_vector.set(__LASTSTOPPED_ISSET_ID, value);
   }
 
   public int getLastStarted() {
@@ -272,9 +279,7 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     __isset_bit_vector.clear(__LASTSTARTED_ISSET_ID);
   }
 
-  /**
-   * Returns true if field lastStarted is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field lastStarted is set (has been assigned a value) and false otherwise */
   public boolean isSetLastStarted() {
     return __isset_bit_vector.get(__LASTSTARTED_ISSET_ID);
   }
@@ -283,28 +288,27 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     __isset_bit_vector.set(__LASTSTARTED_ISSET_ID, value);
   }
 
-  public int getCurrentState() {
+  public String getCurrentState() {
     return this.currentState;
   }
 
-  public void setCurrentState(int currentState) {
+  public void setCurrentState(String currentState) {
     this.currentState = currentState;
-    setCurrentStateIsSet(true);
   }
 
   public void unsetCurrentState() {
-    __isset_bit_vector.clear(__CURRENTSTATE_ISSET_ID);
+    this.currentState = null;
   }
 
-  /**
-   * Returns true if field currentState is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field currentState is set (has been assigned a value) and false otherwise */
   public boolean isSetCurrentState() {
-    return __isset_bit_vector.get(__CURRENTSTATE_ISSET_ID);
+    return this.currentState != null;
   }
 
   public void setCurrentStateIsSet(boolean value) {
-    __isset_bit_vector.set(__CURRENTSTATE_ISSET_ID, value);
+    if (!value) {
+      this.currentState = null;
+    }
   }
 
   public int getRuns() {
@@ -320,9 +324,7 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     __isset_bit_vector.clear(__RUNS_ISSET_ID);
   }
 
-  /**
-   * Returns true if field runs is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field runs is set (has been assigned a value) and false otherwise */
   public boolean isSetRuns() {
     return __isset_bit_vector.get(__RUNS_ISSET_ID);
   }
@@ -333,102 +335,100 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-      case APPLICATION:
-        if (value == null) {
-          unsetApplication();
-        } else {
-          setApplication((String) value);
-        }
-        break;
+    case APPLICATION_ID:
+      if (value == null) {
+        unsetApplicationId();
+      } else {
+        setApplicationId((String)value);
+      }
+      break;
 
-      case FLOW:
-        if (value == null) {
-          unsetFlow();
-        } else {
-          setFlow((String) value);
-        }
-        break;
+    case FLOW_ID:
+      if (value == null) {
+        unsetFlowId();
+      } else {
+        setFlowId((String)value);
+      }
+      break;
 
-      case LAST_STOPPPED:
-        if (value == null) {
-          unsetLastStoppped();
-        } else {
-          setLastStoppped((Integer) value);
-        }
-        break;
+    case LAST_STOPPED:
+      if (value == null) {
+        unsetLastStopped();
+      } else {
+        setLastStopped((Integer)value);
+      }
+      break;
 
-      case LAST_STARTED:
-        if (value == null) {
-          unsetLastStarted();
-        } else {
-          setLastStarted((Integer) value);
-        }
-        break;
+    case LAST_STARTED:
+      if (value == null) {
+        unsetLastStarted();
+      } else {
+        setLastStarted((Integer)value);
+      }
+      break;
 
-      case CURRENT_STATE:
-        if (value == null) {
-          unsetCurrentState();
-        } else {
-          setCurrentState((Integer) value);
-        }
-        break;
+    case CURRENT_STATE:
+      if (value == null) {
+        unsetCurrentState();
+      } else {
+        setCurrentState((String)value);
+      }
+      break;
 
-      case RUNS:
-        if (value == null) {
-          unsetRuns();
-        } else {
-          setRuns((Integer) value);
-        }
-        break;
+    case RUNS:
+      if (value == null) {
+        unsetRuns();
+      } else {
+        setRuns((Integer)value);
+      }
+      break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-      case APPLICATION:
-        return getApplication();
+    case APPLICATION_ID:
+      return getApplicationId();
 
-      case FLOW:
-        return getFlow();
+    case FLOW_ID:
+      return getFlowId();
 
-      case LAST_STOPPPED:
-        return Integer.valueOf(getLastStoppped());
+    case LAST_STOPPED:
+      return Integer.valueOf(getLastStopped());
 
-      case LAST_STARTED:
-        return Integer.valueOf(getLastStarted());
+    case LAST_STARTED:
+      return Integer.valueOf(getLastStarted());
 
-      case CURRENT_STATE:
-        return Integer.valueOf(getCurrentState());
+    case CURRENT_STATE:
+      return getCurrentState();
 
-      case RUNS:
-        return Integer.valueOf(getRuns());
+    case RUNS:
+      return Integer.valueOf(getRuns());
 
     }
     throw new IllegalStateException();
   }
 
-  /**
-   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-   */
+  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-      case APPLICATION:
-        return isSetApplication();
-      case FLOW:
-        return isSetFlow();
-      case LAST_STOPPPED:
-        return isSetLastStoppped();
-      case LAST_STARTED:
-        return isSetLastStarted();
-      case CURRENT_STATE:
-        return isSetCurrentState();
-      case RUNS:
-        return isSetRuns();
+    case APPLICATION_ID:
+      return isSetApplicationId();
+    case FLOW_ID:
+      return isSetFlowId();
+    case LAST_STOPPED:
+      return isSetLastStopped();
+    case LAST_STARTED:
+      return isSetLastStarted();
+    case CURRENT_STATE:
+      return isSetCurrentState();
+    case RUNS:
+      return isSetRuns();
     }
     throw new IllegalStateException();
   }
@@ -438,7 +438,7 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     if (that == null)
       return false;
     if (that instanceof FlowState)
-      return this.equals((FlowState) that);
+      return this.equals((FlowState)that);
     return false;
   }
 
@@ -446,30 +446,30 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     if (that == null)
       return false;
 
-    boolean this_present_application = true && this.isSetApplication();
-    boolean that_present_application = true && that.isSetApplication();
-    if (this_present_application || that_present_application) {
-      if (!(this_present_application && that_present_application))
+    boolean this_present_applicationId = true && this.isSetApplicationId();
+    boolean that_present_applicationId = true && that.isSetApplicationId();
+    if (this_present_applicationId || that_present_applicationId) {
+      if (!(this_present_applicationId && that_present_applicationId))
         return false;
-      if (!this.application.equals(that.application))
-        return false;
-    }
-
-    boolean this_present_flow = true && this.isSetFlow();
-    boolean that_present_flow = true && that.isSetFlow();
-    if (this_present_flow || that_present_flow) {
-      if (!(this_present_flow && that_present_flow))
-        return false;
-      if (!this.flow.equals(that.flow))
+      if (!this.applicationId.equals(that.applicationId))
         return false;
     }
 
-    boolean this_present_lastStoppped = true;
-    boolean that_present_lastStoppped = true;
-    if (this_present_lastStoppped || that_present_lastStoppped) {
-      if (!(this_present_lastStoppped && that_present_lastStoppped))
+    boolean this_present_flowId = true && this.isSetFlowId();
+    boolean that_present_flowId = true && that.isSetFlowId();
+    if (this_present_flowId || that_present_flowId) {
+      if (!(this_present_flowId && that_present_flowId))
         return false;
-      if (this.lastStoppped != that.lastStoppped)
+      if (!this.flowId.equals(that.flowId))
+        return false;
+    }
+
+    boolean this_present_lastStopped = true;
+    boolean that_present_lastStopped = true;
+    if (this_present_lastStopped || that_present_lastStopped) {
+      if (!(this_present_lastStopped && that_present_lastStopped))
+        return false;
+      if (this.lastStopped != that.lastStopped)
         return false;
     }
 
@@ -482,12 +482,12 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
         return false;
     }
 
-    boolean this_present_currentState = true;
-    boolean that_present_currentState = true;
+    boolean this_present_currentState = true && this.isSetCurrentState();
+    boolean that_present_currentState = true && that.isSetCurrentState();
     if (this_present_currentState || that_present_currentState) {
       if (!(this_present_currentState && that_present_currentState))
         return false;
-      if (this.currentState != that.currentState)
+      if (!this.currentState.equals(that.currentState))
         return false;
     }
 
@@ -514,34 +514,34 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     }
 
     int lastComparison = 0;
-    FlowState typedOther = (FlowState) other;
+    FlowState typedOther = (FlowState)other;
 
-    lastComparison = Boolean.valueOf(isSetApplication()).compareTo(typedOther.isSetApplication());
+    lastComparison = Boolean.valueOf(isSetApplicationId()).compareTo(typedOther.isSetApplicationId());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetApplication()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.application, typedOther.application);
+    if (isSetApplicationId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.applicationId, typedOther.applicationId);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetFlow()).compareTo(typedOther.isSetFlow());
+    lastComparison = Boolean.valueOf(isSetFlowId()).compareTo(typedOther.isSetFlowId());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlow()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flow, typedOther.flow);
+    if (isSetFlowId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flowId, typedOther.flowId);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetLastStoppped()).compareTo(typedOther.isSetLastStoppped());
+    lastComparison = Boolean.valueOf(isSetLastStopped()).compareTo(typedOther.isSetLastStopped());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLastStoppped()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.lastStoppped, typedOther.lastStoppped);
+    if (isSetLastStopped()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.lastStopped, typedOther.lastStopped);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -586,31 +586,32 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true) {
+    while (true)
+    {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) {
+      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
         break;
       }
       switch (field.id) {
-        case 1: // APPLICATION
+        case 1: // APPLICATION_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.application = iprot.readString();
-          } else {
+            this.applicationId = iprot.readString();
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 2: // FLOW
+        case 2: // FLOW_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.flow = iprot.readString();
-          } else {
+            this.flowId = iprot.readString();
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 3: // LAST_STOPPPED
+        case 3: // LAST_STOPPED
           if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.lastStoppped = iprot.readI32();
-            setLastStopppedIsSet(true);
-          } else {
+            this.lastStopped = iprot.readI32();
+            setLastStoppedIsSet(true);
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -618,15 +619,14 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.lastStarted = iprot.readI32();
             setLastStartedIsSet(true);
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // CURRENT_STATE
-          if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.currentState = iprot.readI32();
-            setCurrentStateIsSet(true);
-          } else {
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.currentState = iprot.readString();
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -634,7 +634,7 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.runs = iprot.readI32();
             setRunsIsSet(true);
-          } else {
+          } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -651,25 +651,27 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.application != null) {
-      oprot.writeFieldBegin(APPLICATION_FIELD_DESC);
-      oprot.writeString(this.application);
+    if (this.applicationId != null) {
+      oprot.writeFieldBegin(APPLICATION_ID_FIELD_DESC);
+      oprot.writeString(this.applicationId);
       oprot.writeFieldEnd();
     }
-    if (this.flow != null) {
-      oprot.writeFieldBegin(FLOW_FIELD_DESC);
-      oprot.writeString(this.flow);
+    if (this.flowId != null) {
+      oprot.writeFieldBegin(FLOW_ID_FIELD_DESC);
+      oprot.writeString(this.flowId);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(LAST_STOPPPED_FIELD_DESC);
-    oprot.writeI32(this.lastStoppped);
+    oprot.writeFieldBegin(LAST_STOPPED_FIELD_DESC);
+    oprot.writeI32(this.lastStopped);
     oprot.writeFieldEnd();
     oprot.writeFieldBegin(LAST_STARTED_FIELD_DESC);
     oprot.writeI32(this.lastStarted);
     oprot.writeFieldEnd();
-    oprot.writeFieldBegin(CURRENT_STATE_FIELD_DESC);
-    oprot.writeI32(this.currentState);
-    oprot.writeFieldEnd();
+    if (this.currentState != null) {
+      oprot.writeFieldBegin(CURRENT_STATE_FIELD_DESC);
+      oprot.writeString(this.currentState);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldBegin(RUNS_FIELD_DESC);
     oprot.writeI32(this.runs);
     oprot.writeFieldEnd();
@@ -682,24 +684,24 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     StringBuilder sb = new StringBuilder("FlowState(");
     boolean first = true;
 
-    sb.append("application:");
-    if (this.application == null) {
+    sb.append("applicationId:");
+    if (this.applicationId == null) {
       sb.append("null");
     } else {
-      sb.append(this.application);
+      sb.append(this.applicationId);
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("flow:");
-    if (this.flow == null) {
+    sb.append("flowId:");
+    if (this.flowId == null) {
       sb.append("null");
     } else {
-      sb.append(this.flow);
+      sb.append(this.flowId);
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("lastStoppped:");
-    sb.append(this.lastStoppped);
+    sb.append("lastStopped:");
+    sb.append(this.lastStopped);
     first = false;
     if (!first) sb.append(", ");
     sb.append("lastStarted:");
@@ -707,7 +709,11 @@ public class FlowState implements org.apache.thrift.TBase<FlowState, FlowState._
     first = false;
     if (!first) sb.append(", ");
     sb.append("currentState:");
-    sb.append(this.currentState);
+    if (this.currentState == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.currentState);
+    }
     first = false;
     if (!first) sb.append(", ");
     sb.append("runs:");

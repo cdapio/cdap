@@ -140,11 +140,11 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
         if (!deployed.containsKey(appFlow)) {
           deployed.put(appFlow, 1);
           FlowState status = new FlowState();
-          status.setApplication(rs.getString("application"));
-          status.setFlow(rs.getString("flow"));
-          status.setCurrentState(StateChangeType.DEPLOYED.getType());
+          status.setApplicationId(rs.getString("application"));
+          status.setFlowId(rs.getString("flow"));
+          status.setCurrentState(StateChangeType.DEPLOYED.name());
           status.setLastStarted(-1);
-          status.setLastStoppped(-1);
+          status.setLastStopped(-1);
           status.setRuns(0);
           result.add(status);
         }
@@ -168,20 +168,20 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     }
 
     for (FlowState state : result) {
-      String flow = state.getFlow();
-      String app = state.getApplication();
+      String flow = state.getFlowId();
+      String app = state.getApplicationId();
       String appFlow = String.format("%s.%s", app, flow);
       if (started.containsKey(appFlow)) {
         state.setLastStarted(started.get(appFlow));
       }
       if (stopped.containsKey(appFlow)) {
-        state.setLastStoppped(stopped.get(appFlow));
+        state.setLastStopped(stopped.get(appFlow));
       }
       if (runs.containsKey(appFlow)) {
         state.setRuns(runs.get(appFlow));
       }
       if (states.containsKey(appFlow)) {
-        state.setCurrentState(states.get(appFlow));
+        state.setCurrentState(StateChangeType.value(states.get(appFlow)).name());
       }
     }
     return result;

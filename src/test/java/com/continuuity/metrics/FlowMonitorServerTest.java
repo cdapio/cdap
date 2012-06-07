@@ -203,6 +203,12 @@ public class FlowMonitorServerTest {
     addPointToFlowStateTable(17, "demo", "EFG", "hustler", "", StateChangeType.STARTING);
     addPointToFlowStateTable(18, "demo", "EFG", "hustler", "", StateChangeType.FAILED);
 
+    addPointToFlowStateTable(19, "demo", "XYZ", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(20, "demo", "XYZ", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(21, "demo", "XYZ", "targetting", "", StateChangeType.RUNNING);
+    addPointToFlowStateTable(22, "demo", "XYZ", "targetting", "", StateChangeType.STOPPING);
+    addPointToFlowStateTable(23, "demo", "XYZ", "targetting", "", StateChangeType.STOPPED);
+
     FlowMonitorServer server = new FlowMonitorServer(handler, callback);
     server.start(configuration);
 

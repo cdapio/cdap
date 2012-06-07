@@ -35,18 +35,30 @@ struct Metric {
   4: i64 value,
 }
 
+/**
+ * Provides the state of flows.
+ */
 struct FlowState {
-  1: string application,
-  2: string flow,
-  3: i32 lastStoppped,
+  1: string applicationId,
+  2: string flowId,
+  3: i32 lastStopped,
   4: i32 lastStarted,
-  5: i32 currentState,
+  5: string currentState,
   6: i32 runs,
 }
 
 service FlowMonitor {
-    void add(1: FlowMetric metric),
-    list<FlowState> getFlows(1: string accountId),
-    list<FlowEvent> getFlowHistory(1: string accountId, 2: string appid, 3: string flowId),
-    list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid),
+
+  /**
+   * Adds a metric to a flow
+   */
+  void add(1: FlowMetric metric),
+
+  /**
+   * Returns the state of flows within a given account id.
+   */
+  list<FlowState> getFlows(1: string accountId),
+
+  list<FlowEvent> getFlowHistory(1: string accountId, 2: string appid, 3: string flowId),
+  list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid),
 }
