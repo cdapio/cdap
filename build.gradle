@@ -71,6 +71,4 @@ task deploy(dependsOn: ['all', 'upload']) {
 	}
 }
 
-// when run as multi-project build, java 'build' task is run by default but we dont have any java
-task(':web-cloud-app:build').dependsOn 'all'
 
