@@ -56,7 +56,7 @@ public class SQLStateChangeSyncerTest {
     CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10)); client.start();
 
 
-    StateChanger changer = StateChange.Client.newState(client, "/continuuity/system/queue");
+    StateChanger changer = StateChange.Client.newStateChanger(client, "/continuuity/system/queue");
     StateChangeListener listener = StateChange.Server.newListener(client);
 
     Injector injector = Guice.createInjector(DIModules.getInMemoryHSQLBindings());

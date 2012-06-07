@@ -26,9 +26,11 @@ public class FlowMonitor {
 
     public void add(FlowMetric metric) throws org.apache.thrift.TException;
 
+    public List<FlowState> getFlows(String accountId) throws org.apache.thrift.TException;
+
     public List<FlowEvent> getFlowHistory(String accountId, String appid, String flowId) throws org.apache.thrift.TException;
 
-    public List<Metric> getFlowMetric(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException;
+    public List<Metric> getFlowMetrics(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException;
 
   }
 
@@ -36,9 +38,11 @@ public class FlowMonitor {
 
     public void add(FlowMetric metric, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.add_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlows_call> resultHandler) throws org.apache.thrift.TException;
+
     public void getFlowHistory(String accountId, String appid, String flowId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowHistory_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getFlowMetric(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowMetric_call> resultHandler) throws org.apache.thrift.TException;
+    public void getFlowMetrics(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowMetrics_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -82,6 +86,29 @@ public class FlowMonitor {
       return;
     }
 
+    public List<FlowState> getFlows(String accountId) throws org.apache.thrift.TException
+    {
+      send_getFlows(accountId);
+      return recv_getFlows();
+    }
+
+    public void send_getFlows(String accountId) throws org.apache.thrift.TException
+    {
+      getFlows_args args = new getFlows_args();
+      args.setAccountId(accountId);
+      sendBase("getFlows", args);
+    }
+
+    public List<FlowState> recv_getFlows() throws org.apache.thrift.TException
+    {
+      getFlows_result result = new getFlows_result();
+      receiveBase(result, "getFlows");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlows failed: unknown result");
+    }
+
     public List<FlowEvent> getFlowHistory(String accountId, String appid, String flowId) throws org.apache.thrift.TException
     {
       send_getFlowHistory(accountId, appid, flowId);
@@ -107,30 +134,30 @@ public class FlowMonitor {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowHistory failed: unknown result");
     }
 
-    public List<Metric> getFlowMetric(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException
+    public List<Metric> getFlowMetrics(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException
     {
-      send_getFlowMetric(accountId, appId, flowId, rid);
-      return recv_getFlowMetric();
+      send_getFlowMetrics(accountId, appId, flowId, rid);
+      return recv_getFlowMetrics();
     }
 
-    public void send_getFlowMetric(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException
+    public void send_getFlowMetrics(String accountId, String appId, String flowId, String rid) throws org.apache.thrift.TException
     {
-      getFlowMetric_args args = new getFlowMetric_args();
+      getFlowMetrics_args args = new getFlowMetrics_args();
       args.setAccountId(accountId);
       args.setAppId(appId);
       args.setFlowId(flowId);
       args.setRid(rid);
-      sendBase("getFlowMetric", args);
+      sendBase("getFlowMetrics", args);
     }
 
-    public List<Metric> recv_getFlowMetric() throws org.apache.thrift.TException
+    public List<Metric> recv_getFlowMetrics() throws org.apache.thrift.TException
     {
-      getFlowMetric_result result = new getFlowMetric_result();
-      receiveBase(result, "getFlowMetric");
+      getFlowMetrics_result result = new getFlowMetrics_result();
+      receiveBase(result, "getFlowMetrics");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowMetric failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowMetrics failed: unknown result");
     }
 
   }
@@ -183,6 +210,38 @@ public class FlowMonitor {
       }
     }
 
+    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getFlows_call method_call = new getFlows_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getFlows_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String accountId;
+      public getFlows_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.accountId = accountId;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlows", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlows_args args = new getFlows_args();
+        args.setAccountId(accountId);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<FlowState> getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getFlows();
+      }
+    }
+
     public void getFlowHistory(String accountId, String appid, String flowId, org.apache.thrift.async.AsyncMethodCallback<getFlowHistory_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getFlowHistory_call method_call = new getFlowHistory_call(accountId, appid, flowId, resultHandler, this, ___protocolFactory, ___transport);
@@ -221,19 +280,19 @@ public class FlowMonitor {
       }
     }
 
-    public void getFlowMetric(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<getFlowMetric_call> resultHandler) throws org.apache.thrift.TException {
+    public void getFlowMetrics(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<getFlowMetrics_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getFlowMetric_call method_call = new getFlowMetric_call(accountId, appId, flowId, rid, resultHandler, this, ___protocolFactory, ___transport);
+      getFlowMetrics_call method_call = new getFlowMetrics_call(accountId, appId, flowId, rid, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getFlowMetric_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getFlowMetrics_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String accountId;
       private String appId;
       private String flowId;
       private String rid;
-      public getFlowMetric_call(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<getFlowMetric_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getFlowMetrics_call(String accountId, String appId, String flowId, String rid, org.apache.thrift.async.AsyncMethodCallback<getFlowMetrics_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.accountId = accountId;
         this.appId = appId;
@@ -242,8 +301,8 @@ public class FlowMonitor {
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowMetric", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getFlowMetric_args args = new getFlowMetric_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowMetrics", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlowMetrics_args args = new getFlowMetrics_args();
         args.setAccountId(accountId);
         args.setAppId(appId);
         args.setFlowId(flowId);
@@ -258,7 +317,7 @@ public class FlowMonitor {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getFlowMetric();
+        return (new Client(prot)).recv_getFlowMetrics();
       }
     }
 
@@ -276,8 +335,9 @@ public class FlowMonitor {
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
       processMap.put("add", new add());
+      processMap.put("getFlows", new getFlows());
       processMap.put("getFlowHistory", new getFlowHistory());
-      processMap.put("getFlowMetric", new getFlowMetric());
+      processMap.put("getFlowMetrics", new getFlowMetrics());
       return processMap;
     }
 
@@ -293,6 +353,22 @@ public class FlowMonitor {
       protected add_result getResult(I iface, add_args args) throws org.apache.thrift.TException {
         add_result result = new add_result();
         iface.add(args.metric);
+        return result;
+      }
+    }
+
+    private static class getFlows<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlows_args> {
+      public getFlows() {
+        super("getFlows");
+      }
+
+      protected getFlows_args getEmptyArgsInstance() {
+        return new getFlows_args();
+      }
+
+      protected getFlows_result getResult(I iface, getFlows_args args) throws org.apache.thrift.TException {
+        getFlows_result result = new getFlows_result();
+        result.success = iface.getFlows(args.accountId);
         return result;
       }
     }
@@ -313,18 +389,18 @@ public class FlowMonitor {
       }
     }
 
-    private static class getFlowMetric<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowMetric_args> {
-      public getFlowMetric() {
-        super("getFlowMetric");
+    private static class getFlowMetrics<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowMetrics_args> {
+      public getFlowMetrics() {
+        super("getFlowMetrics");
       }
 
-      protected getFlowMetric_args getEmptyArgsInstance() {
-        return new getFlowMetric_args();
+      protected getFlowMetrics_args getEmptyArgsInstance() {
+        return new getFlowMetrics_args();
       }
 
-      protected getFlowMetric_result getResult(I iface, getFlowMetric_args args) throws org.apache.thrift.TException {
-        getFlowMetric_result result = new getFlowMetric_result();
-        result.success = iface.getFlowMetric(args.accountId, args.appId, args.flowId, args.rid);
+      protected getFlowMetrics_result getResult(I iface, getFlowMetrics_args args) throws org.apache.thrift.TException {
+        getFlowMetrics_result result = new getFlowMetrics_result();
+        result.success = iface.getFlowMetrics(args.accountId, args.appId, args.flowId, args.rid);
         return result;
       }
     }
@@ -799,6 +875,631 @@ public class FlowMonitor {
       StringBuilder sb = new StringBuilder("add_result(");
       boolean first = true;
 
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class getFlows_args implements org.apache.thrift.TBase<getFlows_args, getFlows_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
+
+    private String accountId; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT_ID((short)1, "accountId");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT_ID
+            return ACCOUNT_ID;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_args.class, metaDataMap);
+    }
+
+    public getFlows_args() {
+    }
+
+    public getFlows_args(
+      String accountId)
+    {
+      this();
+      this.accountId = accountId;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlows_args(getFlows_args other) {
+      if (other.isSetAccountId()) {
+        this.accountId = other.accountId;
+      }
+    }
+
+    public getFlows_args deepCopy() {
+      return new getFlows_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.accountId = null;
+    }
+
+    public String getAccountId() {
+      return this.accountId;
+    }
+
+    public void setAccountId(String accountId) {
+      this.accountId = accountId;
+    }
+
+    public void unsetAccountId() {
+      this.accountId = null;
+    }
+
+    /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccountId() {
+      return this.accountId != null;
+    }
+
+    public void setAccountIdIsSet(boolean value) {
+      if (!value) {
+        this.accountId = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT_ID:
+        if (value == null) {
+          unsetAccountId();
+        } else {
+          setAccountId((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT_ID:
+        return getAccountId();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT_ID:
+        return isSetAccountId();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlows_args)
+        return this.equals((getFlows_args)that);
+      return false;
+    }
+
+    public boolean equals(getFlows_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_accountId = true && this.isSetAccountId();
+      boolean that_present_accountId = true && that.isSetAccountId();
+      if (this_present_accountId || that_present_accountId) {
+        if (!(this_present_accountId && that_present_accountId))
+          return false;
+        if (!this.accountId.equals(that.accountId))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlows_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlows_args typedOther = (getFlows_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccountId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accountId, typedOther.accountId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // ACCOUNT_ID
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.accountId = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.accountId != null) {
+        oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
+        oprot.writeString(this.accountId);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlows_args(");
+      boolean first = true;
+
+      sb.append("accountId:");
+      if (this.accountId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.accountId);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class getFlows_result implements org.apache.thrift.TBase<getFlows_result, getFlows_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+
+    private List<FlowState> success; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowState.class))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_result.class, metaDataMap);
+    }
+
+    public getFlows_result() {
+    }
+
+    public getFlows_result(
+      List<FlowState> success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlows_result(getFlows_result other) {
+      if (other.isSetSuccess()) {
+        List<FlowState> __this__success = new ArrayList<FlowState>();
+        for (FlowState other_element : other.success) {
+          __this__success.add(new FlowState(other_element));
+        }
+        this.success = __this__success;
+      }
+    }
+
+    public getFlows_result deepCopy() {
+      return new getFlows_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<FlowState> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(FlowState elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<FlowState>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<FlowState> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<FlowState> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<FlowState>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlows_result)
+        return this.equals((getFlows_result)that);
+      return false;
+    }
+
+    public boolean equals(getFlows_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlows_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlows_result typedOther = (getFlows_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                this.success = new ArrayList<FlowState>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                {
+                  FlowState _elem2; // required
+                  _elem2 = new FlowState();
+                  _elem2.read(iprot);
+                  this.success.add(_elem2);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
+          for (FlowState _iter3 : this.success)
+          {
+            _iter3.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlows_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -1545,14 +2246,14 @@ public class FlowMonitor {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                this.success = new ArrayList<FlowEvent>(_list0.size);
-                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                org.apache.thrift.protocol.TList _list4 = iprot.readListBegin();
+                this.success = new ArrayList<FlowEvent>(_list4.size);
+                for (int _i5 = 0; _i5 < _list4.size; ++_i5)
                 {
-                  FlowEvent _elem2; // required
-                  _elem2 = new FlowEvent();
-                  _elem2.read(iprot);
-                  this.success.add(_elem2);
+                  FlowEvent _elem6; // required
+                  _elem6 = new FlowEvent();
+                  _elem6.read(iprot);
+                  this.success.add(_elem6);
                 }
                 iprot.readListEnd();
               }
@@ -1576,9 +2277,9 @@ public class FlowMonitor {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (FlowEvent _iter3 : this.success)
+          for (FlowEvent _iter7 : this.success)
           {
-            _iter3.write(oprot);
+            _iter7.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -1626,8 +2327,8 @@ public class FlowMonitor {
 
   }
 
-  public static class getFlowMetric_args implements org.apache.thrift.TBase<getFlowMetric_args, getFlowMetric_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowMetric_args");
+  public static class getFlowMetrics_args implements org.apache.thrift.TBase<getFlowMetrics_args, getFlowMetrics_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowMetrics_args");
 
     private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("appId", org.apache.thrift.protocol.TType.STRING, (short)2);
@@ -1720,13 +2421,13 @@ public class FlowMonitor {
       tmpMap.put(_Fields.RID, new org.apache.thrift.meta_data.FieldMetaData("rid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowMetric_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowMetrics_args.class, metaDataMap);
     }
 
-    public getFlowMetric_args() {
+    public getFlowMetrics_args() {
     }
 
-    public getFlowMetric_args(
+    public getFlowMetrics_args(
       String accountId,
       String appId,
       String flowId,
@@ -1742,7 +2443,7 @@ public class FlowMonitor {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowMetric_args(getFlowMetric_args other) {
+    public getFlowMetrics_args(getFlowMetrics_args other) {
       if (other.isSetAccountId()) {
         this.accountId = other.accountId;
       }
@@ -1757,8 +2458,8 @@ public class FlowMonitor {
       }
     }
 
-    public getFlowMetric_args deepCopy() {
-      return new getFlowMetric_args(this);
+    public getFlowMetrics_args deepCopy() {
+      return new getFlowMetrics_args(this);
     }
 
     @Override
@@ -1939,12 +2640,12 @@ public class FlowMonitor {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowMetric_args)
-        return this.equals((getFlowMetric_args)that);
+      if (that instanceof getFlowMetrics_args)
+        return this.equals((getFlowMetrics_args)that);
       return false;
     }
 
-    public boolean equals(getFlowMetric_args that) {
+    public boolean equals(getFlowMetrics_args that) {
       if (that == null)
         return false;
 
@@ -1992,13 +2693,13 @@ public class FlowMonitor {
       return 0;
     }
 
-    public int compareTo(getFlowMetric_args other) {
+    public int compareTo(getFlowMetrics_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowMetric_args typedOther = (getFlowMetric_args)other;
+      getFlowMetrics_args typedOther = (getFlowMetrics_args)other;
 
       lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
       if (lastComparison != 0) {
@@ -2124,7 +2825,7 @@ public class FlowMonitor {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowMetric_args(");
+      StringBuilder sb = new StringBuilder("getFlowMetrics_args(");
       boolean first = true;
 
       sb.append("accountId:");
@@ -2184,8 +2885,8 @@ public class FlowMonitor {
 
   }
 
-  public static class getFlowMetric_result implements org.apache.thrift.TBase<getFlowMetric_result, getFlowMetric_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowMetric_result");
+  public static class getFlowMetrics_result implements org.apache.thrift.TBase<getFlowMetrics_result, getFlowMetrics_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowMetrics_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
 
@@ -2258,13 +2959,13 @@ public class FlowMonitor {
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
               new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Metric.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowMetric_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowMetrics_result.class, metaDataMap);
     }
 
-    public getFlowMetric_result() {
+    public getFlowMetrics_result() {
     }
 
-    public getFlowMetric_result(
+    public getFlowMetrics_result(
       List<Metric> success)
     {
       this();
@@ -2274,7 +2975,7 @@ public class FlowMonitor {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getFlowMetric_result(getFlowMetric_result other) {
+    public getFlowMetrics_result(getFlowMetrics_result other) {
       if (other.isSetSuccess()) {
         List<Metric> __this__success = new ArrayList<Metric>();
         for (Metric other_element : other.success) {
@@ -2284,8 +2985,8 @@ public class FlowMonitor {
       }
     }
 
-    public getFlowMetric_result deepCopy() {
-      return new getFlowMetric_result(this);
+    public getFlowMetrics_result deepCopy() {
+      return new getFlowMetrics_result(this);
     }
 
     @Override
@@ -2370,12 +3071,12 @@ public class FlowMonitor {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getFlowMetric_result)
-        return this.equals((getFlowMetric_result)that);
+      if (that instanceof getFlowMetrics_result)
+        return this.equals((getFlowMetrics_result)that);
       return false;
     }
 
-    public boolean equals(getFlowMetric_result that) {
+    public boolean equals(getFlowMetrics_result that) {
       if (that == null)
         return false;
 
@@ -2396,13 +3097,13 @@ public class FlowMonitor {
       return 0;
     }
 
-    public int compareTo(getFlowMetric_result other) {
+    public int compareTo(getFlowMetrics_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getFlowMetric_result typedOther = (getFlowMetric_result)other;
+      getFlowMetrics_result typedOther = (getFlowMetrics_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -2434,14 +3135,14 @@ public class FlowMonitor {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list4 = iprot.readListBegin();
-                this.success = new ArrayList<Metric>(_list4.size);
-                for (int _i5 = 0; _i5 < _list4.size; ++_i5)
+                org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
+                this.success = new ArrayList<Metric>(_list8.size);
+                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
                 {
-                  Metric _elem6; // required
-                  _elem6 = new Metric();
-                  _elem6.read(iprot);
-                  this.success.add(_elem6);
+                  Metric _elem10; // required
+                  _elem10 = new Metric();
+                  _elem10.read(iprot);
+                  this.success.add(_elem10);
                 }
                 iprot.readListEnd();
               }
@@ -2465,9 +3166,9 @@ public class FlowMonitor {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (Metric _iter7 : this.success)
+          for (Metric _iter11 : this.success)
           {
-            _iter7.write(oprot);
+            _iter11.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -2479,7 +3180,7 @@ public class FlowMonitor {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getFlowMetric_result(");
+      StringBuilder sb = new StringBuilder("getFlowMetrics_result(");
       boolean first = true;
 
       sb.append("success:");

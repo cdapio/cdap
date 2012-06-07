@@ -18,7 +18,7 @@ public final class StateChange {
       return new StateChangeDataImpl(System.currentTimeMillis(), accountId, application, flowname, payload, type);
     }
 
-    public static StateChanger newState(CuratorFramework client, String path) {
+    public static StateChanger newStateChanger(CuratorFramework client, String path) {
       return new StateChangerImpl(client, path);
     }
   }

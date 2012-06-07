@@ -69,7 +69,6 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
   @Override
   protected void stop() {
     Closeables.closeQuietly(client);
-    Stoppables.stopQuietly(handler, "Shutting down of FAR Registered service.");
     server.stop();
     executorService.shutdown();
   }
@@ -127,7 +126,6 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
       stop();
     } catch (TTransportException e) {
       Log.error("Non-blocking server error. Reason : {}", e.getMessage());
-      stop();
     } catch (StateChangeListenerException e) {
       Log.error("Error listening to state change queue.");
     }

@@ -7,9 +7,11 @@ import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.metrics.service.FlowMonitorClient;
 import com.continuuity.metrics.service.FlowMonitorHandler;
 import com.continuuity.metrics.service.FlowMonitorServer;
+import com.continuuity.metrics.stubs.FlowState;
 import com.continuuity.metrics.stubs.Metric;
 import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.metrics.stubs.FlowMetric;
+import com.continuuity.observer.StateChangeType;
 import com.continuuity.runtime.DIModules;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
@@ -18,10 +20,7 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.List;
 import java.util.Random;
 
@@ -33,6 +32,7 @@ public class FlowMonitorServerTest {
   private static final Logger Log = LoggerFactory.getLogger(FlowMonitorServerTest.class);
   private static InMemoryZookeeper zookeeper = null;
   private static String zkEnsemble;
+  private Connection myConnection;
 
   @BeforeClass
   public static void before() throws Exception {
@@ -146,9 +146,69 @@ public class FlowMonitorServerTest {
     }
   }
 
+  public void addPointToFlowStateTable(int timestamp, String accountId, String application, String flow, String payload,
+                                       StateChangeType type) throws Exception {
+    String sql = "INSERT INTO " +
+      "flow_state (timestamp, account, application, flow, payload, state) " +
+      " VALUES (?, ?, ?, ?, ?, ?);";
+
+    try {
+      PreparedStatement stmt = myConnection.prepareStatement(sql);
+      stmt.setLong(1, timestamp);
+      stmt.setString(2, accountId);
+      stmt.setString(3, application);
+      stmt.setString(4, flow);
+      stmt.setString(5, payload);
+      stmt.setInt(6, type.getType());
+      stmt.executeUpdate();
+    } catch (SQLException e) {
+      Log.error("Failed to write the state change to SQL DB (state : {}). Reason : {}",accountId, e.getMessage());
+    }
+  }
+
   @Test
-  public void testTestCombined() throws Exception {
-    Injector injector = Guice.createInjector(DIModules.getInMemoryHSQLBindings());
+  public void testGetFlowsAPI() throws Exception {
+    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
+    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
+    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+
+    CConfiguration configuration = CConfiguration.create();
+    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+
+    myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
+    clearFlowStateTable();
+    addPointToFlowStateTable(1, "demo", "ABC", "targetting", "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "XYZ", "targetting", "", StateChangeType.DEPLOYED);
+
+    addPointToFlowStateTable(3, "demo", "ABC", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(4, "demo", "ABC", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(5, "demo", "ABC", "targetting", "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(6, "demo", "ABC", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(7, "demo", "ABC", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(8, "demo", "ABC", "targetting", "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(9, "demo", "XYZ", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(10, "demo", "XYZ", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(11, "demo", "XYZ", "targetting", "", StateChangeType.RUNNING);
+    addPointToFlowStateTable(12, "demo", "XYZ", "targetting", "", StateChangeType.STOPPING);
+    addPointToFlowStateTable(13, "demo", "XYZ", "targetting", "", StateChangeType.STOPPED);
+
+    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
+    server.start(configuration);
+
+    Thread.sleep(5000);
+
+    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    List<FlowState> states = client.getFlows("demo");
+    Assert.assertNotNull(states);
+    client.close();
+    server.stop();
+  }
+
+  @Test
+  public void testGenMetrics() throws Exception {
+    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
     FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
     StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
 
@@ -164,6 +224,30 @@ public class FlowMonitorServerTest {
     generateRandomFlowMetrics(client);
 
     List<Metric> metrics = client.getFlowMetric("demo", "personalization", "targetting", "ABC");
+    Assert.assertTrue(metrics.size() == 12);
+
+    List<FlowState> states = client.getFlows("demo");
+    Assert.assertNotNull(states);
     server.stop();
+  }
+
+  @Test @Ignore
+  public void testReadFromLocalExternalServiceNotReallyATestCase() throws Exception {
+    CConfiguration configuration = CConfiguration.create();
+    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, "localhost:2181");
+
+    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    List<FlowState> states = client.getFlows("demo");
+  }
+
+  private void clearFlowStateTable() {
+    String sql = "DELETE FROM flow_state";
+
+    try {
+      PreparedStatement stmt = myConnection.prepareStatement(sql);
+      stmt.executeUpdate();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
   }
 }

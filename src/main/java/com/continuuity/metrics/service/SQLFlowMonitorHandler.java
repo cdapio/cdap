@@ -1,10 +1,10 @@
 package com.continuuity.metrics.service;
 
-import com.continuuity.metrics.stubs.FlowEvent;
-import com.continuuity.metrics.stubs.FlowMetric;
-import com.continuuity.metrics.stubs.Metric;
-import com.continuuity.metrics.stubs.MetricType;
+import com.continuuity.metrics.stubs.*;
+import com.continuuity.observer.StateChangeType;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.internal.Pair;
 import com.google.inject.Inject;
 import java.sql.ResultSet;
 import org.slf4j.Logger;
@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -89,7 +90,7 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
    */
   @Override
   public List<Metric> getFlowMetric(String accountId, String app, String flow, String rid) {
-    List<Metric> results = Lists.newArrayList();
+    List<Metric> result = Lists.newArrayList();
     String sql = "SELECT flowlet, metric, rid, SUM(value) AS total FROM flow_metrics WHERE accountId = ? AND app = ? AND " +
       "flow = ? AND rid = ? GROUP by flowlet, metric, rid";
     try {
@@ -105,23 +106,90 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
         metric.setType(MetricType.FLOWLET);
         metric.setName(rs.getString("metric"));
         metric.setValue(rs.getLong("total"));
-        results.add(metric);
+        result.add(metric);
       }
     } catch (SQLException e) {
       Log.warn("Unable to retrieve flow metrics. Application '{}', Flow '{}', Run ID '{}'",
         new Object[] {app, flow, rid});
     }
-    return results;
+    return result;
   }
 
+  /**
+   * FIXME: This was done in hurry and can be written in a much better way.
+   *
+   * @param accountId
+   * @return
+   */
   @Override
-  public void stop(String s) {
-    Log.info("Stopping flow monitoring ...");
-    running = false;
+  public List<FlowState> getFlows(String accountId) {
+    Map<String, Integer> started = Maps.newHashMap();
+    Map<String, Integer> stopped = Maps.newHashMap();
+    Map<String, Integer> runs = Maps.newHashMap();
+    Map<String, Integer> deployed = Maps.newHashMap();
+    Map<String, Integer> states = Maps.newHashMap();
+
+    List<FlowState> result = Lists.newArrayList();
+    String sql = "SELECT timestamp, application, flow, state " +
+      "FROM flow_state WHERE account = ? ORDER by timestamp";
+    try {
+      PreparedStatement stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      ResultSet rs = stmt.executeQuery();
+      while(rs.next()) {
+        String app = rs.getString("application");
+        String flow = rs.getString("flow");
+        String appFlow = String.format("%s.%s", app, flow);
+        Integer timestamp = rs.getInt("timestamp");
+        int state = rs.getInt("state");
+
+        if(! deployed.containsKey(appFlow)) {
+          deployed.put(appFlow, 1);
+          FlowState status = new FlowState();
+          status.setApplication(rs.getString("application"));
+          status.setFlow(rs.getString("flow"));
+          status.setCurrentState(StateChangeType.DEPLOYED.getType());
+          status.setLastStarted(-1);
+          status.setLastStoppped(-1);
+          status.setRuns(0);
+          result.add(status);
+        }
+
+        if(state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
+          started.put(appFlow, timestamp );
+        } else if(state == StateChangeType.STOPPING.getType() || state == StateChangeType.STOPPED.getType()) {
+          stopped.put(appFlow, timestamp);
+          if(runs.containsKey(flow)) {
+            int run = runs.get(flow).intValue();
+            runs.put(appFlow, run + 1);
+          } else {
+            runs.put(appFlow, 1);
+          }
+        }
+        states.put(appFlow, state);
+      }
+    } catch (SQLException e) {
+
+    }
+
+    for(FlowState state : result) {
+      String flow = state.getFlow();
+      String app = state.getApplication();
+      String appFlow = String.format("%s.%s", app, flow);
+      if(started.containsKey(appFlow)) {
+        state.setLastStarted(started.get(appFlow));
+      }
+      if(stopped.containsKey(appFlow)) {
+        state.setLastStoppped(stopped.get(appFlow));
+      }
+      if(runs.containsKey(appFlow)) {
+        state.setRuns(runs.get(appFlow));
+      }
+      if(states.containsKey(appFlow)) {
+        state.setCurrentState(states.get(appFlow));
+      }
+    }
+    return result;
   }
 
-  @Override
-  public boolean isStopped() {
-    return ! running;
-  }
 }

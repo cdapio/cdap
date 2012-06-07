@@ -54,7 +54,7 @@ public final class DIModules {
         @Override
         protected void configure() {
           bind(String.class).annotatedWith(Names.named("Flow Monitor JDBC URL"))
-            .toInstance("jdbc:hsqldb:file:data/flowmonitordb");
+            .toInstance("jdbc:hsqldb:file:/tmp/data/flowmonitordb");
         }
       }
     );

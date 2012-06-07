@@ -30,4 +30,4 @@ fi
 
 CLASSPATH=`"$bin"/classpath`; export CLASSPATH
 CLASSPATH=$CLASSPATH:$conf
-$JAVA -cp ${CLASSPATH} com.continuuity.runtime.FlowMonitorMain
+$JAVA -cp ${CLASSPATH} com.continuuity.runtime.FlowMonitorMain &

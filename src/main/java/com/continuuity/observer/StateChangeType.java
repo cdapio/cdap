@@ -6,9 +6,9 @@ package com.continuuity.observer;
 public enum StateChangeType {
   DEPLOYED (1),
   STARTING (2),
-  RUNNING (3),
-  STOPPING (4),
-  HEARTBEAT (5),
+  STARTED (3),
+  RUNNING (4),
+  STOPPING (5),
   STOPPED (6);
 
   int type;

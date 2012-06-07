@@ -43,7 +43,7 @@ public class StateChangeTest {
   public void testSimpleEventsOrdered() throws Exception {
     CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10));
     client.start();
-    StateChanger changer = StateChange.Client.newState(client, "/continuuity/system/queue");
+    StateChanger changer = StateChange.Client.newStateChanger(client, "/continuuity/system/queue");
     StateChangeListener listener = StateChange.Server.newListener(client);
 
     for(int i = 0; i < 100; ++i) {
