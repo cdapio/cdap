@@ -19,52 +19,52 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>rest.RestCollector,flume.FlumeCollector,rest.RestAccessor</value>
+        <value>collector.rest,collector.flume,accessor.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
     <!-- Todd: I'm really unhappy that we have to use so much XML to describe
          the Collectors, but that's 'cos we are using the Hadoop config object -->
     <property>
-        <name>rest.RestAccessor.class</name>
+        <name>accessor.rest.class</name>
         <value>com.continuuity.gateway.accessor.RestAccessor</value>
         <description>Specifies the class for the REST accessor</description>
     </property>
 
     <property>
-        <name>rest.RestAccessor.port</name>
+        <name>accessor.rest.port</name>
         <value>10002</value>
     </property>
 
     <property>
-        <name>rest.RestAccessor.middle</name>
+        <name>accessor.rest.middle</name>
         <value>/rest-data/</value>
     </property>
 
     <property>
-        <name>rest.RestCollector.class</name>
+        <name>collector.rest.class</name>
         <value>com.continuuity.gateway.collector.RestCollector</value>
         <description>Specifies the class for the REST collector</description>
     </property>
 
     <property>
-        <name>rest.RestCollector.port</name>
+        <name>collector.rest.port</name>
         <value>10000</value>
     </property>
 
     <property>
-        <name>rest.RestCollector.middle</name>
+        <name>collector.rest.middle</name>
         <value>/rest-stream/</value>
     </property>
 
     <property>
-        <name>flume.FlumeCollector.class</name>
+        <name>collector.flume.class</name>
         <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
         <description>Specifies the class for the Flume collector</description>
     </property>
 
     <property>
-        <name>rest.FlumeCollector.port</name>
+        <name>collector.flume.port</name>
         <value>10001</value>
     </property>
 
