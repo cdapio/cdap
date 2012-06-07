@@ -2,8 +2,8 @@ package com.continuuity.observer.internal;
 
 import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.observer.StateChangeData;
-import com.continuuity.observer.StateChangeListenerException;
 import com.continuuity.observer.StateChangeListener;
+import com.continuuity.observer.StateChangeListenerException;
 import com.google.gson.Gson;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.recipes.queue.SimpleDistributedQueue;
@@ -36,11 +36,11 @@ final class StateChangeListenerImpl implements StateChangeListener {
     new Thread(new Runnable() {
       @Override
       public void run() {
-        while(running) {
+        while (running) {
           try {
             byte[] bytes = queue.poll(5, TimeUnit.SECONDS);
-            StateChangeData data  = gson.fromJson(new StringReader(new String(bytes)), StateChangeDataImpl.class);
-            if(data == null) {
+            StateChangeData data = gson.fromJson(new StringReader(new String(bytes)), StateChangeDataImpl.class);
+            if (data == null) {
               continue;
             }
             callback.process(data);

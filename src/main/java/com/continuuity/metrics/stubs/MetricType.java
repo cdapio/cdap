@@ -6,10 +6,6 @@
 package com.continuuity.metrics.stubs;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 public enum MetricType implements org.apache.thrift.TEnum {
   FLOWLET(1);
 
@@ -28,9 +24,10 @@ public enum MetricType implements org.apache.thrift.TEnum {
 
   /**
    * Find a the enum type by its integer value, as defined in the Thrift IDL.
+   *
    * @return null if the value is not found.
    */
-  public static MetricType findByValue(int value) { 
+  public static MetricType findByValue(int value) {
     switch (value) {
       case 1:
         return FLOWLET;

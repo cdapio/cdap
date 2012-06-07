@@ -5,31 +5,18 @@
  */
 package com.continuuity.metrics.stubs;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlowEvent");
 
-  private static final org.apache.thrift.protocol.TField START_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("startTime", org.apache.thrift.protocol.TType.I32, (short)1);
-  private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("endTime", org.apache.thrift.protocol.TType.I32, (short)2);
-  private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField APP_FIELD_DESC = new org.apache.thrift.protocol.TField("app", org.apache.thrift.protocol.TType.STRING, (short)4);
-  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short)5);
-  private static final org.apache.thrift.protocol.TField RID_FIELD_DESC = new org.apache.thrift.protocol.TField("rid", org.apache.thrift.protocol.TType.STRING, (short)6);
-  private static final org.apache.thrift.protocol.TField STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("state", org.apache.thrift.protocol.TType.I32, (short)7);
+  private static final org.apache.thrift.protocol.TField START_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("startTime", org.apache.thrift.protocol.TType.I32, (short) 1);
+  private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("endTime", org.apache.thrift.protocol.TType.I32, (short) 2);
+  private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short) 3);
+  private static final org.apache.thrift.protocol.TField APP_FIELD_DESC = new org.apache.thrift.protocol.TField("app", org.apache.thrift.protocol.TType.STRING, (short) 4);
+  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short) 5);
+  private static final org.apache.thrift.protocol.TField RID_FIELD_DESC = new org.apache.thrift.protocol.TField("rid", org.apache.thrift.protocol.TType.STRING, (short) 6);
+  private static final org.apache.thrift.protocol.TField STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("state", org.apache.thrift.protocol.TType.I32, (short) 7);
 
   private int startTime; // required
   private int endTime; // required
@@ -39,15 +26,17 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
   private String rid; // required
   private int state; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    START_TIME((short)1, "startTime"),
-    END_TIME((short)2, "endTime"),
-    ACCOUNT_ID((short)3, "accountId"),
-    APP((short)4, "app"),
-    FLOW((short)5, "flow"),
-    RID((short)6, "rid"),
-    STATE((short)7, "state");
+    START_TIME((short) 1, "startTime"),
+    END_TIME((short) 2, "endTime"),
+    ACCOUNT_ID((short) 3, "accountId"),
+    APP((short) 4, "app"),
+    FLOW((short) 5, "flow"),
+    RID((short) 6, "rid"),
+    STATE((short) 7, "state");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -61,7 +50,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // START_TIME
           return START_TIME;
         case 2: // END_TIME
@@ -122,22 +111,23 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
   private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.START_TIME, new org.apache.thrift.meta_data.FieldMetaData("startTime", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.END_TIME, new org.apache.thrift.meta_data.FieldMetaData("endTime", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.APP, new org.apache.thrift.meta_data.FieldMetaData("app", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.RID, new org.apache.thrift.meta_data.FieldMetaData("rid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.STATE, new org.apache.thrift.meta_data.FieldMetaData("state", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.START_TIME, new org.apache.thrift.meta_data.FieldMetaData("startTime", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.END_TIME, new org.apache.thrift.meta_data.FieldMetaData("endTime", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.APP, new org.apache.thrift.meta_data.FieldMetaData("app", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.RID, new org.apache.thrift.meta_data.FieldMetaData("rid", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.STATE, new org.apache.thrift.meta_data.FieldMetaData("state", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlowEvent.class, metaDataMap);
   }
@@ -152,8 +142,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     String app,
     String flow,
     String rid,
-    int state)
-  {
+    int state) {
     this();
     this.startTime = startTime;
     setStartTimeIsSet(true);
@@ -221,7 +210,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     __isset_bit_vector.clear(__STARTTIME_ISSET_ID);
   }
 
-  /** Returns true if field startTime is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field startTime is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetStartTime() {
     return __isset_bit_vector.get(__STARTTIME_ISSET_ID);
   }
@@ -243,7 +234,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     __isset_bit_vector.clear(__ENDTIME_ISSET_ID);
   }
 
-  /** Returns true if field endTime is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field endTime is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetEndTime() {
     return __isset_bit_vector.get(__ENDTIME_ISSET_ID);
   }
@@ -264,7 +257,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     this.accountId = null;
   }
 
-  /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field accountId is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetAccountId() {
     return this.accountId != null;
   }
@@ -287,7 +282,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     this.app = null;
   }
 
-  /** Returns true if field app is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field app is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetApp() {
     return this.app != null;
   }
@@ -310,7 +307,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     this.flow = null;
   }
 
-  /** Returns true if field flow is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field flow is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetFlow() {
     return this.flow != null;
   }
@@ -333,7 +332,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     this.rid = null;
   }
 
-  /** Returns true if field rid is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field rid is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetRid() {
     return this.rid != null;
   }
@@ -357,7 +358,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     __isset_bit_vector.clear(__STATE_ISSET_ID);
   }
 
-  /** Returns true if field state is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field state is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetState() {
     return __isset_bit_vector.get(__STATE_ISSET_ID);
   }
@@ -368,113 +371,115 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case START_TIME:
-      if (value == null) {
-        unsetStartTime();
-      } else {
-        setStartTime((Integer)value);
-      }
-      break;
+      case START_TIME:
+        if (value == null) {
+          unsetStartTime();
+        } else {
+          setStartTime((Integer) value);
+        }
+        break;
 
-    case END_TIME:
-      if (value == null) {
-        unsetEndTime();
-      } else {
-        setEndTime((Integer)value);
-      }
-      break;
+      case END_TIME:
+        if (value == null) {
+          unsetEndTime();
+        } else {
+          setEndTime((Integer) value);
+        }
+        break;
 
-    case ACCOUNT_ID:
-      if (value == null) {
-        unsetAccountId();
-      } else {
-        setAccountId((String)value);
-      }
-      break;
+      case ACCOUNT_ID:
+        if (value == null) {
+          unsetAccountId();
+        } else {
+          setAccountId((String) value);
+        }
+        break;
 
-    case APP:
-      if (value == null) {
-        unsetApp();
-      } else {
-        setApp((String)value);
-      }
-      break;
+      case APP:
+        if (value == null) {
+          unsetApp();
+        } else {
+          setApp((String) value);
+        }
+        break;
 
-    case FLOW:
-      if (value == null) {
-        unsetFlow();
-      } else {
-        setFlow((String)value);
-      }
-      break;
+      case FLOW:
+        if (value == null) {
+          unsetFlow();
+        } else {
+          setFlow((String) value);
+        }
+        break;
 
-    case RID:
-      if (value == null) {
-        unsetRid();
-      } else {
-        setRid((String)value);
-      }
-      break;
+      case RID:
+        if (value == null) {
+          unsetRid();
+        } else {
+          setRid((String) value);
+        }
+        break;
 
-    case STATE:
-      if (value == null) {
-        unsetState();
-      } else {
-        setState((Integer)value);
-      }
-      break;
+      case STATE:
+        if (value == null) {
+          unsetState();
+        } else {
+          setState((Integer) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case START_TIME:
-      return Integer.valueOf(getStartTime());
+      case START_TIME:
+        return Integer.valueOf(getStartTime());
 
-    case END_TIME:
-      return Integer.valueOf(getEndTime());
+      case END_TIME:
+        return Integer.valueOf(getEndTime());
 
-    case ACCOUNT_ID:
-      return getAccountId();
+      case ACCOUNT_ID:
+        return getAccountId();
 
-    case APP:
-      return getApp();
+      case APP:
+        return getApp();
 
-    case FLOW:
-      return getFlow();
+      case FLOW:
+        return getFlow();
 
-    case RID:
-      return getRid();
+      case RID:
+        return getRid();
 
-    case STATE:
-      return Integer.valueOf(getState());
+      case STATE:
+        return Integer.valueOf(getState());
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case START_TIME:
-      return isSetStartTime();
-    case END_TIME:
-      return isSetEndTime();
-    case ACCOUNT_ID:
-      return isSetAccountId();
-    case APP:
-      return isSetApp();
-    case FLOW:
-      return isSetFlow();
-    case RID:
-      return isSetRid();
-    case STATE:
-      return isSetState();
+      case START_TIME:
+        return isSetStartTime();
+      case END_TIME:
+        return isSetEndTime();
+      case ACCOUNT_ID:
+        return isSetAccountId();
+      case APP:
+        return isSetApp();
+      case FLOW:
+        return isSetFlow();
+      case RID:
+        return isSetRid();
+      case STATE:
+        return isSetState();
     }
     throw new IllegalStateException();
   }
@@ -484,7 +489,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     if (that == null)
       return false;
     if (that instanceof FlowEvent)
-      return this.equals((FlowEvent)that);
+      return this.equals((FlowEvent) that);
     return false;
   }
 
@@ -569,7 +574,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
     }
 
     int lastComparison = 0;
-    FlowEvent typedOther = (FlowEvent)other;
+    FlowEvent typedOther = (FlowEvent) other;
 
     lastComparison = Boolean.valueOf(isSetStartTime()).compareTo(typedOther.isSetStartTime());
     if (lastComparison != 0) {
@@ -651,10 +656,9 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
@@ -662,7 +666,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.startTime = iprot.readI32();
             setStartTimeIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -670,35 +674,35 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.endTime = iprot.readI32();
             setEndTimeIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // ACCOUNT_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.accountId = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // APP
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.app = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // FLOW
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.flow = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // RID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.rid = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -706,7 +710,7 @@ public class FlowEvent implements org.apache.thrift.TBase<FlowEvent, FlowEvent._
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.state = iprot.readI32();
             setStateIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

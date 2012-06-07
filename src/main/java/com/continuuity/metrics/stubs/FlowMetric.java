@@ -5,34 +5,21 @@
  */
 package com.continuuity.metrics.stubs;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetric._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FlowMetric");
 
-  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I32, (short)1);
-  private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short)4);
-  private static final org.apache.thrift.protocol.TField RID_FIELD_DESC = new org.apache.thrift.protocol.TField("rid", org.apache.thrift.protocol.TType.STRING, (short)5);
-  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRING, (short)6);
-  private static final org.apache.thrift.protocol.TField FLOWLET_FIELD_DESC = new org.apache.thrift.protocol.TField("flowlet", org.apache.thrift.protocol.TType.STRING, (short)7);
-  private static final org.apache.thrift.protocol.TField INSTANCE_FIELD_DESC = new org.apache.thrift.protocol.TField("instance", org.apache.thrift.protocol.TType.STRING, (short)8);
-  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short)9);
-  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.I64, (short)10);
+  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I32, (short) 1);
+  private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short) 2);
+  private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short) 3);
+  private static final org.apache.thrift.protocol.TField FLOW_FIELD_DESC = new org.apache.thrift.protocol.TField("flow", org.apache.thrift.protocol.TType.STRING, (short) 4);
+  private static final org.apache.thrift.protocol.TField RID_FIELD_DESC = new org.apache.thrift.protocol.TField("rid", org.apache.thrift.protocol.TType.STRING, (short) 5);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.STRING, (short) 6);
+  private static final org.apache.thrift.protocol.TField FLOWLET_FIELD_DESC = new org.apache.thrift.protocol.TField("flowlet", org.apache.thrift.protocol.TType.STRING, (short) 7);
+  private static final org.apache.thrift.protocol.TField INSTANCE_FIELD_DESC = new org.apache.thrift.protocol.TField("instance", org.apache.thrift.protocol.TType.STRING, (short) 8);
+  private static final org.apache.thrift.protocol.TField METRIC_FIELD_DESC = new org.apache.thrift.protocol.TField("metric", org.apache.thrift.protocol.TType.STRING, (short) 9);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.I64, (short) 10);
 
   private int timestamp; // required
   private String accountId; // required
@@ -45,18 +32,20 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
   private String metric; // required
   private long value; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    TIMESTAMP((short)1, "timestamp"),
-    ACCOUNT_ID((short)2, "accountId"),
-    APPLICATION((short)3, "application"),
-    FLOW((short)4, "flow"),
-    RID((short)5, "rid"),
-    VERSION((short)6, "version"),
-    FLOWLET((short)7, "flowlet"),
-    INSTANCE((short)8, "instance"),
-    METRIC((short)9, "metric"),
-    VALUE((short)10, "value");
+    TIMESTAMP((short) 1, "timestamp"),
+    ACCOUNT_ID((short) 2, "accountId"),
+    APPLICATION((short) 3, "application"),
+    FLOW((short) 4, "flow"),
+    RID((short) 5, "rid"),
+    VERSION((short) 6, "version"),
+    FLOWLET((short) 7, "flowlet"),
+    INSTANCE((short) 8, "instance"),
+    METRIC((short) 9, "metric"),
+    VALUE((short) 10, "value");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -70,7 +59,7 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // TIMESTAMP
           return TIMESTAMP;
         case 2: // ACCOUNT_ID
@@ -136,28 +125,29 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
   private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.RID, new org.apache.thrift.meta_data.FieldMetaData("rid", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.FLOWLET, new org.apache.thrift.meta_data.FieldMetaData("flowlet", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.INSTANCE, new org.apache.thrift.meta_data.FieldMetaData("instance", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.FLOW, new org.apache.thrift.meta_data.FieldMetaData("flow", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.RID, new org.apache.thrift.meta_data.FieldMetaData("rid", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.FLOWLET, new org.apache.thrift.meta_data.FieldMetaData("flowlet", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.INSTANCE, new org.apache.thrift.meta_data.FieldMetaData("instance", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.METRIC, new org.apache.thrift.meta_data.FieldMetaData("metric", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT,
+      new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FlowMetric.class, metaDataMap);
   }
@@ -175,8 +165,7 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     String flowlet,
     String instance,
     String metric,
-    long value)
-  {
+    long value) {
     this();
     this.timestamp = timestamp;
     setTimestampIsSet(true);
@@ -259,7 +248,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
   }
 
-  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field timestamp is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetTimestamp() {
     return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
   }
@@ -280,7 +271,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.accountId = null;
   }
 
-  /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field accountId is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetAccountId() {
     return this.accountId != null;
   }
@@ -303,7 +296,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.application = null;
   }
 
-  /** Returns true if field application is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field application is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetApplication() {
     return this.application != null;
   }
@@ -326,7 +321,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.flow = null;
   }
 
-  /** Returns true if field flow is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field flow is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetFlow() {
     return this.flow != null;
   }
@@ -349,7 +346,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.rid = null;
   }
 
-  /** Returns true if field rid is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field rid is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetRid() {
     return this.rid != null;
   }
@@ -372,7 +371,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.version = null;
   }
 
-  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field version is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetVersion() {
     return this.version != null;
   }
@@ -395,7 +396,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.flowlet = null;
   }
 
-  /** Returns true if field flowlet is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field flowlet is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetFlowlet() {
     return this.flowlet != null;
   }
@@ -418,7 +421,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.instance = null;
   }
 
-  /** Returns true if field instance is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field instance is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetInstance() {
     return this.instance != null;
   }
@@ -441,7 +446,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     this.metric = null;
   }
 
-  /** Returns true if field metric is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field metric is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetMetric() {
     return this.metric != null;
   }
@@ -465,7 +472,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     __isset_bit_vector.clear(__VALUE_ISSET_ID);
   }
 
-  /** Returns true if field value is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field value is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetValue() {
     return __isset_bit_vector.get(__VALUE_ISSET_ID);
   }
@@ -476,152 +485,154 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case TIMESTAMP:
-      if (value == null) {
-        unsetTimestamp();
-      } else {
-        setTimestamp((Integer)value);
-      }
-      break;
+      case TIMESTAMP:
+        if (value == null) {
+          unsetTimestamp();
+        } else {
+          setTimestamp((Integer) value);
+        }
+        break;
 
-    case ACCOUNT_ID:
-      if (value == null) {
-        unsetAccountId();
-      } else {
-        setAccountId((String)value);
-      }
-      break;
+      case ACCOUNT_ID:
+        if (value == null) {
+          unsetAccountId();
+        } else {
+          setAccountId((String) value);
+        }
+        break;
 
-    case APPLICATION:
-      if (value == null) {
-        unsetApplication();
-      } else {
-        setApplication((String)value);
-      }
-      break;
+      case APPLICATION:
+        if (value == null) {
+          unsetApplication();
+        } else {
+          setApplication((String) value);
+        }
+        break;
 
-    case FLOW:
-      if (value == null) {
-        unsetFlow();
-      } else {
-        setFlow((String)value);
-      }
-      break;
+      case FLOW:
+        if (value == null) {
+          unsetFlow();
+        } else {
+          setFlow((String) value);
+        }
+        break;
 
-    case RID:
-      if (value == null) {
-        unsetRid();
-      } else {
-        setRid((String)value);
-      }
-      break;
+      case RID:
+        if (value == null) {
+          unsetRid();
+        } else {
+          setRid((String) value);
+        }
+        break;
 
-    case VERSION:
-      if (value == null) {
-        unsetVersion();
-      } else {
-        setVersion((String)value);
-      }
-      break;
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((String) value);
+        }
+        break;
 
-    case FLOWLET:
-      if (value == null) {
-        unsetFlowlet();
-      } else {
-        setFlowlet((String)value);
-      }
-      break;
+      case FLOWLET:
+        if (value == null) {
+          unsetFlowlet();
+        } else {
+          setFlowlet((String) value);
+        }
+        break;
 
-    case INSTANCE:
-      if (value == null) {
-        unsetInstance();
-      } else {
-        setInstance((String)value);
-      }
-      break;
+      case INSTANCE:
+        if (value == null) {
+          unsetInstance();
+        } else {
+          setInstance((String) value);
+        }
+        break;
 
-    case METRIC:
-      if (value == null) {
-        unsetMetric();
-      } else {
-        setMetric((String)value);
-      }
-      break;
+      case METRIC:
+        if (value == null) {
+          unsetMetric();
+        } else {
+          setMetric((String) value);
+        }
+        break;
 
-    case VALUE:
-      if (value == null) {
-        unsetValue();
-      } else {
-        setValue((Long)value);
-      }
-      break;
+      case VALUE:
+        if (value == null) {
+          unsetValue();
+        } else {
+          setValue((Long) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case TIMESTAMP:
-      return Integer.valueOf(getTimestamp());
+      case TIMESTAMP:
+        return Integer.valueOf(getTimestamp());
 
-    case ACCOUNT_ID:
-      return getAccountId();
+      case ACCOUNT_ID:
+        return getAccountId();
 
-    case APPLICATION:
-      return getApplication();
+      case APPLICATION:
+        return getApplication();
 
-    case FLOW:
-      return getFlow();
+      case FLOW:
+        return getFlow();
 
-    case RID:
-      return getRid();
+      case RID:
+        return getRid();
 
-    case VERSION:
-      return getVersion();
+      case VERSION:
+        return getVersion();
 
-    case FLOWLET:
-      return getFlowlet();
+      case FLOWLET:
+        return getFlowlet();
 
-    case INSTANCE:
-      return getInstance();
+      case INSTANCE:
+        return getInstance();
 
-    case METRIC:
-      return getMetric();
+      case METRIC:
+        return getMetric();
 
-    case VALUE:
-      return Long.valueOf(getValue());
+      case VALUE:
+        return Long.valueOf(getValue());
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case TIMESTAMP:
-      return isSetTimestamp();
-    case ACCOUNT_ID:
-      return isSetAccountId();
-    case APPLICATION:
-      return isSetApplication();
-    case FLOW:
-      return isSetFlow();
-    case RID:
-      return isSetRid();
-    case VERSION:
-      return isSetVersion();
-    case FLOWLET:
-      return isSetFlowlet();
-    case INSTANCE:
-      return isSetInstance();
-    case METRIC:
-      return isSetMetric();
-    case VALUE:
-      return isSetValue();
+      case TIMESTAMP:
+        return isSetTimestamp();
+      case ACCOUNT_ID:
+        return isSetAccountId();
+      case APPLICATION:
+        return isSetApplication();
+      case FLOW:
+        return isSetFlow();
+      case RID:
+        return isSetRid();
+      case VERSION:
+        return isSetVersion();
+      case FLOWLET:
+        return isSetFlowlet();
+      case INSTANCE:
+        return isSetInstance();
+      case METRIC:
+        return isSetMetric();
+      case VALUE:
+        return isSetValue();
     }
     throw new IllegalStateException();
   }
@@ -631,7 +642,7 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     if (that == null)
       return false;
     if (that instanceof FlowMetric)
-      return this.equals((FlowMetric)that);
+      return this.equals((FlowMetric) that);
     return false;
   }
 
@@ -743,7 +754,7 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
     }
 
     int lastComparison = 0;
-    FlowMetric typedOther = (FlowMetric)other;
+    FlowMetric typedOther = (FlowMetric) other;
 
     lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
@@ -855,10 +866,9 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
@@ -866,63 +876,63 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.timestamp = iprot.readI32();
             setTimestampIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // ACCOUNT_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.accountId = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // APPLICATION
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.application = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 4: // FLOW
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.flow = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 5: // RID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.rid = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // VERSION
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.version = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 7: // FLOWLET
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.flowlet = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 8: // INSTANCE
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.instance = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 9: // METRIC
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.metric = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -930,7 +940,7 @@ public class FlowMetric implements org.apache.thrift.TBase<FlowMetric, FlowMetri
           if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.value = iprot.readI64();
             setValueIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

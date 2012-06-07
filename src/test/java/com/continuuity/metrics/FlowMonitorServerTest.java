@@ -7,10 +7,10 @@ import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.metrics.service.FlowMonitorClient;
 import com.continuuity.metrics.service.FlowMonitorHandler;
 import com.continuuity.metrics.service.FlowMonitorServer;
+import com.continuuity.metrics.stubs.FlowMetric;
 import com.continuuity.metrics.stubs.FlowState;
 import com.continuuity.metrics.stubs.Metric;
 import com.continuuity.observer.StateChangeCallback;
-import com.continuuity.metrics.stubs.FlowMetric;
 import com.continuuity.observer.StateChangeType;
 import com.continuuity.runtime.DIModules;
 import com.google.common.io.Closeables;
@@ -48,7 +48,7 @@ public class FlowMonitorServerTest {
 
   @AfterClass
   public static void after() throws Exception {
-    if(zookeeper != null) {
+    if (zookeeper != null) {
       Closeables.closeQuietly(zookeeper);
     }
   }
@@ -104,26 +104,26 @@ public class FlowMonitorServerTest {
   }
 
   private void generateRandomFlowMetrics(FlowMonitorClient client) throws ServiceDiscoveryClientException {
-    String[] accountIds = { "demo"};
-    String[] rids = { "ABC", "XYZ"};
-    String[] applications = { "personalization"};
-    String[] versions = { "18", "28"};
-    String[] flows = { "targetting", "smart-explorer", "indexer"};
-    String[] flowlets = { "flowlet-A", "flowlet-B", "flowlet-C", "flowlet-D"};
-    String[] metrics = { "in", "out", "ops"};
-    String[] instances = { "1", "2"};
+    String[] accountIds = {"demo"};
+    String[] rids = {"ABC", "XYZ"};
+    String[] applications = {"personalization"};
+    String[] versions = {"18", "28"};
+    String[] flows = {"targetting", "smart-explorer", "indexer"};
+    String[] flowlets = {"flowlet-A", "flowlet-B", "flowlet-C", "flowlet-D"};
+    String[] metrics = {"in", "out", "ops"};
+    String[] instances = {"1", "2"};
 
     Random random = new Random();
-    for(int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i) {
       String rid = rids[(i % rids.length)];
-      for(int i1 = 0; i1 < accountIds.length; ++i1) {
-        int timestamp = (int)(System.currentTimeMillis()/1000);
-        for(int i2 = 0; i2 < applications.length; ++i2) {
-          for(int i3 = 0; i3 < versions.length; ++i3) {
-            for(int i4 = 0; i4 < flows.length; ++i4) {
-              for(int i5 = 0; i5 < flowlets.length; ++i5) {
-                for(int i6 = 0; i6 < instances.length; ++i6) {
-                  for(int i7 = 0; i7 < metrics.length; ++i7) {
+      for (int i1 = 0; i1 < accountIds.length; ++i1) {
+        int timestamp = (int) (System.currentTimeMillis() / 1000);
+        for (int i2 = 0; i2 < applications.length; ++i2) {
+          for (int i3 = 0; i3 < versions.length; ++i3) {
+            for (int i4 = 0; i4 < flows.length; ++i4) {
+              for (int i5 = 0; i5 < flowlets.length; ++i5) {
+                for (int i6 = 0; i6 < instances.length; ++i6) {
+                  for (int i7 = 0; i7 < metrics.length; ++i7) {
                     FlowMetric metric = new FlowMetric();
                     metric.setInstance(instances[i6]);
                     metric.setFlowlet(flowlets[i5]);
@@ -134,7 +134,7 @@ public class FlowMonitorServerTest {
                     metric.setRid(rid);
                     metric.setMetric(metrics[i7]);
                     metric.setTimestamp(timestamp);
-                    metric.setValue(1000 * random.nextInt() );
+                    metric.setValue(1000 * random.nextInt());
                     client.add(metric);
                   }
                 }
@@ -162,7 +162,7 @@ public class FlowMonitorServerTest {
       stmt.setInt(6, type.getType());
       stmt.executeUpdate();
     } catch (SQLException e) {
-      Log.error("Failed to write the state change to SQL DB (state : {}). Reason : {}",accountId, e.getMessage());
+      Log.error("Failed to write the state change to SQL DB (state : {}). Reason : {}", accountId, e.getMessage());
     }
   }
 
@@ -179,6 +179,8 @@ public class FlowMonitorServerTest {
     clearFlowStateTable();
     addPointToFlowStateTable(1, "demo", "ABC", "targetting", "", StateChangeType.DEPLOYED);
     addPointToFlowStateTable(2, "demo", "XYZ", "targetting", "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "UVW", "smart-explorer", "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "EFG", "hustler", "", StateChangeType.DEPLOYED);
 
     addPointToFlowStateTable(3, "demo", "ABC", "targetting", "", StateChangeType.STARTING);
     addPointToFlowStateTable(4, "demo", "ABC", "targetting", "", StateChangeType.STARTED);
@@ -193,6 +195,13 @@ public class FlowMonitorServerTest {
     addPointToFlowStateTable(11, "demo", "XYZ", "targetting", "", StateChangeType.RUNNING);
     addPointToFlowStateTable(12, "demo", "XYZ", "targetting", "", StateChangeType.STOPPING);
     addPointToFlowStateTable(13, "demo", "XYZ", "targetting", "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(14, "demo", "UVW", "smart-explorer", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(15, "demo", "UVW", "smart-explorer", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(16, "demo", "UVW", "smart-explorer", "", StateChangeType.RUNNING);
+
+    addPointToFlowStateTable(17, "demo", "EFG", "hustler", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(18, "demo", "EFG", "hustler", "", StateChangeType.FAILED);
 
     FlowMonitorServer server = new FlowMonitorServer(handler, callback);
     server.start(configuration);
@@ -231,7 +240,8 @@ public class FlowMonitorServerTest {
     server.stop();
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   public void testReadFromLocalExternalServiceNotReallyATestCase() throws Exception {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, "localhost:2181");

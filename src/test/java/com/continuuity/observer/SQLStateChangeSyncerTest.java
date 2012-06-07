@@ -46,14 +46,15 @@ public class SQLStateChangeSyncerTest {
 
   @AfterClass
   public static void after() throws Exception {
-    if(zookeeper != null) {
+    if (zookeeper != null) {
       Closeables.closeQuietly(zookeeper);
     }
   }
 
   @Test
   public void testHSQLStateChangeSyncerSave() throws Exception {
-    CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10)); client.start();
+    CuratorFramework client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryOneTime(10));
+    client.start();
 
 
     StateChanger changer = StateChange.Client.newStateChanger(client, "/continuuity/system/queue");
@@ -63,7 +64,7 @@ public class SQLStateChangeSyncerTest {
     StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
     listener.listen("/continuuity/system/queue", callback);
 
-    for(int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i) {
       changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
         StateChangeType.DEPLOYED));
     }

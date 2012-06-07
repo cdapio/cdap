@@ -23,7 +23,7 @@ public class FlowMonitorMain {
     OptionsParser.init(this, args, System.out);
     try {
       CConfiguration conf = CConfiguration.create();
-      if(zookeeper != null) {
+      if (zookeeper != null) {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper);
       } else {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,10 +35,11 @@ class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   public void initialization() {
     try {
       connection.prepareStatement(
-       "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
-         " payload VARCHAR, state INTEGER)"
+        "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
+          " payload VARCHAR, state INTEGER)"
       ).execute();
-    } catch (SQLException e) {}
+    } catch (SQLException e) {
+    }
   }
 
   @Override
@@ -49,7 +49,7 @@ class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
       " VALUES (?, ?, ?, ?, ?, ?);";
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
-      stmt.setLong(1, data.getTimestamp()/1000);
+      stmt.setLong(1, data.getTimestamp() / 1000);
       stmt.setString(2, data.getAccountId());
       stmt.setString(3, data.getApplication());
       stmt.setString(4, data.getFlowName());

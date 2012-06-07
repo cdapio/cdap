@@ -1,7 +1,7 @@
 apply plugin: 'continuuity'
 
 buildscript {
-  apply from: 'continuuity.gradle'
+    apply from: 'continuuity.gradle'
 }
 
 /**
@@ -46,19 +46,19 @@ thrift {
 /**
  * Create Release TAR ball
  */
-task dist(type:  Tar, dependsOn: jar) {
+task dist(type: Tar, dependsOn: jar) {
     group = 'Continuuity'
     description = 'Generates distribution tar file.'
     from('bin') {
-     into('overlord/bin')
+        into('overlord/bin')
     }
 
     into('overlord/conf') {
-     from sourceSets.main.output.resourcesDir
+        from sourceSets.main.output.resourcesDir
     }
 
     into('overlord/libs') {
-      from configurations.compile
-      from jar.outputs.files
+        from configurations.compile
+        from jar.outputs.files
     }
 }

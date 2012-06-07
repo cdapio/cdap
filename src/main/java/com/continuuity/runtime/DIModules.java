@@ -14,6 +14,7 @@ public final class DIModules {
 
   /**
    * Provides binding for an in memory hsql implementations.
+   *
    * @return {@link Module} instance that is combined from multiple modules.
    */
   public static Module getInMemoryHSQLBindings() {
@@ -27,14 +28,14 @@ public final class DIModules {
     }
 
     return Modules.combine(
-        new SQLStateChangerModule() ,
-        new SQLFlowMonitorModule(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(String.class).annotatedWith(Names.named("Flow Monitor JDBC URL")).toInstance("jdbc:hsqldb:mem:fmdb");
-          }
+      new SQLStateChangerModule(),
+      new SQLFlowMonitorModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(String.class).annotatedWith(Names.named("Flow Monitor JDBC URL")).toInstance("jdbc:hsqldb:mem:fmdb");
         }
+      }
     );
   }
 
@@ -48,7 +49,7 @@ public final class DIModules {
       e.printStackTrace();
     }
     return Modules.combine(
-      new SQLStateChangerModule() ,
+      new SQLStateChangerModule(),
       new SQLFlowMonitorModule(),
       new AbstractModule() {
         @Override

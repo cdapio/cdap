@@ -3,13 +3,12 @@ package com.continuuity.metrics.service;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredService;
-import com.continuuity.common.service.Stoppables;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.observer.StateChangeListener;
 import com.continuuity.observer.StateChangeListenerException;
 import com.continuuity.observer.internal.StateChange;
-import com.continuuity.metrics.stubs.FlowMonitor;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.netflix.curator.framework.CuratorFramework;
@@ -80,7 +79,7 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
    */
   @Override
   protected boolean ruok() {
-    return server.isServing() && ! server.isStopped();
+    return server.isServing() && !server.isStopped();
   }
 
   /**

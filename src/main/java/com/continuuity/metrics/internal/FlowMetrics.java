@@ -44,8 +44,8 @@ final class FlowMetrics implements CMetrics {
   }
 
   public void incr(String metric, long l) {
-    if(! metrics.containsKey(metric)) {
-      MetricName name = new MetricName(group, type, cmetric.getName(metric), cmetric.getScope() );
+    if (!metrics.containsKey(metric)) {
+      MetricName name = new MetricName(group, type, cmetric.getName(metric), cmetric.getScope());
       metrics.put(metric, Metrics.newCounter(name));
     }
     metrics.get(metric).inc(l);

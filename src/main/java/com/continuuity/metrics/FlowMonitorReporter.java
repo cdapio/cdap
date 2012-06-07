@@ -48,7 +48,6 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
   }
 
   /**
-   *
    * @param metricsRegistry
    */
   public FlowMonitorReporter(MetricsRegistry metricsRegistry, CConfiguration configuration) {
@@ -74,7 +73,7 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
    */
   @Override
   public void run() {
-    if(! hasConnected) {
+    if (!hasConnected) {
       return;
     }
     for (Map.Entry<MetricName, Metric> entry : getMetricsRegistry().allMetrics().entrySet()) {
@@ -110,7 +109,7 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
    */
   @Override
   public void processCounter(MetricName name, Counter counter, String context) throws Exception {
-    if(! ("flow".equals(name.getGroup()))) {
+    if (!("flow".equals(name.getGroup()))) {
       return;
     }
 
@@ -124,17 +123,17 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
     FlowMetric metric = null;
 
     String[] scopeParts = scope.split("\\.");
-    if(scopeParts.length != 4) {
+    if (scopeParts.length != 4) {
       return metric;
     }
 
     String[] nameParts = name.split("\\.");
-    if(nameParts.length != 4) {
+    if (nameParts.length != 4) {
       return metric;
     }
 
     metric = new FlowMetric();
-    int timestamp = (int)(System.currentTimeMillis()/1000);
+    int timestamp = (int) (System.currentTimeMillis() / 1000);
     metric.setTimestamp(timestamp);
     metric.setAccountId(scopeParts[0]);
     metric.setApplication(scopeParts[1]);

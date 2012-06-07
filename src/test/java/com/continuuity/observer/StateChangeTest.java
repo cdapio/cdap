@@ -1,7 +1,6 @@
 package com.continuuity.observer;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.observer.*;
 import com.continuuity.observer.internal.StateChange;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
@@ -34,7 +33,7 @@ public class StateChangeTest {
 
   @AfterClass
   public static void after() throws Exception {
-    if(zookeeper != null) {
+    if (zookeeper != null) {
       Closeables.closeQuietly(zookeeper);
     }
   }
@@ -46,7 +45,7 @@ public class StateChangeTest {
     StateChanger changer = StateChange.Client.newStateChanger(client, "/continuuity/system/queue");
     StateChangeListener listener = StateChange.Server.newListener(client);
 
-    for(int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i) {
       changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
         StateChangeType.DEPLOYED));
     }
@@ -54,6 +53,7 @@ public class StateChangeTest {
 
     listener.listen("/continuuity/system/queue", new StateChangeCallback<StateChangeData>() {
       private int i = 0;
+
       @Override
       public void process(StateChangeData data) {
         Assert.assertTrue(data.getAccountId().equals("A:" + i));

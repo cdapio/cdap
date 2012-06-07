@@ -5,7 +5,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.metrics.stubs.*;
+import com.continuuity.metrics.stubs.FlowMetric;
+import com.continuuity.metrics.stubs.FlowMonitor;
+import com.continuuity.metrics.stubs.FlowState;
+import com.continuuity.metrics.stubs.Metric;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
@@ -37,7 +40,7 @@ public class FlowMonitorClient implements Closeable {
     String zkEnsemble = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     serviceDiscoveryClient = new ServiceDiscoveryClient(zkEnsemble);
     client = connect();
-    if(client == null) {
+    if (client == null) {
       throw new ServiceDiscoveryClientException("No services available");
     }
   }
@@ -48,7 +51,7 @@ public class FlowMonitorClient implements Closeable {
     ServiceDiscoveryClient.ServiceProvider provider = null;
     try {
       provider = serviceDiscoveryClient.getServiceProvider("flow-monitor");
-      if(provider.getInstances().size() < 1) {
+      if (provider.getInstances().size() < 1) {
         return null;
       }
     } catch (ServiceDiscoveryClientException e) {
@@ -62,7 +65,7 @@ public class FlowMonitorClient implements Closeable {
     ServiceInstance<ServiceDiscoveryClient.ServicePayload> instance = null;
     try {
       instance = strategy.getInstance(provider);
-      if(instance != null) {
+      if (instance != null) {
         return new ImmutablePair<String, Integer>(instance.getAddress(), instance.getPort());
       }
     } catch (Exception e) {
@@ -74,11 +77,11 @@ public class FlowMonitorClient implements Closeable {
 
   private FlowMonitor.Client connect() {
     ImmutablePair<String, Integer> endpoint = getServiceEndpoint();
-    if(endpoint == null) {
+    if (endpoint == null) {
       return null;
     }
     TTransport transport = new TFramedTransport(
-      new TSocket(endpoint.getFirst(),endpoint.getSecond()));
+      new TSocket(endpoint.getFirst(), endpoint.getSecond()));
     try {
       transport.open();
     } catch (TTransportException e) {
@@ -91,7 +94,7 @@ public class FlowMonitorClient implements Closeable {
   public void add(FlowMetric metric) {
     int i = 0;
 
-    while(i < MAX_RETRY) {
+    while (i < MAX_RETRY) {
       boolean exception = false;
       try {
         client.add(metric);
@@ -99,10 +102,11 @@ public class FlowMonitorClient implements Closeable {
       } catch (TException e) {
         exception = true;
       }
-      if(exception) {
+      if (exception) {
         try {
           Thread.sleep(100);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
       }
     }
     Log.warn("Unable to send metrics ");

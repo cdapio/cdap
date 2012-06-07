@@ -4,7 +4,6 @@ import com.continuuity.observer.StateChangeData;
 import com.continuuity.observer.StateChangeListener;
 import com.continuuity.observer.StateChangeType;
 import com.continuuity.observer.StateChanger;
-
 import com.netflix.curator.framework.CuratorFramework;
 
 /**
@@ -14,7 +13,7 @@ public final class StateChange {
 
   public static class Client {
     public static StateChangeData newState(String accountId, String application, String flowname,
-                                         String payload, StateChangeType type) {
+                                           String payload, StateChangeType type) {
       return new StateChangeDataImpl(System.currentTimeMillis(), accountId, application, flowname, payload, type);
     }
 

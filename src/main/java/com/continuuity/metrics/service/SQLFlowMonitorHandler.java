@@ -4,17 +4,12 @@ import com.continuuity.metrics.stubs.*;
 import com.continuuity.observer.StateChangeType;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.internal.Pair;
 import com.google.inject.Inject;
-import java.sql.ResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +35,7 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     return connection;
   }
 
-  public void initialization()  {
+  public void initialization() {
     try {
       connection.prepareStatement(
         "CREATE TABLE flow_metrics (timestamp INTEGER, accountid VARCHAR, " +
@@ -81,7 +76,6 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
 
 
   /**
-   *
    * @param accountId
    * @param app
    * @param flow
@@ -99,8 +93,8 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
       stmt.setString(2, app);
       stmt.setString(3, flow);
       stmt.setString(4, rid);
-      ResultSet rs  = stmt.executeQuery();
-      while(rs.next()) {
+      ResultSet rs = stmt.executeQuery();
+      while (rs.next()) {
         Metric metric = new Metric();
         metric.setId(rs.getString("flowlet"));
         metric.setType(MetricType.FLOWLET);
@@ -110,7 +104,7 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
       }
     } catch (SQLException e) {
       Log.warn("Unable to retrieve flow metrics. Application '{}', Flow '{}', Run ID '{}'",
-        new Object[] {app, flow, rid});
+        new Object[]{app, flow, rid});
     }
     return result;
   }
@@ -136,14 +130,14 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setString(1, accountId);
       ResultSet rs = stmt.executeQuery();
-      while(rs.next()) {
+      while (rs.next()) {
         String app = rs.getString("application");
         String flow = rs.getString("flow");
         String appFlow = String.format("%s.%s", app, flow);
         Integer timestamp = rs.getInt("timestamp");
         int state = rs.getInt("state");
 
-        if(! deployed.containsKey(appFlow)) {
+        if (!deployed.containsKey(appFlow)) {
           deployed.put(appFlow, 1);
           FlowState status = new FlowState();
           status.setApplication(rs.getString("application"));
@@ -155,11 +149,12 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
           result.add(status);
         }
 
-        if(state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
-          started.put(appFlow, timestamp );
-        } else if(state == StateChangeType.STOPPING.getType() || state == StateChangeType.STOPPED.getType()) {
+        if (state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
+          started.put(appFlow, timestamp);
+        } else if (state == StateChangeType.STOPPING.getType()
+          || state == StateChangeType.STOPPED.getType() || state == StateChangeType.FAILED.getType()) {
           stopped.put(appFlow, timestamp);
-          if(runs.containsKey(flow)) {
+          if (runs.containsKey(flow)) {
             int run = runs.get(flow).intValue();
             runs.put(appFlow, run + 1);
           } else {
@@ -172,20 +167,20 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
 
     }
 
-    for(FlowState state : result) {
+    for (FlowState state : result) {
       String flow = state.getFlow();
       String app = state.getApplication();
       String appFlow = String.format("%s.%s", app, flow);
-      if(started.containsKey(appFlow)) {
+      if (started.containsKey(appFlow)) {
         state.setLastStarted(started.get(appFlow));
       }
-      if(stopped.containsKey(appFlow)) {
+      if (stopped.containsKey(appFlow)) {
         state.setLastStoppped(stopped.get(appFlow));
       }
-      if(runs.containsKey(appFlow)) {
+      if (runs.containsKey(appFlow)) {
         state.setRuns(runs.get(appFlow));
       }
-      if(states.containsKey(appFlow)) {
+      if (states.containsKey(appFlow)) {
         state.setCurrentState(states.get(appFlow));
       }
     }
