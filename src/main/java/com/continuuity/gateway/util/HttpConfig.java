@@ -23,9 +23,9 @@ public class HttpConfig {
 	/** a default port for HTTP */
 	public static final int DefaultPort = 8080;
 	/** default prefix is just the root path */
-	public static String DefaultPrefix = "/";
+	public static String DefaultPrefix = "";
 	/** default middle part is empty */
-	public static String DefaultMiddle = "";
+	public static String DefaultMiddle = "/";
 	/** chunking is on by default */
 	public static boolean DefaultChunking = true;
 	/** default max content size is 1MB */
@@ -155,6 +155,8 @@ public class HttpConfig {
 	public static HttpConfig configure(String name,
 																		 CConfiguration configuration,
 																		 HttpConfig defaults) throws Exception {
+		// if no defaults were given, create an empty config (it has defaults)
+		if (defaults == null) defaults = new HttpConfig();
 		HttpConfig config = new HttpConfig(name);
 		config.port = configuration.getInt(Constants.buildConnectorPropertyName(
 				name, Constants.CONFIG_PORT), defaults.getPort());
@@ -178,10 +180,21 @@ public class HttpConfig {
 
 	/**
 	 * Get the base URL that this HttpConfig describes
+	 * @param hostname the hostname to use for the base url (HttpConfig
+	 *                  does not have that). If null, localhost is used.
+	 * @return the base URL
+	 */
+	public String getBaseUrl(String hostname) {
+		return (this.isSsl() ? "https" : "http") + "://"
+				+ (hostname == null? "localhost" : hostname) + ":"
+				+ this.getPort() + this.getPathPrefix() + this.getPathMiddle();
+	}
+
+	/**
+	 * Get the base URL that this HttpConfig describes, using localhost
 	 * @return the base URL
 	 */
 	public String getBaseUrl() {
-		return (this.isSsl() ? "https" : "http") + "://localhost:"
-				+ this.getPort() + this.getPathPrefix() + this.getPathMiddle();
+		return this.getBaseUrl(null);
 	}
 }
