@@ -90,6 +90,8 @@ public class GetValueByKeyTest {
 				{ "--key", "636174", "--hex" }, // "cat" in hex notation
 				{ "--key", "6beb79", "--hex" }, // non-Ascii "këy" in hex notation
 				{ "--key", "cat", "--base", "http://localhost:" + port + prefix + path }, // explicit base url
+				{ "--key", "cat", "--host", "localhost" }, // correct hostname
+				{ "--key", "cat", "--connector", name }, // valid connector name
 		};
 
 		// argument combinations that should lead to failure
@@ -97,6 +99,13 @@ public class GetValueByKeyTest {
 				{ },
 				{ "--key" }, // no key
 				{ "--garble" }, // invalid argument
+				{ "--encoding" }, // missing argument
+				{ "--keyfile" }, // missing argument
+				{ "--tofile" }, // missing argument
+				{ "--base" }, // missing argument
+				{ "--host" }, // missing argument
+				{ "--connector" }, // missing argument
+				{ "--connector", "fantasy.name" }, // invalid connector name
 				{ "--key", "funk", "--hex" }, // non-hexadecimal key with --hex
 				{ "--key", "babed", "--hex" }, // key of uneven length with --hex
 				{ "--key", "pfunk", "--encoding", "fantasy string" }, // invalid encoding
@@ -104,6 +113,7 @@ public class GetValueByKeyTest {
 				{ "--key", "key with blanks", "--url"}, // url-encoded key may not contain blanks
 				{ "--key", "cat", "--base", "http://localhost" + prefix + path }, // explicit but port is missing -> connection refused
 				{ "--key", "cat", "--base", "http://localhost:" + port + "/gataca" + path }, // explicit but wrong base -> 404
+				{ "--key", "cat", "--host", "my.fantasy.hostname" }, // bad hostname -> 404
 		};
 
 		// test each good combination

@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventBuilder;
 import org.junit.Assert;
@@ -22,6 +23,7 @@ public class ConsumerTest {
 				}
 			}
 		};
+		consumer.configure(CConfiguration.create());
 
 		Event goodEvent = new EventBuilder().setHeader("goody", "ok").create();
 		Event badEvent = new EventBuilder().setHeader("dummy", "not ok").create();
