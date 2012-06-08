@@ -1,8 +1,8 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.RestCollector;
+import com.continuuity.gateway.util.Util;
 import com.continuuity.gateway.util.HttpConfig;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -16,67 +16,33 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
+// todo document this
 public class SendRestEvent {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(SendRestEvent.class);
 
 	/**
-	 * Reads the gateway configuration, figures out the name of the rest
-	 * collector - if one is configured - and returns its HttpConfig.
+	 * Retrieves the http config of the rest collector from the gateway
+	 * configuration. If no name is passed in, tries to figures out the
+	 * name by scanning through the configuration.
 	 * @param config The gateway configuration
 	 * @param restName The name of the rest collector, optional
-	 * @return the HttpConfig if successful, or null otherwise.
+	 * @return The HttpConfig if found, or null otherwise.
 	 */
-	// todo move this to util and write a unit test
 	static HttpConfig findRestConfig(CConfiguration config, String restName) {
 
 		if (restName == null) {
-			List<String> restConnectors = new LinkedList<String>();
-
-			// Retrieve the list of connectors in the gateway
-			Collection<String> connectorNames = config.
-					getStringCollection(Constants.CONFIG_CONNECTORS);
-
-			// For each Connector
-			for (String connectorName : connectorNames) {
-				// Retrieve the connector's Class name
-				String connectorClassName = config.get(
-						Constants.buildConnectorPropertyName(connectorName,
-								Constants.CONFIG_CLASSNAME));
-				// no class name configured? skip!
-				if (connectorClassName == null) {
-					LOG.warn("No class configured for connector '" + connectorName + "'.");
-					continue;
-				}
-				try {
-					// test whether this connector is a subclass of FlumeCollector -> hit!
-					Class connectorClass = Class.forName(connectorClassName);
-					if (RestCollector.class.isAssignableFrom(connectorClass)) {
-						restConnectors.add(connectorName);
-					}
-					// class cannot be found? skip!
-				} catch (ClassNotFoundException e) {
-					LOG.warn("Configured class " + connectorClassName +
-							" for connector '" + connectorName + "' not found.");
-				}
-			}
-			// make sure there is exactly one flume collector
-			if (restConnectors.size() == 0) {
-				LOG.error("No Rest collector found in configuration.");
+			// find the name of the REST collector
+			restName = Util.findConnector(config, RestCollector.class);
+			if (restName == null) {
 				return null;
-			} else if (restConnectors.size() > 1) {
-				LOG.error("Multiple Rest collectors found: " + restConnectors);
-				return null;
+			} else {
+				LOG.info("Reading configuration for connector '" + restName + "'.");
 			}
-			restName = restConnectors.iterator().next();
-			LOG.info("Reading configuration for connector '" + restName + "'.");
 		}
-		// get that collector's http config
+		// get the collector's http config
 		HttpConfig httpConfig = null;
 		try {
 			httpConfig = HttpConfig.configure(restName, config, null);
@@ -89,10 +55,10 @@ public class SendRestEvent {
 
 	public static void usage(boolean error) {
 		PrintStream out = (error ? System.err : System.out);
-		out.println("Usage: SendFlumeEvent <option> ... with");
+		out.println("Usage: SendRestEvent <option> ... with");
 		out.println("  --base <url>            To specify the port to use");
 		out.println("  --host <name>           To specify the hostname to send to");
-		out.println("  --connector <name>      To specify the name of the flume connector");
+		out.println("  --connector <name>      To specify the name of the rest collector");
 		out.println("  --stream <name>         To specify the destination event stream");
 		out.println("	 --header <name> <value> To specify a header for the event to send. Can be used multiple times");
 		out.println("  --body <value>          To specify the body of the event");
@@ -163,6 +129,7 @@ public class SendRestEvent {
 		}
 		if (baseUrl == null) {
 			System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
+			System.exit(1);
 		} else {
 			System.out.println("Using base URL: " + baseUrl);
 		}
@@ -183,26 +150,9 @@ public class SendRestEvent {
 		}
 
 		if (filename != null) {
-			File file = new File(filename);
-			if (!file.isFile()) {
-				System.err.println("'" + filename + "' is not a regular file.");
-			}
-			int bytesToRead = (int)file.length();
-			byte[] bytes = new byte[bytesToRead];
-			int offset = 0;
-			try {
-				FileInputStream input = new FileInputStream(filename);
-				while (bytesToRead > 0) {
-					int bytesRead = input.read(bytes, offset, bytesToRead);
-					bytesToRead -= bytesRead;
-					offset += bytesRead;
-				}
-				input.close();
-			} catch (FileNotFoundException e) {
-				System.err.println("File '" + filename + "' cannot be opened: " + e.getMessage());
-				System.exit(1);
-			} catch (IOException e) {
-				System.err.println("Error reading from file '" + filename + "': " + e.getMessage());
+			byte[] bytes = Util.readBinaryFile(filename);
+			if (bytes == null) {
+				System.err.println("Cannot read body from file " + filename + ".");
 				System.exit(1);
 			}
 			post.setEntity(new ByteArrayEntity(bytes));

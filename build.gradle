@@ -17,11 +17,10 @@ def avroVersion = '1.6.2'
 def continuuityVersion = '0.1.0-SNAPSHOT'
 def flumeVersion = '1.1.0-cdh4.0.0+'
 
-/*
+
 tasks.withType(Compile) { 
-    options.compilerArgs << "-Xlint:deprecation" 
+    options.compilerArgs << "-Xlint:unchecked"
 } 
-*/
 
 dependencies {
 

@@ -3,6 +3,7 @@ package com.continuuity.gateway.tools;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.FlumeCollector;
+import com.continuuity.gateway.util.Util;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -11,67 +12,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
+// todo document this
 public class SendFlumeEvent {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(SendFlumeEvent.class);
 
 	/**
-	 * Reads the gateway configuration, figures out the name of the flume
-	 * collector - if one is configured - and returns its port number.
+	 * Retrieves the port number of the flume collector from the gateway
+	 * configuration. If no name is passed in, tries to figures out the name
+	 * by scanning through the configuration.
 	 * @param config The gateway configuration
 	 * @param flumeName The name of the flume collector, optional
 	 * @return The port number if found, or -1 otherwise.
 	 */
-	// todo move this to util and write a unit test
 	static int findFlumePort(CConfiguration config, String flumeName) {
 
 		if (flumeName == null) {
-			List<String> flumeConnectors = new LinkedList<String>();
-
-			// Retrieve the list of connectors in the gateway
-			Collection<String> connectorNames = config.
-					getStringCollection(Constants.CONFIG_CONNECTORS);
-
-			// For each Connector
-			for (String connectorName : connectorNames) {
-				// Retrieve the connector's Class name
-				String connectorClassName = config.get(
-						Constants.buildConnectorPropertyName(connectorName,
-								Constants.CONFIG_CLASSNAME));
-				// no class name configured? skip!
-				if (connectorClassName == null) {
-					LOG.warn("No class configured for connector '" + connectorName + "'.");
-					continue;
-				}
-		 		try {
-					// test whether this connector is a subclass of FlumeCollector -> hit!
-					Class connectorClass = Class.forName(connectorClassName);
-					if (FlumeCollector.class.isAssignableFrom(connectorClass)) {
-						flumeConnectors.add(connectorName);
-					}
-					// class cannot be found? skip!
-				} catch (ClassNotFoundException e) {
-					 LOG.warn("Configured class " + connectorClassName +
-							 " for connector '" + connectorName + "' not found.");
-				}
-			}
-			// make sure there is exactly one flume collector
-			if (flumeConnectors.size() == 0) {
-				LOG.error("No flume collector found in configuration.");
+			// find the name of the flume collector
+			flumeName = Util.findConnector(config, FlumeCollector.class);
+			if (flumeName == null) {
 				return -1;
-			} else if (flumeConnectors.size() > 1) {
-				LOG.error("Multiple flume collectors found: " + flumeConnectors);
-				return -1;
+			} else {
+				LOG.info("Reading configuration for connector '" + flumeName + "'.");
 			}
-			LOG.info("Reading configuration for connector '" + flumeName + "'.");
-			flumeName = flumeConnectors.iterator().next();
 		}
-		// get that single collector's port number from the config
+		// get the collector's port number from the config
 		return config.getInt(Constants.buildConnectorPropertyName(
 				flumeName, Constants.CONFIG_PORT), FlumeCollector.DefaultPort);
 	}
@@ -162,26 +129,9 @@ public class SendFlumeEvent {
 		}
 
 		if (filename != null) {
-			File file = new File(filename);
-			if (!file.isFile()) {
-				System.err.println("'" + filename + "' is not a regular file.");
-			}
-			int bytesToRead = (int)file.length();
-			byte[] bytes = new byte[bytesToRead];
-			int offset = 0;
-			try {
-				FileInputStream input = new FileInputStream(filename);
-				while (bytesToRead > 0) {
-					int bytesRead = input.read(bytes, offset, bytesToRead);
-					bytesToRead -= bytesRead;
-					offset += bytesRead;
-				}
-				input.close();
-			} catch (FileNotFoundException e) {
-				System.err.println("File '" + filename + "' cannot be opened: " + e.getMessage());
-				System.exit(1);
-			} catch (IOException e) {
-				System.err.println("Error reading from file '" + filename + "': " + e.getMessage());
+			byte[] bytes = Util.readBinaryFile(filename);
+			if (bytes == null) {
+				System.err.println("Cannot read body from file " + filename + ".");
 				System.exit(1);
 			}
 			event.setBody(bytes);
