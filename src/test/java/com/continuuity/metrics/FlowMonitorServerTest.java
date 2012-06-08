@@ -214,15 +214,40 @@ public class FlowMonitorServerTest {
     server.stop();
   }
 
-
   @Test
-  @Ignore
+  public void testGetFlowDefinition() throws Exception {
+    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
+    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
+    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+
+    CConfiguration configuration = CConfiguration.create();
+    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+
+    populateData();
+
+    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
+    server.start(configuration);
+
+    Thread.sleep(5000);
+
+    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
+    Assert.assertNotNull(definition);
+    client.close();
+    server.stop();
+  }
+
+
+  @Test @Ignore
   public void testReadFromLocalExternalServiceNotReallyATestCase() throws Exception {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, "localhost:2181");
 
     FlowMonitorClient client = new FlowMonitorClient(configuration);
     List<FlowState> states = client.getFlows("demo");
+    List<FlowRun> runs = client.getFlowHistory("demo", "XYZ", "targetting");
+    String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
+
   }
 
   private void populateData() throws Exception {
@@ -260,6 +285,11 @@ public class FlowMonitorServerTest {
     addPointToFlowStateTable(21, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.RUNNING);
     addPointToFlowStateTable(22, "demo", "XYZ", "r6", "targetting", "", StateChangeType.STOPPING);
     addPointToFlowStateTable(23, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(24, "demo", "XYZ", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(25, "demo", "ABC", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(26, "demo", "EFG", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(27, "demo", "UVW", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
   }
   private void clearFlowStateTable() {
     String sql = "DELETE FROM flow_state";

@@ -31,4 +31,19 @@ class FlowMonitorImpl implements FlowMonitor.Iface {
     return handler.getFlowHistory(accountId, appId, flowId);
   }
 
+  /**
+   * Returns definition of a flow.
+   * NOTE: Version ID is not used for now, but we found out that in order to get the right definition,
+   * we need to have the versionId.
+   *
+   * @param accountId
+   * @param appId
+   * @param flowId
+   * @param versionId
+   */
+  @Override
+  public String getFlowDefinition(String accountId, String appId, String flowId, String versionId) throws TException {
+    return handler.getFlowDefinition(accountId, appId, flowId, versionId);
+  }
+
 }

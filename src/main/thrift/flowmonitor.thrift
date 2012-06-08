@@ -74,5 +74,12 @@ service FlowMonitor {
    */
   list<FlowRun> getFlowHistory(1: string accountId, 2: string appId, 3: string flowId),
 
+  /**
+   * Returns definition of a flow.
+   * NOTE: Version ID is not used for now, but we found out that in order to get the right definition,
+   *       we need to have the versionId.
+   */
+  string getFlowDefinition(1: string accountId, 2: string appId, 3: string flowId, 4: string versionId),
+
   /** list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid), */
 }

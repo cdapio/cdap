@@ -261,5 +261,36 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     return runs;
   }
 
+  /**
+   * Returns the flow definition.
+   *
+   * @param accountId
+   * @param appId
+   * @param flowId
+   * @param versionId
+   * @return
+   */
+  @Override
+  public String getFlowDefinition(String accountId, String appId, String flowId, String versionId) {
+    String sql = "SELECT payload FROM flow_state WHERE account = ? AND application = ? " +
+      "AND flow = ? AND state = 1 ORDER by timestamp DESC limit 1";
+
+    String definition = null;
+    try {
+      PreparedStatement stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      stmt.setString(2, appId);
+      stmt.setString(3, flowId);
+      ResultSet rs = stmt.executeQuery();
+      rs.next();
+      definition = rs.getString("payload");
+    } catch (SQLException e) {
+      Log.error("Unable to get flow run for account {}, application {}, flow {}. Reason : {}", new Object[] {
+        accountId, appId, flowId, e.getMessage()
+      });
+    }
+    return definition;
+  }
+
 
 }

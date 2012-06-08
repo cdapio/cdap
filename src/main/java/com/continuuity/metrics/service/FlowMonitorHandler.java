@@ -33,7 +33,16 @@ public interface FlowMonitorHandler {
    */
   public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId);
 
+  /**
+   * Returns the flow definition.
+   *
+   * @param accountId
+   * @param appId
+   * @param flowId
+   * @param versionId
+   * @return
+   */
+  String getFlowDefinition(String accountId, String appId, String flowId, String versionId);
+
   List<Metric> getFlowMetric(String accountId, String app, String flow, String rid);
-
-
 }
