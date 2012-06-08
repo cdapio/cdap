@@ -23,12 +23,17 @@ task binaries(type:Copy) {
 	into 'build/bin'
 }
 
+task link() {
+	"npm link ./server/".execute();
+	"rm -rf ./node_modules/".execute();
+}
+
 task server(type:Copy, dependsOn: 'syntax', description: 'Copies relevant server files to build') {
 	from 'server/'
 	into 'build/server'
 }
 server.configure {
-	include('bin/*', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js', 'index.html')
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js', 'index.html')
 }
 
 task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS') {
@@ -73,7 +78,7 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
+task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'link', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
 	}
