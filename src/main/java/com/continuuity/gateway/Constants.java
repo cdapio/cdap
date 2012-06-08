@@ -83,19 +83,6 @@ public class Constants {
 	 */
 	public static final String CONFIG_PATH_MIDDLE = "middle";
 
-	/**
-   * Generate the name of a property option for the Gateway. Basically concats
-   * the GATEWAY_PREFIX to the property.
-   *
-   * @param propertyName   The name of the property
-   *
-   * @return  A fully composed gateway configuration property
-   */
-  public static String buildGatewayPropertyName(String propertyName) {
-
-    return GATEWAY_PREFIX + propertyName;
-  }
-
   /**
    * Generate the name of a property option for a named Collector. Basically
    * a helper method that concats some strings.
