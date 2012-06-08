@@ -6,6 +6,7 @@ import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -148,7 +149,63 @@ public class RestAccessorTest {
 
 		// submit a GET with existing key but with query part -> 501 Not Implemented
 		Assert.assertEquals(501, Util.sendGetRequest(baseUrl + "x?query=none"));
+
+		// and shutdown
+		accessor.stop();
 	}
 
-	// TODO test start/stop/restart/stop
+	@Test
+	public void testStopRestart() throws Exception {
+		// configure an accessor
+		final String name = "access.rest";
+		final String prefix = "/continuuity";
+		final String path = "/table/";
+		final int port = Util.findFreePort();
+
+		CConfiguration configuration = new CConfiguration();
+		configuration.set(Constants.CONFIG_CONNECTORS, name);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
+		configuration.setInt(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PORT),port);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_MIDDLE), path);
+
+		// create, configure, and start Accessor
+		RestAccessor accessor = new RestAccessor();
+		accessor.setName(name);
+		accessor.setExecutor(this.executor);
+		accessor.configure(configuration);
+		accessor.start();
+
+		// the correct URL would be http://localhost:<port>/continuuity/table/
+		String baseUrl = accessor.getHttpConfig().getBaseUrl() + "default/";
+
+		// test one valid key
+		Util.testKeyValue(this.executor, baseUrl, "x", "y");
+
+		// submit a GET with existing key -> 200 OK
+		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+
+		// stop the connector
+		accessor.stop();
+
+		// verify that GET fails now. Should throw an exception
+		try {
+			Util.sendGetRequest(baseUrl + "x");
+			Assert.fail("Expected HttpHostConnectException because connector was stopped.");
+		} catch (HttpHostConnectException e) {
+			// this is expected
+		}
+		// restart the connector
+		accessor.start();
+
+		// submit a GET with existing key -> 200 OK
+		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+
+		// and finally shut down
+		accessor.stop();
+	}
 }
