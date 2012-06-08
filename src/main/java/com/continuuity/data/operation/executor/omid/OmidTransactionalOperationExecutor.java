@@ -229,7 +229,7 @@ public class OmidTransactionalOperationExecutor
         pointer.getFirst());
     // modify
     byte [] newValue = write.getModifier().modify(value);
-    // write
+    // write (should we do a CAS here?  seems like conflicts are handled)
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(), newValue);
     return new WriteTransactionResult(true, new Delete(write.getKey()));
   }

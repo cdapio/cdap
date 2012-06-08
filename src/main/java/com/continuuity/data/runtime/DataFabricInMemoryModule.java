@@ -21,6 +21,7 @@ import com.google.inject.Singleton;
  */
 public class DataFabricInMemoryModule extends AbstractModule {
 
+  @Override
   public void configure() {
 
     // Bind our implementations

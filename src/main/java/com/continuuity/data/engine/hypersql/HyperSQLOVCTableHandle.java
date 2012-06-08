@@ -30,6 +30,9 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
-    return new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
+    HyperSQLOVCTable table =
+        new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
+    table.initializeTable();
+    return table;
   }
 }

@@ -32,6 +32,8 @@ public class DataFabricLocalModule extends AbstractModule {
     this.hyperSqlJDCBString = hyperSqlJDBCString;
 
   }
+
+  @Override
   public void configure() {
 
     // Load any necessary drivers
