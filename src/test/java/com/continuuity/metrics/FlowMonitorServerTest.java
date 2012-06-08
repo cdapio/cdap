@@ -214,28 +214,28 @@ public class FlowMonitorServerTest {
     server.stop();
   }
 
-  @Test
-  public void testGetFlowDefinition() throws Exception {
-    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
-    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
-    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
-
-    CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
-
-    populateData();
-
-    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
-    server.start(configuration);
-
-    Thread.sleep(5000);
-
-    FlowMonitorClient client = new FlowMonitorClient(configuration);
-    String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
-    Assert.assertNotNull(definition);
-    client.close();
-    server.stop();
-  }
+//  @Test
+//  public void testGetFlowDefinition() throws Exception {
+//    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
+//    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
+//    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+//
+//    CConfiguration configuration = CConfiguration.create();
+//    configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+//
+//    populateData();
+//
+//    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
+//    server.start(configuration);
+//
+//    Thread.sleep(5000);
+//
+//    FlowMonitorClient client = new FlowMonitorClient(configuration);
+//    String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
+//    Assert.assertNotNull(definition);
+//    client.close();
+//    server.stop();
+//  }
 
 
   @Test @Ignore
