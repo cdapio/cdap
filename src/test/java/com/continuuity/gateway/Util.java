@@ -307,5 +307,27 @@ public class Util {
 		testKeyValue(executor, baseUri, key.getBytes(), value.getBytes());
 	}
 
+	/**
+	 * Send a GET request to the given URL and return the HTTP status
+	 * @param url the URL to get
+	 */
+	public static int sendGetRequest(String url) throws Exception {
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(new HttpGet(url));
+		client.getConnectionManager().shutdown();
+		return response.getStatusLine().getStatusCode();
+	}
 
+	/**
+	 * Send a POST request to the given URL and return the HTTP status
+	 * @param url the URL to post to
+	 */
+	public static int sendPostRequest(String url) throws Exception {
+		HttpClient client = new DefaultHttpClient();
+		HttpPost post = new HttpPost(url);
+		post.setEntity(new ByteArrayEntity(new byte[0]));
+		HttpResponse response = client.execute(post);
+		client.getConnectionManager().shutdown();
+		return response.getStatusLine().getStatusCode();
+	}
 }

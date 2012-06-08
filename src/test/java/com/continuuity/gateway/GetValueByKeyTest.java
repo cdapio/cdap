@@ -114,6 +114,7 @@ public class GetValueByKeyTest {
 				{ "--key", "cat", "--base", "http://localhost" + prefix + path }, // explicit but port is missing -> connection refused
 				{ "--key", "cat", "--base", "http://localhost:" + port + "/gataca" + path }, // explicit but wrong base -> 404
 				{ "--key", "cat", "--host", "my.fantasy.hostname" }, // bad hostname -> 404
+				{ "--host", "localhost" }, // no key given
 		};
 
 		// test each good combination

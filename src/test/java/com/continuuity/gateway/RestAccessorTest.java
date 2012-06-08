@@ -6,6 +6,7 @@ import com.continuuity.data.runtime.DataFabricInMemoryModule;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -78,7 +79,6 @@ public class RestAccessorTest {
 
 		Util.testKeyValue(this.executor, uri, "x", "y");
 		Util.testKeyValue(this.executor, uri, "mt", "");
-		Util.testKeyValue(this.executor, uri, "", "");
 		Util.testKeyValue(this.executor, uri, "blank in the key", "some string");
 		Util.testKeyValue(this.executor, uri, "cat's name?", "pfunk!");
 		Util.testKeyValue(this.executor, uri, "special-/?@:%+key", "moseby");
@@ -89,11 +89,66 @@ public class RestAccessorTest {
 		accessor.stop();
 	}
 
-	// TODO test not found
-	// TODO test POST
-	// TODO test URL with parameter
-	// TODO test URL without key
-	// TODO test URL with wrong path
-	// TODO test URL with table other than default
+	@Test
+	public void testBadRequests() throws Exception {
+		// configure an accessor
+		final String name = "access.rest";
+		final String prefix = "/continuuity";
+		final String path = "/table/";
+		final int port = Util.findFreePort();
+
+		CConfiguration configuration = new CConfiguration();
+		configuration.set(Constants.CONFIG_CONNECTORS, name);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
+		configuration.setInt(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PORT),port);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_MIDDLE), path);
+
+		// create, configure, and start Accessor
+		RestAccessor accessor = new RestAccessor();
+		accessor.setName(name);
+		accessor.setExecutor(this.executor);
+		accessor.configure(configuration);
+		accessor.start();
+
+		// the correct URL would be http://localhost:<port>/continuuity/table/
+		String baseUrl = accessor.getHttpConfig().getBaseUrl() + "default/";
+
+		// test one valid key
+		Util.testKeyValue(this.executor, baseUrl, "x", "y");
+
+		// submit a request without prefix in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/somewhere"));
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/data"));
+
+		// submit a request with correct prefix but no table -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/table/x"));
+
+		// submit a request with correct prefix but non-existent table -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/table/other/x"));
+
+		// submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
+		Assert.assertEquals(405, Util.sendPostRequest(baseUrl));
+
+		// submit a GET without key -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest(baseUrl));
+
+		// submit a GET with existing key -> 200 OK
+		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+
+		// submit a GET with non-existing key -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "does.not.exist"));
+
+		// submit a GET with existing key but more after that in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "x/y/z"));
+
+		// submit a GET with existing key but with query part -> 501 Not Implemented
+		Assert.assertEquals(501, Util.sendGetRequest(baseUrl + "x?query=none"));
+	}
+
 	// TODO test start/stop/restart/stop
 }

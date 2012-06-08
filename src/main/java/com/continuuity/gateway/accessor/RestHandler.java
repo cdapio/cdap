@@ -86,7 +86,7 @@ public class RestHandler extends NettyRestHandler {
 				}
 			}
 		}
-		if (key == null) {
+		if (key == null || key.length() == 0) {
 			LOG.debug("Received a request with invalid path " + path);
 			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
 			return;
