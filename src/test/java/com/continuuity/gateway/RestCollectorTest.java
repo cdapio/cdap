@@ -78,12 +78,54 @@ public class RestCollectorTest {
 		Assert.assertEquals(0, collector.getConsumer().eventsFailed());
 	}
 
-	// @todo test that appropriate status codes are returned for
-  // - no api token
-	// - missing permission
-	// - unsupported query
-	// - stream does not exist
-	// - internal error?
-	// - wrong method (get, head, etc.)
-	// public void testHttpCodes() throws Exception
+	/** This tests that the collector returns the correct HTTP codes for invalid requests */
+	@Test
+	public void testBadRequests() throws Exception {
+		// configure an collector
+		final String name = "collect.rest";
+		final String prefix = "/continuuity";
+		final String path = "/stream/";
+		final int port = Util.findFreePort();
+
+		CConfiguration configuration = new CConfiguration();
+		configuration.set(Constants.CONFIG_CONNECTORS, name);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
+		configuration.setInt(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PORT),port);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name,
+				Constants.CONFIG_PATH_MIDDLE), path);
+
+		// create, configure, and start Accessor
+		RestCollector collector = new RestCollector();
+		collector.setName(name);
+		collector.setConsumer(new Util.NoopConsumer());
+		collector.configure(configuration);
+		collector.start();
+
+		// the correct URL would be http://localhost:<port>/continuuity/stream/
+		String baseUrl = collector.getHttpConfig().getBaseUrl();
+
+		// submit a request without prefix in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendPostRequest("http://localhost:" + port + "/somewhere"));
+		Assert.assertEquals(404, Util.sendPostRequest("http://localhost:" + port + "/continuuity/data"));
+
+		// submit a request with correct prefix but no stream -> 404 Not Found
+		Assert.assertEquals(404, Util.sendPostRequest(baseUrl));
+
+		// submit a GET to the collector (which only supports POST) -> 405 Not Allowed
+		Assert.assertEquals(405, Util.sendGetRequest(baseUrl));
+
+		// submit a POST with stream name but more after that in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "events/"));
+		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "events/more"));
+
+		// submit a POST with existing key but with query part -> 501 Not Implemented
+		Assert.assertEquals(501, Util.sendPostRequest(baseUrl + "x?query=none"));
+
+		// and shutdown
+		collector.stop();
+	}
 }

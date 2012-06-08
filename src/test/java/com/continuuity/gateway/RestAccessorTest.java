@@ -90,6 +90,7 @@ public class RestAccessorTest {
 		accessor.stop();
 	}
 
+	/** This tests that the accessor returns the correct HTTP codes for invalid requests */
 	@Test
 	public void testBadRequests() throws Exception {
 		// configure an accessor
@@ -154,6 +155,7 @@ public class RestAccessorTest {
 		accessor.stop();
 	}
 
+	/** This tests that the accessor can be stopped and restarted */
 	@Test
 	public void testStopRestart() throws Exception {
 		// configure an accessor
