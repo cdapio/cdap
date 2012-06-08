@@ -89,13 +89,16 @@ try {
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 		var body = null;
+		var length = req.header('Content-length');
+
+		var data = new Buffer(parseInt(length, 10));
+		var idx = 0;
+
+		console.log('Receiving file upload of length', length);
 
 		req.on('data', function(raw) {
-			if (body === null) {
-				body = raw;
-			} else {
-				body += raw;
-			}
+			raw.copy(data, idx);
+			idx += raw.length;
 		});
 
 		req.on('end', function() {
@@ -114,7 +117,7 @@ try {
 			var FAR = thrift.createClient(FARService, conn);
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
 				'filename': 'upload.jar',
-				'size': body.length,
+				'size': data.length,
 				'modtime': new Date().getTime()
 			}), function (error, resource_identifier) {
 				if (error) {
@@ -122,7 +125,7 @@ try {
 				} else {
 
 					socket.emit('upload', {'status': 'initialized'});
-					FAR.chunk(auth_token, resource_identifier, body, function (error, result) {
+					FAR.chunk(auth_token, resource_identifier, data, function (error, result) {
 						if (error) {
 							console.log('FARManager chunk', error);
 						} else {
