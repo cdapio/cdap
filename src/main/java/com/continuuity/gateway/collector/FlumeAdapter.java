@@ -40,11 +40,13 @@ class FlumeAdapter implements AvroSourceProtocol {
 	private Consumer consumer;
 	private Collector collector;
 
+	///CLOVER OFF
 	/** prevent using the default constructor, to ensure the collector is always set */
 	private FlumeAdapter() {
 		LOG.error("Attempt to call default constructor.");
 		throw new UnsupportedOperationException("Attempt to call default constructor for FlumeAdapter.");
 	}
+	///CLOVER ON
 
 	/**
 	 * Constructor ensures that the collector is always set
