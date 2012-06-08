@@ -97,7 +97,7 @@ public class CommandPortServer {
    */
   public void addListener(String name, String description, CommandListener listener) {
     listeners.put(name, listener);
-    helpString = String.format("%s\n%10s : %30s\n", helpString, name, description);
+    helpString = String.format("%s%10s : %30s\n", helpString, name, description);
   }
 
   /**
@@ -115,17 +115,17 @@ public class CommandPortServer {
       while(running) {
         Socket socket = serverSocket.accept(); /** wait for connection */
         inSession = true;
-        while(inSession) {
-          BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-          DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
-          String command = fromClient.readLine();
-          if(command == null || command.isEmpty()) {
+        BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
+        String command;
+        while((command = fromClient.readLine()) != null) {
+          if(command.isEmpty()) {
             break;
           }
           if(command.equals("help")) {
             toClient.writeBytes(helpString);
           } else if(command.equals("exit")) {
-            inSession = false;
+            break;
           } else if(listeners.containsKey(command)) {
             String message = listeners.get(command).act();
             toClient.writeBytes(message + "\n");

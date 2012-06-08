@@ -18,6 +18,3 @@ dependencies {
     compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
 }
 
-task mappings << {
-    println conf2ScopeMappings.mappings
-}

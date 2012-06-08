@@ -7,8 +7,9 @@ import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 
 import java.io.IOException;
 
@@ -21,7 +22,7 @@ import java.io.IOException;
  * </p>
  */
 public abstract class AbstractRegisteredService implements RegisteredService {
-  private static final Logger Log = LoggerFactory.getLogger(AbstractRegisteredService.class);
+  private static final Logger Log = (Logger)LoggerFactory.getLogger(AbstractRegisteredService.class);
 
   /**
    * Service registration client.
@@ -34,9 +35,9 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   private String service = "named-but-notnamed";
 
   /**
-   * Command port server associated with the service.
+   * Command port cmdPortServer associated with the service.
    */
-  private CommandPortServer server;
+  private CommandPortServer cmdPortServer;
 
   /**
    * Service thread returned from starting of the service. The service thread is actually managed
@@ -45,10 +46,11 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   private Thread serviceThread;
 
   /**
-   * Base class constructor with service name being provided.
+   * Set service name
+   *
    * @param service name
    */
-  public AbstractRegisteredService(String service) {
+  public void setServiceName(String service) {
     this.service = service;
   }
 
@@ -61,7 +63,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   }
 
   /**
-   * Adds a command listener to the command port server.
+   * Adds a command listener to the command port cmdPortServer.
    * <p>
    *   NOTE: If the same command is registered twice the latest one wins.
    * </p>
@@ -70,7 +72,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * @param listener to be associated with command, that is invoked when command port sees that.
    */
   public void addCommandListener(String command, String description, CommandPortServer.CommandListener listener) {
-    server.addListener(command, description, listener);
+    cmdPortServer.addListener(command, description, listener);
   }
 
   /**
@@ -85,13 +87,49 @@ public abstract class AbstractRegisteredService implements RegisteredService {
     Preconditions.checkNotNull(zkEnsemble);
 
     try {
-      server = new CommandPortServer(service);
+      cmdPortServer = new CommandPortServer(service);
 
       addCommandListener("stop", "Stops the service", new CommandPortServer.CommandListener() {
         @Override
         public String act() {
           stop(true);
           return "Done";
+        }
+      });
+
+      addCommandListener("log-trace", "Change service level log to trace", new CommandPortServer.CommandListener(){
+        @Override
+        public String act() {
+          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+          root.setLevel(Level.DEBUG);
+          return "WARNING: Please note that this might fill out the disk space on host. Set log level to debug";
+        }
+      });
+
+      addCommandListener("log-debug", "Change service level log to debug", new CommandPortServer.CommandListener(){
+        @Override
+        public String act() {
+          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+          root.setLevel(Level.DEBUG);
+          return "Set log level to debug";
+        }
+      });
+
+      addCommandListener("log-error", "Change service level log to error.", new CommandPortServer.CommandListener() {
+        @Override
+        public String act() {
+          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+          root.setLevel(Level.ERROR);
+          return "Set log level to error";
+        }
+      });
+
+      addCommandListener("log-warn", "Change service level log to warn.", new CommandPortServer.CommandListener() {
+        @Override
+        public String act() {
+          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+          root.setLevel(Level.WARN);
+          return "Set log level to warn";
         }
       });
 
@@ -119,11 +157,11 @@ public abstract class AbstractRegisteredService implements RegisteredService {
         throw new RegisteredServiceException("Thread returned from start is null");
       }
       serviceThread.start();
-      server.serve();
+      cmdPortServer.serve();
     } catch (ServiceDiscoveryClientException e) {
-      Log.error("Unable to register the server with discovery service, shutting down. Reason {}", e.getMessage());
+      Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
       stop(true);
-      throw new RegisteredServiceException("Unable to register the server with discovery service");
+      throw new RegisteredServiceException("Unable to register the cmdPortServer with discovery service");
     } catch (CommandPortServer.CommandPortException e) {
       Log.warn("Error starting the command port service. Service not started. Reason : {}", e.getMessage());
       throw new RegisteredServiceException("Could not start command port service. Reason : " + e.getMessage());
@@ -141,7 +179,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   public final void stop(boolean now) {
     try {
       client.close();
-      server.stop();
+      cmdPortServer.stop();
     } catch (IOException e) {
       Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
     }
