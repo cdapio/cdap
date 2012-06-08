@@ -4,6 +4,7 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.service.RegisteredService;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricInMemoryModule;
@@ -12,6 +13,7 @@ import com.continuuity.flow.runtime.FlowSingleNodeModule;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayProductionModule;
 
+import com.continuuity.runtime.DIModules;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -56,8 +58,7 @@ public class SingleNodeMain {
    * This is the Metrics Monitor service
    */
   @Inject
-  // TODO: Make this the real class
-  private Object theOverlord;
+  private RegisteredService theOverlord;
 
   /**
    * This is the FlowManager service
@@ -81,16 +82,16 @@ public class SingleNodeMain {
    */
   private void bootStrapServices() {
 
-    LOG.info("==============================================================" +
+    System.out.println("==============================================================" +
       "==============");
-    LOG.info(" Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All " +
+    System.out.println(" Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All " +
       "Rights Reserved.");
-    LOG.info("");
+    System.out.println("");
 
     //if (zookeeper != null) {
       try {
 
-        LOG.info(" Starting Zookeeper Service");
+        System.out.println(" Starting Zookeeper Service");
         zookeeper =
           new InMemoryZookeeper(
             Integer.parseInt(myConfiguration.get("zookeeper.port")),
@@ -107,7 +108,7 @@ public class SingleNodeMain {
     if (theGateway != null) {
       try {
 
-        LOG.info(" Starting Gateway Service");
+        System.out.println(" Starting Gateway Service");
         theGateway.configure(myConfiguration);
         theGateway.start();
 
@@ -119,24 +120,10 @@ public class SingleNodeMain {
         "Unable to start, Gateway service is null");
     }
 
-    if (theOverlord != null) {
-      try {
-
-        LOG.info(" Starting Metrics Service");
-        // TODO: Really start it
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, Metrics service is null");
-    }
-
     if (theFlowManager != null) {
       try {
 
-        LOG.info(" Starting FlowManager Service");
+        System.out.println(" Starting FlowManager Service");
         theFlowManager.start(myConfiguration);
 
       } catch (Exception e) {
@@ -144,8 +131,26 @@ public class SingleNodeMain {
       }
     } else {
       throw new IllegalStateException(
+        "Unable to start, FlowManager service is null");
+    }
+
+    if (theOverlord != null) {
+      try {
+
+        System.out.println(" Starting Metrics Service");
+        theOverlord.start(null, myConfiguration);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      throw new IllegalStateException(
         "Unable to start, Metrics service is null");
     }
+
+
+
+    // TODO: Also, need to start web-cloud-app
 
 
 
@@ -184,7 +189,8 @@ public class SingleNodeMain {
     Injector injector = Guice.createInjector(
         new GatewayProductionModule(),
         new DataFabricInMemoryModule(),
-        new FlowSingleNodeModule() );
+        new FlowSingleNodeModule(),
+        DIModules.getInMemoryHSQLBindings());
 
     // Create our server instance
     SingleNodeMain continuuity = injector.getInstance(SingleNodeMain.class);
