@@ -85,8 +85,8 @@ implements OrderedVersionedColumnarTable {
       stmt.executeUpdate(createStatement);
       stmt.executeUpdate(indexStatement);
     } catch (SQLException e) {
-      // fail silent if table already exists (code -21)
-      if (e.getErrorCode() != -21) {
+      // fail silent if table/index already exists (code -21 or -23)
+      if (e.getErrorCode() != -21 && e.getErrorCode() != -23) {
         System.out.println("HyperSQL exception on create (id = " +
             e.getErrorCode() + ")");
         e.printStackTrace();
@@ -272,7 +272,9 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public byte[] get(byte[] row, byte[] column, ReadPointer readPointer) {
-    return getWithVersion(row, column, readPointer).getFirst();
+    ImmutablePair<byte[], Long> res = getWithVersion(row, column, readPointer);
+    if (res == null) return null;
+    return res.getFirst();
   }
 
   @Override
@@ -289,6 +291,7 @@ implements OrderedVersionedColumnarTable {
       ps.setBytes(2, column);
       ResultSet result = ps.executeQuery();
       ImmutablePair<Long,byte[]> latest = filteredLatest(result, readPointer);
+      if (latest == null) return null;
       return new ImmutablePair<byte[],Long>(latest.getSecond(),
           latest.getFirst());
     } catch (SQLException e) {
@@ -433,7 +436,7 @@ implements OrderedVersionedColumnarTable {
    */
   private ImmutablePair<Long, byte[]> filteredLatest(
       ResultSet result, ReadPointer readPointer) throws SQLException {
-    if (result == null) return new ImmutablePair<Long,byte[]>(-1L, null);
+    if (result == null) return null;
     long lastDelete = -1;
     long undeleted = -1;
     while (result.next()) {
@@ -456,7 +459,7 @@ implements OrderedVersionedColumnarTable {
       return new ImmutablePair<Long, byte[]>(curVersion,
           result.getBytes(4));
     }
-    return new ImmutablePair<Long,byte[]>(-1L, null);
+    return null;
   }
 
   /**

@@ -163,10 +163,10 @@ public class TTQueueOnVCTable implements TTQueue {
     // Insert entry at active shard
     this.table.put(makeRow(GLOBAL_DATA_HEADER, shardMeta.getShardId()),
         new byte [][] {
-          makeColumn(entryId, ENTRY_META), makeColumn(entryId, ENTRY_DATA)
+          makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META) 
         }, cleanWriteVersion,
         new byte [][] {
-          new EntryMeta(EntryState.VALID).getBytes(), data
+          data, new EntryMeta(EntryState.VALID).getBytes()
         });
 
     // Return success with pointer to entry
@@ -449,6 +449,7 @@ public class TTQueueOnVCTable implements TTQueue {
       // Get the data and check the partitioner
       byte [] data = this.table.get(shardRow,
           makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
+      assert(data != null);
       if (!config.getPartitioner().shouldEmit(consumer,
           entryPointer.getEntryId(), data)) {
         // Partitioner says skip, move to next entry in shard

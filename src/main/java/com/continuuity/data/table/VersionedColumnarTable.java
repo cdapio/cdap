@@ -91,7 +91,8 @@ public interface VersionedColumnarTable {
    * @param row
    * @param column
    * @param readPointer
-   * @return value and version of the latest visible column in the specified row
+   * @return value and version of the latest visible column in the specified
+   *         row, or null if none exists
    */
   public ImmutablePair<byte[],Long> getWithVersion(byte [] row, byte [] column,
       ReadPointer readPointer);

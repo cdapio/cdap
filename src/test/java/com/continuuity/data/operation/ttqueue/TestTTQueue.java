@@ -11,62 +11,58 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-import com.continuuity.data.engine.memory.MemoryOVCTable;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.ReadPointer;
 
-public class TestTTQueue {
+public abstract class TestTTQueue {
 
   private static final long MAX_TIMEOUT_MS = 10000;
   private static final long DEQUEUE_BLOCK_TIMEOUT_MS = 1;
 
-  private static TimestampOracle timeOracle =
+  protected static TimestampOracle timeOracle =
       new MemoryStrictlyMonotonicTimeOracle();
 
-  private static TTQueue createQueue() {
-    return createQueue(new Configuration());
+  private TTQueue createQueue() {
+    return createQueue(new CConfiguration());
   }
-  
-  private static TTQueue createQueue(Configuration conf) {
-    return new TTQueueOnVCTable(
-        new MemoryOVCTable(Bytes.toBytes("TestTTQueueTable")),
-            Bytes.toBytes("TestTTQueue"),
-            timeOracle, conf);
-  }
+
+  protected abstract TTQueue createQueue(CConfiguration conf);
+
+  protected abstract int getNumIterations();
 
   @Test
   public void testLotsOfAsyncDequeueing() throws Exception {
-    TTQueueOnVCTable queue = (TTQueueOnVCTable)createQueue();
+    TTQueue queue = createQueue();
     long dirtyVersion = 1;
-    
+
     long startTime = System.currentTimeMillis();
-    
-    int numEntries = 1000;
-    
+
+    int numEntries = getNumIterations();
+
     for (int i=1; i<numEntries+1; i++) {
       queue.enqueue(Bytes.toBytes(i), dirtyVersion);
     }
     System.out.println("Done enqueueing");
-    
+
     long enqueueStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished enqueue of " + numEntries + " entries in " +
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
-    
+
     QueueConsumer consumerSync = new QueueConsumer(0, 0, 1);
     QueueConfig configSync = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), true);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerSync, configSync,
-              new MemoryReadPointer(queue.timeOracle.getTimestamp()));
+              new MemoryReadPointer(timeOracle.getTimestamp()));
       assertTrue(result.isSuccess());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
       assertTrue(queue.ack(result.getEntryPointer(), consumerSync));
@@ -74,42 +70,42 @@ public class TestTTQueue {
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
     }
-    
+
     long dequeueSyncStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished sync dequeue of " + numEntries + " entries in " +
         (dequeueSyncStop-enqueueStop) + " ms (" +
         (dequeueSyncStop-enqueueStop)/((float)numEntries) + " ms/entry)");
-    
+
     // Async
-    
+
     QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1);
     QueueConfig configAsync = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), false);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, configAsync,
-              new MemoryReadPointer(queue.timeOracle.getTimestamp()));
+              new MemoryReadPointer(timeOracle.getTimestamp()));
       assertTrue(result.isSuccess());
       assertTrue("Expected " + i + ", Actual " + Bytes.toInt(result.getValue()),
           Bytes.equals(Bytes.toBytes(i), result.getValue()));
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
     }
-    
+
     long dequeueAsyncStop = System.currentTimeMillis();
-    
+
     System.out.println("Finished async dequeue of " + numEntries + " entries in " +
         (dequeueAsyncStop-dequeueSyncStop) + " ms (" +
         (dequeueAsyncStop-dequeueSyncStop)/((float)numEntries) + " ms/entry)");
-    
+
     // Both queues should be empty for each consumer
     assertTrue(queue.dequeue(consumerSync, configSync,
-        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
+        new MemoryReadPointer(timeOracle.getTimestamp())).isEmpty());
     assertTrue(queue.dequeue(consumerAsync, configAsync,
-        new MemoryReadPointer(queue.timeOracle.getTimestamp())).isEmpty());
+        new MemoryReadPointer(timeOracle.getTimestamp())).isEmpty());
   }
-  
+
   @Test
   public void testSingleConsumerSimple() throws Exception {
     final boolean singleEntry = true;
@@ -164,7 +160,7 @@ public class TestTTQueue {
   @Test
   public void testSingleConsumerAckSemantics() throws Exception {
     final boolean singleEntry = true;
-    Configuration conf = new Configuration();
+    CConfiguration conf = new CConfiguration();
     long semiAckedTimeout = 50L;
     conf.setLong("ttqueue.entry.semiacked.max", semiAckedTimeout);
     TTQueue queue = createQueue(conf);
@@ -174,7 +170,7 @@ public class TestTTQueue {
     byte [] valueSemiAckedTimeout = Bytes.toBytes("semiAckedTimeout");
     byte [] valueSemiAckedToDequeued = Bytes.toBytes("semiAckedToDequeued");
     byte [] valueSemiAckedToAcked = Bytes.toBytes("semiAckedToAcked");
-    
+
     // enqueue three entries
     assertTrue(queue.enqueue(valueSemiAckedTimeout, dirtyVersion).isSuccess());
     assertTrue(queue.enqueue(valueSemiAckedToDequeued, dirtyVersion).isSuccess());
@@ -184,15 +180,15 @@ public class TestTTQueue {
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
     QueueConfig config = new QueueConfig(partitioner, singleEntry);
-    
+
     // get the first entry
     DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), valueSemiAckedTimeout));
     // ack it but that's it
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
-    
-    
+
+
     // dequeue again, should get second entry (first is semi-acked)
     result = queue.dequeue(consumer, config, dirtyReadPointer);
     assertTrue(result.toString(), result.isSuccess());
@@ -200,8 +196,8 @@ public class TestTTQueue {
     // ack it, then unack it
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
     assertTrue(queue.unack(result.getEntryPointer(), consumer));
-    
-    
+
+
     // dequeue again, should get second entry again
     result = queue.dequeue(consumer, config, dirtyReadPointer);
     assertTrue(result.toString(), result.isSuccess());
@@ -209,8 +205,8 @@ public class TestTTQueue {
     // ack it, then finalize it
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
     assertTrue(queue.finalize(result.getEntryPointer(), consumer));
-    
-    
+
+
     // dequeue again, should get third entry
     result = queue.dequeue(consumer, config, dirtyReadPointer);
     assertTrue(result.toString(), result.isSuccess());
@@ -219,22 +215,22 @@ public class TestTTQueue {
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
     assertTrue(queue.finalize(result.getEntryPointer(), consumer));
 
-    
+
     // queue should be empty
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
-    
+
     // but should not actually be "empty"
     // if we change config it should break
     QueueConfig badConfig = new QueueConfig(partitioner, !singleEntry);
     assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isFailure());
-    
-    
+
+
     // now sleep timeout+1 to allow semi-ack to timeout
     Thread.sleep(semiAckedTimeout + 1);
-    
+
     // queue should be empty still
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
-    
+
     // now actually empty, changing config works and still empty!
     assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isEmpty());
   }
@@ -680,7 +676,7 @@ public class TestTTQueue {
     // shut down
     dequeuer.shutdown();
   }
-  
+
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
     final TTQueue queue = createQueue();
@@ -688,8 +684,8 @@ public class TestTTQueue {
     final ReadPointer readPointer = new MemoryReadPointer(version);
     AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
 
-    final int n = 5000;
-    
+    final int n = getNumIterations();
+
     // Create and start a thread that dequeues in a loop
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     final QueueConfig config = new QueueConfig(
@@ -720,10 +716,10 @@ public class TestTTQueue {
       }
     };
     dequeueThread.start();
-    
+
     // After 10ms, should still have zero entries
     assertEquals(0, dequeued.size());
-    
+
     // Start an enqueueThread to enqueue N entries
     Thread enqueueThread = new Thread() {
       @Override
@@ -735,23 +731,23 @@ public class TestTTQueue {
       }
     };
     enqueueThread.start();
-    
+
     // Join the enqueuer
     enqueueThread.join();
-    
+
     // Tell the dequeuer to stop (once he gets an empty)
     stop.set(true);
     dequeueThread.join();
     System.out.println("DequeueThread is done.  Set size is " +
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
-    
+
     // Should have dequeued n entries
     assertEquals(n, dequeued.size());
-    
+
     // And dequeuedEntries should be >= n
     assertTrue(n <= dequeueReturns.get());
   }
-  
+
   @Test
   public void testMultiConsumerMultiGroup() throws Exception {
     final boolean singleEntry = true;

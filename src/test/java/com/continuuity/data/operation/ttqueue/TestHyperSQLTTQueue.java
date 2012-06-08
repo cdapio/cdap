@@ -1,0 +1,36 @@
+package com.continuuity.data.operation.ttqueue;
+
+import java.util.Random;
+
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.runtime.DataFabricLocalModule;
+import com.continuuity.data.table.OVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
+public class TestHyperSQLTTQueue extends TestTTQueue {
+
+  private static final Injector injector =
+      Guice.createInjector(new DataFabricLocalModule());
+
+  private static final OVCTableHandle handle =
+      injector.getInstance(OVCTableHandle.class);
+
+  private static final Random r = new Random();
+
+  @Override
+  protected TTQueue createQueue(CConfiguration conf) {
+    String rand = "" + Math.abs(r.nextInt());
+    return new TTQueueOnVCTable(
+        handle.getTable(Bytes.toBytes("TestMemoryTTQueueTable" + rand)),
+        Bytes.toBytes("TestTTQueueName" + rand),
+        TestTTQueue.timeOracle, conf);
+  }
+
+  @Override
+  protected int getNumIterations() {
+    return 100;
+  }
+}
