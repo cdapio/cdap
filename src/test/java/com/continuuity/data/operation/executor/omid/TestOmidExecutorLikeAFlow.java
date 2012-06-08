@@ -58,6 +58,8 @@ public class TestOmidExecutorLikeAFlow {
   @BeforeClass
   public static void initializeClass() {
     injector = Guice.createInjector(new DataFabricInMemoryModule());
+    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
+    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
   }
   
   @Before
