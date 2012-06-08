@@ -287,10 +287,14 @@ public class Util {
 
 		// verify that the value is actually the same
 		InputStream content = response.getEntity().getContent();
-		byte[] bytes = new byte[length];
-		int bytesRead = content.read(bytes);
-		Assert.assertEquals(length, bytesRead);
-		Assert.assertArrayEquals(value, bytes);
+		if (length > 0) {
+			byte[] bytes = new byte[length];
+			int bytesRead = content.read(bytes);
+			Assert.assertEquals(length, bytesRead);
+			Assert.assertArrayEquals(value, bytes);
+		}
+		// verify that the entire content was read
+		Assert.assertEquals(-1, content.read(new byte[1]));
 	}
 
 	/**
