@@ -64,6 +64,7 @@ public class GetValueByKey {
 		} catch (Exception e) {
 			LOG.error("Exception reading Http configuration for connector '"
 					+ restName + "': " + e.getMessage());
+			return null;
 		}
 		return httpConfig.getBaseUrl(hostname);
 	}
@@ -81,8 +82,8 @@ public class GetValueByKey {
 		out.println("  --host <name>           To specify the hostname to send to");
 		out.println("  --connector <name>      To specify the name of the rest collector");
 		out.println("  --key <string>          To specify the key");
-		out.println("  --keyfile <path>        To read the binary key from a file");
-		out.println("  --tofile <path>         To write the binary value to a file");
+		out.println("  --key-file <path>       To read the binary key from a file");
+		out.println("  --to-file <path>        To write the binary value to a file");
 		out.println("  --hex                   Value for --key is hexadecimal (value will be printed the same way)");
 		out.println("  --ascii                 Value for --key is ASCII (value will be printed the same way)");
 		out.println("  --url                   Value for --key is URL-encoded (value will be printed the same way)");
@@ -108,8 +109,8 @@ public class GetValueByKey {
 		String keyfile = null;         // the file to read the key from
 		String tofile = null;          // the file to write the value to
 		String encoding = "ASCII";     // the encoding for --key and for display of the value
-		boolean hex = false;           // whether --key and display of value use hexadecimal encoding
-		boolean urlenc = false;        // whether --key and display of value use url encoding
+		boolean hexEncoded = false;    // whether --key and display of value use hexadecimal encoding
+		boolean urlEncoded = false;    // whether --key and display of value use url encoding
 
 		// go through all the arguments
 		for (int pos = 0; pos < args.length; pos++) {
@@ -146,10 +147,10 @@ public class GetValueByKey {
 				encoding = "ASCII";
 			}
 			else if ("--url".equals(arg)) {
-				urlenc = true;
+				urlEncoded = true;
 			}
 			else if ("--hex".equals(arg)) {
-				hex = true;
+				hexEncoded = true;
 			}
 			else if ("--help".equals(arg)) {
 				return usage(false);
@@ -188,7 +189,7 @@ public class GetValueByKey {
 			binaryKey = bytes;
 		}
 		// or is it --key in hexadecimal?
-		else if (hex) {
+		else if (hexEncoded) {
 			try {
 				binaryKey = Util.hexValue(key);
 			} catch (NumberFormatException e) {
@@ -197,7 +198,7 @@ public class GetValueByKey {
 			}
 		}
 		// or --key in URL encoding?
-		else if (urlenc) {
+		else if (urlEncoded) {
 			urlEncodedKey = key;
 			try {
 				binaryKey = URLDecoder.decode(key, "ISO8859_1").getBytes("ISO8859_1");
@@ -233,7 +234,7 @@ public class GetValueByKey {
 
 		// construct the full URL and verify its well-formedness
 		String fullUrl = baseUrl + "default/" + urlEncodedKey;
-		URI uri = null;
+		URI uri;
 		try {
 			uri = URI.create(fullUrl);
 		} catch (IllegalArgumentException e) {
@@ -244,7 +245,7 @@ public class GetValueByKey {
 
 		// send an HTTP get
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = null;
+		HttpResponse response;
 		try {
 			 response = client.execute(new HttpGet(uri));
 		} catch (IOException e) {
@@ -260,7 +261,7 @@ public class GetValueByKey {
 		}
 
 		// read the binary value from the HTTP response
-		byte[] binaryValue = null;
+		byte[] binaryValue;
 		String value = null;
 
 		try {
@@ -292,11 +293,11 @@ public class GetValueByKey {
 			}
 		}
 		// convert to hex if key was given as hex
-		if (hex) {
+		if (hexEncoded) {
 			value = Util.toHex(binaryValue);
 		}
 		// or was the key URL encoded? then we also URL encode the value
-		else if (urlenc) {
+		else if (urlEncoded) {
 			try {
 				value = URLEncoder.encode(new String(binaryValue, "ISO8859_1"), "ISO8859_1");
 			} catch (UnsupportedEncodingException e) {

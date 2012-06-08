@@ -26,7 +26,7 @@ public class GatewayRestCollectorTest {
 	static  String name = "collect.rest";
 	static final String prefix = "";
 	static final String path = "/stream/";
-	static final String dest = "pfunk";
+	static final String stream = "pfunk";
 	static final int eventsToSend = 10;
 	static int port = 10000;
 
@@ -90,7 +90,7 @@ public class GatewayRestCollectorTest {
     theGateway.start();
 
     // Send some REST events
-		Util.sendRestEvents(port, prefix, path, dest, eventsToSend);
+		Util.sendRestEvents(port, prefix, path, stream, eventsToSend);
 
     // Stop the Gateway
     theGateway.stop();
@@ -100,7 +100,7 @@ public class GatewayRestCollectorTest {
 		Assert.assertEquals(0, consumer.eventsFailed());
 
     // Clean out the queue
-		Util.consumeQueue(this.executor, dest, name, eventsToSend);
+		Util.consumeQueue(this.executor, stream, name, eventsToSend);
 	}
 
 } // end of GatewayRestCollectorTest

@@ -1,6 +1,6 @@
 // The purpose of this script is to bootstrap the continuuity build system.
 // This script is maintained in the continuuity repo and is copied to each
-// submodule to allow them to be developed independent of the continuuity.
+// sub-module to allow them to be developed independent of the continuuity.
 // This script should only contain the bare essentials to load the
 // continuuity plugin.
 

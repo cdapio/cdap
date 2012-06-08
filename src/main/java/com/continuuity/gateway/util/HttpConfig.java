@@ -49,7 +49,7 @@ public class HttpConfig {
 	private boolean ssl = false;
 
 	/** private because this would create a config without a name */
-	private HttpConfig() { };
+	private HttpConfig() { }
 
 	/**
 	 * Constructor takes the connector name.
@@ -130,6 +130,9 @@ public class HttpConfig {
 	 * @return this HttpConfig object
 	 */
 	public HttpConfig setPathPrefix(String prefix) {
+		if (prefix == null) {
+			throw new IllegalArgumentException("Path prefix may not be null.");
+		}
 		this.prefix = prefix;
 		return this;
 	}
@@ -140,6 +143,9 @@ public class HttpConfig {
 	 * @return this HttpConfig object
 	 */
 	public HttpConfig setPathMiddle(String middle) {
+		if (middle == null) {
+			throw new IllegalArgumentException("Path middle may not be null.");
+		}
 		this.middle = middle;
 		return this;
 	}
@@ -187,7 +193,9 @@ public class HttpConfig {
 	public String getBaseUrl(String hostname) {
 		return (this.isSsl() ? "https" : "http") + "://"
 				+ (hostname == null? "localhost" : hostname) + ":"
-				+ this.getPort() + this.getPathPrefix() + this.getPathMiddle();
+				+ this.getPort()
+				+ (this.getPathPrefix() == null ? "" : this.getPathPrefix())
+				+ (this.getPathMiddle() == null ? "" : this.getPathMiddle());
 	}
 
 	/**

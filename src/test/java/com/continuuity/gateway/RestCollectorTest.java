@@ -65,9 +65,9 @@ public class RestCollectorTest {
 		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
-		collector.setConsumer(new Util.VerifyConsumer(17, name, stream));
+		collector.setConsumer(new Util.VerifyConsumer(15, name, stream));
 		collector.start();
-		Util.sendRestEvent(Util.createHttpPost(port, prefix, path, stream, 17));
+		Util.sendRestEvent(Util.createHttpPost(port, prefix, path, stream, 15));
 		collector.stop();
 		collector.setConsumer(new Util.VerifyConsumer(name, stream));
 		collector.start();

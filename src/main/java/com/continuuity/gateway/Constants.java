@@ -85,7 +85,7 @@ public class Constants {
 
   /**
    * Generate the name of a property option for a named Collector. Basically
-   * a helper method that concats some strings.
+   * a helper method that concatenates some strings.
    *
    * @param collectorName  The name of the Collector
    * @param propertyName   The name of the property

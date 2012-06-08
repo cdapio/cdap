@@ -42,7 +42,7 @@ public class Gateway {
 
 	/**
 	 * This is the executor that all accessors will use for the data fabric.
-	 * Gateway can not function withou a valid operation executor.
+	 * Gateway can not function without a valid operation executor.
 	 */
 	@Inject
 	private OperationExecutor executor;
@@ -132,7 +132,7 @@ public class Gateway {
 				} catch (Exception e) {
 					LOG.error("Error adding connector '" + connectorName + "' (" +
 							e.getMessage() + "). Skipping connector '" + connectorName + "'.");
-					continue;
+					// continue // unnecessary
 				}
       }
 		}
@@ -249,7 +249,7 @@ public class Gateway {
 	}
 
 	/**
-	 *  Set the operations executor thatis used for all data fabric access.
+	 *  Set the operations executor that is used for all data fabric access.
 	 *  @param executor The executor to use
 	 *  @throws IllegalArgumentException If the consumer object is null
 	 */

@@ -288,7 +288,8 @@ public class Util {
 		// verify that the value is actually the same
 		InputStream content = response.getEntity().getContent();
 		byte[] bytes = new byte[length];
-		content.read(bytes);
+		int bytesRead = content.read(bytes);
+		Assert.assertEquals(length, bytesRead);
 		Assert.assertArrayEquals(value, bytes);
 	}
 

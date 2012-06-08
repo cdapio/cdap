@@ -74,7 +74,7 @@ public class RestHandler extends NettyRestHandler {
 		}
 
 		// we only support requests of the form POST http://host:port/prefix/path/<tablename>/<key>
-		String destination = null, key = null;
+		String destination, key = null;
 		String path = decoder.getPath();
 		if (path.startsWith(this.pathPrefix)) {
 			String remainder = path.substring(this.pathPrefix.length());
@@ -95,7 +95,7 @@ public class RestHandler extends NettyRestHandler {
 		LOG.debug("Received GET request for key '" + key + "'.");
 		// ignore the content of the request - this is a GET
 		// get the value from the data fabric
-		byte[] value = null;
+		byte[] value;
 		try {
 			Read read = new Read(key.getBytes("ISO8859_1"));
 			value = this.accessor.getExecutor().execute(read);

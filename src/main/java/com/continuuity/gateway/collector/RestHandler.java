@@ -39,7 +39,6 @@ public class RestHandler extends NettyRestHandler {
 	/**
 	 * Constructor requires to pass in the collector that created this handler.
 	 * @param collector The collector that created this handler
-	 * @return
 	 */
 	RestHandler(RestCollector collector) {
 		this.collector = collector;

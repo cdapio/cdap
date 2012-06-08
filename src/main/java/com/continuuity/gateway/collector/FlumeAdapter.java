@@ -26,7 +26,7 @@ import java.util.List;
  * <ul>
  *   <li>Mapping a flume event to a flow event, including the filtering and
  *   mapping and adding of headers</li>
- *   <li>Depending on the sucess of the consumer, create an Avro response
+ *   <li>Depending on the success of the consumer, create an Avro response
  *   for the client (the Avro sink in a customer's Flume flow) to indicate
  *   success or failure of the ingestion of the event.
  *   </li>
