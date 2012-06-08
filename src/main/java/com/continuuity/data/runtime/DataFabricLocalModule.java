@@ -3,6 +3,8 @@
  */
 package com.continuuity.data.runtime;
 
+import java.util.Properties;
+
 import com.continuuity.data.engine.hypersql.HyperSQLColumnarTableHandle;
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -23,14 +25,27 @@ import com.google.inject.name.Names;
 public class DataFabricLocalModule extends AbstractModule {
 
   private final String hyperSqlJDCBString;
+  private final Properties hyperSqlProperties;
+  
+  private static final Properties DEFAULT_PROPERTIES;
+  static {
+    DEFAULT_PROPERTIES = new Properties();
+    DEFAULT_PROPERTIES.setProperty("user", "SA");
+    DEFAULT_PROPERTIES.setProperty("password", "");
+  }
   
   public DataFabricLocalModule() {
-    this("jdbc:hsqldb:mem:dflmmem");
+    this("jdbc:hsqldb:mem:dflmmem", DEFAULT_PROPERTIES);
   }
   
   public DataFabricLocalModule(String hyperSqlJDBCString) {
+    this(hyperSqlJDBCString, DEFAULT_PROPERTIES);
+  }
+  
+  public DataFabricLocalModule(String hyperSqlJDBCString,
+      Properties hyperSqlProperties) {
     this.hyperSqlJDCBString = hyperSqlJDBCString;
-
+    this.hyperSqlProperties = hyperSqlProperties;
   }
 
   @Override
@@ -57,6 +72,9 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(Names.named("HyperSQLOVCTableHandleJDBCString"))
         .toInstance(hyperSqlJDCBString);
+    bind(Properties.class)
+        .annotatedWith(Names.named("HyperSQLOVCTableHandleProperties"))
+        .toInstance(hyperSqlProperties);
 
   }
 

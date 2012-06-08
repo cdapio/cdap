@@ -68,7 +68,7 @@ implements OrderedVersionedColumnarTable {
   }
 
   void initializeTable() {
-    String createStatement = "CREATE TABLE " + this.tableName + " (" +
+    String createStatement = "CREATE CACHED TABLE " + this.tableName + " (" +
         "row " + ROW_TYPE + " NOT NULL, " +
         "column " + COLUMN_TYPE + " NOT NULL, " +
         "version " + VERSION_TYPE + " NOT NULL, " +

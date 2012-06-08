@@ -1,0 +1,29 @@
+package com.continuuity.data.operation.ttqueue;
+
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.engine.memory.MemoryOVCTable;
+
+public class BenchMemoryTTQueue extends BenchTTQueue {
+
+  // Configuration of memory ttqueue bench
+  private static final BenchConfig config = new BenchConfig();
+  static {
+    config.numJustEnqueues = 100000;
+    config.queueEntrySize = 10;
+  }
+  
+  @Override
+  protected TTQueue createQueue(CConfiguration conf) {
+    return new TTQueueOnVCTable(
+        new MemoryOVCTable(Bytes.toBytes("TestMemoryTTQueue")),
+        Bytes.toBytes("TestTTQueue"),
+        TestTTQueue.timeOracle, conf);
+  }
+
+  @Override
+  protected BenchConfig getConfig() {
+    return config;
+  }
+}
