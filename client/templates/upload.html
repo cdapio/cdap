@@ -1,12 +1,16 @@
 
 <div id="sub-header">
-	<h2 id="content-header">Upload a FAR</h2>
+	<div id="action-buttons" class="btn-group pull-right">
+	  <button class="btn" {{action "cancel" on="click"}}>Cancel</button>
+	</div>
+	<h2 id="content-header">Upload a Flow</h2>
 	<ul class="breadcrumb">
 		<li><a href="#">Flows</a> <span class="divider">/</span></li>
 		<li class="selected">Upload</li>
 	</ul>
+	<div id="far-upload-alert" class="alert alert-error">
+	</div>
 </div>
-
 <div id="far-upload" class="well">
-	<h2>Drop your *.jar file to Upload</h2>
+	<h3 id="far-upload-status">Drop a *.jar file here to upload</h3>
 </div>

@@ -1,23 +1,26 @@
 <div id="sub-header">
-	<div class="btn-group pull-right" style="width:205px;margin: 8px 0px 0px;">
-		<button class="btn" {{action "logs" on="click"}}>Logs</button>
+	<div id="action-buttons" class="btn-group pull-right" style="width:116px;">
 		<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentStatus}}</button>
 	  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-id="current.id"}}>{{current.defaultAction}}</button>
-	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
-		<span class="caret"></span>
-		</button>
-		<ul class="dropdown-menu">
-			<li><a href="#/flow/{id}/upload">Upload New FAR</a></li>
-			<li class="divider"></li>
-			<li><a href="#/flow/{id}/delete">Delete Flow</a></li>
-		</ul>
 	</div>
 	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
 	<ul class="breadcrumb">
 		<li><a href="#">Flows</a> <span class="divider">/</span></li>
-		<li class="selected">{{current.meta.name}}</li>
-		<li class="pull-right">By {{current.meta.author}} of {{current.meta.company}}</li>
+		{{#if run}}
+			<li><a {{bindAttr href="current.href"}}>{{current.meta.name}}</a></li>
+			<span class="divider">/</span></li>
+			<li class="selected">{{run}}</li>
+		{{else}}
+			<li class="selected">{{current.meta.name}}</li>
+		{{/if}}
+		<li class="pull-right">
+			{{#if current.meta.author}}
+				By {{current.meta.author}} of {{current.meta.company}}
+			{{/if}}
+		</li>
 	</ul>
+	<div id="run-info" class="alert alert-info">
+	</div>
 </div>
 
 <div id="flowviz-container" class="well">
@@ -27,17 +30,15 @@
 <div id="object-list">
 <table class="table table-condensed">
 	<thead>
-		<tr><th style="width: 215px;">Run History</th>
-		<th>Result</th>
-		<th>User</th>
-		<th style="width:250px;">Time</th>
+		<tr><th style="width: 215px;">Started</th>
+		<th>Ended</th>
+		<th style="width:250px;">Result</th>
 	</tr></thead>
 	{{#each history tagName="tbody"}}
-		<tr>
-			<td><strong>{{name}}</strong></td>
-			<td>{{result}}</td>
-			<td>{{username}}</td>
-			<td>{{time}}</td>
+		<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
+			<td>{{started}}</td>
+			<td>{{ended}}</td>
+			<td>{{endStatus}}</td>
 		</tr>
 	{{/each}}
 </table>

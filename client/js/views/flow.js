@@ -6,6 +6,7 @@ define([
 	return Em.View.create({
 		template: Em.Handlebars.compile(Template),
 		currentBinding: 'App.Controllers.Flow.current',
+		runBinding: 'App.Controllers.Flow.run',
 		historyBinding: 'App.Controllers.Flow.history',
 		exec: function (event) {
 
@@ -13,11 +14,17 @@ define([
 			var id = control.attr('flow-id');
 			var action = control.attr('flow-action');
 
-			App.Controllers.Flows[action.toLowerCase()](id);
+			if (action.toLowerCase() in App.Controllers.Flows) {
+				App.Controllers.Flows[action.toLowerCase()](id);
+			}
 		},
-		logs: function (event) {
-			App.router.set('location', '#/flows/{id}/logs');
-		}
+		loadRun: function (event) {
+
+			var td = $(event.srcElement);
+			var href = td.parent().attr('href');
+			
+			App.router.set('location', href);
+		},
 	});
 
 });

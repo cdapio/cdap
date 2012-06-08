@@ -18,11 +18,6 @@ define([], function () {
 		}.property(),
 
 		init: function () {
-			var connectorPaintStyle = {
-				lineWidth:3,
-				strokeStyle:"#555",
-				joinstyle:"round"
-			};
 
 			this.sourcespec = {
 				endpoint:"Dot",
@@ -60,27 +55,49 @@ define([], function () {
 
 		},
 
-		load: function (id) {
+		load: function (app, id, run) {
 
 			var self = this;
 
-			App.socket.request('rest', {
-				method: 'history',
-				params: id
+			if (!run) {
+				$('#run-info').hide();
+			}
+			this.set('run', run);
+
+			App.socket.request('monitor', {
+				method: 'getFlowHistory',
+				params: ['demo', app, id]
 			}, function (response) {
 				var hist = response.params;
 				for (var i = 0; i < hist.length; i ++) {
-					hist[i] = Ember.Object.create(hist[i]);
+					hist[i] = App.Models.Run.create(hist[i]);
 					self.history.pushObject(hist[i]);
+
+					if (run && run === hist[i].runId) {
+						$('#run-info').html('The following diagram represents a run from ' + hist[i].startTime + ' to ' + hist[i].endTime + '. It finished with a ' + hist[i].endStatus + ' status.').show();
+					}
+
 				}
 			});
 
-			App.socket.request('rest', {
-				method: 'flows',
-				params: id
+			App.interstitial.loading();
+
+			App.socket.request('monitor', {
+				method: 'getFlowDefinition',
+				params: ['demo', app, id, '']
 			}, function (response) {
 
-				self.set('current', App.Models.Flow.create(response.params));
+				if (!response.params) {
+					App.interstitial.label('Flow not found.', {
+						action: 'All Flows',
+						click: function () {
+							App.router.set('location', '');
+						}
+					});
+					return;
+				}
+
+				self.set('current', App.Models.Definition.create(response.params));
 
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
@@ -89,6 +106,7 @@ define([], function () {
 
 				self.drawNodes();
 
+				/*
 				clearInterval(self.interval);
 				self.interval = setInterval(function () {
 					if (self.current.status === 'running') {
@@ -96,16 +114,22 @@ define([], function () {
 					}
 				}, 1000);
 				self.updateStats();
+				*/
+				
+				App.interstitial.hide();
 
 			});
 		},
 
 		updateStats: function () {
 			var self = this;
-			App.socket.request('rest', {
-				method: 'status',
+			App.socket.request('monitor', {
+				method: 'getFlowMetric',
 				params: this.get('current').get('id')
 			}, function (response) {
+
+				console.log(response);
+
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
 					var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
@@ -143,7 +167,6 @@ define([], function () {
 			}, res);
 		},
 		spins: function (element, start, finish, time) {
-			var self = this;
 			if (start === finish) {
 				element.html(finish);
 				return;
@@ -157,20 +180,32 @@ define([], function () {
 			$('#flowviz').html('');
 
 			var flowlets = App.Controllers.Flow.content;
-			var cx = App.Controllers.Flow.current.connections;
 			var self = this;
 
 			function get_flowlet(id) {
 				id = id + "";
 				for (var k = 0; k < flowlets.length; k++) {
-					if (flowlets[k].id === id) {
+					if (flowlets[k].name === id) {
 						return flowlets[k];
 					}
 				}
 			}
 
-			var column = 1, columns = {}, rows = {}, numColumns = 0;
+			var cx = App.Controllers.Flow.current.connections;
+			var conns = {};
+			for (var i = 0; i < cx.length; i ++) {
+				if (!conns[cx[i].from.flowlet]) {
+					conns[cx[i].from.flowlet] = [];
+				}
+				conns[cx[i].from.flowlet].push(cx[i].to.flowlet);
+			}
+			for (var j = 0; j < flowlets.length; j++) {
+				if (!conns[flowlets[j].name]) {
+					conns[flowlets[j].name] = [];
+				}
+			}
 
+			var columns = {}, rows = {}, numColumns = 0;
 			var column_map = {};
 
 			function append (id, column, connectTo) {
@@ -198,14 +233,14 @@ define([], function () {
 					row: rows[column] ++
 				};
 
-				for (var i = 0; i < cx[id].length; i ++) {
-					elId = "flowlet" + cx[id][i];
+				for (var i = 0; i < conns[id].length; i ++) {
+					elId = "flowlet" + conns[id][i];
 					self.plumber.addEndpoint(elId, self.destspec, {
 						anchor: "RightMiddle",
 						uuid: elId + "RightMiddle"
 					});
 				}
-				if (cx[id].length > 0) {
+				if (conns[id].length > 0) {
 					elId = "flowlet" + id;
 					self.plumber.addEndpoint(elId, self.sourcespec, {
 						anchor: "LeftMiddle",
@@ -231,18 +266,17 @@ define([], function () {
 				var i;
 				
 				if (!id) { // Append the first node
-					for (i in cx) {
-						if (cx[i].length === 0) {
+					for (i in conns) {
+						if (!conns[i] || conns[i].length === 0) {
 							append(i, 0);
 							connects_to(i);
 							break;
 						}
 					}
 				} else {
-					var atleastOne = false;
-					for (i in cx) {
-						for (var k = 0; k < cx[i].length; k ++) {
-							if (cx[i][k] === id) {
+					for (i in conns) {
+						for (var k = 0; k < conns[i].length; k ++) {
+							if (conns[i][k] === id) {
 								append(i, column_map[id].column + 1);
 								connect(id, i);
 								connects_to(i);

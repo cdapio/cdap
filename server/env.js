@@ -14,40 +14,41 @@
 			res.sendfile(__dirname + '/index.html');
 		});
 
+		if (process.env.API_SIM) {
+			this.api = require('./api_simulator');
+		} else {
+			this.api = require('./api');
+		}
+
+		app.use(express['static'](__dirname + '/../client/'));
+
 		if (process.env.NODE_ENV === 'production') {
 
 			this.PORT = 80;
-			this.api = require('./api_wrapper');
-			this.api.configure('rest.continuuity.com', 80);
-			app.use(express['static'](__dirname + '/../build/'));
+			this.api.configure({
+				'upload': { 'host': 'upload.continuuity.com', 'port': 45000 },
+				'manager': { 'host': 'manager.continuuity.com', 'port': 45001 },
+				'monitor': { 'host': 'monitor.continuuity.com', 'port': 45002 }
+			});
 
 		} else if (process.env.NODE_ENV === 'staging') {
 
 			this.PORT = 80;
-			this.api = require('./api_wrapper');
-			this.api.configure('127.0.0.1', 8082);
-			app.use(express['static'](__dirname + '/../build/'));
-
-		} else if (process.env.NODE_ENV === 'devstaging') {
-
-			this.PORT = 80;
-			this.api = require('./api_simulator');
-			this.api.configure('127.0.0.1', 8082);
-			app.use(express['static'](__dirname + '/../build/'));
-
-		} else if (process.env.NODE_ENV === 'localstaging') {
-
-			this.PORT = 8081;
-			this.api = require('./api_wrapper');
-			this.api.configure('127.0.0.1', 45000);
-			app.use(express['static'](__dirname + '/../client/'));
+			this.api.configure({
+				'upload': { 'host': '127.0.0.1', 'port': 45000 },
+				'manager': { 'host': '127.0.0.1', 'port': 45001 },
+				'monitor': { 'host': '127.0.0.1', 'port': 45002 }
+			});
 
 		} else {
 
-			this.PORT = 8081;
-			this.api = require('./api_simulator');
-			this.api.configure('127.0.0.1', 8082);
-			app.use(express['static'](__dirname + '/../client/'));
+			this.PORT = 9999;
+			this.api.configure({
+				'upload': { 'host': '127.0.0.1', 'port': 45000 },
+				'manager': { 'host': '127.0.0.1', 'port': 45001 },
+				'monitor': { 'host': '127.0.0.1', 'port': 45002 }
+			});
+
 		}
 
 		io.configure('production', function(){

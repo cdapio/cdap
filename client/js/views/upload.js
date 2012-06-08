@@ -14,38 +14,42 @@ define([
 
 			function drop (e) {
 				ignoreDrag(e);
-				var dt = e.originalEvent.dataTransfer;
-				var files = dt.files;
 
-				if(files.length > 0){
-					var file = dt.files[0];
-					sendFile(file);
+				if (!this.processing) {
+					var dt = e.originalEvent.dataTransfer;
+					var files = dt.files;
+
+					if(files.length > 0){
+						var file = dt.files[0];
+						sendFile(file);
+					}
+
+					$('#far-upload-alert').hide();
 				}
 			}
 
 			function sendFile(file) {
 
-				$('#far-upload').html('');
-
 				var reader = new FileReader();
+
 				reader.onload = function (evt) {
 
 					var xhr = new XMLHttpRequest();
 					if (xhr.upload) {
 						xhr.upload.onprogress = function () {
-							console.log(arguments);
+							
 						};
 					}
 					xhr.open('POST', '/upload', true);
 					xhr.setRequestHeader("Content-type", "application/octet-stream");
-					xhr.onload = function(e) {
-						console.log('done', e);
-					};
 					xhr.send(evt.target.result);
 
-				};
-				reader.readAsArrayBuffer(file);
+					$('#far-upload-status').html('Uploading...');
+					this.processing = true;
 
+				};
+				$('#far-upload-status').html('Loading...');
+				reader.readAsArrayBuffer(file);
 			}
 
 			$('#far-upload')
@@ -53,27 +57,46 @@ define([
 				.bind('dragover', ignoreDrag)
 				.bind('drop', drop);
 
+			this.welcome_message = $('#far-upload-status').html();
+			$('#far-upload-alert').hide();
+		},
+		cancel: function () {
+			App.router.set('location', '/');
+		},
+		showError: function (message) {
+			console.log(message);
+			$('#far-upload-alert').html('Error: ' + message).show();
+		},
+		showSuccess: function (message) {
+			$('#far-upload-alert').removeClass('alert-error')
+				.addClass('alert-success').html('Flow uploaded, verified, and deployed!').show();
 		},
 		identifier: null,
 		update: function (response) {
-					console.log(response);
-			var html;
-			switch(response) {
-				case 'sent':
-					html = 'Sending data...';
-				break;
-				case 'verifying':
-					html = 'Verifying...';
-				break;
-				default:
-					if (response.version) {
-						this.identifier = response;
-						html = 'Initializing version ' + response.version + '...';
-					} else {
-						html = response.message + '<br /><br /><a href="#">View this Flow</a>';
-					}
+			if (response.error) {
+				this.showError(response.error);
+				$('#far-upload-status').html(this.welcome_message);
+				this.processing = false;
+
+			} else {
+				switch (response.step) {
+					case 1:
+					case 2:
+					case 3:
+					case undefined:
+						$('#far-upload-status').html(response.status);
+					break;
+					case 5:
+						this.showSuccess(response.status);
+						this.processing = false;
+						$('#far-upload-status').html(this.welcome_message);
+					break;
+					default:
+						this.showError(response.status);
+						this.processing = false;
+						$('#far-upload-status').html(this.welcome_message);
+				}
 			}
-			$('#far-upload').append('<h2>' + html + '</h2>');
 		}
 	});
 

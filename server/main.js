@@ -24,15 +24,33 @@ io.sockets.on('connection', function (socket) {
 
 	sockets[id] = socket;
 
-	socket.on('rest', function (request) {
-		console.log('Received', request);
-		Env.api.request(request.method, request.params, function (error, response) {
-			console.log('Responding', response);
-			socket.emit('exec', {
-				method: request.method,
-				params: typeof response === "string" ? JSON.parse(response) : response,
-				id: request.id
-			});
+	socket.on('manager', function (request) {
+		console.log('Manager Request', request);
+		Env.api.manager(request.method, request.params, function (error, response) {
+			if (error) {
+				socket.emit('failure', error);
+			} else {
+				socket.emit('exec', {
+					method: request.method,
+					params: typeof response === "string" ? JSON.parse(response) : response,
+					id: request.id
+				});
+			}
+		});
+	});
+
+	socket.on('monitor', function (request) {
+		console.log('Monitor Request', request);
+		Env.api.monitor(request.method, request.params, function (error, response) {
+			if (error) {
+				socket.emit('failure', error);
+			} else {
+				socket.emit('exec', {
+					method: request.method,
+					params: typeof response === "string" ? JSON.parse(response) : response,
+					id: request.id
+				});
+			}
 		});
 	});
 

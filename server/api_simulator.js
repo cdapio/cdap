@@ -168,15 +168,7 @@ var http = require('http');
 	}
 
 	var spec = {
-		"applications": function (id) {
-			if (id) {
-				id = id + "";
-				return get_app(id);
-			} else {
-				return apps;
-			}
-		},
-		"flows": function (id) {
+		"getFlow": function (id) {
 
 			if (id) {
 				id = id + "";
@@ -224,7 +216,7 @@ var http = require('http');
 			return history[id];
 
 		},
-		"status": function (id) {
+		"getFlowMetric": function (id) {
 
 			var flow = get_flow(id);
 			var flowlets = [];
@@ -260,14 +252,6 @@ var http = require('http');
 		}
 	}
 
-	function get_app(name) {
-		for(var i = 0; i < apps.length; i ++) {
-			if (apps[i].name === name) {
-				return apps[i];
-			}
-		}
-	}
-
 	function toISO8601(date) {
 		var pad_two = function(n) {
 			return (n < 10 ? '0' : '') + n;
@@ -286,10 +270,23 @@ var http = require('http');
 		].join('');
 	}
 
-	this.request = function (method, params, done) {
+	this.manager = function (method, params, done) {
 
-		done(null, spec[method].call(this, params));
+		if (method in spec) {
+			done(null, spec[method].call(this, params));
+		} else {
+			done('Unknown method for service Manager: ' + method, null);
+		}
 
+	};
+
+	this.monitor = function (method, params, done) {
+
+		if (method in spec) {
+			done(null, spec[method].call(this, params));
+		} else {
+			done('Unknown method for service Manager: ' + method, null);
+		}
 	};
 
 	this.upload = function (req, res) {

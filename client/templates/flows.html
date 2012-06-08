@@ -1,13 +1,15 @@
 <div id="sub-header">
-	<div class="btn-group pull-right" style="margin: 10px 0px 0px;">
-	  <button class="btn" {{action "logs" on="click"}}>Logs</button>
-	  <button class="btn" {{action "upload" on="click"}}>Upload a Flow</button>
+	<div id="action-buttons" class="pull-right">
+		{{#if App.Controllers.Flows.length}}
+			<button class="btn" {{action "upload" on="click"}}>Upload a Flow</button>
+		{{else}}
+			<button class="btn btn-success" {{action "upload" on="click"}}>Upload a Flow</button>
+		{{/if}}
 	</div>
-	<h2 id="content-header">Demo, Inc. <span>Flows</span></h2>
+	<h2 id="content-header">Local Mode <span>All Flows</span></h2>
 	<ul class="breadcrumb">
-		<li><a href="#">Flows</a> <span class="divider">/</span></li>
-		<li class="selected">{{current.meta.name}}</li>
-		<li class="pull-right">Displaying 1 of 1 flows.</li>
+		<li><a href="#">All Flows</a>
+		<li class="pull-right">Displaying {{App.Controllers.Flows.length}} of {{App.Controllers.Flows.length}} flows.</li>
 	</ul>
 </div>
 
@@ -15,29 +17,28 @@
 <table class="table">
 	<thead>
 		<th colspan="2" style="width: 215px;">Name</th>
-		<th style="width: 120px;">Application</th>
-		<th style="width: 75px;">Status</th>
+		<th style="width: 120px;">Last Started</th>
+		<th style="width: 120px;">Last Stopped</th>
 		<th style="width: 32px;">Runs</th>
 		<th colspan="2">&nbsp;</th>
 	</thead>
 	{{#each App.Controllers.Flows tagName="tbody"}}
 	<tr>
-		<td style="width: 18px;"><div class="btn-group"><button class="btn dropdown-toggle" data-toggle="dropdown">
-			<span class="caret"></span>
-			</button>
-			<ul class="dropdown-menu">
-				<li><a href="#">View Detail</a></li>
-				<li class="divider"></li>
-				<li><a href="#">Upload New FAR</a></li>
-				<li class="divider"></li>
-				<li><a href="#">Delete Flow</a></li>
-			</ul></div>
+		<td style="width: 18px;">
+			<div class="btn-group">
+				<button class="btn dropdown-toggle" data-toggle="dropdown">
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><a {{bindAttr href="href"}}>View Detail</a></li>
+				</ul>
+			</div>
 		</td>
-		<td><a {{bindAttr href="href"}}><strong>{{meta.name}}</strong></a></td>
-		<td><a href="#/apps/default">default</a></td>
-		<td style="width: 140px;">{{lastStarted}}</td>
+		<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
+		<td style="width: 140px;">{{started}}</td>
+		<td style="width: 140px;">{{stopped}}</td>
 		<td>{{runs}}</td>
-		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentStatus}}</span></td>
+		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
 		<td style="width: 64px;">
 			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-id="id"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
 			</div>

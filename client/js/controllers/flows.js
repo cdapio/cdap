@@ -8,9 +8,13 @@ define([], function () {
 
 			this.clear();
 
-			App.socket.request('rest', {
-				method: 'flows'
+			App.interstitial.loading();
+
+			App.socket.request('monitor', {
+				method: 'getFlows',
+				params: ['demo']
 			}, function (response) {
+
 				var flows = response.params;
 				if (!flows) {
 					return;
@@ -20,10 +24,14 @@ define([], function () {
 					flows[i] = App.Models.Flow.create(flows[i]);
 					App.Controllers.Flows.pushObject(flows[i]);
 				}
+
+				App.interstitial.hide();
 			});
 		},
 		start: function (id) {
-			App.socket.request('rest', {
+
+			/*
+			App.socket.request('manager', {
 				method: 'start',
 				params: id
 			}, function (response) {
@@ -43,9 +51,11 @@ define([], function () {
 					}
 				}
 			});
+			*/
 		},
 		stop: function (id) {
-			App.socket.request('rest', {
+			/*
+			App.socket.request('manager', {
 				method: 'stop',
 				params: id
 			}, function (response) {
@@ -73,11 +83,7 @@ define([], function () {
 					}
 				}
 			});
-		},
-		detail: function (id) {
-			App.router.set('location', '/flows/' + id);
+			*/
 		}
-
 	});
-
 });

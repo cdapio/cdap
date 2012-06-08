@@ -1,7 +1,7 @@
 
 define([], function () {
 
-	return function (hostname, connected) {
+	return function (hostname, connected, error) {
 
 		var socket = io.connect(hostname);
 		var pending = {};
@@ -16,6 +16,10 @@ define([], function () {
 
 		});
 
+		socket.on('failure', function (failure) {
+			error(failure);
+		});
+
 		socket.on('upload', function (response) {
 
 			App.Views.Upload.update(response);
@@ -23,6 +27,22 @@ define([], function () {
 		});
 
 		socket.on('connect', connected);
+		socket.on('error', function () {
+			error('Error', arguments);
+		});
+
+		socket.on('connect_failed', function () {
+			error('Connection failed.', arguments);
+		});
+		socket.on('reconnect_failed', function () {
+			error('Reconnect failed.', arguments);
+		});
+		socket.on('reconnect', function () {
+			error('Reconnected.', arguments);
+		});
+		socket.on('reconnecting', function (timeout, attempt) {
+			error('Reconnecting. Attempt ' + attempt + '.', arguments);
+		});
 
 		$.extend(socket, {
 			request: function (service, request, response) {

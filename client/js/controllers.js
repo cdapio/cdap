@@ -1,9 +1,7 @@
 
-define(['controllers/applications', 'controllers/application', 'controllers/flows', 'controllers/flow'],
-	function (As, A, Fs, F) {
+define(['controllers/flows', 'controllers/flow'],
+	function (Fs, F) {
 		return {
-			Applications: As,
-			Application: A,
 			Flows: Fs,
 			Flow: F
 		};

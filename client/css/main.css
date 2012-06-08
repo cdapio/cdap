@@ -5,7 +5,7 @@ body {
 	background-image: url(../img/groovepaper.png);
 }
 /*
- * Overrides
+ * Bootstrap Overrides
  */
 .navbar-inner {
 	padding: 0px 10px;
@@ -32,6 +32,9 @@ a.brand {
 	background-color: #061c35;
 	border-right: 1px solid #152c52;
 }
+.table {
+	margin: 0;
+}
 .table-condensed td {
 	line-height: 14px !important;
 }
@@ -41,13 +44,12 @@ td {
 }
 h2 {
 	font-weight: 100 !important;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.06em;
 	font-size: 30px;
+	margin-bottom: 12px;
 }
-h3 {
-	font-weight: 100 !important;
-	letter-spacing: 0.08em;
-	font-size: 20px;
+.label {
+	cursor: default
 }
 a strong {
 	color: #555;
@@ -57,6 +59,10 @@ a strong {
 }
 .breadcrumb {
 	padding: 4px 8px;
+	margin: 0;
+}
+#action-buttons {
+	margin-top: 8px;
 }
 /*
  * Rules
@@ -82,21 +88,31 @@ td a {
 	text-transform: uppercase;
 	text-align: center;
 	padding: 16px 10px;
-	color: #aaa;
-	font-size: 10px;
+	color: #999;
+	font-size: 11px;
 }
 #footer a, #footer span {
 	color: #777;
 }
 #content {
-	/*
-		background-color: #FFF;
-		border-radius: 4px;
-		border: 1px solid #efefef;
-	*/
+	position: relative;
 }
 #content-body {
 
+}
+#interstitial {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: white;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	z-index: 10;
+}
+#interstitial * {
+	padding-top: 52px;
 }
 .widget {
 	border-radius: 5px;
@@ -147,6 +163,7 @@ td a {
 	margin: 0px 10px 15px 5px;
 	padding: 0px;
 	overflow: auto;
+	overflow-y: hidden;
 	background-color: #f9f9f9;
 }
 #far-upload {
@@ -156,9 +173,20 @@ td a {
 #far-upload a {
 	text-decoration: underline;
 }
+#far-upload h3 {
+	padding: 48px;
+	border: 1px dashed #AAA;
+	border-radius: 4px;
+}
+#far-upload-alert {
+	display: none;
+}
 #sub-header {
 	max-width: 1024px;
 	margin: 0 auto 12px;
+}
+#sub-header .alert {
+	margin: 12px 0px 0px;
 }
 #object-list {
 	max-width: 1008px;
@@ -167,11 +195,8 @@ td a {
 	border-radius: 4px;
 	padding: 8px;
 }
-h2 {
-	padding: 4px 0px 12px;
-}
-h3 {
-	padding-left: 8px;
+h3 a {
+	text-decoration: underline;
 }
 #content-header span {
 	color: #ccc;
@@ -180,6 +205,9 @@ ol {
 	margin: 0;
 	padding: 0;
 	padding-left: 32px;
+}
+#run-info {
+	display: none;
 }
 /*
  * jsplumb
@@ -216,7 +244,5 @@ ol {
 .window:hover {
 	box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
-._jsPlumb_connector { z-index:4; }
-._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:21;cursor:pointer; }
-.hl { border:3px solid red; }
-#debug { position:absolute; background-color:black; color:red; z-index:5000 }
+._jsPlumb_connector { z-index:1; }
+._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:2; cursor:pointer; }

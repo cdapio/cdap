@@ -14,14 +14,28 @@ task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS fil
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
 	commandLine = ["./tools/jshint/bin/hint", 
-		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/"
-		, "--config", 'jshint.json']
+		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/",
+		"./server/", "--config", 'jshint.json']
+}
+
+task binaries(type:Copy) {
+	from 'bin/'
+	into 'build/bin'
+}
+
+task server(type:Copy, dependsOn: 'syntax', description: 'Copies relevant server files to build') {
+	from 'server/'
+	into 'build/server'
+}
+server.configure {
+	include('bin/*', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js', 'index.html')
 }
 
 task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS') {
 	
 	// Uses app.build.js configuration file
-	"mkdir ./build/js".execute()
+	"mkdir ./build/client".execute()
+	"mkdir ./build/client/js".execute()
 	commandLine = ['./tools/requirejs/bin/r.js', '-o', 'app.build.js']
 
 }
@@ -32,13 +46,13 @@ task jslibs(type:Copy, dependsOn: 'js') {
 }
 
 task css(type: Exec, dependsOn: 'js', description: 'Process and minify LESS -> CSS') {
-	"mkdir ./build/css".execute()
-	commandLine = ['cp', '-r', './client/css', './build/']
+	"mkdir ./build/client/css".execute()
+	commandLine = ['cp', '-r', './client/css', './build/client/']
 }
 
 task images(type:Copy) {
     from 'client/img'
-    into 'build/img'
+    into 'build/client/img'
 }
 
 task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless browser environment') {
@@ -59,7 +73,7 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-task build(overwrite: true, dependsOn: ['cleanbuild', 'syntax', 'js', 'jslibs', 'css', 'images', 'docs']) {
+task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
 	}

@@ -5,40 +5,40 @@
 define([], function () {
 	return Em.Object.extend({
 		href: function () {
-			return '#/apps/' + this.get('app') + '/flows/' + this.get('id');
+			return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
 		}.property(),
-		lastStarted: function () {
-			return this.started ? $.timeago(this.started) : 'Never';
+		started: function () {
+			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'Never';
 		}.property('timeTrigger'),
-		lastStopped: function () {
-			return this.stopped ? $.timeago(this.stopped) : 'Never';
+		stopped: function () {
+			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'Never';
 		}.property('timeTrigger'),
-		currentStatus: function () {
-			return this.get('status').toUpperCase();
-		}.property('status'),
 		statusClass: function () {
 			return {
+				'deployed': 'label label-info',
 				'stopped': 'label',
 				'stopping': 'label label-warning',
 				'running': 'label label-success',
-				'error': 'label label-warning'
-			}[this.status];
-		}.property('status'),
+				'failed': 'label label-warning'
+			}[this.currentState.toLowerCase()];
+		}.property('currentState'),
 		defaultActionClass: function () {
 			return {
+				'deployed': 'btn btn-danger',
 				'stopped': 'btn btn-danger',
 				'stopping': 'btn',
 				'running': 'btn btn-success',
-				'error': 'btn btn-warning'
-			}[this.status];
-		}.property('status'),
+				'failed': 'btn btn-warning'
+			}[this.currentState.toLowerCase()];
+		}.property('currentState'),
 		defaultAction: function () {
 			return {
+				'deployed': 'Start',
 				'stopped': 'Start',
 				'stopping': 'Wait',
 				'running': 'Stop',
-				'error': 'Start'
-			}[this.status];
-		}.property('status')
+				'failed': 'Start'
+			}[this.currentState.toLowerCase()];
+		}.property('currentState')
 	});
 });
