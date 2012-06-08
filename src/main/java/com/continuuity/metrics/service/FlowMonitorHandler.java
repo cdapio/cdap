@@ -1,9 +1,6 @@
 package com.continuuity.metrics.service;
 
-import com.continuuity.metrics.stubs.FlowEvent;
-import com.continuuity.metrics.stubs.FlowMetric;
-import com.continuuity.metrics.stubs.FlowState;
-import com.continuuity.metrics.stubs.Metric;
+import com.continuuity.metrics.stubs.*;
 
 import java.util.List;
 
@@ -11,11 +8,32 @@ import java.util.List;
  *
  */
 public interface FlowMonitorHandler {
+  /**
+   * Adds a metric for a flow.
+   *
+   * @param metric to be added.
+   */
   public void add(FlowMetric metric);
 
-  public List<FlowEvent> getFlowHistory(String accountId, String app, String flow);
+  /**
+   * Returns list of flows and their state for a given account id.
+   *
+   * @param accountId specifying the flows to be returned.
+   * @return list of flow state.
+   */
+  List<FlowState> getFlows(String accountId);
+
+  /**
+   * Returns a list of runs for a given flow.
+   *
+   * @param accountId for which the flows belong to.
+   * @param appId  to which the flows belong to.
+   * @param flowId is the id of the flow runs to be returned.
+   * @return
+   */
+  public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId);
 
   List<Metric> getFlowMetric(String accountId, String app, String flow, String rid);
 
-  List<FlowState> getFlows(String accountId);
+
 }

@@ -69,12 +69,6 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
     }
   }
 
-  @Override
-  public List<FlowEvent> getFlowHistory(String accountId, String app, String flow) {
-    return null;
-  }
-
-
   /**
    * @param accountId
    * @param app
@@ -164,7 +158,7 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
         states.put(appFlow, state);
       }
     } catch (SQLException e) {
-
+      Log.error("Unable to retrieve information about flows for account {}. Reason : {}.", accountId, e.getMessage());
     }
 
     for (FlowState state : result) {
@@ -181,10 +175,91 @@ class SQLFlowMonitorHandler implements FlowMonitorHandler {
         state.setRuns(runs.get(appFlow));
       }
       if (states.containsKey(appFlow)) {
-        state.setCurrentState(StateChangeType.value(states.get(appFlow)).name());
+        int i = states.get(appFlow);
+        state.setCurrentState(StateChangeType.value(i).name());
       }
     }
     return result;
   }
+
+
+  //  "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
+  // " payload VARCHAR, state INTEGER)"
+
+  /**
+   * FIXME : I am probably most duplicate of getFlows - Refactor me.
+   *
+   * @param accountId for which the flows belong to.
+   * @param appId  to which the flows belong to.
+   * @param flowId is the id of the flow runs to be returned.
+   * @return
+   */
+  @Override
+  public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId) {
+    Map<String, Integer> started = Maps.newHashMap();
+    Map<String, Integer> stopped = Maps.newHashMap();
+    Map<String, Integer> states = Maps.newHashMap();
+
+    String sql = "SELECT timestamp, runid, state FROM flow_state WHERE account = ? AND application = ? " +
+      "AND flow = ? ORDER by timestamp";
+
+    List<FlowRun> runs = Lists.newArrayList();
+    try {
+      PreparedStatement stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      stmt.setString(2, appId);
+      stmt.setString(3, flowId);
+      ResultSet rs = stmt.executeQuery();
+      while(rs.next()) {
+
+
+        String rid = rs.getString("runid");
+        if(rid == null) {
+          continue;
+        }
+        int state = rs.getInt("state");
+        int timestamp = rs.getInt("timestamp");
+
+        if(! started.containsKey(rid))  {
+          FlowRun run = new FlowRun();
+          run.setStartTime(-1);
+          run.setEndTime(-1);
+          run.setRunId(rid);
+          run.setEndStatus("NA");
+          runs.add(run);
+        }
+
+        if(state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
+          started.put(rid, timestamp );
+        }
+
+        if(state == StateChangeType.STOPPING.getType() || state == StateChangeType.STOPPED.getType()
+          || state == StateChangeType.FAILED.getType()) {
+          stopped.put(rid, timestamp );
+        }
+
+        states.put(rid, state);
+      }
+
+      for(FlowRun run : runs) {
+        String runId = run.getRunId();
+        if(started.containsKey(runId)) {
+          run.setStartTime(started.get(runId));
+        }
+        if(stopped.containsKey(runId)) {
+          run.setEndTime(stopped.get(runId));
+        }
+        if(states.containsKey(runId)) {
+          run.setEndStatus(StateChangeType.value(states.get(runId)).name());
+        }
+      }
+    } catch (SQLException e) {
+      Log.error("Unable to get flow run for account {}, application {}, flow {}. Reason : {}", new Object[] {
+        accountId, appId, flowId, e.getMessage()
+      });
+    }
+    return runs;
+  }
+
 
 }

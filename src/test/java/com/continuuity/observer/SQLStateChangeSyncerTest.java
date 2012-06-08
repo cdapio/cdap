@@ -65,7 +65,7 @@ public class SQLStateChangeSyncerTest {
     listener.listen("/continuuity/system/queue", callback);
 
     for (int i = 0; i < 100; ++i) {
-      changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
+      changer.change(StateChange.Client.newState("A:" + i, "B", "C", "rid", "[]",
         StateChangeType.DEPLOYED));
     }
 

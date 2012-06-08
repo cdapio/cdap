@@ -27,12 +27,8 @@ class FlowMonitorImpl implements FlowMonitor.Iface {
   }
 
   @Override
-  public List<FlowEvent> getFlowHistory(String accountId, String app, String flow) throws TException {
-    return handler.getFlowHistory(accountId, app, flow);
+  public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId) throws TException {
+    return handler.getFlowHistory(accountId, appId, flowId);
   }
 
-  @Override
-  public List<Metric> getFlowMetrics(String accountId, String app, String flow, String rid) throws TException {
-    return handler.getFlowMetric(accountId, app, flow, rid);
-  }
 }

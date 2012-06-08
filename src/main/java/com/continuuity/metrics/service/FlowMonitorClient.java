@@ -5,10 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.metrics.stubs.FlowMetric;
-import com.continuuity.metrics.stubs.FlowMonitor;
-import com.continuuity.metrics.stubs.FlowState;
-import com.continuuity.metrics.stubs.Metric;
+import com.continuuity.metrics.stubs.*;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
@@ -112,13 +109,13 @@ public class FlowMonitorClient implements Closeable {
     Log.warn("Unable to send metrics ");
   }
 
-  public List<Metric> getFlowMetric(String accountId, String app, String flow, String rid) throws TException {
-    return client.getFlowMetrics(accountId, app, flow, rid);
-  }
-
 
   public List<FlowState> getFlows(String accountId) throws TException {
     return client.getFlows(accountId);
+  }
+
+  public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId) throws TException {
+    return client.getFlowHistory(accountId, appId, flowId);
   }
 
   /**

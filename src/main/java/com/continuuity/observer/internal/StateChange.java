@@ -12,9 +12,9 @@ import com.netflix.curator.framework.CuratorFramework;
 public final class StateChange {
 
   public static class Client {
-    public static StateChangeData newState(String accountId, String application, String flowname,
+    public static StateChangeData newState(String accountId, String appId, String flowId, String runId,
                                            String payload, StateChangeType type) {
-      return new StateChangeDataImpl(System.currentTimeMillis(), accountId, application, flowname, payload, type);
+      return new StateChangeDataImpl(System.currentTimeMillis(), accountId, appId, flowId, runId, payload, type);
     }
 
     public static StateChanger newStateChanger(CuratorFramework client, String path) {

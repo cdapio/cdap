@@ -35,7 +35,7 @@ class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   public void initialization() {
     try {
       connection.prepareStatement(
-        "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
+        "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, runid VARCHAR, flow VARCHAR, " +
           " payload VARCHAR, state INTEGER)"
       ).execute();
     } catch (SQLException e) {
@@ -45,16 +45,17 @@ class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   @Override
   public void process(StateChangeData data) {
     String sql = "INSERT INTO " +
-      "flow_state (timestamp, account, application, flow, payload, state) " +
-      " VALUES (?, ?, ?, ?, ?, ?);";
+      "flow_state (timestamp, account, application, runid, flow, payload, state) " +
+      " VALUES (?, ?, ?, ?, ?, ?, ?);";
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setLong(1, data.getTimestamp() / 1000);
       stmt.setString(2, data.getAccountId());
       stmt.setString(3, data.getApplication());
-      stmt.setString(4, data.getFlowName());
-      stmt.setString(5, data.getPayload());
-      stmt.setInt(6, data.getType().getType());
+      stmt.setString(4, data.getRunId());
+      stmt.setString(5, data.getFlowName());
+      stmt.setString(6, data.getPayload());
+      stmt.setInt(7, data.getType().getType());
       stmt.executeUpdate();
     } catch (SQLException e) {
       Log.error("Failed to write the state change to SQL DB (state : {}). Reason : {}", data.toString(), e.getMessage());

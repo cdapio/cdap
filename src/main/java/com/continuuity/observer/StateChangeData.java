@@ -10,6 +10,8 @@ public interface StateChangeData {
 
   public String getApplication();
 
+  public String getRunId();
+
   public String getFlowName();
 
   public String getPayload();

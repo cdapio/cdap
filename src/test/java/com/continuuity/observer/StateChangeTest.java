@@ -46,7 +46,7 @@ public class StateChangeTest {
     StateChangeListener listener = StateChange.Server.newListener(client);
 
     for (int i = 0; i < 100; ++i) {
-      changer.change(StateChange.Client.newState("A:" + i, "B", "C", "[]",
+      changer.change(StateChange.Client.newState("A:" + i, "B", "C", "rid", "[]",
         StateChangeType.DEPLOYED));
     }
 

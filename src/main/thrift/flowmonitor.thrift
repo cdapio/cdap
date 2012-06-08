@@ -47,6 +47,16 @@ struct FlowState {
   6: i32 runs,
 }
 
+/**
+ * Information returned for each Flow run.
+ */
+struct FlowRun {
+  1: string runId,
+  2: i32 startTime,
+  3: i32 endTime,
+  4: string endStatus
+}
+
 service FlowMonitor {
 
   /**
@@ -59,6 +69,10 @@ service FlowMonitor {
    */
   list<FlowState> getFlows(1: string accountId),
 
-  list<FlowEvent> getFlowHistory(1: string accountId, 2: string appid, 3: string flowId),
-  list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid),
+  /**
+   * Returns run information for a given flow id.
+   */
+  list<FlowRun> getFlowHistory(1: string accountId, 2: string appId, 3: string flowId),
+
+  /** list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid), */
 }

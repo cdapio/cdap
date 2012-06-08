@@ -8,6 +8,7 @@ import com.continuuity.metrics.service.FlowMonitorClient;
 import com.continuuity.metrics.service.FlowMonitorHandler;
 import com.continuuity.metrics.service.FlowMonitorServer;
 import com.continuuity.metrics.stubs.FlowMetric;
+import com.continuuity.metrics.stubs.FlowRun;
 import com.continuuity.metrics.stubs.FlowState;
 import com.continuuity.metrics.stubs.Metric;
 import com.continuuity.observer.StateChangeCallback;
@@ -146,20 +147,21 @@ public class FlowMonitorServerTest {
     }
   }
 
-  public void addPointToFlowStateTable(int timestamp, String accountId, String application, String flow, String payload,
-                                       StateChangeType type) throws Exception {
+  public void addPointToFlowStateTable(int timestamp, String accountId, String appId, String runId, String flowId,
+                                       String payload, StateChangeType type) throws Exception {
     String sql = "INSERT INTO " +
-      "flow_state (timestamp, account, application, flow, payload, state) " +
-      " VALUES (?, ?, ?, ?, ?, ?);";
+      "flow_state (timestamp, account, application, flow, runid, payload, state) " +
+      " VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     try {
       PreparedStatement stmt = myConnection.prepareStatement(sql);
       stmt.setLong(1, timestamp);
       stmt.setString(2, accountId);
-      stmt.setString(3, application);
-      stmt.setString(4, flow);
-      stmt.setString(5, payload);
-      stmt.setInt(6, type.getType());
+      stmt.setString(3, appId);
+      stmt.setString(4, flowId);
+      stmt.setString(5, runId);
+      stmt.setString(6, payload);
+      stmt.setInt(7, type.getType());
       stmt.executeUpdate();
     } catch (SQLException e) {
       Log.error("Failed to write the state change to SQL DB (state : {}). Reason : {}", accountId, e.getMessage());
@@ -175,39 +177,7 @@ public class FlowMonitorServerTest {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
 
-    myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
-    clearFlowStateTable();
-    addPointToFlowStateTable(1, "demo", "ABC", "targetting", "", StateChangeType.DEPLOYED);
-    addPointToFlowStateTable(2, "demo", "XYZ", "targetting", "", StateChangeType.DEPLOYED);
-    addPointToFlowStateTable(2, "demo", "UVW", "smart-explorer", "", StateChangeType.DEPLOYED);
-    addPointToFlowStateTable(2, "demo", "EFG", "hustler", "", StateChangeType.DEPLOYED);
-
-    addPointToFlowStateTable(3, "demo", "ABC", "targetting", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(4, "demo", "ABC", "targetting", "", StateChangeType.STARTED);
-    addPointToFlowStateTable(5, "demo", "ABC", "targetting", "", StateChangeType.STOPPED);
-
-    addPointToFlowStateTable(6, "demo", "ABC", "targetting", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(7, "demo", "ABC", "targetting", "", StateChangeType.STARTED);
-    addPointToFlowStateTable(8, "demo", "ABC", "targetting", "", StateChangeType.STOPPED);
-
-    addPointToFlowStateTable(9, "demo", "XYZ", "targetting", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(10, "demo", "XYZ", "targetting", "", StateChangeType.STARTED);
-    addPointToFlowStateTable(11, "demo", "XYZ", "targetting", "", StateChangeType.RUNNING);
-    addPointToFlowStateTable(12, "demo", "XYZ", "targetting", "", StateChangeType.STOPPING);
-    addPointToFlowStateTable(13, "demo", "XYZ", "targetting", "", StateChangeType.STOPPED);
-
-    addPointToFlowStateTable(14, "demo", "UVW", "smart-explorer", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(15, "demo", "UVW", "smart-explorer", "", StateChangeType.STARTED);
-    addPointToFlowStateTable(16, "demo", "UVW", "smart-explorer", "", StateChangeType.RUNNING);
-
-    addPointToFlowStateTable(17, "demo", "EFG", "hustler", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(18, "demo", "EFG", "hustler", "", StateChangeType.FAILED);
-
-    addPointToFlowStateTable(19, "demo", "XYZ", "targetting", "", StateChangeType.STARTING);
-    addPointToFlowStateTable(20, "demo", "XYZ", "targetting", "", StateChangeType.STARTED);
-    addPointToFlowStateTable(21, "demo", "XYZ", "targetting", "", StateChangeType.RUNNING);
-    addPointToFlowStateTable(22, "demo", "XYZ", "targetting", "", StateChangeType.STOPPING);
-    addPointToFlowStateTable(23, "demo", "XYZ", "targetting", "", StateChangeType.STOPPED);
+    populateData();
 
     FlowMonitorServer server = new FlowMonitorServer(handler, callback);
     server.start(configuration);
@@ -222,7 +192,7 @@ public class FlowMonitorServerTest {
   }
 
   @Test
-  public void testGenMetrics() throws Exception {
+  public void testGetFlowHistory() throws Exception {
     Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
     FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
     StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
@@ -230,21 +200,20 @@ public class FlowMonitorServerTest {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
 
+    populateData();
+
     FlowMonitorServer server = new FlowMonitorServer(handler, callback);
     server.start(configuration);
 
     Thread.sleep(5000);
 
     FlowMonitorClient client = new FlowMonitorClient(configuration);
-    generateRandomFlowMetrics(client);
-
-    List<Metric> metrics = client.getFlowMetric("demo", "personalization", "targetting", "ABC");
-    Assert.assertTrue(metrics.size() == 12);
-
-    List<FlowState> states = client.getFlows("demo");
+    List<FlowRun> states = client.getFlowHistory("demo", "XYZ", "targetting");
     Assert.assertNotNull(states);
+    client.close();
     server.stop();
   }
+
 
   @Test
   @Ignore
@@ -256,6 +225,42 @@ public class FlowMonitorServerTest {
     List<FlowState> states = client.getFlows("demo");
   }
 
+  private void populateData() throws Exception {
+    myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
+
+    clearFlowStateTable();
+    addPointToFlowStateTable(1, "demo", "ABC", null, "targetting", "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "XYZ", null, "targetting", "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "UVW", null, "smart-explorer",  "", StateChangeType.DEPLOYED);
+    addPointToFlowStateTable(2, "demo", "EFG", null, "hustler", "", StateChangeType.DEPLOYED);
+
+    addPointToFlowStateTable(3, "demo", "ABC", "r1", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(4, "demo", "ABC", "r1", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(5, "demo", "ABC", "r1", "targetting", "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(6, "demo", "ABC", "r2", "targetting", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(7, "demo", "ABC", "r2", "targetting", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(8, "demo", "ABC", "r2", "targetting", "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(9, "demo", "XYZ", "r3", "targetting","", StateChangeType.STARTING);
+    addPointToFlowStateTable(10, "demo", "XYZ", "r3", "targetting",  "", StateChangeType.STARTED);
+    addPointToFlowStateTable(11, "demo", "XYZ", "r3",  "targetting",  "", StateChangeType.RUNNING);
+    addPointToFlowStateTable(12, "demo", "XYZ", "r3", "targetting",  "", StateChangeType.STOPPING);
+    addPointToFlowStateTable(13, "demo", "XYZ", "r3", "targetting",  "", StateChangeType.STOPPED);
+
+    addPointToFlowStateTable(14, "demo", "UVW", "r4", "smart-explorer", "", StateChangeType.STARTING);
+    addPointToFlowStateTable(15, "demo", "UVW", "r4", "smart-explorer", "", StateChangeType.STARTED);
+    addPointToFlowStateTable(16, "demo", "UVW", "r4", "smart-explorer", "", StateChangeType.RUNNING);
+
+    addPointToFlowStateTable(17, "demo", "EFG", "r5", "hustler",  "", StateChangeType.STARTING);
+    addPointToFlowStateTable(18, "demo", "EFG", "r5", "hustler",  "", StateChangeType.FAILED);
+
+    addPointToFlowStateTable(19, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.STARTING);
+    addPointToFlowStateTable(20, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.STARTED);
+    addPointToFlowStateTable(21, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.RUNNING);
+    addPointToFlowStateTable(22, "demo", "XYZ", "r6", "targetting", "", StateChangeType.STOPPING);
+    addPointToFlowStateTable(23, "demo", "XYZ", "r6", "targetting",  "", StateChangeType.STOPPED);
+  }
   private void clearFlowStateTable() {
     String sql = "DELETE FROM flow_state";
 

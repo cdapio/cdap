@@ -10,17 +10,19 @@ import com.google.common.base.Objects;
 final class StateChangeDataImpl implements StateChangeData {
   private final long timestamp;
   private final String accountId;
-  private final String application;
-  private final String flowname;
+  private final String appId;
+  private final String flowId;
+  private final String runId;
   private final String payload;
   private final StateChangeType type;
 
-  public StateChangeDataImpl(long timestamp, String accountId, String application, String flowname,
+  public StateChangeDataImpl(long timestamp, String accountId, String appId, String flowId, String runId,
                              String payload, StateChangeType type) {
     this.timestamp = timestamp;
     this.accountId = accountId;
-    this.application = application;
-    this.flowname = flowname;
+    this.appId = appId;
+    this.runId = runId;
+    this.flowId = flowId;
     this.payload = payload;
     this.type = type;
   }
@@ -37,12 +39,17 @@ final class StateChangeDataImpl implements StateChangeData {
 
   @Override
   public String getApplication() {
-    return application;
+    return appId;
+  }
+
+  @Override
+  public String getRunId() {
+    return "rid";
   }
 
   @Override
   public String getFlowName() {
-    return flowname;
+    return flowId;
   }
 
   @Override
@@ -60,8 +67,9 @@ final class StateChangeDataImpl implements StateChangeData {
     return Objects.toStringHelper(this)
       .add("timestamp", timestamp)
       .add("accountid", accountId)
-      .add("application", application)
-      .add("flowname", flowname)
+      .add("application", appId)
+      .add("flowname", flowId)
+      .add("runid", runId)
       .add("payload", payload)
       .add("type", type)
       .toString();
