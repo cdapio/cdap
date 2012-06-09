@@ -14,7 +14,9 @@ task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS fil
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
 
-println("****** Build dir = " + project.getBuildDir());
+for (p in project.getProperties()) {
+	println("***** " + p);
+}
 	
 	commandLine = ["./tools/jshint/bin/hint", 
 		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/",
