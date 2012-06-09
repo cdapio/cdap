@@ -41,7 +41,7 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
 
   @Inject
   public FlowMonitorRegisteredService(FlowMonitorHandler handler, StateChangeCallback callback) {
-    super("flow-monitor");
+    setServiceName("flow-monitor");
     this.handler = handler;
     this.callback = callback;
   }
