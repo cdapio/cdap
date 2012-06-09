@@ -16,10 +16,10 @@ public class BenchHyperSQLTTqueue extends BenchTTQueue {
 
 //  private static final String hsql = "jdbc:hsqldb:file:/db/benchdb";
   private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
-  
+
   private static final DataFabricLocalModule module =
       new DataFabricLocalModule(hsql, hsqlProperties);
-  
+
   private static final Injector injector = Guice.createInjector(module);
 
   private static final OVCTableHandle handle =
@@ -33,14 +33,15 @@ public class BenchHyperSQLTTqueue extends BenchTTQueue {
     // Disable logging
     hsqlProperties.setProperty("hsqldb.log_data", "false");
   }
-  
+
   // Configuration for hypersql bench
   private static final BenchConfig config = new BenchConfig();
   static {
     config.numJustEnqueues = 1000;
     config.queueEntrySize = 10;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 1000;
   }
-  
+
   @Override
   protected TTQueue createQueue(CConfiguration conf) {
     String rand = "" + Math.abs(BenchTTQueue.r.nextInt());

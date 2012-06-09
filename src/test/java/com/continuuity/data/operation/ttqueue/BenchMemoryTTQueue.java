@@ -10,8 +10,9 @@ public class BenchMemoryTTQueue extends BenchTTQueue {
   // Configuration of memory ttqueue bench
   private static final BenchConfig config = new BenchConfig();
   static {
-    config.numJustEnqueues = 100000;
+    config.numJustEnqueues = 10000;
     config.queueEntrySize = 10;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 10000;
   }
   
   @Override

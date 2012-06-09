@@ -9,6 +9,8 @@ import org.junit.Test;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.table.ReadPointer;
 
 public abstract class BenchTTQueue {
 
@@ -28,6 +30,7 @@ public abstract class BenchTTQueue {
   protected static class BenchConfig {
     protected int numJustEnqueues = 1000;
     protected int queueEntrySize = 1024;
+    protected int numEnqueuesThenSyncDequeueAckFinalize = 1000;
   }
   
   protected static final Random r = new Random();
@@ -48,6 +51,44 @@ public abstract class BenchTTQueue {
     
     long end = now();
     printReport(start, end, iterations);
+  }
+  
+  @Test
+  public void benchEnqueuesThenSyncDequeueAckFinalize() throws Exception {
+    TTQueue queue = createQueue();
+    int iterations = config.numEnqueuesThenSyncDequeueAckFinalize;
+    long start = now();
+    
+    log("Enqueueing " + iterations + " entries");
+    byte [] data = new byte[config.queueEntrySize];
+    long last = start;
+    for (int i=0; i<iterations; i++) {
+      r.nextBytes(data);
+      assertTrue(queue.enqueue(data, timeOracle.getTimestamp()).isSuccess());
+      last = printStat(i, last, 1000);
+    }
+    long end = now();
+    printReport(start, end, iterations);
+    log("Done enqueueing\n");
+    
+    log("Dequeueing " + iterations + " entries");
+    long dstart = now();
+    last = dstart;
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConfig config = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+    ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
+    for (int i=0; i<iterations; i++) {
+      DequeueResult result = queue.dequeue(consumer, config, rp);
+      assertTrue(result.isSuccess());
+      assertTrue(queue.ack(result.getEntryPointer(), consumer));
+      assertTrue(queue.finalize(result.getEntryPointer(), consumer));
+      last = printStat(i, last, 1000);
+    }
+    long dend = now();
+    printReport(dstart, dend, iterations);
+    log("Done dequeueing\n");
+    
   }
   
   private long printStat(int i, long last, int perline) {
