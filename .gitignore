@@ -27,3 +27,6 @@ clover.license
 /gateway
 /overlord
 /web-cloud-app
+
+# Ignore Node stuff
+npm*
