@@ -83,7 +83,8 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
+//task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
+task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
 	}
