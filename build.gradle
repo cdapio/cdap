@@ -21,6 +21,16 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
+clover {
+    excludes << '**/metrics/stubs/*'
+}
+
+sonar {
+    project {
+        sourceExclusions = '**/metrics/stubs/*'
+    }
+}
+
 /**
  * Generate thrift files.
  */
