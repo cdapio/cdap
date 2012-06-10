@@ -1,7 +1,7 @@
 package com.continuuity.gateway.runtime;
 
 import com.continuuity.gateway.Consumer;
-import com.continuuity.gateway.consumer.TransactionalConsumer;
+import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.AbstractModule;
 
 /**
@@ -12,7 +12,7 @@ public class GatewayProductionModule extends AbstractModule {
     public void configure() {
 
       // Bind our implementations
-      bind(Consumer.class).to(TransactionalConsumer.class);
+      bind(Consumer.class).to(TupleWritingConsumer.class);
 
     }
 

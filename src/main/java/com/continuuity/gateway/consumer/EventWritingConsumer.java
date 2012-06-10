@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TransactionalConsumer extends Consumer {
+public class EventWritingConsumer extends Consumer {
 
   /**
    * This is the operations executor that we will use to talk to the data-fabric
@@ -26,7 +26,7 @@ public class TransactionalConsumer extends Consumer {
 
 	/** This is our Logger class */
 	private static final Logger LOG = LoggerFactory
-			.getLogger(TransactionalConsumer.class);
+			.getLogger(EventWritingConsumer.class);
 
 	/**
 	 * Use this if you don't use Guice to create the consumer
