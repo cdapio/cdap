@@ -2,7 +2,7 @@ package com.continuuity.observer;
 
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.observer.internal.StateChange;
-import com.continuuity.runtime.MetricsRuntime;
+import com.continuuity.runtime.MetricsModules;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -60,7 +60,7 @@ public class SQLStateChangeSyncerTest {
     StateChanger changer = StateChange.Client.newStateChanger(client, "/continuuity/system/queue");
     StateChangeListener listener = StateChange.Server.newListener(client);
 
-    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
     listener.listen("/continuuity/system/queue", callback);
 

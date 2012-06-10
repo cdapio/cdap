@@ -11,9 +11,9 @@ import com.google.inject.name.Names;
 /**
  *
  */
-public class MetricsRuntime extends RuntimeModule {
+public class MetricsModules extends RuntimeModule {
   @Override
-  public Module getInMemory() {
+  public Module getInMemoryModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -26,7 +26,7 @@ public class MetricsRuntime extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNode() {
+  public Module getSingleNodeModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -39,7 +39,7 @@ public class MetricsRuntime extends RuntimeModule {
   }
 
   @Override
-  public Module getDistributed() {
+  public Module getDistributedModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {

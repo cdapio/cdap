@@ -5,14 +5,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.metrics.service.MetricsClient;
-import com.continuuity.metrics.service.MetricsHandler;
 import com.continuuity.metrics.service.MetricsServer;
 import com.continuuity.metrics.stubs.FlowMetric;
 import com.continuuity.metrics.stubs.FlowRun;
 import com.continuuity.metrics.stubs.FlowState;
-import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.observer.StateChangeType;
-import com.continuuity.runtime.MetricsRuntime;
+import com.continuuity.runtime.MetricsModules;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -59,7 +57,7 @@ public class FlowMonitorServerTest {
 
   @Test
   public void testFlowMonitorServer() throws Exception {
-    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();
@@ -173,7 +171,7 @@ public class FlowMonitorServerTest {
   public void testGetFlowsAPI() throws Exception {
     populateData();
 
-    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();
@@ -193,7 +191,7 @@ public class FlowMonitorServerTest {
 
   @Test
   public void testGetFlowHistory() throws Exception {
-    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();

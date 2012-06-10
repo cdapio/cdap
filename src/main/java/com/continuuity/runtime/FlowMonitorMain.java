@@ -29,7 +29,7 @@ public class FlowMonitorMain {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
       }
 
-      Injector injector = Guice.createInjector(new MetricsRuntime().getSingleNode());
+      Injector injector = Guice.createInjector(new MetricsModules().getSingleNodeModules());
       MetricsServer service = injector.getInstance(MetricsServer.class);
       service.start(args, conf);
     } catch (Exception e) {
