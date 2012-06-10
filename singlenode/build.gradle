@@ -36,3 +36,14 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
+/**
+ * Configure distZip task 
+ */
+applicationDistribution.from(sourceSets.main.output.resourcesDir) {
+    into "conf"
+}
+
+applicationDistribution.from("$buildDir/docs") {
+    into "docs"
+}
+
