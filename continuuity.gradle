@@ -1,19 +1,19 @@
 // The purpose of this script is to bootstrap the continuuity build system.
 // This script is maintained in the continuuity repo and is copied to each
-// submodule to allow them to be developed independent of the continuuity.
+// submodule to allow them to be developed independent of the continuuity repo.
 // This script should only contain the bare essentials to load the
 // continuuity plugin.
-
 project.buildscript {
     if (!ext.has("com.continuuity.gradle.ContinuuityPlugin"))
     {
         repositories {
+            mavenLocal()
             maven {
                 credentials {
                     username "gradle"
                     password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
                 }
-                url "https://repository.continuuity.com/buildsrc"
+                url "http://repository.continuuity.com:8081/artifactory/buildsrc"
             }
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
@@ -27,3 +27,7 @@ project.buildscript {
         }
     }
 }
+
+
+
+

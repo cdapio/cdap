@@ -20,9 +20,18 @@ test {
 }
 
 dependencies {
-  compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
-  compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
-  compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+    /// Internal dependencies.
+    if(multiModule)
+    {
+        compile project(":common")
+    }
+    else
+    {
+        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+    }
+    /// External dependencies.
+    compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
+    compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
 }
 
 
