@@ -1,25 +1,5 @@
 package com.continuuity.data.operation.executor.omid;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.continuuity.data.SyncReadTimeoutException;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
@@ -28,20 +8,23 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.*;
 
 public class TestOmidExecutorLikeAFlow {
 
@@ -57,7 +40,7 @@ public class TestOmidExecutorLikeAFlow {
 
   @BeforeClass
   public static void initializeClass() {
-    injector = Guice.createInjector(new DataFabricInMemoryModule());
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
     OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
   }

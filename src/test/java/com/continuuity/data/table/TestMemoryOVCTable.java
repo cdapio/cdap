@@ -1,13 +1,13 @@
 package com.continuuity.data.table;
 
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class TestMemoryOVCTable extends TestOVCTable {
 
   private static final Injector injector =
-      Guice.createInjector(new DataFabricInMemoryModule());
+      Guice.createInjector(new DataFabricModules().getInMemoryModules());
 
   @Override
   protected OVCTableHandle getTableHandle() {

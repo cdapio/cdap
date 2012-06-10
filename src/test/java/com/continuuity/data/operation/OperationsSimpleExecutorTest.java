@@ -3,28 +3,24 @@
  */
 package com.continuuity.data.operation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
+import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.table.ColumnarTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
-import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
-import com.continuuity.data.table.ColumnarTableHandle;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.*;
 
 /**
  * Simple test of operations stuff.
@@ -39,7 +35,7 @@ public class OperationsSimpleExecutorTest {
 
   @BeforeClass
   public static void initializeClass() {
-    injector = Guice.createInjector(new DataFabricInMemoryModule());
+    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
   }
   
   @Before

@@ -3,8 +3,6 @@
  */
 package com.continuuity.data.runtime;
 
-import java.util.Properties;
-
 import com.continuuity.data.engine.hypersql.HyperSQLColumnarTableHandle;
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -18,6 +16,8 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+
+import java.util.Properties;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
@@ -87,4 +87,5 @@ public class DataFabricLocalModule extends AbstractModule {
       throw new RuntimeException(e);
     }
   }
-} // end of GatewayProductionModule
+
+} // end of DataFabricLocalModule
