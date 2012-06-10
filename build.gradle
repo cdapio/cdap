@@ -24,12 +24,23 @@ tasks.withType(Compile) {
 
 dependencies {
 
-    // this is needed to ensure that kryo uses its packaged asm classes and 
+    /// Internal dependencies.
+    if(multiModule)
+    {
+        compile project(":flow")
+        compile project(":data-fabric")
+    }
+    else
+    {
+        compile "com.continuuity:flow:$continuuityVersion"
+        compile "com.continuuity:data-fabric:$continuuityVersion"
+    }
+
+    // External dependencies.
+
+    // this is needed to ensure that kryo uses its packaged asm classes and
     // and not the ones from the asm jar that guice pulls in
     compile group: 'kryo', name: 'kryo', version: '2.09', classifier: 'all'
-
-    compile "com.continuuity:flow:$continuuityVersion"
-    compile "com.continuuity:data-fabric:$continuuityVersion"
     
     compile "org.apache.avro:avro:$avroVersion"
     compile "org.apache.avro:avro-ipc:$avroVersion"
