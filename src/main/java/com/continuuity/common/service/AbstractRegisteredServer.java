@@ -90,7 +90,7 @@ public abstract class AbstractRegisteredServer {
       cmdPortServer = new CommandPortServer(server);
 
       // Create our cmd port server
-      cmdPortServer = new CommandPortServer(serviceName);
+      cmdPortServer = new CommandPortServer(server);
 
       // Add some commands to the cmd server
       addCommandListener("stop", "Stops the service", new CommandPortServer.CommandListener() {

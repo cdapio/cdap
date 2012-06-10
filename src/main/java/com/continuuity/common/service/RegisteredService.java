@@ -13,17 +13,17 @@ public interface RegisteredService {
    * @param args arguments for the service
    * @param conf instance of configuration object.
    *
-   * @throws RegisteredServiceException If there is any problem starting.
+   * @throws ServerException If there is any problem starting.
    */
   public void start(String[] args, CConfiguration conf)
-    throws RegisteredServiceException;
+    throws ServerException;
 
   /**
    * Stops the service
    * @param now true specifies non-graceful shutdown; false otherwise.
    *
-   * @throws RegisteredServiceException If there is a problem stopping.
+   * @throws ServerException If there is a problem stopping.
    */
-  public void stop(boolean now) throws RegisteredServiceException;
+  public void stop(boolean now) throws ServerException;
 
 }
