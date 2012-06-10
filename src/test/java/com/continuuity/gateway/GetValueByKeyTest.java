@@ -5,7 +5,7 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.continuuity.gateway.tools.GetValueByKey;
 import com.google.inject.Guice;
@@ -28,7 +28,7 @@ public class GetValueByKeyTest {
 	public void setupDataFabric() throws Exception {
 		// Set up our Guice injections
 		Injector injector = Guice.createInjector(
-				new DataFabricInMemoryModule());
+				new DataFabricModules().getInMemoryModules());
 		this.executor = injector.getInstance(OperationExecutor.class);
 
 		String[][] keyValues = {

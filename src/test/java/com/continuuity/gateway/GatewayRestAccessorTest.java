@@ -2,7 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -46,7 +46,7 @@ public class GatewayRestAccessorTest {
 
 		// Set up our Guice injections
 		Injector injector = Guice.createInjector(
-				new DataFabricInMemoryModule());
+				new DataFabricModules().getInMemoryModules());
 		this.executor = injector.getInstance(OperationExecutor.class);
 
 		// Look for a free port

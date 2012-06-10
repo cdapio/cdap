@@ -1,7 +1,7 @@
 package com.continuuity.gateway.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,8 +22,8 @@ public class Main {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayProductionModule(),
-        new DataFabricInMemoryModule() );
+        new GatewayModules().getSingleNodeModules(),
+        new DataFabricModules().getSingleNodeModules() );
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);
