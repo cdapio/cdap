@@ -40,8 +40,8 @@ public abstract class AbstractRegisteredServer {
   private CommandPortServer cmdPortServer;
 
   /**
-   * Server thread returned from starting of the service. The service thread is actually managed
-   * by the AbstractRegisteredServer.
+   * Server thread returned from starting of the service. The service thread is
+   * actually managedby the AbstractRegisteredServer.
    */
   private Thread serverThread;
 
@@ -154,7 +154,7 @@ public abstract class AbstractRegisteredServer {
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(server, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
+      client.register(server, serviceArgs.getSecond(), serviceArgs.getFirst());
 
       serverThread = start();
       if(serverThread == null) {

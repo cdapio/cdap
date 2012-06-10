@@ -103,18 +103,17 @@ public class CommandPortServer {
   /**
    * Blocking call that waits for connections and serves command one client at a time.
    * <p>
-   *   Not facny multi-threaded server and don't expect it to be :-)
+   *   Not fancy multi-threaded server and don't expect it to be :-)
    * </p>
    *
    * @throws CommandPortException
    */
   public void serve() throws CommandPortException {
-    boolean inSession = true;
+
     try {
       port = serverSocket.getLocalPort();
       while(running) {
         Socket socket = serverSocket.accept(); /** wait for connection */
-        inSession = true;
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
         String command;
