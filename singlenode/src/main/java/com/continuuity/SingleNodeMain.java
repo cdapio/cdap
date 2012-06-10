@@ -4,16 +4,18 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.service.RegisteredService;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
-import com.continuuity.flow.manager.server.FlowManager;
-import com.continuuity.flow.runtime.FlowSingleNodeModule;
-import com.continuuity.gateway.Gateway;
+import com.continuuity.flow.manager.server.FAR.FARServer;
+import com.continuuity.flow.manager.server.FlowManager.FlowManagerServer;
 import com.continuuity.gateway.runtime.GatewayProductionModule;
+import com.continuuity.data.runtime.DataFabricInMemoryModule;
+import com.continuuity.flow.runtime.FARRuntime;
+import com.continuuity.flow.runtime.FlowManagerRuntime;
+import com.continuuity.gateway.Gateway;
 
-import com.continuuity.runtime.DIModules;
+import com.continuuity.metrics.service.MetricsServer;
+import com.continuuity.runtime.MetricsRuntime;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -58,13 +60,19 @@ public class SingleNodeMain {
    * This is the Metrics Monitor service
    */
   @Inject
-  private RegisteredService theOverlord;
+  private MetricsServer theOverlord;
 
   /**
-   * This is the FlowManager service
+   * This is the FAR server.
    */
   @Inject
-  private FlowManager theFlowManager;
+  private FARServer theFARServer;
+
+  /**
+   * This is the FlowManager server
+   */
+  @Inject
+  private FlowManagerServer theFlowManager;
 
   /**
    * This is our universal configurations object.
@@ -124,7 +132,7 @@ public class SingleNodeMain {
       try {
 
         System.out.println(" Starting FlowManager Service");
-        theFlowManager.start(myConfiguration);
+        theFlowManager.start(null, myConfiguration);
 
       } catch (Exception e) {
         e.printStackTrace();
@@ -147,8 +155,6 @@ public class SingleNodeMain {
       throw new IllegalStateException(
         "Unable to start, Metrics service is null");
     }
-
-
 
     // TODO: Also, need to start web-cloud-app
 
@@ -184,13 +190,19 @@ public class SingleNodeMain {
   public static void main(String[] args) {
 
     // We don't support command line options currently
+    FARRuntime farRuntime = new FARRuntime();
+    FlowManagerRuntime flowManagerRuntime = new FlowManagerRuntime();
+    MetricsRuntime metricsRuntime = new MetricsRuntime();
+
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
+        farRuntime.getSingleNode(),
+        flowManagerRuntime.getSingleNode(),
+        metricsRuntime.getSingleNode(),
         new GatewayProductionModule(),
-        new DataFabricInMemoryModule(),
-        new FlowSingleNodeModule(),
-        DIModules.getInMemoryHSQLBindings());
+        new DataFabricInMemoryModule()
+    );
 
     // Create our server instance
     SingleNodeMain continuuity = injector.getInstance(SingleNodeMain.class);
