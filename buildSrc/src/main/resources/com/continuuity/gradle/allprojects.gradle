@@ -19,11 +19,11 @@ setDefault('groupId', 'com.continuuity')
 setDefault('artifactId', projectDir.name)
 setDefault('artifactoryUsername', 'gradle');
 setDefault('artifactoryPassword', '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy');
-setDefault('useMavenLocal', true);
+setDefault('useMavenLocal', 'true');
 
 /// Define artifact repositories.
 repositories {
-    if (useMavenLocal)
+    if (Boolean.valueOf(useMavenLocal))
     {
         mavenLocal()
     }
