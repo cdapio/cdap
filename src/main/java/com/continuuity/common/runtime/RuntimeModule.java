@@ -16,7 +16,7 @@ public abstract class RuntimeModule {
    *
    * @return A combined set of Modules required for InMemory execution.
    */
-  public abstract Module getInMemory();
+  public abstract Module getInMemoryModules();
 
   /**
    * Implementers of this method should return a combined Module that includes
@@ -25,7 +25,7 @@ public abstract class RuntimeModule {
    *
    * @return A combined set of Modules required for SingleNode execution.
    */
-  public abstract Module getSingleNode();
+  public abstract Module getSingleNodeModules();
 
   /**
    * Implementers of this method should return a combined Module that includes
@@ -34,6 +34,6 @@ public abstract class RuntimeModule {
    *
    * @return A combined set of Modules required for distributed execution.
    */
-  public abstract Module getDistributed();
+  public abstract Module getDistributedModules();
 
 }
