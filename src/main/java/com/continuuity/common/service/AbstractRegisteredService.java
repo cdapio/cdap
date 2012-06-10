@@ -14,15 +14,17 @@ import ch.qos.logback.classic.Logger;
 import java.io.IOException;
 
 /**
- * This abstract class makes it easy to build a registered service.
- * <p>
- *   RegisteredService provides an ability to register the service with the central
- *   service discovery system and also provides a command port that can be accessed
- *   locally to investigate the service.
- * </p>
+ * RegisteredService provides an ability to register a service with the central
+ * service discovery system and also provides a command port that can be
+ * accessed locally to investigate or manage the service.
  */
 public abstract class AbstractRegisteredService implements RegisteredService {
-  private static final Logger Log = (Logger)LoggerFactory.getLogger(AbstractRegisteredService.class);
+
+  /**
+   * Our logging instance
+   */
+  private static final Logger Log =
+    (Logger)LoggerFactory.getLogger(AbstractRegisteredService.class);
 
   /**
    * Service registration client.
@@ -32,7 +34,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   /**
    * Name of the service
    */
-  private String service = "named-but-notnamed";
+  private String serviceName = "named-but-notnamed";
 
   /**
    * Command port cmdPortServer associated with the service.
@@ -48,10 +50,14 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   /**
    * Set service name
    *
-   * @param service name
+   * @param serviceName serviceName
    */
-  public void setServiceName(String service) {
-    this.service = service;
+  public void setServiceName(String serviceName) {
+
+    // Check our preconditions
+    Preconditions.checkNotNull(serviceName);
+
+    this.serviceName = serviceName;
   }
 
   /**
@@ -59,7 +65,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    * @return name of the service.
    */
   public String getServiceName() {
-    return this.service;
+    return this.serviceName;
   }
 
   /**
@@ -87,8 +93,11 @@ public abstract class AbstractRegisteredService implements RegisteredService {
     Preconditions.checkNotNull(zkEnsemble);
 
     try {
-      cmdPortServer = new CommandPortServer(service);
 
+      // Create our cmd port server
+      cmdPortServer = new CommandPortServer(serviceName);
+
+      // Add some commands to the cmd server
       addCommandListener("stop", "Stops the service", new CommandPortServer.CommandListener() {
         @Override
         public String act() {
@@ -145,12 +154,13 @@ public abstract class AbstractRegisteredService implements RegisteredService {
 
       ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
         serviceArgs = configure(args, conf);
-      if(serviceArgs == null) {
+
+      if (serviceArgs == null) {
         throw new RegisteredServiceException("configuration of service failed.");
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
+      client.register(serviceName, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
       serviceThread = start();
       if(serviceThread == null) {

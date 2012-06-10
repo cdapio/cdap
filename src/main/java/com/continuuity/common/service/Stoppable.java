@@ -5,9 +5,10 @@ package com.continuuity.common.service;
  * stop resources or subsystems that are started.
  */
 public interface Stoppable {
+
   /**
-   * Closes any resources held by the class implementing Stopable.
-   * If the resources and subsystems are already stoppped then
+   * Closes any resources held by the class implementing Stoppable.
+   * If the resources and subsystems are already stopped then
    * invoking this has no effect.
    *
    * @param reason for stopping.
@@ -20,4 +21,5 @@ public interface Stoppable {
    * @return true if stopped; false otherwise.
    */
   public boolean isStopped();
+
 }
