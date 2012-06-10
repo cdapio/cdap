@@ -5,17 +5,15 @@ package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FAR.FARServer;
 import com.continuuity.flow.manager.server.FlowManager.FlowManagerServer;
-import com.continuuity.gateway.runtime.GatewayProductionModule;
-import com.continuuity.data.runtime.DataFabricInMemoryModule;
-import com.continuuity.flow.runtime.FARRuntime;
-import com.continuuity.flow.runtime.FlowManagerRuntime;
+import com.continuuity.flow.runtime.FARModules;
+import com.continuuity.flow.runtime.FlowManagerModules;
 import com.continuuity.gateway.Gateway;
-
+import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.metrics.service.MetricsServer;
-import com.continuuity.runtime.MetricsRuntime;
+import com.continuuity.runtime.MetricsModules;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -23,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * SingleNodeMain is the master main method for the Continuuity single node
@@ -36,12 +35,6 @@ public class SingleNodeMain {
    */
   private static final Logger LOG =
       LoggerFactory.getLogger(SingleNodeMain.class);
-
-  /**
-   * This is the data fabric service
-   */
-  @Inject
-  private OperationExecutor theFabric;
 
   /**
    * This is the Zookeeper service.
@@ -96,22 +89,15 @@ public class SingleNodeMain {
       "Rights Reserved.");
     System.out.println("");
 
-    //if (zookeeper != null) {
-      try {
 
-        System.out.println(" Starting Zookeeper Service");
-        zookeeper =
-          new InMemoryZookeeper(
-            Integer.parseInt(myConfiguration.get("zookeeper.port")),
-            new File(myConfiguration.get("zookeeper.datadir")) );
+    try {
 
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    /*} else {
-      throw new IllegalStateException(
-        "Unable to start, Zookeeper service is null");
-    }   */
+      System.out.println(" Starting Zookeeper Service");
+      startZookeeper();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     if (theGateway != null) {
       try {
@@ -162,6 +148,25 @@ public class SingleNodeMain {
 
   } // end of bootStrapServices
 
+  /**
+   * Start Zookeeper attempts to start our single node ZK instance. It requires
+   * two configuration values to be set somewhere in our config files:
+   *
+   * <ul>
+   *   <li>zookeeper.port</li>
+   *   <li>zookeeper.datadir</li>
+   * </ul>
+   *
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  private void startZookeeper() throws InterruptedException, IOException {
+    zookeeper =
+      new InMemoryZookeeper(
+        Integer.parseInt(myConfiguration.get("zookeeper.port")),
+        new File(myConfiguration.get("zookeeper.datadir")) );
+  }
+
 
   /**
    * Load Configuration looks for all of the config xml files in the resources
@@ -190,18 +195,21 @@ public class SingleNodeMain {
   public static void main(String[] args) {
 
     // We don't support command line options currently
-    FARRuntime farRuntime = new FARRuntime();
-    FlowManagerRuntime flowManagerRuntime = new FlowManagerRuntime();
-    MetricsRuntime metricsRuntime = new MetricsRuntime();
 
+    // Retrieve all of the modules from each of the components
+    FARModules farModules = new FARModules();
+    FlowManagerModules flowManagerModules = new FlowManagerModules();
+    MetricsModules metricsModules = new MetricsModules();
+    GatewayModules gatewayModules = new GatewayModules();
+    DataFabricModules dataFabricModules = new DataFabricModules();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        farRuntime.getSingleNode(),
-        flowManagerRuntime.getSingleNode(),
-        metricsRuntime.getSingleNode(),
-        new GatewayProductionModule(),
-        new DataFabricInMemoryModule()
+      farModules.getSingleNodeModules(),
+      flowManagerModules.getSingleNodeModules(),
+      metricsModules.getSingleNodeModules(),
+      gatewayModules.getSingleNodeModules(),
+      dataFabricModules.getSingleNodeModules()
     );
 
     // Create our server instance
