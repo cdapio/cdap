@@ -19,6 +19,7 @@ atlassian-ide-plugin.xml
 .gradle/
 build/
 clover.license
+.clover
 
 # Ignore submodules.
 /common

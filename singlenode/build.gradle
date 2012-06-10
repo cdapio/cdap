@@ -12,11 +12,25 @@ buildscript {
  * Specify all the dependencies
  */
 dependencies {
-    compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-    compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
-    compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
-    compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
-    compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+
+
+    /// Internal dependencies.
+    if(multiModule)
+    {
+        compile project(":common")
+        compile project(":gateway")
+        compile project(":flow")
+        compile project(":data-fabric")
+        compile project(":overlord")
+    }
+    else
+    {
+        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+    }
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'

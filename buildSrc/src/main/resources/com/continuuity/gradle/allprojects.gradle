@@ -1,6 +1,5 @@
 // The contents of this file applies to all project.
 apply plugin: 'idea'
-apply plugin: 'maven'
 
 defaultTasks 'build'
 
@@ -23,6 +22,7 @@ setDefault('artifactoryPassword', '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy');
 
 /// Define artifact repositories.
 repositories {
+    mavenLocal()
     maven {
         credentials {
             username artifactoryUsername
@@ -48,17 +48,4 @@ repositories {
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
-}
-
-uploadArchives {
-    repositories {
-        repositories.mavenDeployer {
-            repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
-                authentication(userName: artifactoryUsername, password: artifactoryPassword)
-            }
-            pom.version = version
-            pom.artifactId = artifactId
-            pom.groupId = groupId
-        }
-    }
 }
