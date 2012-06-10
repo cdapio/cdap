@@ -7,7 +7,7 @@ import java.util.List;
 /**
  *
  */
-public interface FlowMonitorHandler {
+public interface MetricsHandler {
   /**
    * Adds a metric for a flow.
    *

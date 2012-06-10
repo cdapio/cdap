@@ -27,16 +27,22 @@ import java.util.List;
  *
  *
  */
-public class FlowMonitorClient implements Closeable {
-  private static final Logger Log = LoggerFactory.getLogger(FlowMonitorClient.class);
+public class MetricsClient implements Closeable {
+  private static final Logger Log = LoggerFactory.getLogger(MetricsClient.class);
   private ServiceDiscoveryClient serviceDiscoveryClient;
   private FlowMonitor.Client client;
   private static final int MAX_RETRY = 3;
+  private ImmutablePair<String, Integer> endpoint;
 
-  public FlowMonitorClient(CConfiguration configuration) throws ServiceDiscoveryClientException {
+  public MetricsClient(String host, int port) {
+    endpoint = new ImmutablePair<String, Integer>(host, port);
+    client = connect(false);
+  }
+
+  public MetricsClient(CConfiguration configuration) throws ServiceDiscoveryClientException {
     String zkEnsemble = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     serviceDiscoveryClient = new ServiceDiscoveryClient(zkEnsemble);
-    client = connect();
+    client = connect(true);
     if (client == null) {
       throw new ServiceDiscoveryClientException("No services available");
     }
@@ -72,11 +78,16 @@ public class FlowMonitorClient implements Closeable {
     return null;
   }
 
-  private FlowMonitor.Client connect() {
-    ImmutablePair<String, Integer> endpoint = getServiceEndpoint();
+  private FlowMonitor.Client connect(boolean autoDiscovery) {
+
+    if(autoDiscovery) {
+      endpoint = getServiceEndpoint();
+    }
+
     if (endpoint == null) {
       return null;
     }
+
     TTransport transport = new TFramedTransport(
       new TSocket(endpoint.getFirst(), endpoint.getSecond()));
     try {
@@ -131,6 +142,8 @@ public class FlowMonitorClient implements Closeable {
    */
   @Override
   public void close() throws IOException {
-    serviceDiscoveryClient.close();
+    if(serviceDiscoveryClient != null) {
+      serviceDiscoveryClient.close();
+    }
   }
 }

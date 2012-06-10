@@ -4,16 +4,15 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.metrics.service.FlowMonitorClient;
-import com.continuuity.metrics.service.FlowMonitorHandler;
-import com.continuuity.metrics.service.FlowMonitorServer;
+import com.continuuity.metrics.service.MetricsClient;
+import com.continuuity.metrics.service.MetricsHandler;
+import com.continuuity.metrics.service.MetricsServer;
 import com.continuuity.metrics.stubs.FlowMetric;
 import com.continuuity.metrics.stubs.FlowRun;
 import com.continuuity.metrics.stubs.FlowState;
-import com.continuuity.metrics.stubs.Metric;
 import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.observer.StateChangeType;
-import com.continuuity.runtime.DIModules;
+import com.continuuity.runtime.MetricsRuntime;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -35,16 +34,20 @@ public class FlowMonitorServerTest {
   private static String zkEnsemble;
   private Connection myConnection;
 
-  @BeforeClass
-  public static void before() throws Exception {
-    zookeeper = new InMemoryZookeeper();
-    zkEnsemble = zookeeper.getConnectionString();
-    Log.info("Connection string {}", zkEnsemble);
+  static {
     try {
       Class.forName("org.hsqldb.jdbcDriver");
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     }
+  }
+
+  @BeforeClass
+  public static void before() throws Exception {
+    zookeeper = new InMemoryZookeeper();
+    zkEnsemble = zookeeper.getConnectionString();
+    Log.info("Connection string {}", zkEnsemble);
+
   }
 
   @AfterClass
@@ -56,20 +59,18 @@ public class FlowMonitorServerTest {
 
   @Test
   public void testFlowMonitorServer() throws Exception {
-    Injector injector = Guice.createInjector(DIModules.getInMemoryHSQLBindings());
-    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
-    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
     String dir = configuration.get("user.dir");
 
-    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
-    server.start(configuration);
+    server.start(null, configuration);
 
     Thread.sleep(5000);
 
-    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    MetricsClient client = new MetricsClient("localhost", 45002);
 
     FlowMetric metric = new FlowMetric();
     metric.setAccountId("accountid");
@@ -101,10 +102,10 @@ public class FlowMonitorServerTest {
     String flowlet = rs.getString("flowlet");
     Assert.assertTrue("flowlet".equals(flowlet));
 
-    server.stop();
+    server.stop(true);
   }
 
-  private void generateRandomFlowMetrics(FlowMonitorClient client) throws ServiceDiscoveryClientException {
+  private void generateRandomFlowMetrics(MetricsClient client) throws ServiceDiscoveryClientException {
     String[] accountIds = {"demo"};
     String[] rids = {"ABC", "XYZ"};
     String[] applications = {"personalization"};
@@ -170,54 +171,50 @@ public class FlowMonitorServerTest {
 
   @Test
   public void testGetFlowsAPI() throws Exception {
-    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
-    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
-    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+    populateData();
+
+    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+    String dir = configuration.get("user.dir");
 
-    populateData();
-
-    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
-    server.start(configuration);
+    server.start(null, configuration);
 
     Thread.sleep(5000);
 
-    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    MetricsClient client = new MetricsClient("localhost", 45002);
     List<FlowState> states = client.getFlows("demo");
     Assert.assertNotNull(states);
     client.close();
-    server.stop();
+    server.stop(true);
   }
 
   @Test
   public void testGetFlowHistory() throws Exception {
-    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
-    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
-    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+    Injector injector = Guice.createInjector(new MetricsRuntime().getInMemory());
+    MetricsServer server = injector.getInstance(MetricsServer.class);
 
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+    String dir = configuration.get("user.dir");
 
     populateData();
 
-    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
-    server.start(configuration);
-
     Thread.sleep(5000);
 
-    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    MetricsClient client = new MetricsClient("localhost", 45002);
     List<FlowRun> states = client.getFlowHistory("demo", "XYZ", "targetting");
     Assert.assertNotNull(states);
     client.close();
-    server.stop();
+    server.stop(true);
   }
 
 //  @Test
 //  public void testGetFlowDefinition() throws Exception {
 //    Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
-//    FlowMonitorHandler handler = injector.getInstance(FlowMonitorHandler.class);
+//    MetricsHandler handler = injector.getInstance(MetricsHandler.class);
 //    StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
 //
 //    CConfiguration configuration = CConfiguration.create();
@@ -225,12 +222,12 @@ public class FlowMonitorServerTest {
 //
 //    populateData();
 //
-//    FlowMonitorServer server = new FlowMonitorServer(handler, callback);
+//    MetricsServer server = new MetricsServer(handler, callback);
 //    server.start(configuration);
 //
 //    Thread.sleep(5000);
 //
-//    FlowMonitorClient client = new FlowMonitorClient(configuration);
+//    MetricsClient client = new MetricsClient(configuration);
 //    String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
 //    Assert.assertNotNull(definition);
 //    client.close();
@@ -243,7 +240,7 @@ public class FlowMonitorServerTest {
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, "localhost:2181");
 
-    FlowMonitorClient client = new FlowMonitorClient(configuration);
+    MetricsClient client = new MetricsClient("localhost", 45002);
     List<FlowState> states = client.getFlows("demo");
     List<FlowRun> runs = client.getFlowHistory("demo", "XYZ", "targetting");
     String definition = client.getFlowDefinition("demo", "XYZ", "targetting", "");
@@ -251,8 +248,9 @@ public class FlowMonitorServerTest {
   }
 
   private void populateData() throws Exception {
-    myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
+    //myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
 
+    myConnection = DriverManager.getConnection("jdbc:hsqldb:mem:fmdb", "sa", "");
     clearFlowStateTable();
     addPointToFlowStateTable(1, "demo", "ABC", null, "targetting", "", StateChangeType.DEPLOYED);
     addPointToFlowStateTable(2, "demo", "XYZ", null, "targetting", "", StateChangeType.DEPLOYED);
@@ -290,6 +288,8 @@ public class FlowMonitorServerTest {
     addPointToFlowStateTable(25, "demo", "ABC", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
     addPointToFlowStateTable(26, "demo", "EFG", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
     addPointToFlowStateTable(27, "demo", "UVW", null, "targetting", "{\"meta\":{\"name\":\"test\",\"email\":\"me@continuuity.com\",\"app\":\"personalization\"},\"flowlets\":[{\"name\":\"A1\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A2\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":1,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0},{\"name\":\"A3\",\"classname\":\"com.continuuity.flow.flowlet.api.Flowlet\",\"instances\":2,\"resource\":{\"cpu\":1,\"memory\":512,\"uplink\":1,\"downlink\":1},\"id\":0}],\"connections\":[{\"from\":{\"flowlet\":\"A1\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A2\",\"stream\":\"in\"}},{\"from\":{\"flowlet\":\"A2\",\"stream\":\"out\"},\"to\":{\"flowlet\":\"A3\",\"stream\":\"in\"}}],\"streams\":{}}", StateChangeType.DEPLOYED);
+
+
   }
   private void clearFlowStateTable() {
     String sql = "DELETE FROM flow_state";

@@ -2,7 +2,7 @@ package com.continuuity.metrics.service;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.service.AbstractRegisteredService;
+import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
@@ -29,19 +29,19 @@ import java.util.concurrent.Executors;
  *
  *
  */
-class FlowMonitorRegisteredService extends AbstractRegisteredService {
-  private static final Logger Log = LoggerFactory.getLogger(FlowMonitorRegisteredService.class);
+public class MetricsRegisteredServer extends AbstractRegisteredServer implements MetricsServer {
+  private static final Logger Log = LoggerFactory.getLogger(MetricsRegisteredServer.class);
   private static final String STATE_CHANGE_QUEUE = "/continuuity/system/queue/statechange";
   private THsHaServer server;
   private CuratorFramework client;
   private ExecutorService executorService;
-  private final FlowMonitorHandler handler;
+  private final MetricsHandler handler;
   private final StateChangeCallback callback;
   private StateChangeListener listener;
 
   @Inject
-  public FlowMonitorRegisteredService(FlowMonitorHandler handler, StateChangeCallback callback) {
-    setServiceName("flow-monitor");
+  public MetricsRegisteredServer(MetricsHandler handler, StateChangeCallback callback) {
+    setServerName("flow-monitor");
     this.handler = handler;
     this.callback = callback;
   }
@@ -63,7 +63,7 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
   }
 
   /**
-   * Should be implemented by the class extending {@link com.continuuity.common.service.AbstractRegisteredService} to stop the service.
+   * Should be implemented by the class extending {@link com.continuuity.common.service.AbstractRegisteredServer} to stop the service.
    */
   @Override
   protected void stop() {
@@ -108,7 +108,7 @@ class FlowMonitorRegisteredService extends AbstractRegisteredService {
         Constants.DEFAULT_FLOW_MONITOR_SERVER_THREADS);
       int threads = Integer.valueOf(threadCntProperty);
 
-      FlowMonitorImpl serviceImpl = new FlowMonitorImpl(handler);
+      MetricsImpl serviceImpl = new MetricsImpl(handler);
       THsHaServer.Args serverArgs =
         new THsHaServer
           .Args(new TNonblockingServerSocket(port))

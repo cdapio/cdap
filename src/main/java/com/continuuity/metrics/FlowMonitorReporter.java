@@ -2,7 +2,7 @@ package com.continuuity.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.metrics.service.FlowMonitorClient;
+import com.continuuity.metrics.service.MetricsClient;
 import com.continuuity.metrics.stubs.FlowMetric;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.*;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class FlowMonitorReporter extends AbstractPollingReporter implements MetricProcessor<String> {
   private static final Logger Log = LoggerFactory.getLogger(FlowMonitorReporter.class);
   private final MetricPredicate predicate;
-  private FlowMonitorClient client;
+  private MetricsClient client;
   private boolean hasConnected = false;
 
   /**
@@ -54,7 +54,7 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
     super(Metrics.defaultRegistry(), "flow-monitor-reporter");
     this.predicate = MetricPredicate.ALL;
     try {
-      this.client = new FlowMonitorClient(configuration);
+      this.client = new MetricsClient(configuration);
       hasConnected = true;
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to connect to flow monitor. Reason : {}.", e.getMessage());

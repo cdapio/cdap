@@ -17,14 +17,14 @@ import java.util.Map;
  *
  *
  */
-class SQLFlowMonitorHandler implements FlowMonitorHandler {
-  private static final Logger Log = LoggerFactory.getLogger(SQLFlowMonitorHandler.class);
+public class SQLMetricsHandler implements MetricsHandler {
+  private static final Logger Log = LoggerFactory.getLogger(SQLMetricsHandler.class);
   private final String url;
   private final Connection connection;
   private volatile boolean running;
 
   @Inject
-  public SQLFlowMonitorHandler(@Named("Flow Monitor JDBC URL") final String url) throws SQLException {
+  public SQLMetricsHandler(@Named("Flow Monitor JDBC URL") final String url) throws SQLException {
     this.url = url;
     connection = DriverManager.getConnection(url, "sa", "");
     initialization();

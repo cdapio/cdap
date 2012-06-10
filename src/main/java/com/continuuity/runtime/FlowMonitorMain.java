@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.options.Option;
 import com.continuuity.common.options.OptionsParser;
-import com.continuuity.common.service.RegisteredService;
+import com.continuuity.metrics.service.MetricsServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
@@ -29,8 +29,8 @@ public class FlowMonitorMain {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
       }
 
-      Injector injector = Guice.createInjector(DIModules.getFileHSQLBindings());
-      RegisteredService service = injector.getInstance(RegisteredService.class);
+      Injector injector = Guice.createInjector(new MetricsRuntime().getSingleNode());
+      MetricsServer service = injector.getInstance(MetricsServer.class);
       service.start(args, conf);
     } catch (Exception e) {
       Log.error("Server failed to start. Reason : {}", e.getMessage());

@@ -18,7 +18,7 @@ import java.sql.SQLException;
  * On callback, the {@link #process(com.continuuity.observer.StateChangeData)} gets called with {@link com.continuuity.observer.StateChangeData} that contains
  * information for the state of the flow.
  */
-class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
+public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   private static final Logger Log = LoggerFactory.getLogger(SQLStateChangeSyncer.class);
   private final Connection connection;
 

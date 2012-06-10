@@ -4,8 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.options.Option;
 import com.continuuity.common.options.OptionsParser;
-import com.continuuity.metrics.service.FlowMonitorClient;
-import com.continuuity.metrics.stubs.FlowMetric;
 import com.continuuity.observer.StateChangeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +12,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Random;
 
 /**
  * A Test client for generating data - nothing fancy here.

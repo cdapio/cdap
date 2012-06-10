@@ -9,10 +9,10 @@ import java.util.List;
  *
  *
  */
-class FlowMonitorImpl implements FlowMonitor.Iface {
-  private final FlowMonitorHandler handler;
+class MetricsImpl implements FlowMonitor.Iface {
+  private final MetricsHandler handler;
 
-  public FlowMonitorImpl(FlowMonitorHandler handler) {
+  public MetricsImpl(MetricsHandler handler) {
     this.handler = handler;
   }
 
