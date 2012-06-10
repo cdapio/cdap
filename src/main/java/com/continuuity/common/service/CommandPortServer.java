@@ -14,12 +14,12 @@ import java.net.Socket;
 import java.util.Map;
 
 /**
- * CommandPortServer is simple TCP server that is embedded into {@link AbstractRegisteredService}
+ * CommandPortServer is simple TCP server that is embedded into {@link AbstractRegisteredServer}
  * for managing some parts of service through command line. It's not multi-client. It supports
  * only one client to be connected at any given point in time. So, please do not try to use it
  * as service provider. You can attach listeners to the commands. When the command is received
  * it is dispatched to appropriate listener. By default, "help" has a default listener.
- * This works in conjunction with {@link AbstractRegisteredService} only for now.
+ * This works in conjunction with {@link AbstractRegisteredServer} only for now.
  *
  * This is how it can be used :
  * <code>
@@ -58,7 +58,7 @@ public class CommandPortServer {
   /**
    * Name of service that uses command port.
    */
-  private final String serviceName;
+  private final String serverName;
 
   /**
    * Specifies whether command port should be running or no.
@@ -68,15 +68,15 @@ public class CommandPortServer {
   /**
    * Creates an instance of CommandPortServer.
    *
-   * @param serviceName name of the service that uses command port.
+   * @param serverName name of the service that uses command port.
    */
-  public CommandPortServer(String serviceName) throws IOException {
-    this.serviceName = serviceName;
+  public CommandPortServer(String serverName) throws IOException {
+    this.serverName = serverName;
     serverSocket = new ServerSocket(0, 0, InetAddress.getByName("localhost"));
     Log.info(String.format("Command server listening on %s",
       serverSocket.getLocalSocketAddress().toString()));
     port = serverSocket.getLocalPort();
-    helpString = String.format("%s command port\n", serviceName);
+    helpString = String.format("%s command port\n", serverName);
   }
 
   /**

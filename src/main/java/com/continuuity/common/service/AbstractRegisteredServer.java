@@ -14,15 +14,15 @@ import ch.qos.logback.classic.Logger;
 import java.io.IOException;
 
 /**
- * This abstract class makes it easy to build a registered service.
+ * This abstract class makes it easy to build a registered server.
  * <p>
- *   RegisteredService provides an ability to register the service with the central
- *   service discovery system and also provides a command port that can be accessed
- *   locally to investigate the service.
+ *   Server provides an ability to register the server with the central
+ *   server discovery system and also provides a command port that can be accessed
+ *   locally to investigate the server.
  * </p>
  */
-public abstract class AbstractRegisteredService implements RegisteredService {
-  private static final Logger Log = (Logger)LoggerFactory.getLogger(AbstractRegisteredService.class);
+public abstract class AbstractRegisteredServer {
+  private static final Logger Log = (Logger)LoggerFactory.getLogger(AbstractRegisteredServer.class);
 
   /**
    * Service registration client.
@@ -30,9 +30,9 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   private ServiceDiscoveryClient client;
 
   /**
-   * Name of the service
+   * Name of the server
    */
-  private String service = "named-but-notnamed";
+  private String server = "NA";
 
   /**
    * Command port cmdPortServer associated with the service.
@@ -40,26 +40,26 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   private CommandPortServer cmdPortServer;
 
   /**
-   * Service thread returned from starting of the service. The service thread is actually managed
-   * by the AbstractRegisteredService.
+   * Server thread returned from starting of the service. The service thread is actually managed
+   * by the AbstractRegisteredServer.
    */
-  private Thread serviceThread;
+  private Thread serverThread;
 
   /**
-   * Set service name
+   * Set server name
    *
-   * @param service name
+   * @param server name
    */
-  public void setServiceName(String service) {
-    this.service = service;
+  public void setServerName(String server) {
+    this.server = server;
   }
 
   /**
    * Returns name of the service
    * @return name of the service.
    */
-  public String getServiceName() {
-    return this.service;
+  public String getServerName() {
+    return this.server;
   }
 
   /**
@@ -80,14 +80,14 @@ public abstract class AbstractRegisteredService implements RegisteredService {
    *
    * @param args arguments for the service
    * @param conf instance of configuration object.
-   * @throws RegisteredServiceException
+   * @throws ServerException
    */
-  public final void start(String[] args, CConfiguration conf) throws RegisteredServiceException {
+  public final void start(String[] args, CConfiguration conf) throws ServerException {
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     Preconditions.checkNotNull(zkEnsemble);
 
     try {
-      cmdPortServer = new CommandPortServer(service);
+      cmdPortServer = new CommandPortServer(server);
 
       addCommandListener("stop", "Stops the service", new CommandPortServer.CommandListener() {
         @Override
@@ -146,28 +146,28 @@ public abstract class AbstractRegisteredService implements RegisteredService {
       ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
         serviceArgs = configure(args, conf);
       if(serviceArgs == null) {
-        throw new RegisteredServiceException("configuration of service failed.");
+        throw new ServerException("configuration of service failed.");
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(service, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
+      client.register(server, serviceArgs.getSecond().intValue(), serviceArgs.getFirst());
 
-      serviceThread = start();
-      if(serviceThread == null) {
-        throw new RegisteredServiceException("Thread returned from start is null");
+      serverThread = start();
+      if(serverThread == null) {
+        throw new ServerException("Thread returned from start is null");
       }
-      serviceThread.start();
+      serverThread.start();
       cmdPortServer.serve();
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
       stop(true);
-      throw new RegisteredServiceException("Unable to register the cmdPortServer with discovery service");
+      throw new ServerException("Unable to register the cmdPortServer with discovery service");
     } catch (CommandPortServer.CommandPortException e) {
       Log.warn("Error starting the command port service. Service not started. Reason : {}", e.getMessage());
-      throw new RegisteredServiceException("Could not start command port service. Reason : " + e.getMessage());
+      throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
     } catch (IOException e) {
       Log.error("Error starting the command port service. Reason : {}", e.getMessage());
-      throw new RegisteredServiceException("Could not start command port service. Reason : " + e.getMessage());
+      throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
     }
   }
 
@@ -193,7 +193,7 @@ public abstract class AbstractRegisteredService implements RegisteredService {
   protected abstract Thread start();
 
   /**
-   * Should be implemented by the class extending {@link AbstractRegisteredService} to stop the service.
+   * Should be implemented by the class extending {@link AbstractRegisteredServer} to stop the service.
    */
   protected abstract void stop();
 
