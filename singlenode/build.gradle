@@ -47,3 +47,12 @@ applicationDistribution.from("$buildDir/docs") {
     into "docs"
 }
 
+/**
+ * Hack the start script launch directory - remain in $APP_HOME
+ */
+tasks.startScripts {
+    doLast {
+        def scriptFile = file "${outputDir}/${applicationName}"
+        scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
+    }
+}
