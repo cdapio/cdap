@@ -4,6 +4,7 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -191,6 +192,9 @@ public class SingleNodeMain {
       new InMemoryZookeeper(
         Integer.parseInt(myConfiguration.get("zookeeper.port")),
         new File(myConfiguration.get("zookeeper.datadir")) );
+
+    /** Set the connection string about where ZK server started on */
+    myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
   }
 
 
