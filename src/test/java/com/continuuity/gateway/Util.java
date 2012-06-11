@@ -16,6 +16,7 @@ import org.apache.flume.event.SimpleEvent;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -323,8 +324,8 @@ public class Util {
 	 * @param value The value
 	 * @throws Exception if an exception occurs
 	 */
-	static void testKeyValue(OperationExecutor executor,
-										String baseUri, byte[] key, byte[] value) throws Exception {
+	static void writeAndGet(OperationExecutor executor,
+													String baseUri, byte[] key, byte[] value) throws Exception {
 		// add the key/value to the data fabric
 		Write write = new Write(key, value);
 		List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
@@ -362,16 +363,16 @@ public class Util {
 	/**
 	 * Verify that a given value can be retrieved for a given key via http GET request.
 	 * This converts the key and value from String to bytes and calls the byte-based
-	 * method testKeyValue.
+	 * method writeAndGet.
 	 * @param executor the operation executor to use for access to data fabric
 	 * @param baseUri The URI for get request, without the key
 	 * @param key The key
 	 * @param value The value
 	 * @throws Exception if an exception occurs
 	 */
-	static void testKeyValue(OperationExecutor executor,
-										String baseUri, String key, String value) throws Exception {
-		testKeyValue(executor, baseUri, key.getBytes(), value.getBytes());
+	static void writeAndGet(OperationExecutor executor,
+													String baseUri, String key, String value) throws Exception {
+		writeAndGet(executor, baseUri, key.getBytes("ISO8859_1"), value.getBytes("ISO8859_1"));
 	}
 
 	/**
@@ -383,6 +384,38 @@ public class Util {
 		HttpResponse response = client.execute(new HttpGet(url));
 		client.getConnectionManager().shutdown();
 		return response.getStatusLine().getStatusCode();
+	}
+
+	/**
+	 * Send a GET request to the given URL and return the HTTP status
+	 * @param baseUrl the baseURL
+	 * @param key the key to delete
+	 */
+	public static int sendGetRequest(String baseUrl, String key) throws Exception {
+		String urlKey = URLEncoder.encode(key, "ISO8859_1");
+		return sendGetRequest(baseUrl + urlKey);
+	}
+
+	/**
+	 * Send a DELETE request to the given URL and return the HTTP status
+	 * @param url the URL to delete
+	 */
+	public static int sendDeleteRequest(String url) throws Exception {
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(new HttpDelete(url));
+		client.getConnectionManager().shutdown();
+		return response.getStatusLine().getStatusCode();
+	}
+
+	/**
+	 * Send a DELETE request to the given URL for the given key and return the HTTP status
+	 * @param baseUrl the baseURL
+	 * @param key the key to delete
+	 */
+	public static int sendDeleteRequest(String baseUrl, String key) throws Exception {
+		String urlKey = URLEncoder.encode(key, "ISO8859_1");
+		String url = baseUrl + urlKey;
+		return sendDeleteRequest(url);
 	}
 
 	/**

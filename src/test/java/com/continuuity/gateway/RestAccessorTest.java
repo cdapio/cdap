@@ -9,6 +9,7 @@ import com.google.inject.Injector;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,9 @@ public class RestAccessorTest {
 
 	/** this is the executor for all access to the data fabric */
 	private OperationExecutor executor;
+
+	/** the rest accessor we will use in the tests */
+	private RestAccessor accessor;
 
 	/**
 	 * Set up in-memory data fabric
@@ -34,14 +38,30 @@ public class RestAccessorTest {
 	} // end of setupGateway
 
 	/**
-	 * Create a new rest accessor with a given name
+	 * Create a new rest accessor with a given name and parameters
 	 * @param name The name for the accessor
-	 * @return the accessor
+	 * @param prefix The path prefix for the URI
+	 * @param middle The path middle for the URI
+	 * @return the accessor's base URL for REST requests
 	 */
-	RestAccessor newAccessor(String name) {
-		RestAccessor accessor = new RestAccessor();
-		accessor.setName(name);
-		return accessor;
+	String setupAccessor(String name, String prefix, String middle) throws Exception {
+		// bring up a new accessor
+		RestAccessor restAccessor = new RestAccessor();
+		restAccessor.setName(name);
+		// find a free port
+		int port = Util.findFreePort();
+		// configure it
+		CConfiguration configuration = new CConfiguration();
+		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
+		restAccessor.configure(configuration);
+		restAccessor.setExecutor(this.executor);
+		// start the accessor
+		restAccessor.start();
+		// all fine
+		this.accessor = restAccessor;
+		return "http://localhost:" + port + prefix + middle + "default/";
 	}
 
 	/**
@@ -57,143 +77,117 @@ public class RestAccessorTest {
 	 */
 	@Test
 	public void testGetAccess() throws Exception {
-		// some random configuration values
-		String name = "restor";
-		String prefix = "/v0.1";
-		String path = "/table/";
-		int port = Util.findFreePort();
+		String uri = setupAccessor("restor", "/v0.1", "/table/");
 
-		// configure accessor
-		CConfiguration configuration = new CConfiguration();
-		configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
-		Accessor accessor = newAccessor(name);
-		accessor.configure(configuration);
-		accessor.setExecutor(this.executor);
-
-		// start the accessor
-		accessor.start();
-
-		// now perform various requests
-		String uri = "http://localhost:" + port + prefix + path + "default/";
-
-		Util.testKeyValue(this.executor, uri, "x", "y");
-		Util.testKeyValue(this.executor, uri, "mt", "");
-		Util.testKeyValue(this.executor, uri, "blank in the key", "some string");
-		Util.testKeyValue(this.executor, uri, "cat's name?", "pfunk!");
-		Util.testKeyValue(this.executor, uri, "special-/?@:%+key", "moseby");
-		Util.testKeyValue(this.executor, uri, "nønäscîi", "value\u0000with\u0000nulls");
-		Util.testKeyValue(this.executor, uri, "key\u0000with\u0000nulls", "foo");
+		// write value via executor, then retrieve it back via REST
+		Util.writeAndGet(this.executor, uri, "x", "y");
+		Util.writeAndGet(this.executor, uri, "mt", "");
+		Util.writeAndGet(this.executor, uri, "blank in the key", "some string");
+		Util.writeAndGet(this.executor, uri, "cat's name?", "pfunk!");
+		Util.writeAndGet(this.executor, uri, "special-/?@:%+key", "moseby");
+		Util.writeAndGet(this.executor, uri, "nønäscîi", "value\u0000with\u0000nulls");
+		Util.writeAndGet(this.executor, uri, "key\u0000with\u0000nulls", "foo");
 
 		// shut it down
-		accessor.stop();
+		this.accessor.stop();
 	}
 
-	/** This tests that the accessor returns the correct HTTP codes for invalid requests */
+	/**
+	 * This tests that deletes work: A key that exists can be deleted, and another attempt
+	 * to delete the same key fails with 404 Not Found.
+	 * @throws Exception if anything goes wrong
+	 */
+	@Test @Ignore
+	public void testDelete() throws Exception {
+		// configure an accessor
+		String uri = setupAccessor("access.rest", "/", "table/");
+		int port = this.accessor.getHttpConfig().getPort();
+
+		// write a value and verify it can be read
+		String key = "to be deleted";
+		Util.writeAndGet(this.executor, uri, key, "foo");
+		// now delete it
+		Assert.assertEquals(200, Util.sendDeleteRequest(uri, key));
+		// verify that it's gone
+		Assert.assertEquals(200, Util.sendGetRequest(uri, key));
+		// and verify that a repeated delete fails
+		Assert.assertEquals(404, Util.sendDeleteRequest(uri, key));
+
+		this.accessor.stop();
+	}
+
+	/**
+	 * This tests that the accessor returns the correct HTTP codes for invalid requests
+	 * @throws Exception if anything goes wrong
+	 */
 	@Test
 	public void testBadRequests() throws Exception {
 		// configure an accessor
-		final String name = "access.rest";
-		final String prefix = "/continuuity";
-		final String path = "/table/";
-		final int port = Util.findFreePort();
-
-		CConfiguration configuration = new CConfiguration();
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
-		configuration.setInt(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PORT),port);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_MIDDLE), path);
-
-		// create, configure, and start Accessor
-		RestAccessor accessor = new RestAccessor();
-		accessor.setName(name);
-		accessor.setExecutor(this.executor);
-		accessor.configure(configuration);
-		accessor.start();
-
-		// the correct URL would be http://localhost:<port>/continuuity/table/
-		String baseUrl = accessor.getHttpConfig().getBaseUrl() + "default/";
+		String prefix = "/continuuity", middle = "/table/";
+		String baseUrl = setupAccessor("access.rest", prefix, middle);
+		int port = this.accessor.getHttpConfig().getPort();
 
 		// test one valid key
-		Util.testKeyValue(this.executor, baseUrl, "x", "y");
+		Util.writeAndGet(this.executor, baseUrl, "x", "y");
 
 		// submit a request without prefix in the path -> 404 Not Found
 		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/somewhere"));
-		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/data"));
-
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + "/data"));
 		// submit a request with correct prefix but no table -> 404 Not Found
-		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/table/x"));
-
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
 		// submit a request with correct prefix but non-existent table -> 404 Not Found
-		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/continuuity/table/other/x"));
-
+		Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
 		// submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
 		Assert.assertEquals(405, Util.sendPostRequest(baseUrl));
-
 		// submit a GET without key -> 404 Not Found
 		Assert.assertEquals(404, Util.sendGetRequest(baseUrl));
-
 		// submit a GET with existing key -> 200 OK
 		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
-
 		// submit a GET with non-existing key -> 404 Not Found
 		Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "does.not.exist"));
-
 		// submit a GET with existing key but more after that in the path -> 404 Not Found
 		Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "x/y/z"));
-
 		// submit a GET with existing key but with query part -> 501 Not Implemented
 		Assert.assertEquals(501, Util.sendGetRequest(baseUrl + "x?query=none"));
 
+		// test some bad delete requests
+		// submit a request without the correct prefix in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port));
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + "/"));
+		// no table
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
+		// table without key
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
+		// unknown table
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
+		Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+		// no key
+		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl));
+		// non-existent key
+		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
+		// correct key but more in the path
+		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/"));
+		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/a"));
+		// correct key but unsupported query -> 501 Not Implemented
+		Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "x?force=true"));
+
 		// and shutdown
-		accessor.stop();
+		this.accessor.stop();
 	}
 
 	/** This tests that the accessor can be stopped and restarted */
 	@Test
 	public void testStopRestart() throws Exception {
 		// configure an accessor
-		final String name = "access.rest";
-		final String prefix = "/continuuity";
-		final String path = "/table/";
-		final int port = Util.findFreePort();
-
-		CConfiguration configuration = new CConfiguration();
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
-		configuration.setInt(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PORT),port);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_MIDDLE), path);
-
-		// create, configure, and start Accessor
-		RestAccessor accessor = new RestAccessor();
-		accessor.setName(name);
-		accessor.setExecutor(this.executor);
-		accessor.configure(configuration);
-		accessor.start();
-
-		// the correct URL would be http://localhost:<port>/continuuity/table/
-		String baseUrl = accessor.getHttpConfig().getBaseUrl() + "default/";
-
+		String baseUrl = setupAccessor("access.rest", "/continuuity", "/table/");
 		// test one valid key
-		Util.testKeyValue(this.executor, baseUrl, "x", "y");
-
+		Util.writeAndGet(this.executor, baseUrl, "x", "y");
 		// submit a GET with existing key -> 200 OK
 		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
-
 		// stop the connector
-		accessor.stop();
-
+		this.accessor.stop();
 		// verify that GET fails now. Should throw an exception
 		try {
 			Util.sendGetRequest(baseUrl + "x");
@@ -202,12 +196,10 @@ public class RestAccessorTest {
 			// this is expected
 		}
 		// restart the connector
-		accessor.start();
-
+		this.accessor.start();
 		// submit a GET with existing key -> 200 OK
 		Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
-
 		// and finally shut down
-		accessor.stop();
+		this.accessor.stop();
 	}
 }

@@ -1,5 +1,6 @@
 package com.continuuity.gateway.accessor;
 
+import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Read;
 import com.continuuity.gateway.util.NettyRestHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -24,7 +25,7 @@ public class RestHandler extends NettyRestHandler {
 			.getLogger(RestHandler.class);
 
 	/** The allowed methods for this handler */
-	HttpMethod[] allowedMethods = { HttpMethod.GET };
+	HttpMethod[] allowedMethods = { HttpMethod.GET, HttpMethod.DELETE };
 
 	/**
 	 * Will help validate URL paths, and also has the name of the connector and
@@ -59,7 +60,7 @@ public class RestHandler extends NettyRestHandler {
 
 		// we only support get requests for now
 		HttpMethod method = request.getMethod();
-		if (method != HttpMethod.GET) {
+		if (method != HttpMethod.GET && method != HttpMethod.DELETE) {
 			LOG.debug("Received a " + method + " request, which is not supported");
 			respondNotAllowed(message.getChannel(), allowedMethods);
 			return;
@@ -92,22 +93,50 @@ public class RestHandler extends NettyRestHandler {
 			return;
 		}
 		key = URLDecoder.decode(key, "ISO8859_1");
-		LOG.debug("Received GET request for key '" + key + "'.");
-		// ignore the content of the request - this is a GET
+		LOG.debug("Received " + method + " request for key '" + key + "'.");
+		byte[] keyBinary = key.getBytes("ISO8859_1");
+
+		// ignore the content of the request - this is a GET or DELETE
 		// get the value from the data fabric
-		byte[] value;
-		try {
-			Read read = new Read(key.getBytes("ISO8859_1"));
-			value = this.accessor.getExecutor().execute(read);
-		} catch (Exception e) {
-			LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
-			respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-			return;
+		if (method == HttpMethod.GET) {
+			byte[] value;
+			try {
+				Read read = new Read(keyBinary);
+				value = this.accessor.getExecutor().execute(read);
+			} catch (Exception e) {
+				LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
+				respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+				return;
+			}
+			if (value == null) {
+				respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+			} else {
+				respondSuccess(message.getChannel(), request, value);
+			}
 		}
-		if (value == null) {
-			respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-		} else {
-			respondSuccess(message.getChannel(), request, value);
+		else if (method == HttpMethod.DELETE) {
+			try {
+				// first perform a Read to determine whether the key exists
+				Read read = new Read(keyBinary);
+				byte[] value = this.accessor.getExecutor().execute(read);
+				if (value == null) {
+					// key does not exist -> Not Found
+					respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+					return;
+				}
+				Delete delete = new Delete(keyBinary);
+				if (this.accessor.getExecutor().execute(delete)) {
+					// deleted successfully
+					respondSuccess(message.getChannel(), request, null);
+				} else {
+					// something went wrong, internal error
+					respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+				}
+			} catch (Exception e) {
+				// something went wrong, internal error
+				LOG.error("Error deleting value for key '" + key + "': " + e.getMessage() + ".", e);
+				respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+			}
 		}
 	}
 

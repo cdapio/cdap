@@ -84,7 +84,7 @@ public class GatewayRestAccessorTest {
 
 		// Send some REST events
 		for (int i = 0; i < valuesToGet; i++) {
-			Util.testKeyValue(this.executor,
+			Util.writeAndGet(this.executor,
 					"http://localhost:" + port + prefix + path + "default/",
 					"key" + i, "value" + i);
 		}
