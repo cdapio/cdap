@@ -12,7 +12,7 @@
             <level>DEBUG</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>50</maxIndex>
+            <maxIndex>10</maxIndex>
             <FileNamePattern>logs/bigflow.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">

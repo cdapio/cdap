@@ -1,12 +1,8 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
-import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.ImmutablePair;
-import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 
@@ -20,7 +16,7 @@ public class WebCloudAppService implements Server {
 
     // Create a new Process
     ProcessBuilder builder =
-      new ProcessBuilder("../web-cloud-app/build/bin/node",
+      new ProcessBuilder("../web-cloud-app/bin/node",
         "../web-cloud-app/build/server/main.js");
 
     try {

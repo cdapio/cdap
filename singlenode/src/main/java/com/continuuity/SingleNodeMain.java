@@ -105,6 +105,20 @@ public class SingleNodeMain {
       e.printStackTrace();
     }
 
+    if (theOverlord != null) {
+      try {
+
+        System.out.println(" Starting Metrics Service");
+        theOverlord.start(null, myConfiguration);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      throw new IllegalStateException(
+        "Unable to start, Metrics service is null");
+    }
+
     if (theGateway != null) {
       try {
 
@@ -147,21 +161,9 @@ public class SingleNodeMain {
         "Unable to start, FlowManager service is null");
     }
 
-    if (theOverlord != null) {
-      try {
 
-        System.out.println(" Starting Metrics Service");
-        theOverlord.start(null, myConfiguration);
 
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, Metrics service is null");
-    }
-
-    /*try {
+    try {
 
       System.out.println(" Starting Monitoring Webapp");
       theWebApp = new WebCloudAppService();
@@ -169,7 +171,7 @@ public class SingleNodeMain {
 
     } catch (Exception e) {
       e.printStackTrace();
-    }     */
+    }
 
 
   } // end of bootStrapServices
