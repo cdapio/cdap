@@ -31,6 +31,18 @@ public class Constants {
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = "2";
 
   /**
+   * Configuration key names used by flow manager
+   */
+  public static final String CFG_FLOW_MANAGER_SERVER_PORT = "flow.manager.server.port";
+  public static final String CFG_FLOW_MANAGER_SERVER_THREADS = "flow.manager.server.threads";
+
+  /**
+   * Default constants defined for flow manager.
+   */
+  public static final String DEFAULT_FLOW_MANAGER_SERVER_PORT = "45001";
+  public static final String DEFAULT_FLOW_MANAGER_SERVER_THREADS = "2";
+
+  /**
    * Configuration key names used flow monitor.
    */
   public static final String CFG_FLOW_MONITOR_SERVER_PORT = "flow.monitor.server.port";
