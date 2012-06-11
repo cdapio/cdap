@@ -40,7 +40,7 @@ public abstract class TestHBaseTTQueue extends TestTTQueue {
 //  }
 //
 //  @AfterClass
-//  public static void stopEmbeddedHBase() {
+//  public static void stopEmbeddedHBase() {  
 //    try {
 //      if (miniCluster != null) miniCluster.shutdown();
 //    } catch (Exception e) {
