@@ -79,8 +79,7 @@ public class GetValueByKeyTest {
 		Gateway gateway = new Gateway();
 		gateway.setExecutor(this.executor);
 		gateway.setConsumer(new Util.NoopConsumer());
-		gateway.configure(configuration);
-		gateway.start();
+		gateway.start(null, configuration);
 
 		// argument combinations that should return success
 		String[][] goodArgsList = {
@@ -127,6 +126,6 @@ public class GetValueByKeyTest {
 		}
 
 		// and shut down
-		gateway.stop();
+		gateway.stop(false);
 	}
 }

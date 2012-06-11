@@ -1,10 +1,12 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.consumer.EventWritingConsumer;
+import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -34,6 +36,9 @@ public class GatewayRestCollectorTest {
   // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
 
+  // This is the configuration object we'll use in the tests
+  CConfiguration myConfiguration;
+
 	private OperationExecutor executor;
 
 	/**
@@ -54,22 +59,27 @@ public class GatewayRestCollectorTest {
     port = Util.findFreePort();
 
     // Create and populate a new config object
-    CConfiguration configuration = new CConfiguration();
+    myConfiguration = new CConfiguration();
 
-    configuration.set(Constants.CONFIG_CONNECTORS, name);
-    configuration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
+    myConfiguration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());
-    configuration.setInt(Constants.buildConnectorPropertyName(name,
+    myConfiguration.setInt(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PORT),port);
-    configuration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name,
+    myConfiguration.set(Constants.buildConnectorPropertyName(name,
 				Constants.CONFIG_PATH_MIDDLE), path);
 
     // Now create our Gateway
     theGateway = new Gateway();
 		theGateway.setExecutor(this.executor);
-    theGateway.configure(configuration);
+
+    // Set up a basic consumer
+    Consumer theConsumer = new PrintlnConsumer();
+    theGateway.setConsumer(theConsumer);
+
+    theGateway.start(null, myConfiguration);
 
   } // end of setupGateway
 
@@ -88,7 +98,13 @@ public class GatewayRestCollectorTest {
 
     // Initialize and start the Gateway
     theGateway.setConsumer(eventWritingConsumer);
-    theGateway.start();
+
+    try {
+      theGateway.start(null, myConfiguration);
+    } catch (ServerException e) {
+      // We don't care about the reconfigure problem in this test
+      LOG.debug(e.getMessage());
+    }
 
     // Send some REST events and verify them
 		Util.sendRestEvents(port, prefix, path, stream, eventsToSend);
@@ -98,7 +114,7 @@ public class GatewayRestCollectorTest {
 		Util.consumeQueueAsEvents(this.executor, stream, name, eventsToSend);
 
 		// Stop the Gateway
-		theGateway.stop();
+		theGateway.stop(false);
 
 		// now switch the consumer to write the events as tuples
 		TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
@@ -106,7 +122,7 @@ public class GatewayRestCollectorTest {
 
 		// and restart the gateway
 		theGateway.setConsumer(tupleWritingConsumer);
-		theGateway.start();
+		theGateway.start(null, myConfiguration);
 
 		// Send some REST events and verify them
 		Util.sendRestEvents(port, prefix, path, stream, eventsToSend);
@@ -116,7 +132,7 @@ public class GatewayRestCollectorTest {
 		Util.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
 
 		// Stop the Gateway
-    theGateway.stop();
+    theGateway.stop(false);
 
 	}
 

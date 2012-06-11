@@ -1,6 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.service.Server;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ import java.util.List;
  *   <dd>This is currently not implemented.</dd>
  * </dl>
  */
-public class Gateway {
+public class Gateway implements Server {
 
   /**
    * This is our Logger instance
@@ -58,84 +60,13 @@ public class Gateway {
    */
 	private CConfiguration myConfiguration;
 
+
 	/**
 	 * Get the Gateway's current configuration
 	 * @return Our current Configuration
 	 */
 	public CConfiguration getConfiguration() {
 		return myConfiguration;
-	}
-
-	/**
-	 * Set the gateway's Configuration, then create and configure the connectors
-   *
-	 * @param configuration The Configuration object that contains the options
-	 *                      for the Gateway and all its connectors. This can not
-   *                      be null.
-   *
-   * @throws IllegalArgumentException If configuration argument is null.
-	 */
-	public void configure(CConfiguration configuration) {
-
-    if (configuration == null) {
-      throw new IllegalArgumentException("'configuration' argument was null");
-    }
-
-    LOG.info("Configuring Gateway..");
-
-    // Save the configuration so we can use it again later
-		myConfiguration = configuration;
-
-    // Retrieve the list of connectors that we will create
-		Collection<String> connectorNames = myConfiguration.
-				getStringCollection(Constants.CONFIG_CONNECTORS);
-
-    // For each Connector
-    for (String connectorName : connectorNames) {
-
-      // Retrieve the connector's Class
-			String connectorClassName = myConfiguration.get(
-          Constants.buildConnectorPropertyName(connectorName,
-							Constants.CONFIG_CLASSNAME));
-      // Has the user specified the Class? If not, skip this Connector
-			if (connectorClassName == null) {
-        LOG.error("No Class property defined for " + connectorName +
-            ". Can not create " + connectorName + ".");
-			} else {
-        // Instantiate a new Connector and then configure it
-        Connector newConnector;
-        try {
-          // Attempt to load the Class
-          newConnector =
-              (Connector)Class.forName(connectorClassName).newInstance();
-          // Tell it what it's called
-          newConnector.setName(connectorName);
-
-        } catch (Exception e) {
-          LOG.error("Cannot instantiate class " + connectorClassName + "(" +
-              e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
-          continue;
-        }
-
-        // Now try to configure the Connector
-        try {
-          newConnector.configure(myConfiguration);
-        } catch (Exception e) {
-          LOG.error("Error configuring connector '" + connectorName + "' (" +
-              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
-          continue;
-        }
-
-        // Add it to our Connector list
-				try {
-	        this.addConnector(newConnector);
-				} catch (Exception e) {
-					LOG.error("Error adding connector '" + connectorName + "' (" +
-							e.getMessage() + "). Skipping connector '" + connectorName + "'.");
-					// continue // unnecessary
-				}
-      }
-		}
 	}
 
 	/**
@@ -175,18 +106,24 @@ public class Gateway {
    * @throws Exception If there is no Consumer, or whatever Exception a
    * connector throws during start().
    */
-  public void start() throws Exception {
+  public void start(String[] args, CConfiguration conf) throws ServerException {
+
+    // Configure ourselves first
+    configure(conf);
 
     // Check we are in the correct state
 		if (this.consumer == null) {
-			Exception e = new Exception("Cannot start Gateway without a Consumer.");
-			LOG.error(e.getMessage());
-			throw e;
+			ServerException es =
+        new ServerException("Cannot start Gateway without a Consumer.");
+			LOG.error(es.getMessage());
+      throw es;
+
 		}
 		if (this.executor == null) {
-			Exception e = new Exception("Cannot start Gateway without an Operation Executor.");
-			LOG.error(e.getMessage());
-			throw e;
+      ServerException es =
+        new ServerException("Cannot start Gateway without an Operation Executor.");
+			LOG.error(es.getMessage());
+			throw es;
 		}
 
 		LOG.info("Gateway Starting up.");
@@ -207,7 +144,12 @@ public class Gateway {
 			else if (connector instanceof Accessor) {
 				((Accessor)connector).setExecutor(this.executor);
 			}
-      connector.start();
+
+      try {
+        connector.start();
+      } catch (Exception e) {
+        throw new ServerException(e.getMessage());
+      }
 
       LOG.info(" Started " + connector.getName() + " connector");
     }
@@ -217,13 +159,17 @@ public class Gateway {
    * Stop the gateway. This will first stop all our Connectors, and then stop
    * the Consumer.
    */
-  public void stop() throws Exception {
+  public void stop(boolean now) throws ServerException {
 
     LOG.info("Gateway Shutting down");
 
     // Stop all our connectors
     for (Connector connector : this.connectorList) {
-      connector.stop();
+      try {
+        connector.stop();
+      } catch (Exception e) {
+        throw new ServerException(e.getMessage());
+      }
       LOG.info(" " + connector.getName() + " stopped");
     }
 
@@ -260,6 +206,78 @@ public class Gateway {
 		LOG.info("Setting Operations Executor to " + executor.getClass().getName() + ".");
 		this.executor = executor;
 	}
+
+  /**
+   * Set the gateway's Configuration, then create and configure the connectors
+   *
+   * @param configuration The Configuration object that contains the options
+   *                      for the Gateway and all its connectors. This can not
+   *                      be null.
+   *
+   * @throws IllegalArgumentException If configuration argument is null.
+   */
+  private void configure(CConfiguration configuration) {
+
+    if (configuration == null) {
+      throw new IllegalArgumentException("'configuration' argument was null");
+    }
+
+    LOG.info("Configuring Gateway..");
+
+    // Save the configuration so we can use it again later
+    myConfiguration = configuration;
+
+    // Retrieve the list of connectors that we will create
+    Collection<String> connectorNames = myConfiguration.
+      getStringCollection(Constants.CONFIG_CONNECTORS);
+
+    // For each Connector
+    for (String connectorName : connectorNames) {
+
+      // Retrieve the connector's Class
+      String connectorClassName = myConfiguration.get(
+        Constants.buildConnectorPropertyName(connectorName,
+          Constants.CONFIG_CLASSNAME));
+      // Has the user specified the Class? If not, skip this Connector
+      if (connectorClassName == null) {
+        LOG.error("No Class property defined for " + connectorName +
+          ". Can not create " + connectorName + ".");
+      } else {
+        // Instantiate a new Connector and then configure it
+        Connector newConnector;
+        try {
+          // Attempt to load the Class
+          newConnector =
+            (Connector)Class.forName(connectorClassName).newInstance();
+          // Tell it what it's called
+          newConnector.setName(connectorName);
+
+        } catch (Exception e) {
+          LOG.error("Cannot instantiate class " + connectorClassName + "(" +
+            e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
+          continue;
+        }
+
+        // Now try to configure the Connector
+        try {
+          newConnector.configure(myConfiguration);
+        } catch (Exception e) {
+          LOG.error("Error configuring connector '" + connectorName + "' (" +
+            e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+          continue;
+        }
+
+        // Add it to our Connector list
+        try {
+          this.addConnector(newConnector);
+        } catch (Exception e) {
+          LOG.error("Error adding connector '" + connectorName + "' (" +
+            e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+          // continue // unnecessary
+        }
+      }
+    }
+  }
 
 	/**
 	 * Check whether a connector with the given name is already registered
