@@ -113,6 +113,8 @@ public class OmidTransactionalOperationExecutor
       ImmutablePair<ReadPointer,Long> pointer)
           throws OmidTransactionException {
 
+    if (writes.isEmpty()) return new BatchOperationResult(true, "Empty query");
+
     // Re-order operations (create a copy for now)
     List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes);
     Collections.sort(orderedWrites, new WriteOperationComparator());
