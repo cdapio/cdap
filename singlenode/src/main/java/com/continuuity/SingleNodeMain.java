@@ -103,8 +103,7 @@ public class SingleNodeMain {
       try {
 
         System.out.println(" Starting Gateway Service");
-        theGateway.configure(myConfiguration);
-        theGateway.start();
+        theGateway.start(null, myConfiguration);
 
       } catch (Exception e) {
         e.printStackTrace();
