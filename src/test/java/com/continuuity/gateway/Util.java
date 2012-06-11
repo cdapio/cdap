@@ -5,6 +5,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.flow.flowlet.api.Event;
+import com.continuuity.flow.flowlet.api.Tuple;
+import com.continuuity.flow.flowlet.core.TupleSerializer;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
@@ -190,6 +192,24 @@ public class Util {
 	}
 
 	/**
+	 * Verify that an tuple corresponds to an event of the form as created by createFlumeEvent or createHttpPost
+	 * @param tuple The tuple to verify
+	 * @param collectorName The name of the collector that the event was sent to
+	 * @param destination The name of the stream that the event was routed to
+	 * @param expectedNo The number of the event, it should be both in the messageNumber header and in the body.
+	 *                   If null, then this method checks whether the number in the header matches the body.
+	 */
+	static void verifyTuple(Tuple tuple, String collectorName, String destination, Integer expectedNo) {
+		Map<String,String> headers = tuple.get("headers");
+		Assert.assertNotNull(headers.get("messageNumber"));
+		int messageNumber = Integer.valueOf(headers.get("messageNumber"));
+		if (expectedNo != null) Assert.assertEquals(messageNumber, expectedNo.intValue());
+		if (collectorName != null) Assert.assertEquals(collectorName, headers.get(Constants.HEADER_FROM_COLLECTOR));
+		if (destination != null) Assert.assertEquals(destination, headers.get(Constants.HEADER_DESTINATION_STREAM));
+		Assert.assertArrayEquals(createMessage(messageNumber), (byte [])tuple.get("body"));
+	}
+
+	/**
 	 * A consumer that does nothing
 	 */
 	static class NoopConsumer extends Consumer {
@@ -228,8 +248,8 @@ public class Util {
 	 * @param eventsExpected How many events should be read
 	 * @throws Exception
 	 */
-	static void consumeQueue(OperationExecutor executor, String queueName,
-													 String collectorName, int eventsExpected) throws Exception {
+	static void consumeQueueAsEvents(OperationExecutor executor, String queueName,
+																	 String collectorName, int eventsExpected) throws Exception {
 		// one deserializer to reuse
 		EventSerializer deserializer = new EventSerializer();
 		// prepare the queue consumer
@@ -244,7 +264,44 @@ public class Util {
 			// deserialize and verify the event
 			Event event = deserializer.deserialize(result.getValue());
 			Util.verifyEvent(event, collectorName, queueName, null);
+			// message number should be in the header "messageNumber"
 			LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
+			// ack the event so that it disappers from the queue
+			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
+			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
+			operations.add(ack);
+			Assert.assertTrue(executor.execute(operations).isSuccess());
+		}
+	}
+
+	/**
+	 * Consume the tuples in a queue and verify that the are events as created by
+	 * createHttpPost() or createFlumeEvent()
+	 * @param executor The executor to use for access to the data fabric
+	 * @param queueName The name of the queue (stream) that the events were sent to
+	 * @param collectorName The name of the collector that received the events
+	 * @param tuplesExpected How many tuples should be read
+	 * @throws Exception
+	 */
+	static void consumeQueueAsTuples(OperationExecutor executor, String queueName,
+																	 String collectorName, int tuplesExpected) throws Exception {
+		// one deserializer to reuse
+		TupleSerializer deserializer = new TupleSerializer(false);
+		// prepare the queue consumer
+		QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+		QueueDequeue dequeue = new QueueDequeue(queueName.getBytes(), consumer, config);
+		for (int remaining = tuplesExpected; remaining > 0; --remaining) {
+			// dequeue one event and remember its ack pointer
+			DequeueResult result = executor.execute(dequeue);
+			Assert.assertTrue(result.isSuccess());
+			QueueEntryPointer ackPointer = result.getEntryPointer();
+			// deserialize and verify the event
+			Tuple tuple = deserializer.deserialize(result.getValue());
+			Util.verifyTuple(tuple, collectorName, queueName, null);
+			// message number should be in the header "messageNumber"
+			Map<String,String> headers = tuple.get("headers");
+			LOG.info("Popped one event, message number: " + headers.get("messageNumber"));
 			// ack the event so that it disappers from the queue
 			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
 			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);

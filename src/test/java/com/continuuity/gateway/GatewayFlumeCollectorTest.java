@@ -4,7 +4,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
-import com.continuuity.gateway.consumer.TransactionalConsumer;
+import com.continuuity.gateway.consumer.EventWritingConsumer;
+import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -77,26 +78,41 @@ public class GatewayFlumeCollectorTest {
 	@Test
 	public void testFlumeToQueue() throws Exception {
 
-    // Set up our consumer and queues
-		TransactionalConsumer consumer = new TransactionalConsumer();
-		consumer.setExecutor(this.executor);
-    // Initialize and start the Gateway
-    theGateway.setConsumer(consumer);
-    theGateway.start();
+		// Set up our consumer and queues
+		EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
+		eventWritingConsumer.setExecutor(this.executor);
 
-    // Send some events
+		// Initialize and start the Gateway
+		theGateway.setConsumer(eventWritingConsumer);
+		theGateway.start();
+
+		// Send some events
 		Util.sendFlumeEvents(port, stream, eventsToSend, batchSize);
+		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
+		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
+		Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
+		Util.consumeQueueAsEvents(this.executor, stream, name, eventsToSend);
 
-    // Stop the Gateway
-    theGateway.stop();
+		// Stop the Gateway
+		theGateway.stop();
 
-    // Did everything go as planned?
-		Assert.assertEquals(eventsToSend, consumer.eventsReceived());
-		Assert.assertEquals(eventsToSend, consumer.eventsSucceeded());
-		Assert.assertEquals(0, consumer.eventsFailed());
+		// now switch the consumer to write the events as tuples
+		TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
+		tupleWritingConsumer.setExecutor(this.executor);
 
-    // Clean out the queue
-		Util.consumeQueue(this.executor, stream, name, eventsToSend);
+		// and restart the gateway
+		theGateway.setConsumer(tupleWritingConsumer);
+		theGateway.start();
+
+		// Send some events
+		Util.sendFlumeEvents(port, stream, eventsToSend, batchSize);
+		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
+		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
+		Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
+		Util.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
+
+		// Stop the Gateway
+		theGateway.stop();
 	}
 
 } // end of GatewayFlumeCollectorTest

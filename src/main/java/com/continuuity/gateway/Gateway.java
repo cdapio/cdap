@@ -202,7 +202,7 @@ public class Gateway {
 			// For an accessor, set the operations executor for access to data fabric
       // TODO: This should probably be done in the addConnector method?
 			if (connector instanceof Collector) {
-	      ((Collector)connector).setConsumer(this.consumer);
+				((Collector)connector).setConsumer(this.consumer);
 			}
 			else if (connector instanceof Accessor) {
 				((Accessor)connector).setExecutor(this.executor);
