@@ -4,6 +4,7 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FAR.FARServer;
@@ -68,6 +69,11 @@ public class SingleNodeMain {
   private FlowManagerServer theFlowManager;
 
   /**
+   * This is the WebApp Service
+   */
+  private WebCloudAppService theWebApp;
+
+  /**
    * This is our universal configurations object.
    */
   private CConfiguration myConfiguration;
@@ -83,8 +89,8 @@ public class SingleNodeMain {
    */
   private void bootStrapServices() {
 
-    System.out.println("==============================================================" +
-      "==============");
+    System.out.println("====================================================" +
+      "========================");
     System.out.println(" Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All " +
       "Rights Reserved.");
     System.out.println("");
@@ -111,6 +117,20 @@ public class SingleNodeMain {
     } else {
       throw new IllegalStateException(
         "Unable to start, Gateway service is null");
+    }
+
+    if (theFARServer != null) {
+      try {
+
+        System.out.println(" Starting FlowArchive Service");
+        theFARServer.start(null, myConfiguration);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      throw new IllegalStateException(
+        "Unable to start, FlowArchive service is null");
     }
 
     if (theFlowManager != null) {
@@ -141,8 +161,15 @@ public class SingleNodeMain {
         "Unable to start, Metrics service is null");
     }
 
-    // TODO: Also, need to start web-cloud-app
+    /*try {
 
+      System.out.println(" Starting Monitoring Webapp");
+      theWebApp = new WebCloudAppService();
+      theWebApp.start(null, myConfiguration);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }     */
 
 
   } // end of bootStrapServices
