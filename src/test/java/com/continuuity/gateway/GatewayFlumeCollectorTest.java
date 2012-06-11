@@ -25,7 +25,7 @@ public class GatewayFlumeCollectorTest {
 
   // A set of constants we'll use in this test
 	static final String name = "collect.flume";
-	static final String stream = "foo";
+	static final String destination = "foo";
 	static final int batchSize = 4;
 	static final int eventsToSend = 10;
   static int port = 10000;
@@ -87,11 +87,11 @@ public class GatewayFlumeCollectorTest {
 		theGateway.start();
 
 		// Send some events
-		Util.sendFlumeEvents(port, stream, eventsToSend, batchSize);
+		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
 		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
 		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
 		Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
-		Util.consumeQueueAsEvents(this.executor, stream, name, eventsToSend);
+		Util.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
 
 		// Stop the Gateway
 		theGateway.stop();
@@ -105,11 +105,11 @@ public class GatewayFlumeCollectorTest {
 		theGateway.start();
 
 		// Send some events
-		Util.sendFlumeEvents(port, stream, eventsToSend, batchSize);
+		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
 		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
 		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
 		Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-		Util.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
+		Util.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
 
 		// Stop the Gateway
 		theGateway.stop();

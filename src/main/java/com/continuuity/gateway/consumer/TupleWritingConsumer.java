@@ -4,6 +4,7 @@ import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.flow.flowlet.core.TupleInternal;
@@ -62,10 +63,12 @@ public class TupleWritingConsumer extends Consumer {
 			}
 			String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
 			if (destination == null) {
-				LOG.debug("Enqueuing an event that has no destination. Using queue 'default' instead.");
+				LOG.debug("Enqueuing an event that has no destination. Using 'default' instead.");
 				destination = "default";
 			}
-			operations.add(new QueueEnqueue(destination.getBytes(), bytes));
+			// construct the stream URO to use for the data fabric
+			String queueURI = FlowStream.buildStreamURI(destination);
+			operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
 		}
 		BatchOperationResult result = this.executor.execute(operations);
 		if (!result.isSuccess()) {

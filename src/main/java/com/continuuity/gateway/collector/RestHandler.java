@@ -83,14 +83,25 @@ public class RestHandler extends NettyRestHandler {
 			return;
 		}
 
-		// does the path of the URL start with the correct prefix, and is it a single
-		// path component after that? Otherwise we will accept this request.
+		// does the path of the URL start with the correct prefix, and is it of the form
+		// <flowname> or <flowname</<streamname> after that? Otherwise we will not accept this request.
 		String destination = null;
 		String path = decoder.getPath();
 		if (path.startsWith(this.pathPrefix)) {
 			String resourceName = path.substring(this.pathPrefix.length());
-			if (resourceName.length() > 0 && !resourceName.contains("/")) {
-				destination = resourceName;
+			if (resourceName.length() > 0) {
+			 	int pos = resourceName.indexOf('/');
+				if (pos < 0) { // flowname
+					destination = resourceName;
+				} else {
+					if (pos + 1 == resourceName.length()) {
+						destination = resourceName.substring(pos);
+					}
+					pos = resourceName.indexOf('/', pos + 1);
+					if (pos < 0) { // flowname/streamname
+						destination = resourceName;
+					}
+				}
 			}
 		}
 		if (destination == null) {

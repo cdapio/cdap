@@ -20,7 +20,7 @@ public class RestCollectorTest {
 		String name = "rusty";
 		String prefix = "/continuuity";
 		String path = "/q/";
-		String stream = "pfunk";
+		String destination = "pfunk";
 		int port = Util.findFreePort();
 		// configure collector but don't start
 		CConfiguration configuration = new CConfiguration();
@@ -31,7 +31,7 @@ public class RestCollectorTest {
 		collector.configure(configuration);
 		collector.setConsumer(new Util.NoopConsumer());
 		// create an http post
-		HttpPost post = Util.createHttpPost(port, prefix, path, stream, 42);
+		HttpPost post = Util.createHttpPost(port, prefix, path, destination, 42);
 		try { // verify send fails before start()
 			Util.sendRestEvent(post);
 			Assert.fail("Exception expected when collector has not started");
@@ -56,7 +56,7 @@ public class RestCollectorTest {
 		String name = "other";
 		String prefix = "/data";
 		String path = "/stream/";
-		String stream = "foo";
+		String destination = "foo/bar";
 		int eventsToSend = 10;
 		int port = Util.findFreePort();
 		CConfiguration configuration = new CConfiguration();
@@ -65,13 +65,13 @@ public class RestCollectorTest {
 		configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
 		Collector collector = newCollector(name);
 		collector.configure(configuration);
-		collector.setConsumer(new Util.VerifyConsumer(15, name, stream));
+		collector.setConsumer(new Util.VerifyConsumer(15, name, destination));
 		collector.start();
-		Util.sendRestEvent(Util.createHttpPost(port, prefix, path, stream, 15));
+		Util.sendRestEvent(Util.createHttpPost(port, prefix, path, destination, 15));
 		collector.stop();
-		collector.setConsumer(new Util.VerifyConsumer(name, stream));
+		collector.setConsumer(new Util.VerifyConsumer(name, destination));
 		collector.start();
-		Util.sendRestEvents(port, prefix, path, stream, eventsToSend);
+		Util.sendRestEvents(port, prefix, path, destination, eventsToSend);
 		collector.stop();
 		Assert.assertEquals(eventsToSend, collector.getConsumer().eventsReceived());
 		Assert.assertEquals(eventsToSend, collector.getConsumer().eventsSucceeded());
@@ -105,22 +105,26 @@ public class RestCollectorTest {
 		collector.configure(configuration);
 		collector.start();
 
-		// the correct URL would be http://localhost:<port>/continuuity/stream/
+		// the correct URL would be http://localhost:<port>/continuuity/destination/
 		String baseUrl = collector.getHttpConfig().getBaseUrl();
+
+		// submit a POST with flow/ or flow/stream as the destination -> 200
+		Assert.assertEquals(200, Util.sendPostRequest(baseUrl + "events/"));
+		Assert.assertEquals(200, Util.sendPostRequest(baseUrl + "events/more"));
 
 		// submit a request without prefix in the path -> 404 Not Found
 		Assert.assertEquals(404, Util.sendPostRequest("http://localhost:" + port + "/somewhere"));
 		Assert.assertEquals(404, Util.sendPostRequest("http://localhost:" + port + "/continuuity/data"));
 
-		// submit a request with correct prefix but no stream -> 404 Not Found
+		// submit a request with correct prefix but no destination -> 404 Not Found
 		Assert.assertEquals(404, Util.sendPostRequest(baseUrl));
 
 		// submit a GET to the collector (which only supports POST) -> 405 Not Allowed
 		Assert.assertEquals(405, Util.sendGetRequest(baseUrl));
 
-		// submit a POST with stream name but more after that in the path -> 404 Not Found
-		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "events/"));
-		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "events/more"));
+		// submit a POST with destination name but more after that in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "flow/stream/"));
+		Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "flow/events/more"));
 
 		// submit a POST with existing key but with query part -> 501 Not Implemented
 		Assert.assertEquals(501, Util.sendPostRequest(baseUrl + "x?query=none"));

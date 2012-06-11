@@ -4,6 +4,7 @@ import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.api.Tuple;
 import com.continuuity.flow.flowlet.core.TupleSerializer;
@@ -62,11 +63,11 @@ public class Util {
 	 * Creates a flume event that has
 	 * <ul>
 	 *   <li>a header named "messageNumber" with the string value of a number i</li>
-	 *   <li>a header named "HEADER_DESTINATION_STREAM" with the name of a stream</li>
+	 *   <li>a header named "HEADER_DESTINATION_STREAM" with the name of a destination</li>
 	 *   <li>a body with the text "This is message number i.</li>
 	 * </ul>
 	 * @param i The number to use
-	 * @param dest The stream name to use
+	 * @param dest The destination name to use
 	 * @return a flume event
 	 */
 	static SimpleEvent createFlumeEvent(int i, String dest) {
@@ -82,7 +83,7 @@ public class Util {
 	/**
 	 * Uses Flumes RPC client to send a number of flume events to a specified port.
 	 * @param port The port to use
-	 * @param dest The stream name to use as the destination
+	 * @param dest The destination name to use as the destination
 	 * @param numMessages How many messages to send
 	 * @param batchSize Batch size to use for sending
 	 * @throws EventDeliveryException If sending fails for any reason
@@ -164,7 +165,7 @@ public class Util {
 	 * @param port The port as configured for the collector
 	 * @param prefix The path prefix as configured for the collector
 	 * @param path The path as configured for the collector
-	 * @param dest The stream name to use as the destination
+	 * @param dest The destination name to use as the destination
 	 * @throws IOException if sending fails
 	 */
 	static void sendRestEvents(int port, String prefix, String path, String dest, int eventsToSend)
@@ -178,7 +179,7 @@ public class Util {
 	 * Verify that an event corresponds to the form as created by createFlumeEvent or createHttpPost
 	 * @param event The event to verify
 	 * @param collectorName The name of the collector that the event was sent to
-	 * @param destination The name of the stream that the event was routed to
+	 * @param destination The name of the destination that the event was routed to
 	 * @param expectedNo The number of the event, it should be both in the messageNumber header and in the body.
 	 *                   If null, then this method checks whether the number in the header matches the body.
 	 */
@@ -195,7 +196,7 @@ public class Util {
 	 * Verify that an tuple corresponds to an event of the form as created by createFlumeEvent or createHttpPost
 	 * @param tuple The tuple to verify
 	 * @param collectorName The name of the collector that the event was sent to
-	 * @param destination The name of the stream that the event was routed to
+	 * @param destination The name of the destination that the event was routed to
 	 * @param expectedNo The number of the event, it should be both in the messageNumber header and in the body.
 	 *                   If null, then this method checks whether the number in the header matches the body.
 	 */
@@ -243,19 +244,21 @@ public class Util {
 	 * Consume the events in a queue and verify that they correspond to the format as created by
 	 * createHttpPost() or createFlumeEvent()
 	 * @param executor The executor to use for access to the data fabric
-	 * @param queueName The name of the queue (stream) that the events were sent to
+	 * @param destination The name of the flow (destination) that the events were sent to
 	 * @param collectorName The name of the collector that received the events
 	 * @param eventsExpected How many events should be read
 	 * @throws Exception
 	 */
-	static void consumeQueueAsEvents(OperationExecutor executor, String queueName,
+	static void consumeQueueAsEvents(OperationExecutor executor, String destination,
 																	 String collectorName, int eventsExpected) throws Exception {
+		// address the correct queue
+		byte[] queueURI = FlowStream.buildStreamURI(destination).getBytes();
 		// one deserializer to reuse
 		EventSerializer deserializer = new EventSerializer();
 		// prepare the queue consumer
 		QueueConsumer consumer = new QueueConsumer(0, 0, 1);
 		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
-		QueueDequeue dequeue = new QueueDequeue(queueName.getBytes(), consumer, config);
+		QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
 		for (int remaining = eventsExpected; remaining > 0; --remaining) {
 			// dequeue one event and remember its ack pointer
 			DequeueResult result = executor.execute(dequeue);
@@ -263,11 +266,11 @@ public class Util {
 			QueueEntryPointer ackPointer = result.getEntryPointer();
 			// deserialize and verify the event
 			Event event = deserializer.deserialize(result.getValue());
-			Util.verifyEvent(event, collectorName, queueName, null);
+			Util.verifyEvent(event, collectorName, destination, null);
 			// message number should be in the header "messageNumber"
 			LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
 			// ack the event so that it disappers from the queue
-			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
+			QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
 			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
 			operations.add(ack);
 			Assert.assertTrue(executor.execute(operations).isSuccess());
@@ -278,19 +281,21 @@ public class Util {
 	 * Consume the tuples in a queue and verify that the are events as created by
 	 * createHttpPost() or createFlumeEvent()
 	 * @param executor The executor to use for access to the data fabric
-	 * @param queueName The name of the queue (stream) that the events were sent to
+	 * @param destination The name of the flow (destination) that the events were sent to
 	 * @param collectorName The name of the collector that received the events
 	 * @param tuplesExpected How many tuples should be read
 	 * @throws Exception
 	 */
-	static void consumeQueueAsTuples(OperationExecutor executor, String queueName,
+	static void consumeQueueAsTuples(OperationExecutor executor, String destination,
 																	 String collectorName, int tuplesExpected) throws Exception {
+		// address the correct queue
+		byte[] queueURI = FlowStream.buildStreamURI(destination).getBytes();
 		// one deserializer to reuse
 		TupleSerializer deserializer = new TupleSerializer(false);
 		// prepare the queue consumer
 		QueueConsumer consumer = new QueueConsumer(0, 0, 1);
 		QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
-		QueueDequeue dequeue = new QueueDequeue(queueName.getBytes(), consumer, config);
+		QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
 		for (int remaining = tuplesExpected; remaining > 0; --remaining) {
 			// dequeue one event and remember its ack pointer
 			DequeueResult result = executor.execute(dequeue);
@@ -298,12 +303,12 @@ public class Util {
 			QueueEntryPointer ackPointer = result.getEntryPointer();
 			// deserialize and verify the event
 			Tuple tuple = deserializer.deserialize(result.getValue());
-			Util.verifyTuple(tuple, collectorName, queueName, null);
+			Util.verifyTuple(tuple, collectorName, destination, null);
 			// message number should be in the header "messageNumber"
 			Map<String,String> headers = tuple.get("headers");
 			LOG.info("Popped one event, message number: " + headers.get("messageNumber"));
 			// ack the event so that it disappers from the queue
-			QueueAck ack = new QueueAck(queueName.getBytes(), ackPointer, consumer);
+			QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
 			List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
 			operations.add(ack);
 			Assert.assertTrue(executor.execute(operations).isSuccess());
