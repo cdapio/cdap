@@ -2,7 +2,7 @@ package com.continuuity.gateway.runtime;
 
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.gateway.Consumer;
-import com.continuuity.gateway.consumer.TransactionalConsumer;
+import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
@@ -16,7 +16,7 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(Consumer.class).to(TransactionalConsumer.class);
+        bind(Consumer.class).to(TupleWritingConsumer.class);
       }
     };
   }
@@ -26,7 +26,7 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(Consumer.class).to(TransactionalConsumer.class);
+        bind(Consumer.class).to(TupleWritingConsumer.class);
       }
     };
   }
