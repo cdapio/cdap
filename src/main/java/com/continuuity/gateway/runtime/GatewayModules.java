@@ -7,7 +7,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
 /**
- * GatewayModules defines the production bindings for the Gateway.
+ * GatewayModules defines the module bindings for the Gateway.
  */
 public class GatewayModules extends RuntimeModule {
 

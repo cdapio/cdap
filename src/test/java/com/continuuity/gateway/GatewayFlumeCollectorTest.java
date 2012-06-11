@@ -1,10 +1,12 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.EventWritingConsumer;
+import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,6 +38,9 @@ public class GatewayFlumeCollectorTest {
 	// This is the data fabric operations executor
 	private OperationExecutor executor;
 
+  // This is the configuration object we will use in these tests
+  private CConfiguration myConfiguration;
+
   /**
    * Create a new Gateway instance to use in these set of tests. This method
    * is called before any of the test methods.
@@ -54,19 +59,24 @@ public class GatewayFlumeCollectorTest {
     port = Util.findFreePort();
 
     // Create and populate a new config object
-    CConfiguration configuration = new CConfiguration();
+    myConfiguration = new CConfiguration();
 
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
-		configuration.set(
+    myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
+    myConfiguration.set(
         Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
         NettyFlumeCollector.class.getCanonicalName() );
-	  configuration.setInt(
+    myConfiguration.setInt(
         Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT),port);
 
     // Now create our Gateway
 		theGateway = new Gateway();
 		theGateway.setExecutor(this.executor);
-		theGateway.configure(configuration);
+
+    // Set up a basic consumer
+    Consumer theConsumer = new PrintlnConsumer();
+    theGateway.setConsumer(theConsumer);
+
+		theGateway.start(null, myConfiguration);
 
   } // end of setupGateway
 
@@ -84,9 +94,15 @@ public class GatewayFlumeCollectorTest {
 
 		// Initialize and start the Gateway
 		theGateway.setConsumer(eventWritingConsumer);
-		theGateway.start();
 
-		// Send some events
+    try {
+      theGateway.start(null, myConfiguration);
+    } catch (ServerException e) {
+      // We don't care about the reconfigure problem in this test
+      LOG.debug(e.getMessage());
+    }
+
+    // Send some events
 		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
 		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
 		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
@@ -94,7 +110,7 @@ public class GatewayFlumeCollectorTest {
 		Util.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
 
 		// Stop the Gateway
-		theGateway.stop();
+		theGateway.stop(false);
 
 		// now switch the consumer to write the events as tuples
 		TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
@@ -102,7 +118,12 @@ public class GatewayFlumeCollectorTest {
 
 		// and restart the gateway
 		theGateway.setConsumer(tupleWritingConsumer);
-		theGateway.start();
+    try {
+      theGateway.start(null, myConfiguration);
+    } catch (ServerException e) {
+      // We don't care about the reconfigure problem in this test
+      LOG.debug(e.getMessage());
+    }
 
 		// Send some events
 		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
@@ -112,7 +133,7 @@ public class GatewayFlumeCollectorTest {
 		Util.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
 
 		// Stop the Gateway
-		theGateway.stop();
+		theGateway.stop(false);
 	}
 
 } // end of GatewayFlumeCollectorTest

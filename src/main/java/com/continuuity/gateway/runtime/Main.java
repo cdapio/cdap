@@ -34,11 +34,8 @@ public class Main {
       // Load our configuration from our resource files
       CConfiguration configuration = CConfiguration.create();
 
-      // Configure the Gateway
-      theGateway.configure(configuration);
-
       // Start the gateway!
-      theGateway.start();
+      theGateway.start(null, configuration);
 
     } catch (Exception e) {
       e.printStackTrace();

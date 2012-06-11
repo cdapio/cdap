@@ -69,7 +69,7 @@ public class GatewayRestAccessorTest {
 		theGateway = new Gateway();
 		theGateway.setExecutor(this.executor);
 		theGateway.setConsumer(new Util.NoopConsumer());
-		theGateway.configure(configuration);
+		theGateway.start(null, configuration);
 
 	} // end of setupGateway
 
@@ -82,9 +82,6 @@ public class GatewayRestAccessorTest {
 	@Test
 	public void testReadFromGateway() throws Exception {
 
-		// Start the Gateway
-		theGateway.start();
-
 		// Send some REST events
 		for (int i = 0; i < valuesToGet; i++) {
 			Util.testKeyValue(this.executor,
@@ -93,7 +90,7 @@ public class GatewayRestAccessorTest {
 		}
 
 		// Stop the Gateway
-		theGateway.stop();
+		theGateway.stop(false);
 	}
 
 
