@@ -48,8 +48,7 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    throw new
-      UnsupportedOperationException("Distributed mode is not yet implemented");
+    return new DataFabricDistributedModule();
   }
 
 } // end of DataFabricModules

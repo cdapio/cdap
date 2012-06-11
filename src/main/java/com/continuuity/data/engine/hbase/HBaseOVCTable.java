@@ -60,7 +60,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public void delete(byte[] row, byte[] column, long version) {
     try {
       Delete delete = new Delete(row);
-      delete.deleteColumn(row, column, version);
+      delete.deleteColumn(this.family, column, version);
       this.table.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -71,7 +71,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public void deleteAll(byte[] row, byte[] column, long version) {
     try {
       Delete delete = new Delete(row);
-      delete.deleteColumns(row, column, version);
+      delete.deleteColumns(this.family, column, version);
       this.table.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -88,7 +88,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     try {
       Get get = new Get(row);
       get.addFamily(this.family);
-      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.table.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
@@ -114,7 +114,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);
-      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.table.get(get);
       for (KeyValue kv : result.raw()) {
@@ -128,13 +128,18 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     return null;
   }
 
+  private long getMaxStamp(ReadPointer readPointer) {
+    return readPointer.getMaximum() == Long.MAX_VALUE ?
+        readPointer.getMaximum() : readPointer.getMaximum() + 1;
+  }
+
   @Override
   public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
       ReadPointer readPointer) {
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);
-      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.table.get(get);
       for (KeyValue kv : result.raw()) {
@@ -154,7 +159,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     try {
       Get get = new Get(row);
       get.addFamily(this.family);
-      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.table.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
@@ -181,7 +186,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     try {
       Get get = new Get(row);
       for (byte [] column : columns) get.addColumn(this.family, column);
-      get.setTimeRange(0, readPointer.getMaximum() + 1);
+      get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
       Result result = this.table.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
@@ -210,7 +215,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       //       pointer!
       Increment increment = new Increment(row);
       increment.addColumn(family, column, amount);
-      increment.setTimeRange(0, readPointer.getMaximum());
+      increment.setTimeRange(0, getMaxStamp(readPointer));
       Result result = this.table.increment(increment);
       if (result.isEmpty()) return 0L;
       return Bytes.toLong(result.value());
