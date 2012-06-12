@@ -9,21 +9,22 @@ allprojects
         clover 'com.cenqua.clover:clover:3.1.3'
     }
 
-    clover
-    {
+    clover {
+
+        // Location for the Clover license
         licenseLocation = 'classpath://com/continuuity/gradle/clover.license'
+
         // Exclude all generated classes from the test report.
         excludes = ['**/generated/*.java']
+
         // This makes sure the gradle clover plugin doesn't set the default includeTest path to '**/*Test.java'.
         testIncludes = ['**/*.java']
+
 		// Add API source directories for top-level and individual projects
-		println "Clover: Project is: " + project + " , parent is " + project.parent
 		if (project.hasProperty('multiModule') && project.parent == null) {
-			println "This is a multi module top level project"
 			additionalSourceDirs = subprojects.collect { project ->
 				project.sourceSets.api.allSource.srcDirs}
 		} else {
-			println "Non multi module or not main project"
 			additionalSourceDirs = sourceSets.api.allSource.srcDirs
 		}
         //targetPercentage = '85%'
