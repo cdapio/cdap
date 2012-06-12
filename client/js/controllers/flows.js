@@ -82,11 +82,11 @@ define([], function () {
 
 				if (App.Controllers.Flow.current) {
 
-					App.Controllers.Flow.history.pushObject(Em.Object.create({
-						"name": 'Flow Run',
-						"result": "success",
-						"user": "dmosites",
-						"time": new Date().getTime() / 1000
+					App.Controllers.Flow.history.pushObject(App.Models.Run.create({
+						"runId": 'rid',
+						"endStatus": "STOPPED",
+						"startTime": thisFlow.get('lastStarted'),
+						"endTime": new Date().getTime() / 1000
 					}));
 
 					App.Controllers.Flow.stop_spin();
