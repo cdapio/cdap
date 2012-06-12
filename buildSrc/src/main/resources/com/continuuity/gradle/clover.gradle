@@ -17,8 +17,8 @@ allprojects
         // This makes sure the gradle clover plugin doesn't set the default includeTest path to '**/*Test.java'.
         testIncludes = ['**/*.java']
 		// Add API source directories for top-level and individual projects
-		println "Clover: Project is: " + project
-		if (project.hasProperty('multiModule') && project.name == 'continuuity') {
+		println "Clover: Project is: " + project + " , parent is " + project.parent
+		if (project.hasProperty('multiModule') && project.parent == null) {
 			println "This is a multi module top level project"
 			additionalSourceDirs = subprojects.collect { project ->
 				project.sourceSets.api.allSource.srcDirs}
