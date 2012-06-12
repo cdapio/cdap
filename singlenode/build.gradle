@@ -64,6 +64,7 @@ tasks.distZip {
 }
 
 distZip.dependsOn javadoc
+distZip.dependsOn ':web-cloud-app:build'
 
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
     into "conf"
