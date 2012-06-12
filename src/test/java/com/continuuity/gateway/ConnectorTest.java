@@ -6,28 +6,31 @@ import org.junit.Test;
 
 public class ConnectorTest {
 
-	/**
-	 * This tests that a connector saves its name and configuration and
-	 * makes them available via getters.
-	 */
-	@Test
-	public void testConnector() throws Exception {
+  /**
+   * This tests that a connector saves its name and configuration and
+   * makes them available via getters.
+   */
+  @Test
+  public void testConnector() throws Exception {
 
-		Connector connector = new Connector() {
-			@Override
-			public void start() throws Exception { }
-			@Override
-			public void stop() throws Exception { }
-		};
+    Connector connector = new Connector() {
+      @Override
+      public void start() throws Exception {
+      }
 
-		CConfiguration config = CConfiguration.create();
-		connector.setName("dummy");
-		connector.configure(config);
+      @Override
+      public void stop() throws Exception {
+      }
+    };
 
-		// test that the name is set
-		Assert.assertEquals(connector.getName(), "dummy");
+    CConfiguration config = CConfiguration.create();
+    connector.setName("dummy");
+    connector.configure(config);
 
-		// test that configuration is saved
-		Assert.assertSame(connector.getConfiguration(), config);
-	}
+    // test that the name is set
+    Assert.assertEquals(connector.getName(), "dummy");
+
+    // test that configuration is saved
+    Assert.assertSame(connector.getConfiguration(), config);
+  }
 }

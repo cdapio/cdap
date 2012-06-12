@@ -22,21 +22,21 @@ import org.slf4j.LoggerFactory;
 public class GatewayFlumeCollectorTest {
 
   // Our logger object
-	private static final Logger LOG = LoggerFactory
-			.getLogger(GatewayFlumeCollectorTest.class);
+  private static final Logger LOG = LoggerFactory
+      .getLogger(GatewayFlumeCollectorTest.class);
 
   // A set of constants we'll use in this test
-	static final String name = "collect.flume";
-	static final String destination = "foo";
-	static final int batchSize = 4;
-	static final int eventsToSend = 10;
+  static final String name = "collect.flume";
+  static final String destination = "foo";
+  static final int batchSize = 4;
+  static final int eventsToSend = 10;
   static int port = 10000;
 
   // This is the Gateway object we'll use for these tests
   private Gateway theGateway = null;
 
-	// This is the data fabric operations executor
-	private OperationExecutor executor;
+  // This is the data fabric operations executor
+  private OperationExecutor executor;
 
   // This is the configuration object we will use in these tests
   private CConfiguration myConfiguration;
@@ -48,14 +48,14 @@ public class GatewayFlumeCollectorTest {
    * @throws Exception If the Gateway can not be created.
    */
   @Before
-	public void setupGateway() throws Exception {
+  public void setupGateway() throws Exception {
 
-		// Set up our Guice injections
-		Injector injector = Guice.createInjector(
-				new DataFabricModules().getInMemoryModules());
-		this.executor = injector.getInstance(OperationExecutor.class);
+    // Set up our Guice injections
+    Injector injector = Guice.createInjector(
+        new DataFabricModules().getInMemoryModules());
+    this.executor = injector.getInstance(OperationExecutor.class);
 
-		// Look for a free port
+    // Look for a free port
     port = Util.findFreePort();
 
     // Create and populate a new config object
@@ -64,19 +64,19 @@ public class GatewayFlumeCollectorTest {
     myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
     myConfiguration.set(
         Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
-        NettyFlumeCollector.class.getCanonicalName() );
+        NettyFlumeCollector.class.getCanonicalName());
     myConfiguration.setInt(
-        Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT),port);
+        Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 
     // Now create our Gateway
-		theGateway = new Gateway();
-		theGateway.setExecutor(this.executor);
+    theGateway = new Gateway();
+    theGateway.setExecutor(this.executor);
 
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
     theGateway.setConsumer(theConsumer);
 
-		theGateway.start(null, myConfiguration);
+    theGateway.start(null, myConfiguration);
 
   } // end of setupGateway
 
@@ -85,15 +85,15 @@ public class GatewayFlumeCollectorTest {
    *
    * @throws Exception If any exceptions happen during the test
    */
-	@Test
-	public void testFlumeToQueue() throws Exception {
+  @Test
+  public void testFlumeToQueue() throws Exception {
 
-		// Set up our consumer and queues
-		EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
-		eventWritingConsumer.setExecutor(this.executor);
+    // Set up our consumer and queues
+    EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
+    eventWritingConsumer.setExecutor(this.executor);
 
-		// Initialize and start the Gateway
-		theGateway.setConsumer(eventWritingConsumer);
+    // Initialize and start the Gateway
+    theGateway.setConsumer(eventWritingConsumer);
 
     try {
       theGateway.start(null, myConfiguration);
@@ -103,21 +103,21 @@ public class GatewayFlumeCollectorTest {
     }
 
     // Send some events
-		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
-		Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
-		Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
-		Util.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
+    Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
+    Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
+    Util.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
 
-		// Stop the Gateway
-		theGateway.stop(false);
+    // Stop the Gateway
+    theGateway.stop(false);
 
-		// now switch the consumer to write the events as tuples
-		TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
-		tupleWritingConsumer.setExecutor(this.executor);
+    // now switch the consumer to write the events as tuples
+    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
+    tupleWritingConsumer.setExecutor(this.executor);
 
-		// and restart the gateway
-		theGateway.setConsumer(tupleWritingConsumer);
+    // and restart the gateway
+    theGateway.setConsumer(tupleWritingConsumer);
     try {
       theGateway.start(null, myConfiguration);
     } catch (ServerException e) {
@@ -125,15 +125,15 @@ public class GatewayFlumeCollectorTest {
       LOG.debug(e.getMessage());
     }
 
-		// Send some events
-		Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
-		Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
-		Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-		Util.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
+    // Send some events
+    Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
+    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
+    Util.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
 
-		// Stop the Gateway
-		theGateway.stop(false);
-	}
+    // Stop the Gateway
+    theGateway.stop(false);
+  }
 
 } // end of GatewayFlumeCollectorTest

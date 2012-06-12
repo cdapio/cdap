@@ -9,9 +9,10 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
  * request handler (which has all the business logic).
  */
 public interface NettyRequestHandlerFactory {
-	/**
-	 * The only method in this class creates a new instance of the request handler
-	 * @return the new request handler
-	 */
-	SimpleChannelUpstreamHandler newHandler();
+  /**
+   * The only method in this class creates a new instance of the request handler
+   *
+   * @return the new request handler
+   */
+  SimpleChannelUpstreamHandler newHandler();
 }

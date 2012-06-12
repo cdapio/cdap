@@ -15,7 +15,7 @@ public class PrintlnConsumer extends Consumer {
    * This is our Logger instance
    */
   private static final Logger LOG =
-    LoggerFactory.getLogger(PrintlnConsumer.class);
+      LoggerFactory.getLogger(PrintlnConsumer.class);
 
   /**
    * Very basic implementation that logs out the headers and body.
@@ -26,7 +26,7 @@ public class PrintlnConsumer extends Consumer {
   @Override
   protected void single(Event event) throws Exception {
     LOG.info("[ Headers: " + event.getHeaders() + " | "
-      + "Body: " + event.getBody());
+        + "Body: " + event.getBody());
   }
 
 }

@@ -18,52 +18,61 @@ import com.continuuity.gateway.Consumer;
  */
 public abstract class FlumeCollector extends Collector {
 
-	/** If no port is ever configured, we run here */
-	public static final int DefaultPort = 8765;
+  /**
+   * If no port is ever configured, we run here
+   */
+  public static final int DefaultPort = 8765;
 
-	/** The actual port to run on, set by configure() */
-	protected int port = DefaultPort;
+  /**
+   * The actual port to run on, set by configure()
+   */
+  protected int port = DefaultPort;
 
-	/** The adapter that converts from and to flume Avro and calls the consumer */
-	protected FlumeAdapter flumeAdapter;
+  /**
+   * The adapter that converts from and to flume Avro and calls the consumer
+   */
+  protected FlumeAdapter flumeAdapter;
 
-	@Override
-	public void setConsumer(Consumer consumer) {
-		super.setConsumer(consumer);
-		// we consume through the adapter, if necessary create one
-		if (this.flumeAdapter == null) {
-			this.flumeAdapter = new FlumeAdapter(this);
-		}
-		// tell the adapter about the consumer
-		this.flumeAdapter.setConsumer(consumer);
-	}
+  @Override
+  public void setConsumer(Consumer consumer) {
+    super.setConsumer(consumer);
+    // we consume through the adapter, if necessary create one
+    if (this.flumeAdapter == null) {
+      this.flumeAdapter = new FlumeAdapter(this);
+    }
+    // tell the adapter about the consumer
+    this.flumeAdapter.setConsumer(consumer);
+  }
 
-	@Override
-	public Consumer getConsumer() {
-		// we consume through the adapter
-		if (this.flumeAdapter == null) return null;
-		return this.flumeAdapter.getConsumer();
-	}
+  @Override
+  public Consumer getConsumer() {
+    // we consume through the adapter
+    if (this.flumeAdapter == null) return null;
+    return this.flumeAdapter.getConsumer();
+  }
 
-	@Override
-	public void configure(CConfiguration configuration) throws Exception {
-		super.configure(configuration);
-		// the only option we need is the port number
-		this.port = configuration.getInt(Constants.buildConnectorPropertyName(
-				this.name, Constants.CONFIG_PORT), DefaultPort);
-	}
+  @Override
+  public void configure(CConfiguration configuration) throws Exception {
+    super.configure(configuration);
+    // the only option we need is the port number
+    this.port = configuration.getInt(Constants.buildConnectorPropertyName(
+        this.name, Constants.CONFIG_PORT), DefaultPort);
+  }
 
-	/**
-	 * Return the port that this collector is listening on
-	 * @return the port number
-	 */
-	public int getPort() {
-		return this.port;
-	}
+  /**
+   * Return the port that this collector is listening on
+   *
+   * @return the port number
+   */
+  public int getPort() {
+    return this.port;
+  }
 
-	/** Helper method for printing in the log */
-	public String toString() {
-		return this.getClass().getName() + " at :" + this.getPort() + " (" +
-				(this.consumer == null ? "no consumer set" : this.consumer.getClass().getName()) + ")";
-	}
+  /**
+   * Helper method for printing in the log
+   */
+  public String toString() {
+    return this.getClass().getName() + " at :" + this.getPort() + " (" +
+        (this.consumer == null ? "no consumer set" : this.consumer.getClass().getName()) + ")";
+  }
 }

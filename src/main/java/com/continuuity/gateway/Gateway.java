@@ -17,15 +17,15 @@ import java.util.List;
  * data interface for external clients to send events to the data fabric.
  * It supports two main patterns:
  * <dl>
- *   <dt><strong>Send events to a named queue</strong></dt>
- *   <dd>This is supported via various protocols. Every protocol is implemented
- *   as a Collector that it registered with the Gateway. The collector can
- *   implement any protocol, as long as it can convert the data from that
- *   protocol into events. All events are routed to a Consumer that is also
- *   registered with the gateway. The Consumer is responsible for persisting
- *   the event before returning a response.</dd>
- *   <dt><strong>To read data from the data fabric</strong></dt>
- *   <dd>This is currently not implemented.</dd>
+ * <dt><strong>Send events to a named queue</strong></dt>
+ * <dd>This is supported via various protocols. Every protocol is implemented
+ * as a Collector that it registered with the Gateway. The collector can
+ * implement any protocol, as long as it can convert the data from that
+ * protocol into events. All events are routed to a Consumer that is also
+ * registered with the gateway. The Consumer is responsible for persisting
+ * the event before returning a response.</dd>
+ * <dt><strong>To read data from the data fabric</strong></dt>
+ * <dd>This is currently not implemented.</dd>
  * </dl>
  */
 public class Gateway implements Server {
@@ -33,78 +33,79 @@ public class Gateway implements Server {
   /**
    * This is our Logger instance
    */
-	private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
 
-	/**
-	 * This is the consumer that all collectors will use.
-	 * Gateway can not function without a valid Consumer.
-	 */
-	@Inject
-	private Consumer consumer;
+  /**
+   * This is the consumer that all collectors will use.
+   * Gateway can not function without a valid Consumer.
+   */
+  @Inject
+  private Consumer consumer;
 
-	/**
-	 * This is the executor that all accessors will use for the data fabric.
-	 * Gateway can not function without a valid operation executor.
-	 */
-	@Inject
-	private OperationExecutor executor;
+  /**
+   * This is the executor that all accessors will use for the data fabric.
+   * Gateway can not function without a valid operation executor.
+   */
+  @Inject
+  private OperationExecutor executor;
 
-	/**
+  /**
    * The list of connectors for this Gateway. This list is populated in
    * the configure method.
    */
-	private List<Connector> connectorList = new ArrayList<Connector>();
+  private List<Connector> connectorList = new ArrayList<Connector>();
 
   /**
    * Our Configuration object
    */
-	private CConfiguration myConfiguration;
+  private CConfiguration myConfiguration;
 
 
-	/**
-	 * Get the Gateway's current configuration
-	 * @return Our current Configuration
-	 */
-	public CConfiguration getConfiguration() {
-		return myConfiguration;
-	}
+  /**
+   * Get the Gateway's current configuration
+   *
+   * @return Our current Configuration
+   */
+  public CConfiguration getConfiguration() {
+    return myConfiguration;
+  }
 
-	/**
-	 * Add a Connector to the Gateway. This connector must be in pristine state
-	 * and not started yet. The Gateway will start the connector when it starts
-	 * itself.
-	 *
-	 * @param connector The connector to register
-	 * @throws Exception iff a connector with the same name is already registered
-	 */
-	public void addConnector(Connector connector) throws Exception {
+  /**
+   * Add a Connector to the Gateway. This connector must be in pristine state
+   * and not started yet. The Gateway will start the connector when it starts
+   * itself.
+   *
+   * @param connector The connector to register
+   * @throws Exception iff a connector with the same name is already registered
+   */
+  public void addConnector(Connector connector) throws Exception {
 
-		String name = connector.getName();
-		if (name == null) {
-			Exception e =
-					new IllegalArgumentException("Connector name cannot be null.");
-			LOG.error(e.getMessage());
-			throw e;
-		}
+    String name = connector.getName();
+    if (name == null) {
+      Exception e =
+          new IllegalArgumentException("Connector name cannot be null.");
+      LOG.error(e.getMessage());
+      throw e;
+    }
 
-		LOG.info("Adding connector '" + name + "' of type " +
-				connector.getClass().getName() + ".");
+    LOG.info("Adding connector '" + name + "' of type " +
+        connector.getClass().getName() + ".");
 
-		if (this.hasNamedConnector(name)) {
-			Exception e = new Exception("Connector with name '" + name
-					+ "' already registered. ");
-			LOG.error(e.getMessage());
-			throw e;
-		} else {
-			connectorList.add(connector);
-		}
-	}
+    if (this.hasNamedConnector(name)) {
+      Exception e = new Exception("Connector with name '" + name
+          + "' already registered. ");
+      LOG.error(e.getMessage());
+      throw e;
+    } else {
+      connectorList.add(connector);
+    }
+  }
 
   /**
    * Start the gateway. This will also start the Consumer and all the Connectors
    *
    * @throws Exception If there is no Consumer, or whatever Exception a
-   * connector throws during start().
+   *                   connector throws during start().
    */
   public void start(String[] args, CConfiguration conf) throws ServerException {
 
@@ -112,21 +113,21 @@ public class Gateway implements Server {
     configure(conf);
 
     // Check we are in the correct state
-		if (this.consumer == null) {
-			ServerException es =
-        new ServerException("Cannot start Gateway without a Consumer.");
-			LOG.error(es.getMessage());
+    if (this.consumer == null) {
+      ServerException es =
+          new ServerException("Cannot start Gateway without a Consumer.");
+      LOG.error(es.getMessage());
       throw es;
 
-		}
-		if (this.executor == null) {
+    }
+    if (this.executor == null) {
       ServerException es =
-        new ServerException("Cannot start Gateway without an Operation Executor.");
-			LOG.error(es.getMessage());
-			throw es;
-		}
+          new ServerException("Cannot start Gateway without an Operation Executor.");
+      LOG.error(es.getMessage());
+      throw es;
+    }
 
-		LOG.info("Gateway Starting up.");
+    LOG.info("Gateway Starting up.");
 
     // Start our event consumer
     this.consumer.startConsumer();
@@ -136,14 +137,13 @@ public class Gateway implements Server {
 
       // First, perform connector-type specific initialization
       // For a collector, set the Consumer for its events
-			// For an accessor, set the operations executor for access to data fabric
+      // For an accessor, set the operations executor for access to data fabric
       // TODO: This should probably be done in the addConnector method?
-			if (connector instanceof Collector) {
-				((Collector)connector).setConsumer(this.consumer);
-			}
-			else if (connector instanceof Accessor) {
-				((Accessor)connector).setExecutor(this.executor);
-			}
+      if (connector instanceof Collector) {
+        ((Collector) connector).setConsumer(this.consumer);
+      } else if (connector instanceof Accessor) {
+        ((Accessor) connector).setExecutor(this.executor);
+      }
 
       try {
         connector.start();
@@ -181,31 +181,33 @@ public class Gateway implements Server {
 
   }
 
-	/**
-	 *  Set the Consumer that all events are routed to.
-	 *  @param consumer The Consumer that all events will be sent to
-	 *  @throws IllegalArgumentException If the consumer object is null
-	 */
-	public void setConsumer(Consumer consumer) {
-		if (consumer == null) {
-			throw new IllegalArgumentException("'consumer' argument was null");
-		}
-		LOG.info("Setting Consumer to " + consumer.getClass().getName() + ".");
-		this.consumer = consumer;
-	}
+  /**
+   * Set the Consumer that all events are routed to.
+   *
+   * @param consumer The Consumer that all events will be sent to
+   * @throws IllegalArgumentException If the consumer object is null
+   */
+  public void setConsumer(Consumer consumer) {
+    if (consumer == null) {
+      throw new IllegalArgumentException("'consumer' argument was null");
+    }
+    LOG.info("Setting Consumer to " + consumer.getClass().getName() + ".");
+    this.consumer = consumer;
+  }
 
-	/**
-	 *  Set the operations executor that is used for all data fabric access.
-	 *  @param executor The executor to use
-	 *  @throws IllegalArgumentException If the consumer object is null
-	 */
-	public void setExecutor(OperationExecutor executor) {
-		if (executor == null) {
-			throw new IllegalArgumentException("'executor' argument was null");
-		}
-		LOG.info("Setting Operations Executor to " + executor.getClass().getName() + ".");
-		this.executor = executor;
-	}
+  /**
+   * Set the operations executor that is used for all data fabric access.
+   *
+   * @param executor The executor to use
+   * @throws IllegalArgumentException If the consumer object is null
+   */
+  public void setExecutor(OperationExecutor executor) {
+    if (executor == null) {
+      throw new IllegalArgumentException("'executor' argument was null");
+    }
+    LOG.info("Setting Operations Executor to " + executor.getClass().getName() + ".");
+    this.executor = executor;
+  }
 
   /**
    * Set the gateway's Configuration, then create and configure the connectors
@@ -213,7 +215,6 @@ public class Gateway implements Server {
    * @param configuration The Configuration object that contains the options
    *                      for the Gateway and all its connectors. This can not
    *                      be null.
-   *
    * @throws IllegalArgumentException If configuration argument is null.
    */
   private void configure(CConfiguration configuration) {
@@ -229,32 +230,32 @@ public class Gateway implements Server {
 
     // Retrieve the list of connectors that we will create
     Collection<String> connectorNames = myConfiguration.
-      getStringCollection(Constants.CONFIG_CONNECTORS);
+        getStringCollection(Constants.CONFIG_CONNECTORS);
 
     // For each Connector
     for (String connectorName : connectorNames) {
 
       // Retrieve the connector's Class
       String connectorClassName = myConfiguration.get(
-        Constants.buildConnectorPropertyName(connectorName,
-          Constants.CONFIG_CLASSNAME));
+          Constants.buildConnectorPropertyName(connectorName,
+              Constants.CONFIG_CLASSNAME));
       // Has the user specified the Class? If not, skip this Connector
       if (connectorClassName == null) {
         LOG.error("No Class property defined for " + connectorName +
-          ". Can not create " + connectorName + ".");
+            ". Can not create " + connectorName + ".");
       } else {
         // Instantiate a new Connector and then configure it
         Connector newConnector;
         try {
           // Attempt to load the Class
           newConnector =
-            (Connector)Class.forName(connectorClassName).newInstance();
+              (Connector) Class.forName(connectorClassName).newInstance();
           // Tell it what it's called
           newConnector.setName(connectorName);
 
         } catch (Exception e) {
           LOG.error("Cannot instantiate class " + connectorClassName + "(" +
-            e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
           continue;
         }
 
@@ -263,7 +264,7 @@ public class Gateway implements Server {
           newConnector.configure(myConfiguration);
         } catch (Exception e) {
           LOG.error("Error configuring connector '" + connectorName + "' (" +
-            e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
           continue;
         }
 
@@ -272,25 +273,26 @@ public class Gateway implements Server {
           this.addConnector(newConnector);
         } catch (Exception e) {
           LOG.error("Error adding connector '" + connectorName + "' (" +
-            e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
           // continue // unnecessary
         }
       }
     }
   }
 
-	/**
-	 * Check whether a connector with the given name is already registered
- 	 * @param name The name to be checked
-	 * @return true If a connector with the same name exists
-	 */
-	private boolean hasNamedConnector(String name) {
-		for (Connector connector : this.connectorList) {
-			if (connector.getName().equals(name))
-				return true;
-		}
-		return false;
-	}
+  /**
+   * Check whether a connector with the given name is already registered
+   *
+   * @param name The name to be checked
+   * @return true If a connector with the same name exists
+   */
+  private boolean hasNamedConnector(String name) {
+    for (Connector connector : this.connectorList) {
+      if (connector.getName().equals(name))
+        return true;
+    }
+    return false;
+  }
 
 
 } // end of Gateway class

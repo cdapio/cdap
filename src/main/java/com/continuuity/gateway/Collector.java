@@ -15,22 +15,26 @@ package com.continuuity.gateway;
  */
 public abstract class Collector extends Connector {
 
-	/** The consumer to pass all events to. */
-	protected Consumer consumer;
+  /**
+   * The consumer to pass all events to.
+   */
+  protected Consumer consumer;
 
-	/**
-	 * Set the consumer for this collector. It may be shared with other collectors
-	 * @param consumer The consumer to use.
-	 */
-	public void setConsumer(Consumer consumer) {
-		this.consumer = consumer;
-	}
+  /**
+   * Set the consumer for this collector. It may be shared with other collectors
+   *
+   * @param consumer The consumer to use.
+   */
+  public void setConsumer(Consumer consumer) {
+    this.consumer = consumer;
+  }
 
-	/**
-	 * Get the consumer of this collector.
-	 * @return the collector's consumer.
-	 */
-	public Consumer getConsumer() {
-		return  this.consumer;
-	}
+  /**
+   * Get the consumer of this collector.
+   *
+   * @return the collector's consumer.
+   */
+  public Consumer getConsumer() {
+    return this.consumer;
+  }
 }

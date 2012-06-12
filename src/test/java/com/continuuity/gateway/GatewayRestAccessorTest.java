@@ -18,80 +18,80 @@ import org.slf4j.LoggerFactory;
  */
 public class GatewayRestAccessorTest {
 
-	// Our logger object
-	private static final Logger LOG = LoggerFactory
-			.getLogger(GatewayRestAccessorTest.class);
+  // Our logger object
+  private static final Logger LOG = LoggerFactory
+      .getLogger(GatewayRestAccessorTest.class);
 
-	// A set of constants we'll use in these tests
-	static  String name = "access.rest";
-	static final String prefix = "/continuuity";
-	static final String path = "/table/";
-	static final String table = "default";
-	static final int valuesToGet = 10;
-	static int port = 10000;
+  // A set of constants we'll use in these tests
+  static String name = "access.rest";
+  static final String prefix = "/continuuity";
+  static final String path = "/table/";
+  static final String table = "default";
+  static final int valuesToGet = 10;
+  static int port = 10000;
 
-	// This is the Gateway object we'll use for these tests
-	private Gateway theGateway = null;
+  // This is the Gateway object we'll use for these tests
+  private Gateway theGateway = null;
 
-	private OperationExecutor executor;
+  private OperationExecutor executor;
 
-	/**
-	 * Create a new Gateway instance to use in these set of tests. This method
-	 * is called before any of the test methods.
-	 *
-	 * @throws Exception If the Gateway can not be created.
-	 */
-	@Before
-	public void setupGateway() throws Exception {
+  /**
+   * Create a new Gateway instance to use in these set of tests. This method
+   * is called before any of the test methods.
+   *
+   * @throws Exception If the Gateway can not be created.
+   */
+  @Before
+  public void setupGateway() throws Exception {
 
-		// Set up our Guice injections
-		Injector injector = Guice.createInjector(
-				new DataFabricModules().getInMemoryModules());
-		this.executor = injector.getInstance(OperationExecutor.class);
+    // Set up our Guice injections
+    Injector injector = Guice.createInjector(
+        new DataFabricModules().getInMemoryModules());
+    this.executor = injector.getInstance(OperationExecutor.class);
 
-		// Look for a free port
-		port = Util.findFreePort();
+    // Look for a free port
+    port = Util.findFreePort();
 
-		// Create and populate a new config object
-		CConfiguration configuration = new CConfiguration();
+    // Create and populate a new config object
+    CConfiguration configuration = new CConfiguration();
 
-		configuration.set(Constants.CONFIG_CONNECTORS, name);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
-		configuration.setInt(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PORT),port);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_PREFIX), prefix);
-		configuration.set(Constants.buildConnectorPropertyName(name,
-				Constants.CONFIG_PATH_MIDDLE), path);
+    configuration.set(Constants.CONFIG_CONNECTORS, name);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_MIDDLE), path);
 
-		// Now create our Gateway
-		theGateway = new Gateway();
-		theGateway.setExecutor(this.executor);
-		theGateway.setConsumer(new Util.NoopConsumer());
-		theGateway.start(null, configuration);
+    // Now create our Gateway
+    theGateway = new Gateway();
+    theGateway.setExecutor(this.executor);
+    theGateway.setConsumer(new Util.NoopConsumer());
+    theGateway.start(null, configuration);
 
-	} // end of setupGateway
+  } // end of setupGateway
 
 
-	/**
-	 * Test that we can send simulated REST events to a Queue
-	 *
-	 * @throws Exception If any exceptions happen during the test
-	 */
-	@Test
-	public void testReadFromGateway() throws Exception {
+  /**
+   * Test that we can send simulated REST events to a Queue
+   *
+   * @throws Exception If any exceptions happen during the test
+   */
+  @Test
+  public void testReadFromGateway() throws Exception {
 
-		// Send some REST events
-		for (int i = 0; i < valuesToGet; i++) {
-			Util.writeAndGet(this.executor,
-					"http://localhost:" + port + prefix + path + "default/",
-					"key" + i, "value" + i);
-		}
+    // Send some REST events
+    for (int i = 0; i < valuesToGet; i++) {
+      Util.writeAndGet(this.executor,
+          "http://localhost:" + port + prefix + path + "default/",
+          "key" + i, "value" + i);
+    }
 
-		// Stop the Gateway
-		theGateway.stop(false);
-	}
+    // Stop the Gateway
+    theGateway.stop(false);
+  }
 
 
 }

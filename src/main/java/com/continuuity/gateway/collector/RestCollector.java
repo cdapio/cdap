@@ -22,69 +22,76 @@ import java.util.concurrent.Executors;
  */
 public class RestCollector extends Collector implements NettyRequestHandlerFactory {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(RestCollector.class);
+  private static final Logger LOG = LoggerFactory
+      .getLogger(RestCollector.class);
 
-	/** this will provide defaults for the HTTP service, such as port and paths */
-	private static final HttpConfig defaultConfig = new HttpConfig("rest")
-			.setPort(8765)
-			.setPathMiddle("/stream/");
+  /**
+   * this will provide defaults for the HTTP service, such as port and paths
+   */
+  private static final HttpConfig defaultConfig = new HttpConfig("rest")
+      .setPort(8765)
+      .setPathMiddle("/stream/");
 
-	/** this will provide the actual HTTP configuration, backed by the default */
-	private HttpConfig httpConfig = defaultConfig;
+  /**
+   * this will provide the actual HTTP configuration, backed by the default
+   */
+  private HttpConfig httpConfig = defaultConfig;
 
-	/**
-	 * return the HTTP configuration for this accessor
-	 * @return the HTTP configuration
-	 */
-	public HttpConfig getHttpConfig() {
-		return this.httpConfig;
-	}
+  /**
+   * return the HTTP configuration for this accessor
+   *
+   * @return the HTTP configuration
+   */
+  public HttpConfig getHttpConfig() {
+    return this.httpConfig;
+  }
 
-	/** this is the active Netty server channel */
-	private Channel serverChannel;
+  /**
+   * this is the active Netty server channel
+   */
+  private Channel serverChannel;
 
-	@Override
-	public void configure(CConfiguration configuration) throws Exception {
-		super.configure(configuration);
-		this.httpConfig = HttpConfig.configure(this.name, configuration, defaultConfig);
-	}
+  @Override
+  public void configure(CConfiguration configuration) throws Exception {
+    super.configure(configuration);
+    this.httpConfig = HttpConfig.configure(this.name, configuration, defaultConfig);
+  }
 
-	@Override
-	public SimpleChannelUpstreamHandler newHandler() {
-		return new RestHandler(this);
-	}
+  @Override
+  public SimpleChannelUpstreamHandler newHandler() {
+    return new RestHandler(this);
+  }
 
-	@Override
-	public void start() throws Exception {
+  @Override
+  public void start() throws Exception {
     LOG.debug("Starting up " + this);
-		// construct the internet address
-		InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
-		try {
-			// create a server bootstrap
-			ServerBootstrap bootstrap = new ServerBootstrap(
-					new NioServerSocketChannelFactory(
-							Executors.newCachedThreadPool(),
-							Executors.newCachedThreadPool()));
-			// and use a pipeline factory that uses this to cnfigure itself and to
-			// create a request handler for each client request.
-			bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
-			// bind to the address = start the service
-			this.serverChannel = bootstrap.bind(address);
-			// server is now running
-		} catch (Exception e) {
-			LOG.error("Failed to startup collector '" + this.getName()
-					+ "' at " + this.httpConfig.getBaseUrl() + ".");
-			throw e;
-		}
-		LOG.info("Collector '" + this.getName() + "' started at "
-				+ this.httpConfig.getBaseUrl() + ".");
-	}
+    // construct the internet address
+    InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
+    try {
+      // create a server bootstrap
+      ServerBootstrap bootstrap = new ServerBootstrap(
+          new NioServerSocketChannelFactory(
+              Executors.newCachedThreadPool(),
+              Executors.newCachedThreadPool()));
+      // and use a pipeline factory that uses this to cnfigure itself and to
+      // create a request handler for each client request.
+      bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
+      // bind to the address = start the service
+      this.serverChannel = bootstrap.bind(address);
+      // server is now running
+    } catch (Exception e) {
+      LOG.error("Failed to startup collector '" + this.getName()
+          + "' at " + this.httpConfig.getBaseUrl() + ".");
+      throw e;
+    }
+    LOG.info("Collector '" + this.getName() + "' started at "
+        + this.httpConfig.getBaseUrl() + ".");
+  }
 
-	@Override
-	public void stop() {
+  @Override
+  public void stop() {
     LOG.debug("Stopping " + this);
-		// closing the channel stops the service
+    // closing the channel stops the service
     this.serverChannel.close();
     LOG.debug("Stopped " + this);
   }

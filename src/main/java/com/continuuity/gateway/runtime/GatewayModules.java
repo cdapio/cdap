@@ -34,7 +34,7 @@ public class GatewayModules extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
     throw new
-      UnsupportedOperationException("Distributed mode is not yet implemented");
+        UnsupportedOperationException("Distributed mode is not yet implemented");
   }
 
 

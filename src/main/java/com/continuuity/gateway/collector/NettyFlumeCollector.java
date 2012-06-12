@@ -20,37 +20,39 @@ import java.net.InetSocketAddress;
  */
 public class NettyFlumeCollector extends FlumeCollector {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(NettyFlumeCollector.class);
+  private static final Logger LOG = LoggerFactory
+      .getLogger(NettyFlumeCollector.class);
 
-	/** the avro server */
-	private Server server;
+  /**
+   * the avro server
+   */
+  private Server server;
 
-	@Override
-	public void start() {
+  @Override
+  public void start() {
 
     LOG.debug("Starting up " + this);
 
-		// this is all standard avro ipc. The key is to pass in Flume's avro
-		// source protocol as the interface, and the FlumeAdapter as its
-		// implementation.
+    // this is all standard avro ipc. The key is to pass in Flume's avro
+    // source protocol as the interface, and the FlumeAdapter as its
+    // implementation.
     this.server = new NettyServer(
-				new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
-				new InetSocketAddress(this.getPort()));
-		this.server.start();
+        new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
+        new InetSocketAddress(this.getPort()));
+    this.server.start();
 
     LOG.info("Collector '" + this.getName() + "' started on port " + port + ".");
   }
 
-	@Override
-	public void stop() {
-		LOG.debug("Stopping " + this);
-		try {
-			this.server.close();
-			this.server.join();
-		} catch (InterruptedException e) {
-			LOG.info("Received interrupt during join.");
-		}
-		LOG.debug("Stopped " + this);
-	}
+  @Override
+  public void stop() {
+    LOG.debug("Stopping " + this);
+    try {
+      this.server.close();
+      this.server.join();
+    } catch (InterruptedException e) {
+      LOG.info("Received interrupt during join.");
+    }
+    LOG.debug("Stopped " + this);
+  }
 }
