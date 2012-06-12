@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
@@ -19,6 +20,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
@@ -376,6 +378,55 @@ public class Util {
 	}
 
 	/**
+	 * Verify that a given value can be stored for a given key via http PUT request
+	 * @param executor the operation executor to use for access to data fabric
+	 * @param baseUri The URI for PUT request, without the key
+	 * @param key The key
+	 * @param value The value
+	 * @throws Exception if an exception occurs
+	 */
+	static void putAndRead(OperationExecutor executor,
+												 String baseUri, byte[] key, byte[] value) throws Exception {
+
+		// make a get URL
+		String putUrl = baseUri + URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
+		LOG.info("PUT request URI for key '" + new String(key, "ISO8859_1") + "' is " + putUrl);
+
+		// and issue a PUT request to the server
+		HttpClient client = new DefaultHttpClient();
+		HttpPut put = new HttpPut(putUrl);
+		put.setEntity(new ByteArrayEntity(value));
+		HttpResponse response = client.execute(put);
+		client.getConnectionManager().shutdown();
+
+		// verify the response is ok
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+
+		// read the key/value back from the data fabric
+		Read read = new Read(key);
+		byte[] bytes = executor.execute(read);
+		Assert.assertNotNull(bytes);
+
+		// verify the read value is the same as the original value
+		Assert.assertArrayEquals(value, bytes);
+	}
+
+	/**
+	 * Verify that a given value can be stored for a given key via http PUT request.
+	 * This converts the key and value from String to bytes and calls the byte-based
+	 * method putAndRead.
+	 * @param executor the operation executor to use for access to data fabric
+	 * @param baseUri The URI for REST request, without the key
+	 * @param key The key
+	 * @param value The value
+	 * @throws Exception if an exception occurs
+	 */
+	static void putAndRead(OperationExecutor executor,
+												 String baseUri, String key, String value) throws Exception {
+		putAndRead(executor, baseUri, key.getBytes("ISO8859_1"), value.getBytes("ISO8859_1"));
+	}
+
+	/**
 	 * Send a GET request to the given URL and return the HTTP status
 	 * @param url the URL to get
 	 */
@@ -427,6 +478,19 @@ public class Util {
 		HttpPost post = new HttpPost(url);
 		post.setEntity(new ByteArrayEntity(new byte[0]));
 		HttpResponse response = client.execute(post);
+		client.getConnectionManager().shutdown();
+		return response.getStatusLine().getStatusCode();
+	}
+
+	/**
+	 * Send a POST request to the given URL and return the HTTP status
+	 * @param url the URL to post to
+	 */
+	public static int sendPutRequest(String url) throws Exception {
+		HttpClient client = new DefaultHttpClient();
+		HttpPut put = new HttpPut(url);
+		put.setEntity(new ByteArrayEntity(new byte[0]));
+		HttpResponse response = client.execute(put);
 		client.getConnectionManager().shutdown();
 		return response.getStatusLine().getStatusCode();
 	}

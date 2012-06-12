@@ -64,6 +64,16 @@ public class RestAccessorTest {
 		return "http://localhost:" + port + prefix + middle + "default/";
 	}
 
+	static String[][] keyValues = {
+			{ "x", "y" },
+			{ "mt", "" },
+			{ "blank in the key", "some string" },
+			{ "cat's name?", "pfunk!" },
+			{ "special-/?@:%+key", "moseby" },
+			{ "nønäscîi", "value\u0000with\u0000nulls" },
+			{ "key\u0000with\u0000nulls", "foo" }
+	};
+
 	/**
 	 * Starts up a REST accessor, then tests retrieval of several combinations of keys and values
 	 * <ul>
@@ -77,16 +87,55 @@ public class RestAccessorTest {
 	 */
 	@Test
 	public void testGetAccess() throws Exception {
+		// configure an accessor
 		String uri = setupAccessor("restor", "/v0.1", "/table/");
 
 		// write value via executor, then retrieve it back via REST
-		Util.writeAndGet(this.executor, uri, "x", "y");
-		Util.writeAndGet(this.executor, uri, "mt", "");
-		Util.writeAndGet(this.executor, uri, "blank in the key", "some string");
-		Util.writeAndGet(this.executor, uri, "cat's name?", "pfunk!");
-		Util.writeAndGet(this.executor, uri, "special-/?@:%+key", "moseby");
-		Util.writeAndGet(this.executor, uri, "nønäscîi", "value\u0000with\u0000nulls");
-		Util.writeAndGet(this.executor, uri, "key\u0000with\u0000nulls", "foo");
+		for (String[] keyValue : keyValues) {
+			Util.writeAndGet(this.executor, uri, keyValue[0], keyValue[1]);
+		}
+
+		// shut it down
+		this.accessor.stop();
+	}
+
+	/**
+	 * Starts up a REST accessor, then tests storing of several combinations of keys and values
+	 * <ul>
+	 *   <li>of ASCII letters only</li>
+	 *   <li>of special characters</li>
+	 *   <li>containing non-ASCII characters</li>
+	 *   <li>empty key or value</li>
+	 *   <li>containing null bytes</li>
+	 * </ul>
+	 * @throws Exception if any exception occurs
+	 */
+	@Test
+	public void testPutAccess() throws Exception {
+		// configure an accessor
+		String uri = setupAccessor("restor", "/v0.1", "/table/");
+
+		// write value via REST, then retrieve it back via executor
+		for (String[] keyValue : keyValues) {
+			Util.putAndRead(this.executor, uri, keyValue[0], keyValue[1]);
+		}
+
+		// shut it down
+		this.accessor.stop();
+	}
+
+	/**
+	 * Verifies that a PUT to an existing key updates the value
+	 */
+	@Test
+	public void testRepeatedPut() throws Exception {
+		// configure an accessor
+		String uri = setupAccessor("rest", "/v0.1", "/table/");
+
+		// write value via REST, then retrieve it back via executor
+		Util.putAndRead(this.executor, uri, "ki", "velu");
+		// write new value for the same key via REST, then retrieve it back via executor
+		Util.putAndRead(this.executor, uri, "ki", "nuvelu");
 
 		// shut it down
 		this.accessor.stop();
@@ -168,10 +217,30 @@ public class RestAccessorTest {
 		// non-existent key
 		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
 		// correct key but more in the path
-		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/"));
 		Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/a"));
 		// correct key but unsupported query -> 501 Not Implemented
 		Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "x?force=true"));
+
+		// test some bad put requests
+		// submit a request without the correct prefix in the path -> 404 Not Found
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port));
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + "/"));
+		// no table
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + "/table"));
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
+		// table without key
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
+		// unknown table
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
+		Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+		// no key
+		Assert.assertEquals(404, Util.sendPutRequest(baseUrl));
+		// correct key but more in the path
+		Assert.assertEquals(404, Util.sendPutRequest(baseUrl + "x/"));
+		Assert.assertEquals(404, Util.sendPutRequest(baseUrl + "x/a"));
+		// correct key but unsupported query -> 501 Not Implemented
+		Assert.assertEquals(501, Util.sendPutRequest(baseUrl + "x?force=true"));
 
 		// and shutdown
 		this.accessor.stop();

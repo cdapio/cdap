@@ -2,7 +2,9 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.data.operation.Delete;
 import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.Write;
 import com.continuuity.gateway.util.NettyRestHandler;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -25,7 +27,7 @@ public class RestHandler extends NettyRestHandler {
 			.getLogger(RestHandler.class);
 
 	/** The allowed methods for this handler */
-	HttpMethod[] allowedMethods = { HttpMethod.GET, HttpMethod.DELETE };
+	HttpMethod[] allowedMethods = { HttpMethod.GET, HttpMethod.DELETE, HttpMethod.PUT };
 
 	/**
 	 * Will help validate URL paths, and also has the name of the connector and
@@ -60,7 +62,7 @@ public class RestHandler extends NettyRestHandler {
 
 		// we only support get requests for now
 		HttpMethod method = request.getMethod();
-		if (method != HttpMethod.GET && method != HttpMethod.DELETE) {
+		if (method != HttpMethod.GET && method != HttpMethod.DELETE && method != HttpMethod.PUT) {
 			LOG.debug("Received a " + method + " request, which is not supported");
 			respondNotAllowed(message.getChannel(), allowedMethods);
 			return;
@@ -82,9 +84,10 @@ public class RestHandler extends NettyRestHandler {
 			int pos = remainder.indexOf("/");
 			if (pos > 0) {
 				destination = remainder.substring(0, pos);
-				if ("default".equals(destination)) {
-					key = remainder.substring(pos + 1);
-				}
+				if ("default".equals(destination))
+					// no further / in the path
+					if (remainder.indexOf('/', pos + 1) < 0)
+						key = remainder.substring(pos + 1);
 			}
 		}
 		if (key == null || key.length() == 0) {
@@ -115,26 +118,41 @@ public class RestHandler extends NettyRestHandler {
 			}
 		}
 		else if (method == HttpMethod.DELETE) {
-			try {
-				// first perform a Read to determine whether the key exists
-				Read read = new Read(keyBinary);
-				byte[] value = this.accessor.getExecutor().execute(read);
-				if (value == null) {
-					// key does not exist -> Not Found
-					respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-					return;
-				}
-				Delete delete = new Delete(keyBinary);
-				if (this.accessor.getExecutor().execute(delete)) {
-					// deleted successfully
-					respondSuccess(message.getChannel(), request, null);
-				} else {
-					// something went wrong, internal error
-					respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-				}
-			} catch (Exception e) {
+			// first perform a Read to determine whether the key exists
+			Read read = new Read(keyBinary);
+			byte[] value = this.accessor.getExecutor().execute(read);
+			if (value == null) {
+				// key does not exist -> Not Found
+				respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+				return;
+			}
+			Delete delete = new Delete(keyBinary);
+			if (this.accessor.getExecutor().execute(delete)) {
+				// deleted successfully
+				respondSuccess(message.getChannel(), request, null);
+			} else {
 				// something went wrong, internal error
-				LOG.error("Error deleting value for key '" + key + "': " + e.getMessage() + ".", e);
+				respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		else if (method == HttpMethod.PUT) {
+			// read the body of the request and add it to the event
+			ChannelBuffer content = request.getContent();
+			if (content == null) {
+				// PUT without content -> 400 Bad Request
+				respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+				return;
+			}
+			int length = content.readableBytes();
+			byte[] bytes = new byte[length];
+			content.readBytes(bytes);
+			// create a write and attempt to execute it
+			Write write = new Write(keyBinary, bytes);
+			if (this.accessor.getExecutor().execute(write)) {
+				// written successfully
+				respondSuccess(message.getChannel(), request, null);
+			} else {
+				// something went wrong, internal error
 				respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
