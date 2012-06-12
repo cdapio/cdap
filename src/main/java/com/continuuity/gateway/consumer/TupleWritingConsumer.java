@@ -1,12 +1,12 @@
 package com.continuuity.gateway.consumer;
 
 import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.api.Tuple;
 import com.continuuity.flow.flowlet.core.TupleSerializer;
 import com.continuuity.flow.flowlet.impl.TupleBuilderImpl;
 import com.continuuity.gateway.Constants;

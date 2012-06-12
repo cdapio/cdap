@@ -1,10 +1,10 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.continuuity.gateway.tools.DataFabricTool;
