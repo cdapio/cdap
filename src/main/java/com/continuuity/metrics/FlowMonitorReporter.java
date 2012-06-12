@@ -1,6 +1,7 @@
 package com.continuuity.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.metrics.service.MetricsClient;
 import com.continuuity.metrics.stubs.FlowMetric;
@@ -54,7 +55,12 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
     super(Metrics.defaultRegistry(), "flow-monitor-reporter");
     this.predicate = MetricPredicate.ALL;
     try {
-      this.client = new MetricsClient(configuration);
+      if(configuration == null) {
+        int port = Integer.parseInt(Constants.DEFAULT_FLOW_MONITOR_SERVER_PORT);
+        this.client = new MetricsClient("localhost", port );
+      } else {
+        this.client = new MetricsClient(configuration);
+      }
       hasConnected = true;
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to connect to flow monitor. Reason : {}.", e.getMessage());
