@@ -32,6 +32,10 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
 
 // generate the API jar
 
+sourceSets {
+  api
+}
+
 task apiJar(type: Jar) {
   from sourceSets.api.output
   classifier = "api"
