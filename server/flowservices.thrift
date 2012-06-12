@@ -131,7 +131,7 @@ struct FlowStatus {
  1:string app,
  2:string flow,
  3:i32 version,
- 4:list<FlowletStatus> flowlets,
+ 4:string status,
 }
 
 /**

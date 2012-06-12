@@ -1,11 +1,11 @@
 <div id="sub-header">
-	<div id="action-buttons" class="btn-group pull-right" style="width:116px;">
-		<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentStatus}}</button>
-	  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-id="current.id"}}>{{current.defaultAction}}</button>
+	<div id="action-buttons" class="btn-group pull-right" style="width:200px;">
+	  	<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}>{{current.defaultAction}}</button>
+	  	<button disabled="true" style="width: 82px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentState}}</button>
 	</div>
 	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
 	<ul class="breadcrumb">
-		<li><a href="#">Flows</a> <span class="divider">/</span></li>
+		<li><a href="#"><i class="icon-home" /> </a><a href="#">All Flows</a> <span class="divider">/</span></li>
 		{{#if run}}
 			<li><a {{bindAttr href="current.href"}}>{{current.meta.name}}</a></li>
 			<span class="divider">/</span></li>

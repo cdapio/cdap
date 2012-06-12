@@ -45,6 +45,9 @@ function(Models, Views, Controllers, Router, Socket){
 
 			}, function (message, arguments) {
 
+				if (typeof message === "object") {
+					message = message.message;
+				}
 				App.interstitial.label(message).show();
 				
 			});

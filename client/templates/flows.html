@@ -6,9 +6,9 @@
 			<button class="btn btn-success" {{action "upload" on="click"}}>Upload a Flow</button>
 		{{/if}}
 	</div>
-	<h2 id="content-header">Local Mode <span>All Flows</span></h2>
+	<h2 id="content-header">All Flows</h2>
 	<ul class="breadcrumb">
-		<li><a href="#">All Flows</a>
+		<li class="selected"><i class="icon-home" /> All Flows</li>
 		<li class="pull-right">Displaying {{App.Controllers.Flows.length}} of {{App.Controllers.Flows.length}} flows.</li>
 	</ul>
 </div>
@@ -40,7 +40,7 @@
 		<td>{{runs}}</td>
 		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
 		<td style="width: 64px;">
-			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-id="id"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-app="applicationId"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
 			</div>
 		</td>
 	</tr>

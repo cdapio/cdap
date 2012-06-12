@@ -528,6 +528,180 @@ FlowMonitor_getFlowDefinition_result.prototype.write = function(output) {
   return;
 };
 
+var FlowMonitor_getFlowMetrics_args = function(args) {
+  this.accountId = null;
+  this.appId = null;
+  this.flowId = null;
+  this.rid = null;
+  if (args) {
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+    if (args.appId !== undefined) {
+      this.appId = args.appId;
+    }
+    if (args.flowId !== undefined) {
+      this.flowId = args.flowId;
+    }
+    if (args.rid !== undefined) {
+      this.rid = args.rid;
+    }
+  }
+};
+FlowMonitor_getFlowMetrics_args.prototype = {};
+FlowMonitor_getFlowMetrics_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.appId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.STRING) {
+        this.rid = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowMonitor_getFlowMetrics_args.prototype.write = function(output) {
+  output.writeStructBegin('FlowMonitor_getFlowMetrics_args');
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 1);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  if (this.appId) {
+    output.writeFieldBegin('appId', Thrift.Type.STRING, 2);
+    output.writeString(this.appId);
+    output.writeFieldEnd();
+  }
+  if (this.flowId) {
+    output.writeFieldBegin('flowId', Thrift.Type.STRING, 3);
+    output.writeString(this.flowId);
+    output.writeFieldEnd();
+  }
+  if (this.rid) {
+    output.writeFieldBegin('rid', Thrift.Type.STRING, 4);
+    output.writeString(this.rid);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowMonitor_getFlowMetrics_result = function(args) {
+  this.success = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+  }
+};
+FlowMonitor_getFlowMetrics_result.prototype = {};
+FlowMonitor_getFlowMetrics_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size16 = 0;
+        var _rtmp320;
+        this.success = [];
+        var _etype19 = 0;
+        _rtmp320 = input.readListBegin();
+        _etype19 = _rtmp320.etype;
+        _size16 = _rtmp320.size;
+        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        {
+          var elem22 = null;
+          elem22 = new ttypes.Metric();
+          elem22.read(input);
+          this.success.push(elem22);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowMonitor_getFlowMetrics_result.prototype.write = function(output) {
+  output.writeStructBegin('FlowMonitor_getFlowMetrics_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter23 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter23))
+      {
+        iter23 = this.success[iter23];
+        iter23.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FlowMonitorClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -673,6 +847,43 @@ FlowMonitorClient.prototype.recv_getFlowDefinition = function(input,mtype,rseqid
   }
   return callback('getFlowDefinition failed: unknown result');
 };
+FlowMonitorClient.prototype.getFlowMetrics = function(accountId, appId, flowId, rid, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getFlowMetrics(accountId, appId, flowId, rid);
+};
+
+FlowMonitorClient.prototype.send_getFlowMetrics = function(accountId, appId, flowId, rid) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getFlowMetrics', Thrift.MessageType.CALL, this.seqid);
+  var args = new FlowMonitor_getFlowMetrics_args();
+  args.accountId = accountId;
+  args.appId = appId;
+  args.flowId = flowId;
+  args.rid = rid;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FlowMonitorClient.prototype.recv_getFlowMetrics = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FlowMonitor_getFlowMetrics_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getFlowMetrics failed: unknown result');
+};
 var FlowMonitorProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -741,6 +952,20 @@ FlowMonitorProcessor.prototype.process_getFlowDefinition = function(seqid, input
   this._handler.getFlowDefinition(args.accountId, args.appId, args.flowId, args.versionId, function (success) {
     result.success = success;
     output.writeMessageBegin("getFlowDefinition", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FlowMonitorProcessor.prototype.process_getFlowMetrics = function(seqid, input, output) {
+  var args = new FlowMonitor_getFlowMetrics_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FlowMonitor_getFlowMetrics_result();
+  this._handler.getFlowMetrics(args.accountId, args.appId, args.flowId, args.rid, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getFlowMetrics", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

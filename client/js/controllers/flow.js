@@ -20,13 +20,13 @@ define([], function () {
 		init: function () {
 
 			this.sourcespec = {
-				endpoint:"Dot",
+				endpoint:"Blank",
 				paintStyle:{ fillStyle:"#51A351", radius:5 },
 				isSource:true
 			};
 
 			this.destspec = {
-				endpoint:"Dot",
+				endpoint:"Blank",
 				paintStyle:{ fillStyle:"#51A351", radius:5 },
 				maxConnections:-1,
 				dropOptions:{ hoverClass:"hover", activeClass:"active" },
@@ -36,9 +36,7 @@ define([], function () {
 			this.plumber = jsPlumb.getInstance();
 
 			this.plumber.importDefaults({
-				ConnectionOverlays:[
-					[ "Arrow", { location:1, width: 20, length: 20 } ]
-				]
+				
 			});
 		},
 
@@ -82,6 +80,9 @@ define([], function () {
 
 			App.interstitial.loading();
 
+			//
+			// Request Flow Definition
+			//
 			App.socket.request('monitor', {
 				method: 'getFlowDefinition',
 				params: ['demo', app, id, '']
@@ -97,7 +98,11 @@ define([], function () {
 					return;
 				}
 
-				self.set('current', App.Models.Definition.create(response.params));
+				response.params.currentState = 'UNKNOWN';
+				response.params.version = -1;
+
+				self.set('current', App.Models.Flow.create(response.params));
+			
 
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
@@ -106,40 +111,77 @@ define([], function () {
 
 				self.drawNodes();
 
-				/*
-				clearInterval(self.interval);
-				self.interval = setInterval(function () {
-					if (self.current.status === 'running') {
-						self.updateStats();
+				//
+				// Request Flow Status
+				//
+				App.socket.request('manager', {
+					method: 'status',
+					params: [app, id, -1]
+				}, function (response) {
+
+					console.log(response.params);
+
+					self.get('current').set('currentState', response.params.status);
+					self.get('current').set('version', response.params.version);
+
+					if (response.params.status === 'RUNNING') {
+
+						clearInterval(self.interval);
+						self.interval = setInterval(function () {
+							if (self.current.currentState === 'running') {
+								self.updateStats();
+							}
+						}, 1000);
+						self.updateStats(self.get('run'));
+					
 					}
-				}, 1000);
-				self.updateStats();
-				*/
-				
-				App.interstitial.hide();
+
+					App.interstitial.hide();
+
+				});
 
 			});
+
 		},
 
-		updateStats: function () {
+		updateStats: function (once) {
 			var self = this;
+
+			var app = this.get('current').get('meta').app;
+			var id = this.get('current').get('meta').name;
+			var run = this.get('run');
+
+			console.log(self.get('current').get('currentState'));
+
+			if (self.get('current').get('currentState') !== 'RUNNING') {
+				return;
+			}
+
 			App.socket.request('monitor', {
-				method: 'getFlowMetric',
-				params: this.get('current').get('id')
+				method: 'getFlowMetrics',
+				params: ['demo', app, id, run]
 			}, function (response) {
 
 				console.log(response);
+
+				if (!response.params.flowlets) {
+					return;
+				}
 
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
 					var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
 					var finish = flowlets[i].tuples.processed;
 
-					if (!isNaN(start)) {
-						self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
-					} else {
+					if (once) {
 						$('#stat' + flowlets[i].id).html(finish);
-						self.updateStats();
+					} else {
+						if (!isNaN(start)) {
+							self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
+						} else {
+							$('#stat' + flowlets[i].id).html(finish);
+							self.updateStats();
+						}
 					}
 				}
 			});
@@ -191,13 +233,19 @@ define([], function () {
 				}
 			}
 
+			var flowSource = null;
+
 			var cx = App.Controllers.Flow.current.connections;
 			var conns = {};
 			for (var i = 0; i < cx.length; i ++) {
-				if (!conns[cx[i].from.flowlet]) {
-					conns[cx[i].from.flowlet] = [];
+				if (!cx[i].to.flowlet) {
+					flowSource = 'input-stream';
+					continue;
 				}
-				conns[cx[i].from.flowlet].push(cx[i].to.flowlet);
+				if (!conns[cx[i].to.flowlet]) {
+					conns[cx[i].to.flowlet] = [];
+				}
+				conns[cx[i].to.flowlet].push(cx[i].from.flowlet || 'input-stream');
 			}
 			for (var j = 0; j < flowlets.length; j++) {
 				if (!conns[flowlets[j].name]) {
@@ -214,8 +262,8 @@ define([], function () {
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
-					'" class="window' + (column === 0 ? ' source' : '') + '"><strong>' + flowlet.name +
-					'</strong><div id="stat' + id + '"></div></div>');
+					'" class="window' + ('input-stream' === id ? ' source' : '') + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
+					'</strong></div><div id="stat' + id + '"></div></div>');
 				
 				if (columns[column] === undefined) {
 					// Create a new column element.
@@ -232,6 +280,10 @@ define([], function () {
 					column: column,
 					row: rows[column] ++
 				};
+
+				if (!conns[id]) {
+					return;
+				}
 
 				for (var i = 0; i < conns[id].length; i ++) {
 					elId = "flowlet" + conns[id][i];
@@ -252,24 +304,51 @@ define([], function () {
 
 			function connect(from, to) {
 
-				var connector = [ "Bezier", { gap: 0, curviness: 75 } ];
+				var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
+
 				if (column_map[from].row === column_map[to].row) {
-					connector = [ "Flowchart", { gap: 0, stub: 75 } ];
+					connector = [ "StateMachine", { gap: 0, stub: 1 } ];
 				}
+
+				var stateMachineConnector = {
+					connector: connector,
+					paintStyle:{
+						lineWidth:3,
+						strokeStyle:"#152C52"},
+					endpoint:"Blank",
+					anchor:"Continuous",
+					overlays:[ ["Arrow", {location:1, width:20, length:12} ]]
+				};
+				
+				jsPlumb.connect({
+					source:"flowlet" + from,
+					target:"flowlet" + to
+				}, stateMachineConnector);
+
+				/*
+				
 
 				self.plumber.connect({uuids:['flowlet' + from + 'RightMiddle',
 					'flowlet' + to + 'LeftMiddle'],
-					connector: connector});
+					paintStyle:{
+						lineWidth:5,
+						strokeStyle:"#152C52"
+					},
+					overlays:[ ["PlainArrow", {location:1, width:20, length:12} ]],
+
+					connector: connector
+				});
+				*/
 			}
 
-			function connects_to(id) {
+			function bind_to(id) {
 				var i;
 				
 				if (!id) { // Append the first node
 					for (i in conns) {
 						if (!conns[i] || conns[i].length === 0) {
 							append(i, 0);
-							connects_to(i);
+							bind_to(i);
 							break;
 						}
 					}
@@ -279,13 +358,20 @@ define([], function () {
 							if (conns[i][k] === id) {
 								append(i, column_map[id].column + 1);
 								connect(id, i);
-								connects_to(i);
+								bind_to(i);
 							}
 						}
 					}
 				}
 			}
-			connects_to(null);
+
+			if (flowSource === 'input-stream') {
+
+				append('input-stream'); // Attach the Input Stream
+
+			}
+
+			bind_to(flowSource);
 
 		}
 	});

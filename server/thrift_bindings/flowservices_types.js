@@ -793,7 +793,7 @@ var FlowStatus = module.exports.FlowStatus = function(args) {
   this.app = null;
   this.flow = null;
   this.version = null;
-  this.flowlets = null;
+  this.status = null;
   if (args) {
     if (args.app !== undefined) {
       this.app = args.app;
@@ -804,8 +804,8 @@ var FlowStatus = module.exports.FlowStatus = function(args) {
     if (args.version !== undefined) {
       this.version = args.version;
     }
-    if (args.flowlets !== undefined) {
-      this.flowlets = args.flowlets;
+    if (args.status !== undefined) {
+      this.status = args.status;
     }
   }
 };
@@ -845,22 +845,8 @@ FlowStatus.prototype.read = function(input) {
       }
       break;
       case 4:
-      if (ftype == Thrift.Type.LIST) {
-        var _size8 = 0;
-        var _rtmp312;
-        this.flowlets = [];
-        var _etype11 = 0;
-        _rtmp312 = input.readListBegin();
-        _etype11 = _rtmp312.etype;
-        _size8 = _rtmp312.size;
-        for (var _i13 = 0; _i13 < _size8; ++_i13)
-        {
-          var elem14 = null;
-          elem14 = new ttypes.FlowletStatus();
-          elem14.read(input);
-          this.flowlets.push(elem14);
-        }
-        input.readListEnd();
+      if (ftype == Thrift.Type.STRING) {
+        this.status = input.readString();
       } else {
         input.skip(ftype);
       }
@@ -891,18 +877,9 @@ FlowStatus.prototype.write = function(output) {
     output.writeI32(this.version);
     output.writeFieldEnd();
   }
-  if (this.flowlets) {
-    output.writeFieldBegin('flowlets', Thrift.Type.LIST, 4);
-    output.writeListBegin(Thrift.Type.STRUCT, this.flowlets.length);
-    for (var iter15 in this.flowlets)
-    {
-      if (this.flowlets.hasOwnProperty(iter15))
-      {
-        iter15 = this.flowlets[iter15];
-        iter15.write(output);
-      }
-    }
-    output.writeListEnd();
+  if (this.status) {
+    output.writeFieldBegin('status', Thrift.Type.STRING, 4);
+    output.writeString(this.status);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -946,18 +923,18 @@ FlowDescriptor.prototype.read = function(input) {
       break;
       case 2:
       if (ftype == Thrift.Type.LIST) {
-        var _size16 = 0;
-        var _rtmp320;
+        var _size8 = 0;
+        var _rtmp312;
         this.arguments = [];
-        var _etype19 = 0;
-        _rtmp320 = input.readListBegin();
-        _etype19 = _rtmp320.etype;
-        _size16 = _rtmp320.size;
-        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        var _etype11 = 0;
+        _rtmp312 = input.readListBegin();
+        _etype11 = _rtmp312.etype;
+        _size8 = _rtmp312.size;
+        for (var _i13 = 0; _i13 < _size8; ++_i13)
         {
-          var elem22 = null;
-          elem22 = input.readString();
-          this.arguments.push(elem22);
+          var elem14 = null;
+          elem14 = input.readString();
+          this.arguments.push(elem14);
         }
         input.readListEnd();
       } else {
@@ -983,12 +960,12 @@ FlowDescriptor.prototype.write = function(output) {
   if (this.arguments) {
     output.writeFieldBegin('arguments', Thrift.Type.LIST, 2);
     output.writeListBegin(Thrift.Type.STRING, this.arguments.length);
-    for (var iter23 in this.arguments)
+    for (var iter15 in this.arguments)
     {
-      if (this.arguments.hasOwnProperty(iter23))
+      if (this.arguments.hasOwnProperty(iter15))
       {
-        iter23 = this.arguments[iter23];
-        output.writeString(iter23);
+        iter15 = this.arguments[iter15];
+        output.writeString(iter15);
       }
     }
     output.writeListEnd();

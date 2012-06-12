@@ -28,6 +28,11 @@ task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS fil
 //	"rm -rf ./node_modules/".execute();
 //}
 
+task binaries (type: Copy) {
+	from 'bin/'
+	into 'build/bin'
+}
+
 task server(type:Copy, dependsOn: 'syntax', description: 'Copies relevant server files to build') {
 	from 'server/'
 	into 'build/server'

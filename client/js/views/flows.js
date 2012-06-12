@@ -9,9 +9,12 @@ define([
 
 			var control = $(event.srcElement);
 			var id = control.attr('flow-id');
+			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
 
-			App.Controllers.Flows[action.toLowerCase()](id);
+			if (action.toLowerCase() in App.Controllers.Flows) {
+				App.Controllers.Flows[action.toLowerCase()](app, id, -1);
+			}
 
 		},
 		upload: function (event) {

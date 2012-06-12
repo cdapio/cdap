@@ -4,9 +4,6 @@
 
 (function () {
 
-	this.USERNAME = 'cntnty';
-	this.PASSWORD = 'realtime';
-
 	this.configure = function (app, express, io) {
 		console.log('Configuring for ' + (process.env.NODE_ENV || 'development'));
 
@@ -24,6 +21,9 @@
 
 		if (process.env.NODE_ENV === 'production') {
 
+			this.USERNAME = 'cntnty';
+			this.PASSWORD = 'realtime';
+
 			this.PORT = 80;
 			this.api.configure({
 				'upload': { 'host': 'upload.continuuity.com', 'port': 45000 },
@@ -32,6 +32,9 @@
 			});
 
 		} else if (process.env.NODE_ENV === 'staging') {
+
+			this.USERNAME = 'cntnty';
+			this.PASSWORD = 'realtime';
 
 			this.PORT = 80;
 			this.api.configure({

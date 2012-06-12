@@ -5,11 +5,44 @@
 	</div>
 	<h2 id="content-header">Upload a Flow</h2>
 	<ul class="breadcrumb">
-		<li><a href="#">Flows</a> <span class="divider">/</span></li>
+		<li><a href="#"><i class="icon-home" /> </a><a href="#">All Flows</a> <span class="divider">/</span></li>
 		<li class="selected">Upload</li>
 	</ul>
-	<div id="far-upload-alert" class="alert alert-error">
-	</div>
+	<div id="far-upload-alert" class="alert alert-error"></div>
+</div>
+<div id="object-list" style="display: none;">
+<table class="table">
+	<thead>
+		<th colspan="2" style="width: 215px;">Name</th>
+		<th style="width: 120px;">Last Started</th>
+		<th style="width: 120px;">Last Stopped</th>
+		<th style="width: 32px;">Runs</th>
+		<th colspan="2">&nbsp;</th>
+	</thead>
+	{{#each App.Controllers.Flows tagName="tbody"}}
+	<tr>
+		<td style="width: 18px;">
+			<div class="btn-group">
+				<button class="btn dropdown-toggle" data-toggle="dropdown">
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><a {{bindAttr href="href"}}>View Detail</a></li>
+				</ul>
+			</div>
+		</td>
+		<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
+		<td style="width: 140px;">{{started}}</td>
+		<td style="width: 140px;">{{stopped}}</td>
+		<td>{{runs}}</td>
+		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
+		<td style="width: 64px;">
+			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+			</div>
+		</td>
+	</tr>
+	{{/each}}
+</table>
 </div>
 <div id="far-upload" class="well">
 	<h3 id="far-upload-status">Drop a *.jar file here to upload</h3>

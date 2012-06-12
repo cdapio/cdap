@@ -1,14 +1,17 @@
-var Env, express = require('express'),
+
+var Env = require('./env'), express = require('express'), app;
+
+if (Env.USERNAME) {
 	app = express.createServer(express.basicAuth(function (u, p) {
 		return Env.USERNAME === u && Env.PASSWORD === p;
-	})),
-	io = require('socket.io').listen(app);
-
+	}));
+} else {
+	app = express.createServer();
+}
+var io = require('socket.io').listen(app);
 app.use(express.bodyParser());
 
-Env = require('./env');
 Env.configure(app, express, io);
-
 app.listen(Env.PORT);
 
 var id = "default";

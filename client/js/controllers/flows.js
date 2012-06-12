@@ -28,62 +28,76 @@ define([], function () {
 				App.interstitial.hide();
 			});
 		},
-		start: function (id) {
+		start: function (app, id, version) {
 
-			/*
-			App.socket.request('manager', {
-				method: 'start',
-				params: id
-			}, function (response) {
-
-				if (App.Controllers.Flow.current) {
-					App.Controllers.Flow.current.set('status', 'running');
-					App.Controllers.Flow.current.set('running', new Date().ISO8601());
-				}
-
+			var thisFlow;
+			if (App.Controllers.Flow.current) {
+				thisFlow = App.Controllers.Flow.current;
+			} else {
 				var flows = App.Controllers.Flows.content;
 				for (var i = 0; i < flows.length; i ++) {
-					if (flows[i].id === id) {
-						flows[i].set('status', 'running');
-						flows[i].set('started', new Date().ISO8601());
-						flows[i].set('runs', flows[i].runs + 1);
-						return;
+					if (flows[i].get('applicationId') === app &&
+						flows[i].get('flowId') === id) {
+							thisFlow = flows[i];
+							break;
 					}
 				}
+			}
+
+			thisFlow.set('currentState', 'STARTING');
+
+			App.socket.request('manager', {
+				method: 'start',
+				params: [app, id, version]
+			}, function (response) {
+
+				thisFlow.set('currentState', 'RUNNING');
+				thisFlow.set('lastStarted', new Date().getTime() / 1000);
+
 			});
-			*/
+
 		},
-		stop: function (id) {
-			/*
+		stop: function (app, id, version) {
+
+			var thisFlow;
+			if (App.Controllers.Flow.current) {
+				thisFlow = App.Controllers.Flow.current;
+			} else {
+				var flows = App.Controllers.Flows.content;
+				for (var i = 0; i < flows.length; i ++) {
+					if (flows[i].get('applicationId') === app &&
+						flows[i].get('flowId') === id) {
+							thisFlow = flows[i];
+							break;
+					}
+				}
+			}
+
+			thisFlow.set('currentState', 'STOPPING');
+
 			App.socket.request('manager', {
 				method: 'stop',
-				params: id
+				params: [app, id, version]
 			}, function (response) {
 
 				if (App.Controllers.Flow.current) {
-					App.Controllers.Flow.current.set('status', 'stopped');
-					App.Controllers.Flow.current.set('stopped', new Date().ISO8601());
 
 					App.Controllers.Flow.history.pushObject(Em.Object.create({
 						"name": 'Flow Run',
 						"result": "success",
 						"user": "dmosites",
-						"time": new Date().ISO8601()
+						"time": new Date().getTime() / 1000
 					}));
 
 					App.Controllers.Flow.stop_spin();
 				}
 
-				var flows = App.Controllers.Flows.content;
-				for (var i = 0; i < flows.length; i ++) {
-					if (flows[i].id === id) {
-						flows[i].set('status', 'stopped');
-						flows[i].set('stopped', new Date().ISO8601());
-						return;
-					}
-				}
+				thisFlow.set('runs', thisFlow.runs + 1);
+				thisFlow.set('currentState', 'STOPPED');
+				thisFlow.set('lastStopped', new Date().getTime() / 1000);
+
 			});
-			*/
+
 		}
 	});
 });

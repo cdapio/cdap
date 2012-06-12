@@ -48,8 +48,45 @@ try {
 		conn.on('connect', function (response) {
 			var Manager = thrift.createClient(FlowService, conn);
 
+			console.log(method, params);
+
 			if (method in Manager) {
-				Manager[method].apply(Manager, params.concat(done));
+
+				switch (method) {
+					case 'start':
+						var identifier = new flowservices_types.FlowDescriptor({
+							identifier: new flowservices_types.FlowIdentifier({
+								app: params[0],
+								flow: params[1],
+								version: parseInt(params[2], 10),
+								accountId: 'demo'
+							}),
+							arguments: []
+						});
+						Manager.start(null, identifier, done);
+					break;
+					case 'stop':
+						var identifier = new flowservices_types.FlowIdentifier({
+							app: params[0],
+							flow: params[1],
+							version: parseInt(params[2], 10),
+							accountId: 'demo'
+						});
+						Manager.stop(null, identifier, done);
+					break;
+					case 'status':
+						var identifier = new flowservices_types.FlowIdentifier({
+							app: params[0],
+							flow: params[1],
+							version: parseInt(params[2], 10),
+							accountId: 'demo'
+						});
+						Manager.status(null, identifier, done);
+					break;
+					default:
+						Manager[method].apply(Manager, params.concat(done));
+				}
+
 			} else {
 				done('Unknown method for service Manager: ' + method, null);
 			}
@@ -88,7 +125,6 @@ try {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
-		var body = null;
 		var length = req.header('Content-length');
 
 		var data = new Buffer(parseInt(length, 10));
@@ -124,7 +160,7 @@ try {
 					console.log('FARManager init', error);
 				} else {
 
-					socket.emit('upload', {'status': 'initialized'});
+					socket.emit('upload', {'status': 'initialized', 'resource_identifier': resource_identifier});
 					FAR.chunk(auth_token, resource_identifier, data, function (error, result) {
 						if (error) {
 							console.log('FARManager chunk', error);
@@ -143,11 +179,12 @@ try {
 												console.log('FARManager verify', error);
 											} else {
 
-												socket.emit('upload', {'status': 'verify', 'step': result.overall});
+												socket.emit('upload', {'status': 'verify', 'step': result.overall, 'message': result.message, 'flows': result.verification});
 												if (result.overall === 0 ||	// Not Found
 													result.overall === 4 || // Failed
 													result.overall === 5 || // Success
-													result.overall === 6) { // Undeployed
+													result.overall === 6 || // Undeployed
+													result.overall === 7) {
 													clearInterval(status_interval);
 												} // Else: 1 (Registered), 2 (Uploading), 3 (Verifying)
 											}

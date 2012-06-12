@@ -22,7 +22,7 @@ define([], function () {
 
 		socket.on('upload', function (response) {
 
-			App.Views.Upload.update(response);
+			App.Controllers.Upload.update(response);
 
 		});
 
