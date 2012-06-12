@@ -7,7 +7,7 @@ import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
-import com.continuuity.gateway.tools.DataFabricTool;
+import com.continuuity.gateway.tools.DataClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DataFabricToolTest {
+public class DataClientTest {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(DataFabricToolTest.class);
+      .getLogger(DataClientTest.class);
 
   private OperationExecutor executor = null;
 
@@ -126,12 +126,12 @@ public class DataFabricToolTest {
     // test each good combination
     for (String[] args : goodArgsList) {
       LOG.info("Testing: " + Arrays.toString(args));
-      Assert.assertNotNull(new DataFabricTool().execute(args, configuration));
+      Assert.assertNotNull(new DataClient().execute(args, configuration));
     }
     // test each bad combination
     for (String[] args : badArgsList) {
       LOG.info("Testing: " + Arrays.toString(args));
-      Assert.assertNull(new DataFabricTool().execute(args, configuration));
+      Assert.assertNull(new DataClient().execute(args, configuration));
     }
 
     // and shut down

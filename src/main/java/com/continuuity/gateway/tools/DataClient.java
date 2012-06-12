@@ -25,8 +25,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This is a command line tool to retrieve a value by key from the
- * data fabric.
+ * This is a command line tool to interact with the key/vaue store of
+ * data fabric. It can get a value by key, save a value for a key,
+ * delete a key, or list all keys in the store.
  * <ul>
  * <li>It attempts to be smart and determine the URL of the REST
  * accessor auto-magically. If that fails, the user can give hints
@@ -38,12 +39,48 @@ import java.util.List;
  * to the screen in the same encoding as the key.</li>
  * </ul>
  */
-public class DataFabricTool {
+public class DataClient {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(DataFabricTool.class);
+      .getLogger(DataClient.class);
 
-   public static boolean verbose = false;
+  /**
+   * for debugging. should only be set to true in unit tests.
+   * when true, program will print the stack trace after the usage.
+   */
+  public static boolean verbose = false;
+
+  /**
+   * Print the usage statement and return null (or empty string if this is not an error case).
+   * See getValue() for an explanation of the return type.
+   *
+   * @param error indicates whether this was invoked as the result of an error
+   * @throws IllegalArgumentException in case of error, an empty string in case of success
+   */
+  void usage(boolean error) {
+    PrintStream out = (error ? System.err : System.out);
+    String name = this.getClass().getSimpleName();
+    out.println("Usage: ");
+    out.println("  " + name + " read --key <string> [ <options> ]");
+    out.println("  " + name + " write --key <string> --value value [ <options> ]");
+    out.println("  " + name + " delete --key <string> [ <options> ]");
+    out.println("  " + name + " list [ <options> ]");
+    out.println("Additional options:");
+    out.println("  --base <url>            To specify the base url to send to");
+    out.println("  --host <name>           To specify the hostname to send to");
+    out.println("  --connector <name>      To specify the name of the rest connector");
+    out.println("  --key <string>          To specify the key");
+    out.println("  --key-file <path>       To read the binary key from a file");
+    out.println("  --value <string>        To specify the value");
+    out.println("  --value-file <path>     To read/write the binary value from/to a file");
+    out.println("  --hex                   To use hexadecimal encoding for key and value");
+    out.println("  --ascii                 To use ASCII encoding for key and value");
+    out.println("  --url                   To use URL encoding for key and value");
+    out.println("  --encoding <name>       To use this encoding for key and value");
+    if (error) {
+      throw new IllegalArgumentException();
+    }
+  }
 
   /**
    * Retrieves the http config of the rest accessor from the gateway
@@ -77,32 +114,6 @@ public class DataFabricTool {
       return null;
     }
     return httpConfig.getBaseUrl(hostname);
-  }
-
-  /**
-   * Print the usage statement and return null (or empty string if this is not an error case).
-   * See getValue() for an explanation of the return type.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error, an empty string in case of success
-   */
-  void usage(boolean error) {
-    PrintStream out = (error ? System.err : System.out);
-    out.println("Usage: " + this.getClass().getSimpleName() + " <command> [ <option> ... ] with");
-    out.println("  --base <url>            To specify the base url to send to");
-    out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      To specify the name of the rest connector");
-    out.println("  --key <string>          To specify the key");
-    out.println("  --key-file <path>       To read the binary key from a file");
-    out.println("  --value <string>        To specify the value");
-    out.println("  --value-file <path>     To read/write the binary value from/to a file");
-    out.println("  --hex                   To use hexadecimal encoding for key and value");
-    out.println("  --ascii                 To use ASCII encoding for key and value");
-    out.println("  --url                   To use URL encoding for key and value");
-    out.println("  --encoding <name>       To use this encoding for key and value");
-    if (error) {
-      throw new IllegalArgumentException();
-    }
   }
 
   boolean help = false;          // whether --help was there
@@ -462,7 +473,7 @@ public class DataFabricTool {
     * it possible to test the return value.
     */
   public static void main(String[] args) {
-    DataFabricTool instance = new DataFabricTool();
+    DataClient instance = new DataClient();
     String value = instance.execute(args, CConfiguration.create());
     if (value == null) {
       System.exit(1);

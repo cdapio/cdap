@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 // todo document this
-public class SendFlumeEvent {
+public class FlumeClient {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(SendFlumeEvent.class);
+      .getLogger(FlumeClient.class);
 
   /**
    * Retrieves the port number of the flume collector from the gateway
@@ -46,7 +46,7 @@ public class SendFlumeEvent {
 
   public static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    out.println("Usage: SendFlumeEvent <option> ... with");
+    out.println("Usage: FlumeClient <option> ... with");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      To specify the name of the flume connector");
