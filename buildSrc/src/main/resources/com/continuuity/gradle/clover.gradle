@@ -16,7 +16,7 @@ allprojects
         excludes = ['**/generated/*.java']
         // This makes sure the gradle clover plugin doesn't set the default includeTest path to '**/*Test.java'.
         testIncludes = ['**/*.java']
-		if (multiModule) {
+		if (project.hasProperty('multiModule')) {
 			
 		} else {
 			additionalSourceDirs = sourceSets.api.allSource.srcDirs
