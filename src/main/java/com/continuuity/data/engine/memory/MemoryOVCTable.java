@@ -3,7 +3,9 @@
  */
 package com.continuuity.data.engine.memory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -169,6 +171,40 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     return ret;
   }
 
+  @Override
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) {
+    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+    int returned = 0;
+    int skipped = 0;
+
+    for (Map.Entry<Row, NavigableMap<Column, NavigableMap<Version, Value>>> entry :
+      this.map.entrySet()) {
+      // Determine if row is visible
+      if (hasAnyVisibleColumns(entry.getValue(), readPointer)) {
+        if (skipped < offset) {
+          skipped++;
+        } else if (returned < limit) {
+          returned++;
+          keys.add(entry.getKey().value);
+        }
+        if (returned == limit) return keys;
+      }
+    }
+    return keys;
+  }
+    
+  private boolean hasAnyVisibleColumns(
+      NavigableMap<Column, NavigableMap<Version, Value>> columns,
+      ReadPointer readPointer) {
+    for (Map.Entry<Column, NavigableMap<Version,Value>> entry :
+      columns.entrySet()) {
+      if (filteredLatest(entry.getValue(), readPointer) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+    
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow,
       ReadPointer readPointer) {

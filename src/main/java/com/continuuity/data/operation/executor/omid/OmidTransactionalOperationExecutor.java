@@ -16,12 +16,14 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationGenerator;
 import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadCounter;
+import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
+import com.continuuity.data.operation.Undelete;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
@@ -74,6 +76,8 @@ public class OmidTransactionalOperationExecutor
   static int MAX_DEQUEUE_RETRIES = 10;
   static long DEQUEUE_RETRY_SLEEP = 1;
 
+  // Single reads
+  
   @Override
   public byte[] execute(Read read) throws SyncReadTimeoutException {
     initialize();
@@ -84,7 +88,6 @@ public class OmidTransactionalOperationExecutor
     return this.randomTable.get(read.getKey(), COLUMN, pointer);
   }
 
-
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
     initialize();
@@ -94,6 +97,16 @@ public class OmidTransactionalOperationExecutor
     return Bytes.toLong(value);
   }
 
+  @Override
+  public List<byte[]> execute(ReadKeys readKeys)
+      throws SyncReadTimeoutException {
+    
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
+  // Write batches
+  
   @Override
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws OmidTransactionException {
@@ -199,6 +212,8 @@ public class OmidTransactionalOperationExecutor
       WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
     if (write instanceof Write) {
       return write((Write)write, pointer);
+    } else if (write instanceof Delete) {
+      return write((Delete)write, pointer);
     } else if (write instanceof ReadModifyWrite) {
       return write((ReadModifyWrite)write, pointer);
     } else if (write instanceof Increment) {
@@ -219,6 +234,13 @@ public class OmidTransactionalOperationExecutor
     this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
         write.getValue());
     return new WriteTransactionResult(true, new Delete(write.getKey()));
+  }
+
+  WriteTransactionResult write(Delete write,
+      ImmutablePair<ReadPointer, Long> pointer) {
+    initialize();
+    this.randomTable.deleteAll(write.getKey(), COLUMN, pointer.getSecond());
+    return new WriteTransactionResult(true, new Undelete(write.getKey()));
   }
 
   WriteTransactionResult write(ReadModifyWrite write,
@@ -357,7 +379,12 @@ public class OmidTransactionalOperationExecutor
     // Perform deletes
     for (Delete delete : deletes) {
       assert(delete != null);
-      this.randomTable.delete(delete.getKey(), COLUMN, pointer.getSecond());
+      if (delete instanceof Undelete) {
+        this.randomTable.undeleteAll(delete.getKey(), COLUMN,
+            pointer.getSecond());
+      } else {
+        this.randomTable.delete(delete.getKey(), COLUMN, pointer.getSecond());
+      }
     }
     // Notify oracle
     this.oracle.aborted(pointer.getSecond());

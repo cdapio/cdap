@@ -1,6 +1,7 @@
 package com.continuuity.data.engine.hbase;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -289,6 +290,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 

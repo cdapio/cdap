@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -29,11 +31,11 @@ implements OrderedVersionedColumnarTable {
     this.connection = connection;
   }
 
-  private static final String ROW_TYPE = "VARCHAR(1024)";
-  private static final String COLUMN_TYPE = "VARCHAR(1024)";
+  private static final String ROW_TYPE = "VARBINARY(1024)";
+  private static final String COLUMN_TYPE = "VARBINARY(1024)";
   private static final String VERSION_TYPE = "BIGINT";
   private static final String TYPE_TYPE = "INT";
-  private static final String VALUE_TYPE = "VARBINARY(2)";
+  private static final String VALUE_TYPE = "VARBINARY(1024)";
 
   private static final byte [] NULL_VAL = new byte [0];
 
@@ -382,6 +384,96 @@ implements OrderedVersionedColumnarTable {
   }
 
   // Scan Operations
+
+  @Override
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) {
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement(
+          "SELECT row, column, version, kvtype, id " +
+              "FROM " + this.tableName + " " +
+          "ORDER BY row ASC, column ASC, version DESC, kvtype ASC, id DESC");
+      ResultSet result = ps.executeQuery();
+      List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+      int returned = 0;
+      int skipped = 0;
+      long lastDelete = -1;
+      long undeleted = -1;
+      byte [] lastRow = new byte[0];
+      byte [] curRow = new byte[0];
+      byte [] curCol = new byte [0];
+      byte [] lastCol = new byte [0];
+      while (result.next() && returned < limit) {
+        // See if we already included this row
+        byte [] row = result.getBytes(1);
+        if (Bytes.equals(lastRow, row)) continue;
+        
+        // See if this is a new row (clear col/del tracking if so)
+        if (!Bytes.equals(curRow, row)) {
+          lastCol = new byte[0];
+          curCol = new byte[0];
+          lastDelete = -1;
+          undeleted = -1;
+        }
+        curRow = row;
+        
+        // Check visibility of this entry
+        long curVersion = result.getLong(3);
+        // Check if this entry is visible, skip if not
+        if (!readPointer.isVisible(curVersion)) continue;
+      
+        byte [] column = result.getBytes(2);
+        // Check if this column has been completely deleted
+        if (Bytes.equals(lastCol, column)) {
+          continue;
+        }
+        // Check if this is a new column, reset delete pointers if so
+        if (!Bytes.equals(curCol, column)) {
+          curCol = column;
+          lastDelete = -1;
+          undeleted = -1;
+        }
+        // Check if type is a delete and execute accordingly
+        Type type = Type.from(result.getInt(4));
+        if (type.isUndeleteAll()) {
+          undeleted = curVersion;
+          continue;
+        }
+        if (type.isDeleteAll()) {
+          if (undeleted == curVersion) continue;
+          else {
+            // The rest of this column has been deleted, act like we returned it
+            lastCol = column;
+            continue;
+          }
+        }
+        if (type.isDelete()) {
+          lastDelete = curVersion;
+          continue;
+        }
+        if (curVersion == lastDelete) continue;
+        // Column is valid, therefore row is valid, add row
+        lastRow = row;
+        if (skipped < offset) {
+          skipped++;
+        } else {
+          keys.add(row);
+          returned++;
+        }
+      }
+      return keys;
+    } catch (SQLException e) {
+      throw new RuntimeException("SQL Exception", e);
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {

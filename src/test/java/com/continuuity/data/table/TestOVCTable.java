@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+import java.util.Random;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,10 +24,13 @@ public abstract class TestOVCTable {
   private OVCTableHandle tableHandle;
   private OrderedVersionedColumnarTable table;
 
+  private static final Random r = new Random();
+
   @Before
   public void initialize() {
     this.tableHandle = getTableHandle();
-    this.table = this.tableHandle.getTable(Bytes.toBytes("TestOVCTable"));
+    this.table = this.tableHandle.getTable(
+        Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
   }
 
   protected abstract OVCTableHandle getTableHandle();
@@ -166,5 +172,55 @@ public abstract class TestOVCTable {
     // Read value, should now be 4
     assertEquals(4L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
 
+  }
+  
+  @Test
+  public void testGetAllKeys() {
+
+    // write 10 rows
+    for (int i=0; i<10; i++) {
+      this.table.put(Bytes.toBytes("row" + i), COL, 10, Bytes.toBytes(i));
+    }
+    
+    // get all keys and get all 10 back
+    List<byte[]> keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
+    assertEquals(10, keys.size());
+    for (int i=0; i<10; i++) {
+      assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
+          Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
+    }
+    
+    // try out a smaller limit
+    keys = this.table.getKeys(5, 0, RP_MAX);
+    assertEquals(5, keys.size());
+    for (int i=0; i<5; i++) {
+      assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
+          Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
+    }
+    
+    // try out an offset and limit
+    keys = this.table.getKeys(5, 2, RP_MAX);
+    assertEquals(5, keys.size());
+    for (int i=0; i<5; i++) {
+      String row = "row" + (i+2);
+      assertTrue("On i=" + i + ", expected row " + row + ", got row " +
+          new String(keys.get(i)),
+          Bytes.equals(row.getBytes(), keys.get(i)));
+    }
+    
+    // too big of an offset
+    keys = this.table.getKeys(5, 10, RP_MAX);
+    assertEquals(0, keys.size());
+    
+    // delete three of the rows, undelete one of them
+    this.table.delete(Bytes.toBytes("row" + 4), COL, 10);
+    this.table.deleteAll(Bytes.toBytes("row" + 6), COL, 10);
+    this.table.deleteAll(Bytes.toBytes("row" + 8), COL, 10);
+    this.table.undeleteAll(Bytes.toBytes("row" + 6), COL, 10);
+    
+    // get all keys and only get 8 back
+    keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
+    assertEquals(8, keys.size());
+    
   }
 }

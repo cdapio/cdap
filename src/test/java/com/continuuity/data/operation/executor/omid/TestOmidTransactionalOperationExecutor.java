@@ -3,6 +3,22 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.Read;
@@ -12,22 +28,19 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionException;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class TestOmidTransactionalOperationExecutor {
 
@@ -376,9 +389,11 @@ public class TestOmidTransactionalOperationExecutor {
   }
 
   @Test
-  public void testDeletesCantBeTransacted() throws Exception {
+  public void testDeletesCanBeTransacted() throws Exception {
 
-    byte [] key = Bytes.toBytes("testDeletesCantBeTransacted");
+    byte [] key = Bytes.toBytes("testDeletesCanBeTransacted");
+    byte [] valueOne = Bytes.toBytes("valueOne");
+    byte [] valueTwo = Bytes.toBytes("valueTwo");
     
     List<WriteOperation> ops = new ArrayList<WriteOperation>();
     Delete delete = new Delete(key);
@@ -386,10 +401,91 @@ public class TestOmidTransactionalOperationExecutor {
     
     // Executing in a batch should fail
     BatchOperationResult result = executor.execute(ops);
-    assertFalse(result.isSuccess());
+    assertTrue(result.isSuccess());
 
     // Executing singly should also fail
-    assertFalse(executor.execute(delete));
+    assertTrue(executor.execute(delete));
+
+    // start tx one
+    ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
+    RowSet rowsOne = new MemoryRowSet();
+    System.out.println("Started transaction one : " + pointerOne);
+
+    // write value one
+    executor.write(new Write(key, valueOne), pointerOne);
+    rowsOne.addRow(key);
+
+    // read should see nothing
+    assertNull(executor.execute(new Read(key)));
+
+    // commit
+    assertTrue(executor.commitTransaction(pointerOne, rowsOne));
+    
+    // dirty read should see it
+    assertTrue(
+        Bytes.equals(executor.read(new Read(key),
+            new MemoryReadPointer(Long.MAX_VALUE)),
+            valueOne));
+    
+    // start tx two
+    ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
+    RowSet rowsTwo = new MemoryRowSet();
+    System.out.println("Started transaction two : " + pointerTwo);
+    
+    // delete value one
+    executor.write(new Delete(key), pointerTwo);
+    rowsTwo.addRow(key);
+    
+    // clean read should see it still
+    assertTrue(
+        Bytes.equals(executor.execute(new Read(key)), valueOne));
+    
+    // dirty read should NOT see it
+    assertNull(executor.read(new Read(key),
+            new MemoryReadPointer(Long.MAX_VALUE)));
+    
+    // commit it
+    assertTrue(executor.commitTransaction(pointerTwo, rowsTwo));
+    
+    // clean read will not see it now
+    assertNull(executor.execute(new Read(key)));
+    
+    // write value two
+    executor.execute(new Write(key, valueTwo));
+    
+    // clean read sees it
+    assertTrue(
+        Bytes.equals(executor.execute(new Read(key)), valueTwo));
+    
+    // dirty read sees it
+    assertTrue(
+        Bytes.equals(executor.read(new Read(key),
+            new MemoryReadPointer(Long.MAX_VALUE)), valueTwo));
+
+    // start tx three
+    ImmutablePair<ReadPointer, Long> pointerThree = executor.startTransaction();
+    System.out.println("Started transaction three : " + pointerThree);
+    
+    // start and commit a fake transaction which will overlap
+    ImmutablePair<ReadPointer, Long> pointerFour = executor.startTransaction();
+    RowSet rowsFour = new MemoryRowSet();
+    rowsFour.addRow(key);
+    assertTrue(executor.commitTransaction(pointerFour, rowsFour));
+    
+    // commit the real transaction with a delete, should be aborted
+    BatchOperationResult txResult = executor.execute(
+        Arrays.asList(new WriteOperation [] { new Delete(key) }),
+        pointerThree);
+    
+    // verify aborted
+    assertFalse(txResult.isSuccess());
+    
+    // verify clean and dirty reads still see the value (it was undeleted)
+    assertTrue(
+        Bytes.equals(executor.execute(new Read(key)), valueTwo));
+    assertTrue(
+        Bytes.equals(executor.read(new Read(key),
+            new MemoryReadPointer(Long.MAX_VALUE)), valueTwo));
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {

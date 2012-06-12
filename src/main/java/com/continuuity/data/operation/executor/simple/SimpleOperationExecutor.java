@@ -10,6 +10,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationGenerator;
 import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadCounter;
+import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -185,6 +186,13 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public OVCTableHandle getTableHandle() {
+    return null;
+  }
+
+  @Override
+  public List<byte[]> execute(ReadKeys readKeys)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
     return null;
   }
 }
