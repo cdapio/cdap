@@ -64,7 +64,6 @@ tasks.distZip {
 }
 
 distZip.dependsOn javadoc
-//distZip.dependsOn ':continuuity:build'
 
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
     into "conf"
