@@ -42,6 +42,19 @@ dependencies {
 jar.exclude '*.xml'
 
 
+task javadoc(type: Javadoc, overwrite: true) {
+    group = 'Documentation' 
+    description = 'Aggregates API javadocs across all projects.'
+    source project.parent.subprojects.collect { project ->
+        project.sourceSets.api.allJava
+    }
+    destinationDir = new File(buildDir, 'javadoc')
+    // Might need a classpath
+    classpath = files(project.parent.subprojects.collect { project ->
+        project.sourceSets.main.compileClasspath
+    })
+}
+
 /**
  * Configure distZip task 
  */
@@ -49,10 +62,13 @@ tasks.distZip {
     baseName = "bigFlow"
 }
 
+distZip.dependsOn javadoc
+//distZip.dependsOn ':continuuity:build'
+
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
     into "conf"
 }
-applicationDistribution.from("$buildDir/docs") {
+applicationDistribution.from("$buildDir/javadoc") {
     into "docs"
 }
 
