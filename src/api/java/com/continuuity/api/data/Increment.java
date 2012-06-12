@@ -1,7 +1,5 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
-import com.continuuity.data.operation.type.ReadOperation;
-import com.continuuity.data.operation.type.WriteOperation;
 
 public class Increment implements WriteOperation, ReadOperation<Long> {
 

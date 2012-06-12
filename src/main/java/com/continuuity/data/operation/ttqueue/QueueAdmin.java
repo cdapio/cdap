@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.type.ReadOperation;
+import com.continuuity.api.data.ReadOperation;
 import com.google.common.base.Objects;
 
 public class QueueAdmin {

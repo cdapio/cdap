@@ -1,4 +1,4 @@
-package com.continuuity.data;
+package com.continuuity.api.data;
 
 /**
  * Thrown when a synchronous read fails.

@@ -2,7 +2,7 @@ package com.continuuity.data.operation;
 
 import java.util.Comparator;
 
-import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.api.data.WriteOperation;
 
 /**
  * Comparator of {@link WriteOperation}s that orders them in ascending

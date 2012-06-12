@@ -2,8 +2,8 @@ package com.continuuity.data.operation.ttqueue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.operation.type.ReadOperation;
-import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.api.data.ReadOperation;
+import com.continuuity.api.data.WriteOperation;
 import com.google.common.base.Objects;
 
 /**

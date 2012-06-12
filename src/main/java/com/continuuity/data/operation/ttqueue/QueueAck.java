@@ -2,7 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.operation.type.ConditionalWriteOperation;
+import com.continuuity.api.data.ConditionalWriteOperation;
 import com.google.common.base.Objects;
 
 /**

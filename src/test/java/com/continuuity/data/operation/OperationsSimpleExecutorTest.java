@@ -3,9 +3,15 @@
  */
 package com.continuuity.data.operation;
 
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationGenerator;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadCounter;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.google.inject.Guice;

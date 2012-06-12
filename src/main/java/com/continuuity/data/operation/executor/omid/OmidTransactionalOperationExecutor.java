@@ -7,22 +7,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationGenerator;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadCounter;
+import com.continuuity.api.data.SyncReadTimeoutException;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.SyncReadTimeoutException;
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.OperationGenerator;
-import com.continuuity.data.operation.OrderedRead;
 import com.continuuity.data.operation.OrderedWrite;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
@@ -38,7 +37,6 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
@@ -363,16 +361,6 @@ public class OmidTransactionalOperationExecutor
     }
     // Notify oracle
     this.oracle.aborted(pointer.getSecond());
-  }
-
-
-  // Queue operations also not supported right now
-
-  @Override
-  public Map<byte[], byte[]> execute(OrderedRead orderedRead)
-      throws SyncReadTimeoutException {
-    unsupported("Ordered operations not currently supported");
-    return null;
   }
 
   // Single Write Operations (Wrapped and called in a transaction batch)

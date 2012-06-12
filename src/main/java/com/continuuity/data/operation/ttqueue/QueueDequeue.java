@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.data.operation.type.ReadOperation;
+import com.continuuity.api.data.ReadOperation;
 
 /**
  * Marks and retrieves the next entry in the queue for the specified consumer,

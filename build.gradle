@@ -29,6 +29,9 @@ dependencies {
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
     }
+    // Self dependencies.
+    compile sourceSets.api.output
+    
     /// External dependencies.
     compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
     compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
@@ -37,5 +40,7 @@ dependencies {
     compile group: 'org.apache.hadoop', name: 'hadoop-test', version: '1.0.2'
 }
 
-
-
+artifacts {
+  archives apiJavadocJar
+  archives apiJar
+}

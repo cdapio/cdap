@@ -1,6 +1,5 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
-import com.continuuity.data.operation.type.ReadOperation;
 
 public class ReadCounter implements ReadOperation<Long> {
 

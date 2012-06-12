@@ -1,9 +1,5 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.continuuity.data.operation.type.ReadOperation;
-import com.google.common.base.Objects;
 
 public class Read implements ReadOperation<byte[]> {
 
@@ -30,8 +26,10 @@ public class Read implements ReadOperation<byte[]> {
   
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("key", Bytes.toString(key))
-        .toString();
+    StringBuilder sb = new StringBuilder();
+    sb.append("Read{key=");
+    sb.append(new String(key));
+    sb.append("}");
+    return sb.toString();
   }
 }

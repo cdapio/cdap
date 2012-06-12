@@ -1,4 +1,4 @@
-package com.continuuity.data.operation.type;
+package com.continuuity.api.data;
 
 /**
  * Operations are the core building blocks of all data access.

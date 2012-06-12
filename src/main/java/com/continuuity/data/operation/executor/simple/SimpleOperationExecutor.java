@@ -1,22 +1,20 @@
 package com.continuuity.data.operation.executor.simple;
 
 import java.util.List;
-import java.util.Map;
 
-import com.continuuity.data.table.OVCTableHandle;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.SyncReadTimeoutException;
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.OperationGenerator;
-import com.continuuity.data.operation.OrderedRead;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationGenerator;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadCounter;
+import com.continuuity.api.data.SyncReadTimeoutException;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.OrderedWrite;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadCounter;
 import com.continuuity.data.operation.ReadModifyWrite;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -25,9 +23,9 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.ColumnarTableHandle;
+import com.continuuity.data.table.OVCTableHandle;
 
 public class SimpleOperationExecutor implements OperationExecutor {
 
@@ -158,26 +156,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
   @Override
   public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
     return this.randomTable.increment(readCounter.getKey(), COLUMN, 0);
-  }
-
-  @Override
-  public Map<byte[], byte[]> execute(OrderedRead orderedRead)
-      throws SyncReadTimeoutException {
-    throw new RuntimeException("Ordered operations not currently supported");
-    //    Map<byte[], byte[]> result = null;
-    //    if (orderedRead.getEndKey() == null) {
-    //      if (orderedRead.getLimit() <= 1) {
-    //        result = this.executor.readOrdered(orderedRead.getStartKey());
-    //      } else {
-    //        result = this.executor.readOrdered(orderedRead.getStartKey(),
-    //            orderedRead.getLimit());
-    //      }
-    //    } else {
-    //      result = this.executor.readOrdered(orderedRead.getStartKey(),
-    //          orderedRead.getEndKey());
-    //    }
-    //    orderedRead.setResult(result);
-    //    return result;
   }
 
   @Override

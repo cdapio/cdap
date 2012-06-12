@@ -1,6 +1,5 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
-import com.continuuity.data.operation.type.WriteOperation;
 
 public class ColumnWrite implements WriteOperation {
   private final byte [] key;

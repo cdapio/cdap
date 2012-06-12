@@ -1,8 +1,7 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
 import java.util.Map;
 
-import com.continuuity.data.operation.type.ReadOperation;
 
 public class ColumnReadRange implements ReadOperation<Map<byte[], byte[]>> {
 

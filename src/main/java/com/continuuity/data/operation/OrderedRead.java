@@ -2,7 +2,7 @@ package com.continuuity.data.operation;
 
 import java.util.Map;
 
-import com.continuuity.data.operation.type.ReadOperation;
+import com.continuuity.api.data.ReadOperation;
 
 public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
 

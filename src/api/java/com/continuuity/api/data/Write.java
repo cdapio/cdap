@@ -1,9 +1,5 @@
-package com.continuuity.data.operation;
+package com.continuuity.api.data;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.continuuity.data.operation.type.WriteOperation;
-import com.google.common.base.Objects;
 
 public class Write implements WriteOperation {
 
@@ -26,10 +22,13 @@ public class Write implements WriteOperation {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("key", Bytes.toString(key))
-        .add("value", Bytes.toString(value))
-        .toString();
+    StringBuilder sb = new StringBuilder();
+    sb.append("Write{key=");
+    sb.append(new String(key));
+    sb.append(", value=");
+    sb.append(new String(value));
+    sb.append("}");
+    return sb.toString();
   }
 
   @Override

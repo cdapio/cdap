@@ -1,11 +1,11 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.Write;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 

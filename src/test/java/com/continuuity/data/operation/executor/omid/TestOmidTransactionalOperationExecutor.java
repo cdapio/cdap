@@ -3,17 +3,17 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Guice;

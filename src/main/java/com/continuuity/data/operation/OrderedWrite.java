@@ -1,6 +1,6 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.data.operation.type.WriteOperation;
+import com.continuuity.api.data.WriteOperation;
 
 public class OrderedWrite implements WriteOperation {
   private byte [] key;

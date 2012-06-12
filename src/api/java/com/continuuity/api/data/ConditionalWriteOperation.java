@@ -1,4 +1,4 @@
-package com.continuuity.data.operation.type;
+package com.continuuity.api.data;
 
 /**
  * An {@link Operation} that writes data, is atomic, but is NOT retryable.
