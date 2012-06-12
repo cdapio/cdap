@@ -57,6 +57,9 @@ task javadoc(type: Javadoc) {
     source subprojects.collect { project ->
         project.sourceSets.main.allJava
     }
+    source subprojects.collect { project ->
+        project.sourceSets.api.allJava
+    }
     destinationDir = new File(buildDir, 'javadoc')
     // Might need a classpath
     classpath = files(subprojects.collect { project ->
