@@ -100,9 +100,8 @@ public class OmidTransactionalOperationExecutor
   @Override
   public List<byte[]> execute(ReadKeys readKeys)
       throws SyncReadTimeoutException {
-    
-    // TODO Auto-generated method stub
-    return null;
+    return this.randomTable.getKeys(readKeys.getLimit(),
+        readKeys.getOffset(), this.oracle.getReadPointer());
   }
   
   // Write batches
