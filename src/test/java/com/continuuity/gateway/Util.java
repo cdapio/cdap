@@ -1,15 +1,14 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.operation.type.WriteOperation;
-import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.api.Tuple;
-import com.continuuity.flow.flowlet.core.TupleSerializer;
-import com.continuuity.flow.flowlet.impl.EventSerializer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -27,14 +26,22 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.flow.definition.impl.FlowStream;
+import com.continuuity.flow.flowlet.core.TupleSerializer;
+import com.continuuity.flow.flowlet.impl.EventSerializer;
 
 public class Util {
 

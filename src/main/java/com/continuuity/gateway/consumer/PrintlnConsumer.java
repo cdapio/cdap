@@ -1,9 +1,10 @@
 package com.continuuity.gateway.consumer;
 
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.gateway.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.gateway.Consumer;
 
 /**
  * Println Consumer is a very simple consumer that INFO logs all events in the

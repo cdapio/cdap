@@ -33,7 +33,8 @@ dependencies {
     else
     {
         compile "com.continuuity:flow:$continuuityVersion"
-        compile "com.continuuity:data-fabric:$continuuityVersion"
+        compile "com.continuuity:flow:$continuuityVersion:api"
+//        compile "com.continuuity:data-fabric:$continuuityVersion"
     }
 
     // External dependencies.

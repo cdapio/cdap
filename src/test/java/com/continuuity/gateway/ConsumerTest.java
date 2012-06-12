@@ -1,12 +1,13 @@
 package com.continuuity.gateway;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
+import java.util.ArrayList;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.flow.flowlet.impl.EventBuilder;
 
 public class ConsumerTest {
 

@@ -1,21 +1,22 @@
 package com.continuuity.gateway;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.continuuity.gateway.tools.GetValueByKey;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GetValueByKeyTest {
 
