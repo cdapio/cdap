@@ -143,7 +143,7 @@ public class SQLMetricsHandler implements MetricsHandler {
           result.add(status);
         }
 
-        if (state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
+        if (state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
           started.put(appFlow, timestamp);
         } else if (state == StateChangeType.STOPPING.getType()
           || state == StateChangeType.STOPPED.getType() || state == StateChangeType.FAILED.getType()) {
@@ -183,9 +183,6 @@ public class SQLMetricsHandler implements MetricsHandler {
   }
 
 
-  //  "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, flow VARCHAR, " +
-  // " payload VARCHAR, state INTEGER)"
-
   /**
    * FIXME : I am probably most duplicate of getFlows - Refactor me.
    *
@@ -211,13 +208,16 @@ public class SQLMetricsHandler implements MetricsHandler {
       stmt.setString(3, flowId);
       ResultSet rs = stmt.executeQuery();
       while(rs.next()) {
-
-
         String rid = rs.getString("runid");
         if(rid == null) {
           continue;
         }
         int state = rs.getInt("state");
+
+        if(state == StateChangeType.DEPLOYED.getType()) {
+          continue;
+        }
+
         int timestamp = rs.getInt("timestamp");
 
         if(! started.containsKey(rid))  {
@@ -229,7 +229,7 @@ public class SQLMetricsHandler implements MetricsHandler {
           runs.add(run);
         }
 
-        if(state == StateChangeType.STARTING.getType() || state == StateChangeType.STARTED.getType()) {
+        if(state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
           started.put(rid, timestamp );
         }
 

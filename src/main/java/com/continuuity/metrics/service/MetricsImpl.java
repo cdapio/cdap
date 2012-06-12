@@ -46,4 +46,17 @@ class MetricsImpl implements FlowMonitor.Iface {
     return handler.getFlowDefinition(accountId, appId, flowId, versionId);
   }
 
+  /**
+   * Returns metric for a flow.
+   *
+   * @param accountId
+   * @param appId
+   * @param flowId
+   * @param rid
+   */
+  @Override
+  public List<Metric> getFlowMetrics(String accountId, String appId, String flowId, String rid) throws TException {
+    return handler.getFlowMetric(accountId, appId, flowId, rid);
+  }
+
 }

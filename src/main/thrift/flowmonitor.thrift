@@ -81,5 +81,8 @@ service FlowMonitor {
    */
   string getFlowDefinition(1: string accountId, 2: string appId, 3: string flowId, 4: string versionId),
 
-  /** list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid), */
+ /**
+  * Returns metric for a flow.
+  */
+  list<Metric> getFlowMetrics(1: string accountId, 2: string appId, 3: string flowId, 4: string rid),
 }
