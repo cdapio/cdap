@@ -32,8 +32,8 @@ dependencies {
     }
     else
     {
-        compile "com.continuuity:flow:$continuuityVersion"
-        compile "com.continuuity:data-fabric:$continuuityVersion"
+        compile group: 'com.continuuity', name: 'flow', version: "${continuuityVersion}"
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${continuuityVersion}"
     }
 
     // External dependencies.

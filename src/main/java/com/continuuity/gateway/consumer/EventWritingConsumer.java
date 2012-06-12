@@ -1,21 +1,22 @@
 package com.continuuity.gateway.consumer;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.api.Event;
 import com.continuuity.flow.flowlet.impl.EventSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 public class EventWritingConsumer extends Consumer {
 

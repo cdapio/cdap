@@ -4,19 +4,20 @@
 
 package com.continuuity.gateway.collector;
 
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Collector;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.Consumer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.Consumer;
 
 /**
  * /**

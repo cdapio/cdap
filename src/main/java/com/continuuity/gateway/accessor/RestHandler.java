@@ -1,9 +1,7 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.Write;
-import com.continuuity.gateway.util.NettyRestHandler;
+import java.net.URLDecoder;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -15,7 +13,10 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URLDecoder;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.Write;
+import com.continuuity.gateway.util.NettyRestHandler;
 
 /**
  * This is the http request handler for the rest accessor. At this time it only accepts

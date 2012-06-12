@@ -1,14 +1,14 @@
 package com.continuuity.gateway.consumer;
 
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.flow.flowlet.core.TupleInternal;
+import com.continuuity.flow.flowlet.api.Tuple;
 import com.continuuity.flow.flowlet.core.TupleSerializer;
+import com.continuuity.flow.flowlet.impl.TupleBuilderImpl;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.google.inject.Inject;
@@ -54,7 +54,7 @@ public class TupleWritingConsumer extends Consumer {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
     TupleSerializer serializer = new TupleSerializer(false);
     for (Event event : events) {
-      TupleInternal tuple = new TupleBuilder().
+      Tuple tuple = new TupleBuilderImpl().
           set("headers", event.getHeaders()).
           set("body", event.getBody()).
           create();

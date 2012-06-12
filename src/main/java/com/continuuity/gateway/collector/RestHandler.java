@@ -1,16 +1,22 @@
 package com.continuuity.gateway.collector;
 
-import com.continuuity.flow.flowlet.api.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.NettyRestHandler;
+import java.util.Set;
+
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.NettyRestHandler;
 
 /**
  * This is the http request handler for the rest collector. At this time it only accepts
