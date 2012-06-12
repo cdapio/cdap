@@ -1,10 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--                                                                         -->
+<!-- BigFlow Logging Configuration                                           -->
+<!--                                                                         -->
+<!-- We use the LogBack project for logging in Bigflow. The manual for       -->
+<!-- Logback can be found here: http://logback.qos.ch/manual                 -->
+<!--                                                                         -->
+
 <configuration>
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!--See also http://logback.qos.ch/manual/appenders.html#RollingFileAppender-->
-        <File>logs/bigflow.log</File>
+
+        <file>logs/bigflow.log</file>
+        <encoder>
+            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <maxIndex>10</maxIndex>
+            <FileNamePattern>logs/bigflow.log.%i</FileNamePattern>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>50000KB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/bigflow-debug.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -13,12 +37,13 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/bigflow.log.%i</FileNamePattern>
+            <FileNamePattern>logs/bigflow-debug.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>5000KB</MaxFileSize>
+            <MaxFileSize>50000KB</MaxFileSize>
         </triggeringPolicy>
     </appender>
+
 
     <appender name="Error" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -29,8 +54,9 @@
         </filter>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="Rolling"/>
+        <appender-ref ref="Debug"/>
         <appender-ref ref="Error"/>
     </root>
 
