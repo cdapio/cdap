@@ -93,6 +93,44 @@ public class Util {
   }
 
   /**
+   * Retrieves the http config of an http-based connector from the gateway
+   * configuration. If no name is passed in, tries to figures out the
+   * name by scanning through the configuration. Then it uses the
+   * obtained Http config to create the base url for requests.
+   *
+   * @param config   The gateway configuration
+   * @param connectorName The name of the connector, optional
+   * @param hostname The hostname to use for the url, optional. Note that
+   *                 the connector's HttpConfig does not have a hostname
+   *                 because it specifies a local inet address, hence it
+   *                 would use 0.0.0.0 or localhost. This parameter helps
+   *                 to correct the hostname portion of the returned url.
+   * @return The base url if found, or null otherwise.
+   */
+  public static String findBaseUrl(CConfiguration config, Class connectorClass, String connectorName, String hostname) {
+
+    if (connectorName == null) {
+      // find the name of the connector
+      connectorName = Util.findConnector(config, connectorClass);
+      if (connectorName == null) {
+        return null;
+      } else {
+        LOG.info("Reading configuration for connector '" + connectorName + "'.");
+      }
+    }
+    // get the collector's http config
+    HttpConfig httpConfig = null;
+    try {
+      httpConfig = HttpConfig.configure(connectorName, config, null);
+    } catch (Exception e) {
+      LOG.error("Exception reading Http configuration for connector '"
+          + connectorName + "': " + e.getMessage());
+      return null;
+    }
+    return httpConfig.getBaseUrl(hostname);
+  }
+
+  /**
    * Read the contents of an Http response
    * @param response The Http response
    * @return the contents as a byte array

@@ -2,7 +2,6 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.accessor.RestAccessor;
-import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.Util;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -12,8 +11,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,14 +38,29 @@ import java.util.List;
  */
 public class DataClient {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(DataClient.class);
-
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
    */
-  public static boolean verbose = false;
+  public static boolean debug = false;
+
+  boolean help = false;          // whether --help was there
+  boolean verbose = false;       // for debug output
+  String command = null;         // the command to run
+  String baseUrl = null;         // the base url for HTTP requests
+  String hostname = null;        // the hostname of the gateway
+  String connector = null;       // the name of the rest accessor
+  String key = null;             // the key to read/write/delete
+  String value = null;           // the value to write
+  String encoding = null;        // the encoding for --key and for display of the value
+  boolean hexEncoded = false;    // whether --key and display of value use hexadecimal encoding
+  boolean urlEncoded = false;    // whether --key and display of value use url encoding
+  String keyFile = null;         // the file to read the key from
+  String valueFile = null;       // the file to read/write the value from/to
+
+  boolean keyNeeded;             // does the command require a key?
+  boolean valueNeeded;           // does the command require a value?
+  boolean outputNeeded;          // does the command require to write an output value?
 
   /**
    * Print the usage statement and return null (or empty string if this is not an error case).
@@ -77,61 +89,21 @@ public class DataClient {
     out.println("  --ascii                 To use ASCII encoding for key and value");
     out.println("  --url                   To use URL encoding for key and value");
     out.println("  --encoding <name>       To use this encoding for key and value");
+    out.println("  --verbose               To see more verbose output");
+    out.println("  --help                  To print this message");
     if (error) {
       throw new IllegalArgumentException();
     }
   }
 
   /**
-   * Retrieves the http config of the rest accessor from the gateway
-   * configuration. If no name is passed in, tries to figures out the
-   * name by scanning through the configuration. Then it uses the
-   * obtained Http config to create the base url for requests.
-   *
-   * @param config   The gateway configuration
-   * @param restName The name of the rest accessor, optional
-   * @param hostname The hostname to use for the url, optional
-   * @return The base url if found, or null otherwise.
+   * Print an error message followed by the usage statement
+   * @param errorMessage the error message
    */
-  public static String findBaseUrl(CConfiguration config, String restName, String hostname) {
-
-    if (restName == null) {
-      // find the name of the REST accessor
-      restName = Util.findConnector(config, RestAccessor.class);
-      if (restName == null) {
-        return null;
-      } else {
-        LOG.info("Reading configuration for connector '" + restName + "'.");
-      }
-    }
-    // get the collector's http config
-    HttpConfig httpConfig = null;
-    try {
-      httpConfig = HttpConfig.configure(restName, config, null);
-    } catch (Exception e) {
-      LOG.error("Exception reading Http configuration for connector '"
-          + restName + "': " + e.getMessage());
-      return null;
-    }
-    return httpConfig.getBaseUrl(hostname);
+  void usage(String errorMessage) {
+    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    usage(true);
   }
-
-  boolean help = false;          // whether --help was there
-  String command = null;         // the command to run
-  String baseUrl = null;         // the base url for HTTP requests
-  String hostname = null;        // the hostname of the gateway
-  String connector = null;       // the name of the rest accessor
-  String key = null;             // the key to read/write/delete
-  String value = null;           // the value to write
-  String encoding = null;        // the encoding for --key and for display of the value
-  boolean hexEncoded = false;    // whether --key and display of value use hexadecimal encoding
-  boolean urlEncoded = false;    // whether --key and display of value use url encoding
-  String keyFile = null;         // the file to read the key from
-  String valueFile = null;       // the file to read/write the value from/to
-
-  boolean keyNeeded;             // does the command require a key?
-  boolean valueNeeded;           // does the command require a value?
-  boolean outputNeeded;          // does the command require to write an output value?
 
   /**
    * Parse the command line arguments
@@ -178,6 +150,8 @@ public class DataClient {
         urlEncoded = true;
       } else if ("--hex".equals(arg)) {
         hexEncoded = true;
+      } else if ("--verbose".equals(arg)) {
+        verbose = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
@@ -195,10 +169,10 @@ public class DataClient {
     parseArguments(args);
     if (help) return;
     // first validate the command
-    if (!supportedCommands.contains(command)) usage(true);
+    if (!supportedCommands.contains(command)) usage("Unsupported command '" + command + "'.");
     // verify that either --key or --key-file is given, and same for --value and --value-file
-    if (key != null && keyFile != null) usage(true);
-    if (value != null && valueFile != null) usage(true);
+    if (key != null && keyFile != null) usage("Only one of --key and --key-file may be specified");
+    if (value != null && valueFile != null) usage("Only one of --value and --value-file may be specified");
     // verify that only one encoding was given
     int encodings = 0;
     keyNeeded = !command.equals("list");
@@ -208,30 +182,31 @@ public class DataClient {
     if (hexEncoded) ++encodings;
     if (urlEncoded) ++encodings;
     if (encoding != null) ++encodings;
-    if (encodings > (needsEncoding ? 1 : 0)) usage(true);
+    if (needsEncoding && encodings > 1) usage("Only one encoding can be specified.");
+    if (!needsEncoding && encodings > 0) usage("Encoding may not be specified foe binary file.");
     // verify that only one hint is given for the URL
-    if (hostname != null && baseUrl != null) usage(true);
-    if (connector != null && baseUrl != null) usage(true);
+    if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
+    if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
     // based on the command, ensure all arguments are there
     if ("read".equals(command)) {
       // read needs a key and possibly a file for the value
-      if (key == null && keyFile == null) usage(true);
-      if (value != null) usage(true);
+      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
+      if (value != null) usage("A value may not be specified for read.");
     }
     else if ("write".equals(command)) {
       // write needs a key and a value
-      if (key == null && keyFile == null) usage(true);
-      if (value == null && valueFile == null) usage(true);
+      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
+      if (value == null && valueFile == null) usage("A value must be specified - use either --value or --value-file.");
     }
     else if ("delete".equals(command)) {
       // delete needs a key but never a value
-      if (key == null && keyFile == null) usage(true);
-      if (value != null || valueFile != null) usage(true);
+      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
+      if (value != null || valueFile != null) usage("A value may not be specified for delete.");
     }
     else if ("list".equals(command)) {
       // list needs no key, but can have a file for the value
-      if (key != null || keyFile != null) usage(true);
-      if (value != null) usage(true);
+      if (key != null || keyFile != null) usage("A key may not be specified for list.");
+      if (value != null) usage("A value may not be specified for list.");
     }
   }
 
@@ -239,7 +214,7 @@ public class DataClient {
    * read the key using arguments
    */
   byte[] readKeyOrValue(String what, String str, String file) {
-    byte[] binary = null;
+    byte[] binary;
     // is the key in a file?
     if (file != null) {
       binary = Util.readBinaryFile(keyFile);
@@ -284,7 +259,7 @@ public class DataClient {
         FileOutputStream out = new FileOutputStream(valueFile);
         out.write(binaryValue);
         out.close();
-        System.out.println(binaryValue.length + " bytes written to file " + valueFile + ".");
+        if (verbose) System.out.println(binaryValue.length + " bytes written to file " + valueFile + ".");
         return binaryValue.length + " bytes written to file";
       } catch (IOException e) {
         System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
@@ -314,7 +289,8 @@ public class DataClient {
     else
       value = new String(binaryValue);
 
-    System.out.println("Value[" + binaryValue.length + " bytes]: " + value);
+    if (verbose) System.out.println("Value[" + binaryValue.length + " bytes]: " + value);
+    else System.out.println(value);
     return value;
   }
 
@@ -334,12 +310,12 @@ public class DataClient {
 
     // determine the base url for the GET request
     if (baseUrl == null)
-      baseUrl = findBaseUrl(config, connector, hostname);
+      baseUrl = Util.findBaseUrl(config, RestAccessor.class, connector, hostname);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
       return null;
     } else {
-      System.out.println("Using base URL: " + baseUrl);
+      if (verbose) System.out.println("Using base URL: " + baseUrl);
     }
 
     String urlEncodedKey = null;
@@ -380,9 +356,11 @@ public class DataClient {
         return null;
       }
       // show the HTTP status and verify it was successful
-      System.out.println(response.getStatusLine());
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        System.err.println(response.getStatusLine());
         return null;
+      } else {
+        if (verbose) System.out.println(response.getStatusLine());
       }
       // read the binary value from the HTTP response
       binaryValue = Util.readHttpResponse(response);
@@ -401,9 +379,11 @@ public class DataClient {
         return null;
       }
       // show the HTTP status and verify it was successful
-      System.out.println(response.getStatusLine());
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        System.err.println(response.getStatusLine());
         return null;
+      } else {
+        if (verbose) System.out.println(response.getStatusLine());
       }
       return "OK.";
     }
@@ -416,9 +396,11 @@ public class DataClient {
         return null;
       }
       // show the HTTP status and verify it was successful
-      System.out.println(response.getStatusLine());
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        System.err.println(response.getStatusLine());
         return null;
+      } else {
+        if (verbose) System.out.println(response.getStatusLine());
       }
       return "OK.";
     }
@@ -442,10 +424,11 @@ public class DataClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      // show the HTTP status and verify it was successful
-      System.out.println(response.getStatusLine());
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        System.err.println(response.getStatusLine());
         return null;
+      } else {
+        if (verbose) System.out.println(response.getStatusLine());
       }
       // read the binary value from the HTTP response
       binaryValue = Util.readHttpResponse(response);
@@ -460,7 +443,7 @@ public class DataClient {
     try {
       return execute0(args, config);
     } catch (IllegalArgumentException e) {
-      if (verbose) { // this is mainly for debugging the unit test
+      if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }

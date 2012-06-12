@@ -9,7 +9,6 @@ import com.google.inject.Injector;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,7 +154,6 @@ public class RestAccessorTest {
    * @throws Exception if anything goes wrong
    */
   @Test
-  @Ignore
   public void testDelete() throws Exception {
     // configure an accessor
     String uri = setupAccessor("access.rest", "/", "table/");
@@ -164,13 +162,20 @@ public class RestAccessorTest {
     // write a value and verify it can be read
     String key = "to be deleted";
     Util.writeAndGet(this.executor, uri, key, "foo");
+    // until the gateway supports deletes: not implemented
+    Assert.assertEquals(501, Util.sendDeleteRequest(uri, key));
+    // verify that it's still there
+    Assert.assertEquals(200, Util.sendGetRequest(uri, key));
+    // and verify that a repeated delete still fails
+    Assert.assertEquals(501, Util.sendDeleteRequest(uri, key));
+    /*
     // now delete it
     Assert.assertEquals(200, Util.sendDeleteRequest(uri, key));
     // verify that it's gone
-    Assert.assertEquals(200, Util.sendGetRequest(uri, key));
+    Assert.assertEquals(404, Util.sendGetRequest(uri, key));
     // and verify that a repeated delete fails
     Assert.assertEquals(404, Util.sendDeleteRequest(uri, key));
-
+    */
     this.accessor.stop();
   }
 

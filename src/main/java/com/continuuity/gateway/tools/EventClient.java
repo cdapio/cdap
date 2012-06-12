@@ -2,7 +2,6 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.collector.RestCollector;
-import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
@@ -40,7 +39,18 @@ public class EventClient {
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
    */
-  public static boolean verbose = false;
+  public static boolean debug = false;
+
+  boolean verbose = false;       // for debug output
+  boolean help = false;          // whether --help was there
+  String baseUrl = null;         // the base url for HTTP requests
+  String hostname = null;        // the hostname of the gateway
+  String connector = null;       // the name of the rest accessor
+  String body = null;            // the body of the event as a String
+  String bodyFile = null;        // the file that contains the body in binary form
+  String destination = null;     // the destination stream
+  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
+
 
   /**
    * Print the usage statement and return null (or empty string if this is not an error case).
@@ -49,7 +59,7 @@ public class EventClient {
    * @param error indicates whether this was invoked as the result of an error
    * @throws IllegalArgumentException in case of error, an empty string in case of success
    */
-  public void usage(boolean error) {
+  void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     out.println("Usage: EventClient <option> ... with");
     out.println("  --base <url>            To specify the port to use");
@@ -59,53 +69,21 @@ public class EventClient {
     out.println("  --header <name> <value> To specify a header for the event to send. Can be used multiple times");
     out.println("  --body <value>          To specify the body of the event as a string");
     out.println("  --body-file <path>      To specify a file containing the binary body of the event");
+    out.println("  --verbose               To see more verbose output");
+    out.println("  --help                  To print this message");
     if (error) {
       throw new IllegalArgumentException();
     }
   }
 
   /**
-   * Retrieves the http config of the rest collector from the gateway
-   * configuration. If no name is passed in, tries to figures out the
-   * name by scanning through the configuration. Then it uses the
-   * obtained Http config to create the base url for requests.
-   *
-   * @param config   The gateway configuration
-   * @param restName The name of the rest collector, optional
-   * @param hostname The hostname to use for the url, optional
-   * @return The base url if found, or null otherwise.
+   * Print an error message followed by the usage statement
+   * @param errorMessage the error message
    */
-  public static String findBaseUrl(CConfiguration config, String restName, String hostname) {
-
-    if (restName == null) {
-      // find the name of the REST accessor
-      restName = Util.findConnector(config, RestCollector.class);
-      if (restName == null) {
-        return null;
-      } else {
-        LOG.info("Reading configuration for connector '" + restName + "'.");
-      }
-    }
-    // get the collector's http config
-    HttpConfig httpConfig = null;
-    try {
-      httpConfig = HttpConfig.configure(restName, config, null);
-    } catch (Exception e) {
-      LOG.error("Exception reading Http configuration for connector '"
-          + restName + "': " + e.getMessage());
-      return null;
-    }
-    return httpConfig.getBaseUrl(hostname);
+  void usage(String errorMessage) {
+    if (errorMessage != null) System.err.println("Error: " + errorMessage);
+    usage(true);
   }
-
-  boolean help = false;          // whether --help was there
-  String baseUrl = null;         // the base url for HTTP requests
-  String hostname = null;        // the hostname of the gateway
-  String connector = null;       // the name of the rest accessor
-  String body = null;            // the body of the event as a String
-  String bodyFile = null;        // the file that contains the body in binary form
-  String destination = null;     // the destination stream
-  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
 
   /**
    * Parse the command line arguments
@@ -156,12 +134,12 @@ public class EventClient {
     parseArguments(args);
     if (help) return;
     // verify that either --body or --body-file is given
-    if (body != null && bodyFile != null) usage(true);
+    if (body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
     // verify that a destination was given
-    if (destination == null) usage(true);
+    if (destination == null) usage("A destination stream must be specified.");
     // verify that only one hint is given for the URL
-    if (hostname != null && baseUrl != null) usage(true);
-    if (connector != null && baseUrl != null) usage(true);
+    if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
+    if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
   }
 
   /**
@@ -196,12 +174,12 @@ public class EventClient {
 
     // determine the base url for the GET request
     if (baseUrl == null)
-      baseUrl = findBaseUrl(config, connector, hostname);
+      baseUrl = Util.findBaseUrl(config, RestCollector.class, connector, hostname);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
       return null;
     } else {
-      System.out.println("Using base URL: " + baseUrl);
+      if (verbose) System.out.println("Using base URL: " + baseUrl);
     }
 
     // build the full URI for the request and validate it
@@ -254,7 +232,7 @@ public class EventClient {
     try {
       return execute0(args, config);
     } catch (IllegalArgumentException e) {
-      if (verbose) { // this is mainly for debugging the unit test
+      if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
