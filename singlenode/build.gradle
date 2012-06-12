@@ -46,6 +46,10 @@ jar.exclude '*.xml'
 /**
  * Configure distZip task 
  */
+tasks.distZip {
+    baseName = "bigFlow"
+}
+
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
     into "conf"
 }
@@ -73,6 +77,9 @@ tasks.startScripts {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
         scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=$1:\\$APP_HOME/conf/')
+        //for windows .bat - yes, apparently backslash must be triple-escaped
+        def scriptFileWin = file "${outputDir}/${applicationName}.bat"
+        scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=$1;%APP_HOME%\\\\conf\\\\')
     }
 }
 
