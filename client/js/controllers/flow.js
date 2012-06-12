@@ -20,16 +20,15 @@ define([], function () {
 		init: function () {
 
 			this.sourcespec = {
-				endpoint:"Blank",
-				paintStyle:{ fillStyle:"#51A351", radius:5 },
+				endpoint: 'Dot',
+				paintStyle : { radius:5, fillStyle:"#89b086" },
 				isSource:true
 			};
 
 			this.destspec = {
-				endpoint:"Blank",
-				paintStyle:{ fillStyle:"#51A351", radius:5 },
+				endpoint: 'Dot',
+				paintStyle : { radius:5, fillStyle:"#89b086" },
 				maxConnections:-1,
-				dropOptions:{ hoverClass:"hover", activeClass:"active" },
 				isTarget:true
 			};
 
@@ -72,7 +71,9 @@ define([], function () {
 					self.history.pushObject(hist[i]);
 
 					if (run && run === hist[i].runId) {
-						$('#run-info').html('The following diagram represents a run from ' + hist[i].startTime + ' to ' + hist[i].endTime + '. It finished with a ' + hist[i].endStatus + ' status.').show();
+						$('#run-info').html('The following diagram represents a run from ' +
+								new Date(hist[i].startTime * 1000) + ' to ' + new Date(hist[i].endTime * 1000) +
+								'. It finished with a ' + hist[i].endStatus + ' status.').show();
 					}
 
 				}
@@ -307,38 +308,20 @@ define([], function () {
 				var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
 
 				if (column_map[from].row === column_map[to].row) {
-					connector = [ "StateMachine", { gap: 0, stub: 1 } ];
+					connector = [ "Flowchart", { gap: 0, stub: 1 } ];
 				}
 
-				var stateMachineConnector = {
-					connector: connector,
-					paintStyle:{
-						lineWidth:3,
-						strokeStyle:"#152C52"},
-					endpoint:"Blank",
-					anchor:"Continuous",
-					overlays:[ ["Arrow", {location:1, width:20, length:12} ]]
-				};
-				
-				jsPlumb.connect({
-					source:"flowlet" + from,
-					target:"flowlet" + to
-				}, stateMachineConnector);
-
-				/*
-				
-
-				self.plumber.connect({uuids:['flowlet' + from + 'RightMiddle',
-					'flowlet' + to + 'LeftMiddle'],
-					paintStyle:{
-						lineWidth:5,
-						strokeStyle:"#152C52"
-					},
-					overlays:[ ["PlainArrow", {location:1, width:20, length:12} ]],
-
+				var color = '#152C52';
+				self.plumber.connect({
+					paintStyle: { strokeStyle:color, lineWidth:2 },
+					uuids:['flowlet' + from + 'RightMiddle',
+						'flowlet' + to + 'LeftMiddle'],
+					overlays: [
+						[ "Arrow", { location:0.5 }, { foldback:0.7, fillStyle:color, width:14 } ]
+					],
 					connector: connector
 				});
-				*/
+
 			}
 
 			function bind_to(id) {

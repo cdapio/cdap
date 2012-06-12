@@ -14,36 +14,42 @@
 </div>
 
 <div id="object-list">
-<table class="table">
-	<thead>
-		<th colspan="2" style="width: 215px;">Name</th>
-		<th style="width: 120px;">Last Started</th>
-		<th style="width: 120px;">Last Stopped</th>
-		<th style="width: 32px;">Runs</th>
-		<th colspan="2">&nbsp;</th>
-	</thead>
-	{{#each App.Controllers.Flows tagName="tbody"}}
-	<tr>
-		<td style="width: 18px;">
-			<div class="btn-group">
-				<button class="btn dropdown-toggle" data-toggle="dropdown">
-					<span class="caret"></span>
-				</button>
-				<ul class="dropdown-menu">
-					<li><a {{bindAttr href="href"}}>View Detail</a></li>
-				</ul>
+	{{#if App.Controllers.Flows.length}}
+		<table class="table">
+		<thead>
+			<th colspan="2" style="width: 215px;">Name</th>
+			<th style="width: 120px;">Last Started</th>
+			<th style="width: 120px;">Last Stopped</th>
+			<th style="width: 32px;">Runs</th>
+			<th colspan="2">&nbsp;</th>
+		</thead>
+		{{#each App.Controllers.Flows tagName="tbody"}}
+		<tr>
+			<td style="width: 18px;">
+				<div class="btn-group">
+					<button class="btn dropdown-toggle" data-toggle="dropdown">
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li><a {{bindAttr href="href"}}>View Detail</a></li>
+					</ul>
+				</div>
+			</td>
+			<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
+			<td style="width: 140px;">{{started}}</td>
+			<td style="width: 140px;">{{stopped}}</td>
+			<td>{{runs}}</td>
+			<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
+			<td style="width: 64px;">
+				<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-app="applicationId"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+				</div>
+			</td>
+		</tr>
+		{{/each}}
+		</table>
+		{{else}}
+			<div class="object-list-empty">
+				No flows are currently deployed. <a href="#/upload/new">Upload flows</a> to deploy a jar.
 			</div>
-		</td>
-		<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
-		<td style="width: 140px;">{{started}}</td>
-		<td style="width: 140px;">{{stopped}}</td>
-		<td>{{runs}}</td>
-		<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
-		<td style="width: 64px;">
-			<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-app="applicationId"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
-			</div>
-		</td>
-	</tr>
-	{{/each}}
-</table>
+		{{/if}}
 </div>
