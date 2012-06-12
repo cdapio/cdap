@@ -30,6 +30,23 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
     from javadoc.destinationDir
 }
 
+// generate the API jar
+
+task apiJar(type: Jar) {
+  from sourceSets.api.output
+  classifier = "api"
+}
+
+task apiJavadoc(type: Javadoc, dependsOn:apiJar) {
+  source sourceSets.api.allJava
+  destinationDir = reporting.file("${buildDir}/api-docs")
+}
+
+task apiJavadocJar(type: Jar, dependsOn:apiJavadoc) {
+  classifier = "api-javadoc"
+  from apiJavadoc.destinationDir
+}
+
 /**
  * Builds jar, source and docs
  */
