@@ -13,7 +13,6 @@ buildscript {
  */
 dependencies {
 
-
     /// Internal dependencies.
     if(multiModule)
     {
@@ -22,6 +21,8 @@ dependencies {
         compile project(":flow")
         compile project(":data-fabric")
         compile project(":overlord")
+        runtime group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        runtime group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     else
     {
