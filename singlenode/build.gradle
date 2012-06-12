@@ -37,6 +37,12 @@ dependencies {
 }
 
 /**
+ * Exclude config in singlenode jar
+ */
+jar.exclude '*.xml'
+
+
+/**
  * Configure distZip task 
  */
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
@@ -47,12 +53,51 @@ applicationDistribution.from("$buildDir/docs") {
     into "docs"
 }
 
+
 /**
- * Hack the start script launch directory - remain in $APP_HOME
+ * Hack the start script  - remain in $APP_HOME and add $APP_HOME/conf/ to classpath
  */
+
 tasks.startScripts {
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
+        scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=$1:\\$APP_HOME/conf/')
     }
 }
+
+/**
+ * Collect bin scripts from gateway project and replace @classpath@ token
+ */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+applicationDistribution.from(project(':gateway').file('bin')) {
+    into "bin"
+    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+}
+
+/**
+ * Collect bin scripts from flow project and replace @classpath@ token
+ */
+applicationDistribution.from(project(':flow').file('bin')) {
+    into "bin"
+    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+}
+
+/**
+ * Collect bin scripts from data-fabric project and replace @classpath@ token
+ */
+applicationDistribution.from(project(':data-fabric').file('bin')) {
+    into "bin"
+    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+}
+
+
+
