@@ -6,10 +6,10 @@ GitRepo.baseDir=rootProject.projectDir;
 
 // Declare the git repos that will comprise the master build.
 ext.gitRepos = []
+gitRepos << new GitRepo(name: "gateway");
 gitRepos << new GitRepo(name: "common");
 gitRepos << new GitRepo(name: "data-fabric");
 gitRepos << new GitRepo(name: "flow");
-gitRepos << new GitRepo(name: "gateway");
 gitRepos << new GitRepo(name: "overlord");
 gitRepos << new GitRepo(name: "web-cloud-app");
 
