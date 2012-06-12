@@ -28,7 +28,11 @@ dependencies {
     if(multiModule)
     {
         compile project(":flow")
+        compile project(":flow").sourceSets.api.output
         compile project(":data-fabric")
+        compile project(":data-fabric").sourceSets.api.output
+        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        clover group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     else
     {
