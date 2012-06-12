@@ -7,17 +7,23 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.type.WriteOperation;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
-import com.continuuity.gateway.tools.GetValueByKey;
+import com.continuuity.gateway.tools.DataFabricTool;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class GetValueByKeyTest {
+public class DataFabricToolTest {
+
+  private static final Logger LOG = LoggerFactory
+      .getLogger(DataFabricToolTest.class);
 
   private OperationExecutor executor = null;
 
@@ -85,45 +91,47 @@ public class GetValueByKeyTest {
     // argument combinations that should return success
     String[][] goodArgsList = {
         {"--help"}, // print help
-        {"--key", "cat"}, // simple key
-        {"--key", "k\u00eby", "--encoding", "Latin1"}, // non-ascii key with latin1 encoding
-        {"--key", "636174", "--hex"}, // "cat" in hex notation
-        {"--key", "6beb79", "--hex"}, // non-Ascii "këy" in hex notation
-        {"--key", "cat", "--base", "http://localhost:" + port + prefix + path}, // explicit base url
-        {"--key", "cat", "--host", "localhost"}, // correct hostname
-        {"--key", "cat", "--connector", name}, // valid connector name
+        {"read", "--key", "cat"}, // simple key
+        {"read", "--key", "k\u00eby", "--encoding", "Latin1"}, // non-ascii key with latin1 encoding
+        {"read", "--key", "636174", "--hex"}, // "cat" in hex notation
+        {"read", "--key", "6beb79", "--hex"}, // non-Ascii "këy" in hex notation
+        {"read", "--key", "cat", "--base", "http://localhost:" + port + prefix + path}, // explicit base url
+        {"read", "--key", "cat", "--host", "localhost"}, // correct hostname
+        {"read", "--key", "cat", "--connector", name}, // valid connector name
     };
 
     // argument combinations that should lead to failure
     String[][] badArgsList = {
         {},
-        {"--key"}, // no key
-        {"--garble"}, // invalid argument
-        {"--encoding"}, // missing argument
-        {"--keyfile"}, // missing argument
-        {"--tofile"}, // missing argument
-        {"--base"}, // missing argument
-        {"--host"}, // missing argument
-        {"--connector"}, // missing argument
-        {"--connector", "fantasy.name"}, // invalid connector name
-        {"--key", "funk", "--hex"}, // non-hexadecimal key with --hex
-        {"--key", "babed", "--hex"}, // key of uneven length with --hex
-        {"--key", "pfunk", "--encoding", "fantasy string"}, // invalid encoding
-        {"--key", "k\u00eby", "--ascii"}, // non-ascii key with --ascii. Note that this drops the msb of the ë and hance uses "key" as the key -> 404
-        {"--key", "key with blanks", "--url"}, // url-encoded key may not contain blanks
-        {"--key", "cat", "--base", "http://localhost" + prefix + path}, // explicit but port is missing -> connection refused
-        {"--key", "cat", "--base", "http://localhost:" + port + "/gataca" + path}, // explicit but wrong base -> 404
-        {"--key", "cat", "--host", "my.fantasy.hostname"}, // bad hostname -> 404
-        {"--host", "localhost"}, // no key given
+        {"read", "--key"}, // no key
+        {"read", "--garble"}, // invalid argument
+        {"read", "--encoding"}, // missing argument
+        {"read", "--key-file"}, // missing argument
+        {"read", "--value-file"}, // missing argument
+        {"read", "--base"}, // missing argument
+        {"read", "--host"}, // missing argument
+        {"read", "--connector"}, // missing argument
+        {"read", "--connector", "fantasy.name"}, // invalid connector name
+        {"read", "--key", "funk", "--hex"}, // non-hexadecimal key with --hex
+        {"read", "--key", "babed", "--hex"}, // key of uneven length with --hex
+        {"read", "--key", "pfunk", "--encoding", "fantasy string"}, // invalid encoding
+        {"read", "--key", "k\u00eby", "--ascii"}, // non-ascii key with --ascii. Note that this drops the msb of the ë and hance uses "key" as the key -> 404
+        {"read", "--key", "key with blanks", "--url"}, // url-encoded key may not contain blanks
+        {"read", "--key", "cat", "--base", "http://localhost" + prefix + path}, // explicit but port is missing -> connection refused
+        {"read", "--key", "cat", "--base", "http://localhost:" + port + "/gataca" + path}, // explicit but wrong base -> 404
+        {"read", "--key", "cat", "--host", "my.fantasy.hostname"}, // bad hostname -> 404
+        {"read", "--host", "localhost"}, // no key given
     };
 
     // test each good combination
     for (String[] args : goodArgsList) {
-      Assert.assertNotNull(GetValueByKey.getValue(args, configuration));
+      LOG.info("Testing: " + Arrays.toString(args));
+      Assert.assertNotNull(new DataFabricTool().execute(args, configuration));
     }
     // test each bad combination
     for (String[] args : badArgsList) {
-      Assert.assertNull(GetValueByKey.getValue(args, configuration));
+      LOG.info("Testing: " + Arrays.toString(args));
+      Assert.assertNull(new DataFabricTool().execute(args, configuration));
     }
 
     // and shut down

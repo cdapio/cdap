@@ -2,13 +2,13 @@ package com.continuuity.gateway.util;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.gateway.Constants;
+import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -90,6 +90,35 @@ public class Util {
   @SuppressWarnings("unchecked")
   static boolean testClass(Class base, Class clazz) {
     return base.isAssignableFrom(clazz);
+  }
+
+  /**
+   * Read the contents of an Http response
+   * @param response The Http response
+   * @return the contents as a byte array
+   */
+  static public byte[] readHttpResponse(HttpResponse response) {
+    byte[] binary;
+    try {
+      if (response.getEntity() == null) {
+        LOG.error("Cannot read from HTTP response because it has no content.");
+        return null;
+      }
+      int length = (int) response.getEntity().getContentLength();
+      InputStream content = response.getEntity().getContent();
+      binary = new byte[length];
+      int offset = 0;
+      while (length > 0) { // must iterate because input stream is not guaranteed to return all at once
+        int bytesRead = content.read(binary, offset, length);
+        offset += bytesRead;
+        length -= bytesRead;
+      }
+      return binary;
+    } catch (IOException e) {
+      System.err.println("Cannot read from HTTP response: " + e.getMessage());
+      return null;
+    }
+
   }
 
   /**
@@ -182,4 +211,27 @@ public class Util {
     }
     return builder.toString();
   }
+
+  /**
+   * decode an URL-encoded string into bytes
+   */
+  public static byte[] urlDecode(String str) {
+    try { // we use a base encoding that accepts all byte values
+      return URLDecoder.decode(str, "ISO8859_1").getBytes("ISO8859_1");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace(); return null; // cant' happen with ISO8859_1 = Latin1
+    }
+  }
+  /**
+   * URL-encode a binary string
+   */
+  public static String urlEncode(byte[] binary) {
+    if (binary == null) return null;
+    try { // we use a base encoding that accepts all byte values
+      return URLEncoder.encode(new String(binary, "ISO8859_1"), "ISO8859_1");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace(); return null; // this cannot happen with ISO8859_1 = Latin1
+    }
+  }
+
 }
