@@ -229,8 +229,9 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
     Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl));
-    // non-existent key
-    Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
+    // non-existent key, for now expect Not Implemented
+    //Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
+    Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "no-exist"));
     // correct key but more in the path
     Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented

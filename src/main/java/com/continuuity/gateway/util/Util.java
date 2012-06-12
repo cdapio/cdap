@@ -119,7 +119,7 @@ public class Util {
       }
     }
     // get the collector's http config
-    HttpConfig httpConfig = null;
+    HttpConfig httpConfig;
     try {
       httpConfig = HttpConfig.configure(connectorName, config, null);
     } catch (Exception e) {

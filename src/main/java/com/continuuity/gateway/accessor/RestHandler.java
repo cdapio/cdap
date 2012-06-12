@@ -46,8 +46,8 @@ public class RestHandler extends NettyRestHandler {
   /**
    * Disallow default constructor
    */
-  private RestHandler() {
-  }
+  @SuppressWarnings("unused")
+  private RestHandler() {  }
 
   /**
    * Constructor requires the accessor that created this
@@ -123,7 +123,6 @@ public class RestHandler extends NettyRestHandler {
       }
     } else if (method == HttpMethod.DELETE) {
       // Deletes are not yet supported by data fabric
-      // something went wrong, internal error
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       /*
       // first perform a Read to determine whether the key exists
