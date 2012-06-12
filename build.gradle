@@ -23,11 +23,6 @@ task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS fil
 		"./server/", "--config", 'jshint.json']
 }
 
-task binaries(type:Copy) {
-	from 'bin/'
-	into 'build/bin'
-}
-
 //task link() {
 //	"npm link ./server/".execute();
 //	"rm -rf ./node_modules/".execute();
@@ -41,6 +36,16 @@ server.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js', 'index.html')
 }
 
+task templates(type:Copy, dependsOn: 'syntax') {
+    from 'client/templates/'
+    into 'build/client/templates/'
+}
+
+task jsraw(type:Copy, dependsOn: 'templates') {
+    from 'client/js/'
+    into 'build/client/js/'
+}
+
 task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS') {
 	
 	// Uses app.build.js configuration file
@@ -50,7 +55,7 @@ task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS'
 
 }
 
-task jslibs(type:Copy, dependsOn: 'js') {
+task jslibs(type:Copy) {
     from 'client/js/lib'
     into 'build/client/js/lib'
 }
@@ -83,11 +88,15 @@ task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') 
     commandLine = ['./upload.sh']
 }
 
-//task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
-task build(overwrite: true, dependsOn: ['cleanbuild', 'binaries', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
+//task build(overwrite: true, dependsOn: ['cleanbuild', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
+task build(overwrite: true, dependsOn: ['cleanbuild', 'server', 'jsraw', 'jslibs', 'css', 'images', 'docs']) {
 	doLast {
 		println "Done!"
 	}
+}
+
+task run (type: Exec, dependsOn: ['build']) {
+	commandLine = ['build/bin/node', 'build/server/main.js']
 }
 
 task deploy(dependsOn: ['build', 'upload']) {
