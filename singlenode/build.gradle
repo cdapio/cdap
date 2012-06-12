@@ -37,7 +37,7 @@ dependencies {
 }
 
 /**
- * Exclude config in singlenode jar
+ * Exclude any config xml from singlenode jar
  */
 jar.exclude '*.xml'
 
@@ -48,17 +48,26 @@ jar.exclude '*.xml'
 applicationDistribution.from(sourceSets.main.output.resourcesDir) {
     into "conf"
 }
-
 applicationDistribution.from("$buildDir/docs") {
     into "docs"
 }
 
+//web-cloud-app
+applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
+    into "client"
+}
+
+applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
+    into "server"
+}
+
 
 /**
- * Hack the start script  - remain in $APP_HOME and add $APP_HOME/conf/ to classpath
+ * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
  */
 
 tasks.startScripts {
+    applicationName = "bigFlow"
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
@@ -79,15 +88,15 @@ applicationDistribution.from(project(':gateway').file('bin')) {
     filter(ReplaceTokens, tokens: [classpath: cp])
 }
 
-/**
- * Collect bin scripts from flow project and replace @classpath@ token
- */
-applicationDistribution.from(project(':flow').file('bin')) {
-    into "bin"
-    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-    cp += ":\$APP_HOME/conf/"
-    filter(ReplaceTokens, tokens: [classpath: cp])
-}
+///**
+// * Collect bin scripts from flow project and replace @classpath@ token
+// */
+//applicationDistribution.from(project(':flow').file('bin')) {
+//    into "bin"
+//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+//    cp += ":\$APP_HOME/conf/"
+//    filter(ReplaceTokens, tokens: [classpath: cp])
+//}
 
 /**
  * Collect bin scripts from data-fabric project and replace @classpath@ token
@@ -100,4 +109,10 @@ applicationDistribution.from(project(':data-fabric').file('bin')) {
 }
 
 
+/**
+ * Collect node start script from web-cloud-app project
+ */
+applicationDistribution.from(project(':web-cloud-app').file('bin/start_webapp.sh')) {
+    into "bin"
+}
 
