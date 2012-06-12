@@ -205,7 +205,13 @@ td a {
 	border: 1px solid #EDEDED;
 	border-radius: 4px;
 	padding: 8px;
-	overflow: hidden;
+}
+.object-list-empty {
+	padding: 48px;
+	text-align: center;
+}
+.object-list-empty a {
+	text-decoration: underline;
 }
 h3 a {
 	text-decoration: underline;
@@ -247,7 +253,8 @@ ol {
 }
 .window-title {
 	vertical-align: center;
-	padding: 8px;
+	padding: 8px 8px 0px;
+	margin-top: 16px;
 }
 .window.source {
 	background-image: url(../img/stream-icon.png) !important;
