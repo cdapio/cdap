@@ -133,6 +133,10 @@ public class MetricsClient implements Closeable {
     return client.getFlowDefinition(accountId, appId, flowId, versionId);
   }
 
+  public List<Metric> getFlowMetrics(String accountId, String appId, String flowId, String rid) throws TException {
+    return client.getFlowMetrics(accountId, appId, flowId, rid);
+  }
+
   /**
    * Closes this stream and releases any system resources associated
    * with it. If the stream is already closed then invoking this

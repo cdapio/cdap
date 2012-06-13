@@ -12,8 +12,17 @@ import com.google.inject.name.Names;
  *
  */
 public class MetricsModules extends RuntimeModule {
+
+  private void loadHyperSQLDriver() {
+    try {
+      Class.forName("org.hsqldb.jdbcDriver");
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
+  }
   @Override
   public Module getInMemoryModules() {
+    loadHyperSQLDriver();
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -27,6 +36,7 @@ public class MetricsModules extends RuntimeModule {
 
   @Override
   public Module getSingleNodeModules() {
+    loadHyperSQLDriver();
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -40,6 +50,7 @@ public class MetricsModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
+    loadHyperSQLDriver(); /** For now we are using HyperSQL, but will change in future */
     return new AbstractModule() {
       @Override
       protected void configure() {

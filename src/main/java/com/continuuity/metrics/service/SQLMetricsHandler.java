@@ -53,7 +53,7 @@ public class SQLMetricsHandler implements MetricsHandler {
 
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
-      stmt.setLong(1, metric.getTimestamp());
+      stmt.setInt(1, metric.getTimestamp());
       stmt.setString(2, metric.getAccountId());
       stmt.setString(3, metric.getApplication());
       stmt.setString(4, metric.getFlow());
@@ -79,14 +79,40 @@ public class SQLMetricsHandler implements MetricsHandler {
   @Override
   public List<Metric> getFlowMetric(String accountId, String app, String flow, String rid) {
     List<Metric> result = Lists.newArrayList();
+
+    String maxTimeSQL = "SELECT MAX(timestamp) as maxtimestamp FROM flow_metrics " +
+      "WHERE accountId = ? AND app = ? AND flow = ? AND rid = ?";
+    int maxTimestamp = -1;
+    try {
+      PreparedStatement maxTimeStmt = connection.prepareStatement(maxTimeSQL);
+      maxTimeStmt.setString(1, accountId);
+      maxTimeStmt.setString(2, app);
+      maxTimeStmt.setString(3, flow);
+      maxTimeStmt.setString(4, rid);
+      ResultSet rs = maxTimeStmt.executeQuery();
+      rs.next();
+      maxTimestamp = rs.getInt("maxtimestamp");
+    } catch (SQLException e) {
+      Log.warn("Unable to retrieve max timestamp for application '{}', Flow '{}', Run ID '{}'" +
+        new Object[]{app, flow, rid});
+      return result;
+    }
+
+    if(maxTimestamp == -1) {
+      Log.warn("Unable to find max timestamp for application '{}', Flow '{}', Run ID '{}'" +
+        new Object[]{app, flow, rid});
+      return result;
+    }
+
     String sql = "SELECT flowlet, metric, rid, SUM(value) AS total FROM flow_metrics WHERE accountId = ? AND app = ? AND " +
-      "flow = ? AND rid = ? GROUP by flowlet, metric, rid";
+      "flow = ? AND rid = ? AND timestamp = ? GROUP by flowlet, metric, rid";
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setString(1, accountId);
       stmt.setString(2, app);
       stmt.setString(3, flow);
       stmt.setString(4, rid);
+      stmt.setInt(5, maxTimestamp);
       ResultSet rs = stmt.executeQuery();
       while (rs.next()) {
         Metric metric = new Metric();

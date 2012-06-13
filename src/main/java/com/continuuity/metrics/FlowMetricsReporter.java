@@ -18,11 +18,22 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class FlowMonitorReporter extends AbstractPollingReporter implements MetricProcessor<String> {
-  private static final Logger Log = LoggerFactory.getLogger(FlowMonitorReporter.class);
+public class FlowMetricsReporter extends AbstractPollingReporter implements MetricProcessor<String> {
+  private static final Logger Log = LoggerFactory.getLogger(FlowMetricsReporter.class);
   private final MetricPredicate predicate;
   private MetricsClient client;
   private boolean hasConnected = false;
+
+  /**
+   * Enables the console reporter for the default metrics registry, and causes it to print to
+   * STDOUT with the specified period.
+   *
+   * @param period the period between successive outputs
+   * @param unit   the time unit of {@code period}
+   */
+  public static void enable(long period, TimeUnit unit) {
+    enable(Metrics.defaultRegistry(), period, unit, null);
+  }
 
   /**
    * Enables the console reporter for the default metrics registry, and causes it to print to
@@ -44,14 +55,14 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
    * @param unit            the time unit of {@code period}
    */
   public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, CConfiguration configuration) {
-    final FlowMonitorReporter reporter = new FlowMonitorReporter(metricsRegistry, configuration);
+    final FlowMetricsReporter reporter = new FlowMetricsReporter(metricsRegistry, configuration);
     reporter.start(period, unit);
   }
 
   /**
    * @param metricsRegistry
    */
-  public FlowMonitorReporter(MetricsRegistry metricsRegistry, CConfiguration configuration) {
+  public FlowMetricsReporter(MetricsRegistry metricsRegistry, CConfiguration configuration) {
     super(Metrics.defaultRegistry(), "flow-monitor-reporter");
     this.predicate = MetricPredicate.ALL;
     try {
@@ -70,7 +81,7 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
   /**
    *
    */
-  public FlowMonitorReporter(CConfiguration configuration) {
+  public FlowMetricsReporter(CConfiguration configuration) {
     this(Metrics.defaultRegistry(), configuration);
   }
 
@@ -121,11 +132,12 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
 
     FlowMetric metric = getFlowMetric(name.getScope(), name.getName());
     metric.setValue(counter.count());
-    Log.info("Sending metric {} to Flow Monitor.", metric.toString());
+    Log.trace("Sending metric {} to Flow Monitor.", metric.toString());
     client.add(metric);
   }
 
   private FlowMetric getFlowMetric(String scope, String name) {
+    Log.trace("Extracting flow metrics from scope {} and name {}", scope, name);
     FlowMetric metric = null;
 
     String[] scopeParts = scope.split("\\.");
@@ -149,6 +161,8 @@ public class FlowMonitorReporter extends AbstractPollingReporter implements Metr
     metric.setFlowlet(nameParts[1]);
     metric.setInstance(nameParts[2]);
     metric.setMetric(nameParts[3]);
+
+    Log.info("Adding metrics {}.", metric.toString());
 
     return metric;
 
