@@ -56,6 +56,10 @@ define([], function () {
 				thisFlow.set('currentState', 'RUNNING');
 				thisFlow.set('lastStarted', new Date().getTime() / 1000);
 
+				if (App.Controllers.Flow.current) {
+					App.Controllers.Flow.updateStats();
+				}
+
 			});
 
 		},
@@ -87,7 +91,7 @@ define([], function () {
 				if (App.Controllers.Flow.current) {
 
 					App.Controllers.Flow.history.pushObject(App.Models.Run.create({
-						"runId": 'rid',
+						"runId": response.id,
 						"endStatus": "STOPPED",
 						"startTime": thisFlow.get('lastStarted'),
 						"endTime": new Date().getTime() / 1000

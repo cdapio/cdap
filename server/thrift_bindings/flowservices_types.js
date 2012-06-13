@@ -789,20 +789,77 @@ FlowletStatus.prototype.write = function(output) {
   return;
 };
 
+var RunIdentifier = module.exports.RunIdentifier = function(args) {
+  this.id = null;
+  if (args) {
+    if (args.id !== undefined) {
+      this.id = args.id;
+    }
+  }
+};
+RunIdentifier.prototype = {};
+RunIdentifier.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.id = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+RunIdentifier.prototype.write = function(output) {
+  output.writeStructBegin('RunIdentifier');
+  if (this.id) {
+    output.writeFieldBegin('id', Thrift.Type.STRING, 1);
+    output.writeString(this.id);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FlowStatus = module.exports.FlowStatus = function(args) {
-  this.app = null;
-  this.flow = null;
+  this.appId = null;
+  this.flowId = null;
   this.version = null;
+  this.runId = null;
   this.status = null;
   if (args) {
-    if (args.app !== undefined) {
-      this.app = args.app;
+    if (args.appId !== undefined) {
+      this.appId = args.appId;
     }
-    if (args.flow !== undefined) {
-      this.flow = args.flow;
+    if (args.flowId !== undefined) {
+      this.flowId = args.flowId;
     }
     if (args.version !== undefined) {
       this.version = args.version;
+    }
+    if (args.runId !== undefined) {
+      this.runId = args.runId;
     }
     if (args.status !== undefined) {
       this.status = args.status;
@@ -825,14 +882,14 @@ FlowStatus.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.STRING) {
-        this.app = input.readString();
+        this.appId = input.readString();
       } else {
         input.skip(ftype);
       }
       break;
       case 2:
       if (ftype == Thrift.Type.STRING) {
-        this.flow = input.readString();
+        this.flowId = input.readString();
       } else {
         input.skip(ftype);
       }
@@ -845,6 +902,14 @@ FlowStatus.prototype.read = function(input) {
       }
       break;
       case 4:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.runId = new ttypes.RunIdentifier();
+        this.runId.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 5:
       if (ftype == Thrift.Type.STRING) {
         this.status = input.readString();
       } else {
@@ -862,14 +927,14 @@ FlowStatus.prototype.read = function(input) {
 
 FlowStatus.prototype.write = function(output) {
   output.writeStructBegin('FlowStatus');
-  if (this.app) {
-    output.writeFieldBegin('app', Thrift.Type.STRING, 1);
-    output.writeString(this.app);
+  if (this.appId) {
+    output.writeFieldBegin('appId', Thrift.Type.STRING, 1);
+    output.writeString(this.appId);
     output.writeFieldEnd();
   }
-  if (this.flow) {
-    output.writeFieldBegin('flow', Thrift.Type.STRING, 2);
-    output.writeString(this.flow);
+  if (this.flowId) {
+    output.writeFieldBegin('flowId', Thrift.Type.STRING, 2);
+    output.writeString(this.flowId);
     output.writeFieldEnd();
   }
   if (this.version) {
@@ -877,8 +942,13 @@ FlowStatus.prototype.write = function(output) {
     output.writeI32(this.version);
     output.writeFieldEnd();
   }
+  if (this.runId) {
+    output.writeFieldBegin('runId', Thrift.Type.STRUCT, 4);
+    this.runId.write(output);
+    output.writeFieldEnd();
+  }
   if (this.status) {
-    output.writeFieldBegin('status', Thrift.Type.STRING, 4);
+    output.writeFieldBegin('status', Thrift.Type.STRING, 5);
     output.writeString(this.status);
     output.writeFieldEnd();
   }

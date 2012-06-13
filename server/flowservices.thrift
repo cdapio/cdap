@@ -125,13 +125,21 @@ struct FlowletStatus {
 }
 
 /**
+ * Run Identifier associated with flow. 
+ */
+struct RunIdentifier {
+ 1:string id,
+}
+
+/**
  * Structure specifies the return of status call for a given flow.
  */
 struct FlowStatus {
- 1:string app,
- 2:string flow,
+ 1:string appId,
+ 2:string flowId,
  3:i32 version,
- 4:string status,
+ 4:RunIdentifier runId,
+ 5:string status,
 }
 
 /**
@@ -157,7 +165,7 @@ service FlowService {
   /**
    * Starts a Flow
    */
-  void start(1:DelegationToken token,  2: FlowDescriptor descriptor) throws (1: FlowServiceException e),
+  RunIdentifier start(1:DelegationToken token,  2: FlowDescriptor descriptor) throws (1: FlowServiceException e),
 
   /**
    * Checks the status of a Flow
@@ -167,5 +175,5 @@ service FlowService {
   /**
    * Stops a Flow
    */
-  void stop(1: DelegationToken token,  2: FlowIdentifier identifier) throws(1: FlowServiceException e),
+  RunIdentifier stop(1: DelegationToken token,  2: FlowIdentifier identifier) throws(1: FlowServiceException e),
 }

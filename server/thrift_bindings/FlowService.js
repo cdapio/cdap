@@ -77,8 +77,12 @@ FlowService_start_args.prototype.write = function(output) {
 };
 
 var FlowService_start_result = function(args) {
+  this.success = null;
   this.e = null;
   if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
     if (args.e !== undefined) {
       this.e = args.e;
     }
@@ -98,6 +102,14 @@ FlowService_start_result.prototype.read = function(input) {
     }
     switch (fid)
     {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.RunIdentifier();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
       case 1:
       if (ftype == Thrift.Type.STRUCT) {
         this.e = new ttypes.FlowServiceException();
@@ -106,9 +118,6 @@ FlowService_start_result.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
-      case 0:
-        input.skip(ftype);
-        break;
       default:
         input.skip(ftype);
     }
@@ -120,6 +129,11 @@ FlowService_start_result.prototype.read = function(input) {
 
 FlowService_start_result.prototype.write = function(output) {
   output.writeStructBegin('FlowService_start_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
   if (this.e) {
     output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
     this.e.write(output);
@@ -335,8 +349,12 @@ FlowService_stop_args.prototype.write = function(output) {
 };
 
 var FlowService_stop_result = function(args) {
+  this.success = null;
   this.e = null;
   if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
     if (args.e !== undefined) {
       this.e = args.e;
     }
@@ -356,6 +374,14 @@ FlowService_stop_result.prototype.read = function(input) {
     }
     switch (fid)
     {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.RunIdentifier();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
       case 1:
       if (ftype == Thrift.Type.STRUCT) {
         this.e = new ttypes.FlowServiceException();
@@ -364,9 +390,6 @@ FlowService_stop_result.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
-      case 0:
-        input.skip(ftype);
-        break;
       default:
         input.skip(ftype);
     }
@@ -378,6 +401,11 @@ FlowService_stop_result.prototype.read = function(input) {
 
 FlowService_stop_result.prototype.write = function(output) {
   output.writeStructBegin('FlowService_stop_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
   if (this.e) {
     output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
     this.e.write(output);
@@ -428,7 +456,10 @@ FlowServiceClient.prototype.recv_start = function(input,mtype,rseqid) {
   if (null !== result.e) {
     return callback(result.e);
   }
-  callback(null)
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('start failed: unknown result');
 };
 FlowServiceClient.prototype.status = function(token, identifier, callback) {
   this.seqid += 1;
@@ -501,7 +532,10 @@ FlowServiceClient.prototype.recv_stop = function(input,mtype,rseqid) {
   if (null !== result.e) {
     return callback(result.e);
   }
-  callback(null)
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('stop failed: unknown result');
 };
 var FlowServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler

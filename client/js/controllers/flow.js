@@ -120,7 +120,7 @@ define([], function () {
 					params: [app, id, -1]
 				}, function (response) {
 
-					console.log(response.params);
+					self.set('currentRun', response.params.runId.id);
 
 					self.get('current').set('currentState', response.params.status);
 					self.get('current').set('version', response.params.version);
@@ -129,13 +129,14 @@ define([], function () {
 
 						clearInterval(self.interval);
 						self.interval = setInterval(function () {
-							if (self.current.currentState === 'running') {
+							if (self.current.currentState === 'RUNNING') {
 								self.updateStats();
 							}
 						}, 1000);
-						self.updateStats(self.get('run'));
 					
 					}
+
+					self.updateStats(self.get('run'));
 
 					App.interstitial.hide();
 
@@ -145,16 +146,14 @@ define([], function () {
 
 		},
 
-		updateStats: function (once) {
+		updateStats: function (for_run_id) {
 			var self = this;
 
 			var app = this.get('current').get('meta').app;
 			var id = this.get('current').get('meta').name;
-			var run = this.get('run');
+			var run = for_run_id || this.get('currentRun');
 
-			console.log(self.get('current').get('currentState'));
-
-			if (self.get('current').get('currentState') !== 'RUNNING') {
+			if (!for_run_id && self.get('current').get('currentState') !== 'RUNNING') {
 				return;
 			}
 
@@ -163,18 +162,21 @@ define([], function () {
 				params: ['demo', app, id, run]
 			}, function (response) {
 
-				console.log(response);
-
-				if (!response.params.flowlets) {
+				if (!response.params.length) {
 					return;
 				}
 
-				var flowlets = response.params.flowlets;
+				var flowlets = response.params;
 				for (var i = 0; i < flowlets.length; i ++) {
 					var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
-					var finish = flowlets[i].tuples.processed;
 
-					if (once) {
+					if (flowlets[i].name !== 'processed') {
+						continue;
+					}
+
+					var finish = flowlets[i].value;
+					if (for_run_id) {
+
 						$('#stat' + flowlets[i].id).html(finish);
 					} else {
 						if (!isNaN(start)) {
