@@ -178,6 +178,8 @@ public class SingleNodeMain {
       e.printStackTrace();
     }
 
+    System.out.println(" Bigflow started successfully");
+
 
   } // end of bootStrapServices
 

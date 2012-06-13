@@ -6,7 +6,7 @@
 <configuration>
 
     <property>
-        <name>webapp.directory</name>
+        <name>webapp.main</name>
         <value>../web-cloud-app/build/server/main.js</value>
         <description>Specifies location of the webapp's main.js file</description>
     </property>
