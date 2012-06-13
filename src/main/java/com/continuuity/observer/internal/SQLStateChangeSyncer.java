@@ -35,7 +35,7 @@ public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData
   public void initialization() {
     try {
       connection.prepareStatement(
-        "CREATE TABLE flow_state ( timestamp INTEGER, account VARCHAR, application VARCHAR, runid VARCHAR, flow VARCHAR, " +
+        "CREATE TABLE flow_state ( id BIGINT IDENTITY, timestamp INTEGER, account VARCHAR, application VARCHAR, runid VARCHAR, flow VARCHAR, " +
           " payload VARCHAR, state INTEGER)"
       ).execute();
     } catch (SQLException e) {

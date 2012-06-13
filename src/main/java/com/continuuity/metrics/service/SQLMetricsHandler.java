@@ -38,7 +38,7 @@ public class SQLMetricsHandler implements MetricsHandler {
   public void initialization() {
     try {
       connection.prepareStatement(
-        "CREATE TABLE flow_metrics (timestamp INTEGER, accountid VARCHAR, " +
+        "CREATE TABLE flow_metrics (id BIGINT IDENTITY, timestamp INTEGER, accountid VARCHAR, " +
           " app VARCHAR, flow VARCHAR, rid VARCHAR, version VARCHAR, flowlet VARCHAR, instance VARCHAR, metric VARCHAR, value INTEGER )"
       ).execute();
     } catch (SQLException e) {
@@ -144,8 +144,8 @@ public class SQLMetricsHandler implements MetricsHandler {
     Map<String, Integer> states = Maps.newHashMap();
 
     List<FlowState> result = Lists.newArrayList();
-    String sql = "SELECT timestamp, application, flow, state " +
-      "FROM flow_state WHERE account = ? ORDER by timestamp";
+    String sql = "SELECT id, timestamp, application, flow, state " +
+      "FROM flow_state WHERE account = ? ORDER by id";
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setString(1, accountId);
@@ -223,8 +223,8 @@ public class SQLMetricsHandler implements MetricsHandler {
     Map<String, Integer> stopped = Maps.newHashMap();
     Map<String, Integer> states = Maps.newHashMap();
 
-    String sql = "SELECT timestamp, runid, state FROM flow_state WHERE account = ? AND application = ? " +
-      "AND flow = ? ORDER by timestamp";
+    String sql = "SELECT id, timestamp, runid, state FROM flow_state WHERE account = ? AND application = ? " +
+      "AND flow = ? ORDER by id";
 
     List<FlowRun> runs = Lists.newArrayList();
     try {

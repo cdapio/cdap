@@ -44,7 +44,7 @@ final class StateChangeDataImpl implements StateChangeData {
 
   @Override
   public String getRunId() {
-    return "rid";
+    return runId  ;
   }
 
   @Override
