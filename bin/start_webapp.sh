@@ -1,3 +1,3 @@
 #! /bin/sh
 
-node ../server/main.js
+node ../web-app/server/main.js
