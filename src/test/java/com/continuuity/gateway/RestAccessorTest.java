@@ -231,6 +231,9 @@ public class RestAccessorTest {
     Assert.assertTrue(keys.contains("c"));
   }
 
+  // TODO test list with encoding
+  // TODO test list with start/limit
+  
   /**
    * This tests that the accessor returns the correct HTTP codes for invalid requests
    *
