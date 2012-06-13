@@ -204,7 +204,8 @@ public class EventClient {
     // create an HttpPost
     HttpPost post = new HttpPost(uri);
     for (String header : headers.keySet()) {
-      post.setHeader(header, headers.get(header));
+      post.setHeader(destination + "." + header, headers.get(header));
+
     }
     post.setEntity(new ByteArrayEntity(binaryBody));
     // post is now fully constructed, ready to send
