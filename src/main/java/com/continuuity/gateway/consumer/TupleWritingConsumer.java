@@ -54,24 +54,29 @@ public class TupleWritingConsumer extends Consumer {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
     TupleSerializer serializer = new TupleSerializer(false);
     for (Event event : events) {
+      // convert the event into a tuple
       Tuple tuple = new TupleBuilderImpl().
           set("headers", event.getHeaders()).
           set("body", event.getBody()).
           create();
+      // and serialize it
       byte[] bytes = serializer.serialize(tuple);
       if (bytes == null) {
         Exception e = new Exception("Could not serialize event: " + event);
         LOG.warn("Could not serialize event: " + event, e);
         throw e;
       }
+      // figure out where to write it
       String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
       if (destination == null) {
         LOG.debug("Enqueuing an event that has no destination. Using 'default' instead.");
         destination = "default";
       }
-      // construct the stream URO to use for the data fabric
+      // construct the stream URI to use for the data fabric
       String queueURI = FlowStream.buildStreamURI(destination);
       operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
+      LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
+
     }
     BatchOperationResult result = this.executor.execute(operations);
     if (!result.isSuccess()) {
