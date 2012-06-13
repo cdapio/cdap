@@ -13,6 +13,9 @@ buildscript {
  */
 dependencies {
 
+    // for singlenode - simulate standalone project
+    multiModule = 0
+
     /// Internal dependencies.
     if(multiModule)
     {
