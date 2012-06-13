@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -177,13 +178,18 @@ public abstract class TestOVCTable {
   @Test
   public void testGetAllKeys() {
 
+    // list when empty
+    List<byte[]> keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
+    assertNotNull(keys);
+    assertTrue(keys.isEmpty());
+    
     // write 10 rows
     for (int i=0; i<10; i++) {
       this.table.put(Bytes.toBytes("row" + i), COL, 10, Bytes.toBytes(i));
     }
     
     // get all keys and get all 10 back
-    List<byte[]> keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
+    keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
     assertEquals(10, keys.size());
     for (int i=0; i<10; i++) {
       assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),

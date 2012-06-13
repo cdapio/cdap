@@ -100,6 +100,7 @@ public class OmidTransactionalOperationExecutor
   @Override
   public List<byte[]> execute(ReadKeys readKeys)
       throws SyncReadTimeoutException {
+    initialize();
     return this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
   }
