@@ -172,7 +172,7 @@ public class SingleNodeMain {
 
       String hostname = InetAddress.getLocalHost().getHostName();
       System.out.println("   You can connect to it here: http://" + hostname +
-        "localhost:9999");
+        ":9999");
 
     } catch (Exception e) {
       e.printStackTrace();
