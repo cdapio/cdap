@@ -35,7 +35,7 @@ public class WebCloudAppService implements Server {
 
     // Create a new ProcessBuilder
     ProcessBuilder builder =
-      new ProcessBuilder("node", conf.get("webapp.directory"));
+      new ProcessBuilder("node", conf.get("webapp.main"));
 
     // Re-direct all our stderr to stdout
     builder.redirectErrorStream(true);
