@@ -3,6 +3,8 @@ package com.continuuity.common.options;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.continuuity.common.utils.OSDetector;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
@@ -248,6 +250,8 @@ public class OptionsParserTest {
 
   @Test
   public void testEnvVarFlags() {
+    // Ignore this test if windows as this does not work
+    if (OSDetector.isWindows()) return;
     MyFlags myFlags = new MyFlags();
     OptionsParser.init(myFlags, new String[] { "--flagInt=7" }, System.out);
     Assert.assertTrue(myFlags.homeVar.startsWith("/")); // should be some path.
