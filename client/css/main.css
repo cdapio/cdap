@@ -56,7 +56,7 @@ a strong {
 	color: #555;
 }
 .navbar-inner .container {
-	padding: 6px 10px;
+	padding: 6px 0px 6px 6px;
 }
 .breadcrumb {
 	padding: 4px 8px;
@@ -70,6 +70,7 @@ a strong {
 	float: right;
 }
 .btn-group.pull-right > .btn:first-child {
+	margin-left: -1px;
 	border-radius: 0;
 	border-bottom-right-radius: 4px;
 	border-top-right-radius: 4px;
