@@ -67,7 +67,13 @@ define([], function () {
 			}, function (response) {
 				var hist = response.params;
 				for (var i = 0; i < hist.length; i ++) {
+
 					hist[i] = App.Models.Run.create(hist[i]);
+
+					if (hist[i].endStatus === 'RUNNING') {
+						continue;
+					}
+
 					self.history.pushObject(hist[i]);
 
 					if (run && run === hist[i].runId) {
@@ -138,8 +144,6 @@ define([], function () {
 		updateStats: function (for_run_id) {
 			var self = this;
 
-			console.log('updatestats', for_run_id);
-
 			if (!this.get('current')) {
 				console.log('no current flow');
 				return;
@@ -152,7 +156,7 @@ define([], function () {
 			if (!for_run_id && self.get('current').get('currentState') !== 'RUNNING') {
 				return;
 			}
-			
+
 			App.socket.request('monitor', {
 				method: 'getFlowMetrics',
 				params: ['demo', app, id, run]

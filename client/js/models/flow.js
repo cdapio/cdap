@@ -5,14 +5,11 @@
 define([], function () {
 	return Em.Object.extend({
 		href: function () {
-
 			if (this.get('applicationId')) {
 				return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
 			} else {
 				return '#/flow/' + this.get('meta').app + '/' + this.get('meta').name;
-			}
-
-			
+			}			
 		}.property(),
 		getMeta: function () {
 			var arr = [];
@@ -46,7 +43,6 @@ define([], function () {
 				'stopping': 'btn btn-warning',
 				'starting': 'btn btn-warning',
 				'stopped': 'btn btn-danger',
-				'undefined': 'btn',
 				'running': 'btn btn-success',
 				'failed': 'btn btn-warning'
 			}[this.currentState.toLowerCase()];
@@ -57,7 +53,6 @@ define([], function () {
 				'stopped': 'Start',
 				'stopping': '...',
 				'starting': '...',
-				'undefined': 'Start',
 				'running': 'Stop',
 				'failed': 'Start'
 			}[this.currentState.toLowerCase()];
