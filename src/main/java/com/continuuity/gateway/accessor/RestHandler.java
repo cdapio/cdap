@@ -2,8 +2,10 @@ package com.continuuity.gateway.accessor;
 
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.Write;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.gateway.util.Util;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -16,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is the http request handler for the rest accessor. At this time it only accepts
@@ -60,6 +64,12 @@ public class RestHandler extends NettyRestHandler {
     this.pathPrefix = accessor.getHttpConfig().getPathPrefix() + accessor.getHttpConfig().getPathMiddle();
   }
 
+  private static final int UNKNOWN = 0;
+  private static final int READ = 1;
+  private static final int WRITE = 2;
+  private static final int DELETE = 3;
+  private static final int LIST = 4;
+
   @Override
   public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
@@ -74,10 +84,35 @@ public class RestHandler extends NettyRestHandler {
       return;
     }
 
-    // we do not support a query or parameters in the URL
+    // we only support a query or parameters in the URL for LIST
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
-    if (decoder.getParameters() != null && !decoder.getParameters().isEmpty()) {
-      LOG.debug("Received a request with query parameters, which is not supported");
+    Map<String, List<String>> parameters = decoder.getParameters();
+
+    // based on the URL, determine what to do
+    int operation = UNKNOWN;
+    if (method == HttpMethod.PUT)
+      operation = WRITE;
+    else if (method == HttpMethod.DELETE)
+      operation = DELETE;
+    else if (method == HttpMethod.GET) {
+      if (parameters == null || parameters.size() == 0)
+        operation = READ;
+      else {
+        List<String> qParams = parameters.get("q");
+        if (qParams != null && qParams.size() == 1 && "list".equals(qParams.get(0)))
+          operation = LIST;
+    } }
+
+    // respond with error for unknown requests
+    if (operation == UNKNOWN) {
+      LOG.debug("Received an unsupported " + method + " request '" + request.getUri() + "'.");
+      respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
+    }
+
+    // respond with error for parameters if the operation does not allow them
+    if (operation != LIST && parameters != null && !parameters.isEmpty()) {
+      LOG.debug("Received a " + method + " request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
@@ -96,68 +131,132 @@ public class RestHandler extends NettyRestHandler {
             key = remainder.substring(pos + 1);
       }
     }
-    if (key == null || key.length() == 0) {
-      LOG.debug("Received a request with invalid path " + path);
+
+    // all operations except for LIST need a key
+    if (operation != LIST && (key == null || key.length() == 0)) {
+      LOG.debug("Received a request with invalid path " + path + "(no key given)");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
+    // oeration LIST must not have a key
+    if (operation == LIST && (key != null && key.length() > 0)) {
+      LOG.debug("Received a request with invalid path " + path + "(no key may be given)");
+      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    // key is URL-encoded, decode it
     key = URLDecoder.decode(key, "ISO8859_1");
     LOG.debug("Received " + method + " request for key '" + key + "'.");
     byte[] keyBinary = key.getBytes("ISO8859_1");
 
-    // ignore the content of the request - this is a GET or DELETE
-    // get the value from the data fabric
-    if (method == HttpMethod.GET) {
-      byte[] value;
-      try {
+    switch(operation) {
+      case READ : {
+        // Get the value from the data fabric
+        byte[] value;
+        try {
+          Read read = new Read(keyBinary);
+          value = this.accessor.getExecutor().execute(read);
+        } catch (Exception e) {
+         LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
+        if (value == null) {
+          respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        } else {
+          respondSuccess(message.getChannel(), request, value);
+        }
+        break;
+      }
+      case LIST : {
+        int start = 0, limit = 100;
+        List<String> startParams = parameters.get("start");
+        if (startParams != null && !startParams.isEmpty()) {
+          try {
+            start = Integer.valueOf(startParams.get(0));
+          } catch (NumberFormatException e) {
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            return;
+          }
+        }
+        List<String> limitParams = parameters.get("limit");
+        if (limitParams != null && !limitParams.isEmpty()) {
+          try {
+            limit = Integer.valueOf(limitParams.get(0));
+          } catch (NumberFormatException e) {
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            return;
+          }
+        }
+        List<byte[]> keys = null;
+        try {
+          ReadKeys read = new ReadKeys(start, limit);
+          keys = this.accessor.getExecutor().execute(read);
+        } catch (Exception e) {
+          LOG.error("Error listing keys: " + e.getMessage() + ".", e);
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
+        if (keys == null) {
+          // something went wrong, internal error
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
+        StringBuilder builder = new StringBuilder();
+        for (byte[] keyBytes : keys) {
+          builder.append(Util.urlEncode(keyBytes));
+          builder.append("\n");
+        }
+        byte[] responseBody = builder.toString().getBytes("ASCII");
+        respondSuccess(message.getChannel(), request, responseBody);
+        break;
+      }
+      case DELETE : {
+        // first perform a Read to determine whether the key exists
         Read read = new Read(keyBinary);
-        value = this.accessor.getExecutor().execute(read);
-      } catch (Exception e) {
-        LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
+        byte[] value = this.accessor.getExecutor().execute(read);
+        if (value == null) {
+          // key does not exist -> Not Found
+          respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+          return;
+        }
+        Delete delete = new Delete(keyBinary);
+        if (this.accessor.getExecutor().execute(delete)) {
+          // deleted successfully
+          respondSuccess(message.getChannel(), request, null);
+        } else {
+          // something went wrong, internal error
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
+        break;
+      }
+      case WRITE : {
+        // read the body of the request and add it to the event
+        ChannelBuffer content = request.getContent();
+        if (content == null) {
+          // PUT without content -> 400 Bad Request
+          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          return;
+        }
+        int length = content.readableBytes();
+        byte[] bytes = new byte[length];
+        content.readBytes(bytes);
+        // create a write and attempt to execute it
+        Write write = new Write(keyBinary, bytes);
+        if (this.accessor.getExecutor().execute(write)) {
+          // written successfully
+          respondSuccess(message.getChannel(), request, null);
+        } else {
+          // something went wrong, internal error
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
+        break;
+      }
+      default: {
+        // this should not happen because we already checked above -> internal error
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
         return;
-      }
-      if (value == null) {
-        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-      } else {
-        respondSuccess(message.getChannel(), request, value);
-      }
-    } else if (method == HttpMethod.DELETE) {
-      // first perform a Read to determine whether the key exists
-      Read read = new Read(keyBinary);
-      byte[] value = this.accessor.getExecutor().execute(read);
-      if (value == null) {
-        // key does not exist -> Not Found
-        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-      Delete delete = new Delete(keyBinary);
-      if (this.accessor.getExecutor().execute(delete)) {
-        // deleted successfully
-        respondSuccess(message.getChannel(), request, null);
-      } else {
-        // something went wrong, internal error
-        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
-    } else if (method == HttpMethod.PUT) {
-      // read the body of the request and add it to the event
-      ChannelBuffer content = request.getContent();
-      if (content == null) {
-        // PUT without content -> 400 Bad Request
-        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-        return;
-      }
-      int length = content.readableBytes();
-      byte[] bytes = new byte[length];
-      content.readBytes(bytes);
-      // create a write and attempt to execute it
-      Write write = new Write(keyBinary, bytes);
-      if (this.accessor.getExecutor().execute(write)) {
-        // written successfully
-        respondSuccess(message.getChannel(), request, null);
-      } else {
-        // something went wrong, internal error
-        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

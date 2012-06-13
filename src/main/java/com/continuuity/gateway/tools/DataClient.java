@@ -406,8 +406,8 @@ public class DataClient {
     }
     else if ("list".equals(command)) {
       // we have to massage the URL a little more
-      String enc = urlEncoded ? "url" : hexEncoded ? "hex" : encoding;
-      requestUrl += "?q=list&encoding="+enc;
+      //String enc = urlEncoded ? "url" : hexEncoded ? "hex" : encoding;
+      requestUrl += "?q=list";
       try {
         uri = URI.create(requestUrl);
       } catch (IllegalArgumentException e) {

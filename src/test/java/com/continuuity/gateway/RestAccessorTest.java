@@ -6,12 +6,21 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 public class RestAccessorTest {
 
@@ -171,6 +180,55 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendDeleteRequest(uri, key));
 
     this.accessor.stop();
+  }
+
+  /**
+   * Verifies the list request is working. It first inserts a few key/values
+   * and verifies that they can be read back. Then it lists all keyts and
+   * verifies they are all there, exactly once.
+   * @throws Exception
+   */
+  @Test
+  public void testList() throws Exception {
+    // configure an accessor
+    String uri = setupAccessor("access.rest", "/", "table/");
+    int port = this.accessor.getHttpConfig().getPort();
+
+    // write some values and verify they can be read
+    Util.writeAndGet(this.executor, uri, "a", "bar");
+    Util.writeAndGet(this.executor, uri, "a", "foo"); // a should only show once in the list!
+    Util.writeAndGet(this.executor, uri, "b", "foo");
+    Util.writeAndGet(this.executor, uri, "c", "foo");
+
+    // now send a list request
+    String requestUri = uri + "?q=list";
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(new HttpGet(requestUri));
+    client.getConnectionManager().shutdown();
+
+    // verify the response is ok
+    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+
+    // verify the length of the return value is greater than 0
+    int length = (int) response.getEntity().getContentLength();
+    Assert.assertTrue(length > 0);
+
+    // make sure to read all the content from the response
+    InputStream content = response.getEntity().getContent();
+    byte[] bytes = new byte[length];
+    int bytesRead = content.read(bytes);
+    Assert.assertEquals(length, bytesRead);
+    Assert.assertEquals(-1, content.read(new byte[1]));
+
+    // convert the content into a string, then split it into lines
+    String all = new String(bytes, "ASCII");
+    List<String> keys = Arrays.asList(all.split("\n"));
+
+    // and verify that all three keys are listed and nothing else
+    Assert.assertEquals(3, keys.size());
+    Assert.assertTrue(keys.contains("a"));
+    Assert.assertTrue(keys.contains("b"));
+    Assert.assertTrue(keys.contains("c"));
   }
 
   /**
