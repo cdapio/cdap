@@ -1,5 +1,6 @@
 package com.continuuity.gateway.accessor;
 
+import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Read;
 import com.continuuity.api.data.Write;
 import com.continuuity.gateway.util.NettyRestHandler;
@@ -122,9 +123,6 @@ public class RestHandler extends NettyRestHandler {
         respondSuccess(message.getChannel(), request, value);
       }
     } else if (method == HttpMethod.DELETE) {
-      // Deletes are not yet supported by data fabric
-      respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
-      /*
       // first perform a Read to determine whether the key exists
       Read read = new Read(keyBinary);
       byte[] value = this.accessor.getExecutor().execute(read);
@@ -141,7 +139,6 @@ public class RestHandler extends NettyRestHandler {
         // something went wrong, internal error
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
-      */
     } else if (method == HttpMethod.PUT) {
       // read the body of the request and add it to the event
       ChannelBuffer content = request.getContent();

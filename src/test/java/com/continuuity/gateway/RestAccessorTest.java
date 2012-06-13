@@ -162,20 +162,14 @@ public class RestAccessorTest {
     // write a value and verify it can be read
     String key = "to be deleted";
     Util.writeAndGet(this.executor, uri, key, "foo");
-    // until the gateway supports deletes: not implemented
-    Assert.assertEquals(501, Util.sendDeleteRequest(uri, key));
-    // verify that it's still there
-    Assert.assertEquals(200, Util.sendGetRequest(uri, key));
-    // and verify that a repeated delete still fails
-    Assert.assertEquals(501, Util.sendDeleteRequest(uri, key));
-    /*
+
     // now delete it
     Assert.assertEquals(200, Util.sendDeleteRequest(uri, key));
     // verify that it's gone
     Assert.assertEquals(404, Util.sendGetRequest(uri, key));
     // and verify that a repeated delete fails
     Assert.assertEquals(404, Util.sendDeleteRequest(uri, key));
-    */
+
     this.accessor.stop();
   }
 
@@ -230,8 +224,7 @@ public class RestAccessorTest {
     // no key
     Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl));
     // non-existent key, for now expect Not Implemented
-    //Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
-    Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "no-exist"));
+    Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
     // correct key but more in the path
     Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
