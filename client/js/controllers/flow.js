@@ -70,7 +70,8 @@ define([], function () {
 
 					hist[i] = App.Models.Run.create(hist[i]);
 
-					if (hist[i].endStatus === 'RUNNING') {
+					if (hist[i].endStatus === 'RUNNING' ||
+						hist[i].endStatus === 'STARTING') {
 						continue;
 					}
 

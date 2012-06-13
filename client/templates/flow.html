@@ -22,15 +22,10 @@
 		{{#if run}}
 			<li><a {{bindAttr href="current.href"}}>{{current.meta.name}}</a></li>
 			<span class="divider">/</span></li>
-			<li class="selected">{{run}}</li>
+			<li class="selected">Run</li>
 		{{else}}
 			<li class="selected">{{current.meta.name}}</li>
 		{{/if}}
-		<li class="pull-right">
-			{{#if current.meta.author}}
-				By {{current.meta.author}} of {{current.meta.company}}
-			{{/if}}
-		</li>
 	</ul>
 	<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
 	<div id="run-info" class="alert alert-info">
