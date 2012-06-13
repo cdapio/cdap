@@ -1,7 +1,9 @@
 package com.continuuity.gateway.collector;
 
-import java.util.Set;
-
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.NettyRestHandler;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -13,10 +15,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.NettyRestHandler;
+import java.util.Set;
 
 /**
  * This is the http request handler for the rest collector. At this time it only accepts
@@ -139,7 +138,6 @@ public class RestHandler extends NettyRestHandler {
         builder.setHeader(preservedHeader, request.getHeader(header));
       }
     }
-
     // read the body of the request and add it to the event
     ChannelBuffer content = request.getContent();
     int length = content.readableBytes();
@@ -150,6 +148,7 @@ public class RestHandler extends NettyRestHandler {
     }
     Event event = builder.create();
 
+    LOG.debug("Sending event to consumer: " + event);
     // let the consumer process the event.
     // in case of exception, respond with internal error
     try {
