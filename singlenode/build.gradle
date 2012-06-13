@@ -61,6 +61,9 @@ task javadoc(type: Javadoc, overwrite: true) {
  */
 tasks.distZip {
     baseName = "bigFlow"
+    appendix = "singlenode"
+    version = ""
+    classifier = ""
 }
 
 distZip.dependsOn javadoc
