@@ -5,10 +5,24 @@
 define([], function () {
 	return Em.Object.extend({
 		href: function () {
-			return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
+
+			if (this.get('applicationId')) {
+				return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
+			} else {
+				return '#/flow/' + this.get('meta').app + '/' + this.get('meta').name;
+			}
+
+			
 		}.property(),
 		getMeta: function () {
-			return JSON.stringify(this.meta);
+			var arr = [];
+			for (var m in this.meta) {
+				arr.push({
+					k: m,
+					v: this.meta[m]
+				});
+			}
+			return arr;
 		}.property('meta'),
 		started: function () {
 			return this.lastStarted >= 0 ? $.timeago(this.lastStarted * 1000) : 'Never';
