@@ -162,8 +162,6 @@ public class FlowMetricsReporter extends AbstractPollingReporter implements Metr
     metric.setInstance(nameParts[2]);
     metric.setMetric(nameParts[3]);
 
-    Log.info("Adding metrics {}.", metric.toString());
-
     return metric;
 
   }
