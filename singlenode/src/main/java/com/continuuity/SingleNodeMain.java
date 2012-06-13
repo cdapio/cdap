@@ -5,7 +5,6 @@ package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FAR.FARServer;
@@ -24,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * SingleNodeMain is the master main method for the Continuuity single node
@@ -35,7 +35,7 @@ public class SingleNodeMain {
   /**
    * This is our Logger instance
    */
-  private static final Logger LOG =
+  private static final Logger logger =
       LoggerFactory.getLogger(SingleNodeMain.class);
 
   /**
@@ -170,6 +170,10 @@ public class SingleNodeMain {
       theWebApp = new WebCloudAppService();
       theWebApp.start(null, myConfiguration);
 
+      String hostname = InetAddress.getLocalHost().getHostName();
+      System.out.println("   You can connect to it here: http://" + hostname +
+        "localhost:9999");
+
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -186,6 +190,9 @@ public class SingleNodeMain {
    *   <li>zookeeper.datadir</li>
    * </ul>
    *
+   * We also push the ZK ensemble setting back into myConfiguration for
+   * use by the other services.
+   *
    * @throws InterruptedException
    * @throws IOException
    */
@@ -195,8 +202,9 @@ public class SingleNodeMain {
         Integer.parseInt(myConfiguration.get("zookeeper.port")),
         new File(myConfiguration.get("zookeeper.datadir")) );
 
-    /** Set the connection string about where ZK server started on */
-    myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper.getConnectionString());
+    // Set the connection string about where ZK server started on */
+    myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+      zookeeper.getConnectionString());
   }
 
 
@@ -215,6 +223,7 @@ public class SingleNodeMain {
     // TODO: Make this generic and scan for files before adding them
     myConfiguration.addResource("continuuity-flowmanager.xml");
     myConfiguration.addResource("continuuity-gateway.xml");
+    myConfiguration.addResource("continuuity-webapp.xml");
 
   } // end of loadConfiguration
 
