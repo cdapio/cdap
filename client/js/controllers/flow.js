@@ -138,6 +138,13 @@ define([], function () {
 		updateStats: function (for_run_id) {
 			var self = this;
 
+			console.log('updatestats', for_run_id);
+
+			if (!this.get('current')) {
+				console.log('no current flow');
+				return;
+			}
+
 			var app = this.get('current').get('meta').app;
 			var id = this.get('current').get('meta').name;
 			var run = for_run_id || this.get('currentRun');
@@ -145,16 +152,12 @@ define([], function () {
 			if (!for_run_id && self.get('current').get('currentState') !== 'RUNNING') {
 				return;
 			}
-
+			
 			App.socket.request('monitor', {
 				method: 'getFlowMetrics',
 				params: ['demo', app, id, run]
 			}, function (response) {
-
-				if (!response.params.length) {
-					return;
-				}
-
+			
 				var flowlets = response.params;
 				for (var i = 0; i < flowlets.length; i ++) {
 					var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
@@ -169,19 +172,20 @@ define([], function () {
 						$('#stat' + flowlets[i].id).html(finish);
 					} else {
 
-						if (!isNaN(start)) {
+						if (false) { // !isNaN(start)) {
 							self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
 						} else {
 							$('#stat' + flowlets[i].id).html(finish);
-							self.updateStats();
+							// self.updateStats();
 						}
 					}
 				}
 
-				setTimeout(function () {
-					self.updateStats();
-				}, 1000);
-
+				if (!for_run_id) {
+					setTimeout(function () {
+						self.updateStats();
+					}, 1000);
+				}
 			});
 
 		},
@@ -237,9 +241,8 @@ define([], function () {
 			var cx = App.Controllers.Flow.current.connections;
 			var conns = {};
 			for (var i = 0; i < cx.length; i ++) {
-				if (!cx[i].to.flowlet) {
+				if (!cx[i].from.flowlet) {
 					flowSource = 'input-stream';
-					continue;
 				}
 				if (!conns[cx[i].to.flowlet]) {
 					conns[cx[i].to.flowlet] = [];
@@ -256,13 +259,13 @@ define([], function () {
 			var column_map = {};
 
 			function append (id, column, connectTo) {
-				
+
 				var flowlet = get_flowlet(id);
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
 					'" class="window' + ('input-stream' === id ? ' source' : (connectTo ? '' : ' source')) + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
-					'</strong></div><div id="stat' + id + '"></div></div>');
+					'</strong></div><div class="window-value" id="stat' + id + '"></div></div>');
 				
 				if (columns[column] === undefined) {
 					// Create a new column element.
@@ -348,7 +351,7 @@ define([], function () {
 
 			if (flowSource === 'input-stream') {
 
-				append('input-stream'); // Attach the Input Stream
+				append('input-stream', 0); // Attach the Input Stream
 
 			}
 

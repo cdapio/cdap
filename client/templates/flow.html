@@ -1,16 +1,21 @@
 <div id="sub-header">
-	<div id="action-buttons" class="btn-group pull-right" style="width:200px;">
-	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+	{{#unless run}}
+	<div id="action-buttons" class="btn-group pull-right" style="width:300px;">
+	  	<button style="width:75px;" class="btn dropdown-toggle" data-toggle="dropdown">
+	  		Info
 			<span class="caret"></span>
 		</button>
 		<ul class="dropdown-menu">
-			<li style="padding:16px;">{{current.getMeta}}</li>
+			<li style="min-width:200px; padding:16px;">
+				{{#each current.getMeta}}
+					<div><strong>{{k}}</strong>: {{v}}
+				{{/each}}
+			</li>
 		</ul>
 	  	<button class="btn" style="width:75px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}>{{current.defaultAction}}</button>
 	  	<button disabled="true" style="width: 100px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentState}}</button>
-	  	
-	  	
 	</div>
+	{{/unless}}
 	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
 	<ul class="breadcrumb">
 		<li><a href="#"><i class="icon-home" /> </a><a href="#">All Flows</a> <span class="divider">/</span></li>
@@ -54,7 +59,7 @@
 	</table>
 	{{else}}
 	<div class="object-list-empty">
-		This flow has not been run yet.
+		This flow has not completed a run yet.
 	</div>
 	{{/if}}
 </div>

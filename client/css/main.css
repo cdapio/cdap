@@ -257,6 +257,9 @@ ol {
 	padding: 8px 8px 0px;
 	margin-top: 16px;
 }
+.window-value {
+	font-size: 14px;
+}
 .window.source {
 	background-image: url(../img/stream-icon.png) !important;
 	border: 1px solid #FFF;
