@@ -43,27 +43,33 @@ public class WebCloudAppService implements Server {
     try {
 
       // Now try to launch the app
-      logger.info("Launching Web App");
+      logger.info("Launching BigFlow Monitoring Web Application");
       webAppProcess = builder.start();
 
-      // Read out output
-      InputStream is = webAppProcess.getInputStream();
-      InputStreamReader isr = new InputStreamReader(is);
-      BufferedReader br = new BufferedReader(isr);
-
-      // And print it to our logger output
-      String line;
-      while ((line = br.readLine()) != null) {
-        logger.debug(line);
-      }
-
       // Keep running..
-      try {
-        int exitValue = webAppProcess.waitFor();
-      } catch (InterruptedException ie) {
-        logger.error(ie.getMessage());
-        ie.printStackTrace();
-      }
+      final Process localProcess = webAppProcess;
+      new Thread() {
+        @Override
+        public void run() {
+
+          try {
+
+            // Read our output
+            InputStream is = localProcess.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+
+            // And print it to our logger output
+            String line;
+            while ((line = br.readLine()) != null) {
+              logger.debug(line);
+            }
+
+          } catch (IOException ie) {
+            logger.error(ie.getMessage());
+          }
+        }
+      }.start();
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -83,4 +89,4 @@ public class WebCloudAppService implements Server {
     webAppProcess.destroy();
   }
 
-}
+} // end of WebCloudAppService class
