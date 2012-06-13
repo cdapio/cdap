@@ -125,17 +125,6 @@ define([], function () {
 					self.get('current').set('currentState', response.params.status);
 					self.get('current').set('version', response.params.version);
 
-					if (response.params.status === 'RUNNING') {
-
-						clearInterval(self.interval);
-						self.interval = setInterval(function () {
-							if (self.current.currentState === 'RUNNING') {
-								self.updateStats();
-							}
-						}, 1000);
-					
-					}
-
 					self.updateStats(self.get('run'));
 
 					App.interstitial.hide();
@@ -179,6 +168,7 @@ define([], function () {
 
 						$('#stat' + flowlets[i].id).html(finish);
 					} else {
+
 						if (!isNaN(start)) {
 							self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
 						} else {
@@ -187,7 +177,13 @@ define([], function () {
 						}
 					}
 				}
+
+				setTimeout(function () {
+					self.updateStats();
+				}, 1000);
+
 			});
+
 		},
 
 		intervals: {},
