@@ -30,6 +30,8 @@ define([], function () {
 		},
 		start: function (app, id, version) {
 
+			$('#flow-alert').hide();
+
 			var thisFlow;
 			if (App.Controllers.Flow.current) {
 				thisFlow = App.Controllers.Flow.current;
@@ -58,6 +60,8 @@ define([], function () {
 
 		},
 		stop: function (app, id, version) {
+
+			$('#flow-alert').hide();
 
 			var thisFlow;
 			if (App.Controllers.Flow.current) {

@@ -48,7 +48,7 @@ define([], function () {
 						if (response.status === 'initialized') {
 							this.resource_identifier = response.resource_identifier;
 						}
-						$('#far-upload-status').html(response.status);
+						$('#far-upload-status').html(response.status.toUpperCase());
 					break;
 					case 5:
 						App.Views.Upload.showSuccess(response.status);

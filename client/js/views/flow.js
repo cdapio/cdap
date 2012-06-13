@@ -26,6 +26,10 @@ define([
 			
 			App.router.set('location', href);
 		},
+		showError: function (message) {
+			$('#flow-alert').removeClass('alert-success')
+				.addClass('alert-error').html('Error: ' + message).show();
+		}
 	});
 
 });

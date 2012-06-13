@@ -7,6 +7,9 @@ define([], function () {
 		href: function () {
 			return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
 		}.property(),
+		getMeta: function () {
+			return JSON.stringify(this.meta);
+		}.property('meta'),
 		started: function () {
 			return this.lastStarted >= 0 ? $.timeago(this.lastStarted * 1000) : 'Never';
 		}.property('timeTrigger'),

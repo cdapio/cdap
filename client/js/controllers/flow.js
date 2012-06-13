@@ -263,7 +263,7 @@ define([], function () {
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
-					'" class="window' + ('input-stream' === id ? ' source' : '') + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
+					'" class="window' + ('input-stream' === id ? ' source' : (connectTo ? '' : ' source')) + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
 					'</strong></div><div id="stat' + id + '"></div></div>');
 				
 				if (columns[column] === undefined) {
@@ -339,7 +339,7 @@ define([], function () {
 					for (i in conns) {
 						for (var k = 0; k < conns[i].length; k ++) {
 							if (conns[i][k] === id) {
-								append(i, column_map[id].column + 1);
+								append(i, column_map[id].column + 1, id);
 								connect(id, i);
 								bind_to(i);
 							}

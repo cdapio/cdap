@@ -43,9 +43,19 @@ function(Models, Views, Controllers, Router, Socket){
 				}
 				
 
-			}, function (message, arguments) {
+			}, function (message, args) {
 
 				if (typeof message === "object") {
+					
+					if (message.name === "FlowServiceException") {
+						$('#flow-alert').removeClass('alert-success')
+							.addClass('alert-error').html('Error: ' + message.message).show();
+
+						setTimeout(function () {
+							window.location.reload();
+						}, 2000);
+						return;
+					}
 					message = message.message;
 				}
 				App.interstitial.label(message).show();

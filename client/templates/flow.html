@@ -1,7 +1,14 @@
 <div id="sub-header">
 	<div id="action-buttons" class="btn-group pull-right" style="width:200px;">
+	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+			<span class="caret"></span>
+		</button>
+		<ul class="dropdown-menu">
+			<li style="padding:8px;">{{current.getMeta}}</li>
+		</ul>
 	  	<button class="btn" style="width:75px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}>{{current.defaultAction}}</button>
 	  	<button disabled="true" style="width: 100px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentState}}</button>
+	  	
 	  	
 	</div>
 	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
@@ -20,6 +27,7 @@
 			{{/if}}
 		</li>
 	</ul>
+	<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
 	<div id="run-info" class="alert alert-info">
 	</div>
 </div>
@@ -29,18 +37,24 @@
 </div>
 
 <div id="object-list">
-<table class="table table-condensed">
-	<thead>
-		<tr><th style="width: 215px;">Started</th>
-		<th>Ended</th>
-		<th style="width:250px;">Result</th>
-	</tr></thead>
-	{{#each history tagName="tbody"}}
-		<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
-			<td>{{started}}</td>
-			<td>{{ended}}</td>
-			<td>{{endStatus}}</td>
-		</tr>
-	{{/each}}
-</table>
+	{{#if history.length}}
+	<table class="table table-condensed">
+		<thead>
+			<tr><th style="width: 215px;">Started</th>
+			<th>Ended</th>
+			<th style="width:250px;">Result</th>
+		</tr></thead>
+		{{#each history tagName="tbody"}}
+			<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
+				<td>{{started}}</td>
+				<td>{{ended}}</td>
+				<td>{{endStatus}}</td>
+			</tr>
+		{{/each}}
+	</table>
+	{{else}}
+	<div class="object-list-empty">
+		This flow has not been run yet.
+	</div>
+	{{/if}}
 </div>
