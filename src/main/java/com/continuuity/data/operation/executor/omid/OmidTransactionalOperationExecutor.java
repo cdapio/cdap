@@ -73,8 +73,8 @@ public class OmidTransactionalOperationExecutor
 
   static final byte [] COLUMN = Bytes.toBytes("c");
 
-  static int MAX_DEQUEUE_RETRIES = 10;
-  static long DEQUEUE_RETRY_SLEEP = 1;
+  static int MAX_DEQUEUE_RETRIES = 200;
+  static long DEQUEUE_RETRY_SLEEP = 5;
 
   // Single reads
   
