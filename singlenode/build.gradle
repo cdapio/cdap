@@ -69,14 +69,20 @@ tasks.distZip {
 distZip.dependsOn javadoc
 distZip.dependsOn ':web-cloud-app:build'
 
-applicationDistribution.from(sourceSets.main.output.resourcesDir) {
-    into "conf"
-
+task stageConf (type: Copy) {
+    from "${sourceSets.main.output.resourcesDir}"
+    into "${buildDir}/conf"
 }
+distZip.dependsOn stageConf
+
+applicationDistribution.from("$buildDir/conf") {
+    into "conf"
+}
+
 //fix path for web-app
 tasks.distZip {
     doFirst {
-        def webConfFile = file "${project.sourceSets.main.output.resourcesDir}/continuuity-webapp.xml"
+        def webConfFile = file "${buildDir}/conf/continuuity-webapp.xml"
         webConfFile.text = webConfFile.text.replaceFirst('../web-cloud-app/build/server/main.js','web-app/server/main.js')
     }
 }
