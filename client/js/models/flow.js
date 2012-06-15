@@ -9,7 +9,7 @@ define([], function () {
 				return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
 			} else {
 				return '#/flow/' + this.get('meta').app + '/' + this.get('meta').name;
-			}			
+			}
 		}.property(),
 		getMeta: function () {
 			var arr = [];
