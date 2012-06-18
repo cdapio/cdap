@@ -58,11 +58,12 @@ public class OptionSpec {
    * @return name of the type of field.
    */
   public String getTypeName() {
-    Class<?> type = getType();
-    if(type == String.class) {
-      return "String";
-    }
-    return type.toString();
+    return option.type();
+//    Class<?> type = getType();
+//    if(type == String.class) {
+//      return "String";
+//    }
+//    return type.toString();
   }
 
   /**

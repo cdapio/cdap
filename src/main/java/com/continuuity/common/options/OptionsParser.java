@@ -55,13 +55,13 @@ public final class OptionsParser {
    * @param out  stream available to dump outputs.
    * @return List of arguments that were not definied by annotations.
    */
-  public static List<String> init(Object object, String[] args, PrintStream out) {
+  public static List<String> init(Object object, String[] args, String appName, String appVersion, PrintStream out) {
     List<String> nonOptionArgs = new ArrayList<String>();
     Map<String, String> parsedOptions = parseArgs(args, nonOptionArgs);
     Map<String, OptionSpec> declaredOptions = extractDeclarations(object);
 
     if(parsedOptions.containsKey("help") && !declaredOptions.containsKey("help")) {
-      printUsage(declaredOptions, out);
+      printUsage(declaredOptions, appName, appVersion, out);
       return null;
     }
 
@@ -147,7 +147,7 @@ public final class OptionsParser {
         }
 
         String kv = arg.startsWith("--") ? arg.substring(2) : arg.substring(1);
-        String [] splitKV = kv.split("=", 2);
+        String [] splitKV = kv.split(" ", 2);
         String key = splitKV[0];
         String value = splitKV.length == 2 ? splitKV[1] : "";
         parsedOptions.put(key, value);
@@ -163,10 +163,15 @@ public final class OptionsParser {
    * @param options extracted options from introspecting a class
    * @param out Stream to output the usage.
    */
-  private static void printUsage(Map<String, OptionSpec> options, PrintStream out) {
-    final String FORMAT_STRING = "  --%s=<%s>\n%s\t(Default=%s)\n\n";
+  private static void printUsage(Map<String, OptionSpec> options, String appName, String appVersion, PrintStream out) {
+    final String NON_DEFAULT_FORMAT_STRING = " --%-20s %-20s %-20s\n";
+    final String DEFAULT_FORMAT_STRING = " --%-20s %-20s %-50s\t(Default=%s)\n";
+
+    out.print(String.format("%s - v%s\n", appName, appVersion));
+    out.print(String.format("%s\n", "Copyright (c) to Continuuity Inc. All rights reserved.\n\nOptions:"));
+
     if(!options.containsKey("help")) {
-      out.printf(FORMAT_STRING, "help", "boolean", "\tDisplay this help message\n", "false");
+      out.printf(NON_DEFAULT_FORMAT_STRING, "help", "", "\tDisplay this help message");
     }
 
     for(OptionSpec option : options.values()) {
@@ -175,9 +180,16 @@ public final class OptionsParser {
       }
       String usage = option.getUsage();
       if(!usage.isEmpty()) {
-        usage = "\t" + usage + "\n";
+        usage = "\t" + usage;
       }
-      out.printf(FORMAT_STRING, option.getName(), option.getTypeName(), usage, option.getDefaultValue());
+
+      String def = option.getDefaultValue();
+      if("null".equals(def)) {
+        out.printf(NON_DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">", usage);
+      } else {
+        out.printf(DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">",
+          usage, option.getDefaultValue());
+      }
     }
   }
 }

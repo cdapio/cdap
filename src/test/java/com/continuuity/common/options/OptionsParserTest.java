@@ -69,17 +69,17 @@ public class OptionsParserTest {
     String[] args = new String[] {
       "nonFlagArg1",
       "--flagNoValue",
-      "-flagOneDashBoolean=false",
+      "-flagOneDashBoolean false",
       "nonFlagArg2",
-      "--flagFloat=-10.234",
-      "--flagDouble=0.1",
-      "--flagInt=-3",
-      "--flagShort=10",
-      "--flagLong=123",
-      "--flagString=foo",
+      "--flagFloat -10.234",
+      "--flagDouble 0.1",
+      "--flagInt -3",
+      "--flagShort 10",
+      "--flagLong 123",
+      "--flagString foo",
     };
 
-    List<String> nonFlagArgs = OptionsParser.init(myFlags, args, System.out);
+    List<String> nonFlagArgs = OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
 
     Assert.assertTrue(myFlags.getFlagNoValue());
     Assert.assertFalse(myFlags.getFlagOneDashBoolean());
@@ -102,13 +102,13 @@ public class OptionsParserTest {
     String[] args = new String[] {
       "nonFlagArg1",
       "--flagNoValue",
-      "-flagOneDashBoolean=false",
+      "-flagOneDashBoolean false",
       "nonFlagArg2",
-      "--flagFloat=-10.234",
-      "--notAFlag=foo",
+      "--flagFloat -10.234",
+      "--notAFlag foo",
     };
     try {
-      OptionsParser.init(myFlags, args, System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0",System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (UnrecognizedOptionException e) {
       Assert.assertTrue(e.getMessage().contains("notAFlag"));
@@ -119,10 +119,10 @@ public class OptionsParserTest {
   public void testUnsupportedFlagType() {
     UnsupportedTypeFlags myFlags = new UnsupportedTypeFlags();
     String[] args = new String[] {
-      "--unsupportedFlagType=null",
+      "--unsupportedFlagType null",
     };
     try {
-      OptionsParser.init(myFlags, args, System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (UnsupportedOptionTypeException e) {
       Assert.assertTrue(e.getMessage().contains("unsupportedFlagType"));;
@@ -133,10 +133,10 @@ public class OptionsParserTest {
   public void testIllegalFlagValue() {
     MyFlags myFlags = new MyFlags();
     String[] args = new String[] {
-      "--flagFloat=notANumber",
+      "--flagFloat notANumber",
     };
     try {
-      OptionsParser.init(myFlags, args, System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (IllegalOptionValueException e) {
       Assert.assertTrue(e.getMessage().contains("flagFloat"));
@@ -147,10 +147,10 @@ public class OptionsParserTest {
   public void testHexInt() {
     MyFlags myFlags = new MyFlags();
     String[] args = new String[] {
-      "--flagInt=0xA",
+      "--flagInt 0xA",
     };
     try {
-      OptionsParser.init(myFlags, args, System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (IllegalOptionValueException e) {
       // Parsing hex is not supported.
@@ -166,7 +166,7 @@ public class OptionsParserTest {
       "5",
     };
     try {
-      OptionsParser.init(myFlags, args, System.out);
+      OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (IllegalOptionValueException e) {
       // This will be treated as a flag without a value.
@@ -178,7 +178,7 @@ public class OptionsParserTest {
   public void testDuplicateFlags() {
     DuplicateFlagDeclaration myFlags = new DuplicateFlagDeclaration();
     try {
-      OptionsParser.init(myFlags, new String[] {}, System.out);
+      OptionsParser.init(myFlags, new String[] {}, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (DuplicateOptionException e) {
       Assert.assertTrue(e.getMessage().contains("myFlag"));
@@ -186,30 +186,10 @@ public class OptionsParserTest {
   }
 
   @Test
-  public void testPrintUsage() {
-    MyFlags myFlags = new MyFlags();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OptionsParser.init(myFlags, new String[] {"--help"}, new PrintStream(out));
-    String help = out.toString();
-    Assert.assertEquals(
-      "  --help=<boolean>\n\tDisplay this help message\n\t(Default=false)\n\n"
-        + "  --flagDefault=<String>\n\t(Default=\"defaultValue\")\n\n"
-        + "  --flagDouble=<double>\n\t(Default=0.0)\n\n"
-        + "  --flagFloat=<float>\n\t(Default=0.0)\n\n"
-        + "  --flagInt=<int>\n\t(Default=0)\n\n"
-        + "  --flagLong=<long>\n\t(Default=0)\n\n"
-        + "  --flagNoValue=<boolean>\n\ta boolean flag\n\t(Default=false)\n\n"
-        + "  --flagOneDashBoolean=<boolean>\n\t(Default=false)\n\n"
-        + "  --flagShort=<short>\n\t(Default=0)\n\n"
-        + "  --flagString=<String>\n\t(Default=null)\n\n",
-      help);
-  }
-
-  @Test
   public void testHelpOverride() {
     HelpOverride myFlags = new HelpOverride();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    OptionsParser.init(myFlags, new String[] {"--help", "--foo=bar"}, new PrintStream(out));
+    OptionsParser.init(myFlags, new String[] {"--help", "--foo bar"}, "OptionsParserTest", "0.1.0", new PrintStream(out));
 
     // No usage info should have printed, since we declared our own help flag.
     Assert.assertTrue(out.toString().isEmpty());
@@ -221,7 +201,7 @@ public class OptionsParserTest {
   @Test
   public void testIgnoreAfterDoubleDashMarker() {
     MyFlags myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] {"--flagInt=7", "--", "--flagDefault=foo"}, System.out);
+    OptionsParser.init(myFlags, new String[] {"--flagInt 7", "--", "--flagDefault foo"}, "OptionsParserTest", "0.1.0", System.out);
 
     Assert.assertEquals(7, myFlags.flagInt);
     // flagDefault should not have changed, since it was after the "--".
@@ -231,7 +211,7 @@ public class OptionsParserTest {
   @Test
   public void testKeepLatestFlag() {
     MyFlags myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] {"--flagInt=7", "--flagInt=8"}, System.out);
+    OptionsParser.init(myFlags, new String[] {"--flagInt 7", "--flagInt 8"}, "OptionsParserTest", "0.1.0", System.out);
 
     // Keeps the last flag value.
     Assert.assertEquals(8, myFlags.flagInt);
@@ -242,7 +222,7 @@ public class OptionsParserTest {
     // Make sure the subclass inherits its superclass's flags.
     MySubclassedFlags myFlags = new MySubclassedFlags();
     Assert.assertNotNull(OptionsParser.init(myFlags,
-      new String[] {"--flagInt=7", "--flagSubclass=foo"}, System.out));
+      new String[] {"--flagInt 7", "--flagSubclass foo"}, "OptionsParserTest", "0.1.0", System.out));
 
     Assert.assertEquals(7, myFlags.flagInt);
     Assert.assertEquals("foo", myFlags.flagSubclass);
@@ -253,19 +233,19 @@ public class OptionsParserTest {
     // Ignore this test if windows as this does not work
     if (OSDetector.isWindows()) return;
     MyFlags myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--flagInt=7" }, System.out);
+    OptionsParser.init(myFlags, new String[] { "--flagInt 7" },"OptionsParserTest", "0.1.0", System.out);
     Assert.assertTrue(myFlags.homeVar.startsWith("/")); // should be some path.
 
     myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--home=meep" }, System.out);
+    OptionsParser.init(myFlags, new String[] { "--home meep" }, "OptionsParserTest", "0.1.0",System.out);
     Assert.assertEquals("meep", myFlags.homeVar);
 
     myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { "--missing=wombat" }, System.out);
+    OptionsParser.init(myFlags, new String[] { "--missing wombat" }, "OptionsParserTest", "0.1.0",System.out);
     Assert.assertEquals("wombat", myFlags.missingEnv);
 
     myFlags = new MyFlags();
-    OptionsParser.init(myFlags, new String[] { }, System.out);
+    OptionsParser.init(myFlags, new String[] { }, "OptionsParserTest", "0.1.0", System.out);
     Assert.assertEquals("missing", myFlags.missingEnv);
   }
 }

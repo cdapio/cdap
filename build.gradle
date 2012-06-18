@@ -9,11 +9,13 @@ buildscript {
  */
 dependencies {
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.1'
-    compile group: 'com.google.guava', name: 'guava', version: '11.+'
+    compile group: 'com.google.guava', name: 'guava', version: '12.+'
     compile group: 'com.netflix.curator', name: 'curator-framework', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-client', version: '1.1.+'
     compile group: 'com.netflix.curator', name: 'curator-x-discovery', version: '1.1.+'
-    compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.+'
+    compile group: 'org.apache.hadoop', name: 'hadoop-common', version:'0.23.+'
+    compile group: 'org.apache.hadoop', name: 'hadoop-yarn-common', version:'0.23.+'
+    compile group: 'org.apache.hadoop', name: 'hadoop-yarn-api', version: '0.23.+'
     compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
     compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
 }

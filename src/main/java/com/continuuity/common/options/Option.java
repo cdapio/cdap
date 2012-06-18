@@ -26,6 +26,12 @@ public @interface Option {
   String usage() default "";
 
   /**
+   * Specifies the type of parameter.
+   * @return type parameter.
+   */
+  String type() default "";
+
+  /**
    * Specifies whether a variable annotated with @Option need to be displayed as part of usage.
    * @return true to hide; false otherwise.
    */
