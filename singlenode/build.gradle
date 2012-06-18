@@ -45,7 +45,6 @@ dependencies {
  */
 jar.exclude '*.xml'
 
-
 task javadoc(type: Javadoc, overwrite: true) {
     group = 'Documentation' 
     description = 'Aggregates API javadocs across all projects.'
@@ -60,21 +59,9 @@ task javadoc(type: Javadoc, overwrite: true) {
 }
 
 /**
- * Configure distZip task 
- */
-tasks.distZip {
-    baseName = "bigFlow"
-    appendix = "singlenode"
-    version = ""
-    classifier = ""
-}
-
-distZip.dependsOn javadoc
-distZip.dependsOn ':web-cloud-app:build'
-
-
-
-// dynamically generate "stageConf-[project]" tasks
+ * Stage the final /conf directory 
+*/
+// dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode
 project.parent.subprojects.each { p ->
     //println "    name: ${p.name}"
     if (p.sourceSets.main.output.resourcesDir.isDirectory()) {
@@ -82,6 +69,8 @@ project.parent.subprojects.each { p ->
         if (p != project) { //exclude self (singlenode)
             println "staging conf for ${p.name}"
             task "genstageConf${p.name}" (type: Copy) {
+                group 'Deployment'
+                description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
                 from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
                 include 'continuuity-default.xml'
                 include 'continuuity-flow.xml'
@@ -94,7 +83,7 @@ project.parent.subprojects.each { p ->
     }
 }
 
-// conf/ - copy singlenode conf into a staging dir
+// stage the singlenode conf dir
 task stageConfSingleNode (type: Copy) {
     println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
@@ -112,53 +101,9 @@ stageConfSingleNode.dependsOn {
     tasks.findAll { task -> task.name.startsWith('genstageConf') }
 }
 
-
-/*
-task stageConfGateway (type: Copy) {
-    from "${project(':gateway').sourceSets.main.output.resourcesDir}"
-    include 'continuuity-default.xml'
-    into "${buildDir}/conf"
-    rename { 'continuuity-gateway.xml' }
-}
-task stageConfFlow (type: Copy) {
-    from "${project(':flow').sourceSets.main.output.resourcesDir}"
-    include 'continuuity-default.xml'
-    into "${buildDir}/conf"
-    rename { 'continuuity-flow.xml' }
-}
-*/
-
-
-//distZip.dependsOn stageConfSingleNode, stageConfGateway, stageConfFlow
-distZip.dependsOn stageConfSingleNode
-
-// conf/ - include staging conf dir (incl token-replaced files) in distZip
+// include staging conf dir (incl token-replaced files) in distZip
 applicationDistribution.from("$buildDir/conf") {
     into "conf"
-}
-
-//conf editing: fix path for web-app
-//tasks.stageConfSingleNode {
-//    doLast {
-//        def webConfFile = file "${buildDir}/conf/continuuity-webapp.xml"
-//        webConfFile.text = webConfFile.text.replaceFirst('../web-cloud-app/build/server/main.js','web-app/server/main.js')
-//    }
-//}
-
-
-
-   
-applicationDistribution.from("$buildDir/javadoc") {
-    into "docs"
-}
-
-//web-cloud-app
-applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
-    into "web-app/client"
-}
-
-applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
-    into "web-app/server"
 }
 
 
@@ -178,54 +123,41 @@ tasks.startScripts {
     }
 }
 
+
 /**
- * Collect bin scripts from gateway project and replace @classpath@ token
+ * Configure distZip task
+ */
+tasks.distZip {
+    baseName = "bigFlow"
+    appendix = "singlenode"
+    version = ""
+    classifier = ""
+}
+
+distZip.dependsOn javadoc, ':web-cloud-app:build', stageConfSingleNode
+installApp.dependsOn stageConfSingleNode
+
+// include api javadoc   
+applicationDistribution.from("$buildDir/javadoc") {
+    into "docs"
+}
+
+// include :web-cloud-app/build/client directly
+applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
+    into "web-app/client"
+}
+
+//include :web-cloud-app/build/server directly
+applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
+    into "web-app/server"
+}
+
+
+/**
+ * Collect bin scripts from gateway project and replace @classpath@ token - done within distZip task
  */
 
 import org.apache.tools.ant.filters.ReplaceTokens
-
-//applicationDistribution.from(project(':gateway').file('bin')) {
-//    into "bin"
-//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-//    cp += ":\$APP_HOME/conf/"
-//    filter(ReplaceTokens, tokens: [classpath: cp])
-//}
-
-//applicationDistribution.from(project(':gateway').file('bin')) {
-//    into "bin"
-//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-//    cp += ":\$APP_HOME/conf/"
-//    filter(ReplaceTokens, tokens: [classpath: cp])
-//}
-
-
-///**
-// * Collect bin scripts from flow project and replace @classpath@ token
-// */
-//applicationDistribution.from(project(':flow').file('bin')) {
-//    into "bin"
-//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-//    cp += ":\$APP_HOME/conf/"
-//    filter(ReplaceTokens, tokens: [classpath: cp])
-//}
-
-/**
- * Collect bin scripts from data-fabric project and replace @classpath@ token
- */
-//applicationDistribution.from(project(':data-fabric').file('bin')) {
-//    into "bin"
-//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-//    cp += ":\$APP_HOME/conf/"
-//    filter(ReplaceTokens, tokens: [classpath: cp])
-//}
-
-
-/**
- * Collect node start script from web-cloud-app project
- */
-//applicationDistribution.from(project(':web-cloud-app').file('bin/start_webapp.sh')) {
-//    into "bin"
-//}
 
 // dynamically generate "stageConf-[project]" tasks
 project.parent.subprojects.each { p ->
