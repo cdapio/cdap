@@ -13,7 +13,7 @@ import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.impl.EventSerializer;
+import com.continuuity.flow.flowlet.internal.EventSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.google.inject.Inject;

@@ -40,8 +40,8 @@ import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.core.TupleSerializer;
-import com.continuuity.flow.flowlet.impl.EventSerializer;
+import com.continuuity.flow.flowlet.internal.TupleSerializer;
+import com.continuuity.flow.flowlet.internal.EventSerializer;
 
 public class Util {
 

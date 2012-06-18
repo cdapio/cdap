@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.flow.flowlet.internal.EventBuilder;
 
 public class ConsumerTest {
 
