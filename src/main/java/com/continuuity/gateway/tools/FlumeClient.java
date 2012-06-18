@@ -110,6 +110,7 @@ public class FlumeClient {
 
     if (port < 0) {
       CConfiguration config = CConfiguration.create();
+      config.addResource("continuuity-gateway.xml");
       port = findFlumePort(config, connector);
     }
     if (port < 0) {

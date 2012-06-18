@@ -490,11 +490,14 @@ public class DataClient {
     * it possible to test the return value.
     */
   public static void main(String[] args) {
+    // create a config and load the gateway properties
+    CConfiguration config = CConfiguration.create();
+    config.addResource("continuuity-gateway.xml");
+    // create a data client and run it with the given arguments
     DataClient instance = new DataClient();
-    String value = instance.execute(args, CConfiguration.create());
-    if (value == null) {
-      System.exit(1);
-    }
+    String value = instance.execute(args, config);
+    // exit with error in case fails
+    if (value == null) System.exit(1);
   }
 }
 
