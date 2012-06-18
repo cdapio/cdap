@@ -1,7 +1,7 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.flow.flowlet.impl.EventBuilder;
+import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import org.jboss.netty.buffer.ChannelBuffer;
