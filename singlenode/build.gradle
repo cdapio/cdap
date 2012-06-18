@@ -186,6 +186,14 @@ import org.apache.tools.ant.filters.ReplaceTokens
 //    filter(ReplaceTokens, tokens: [classpath: cp])
 //}
 
+applicationDistribution.from(project(':gateway').file('bin')) {
+    into "bin"
+    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+}
+
+
 ///**
 // * Collect bin scripts from flow project and replace @classpath@ token
 // */
@@ -229,5 +237,3 @@ project.parent.subprojects.each { p ->
         }
     }
 }
-
-
