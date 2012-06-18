@@ -6,7 +6,7 @@ define([
 
 		Ember.TEMPLATES['flowlet'] = Em.Handlebars.compile(Flowlet);
 		Ember.TEMPLATES['input-stream'] = Em.Handlebars.compile(Input);
-		
+	
 	return Em.View.create({
 		templateName: function () {
 			if (!this.get('current')) {
@@ -46,6 +46,33 @@ define([
 		hide: function () {
 			var el = $(this.get('element'));
 			el.hide();
+		},
+		payload: null,
+		PayloadView: Ember.TextField.extend({
+			valueBinding: 'App.Views.Flowlet.payload',
+			insertNewline: function() {
+				var value = this.get('value');
+				if (value) {
+					App.Views.Flowlet.inject();
+				}
+			}
+		}),
+		inject: function () {
+
+			var payload = this.get('payload');
+			var flow = App.Views.Flow.current.get('meta').name;
+
+			this.set('payload', '');
+
+			App.socket.request('gateway', {
+				method: 'POST',
+				params: {
+					name: flow,
+					payload: payload
+				}
+			}, function (response) {
+				console.log(response);
+			});
 		}
 	}).append();
 

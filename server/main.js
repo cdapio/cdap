@@ -42,6 +42,13 @@ io.sockets.on('connection', function (socket) {
 		});
 	});
 
+	socket.on('gateway', function (request) {
+		console.log('Gateway Request');
+		Env.api.gateway(request.method, request.params, function (error, response) {
+			
+		});
+	});
+
 	socket.on('monitor', function (request) {
 		console.log('Monitor Request', request);
 		Env.api.monitor(request.method, request.params, function (error, response) {

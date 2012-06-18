@@ -28,7 +28,8 @@
 			this.api.configure({
 				'upload': { 'host': 'upload.continuuity.com', 'port': 45000 },
 				'manager': { 'host': 'manager.continuuity.com', 'port': 45001 },
-				'monitor': { 'host': 'monitor.continuuity.com', 'port': 45002 }
+				'monitor': { 'host': 'monitor.continuuity.com', 'port': 45002 },
+				'gateway': { 'host': 'stream.continuuity.com', 'port': 10000, 'baseUri': '/rest-stream/' }
 			});
 
 		} else if (process.env.NODE_ENV === 'staging') {
@@ -40,7 +41,8 @@
 			this.api.configure({
 				'upload': { 'host': '127.0.0.1', 'port': 45000 },
 				'manager': { 'host': '127.0.0.1', 'port': 45001 },
-				'monitor': { 'host': '127.0.0.1', 'port': 45002 }
+				'monitor': { 'host': '127.0.0.1', 'port': 45002 },
+				'gateway': { 'host': '127.0.0.1', 'port': 10000, 'baseUri': '/rest-stream/' }
 			});
 
 		} else {
@@ -49,7 +51,8 @@
 			this.api.configure({
 				'upload': { 'host': '127.0.0.1', 'port': 45000 },
 				'manager': { 'host': '127.0.0.1', 'port': 45001 },
-				'monitor': { 'host': '127.0.0.1', 'port': 45002 }
+				'monitor': { 'host': '127.0.0.1', 'port': 45002 },
+				'gateway': { 'host': '127.0.0.1', 'port': 10000, 'baseUri': '/rest-stream/' }
 			});
 
 		}

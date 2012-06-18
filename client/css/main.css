@@ -213,6 +213,10 @@ td a {
 .flowletviz h4 span {
 	color: #999;
 }
+#stream-inject {
+	width: 135px;
+	margin: 0;
+}
 #far-upload {
 	padding: 48px;
 	text-align: center;

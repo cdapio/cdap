@@ -94,6 +94,36 @@ try {
 
 	};
 
+	this.gateway = function (method, params, done) {
+
+		var post_data = params.payload;
+		var post_options = {
+		host: this.config.gateway.host,
+		port: this.config.gateway.port,
+		path: this.config.gateway.baseUri + params.name,
+		method: 'POST',
+		headers: {
+			'com.continuuity.token': 'TOKEN',
+			'Content-Length': post_data.length
+		}
+		};
+
+		var post_req = http.request(post_options, function(res) {
+			res.setEncoding('utf8');
+			res.on('data', function (chunk) {
+				console.log('Response: ' + chunk);
+			});
+			res.on('end', function () {
+				console.log(res.statusCode);
+				console.log(post_options, post_data);
+			});
+		});
+
+		post_req.write(post_data);
+		post_req.end();
+
+	};
+
 	this.monitor = function (method, params, done) {
 
 		params = params || [];
