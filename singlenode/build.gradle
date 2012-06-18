@@ -80,18 +80,23 @@ project.parent.subprojects.each { p ->
     if (p.sourceSets.main.output.resourcesDir.isDirectory()) {
         //println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
         if (p != project) { //exclude self (singlenode)
+            println "staging conf for ${p.name}"
             task "genstageConf${p.name}" (type: Copy) {
                 from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
                 include 'continuuity-default.xml'
+                include 'continuuity-flow.xml'
                 into "${buildDir}/conf"
-                rename { "continuuity-${p.name}" }
+                rename { "continuuity-${p.name}.xml" }
             }
-        } 
+        }
+    } else {
+        println "skipping conf for ${p.name} - no resources dir"
     }
 }
 
 // conf/ - copy singlenode conf into a staging dir
 task stageConfSingleNode (type: Copy) {
+    println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
     include 'continuuity-webapp.xml'
     include 'logback.xml'
@@ -108,7 +113,7 @@ stageConfSingleNode.dependsOn {
 }
 
 
-
+/*
 task stageConfGateway (type: Copy) {
     from "${project(':gateway').sourceSets.main.output.resourcesDir}"
     include 'continuuity-default.xml'
@@ -121,7 +126,7 @@ task stageConfFlow (type: Copy) {
     into "${buildDir}/conf"
     rename { 'continuuity-flow.xml' }
 }
-
+*/
 
 
 //distZip.dependsOn stageConfSingleNode, stageConfGateway, stageConfFlow
@@ -186,12 +191,12 @@ import org.apache.tools.ant.filters.ReplaceTokens
 //    filter(ReplaceTokens, tokens: [classpath: cp])
 //}
 
-applicationDistribution.from(project(':gateway').file('bin')) {
-    into "bin"
-    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-    cp += ":\$APP_HOME/conf/"
-    filter(ReplaceTokens, tokens: [classpath: cp])
-}
+//applicationDistribution.from(project(':gateway').file('bin')) {
+//    into "bin"
+//    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+//    cp += ":\$APP_HOME/conf/"
+//    filter(ReplaceTokens, tokens: [classpath: cp])
+//}
 
 
 ///**
@@ -224,16 +229,19 @@ applicationDistribution.from(project(':gateway').file('bin')) {
 
 // dynamically generate "stageConf-[project]" tasks
 project.parent.subprojects.each { p ->
-    println "    name: ${p.name}"
+    //println "    name: ${p.name}"
     if (p.file('bin').isDirectory()) {
         if (p != project) { //exclude self (singlenode)
-            println "processing bin"
+            println "configuring bin for ${p.name}"
             applicationDistribution.from(project(":${p.name}").file('bin')) {
                 into "bin"
+                exclude 'node'
                 def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
                 cp += ":\$APP_HOME/conf/"
                 filter(ReplaceTokens, tokens: [classpath: cp])
             }
         }
+    } else {
+        println "skipping bin for ${p.name} - no bin dir"
     }
 }
