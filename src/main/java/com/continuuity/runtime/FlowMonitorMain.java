@@ -20,7 +20,7 @@ public class FlowMonitorMain {
   private String zookeeper = null;
 
   public void doMain(String args[]) {
-    OptionsParser.init(this, args, System.out);
+    OptionsParser.init(this, args, "Flow Monitor", "0.1.0", System.out);
     try {
       CConfiguration conf = CConfiguration.create();
       if (zookeeper != null) {

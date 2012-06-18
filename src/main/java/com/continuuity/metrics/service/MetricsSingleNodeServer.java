@@ -2,9 +2,7 @@ package com.continuuity.metrics.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
 import com.continuuity.observer.StateChangeListener;
@@ -64,7 +62,7 @@ public class MetricsSingleNodeServer implements MetricsServer {
         Constants.DEFAULT_FLOW_MONITOR_SERVER_PORT);
       int port = Integer.valueOf(portProperty);
 
-      String threadCntProperty = conf.get(Constants.CFG_RESOURCE_MANAGER_SERVER_THREADS,
+      String threadCntProperty = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_THREADS,
         Constants.DEFAULT_FLOW_MONITOR_SERVER_THREADS);
       int threads = Integer.valueOf(threadCntProperty);
 

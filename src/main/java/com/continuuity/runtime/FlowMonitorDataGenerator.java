@@ -38,7 +38,7 @@ public class FlowMonitorDataGenerator {
 
     connection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
 
-    OptionsParser.init(this, args, System.out);
+    OptionsParser.init(this, args, "Flow Monitor Data Generator" , "0.1.0", System.out);
     try {
       CConfiguration conf = CConfiguration.create();
       if (zookeeper != null) {
