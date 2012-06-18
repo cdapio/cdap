@@ -57,6 +57,11 @@ task dist(type: Copy, dependsOn: jar){
     from sourceSets.main.output.resourcesDir
 }
 
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
