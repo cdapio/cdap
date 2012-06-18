@@ -223,7 +223,7 @@ public class SingleNodeMain {
     myConfiguration.clear();
 
     // TODO: Make this generic and scan for files before adding them
-    myConfiguration.addResource("continuuity-flowmanager.xml");
+    myConfiguration.addResource("continuuity-flow.xml");
     myConfiguration.addResource("continuuity-gateway.xml");
     myConfiguration.addResource("continuuity-webapp.xml");
 
