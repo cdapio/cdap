@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -264,7 +265,7 @@ public class DataClient {
       } catch (IOException e) {
         System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
         return null;
-    } }
+      } }
     // was hex encoding requested?
     if (hexEncoded) {
       value = Util.toHex(binaryValue);
@@ -275,7 +276,7 @@ public class DataClient {
         value = URLEncoder.encode(new String(binaryValue, "ISO8859_1"), "ISO8859_1");
       } catch (UnsupportedEncodingException e) {
         e.printStackTrace(); // this cannot happen
-    } }
+      } }
     // was a different encoding specified?
     else if (encoding != null) {
       try { // this may fail because encoding was user-specified
@@ -292,6 +293,33 @@ public class DataClient {
     if (verbose) System.out.println("Value[" + binaryValue.length + " bytes]: " + value);
     else System.out.println(value);
     return value;
+  }
+
+  /*
+   * return the resulting value to the use, following arguments
+   */
+  String writeList(byte[] binaryResponse) {
+    // was a file specified to write to?
+    if (valueFile != null) {
+      try {
+        FileOutputStream out = new FileOutputStream(valueFile);
+        out.write(binaryResponse);
+        out.close();
+        if (verbose) System.out.println(binaryResponse.length + " bytes written to file " + valueFile + ".");
+        return binaryResponse.length + " bytes written to file";
+      } catch (IOException e) {
+        System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
+        return null;
+    } }
+    else {
+      try {
+        System.out.write(binaryResponse);
+        return binaryResponse.length + " bytes written to standard out";
+      } catch (IOException e) {
+        System.err.println("Error writing to standard out: " + e.getMessage());
+        return null;
+      }
+    }
   }
 
   /**
@@ -330,8 +358,9 @@ public class DataClient {
     }
 
     // construct the full URL and verify its well-formedness
-    String requestUrl = baseUrl + "default/";
-    if (keyNeeded) requestUrl += urlEncodedKey;
+    String requestUrl = baseUrl + "default";
+    if (keyNeeded) requestUrl += "/" + urlEncodedKey;
+    if (verbose && !"list".equals(command)) System.out.println("Request URI is: " + requestUrl);
     URI uri;
     try {
       uri = URI.create(requestUrl);
@@ -408,6 +437,11 @@ public class DataClient {
       // we have to massage the URL a little more
       //String enc = urlEncoded ? "url" : hexEncoded ? "hex" : encoding;
       requestUrl += "?q=list";
+      if (urlEncoded) requestUrl += "&enc=url";
+      else if (hexEncoded) requestUrl += "&enc=hex";
+      else if (encoding != null) requestUrl += "&enc=" + encoding;
+      else requestUrl += "&enc=" + Charset.defaultCharset().displayName();
+      if (verbose) System.out.println("Request URI is: " + requestUrl);
       try {
         uri = URI.create(requestUrl);
       } catch (IllegalArgumentException e) {
@@ -434,7 +468,7 @@ public class DataClient {
       binaryValue = Util.readHttpResponse(response);
       if (binaryValue == null) return null;
       // now make returned value available to user
-      return writeValue(binaryValue);
+      return writeList(binaryValue);
     }
     return null;
   }

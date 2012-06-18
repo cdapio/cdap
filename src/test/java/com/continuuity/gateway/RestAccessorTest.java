@@ -254,19 +254,19 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/somewhere"));
     Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + "/data"));
     // submit a request with correct prefix but no table -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
+    Assert.assertEquals(400, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
     // submit a request with correct prefix but non-existent table -> 404 Not Found
     Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
     // submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
     Assert.assertEquals(405, Util.sendPostRequest(baseUrl));
     // submit a GET without key -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest(baseUrl));
+    Assert.assertEquals(400, Util.sendGetRequest(baseUrl));
     // submit a GET with existing key -> 200 OK
     Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
     // submit a GET with non-existing key -> 404 Not Found
     Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "does.not.exist"));
     // submit a GET with existing key but more after that in the path -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "x/y/z"));
+    Assert.assertEquals(400, Util.sendGetRequest(baseUrl + "x/y/z"));
     // submit a GET with existing key but with query part -> 501 Not Implemented
     Assert.assertEquals(501, Util.sendGetRequest(baseUrl + "x?query=none"));
 
@@ -276,19 +276,19 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + "/"));
     // no table
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
-    Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl));
-    // non-existent key, for now expect Not Implemented
+    Assert.assertEquals(400, Util.sendDeleteRequest(baseUrl));
+    // non-existent key
     Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
     // correct key but more in the path
-    Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "x/a"));
+    Assert.assertEquals(400, Util.sendDeleteRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
     Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "x?force=true"));
 
@@ -298,18 +298,18 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + "/"));
     // no table
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
-    Assert.assertEquals(404, Util.sendPutRequest(baseUrl));
+    Assert.assertEquals(400, Util.sendPutRequest(baseUrl));
     // correct key but more in the path
-    Assert.assertEquals(404, Util.sendPutRequest(baseUrl + "x/"));
-    Assert.assertEquals(404, Util.sendPutRequest(baseUrl + "x/a"));
+    Assert.assertEquals(400, Util.sendPutRequest(baseUrl + "x/"));
+    Assert.assertEquals(400, Util.sendPutRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
     Assert.assertEquals(501, Util.sendPutRequest(baseUrl + "x?force=true"));
 

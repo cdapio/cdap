@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -73,22 +74,21 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
+    HttpMethod method = request.getMethod();
+    String requestUri = request.getUri();
 
-    LOG.debug("Request received");
+    LOG.debug("Request received: " + method + " " + requestUri);
 
     // we only support get requests for now
-    HttpMethod method = request.getMethod();
     if (method != HttpMethod.GET && method != HttpMethod.DELETE && method != HttpMethod.PUT) {
       LOG.debug("Received a " + method + " request, which is not supported");
       respondNotAllowed(message.getChannel(), allowedMethods);
       return;
     }
 
-    // we only support a query or parameters in the URL for LIST
-    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    // based on the request URL, determine what to do
+    QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
     Map<String, List<String>> parameters = decoder.getParameters();
-
-    // based on the URL, determine what to do
     int operation = UNKNOWN;
     if (method == HttpMethod.PUT)
       operation = WRITE;
@@ -118,37 +118,61 @@ public class RestHandler extends NettyRestHandler {
     }
 
     // we only support requests of the form POST http://host:port/prefix/path/<tablename>/<key>
-    String destination, key = null;
+    String destination = null, key = null;
     String path = decoder.getPath();
     if (path.startsWith(this.pathPrefix)) {
       String remainder = path.substring(this.pathPrefix.length());
       int pos = remainder.indexOf("/");
-      if (pos > 0) {
+      if (pos < 0) {
+        destination = remainder;
+        key = null;
+      } else {
         destination = remainder.substring(0, pos);
-        if ("default".equals(destination))
-          // no further / in the path
-          if (remainder.indexOf('/', pos + 1) < 0)
-            key = remainder.substring(pos + 1);
-      }
+        // no further / is allowed in the path
+        if (remainder.length() == pos + 1) {
+          key = null;
+        } else if (remainder.indexOf('/', pos + 1) < 0)
+          key = remainder.substring(pos + 1);
+        else {
+          LOG.debug("Received a request with invalid path " + path + "(path does not end with key)");
+          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          return;
+    } } }
+
+    // check that URL could be parsed up to destination
+    if (destination == null) {
+      LOG.debug("Received a request with unknown path '" + path + "'.");
+      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      return;
     }
 
     // all operations except for LIST need a key
     if (operation != LIST && (key == null || key.length() == 0)) {
       LOG.debug("Received a request with invalid path " + path + "(no key given)");
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
-    // oeration LIST must not have a key
+    // operation LIST must not have a key
     if (operation == LIST && (key != null && key.length() > 0)) {
       LOG.debug("Received a request with invalid path " + path + "(no key may be given)");
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+
+    // check that destination is valid - for now only "default" is allowed
+    if (!"default".equals(destination)) {
+      LOG.debug("Received a request with path " + path + " for destination other than 'default'");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
 
     // key is URL-encoded, decode it
-    key = URLDecoder.decode(key, "ISO8859_1");
-    LOG.debug("Received " + method + " request for key '" + key + "'.");
-    byte[] keyBinary = key.getBytes("ISO8859_1");
+    byte[] keyBinary = null;
+    if (key != null) {
+      key = URLDecoder.decode(key, "ISO8859_1");
+      LOG.debug("Received " + method + " request for key '" + key + "'.");
+      keyBinary = key.getBytes("ISO8859_1");
+    }
 
     switch(operation) {
       case READ : {
@@ -171,11 +195,13 @@ public class RestHandler extends NettyRestHandler {
       }
       case LIST : {
         int start = 0, limit = 100;
+        String encoding = "url";
         List<String> startParams = parameters.get("start");
         if (startParams != null && !startParams.isEmpty()) {
           try {
             start = Integer.valueOf(startParams.get(0));
           } catch (NumberFormatException e) {
+            LOG.debug("Received a request with invalid start '" + startParams.get(0) + "' (not an integer).");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
@@ -185,6 +211,16 @@ public class RestHandler extends NettyRestHandler {
           try {
             limit = Integer.valueOf(limitParams.get(0));
           } catch (NumberFormatException e) {
+            LOG.debug("Received a request with invalid limit '" + limitParams.get(0) + "' (not an integer).");
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            return;
+          }
+        }
+        List<String> encParams = parameters.get("enc");
+        if (encParams != null && !encParams.isEmpty()) {
+          encoding = encParams.get(0);
+          if (!"hex".equals(encoding) && !"url".equals(encoding) && !Charset.isSupported(encoding)) {
+            LOG.debug("Received a request with invalid encoding '" + encoding + "'.");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
@@ -205,10 +241,12 @@ public class RestHandler extends NettyRestHandler {
         }
         StringBuilder builder = new StringBuilder();
         for (byte[] keyBytes : keys) {
-          builder.append(Util.urlEncode(keyBytes));
-          builder.append("\n");
+          builder.append(Util.encode(keyBytes, encoding));
+          builder.append('\n');
         }
-        byte[] responseBody = builder.toString().getBytes("ASCII");
+        // if encoding was hex or url, send it back as ASCII, otherwise use encoding
+        byte[] responseBody = builder.toString().getBytes(
+            "url".equals(encoding) || "hex".equals(encoding) ? "ASCII" : encoding);
         respondSuccess(message.getChannel(), request, responseBody);
         break;
       }

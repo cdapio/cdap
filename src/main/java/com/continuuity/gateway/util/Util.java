@@ -272,4 +272,23 @@ public class Util {
     }
   }
 
+  /**
+   * Encode a byte string as a String
+   * @param bytes the byte string to encode
+   * @param encoding the encoding to use - "url" for URL-encoded, "hex" for
+   *                 hexadecimal, or any other valid encoding name
+   * @return the encoded String
+   */
+  public static String encode(byte[] bytes, String encoding) {
+    if (bytes == null) return null;
+    else if (encoding == null) return urlEncode(bytes);
+    else if ("url".equals(encoding)) return urlEncode(bytes);
+    else if ("hex".equals(encoding)) return toHex(bytes);
+    else try {
+      return new String(bytes, encoding);
+      } catch (UnsupportedEncodingException e) {
+        return urlEncode(bytes);
+      }
+  }
+
 }
