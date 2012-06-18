@@ -61,9 +61,10 @@ task javadoc(type: Javadoc, overwrite: true) {
 /**
  * Stage the final /conf directory 
 */
-// dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode
+// dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode.  these tasks will copy continuuity-[name].xml from src/main/resources to /conf
 project.parent.subprojects.each { p ->
-    //println "    name: ${p.name}"
+    println "    name: ${p.name}"
+    println "    resrc: ${p.sourceSets.main.output.resourcesDir}"
     if (p.sourceSets.main.output.resourcesDir.isDirectory()) {
         //println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
         if (p != project) { //exclude self (singlenode)
@@ -72,10 +73,9 @@ project.parent.subprojects.each { p ->
                 group 'Deployment'
                 description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
                 from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
-                include 'continuuity-default.xml'
-                include 'continuuity-flow.xml'
+                include "continuuity-${p.name}.xml"
                 into "${buildDir}/conf"
-                rename { "continuuity-${p.name}.xml" }
+                //rename { "continuuity-${p.name}.xml" }
             }
         }
     } else {
@@ -85,6 +85,8 @@ project.parent.subprojects.each { p ->
 
 // stage the singlenode conf dir
 task stageConfSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies src/main/resources to \$buildDir/conf for singlenode"
     println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
     include 'continuuity-webapp.xml'
@@ -134,7 +136,7 @@ tasks.distZip {
     classifier = ""
 }
 
-distZip.dependsOn javadoc, ':web-cloud-app:build', stageConfSingleNode
+distZip.dependsOn javadoc, ':web-cloud-app:build', assemble, stageConfSingleNode 
 installApp.dependsOn stageConfSingleNode
 
 // include api javadoc   
