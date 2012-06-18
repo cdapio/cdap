@@ -33,6 +33,7 @@ define([], function () {
 				exit: function (stateManager, transition) {
 					this._super(stateManager, transition);
 					App.Controllers.Flow.unload();
+					App.Views.Flowlet.hide();
 				}
 			}),
 
@@ -47,6 +48,7 @@ define([], function () {
 				exit: function (stateManager, transition) {
 					this._super(stateManager, transition);
 					App.Controllers.Flow.unload();
+					App.Views.Flowlet.hide();
 				}
 			})
 		});

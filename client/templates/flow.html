@@ -1,16 +1,18 @@
 <div id="sub-header">
 	{{#unless run}}
 	<div id="action-buttons" class="btn-group pull-right" style="width:300px;">
-	  	<button style="width:75px;" class="btn dropdown-toggle" data-toggle="dropdown">
-	  		Info
+	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
 			<span class="caret"></span>
 		</button>
 		<ul class="dropdown-menu">
-			<li style="min-width:200px; padding:16px;">
+			<li style="min-width:200px; padding:4px 16px 2px;">
 				{{#each current.getMeta}}
 					<div><strong>{{k}}</strong>: {{v}}
 				{{/each}}
 			</li>
+			<li class="divider"></li>
+			<li><a href="#/upload/new">Upload a New Version</a></li>
+			<li><a {{bindAttr href="current.undeployHref"}}>Undeploy This Flow</a></li>
 		</ul>
 	  	<button class="btn" style="width:75px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}>{{current.defaultAction}}</button>
 	  	<button disabled="true" style="width: 100px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentState}}</button>
@@ -26,6 +28,7 @@
 		{{else}}
 			<li class="selected">{{current.meta.name}}</li>
 		{{/if}}
+		<li class="pull-right">Displaying {{App.Controllers.Flow.content.length}} flowlets.</li>
 	</ul>
 	<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
 	<div id="run-info" class="alert alert-info">
@@ -33,7 +36,7 @@
 </div>
 
 <div id="flowviz-container" class="well">
-<div id="flowviz" class="clearfix"></div>
+	<div id="flowviz" class="clearfix"></div>
 </div>
 
 <div id="object-list">
@@ -48,7 +51,7 @@
 			<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
 				<td>{{started}}</td>
 				<td>{{ended}}</td>
-				<td>{{endStatus}}</td>
+				<td>{{detail}}</td>
 			</tr>
 		{{/each}}
 	</table>

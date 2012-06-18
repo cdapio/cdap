@@ -22,7 +22,13 @@ define([], function () {
 				'stopping': 'label label-warning',
 				'running': 'label label-success',
 				'failed': 'label label-warning'
-			}[this.endState.toLowerCase()];
-		}.property('endState')
+			}[this.endStatus.toLowerCase()];
+		}.property('endStatus'),
+		detail: function () {
+			var state = this.get('endStatus');
+			return {
+				'STOPPED': 'Stopped by user'
+			}[state];
+		}.property('endStatus')
 	});
 });

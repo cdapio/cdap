@@ -1,0 +1,20 @@
+
+<i {{action hide on="click"}} class="icon-remove-sign pull-right" /><h4>Inject a Value</h4>
+<div class="well" style="border: 1px solid #EDEDED;border-radius:4px;padding:4px 5px;margin-bottom:6px;">
+	<input type="text" style="width:135px;margin:0;" />
+	<button class="btn btn-success">Inject</button>
+</div>
+<div style="border: 1px solid #EDEDED;border-radius:4px;">
+	<table class="table table-condensed">
+		<thead>
+			<th>Stream</th>
+			<th>Count</th>
+			<th>&nbsp;</th>
+		</thead>
+		<tbody>
+			<td>IN</td>
+			<td>{{current.metrics}}</td>
+			<td style="text-align: right;"><a href="#">Schema</a></td>
+		</tbody>
+	</table>
+</div>

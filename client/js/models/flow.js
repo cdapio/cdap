@@ -11,6 +11,9 @@ define([], function () {
 				return '#/flow/' + this.get('meta').app + '/' + this.get('meta').name;
 			}
 		}.property(),
+		undeployHref: function () {
+			return this.get('href').replace('/flow/', '/undeploy/');
+		}.property(),
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {

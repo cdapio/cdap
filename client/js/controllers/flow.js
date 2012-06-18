@@ -17,6 +17,15 @@ define([], function () {
 			return 'btn btn-warning';
 		}.property(),
 
+		get_flowlet: function (id) {
+			id = id + "";
+			for (var k = 0; k < this.content.length; k++) {
+				if (this.content[k].name === id) {
+					return this.content[k];
+				}
+			}
+		},
+
 		init: function () {
 
 			this.sourcespec = {
@@ -41,7 +50,7 @@ define([], function () {
 
 		unload: function () {
 
-			clearInterval(this.interval);
+			clearTimeout(this.updateTimeout);
 
 			this.set('content', []);
 			this.history.set('content', []);
@@ -70,8 +79,7 @@ define([], function () {
 
 					hist[i] = App.Models.Run.create(hist[i]);
 
-					if (hist[i].endStatus === 'RUNNING' ||
-						hist[i].endStatus === 'STARTING') {
+					if (hist[i].endStatus !== 'STOPPED') {
 						continue;
 					}
 
@@ -165,30 +173,29 @@ define([], function () {
 			
 				var flowlets = response.params;
 				for (var i = 0; i < flowlets.length; i ++) {
-					var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
+					// var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
 
 					if (flowlets[i].name !== 'processed') {
 						continue;
 					}
 
 					var finish = flowlets[i].value;
-					if (for_run_id) {
+					self.get_flowlet(flowlets[i].id).set('metrics', finish);
 
+					if (for_run_id) {
 						$('#stat' + flowlets[i].id).html(finish);
 					} else {
-
-						if (false) { // !isNaN(start)) {
-							self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
-						} else {
+						// if (!isNaN(start)) {
+						//	self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
+						// } else {
 							$('#stat' + flowlets[i].id).html(finish);
-							// self.updateStats();
-						}
+						//}
 					}
 				}
 
 				if (!for_run_id) {
-					setTimeout(function () {
-						self.updateStats();
+					self.updateTimeout = setTimeout(function () {
+						self.updateStats(self.get('run'));
 					}, 1000);
 				}
 			});
@@ -232,14 +239,7 @@ define([], function () {
 			var flowlets = App.Controllers.Flow.content;
 			var self = this;
 
-			function get_flowlet(id) {
-				id = id + "";
-				for (var k = 0; k < flowlets.length; k++) {
-					if (flowlets[k].name === id) {
-						return flowlets[k];
-					}
-				}
-			}
+			
 
 			var flowSource = null;
 
@@ -260,17 +260,31 @@ define([], function () {
 				}
 			}
 
+			function show_detail(el) {
+
+				var id = el.attr('flowlet-id');
+				var x = el.offset().left - 75;
+				var y = el.offset().top - 32;
+
+				App.Controllers.Flow.set('flowlet', self.get_flowlet(id));
+				App.Views.Flowlet.show(x, y);
+
+			}
+
 			var columns = {}, rows = {}, numColumns = 0;
 			var column_map = {};
 
 			function append (id, column, connectTo) {
 
-				var flowlet = get_flowlet(id);
+				var flowlet = self.get_flowlet(id);
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
-					'" class="window' + ('input-stream' === id ? ' source' : (connectTo ? '' : ' source')) + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
-					'</strong></div><div class="window-value" id="stat' + id + '"></div></div>');
+					'" flowlet-id="' + id + '" class="window' + ('input-stream' === id ? ' source' : (connectTo ? '' : ' source')) + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
+					'</strong></div><div class="window-value" id="stat' + id + '">' + ('input-stream' === id ? '' : '0') +
+					'</div></div>').click(function () {
+						show_detail($(this));
+					});
 				
 				if (columns[column] === undefined) {
 					// Create a new column element.

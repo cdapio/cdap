@@ -180,6 +180,39 @@ td a {
 	overflow-y: hidden;
 	background-color: #f9f9f9;
 }
+.flowletviz {
+	position: absolute;
+	top: 22px;
+	left: 0px;
+	border-radius: 3px;
+	background-color: rgba(255, 255, 255, 0.95);
+	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+	width: 215px;
+	min-height: 130px;
+	z-index: 5;
+	padding: 10px;
+	font-size: 11px;
+	display: none;
+}
+.flowletviz i {
+	cursor: pointer;
+}
+.flowletviz .section-header {
+
+}
+.flowletviz h4 {
+	color: #061c35;
+	font-size: 14px;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 4px;
+	margin-bottom: 6px;
+	padding: 0px 2px 4px;
+	font-weight: 400;
+}
+
+.flowletviz h4 span {
+	color: #999;
+}
 #far-upload {
 	padding: 48px;
 	text-align: center;
@@ -232,7 +265,7 @@ ol {
  * jsplumb
  */
 .column {
-	padding: 42px 42px 26px;
+	padding: 42px 42px 0px;
 	float: left;
 }
 .window { 
@@ -250,7 +283,10 @@ ol {
 	float: left;
 	cursor: pointer;
 	clear: left;
-	margin-bottom: 16px;
+	margin-bottom: 42px;
+}
+.window:hover {
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 .window-title {
 	vertical-align: center;
@@ -268,8 +304,5 @@ ol {
 	height: 85px;
 }
 
-.window:hover {
-	box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-}
 ._jsPlumb_connector { z-index:1; }
 ._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:2; cursor:pointer; }
