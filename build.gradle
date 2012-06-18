@@ -57,3 +57,21 @@ task dist(type: Copy, dependsOn: jar){
     from sourceSets.main.output.resourcesDir
 }
 
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+task generateBinDir(type: Copy) {
+    group "Deployment"
+    description "Generates $buildDir/bin with token-replaced scripts"
+    from "bin" 
+    include "*-client"    
+    into "$buildDir/bin"
+    //rename '(.*)', '$1-gen'
+    def cp = configurations.runtime.getAsPath()
+    cp += ':' + jar.outputs.getFiles().getAsPath()
+
+    filter(ReplaceTokens, tokens: [classpath: cp])
+}
+
+build.dependsOn generateBinDir
+
