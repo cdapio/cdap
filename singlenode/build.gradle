@@ -126,12 +126,14 @@ tasks.startScripts {
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
+
 applicationDistribution.from(project(':gateway').file('bin')) {
     into "bin"
     def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
     cp += ":\$APP_HOME/conf/"
     filter(ReplaceTokens, tokens: [classpath: cp])
 }
+
 
 ///**
 // * Collect bin scripts from flow project and replace @classpath@ token
@@ -160,4 +162,3 @@ applicationDistribution.from(project(':data-fabric').file('bin')) {
 applicationDistribution.from(project(':web-cloud-app').file('bin/start_webapp.sh')) {
     into "bin"
 }
-
