@@ -26,7 +26,7 @@ public class UniqueIDGeneratorTest {
       }
     }
 
-    Collection getClashMap() {
+    Collection<Long> getClashMap() {
       return clash;
     }
   }
@@ -45,8 +45,8 @@ public class UniqueIDGeneratorTest {
     thread1.join();
     thread2.join();
 
-    Collection gen1 = id1.getClashMap();
-    Collection gen2 = id2.getClashMap();
+    Collection<Long> gen1 = id1.getClashMap();
+    Collection<Long> gen2 = id2.getClashMap();
 
     gen1.retainAll(gen2);
     Assert.assertTrue(gen1.size() == 0);

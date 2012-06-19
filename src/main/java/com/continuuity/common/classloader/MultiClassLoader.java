@@ -32,6 +32,7 @@ public abstract class MultiClassLoader extends ClassLoader {
     return (loadClass(className, true));
   }
 
+  @SuppressWarnings("unchecked")
   public synchronized Class loadClass(String className,
                                       boolean resolveIt) throws ClassNotFoundException {
 

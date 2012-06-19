@@ -39,6 +39,7 @@ public class ActorSyncCall<T> {
    * @return instance of type T
    * @throws ClassCastException
    */
+  @SuppressWarnings("unchecked")
   public T get(Object message, Timeout timeout) throws ClassCastException {
     T object = null;
     try {

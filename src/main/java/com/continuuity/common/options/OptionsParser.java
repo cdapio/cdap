@@ -16,21 +16,21 @@ import java.util.*;
  *   present in annotated definition an usage message is automatically generated.
  *
  *   Following is an simple example of it's usage.
- *   <code>
+ *   <pre>
  *     public class MyClass {
- *       @Option(name="name", usage="Specifies the name of a flow")
+ *       {@literal @}Option(name="name", usage="Specifies the name of a flow")
  *       private String flowName;
  *
- *       @Option(name="flowlet", usage="Specifies the name of the flowlet")
+ *       {@literal @}Option(name="flowlet", usage="Specifies the name of the flowlet")
  *       private String flowletName;
  *
- *       @Option(name="class", usage="Specifies the class associated with the flowlet to be loaded")
+ *       {@literal @}Option(name="class", usage="Specifies the class associated with the flowlet to be loaded")
  *       private String className;
  *
- *       @Option(name="jar", usage="Specifies the path to the jar file that contains the class specified")
+ *       {@literal @}Option(name="jar", usage="Specifies the path to the jar file that contains the class specified")
  *       private String jarPath;
  *
- *       @Option(name="instance", usage="Specifies the instance id of the flowlet")
+ *       {@literal @}Option(name="instance", usage="Specifies the instance id of the flowlet")
  *       private int instance;
  *
  *       public static void main(String[] args) {
@@ -38,7 +38,7 @@ import java.util.*;
  *        OptionsParser.init(myclass, args, System.out);
  *       }
  *     }
- *   </code>
+ *   </pre>
  * </p>
  */
 public final class OptionsParser {

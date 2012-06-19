@@ -64,6 +64,15 @@ public class ImmutablePairTest {
     Assert.assertTrue(Fixture.e.equals(Fixture.a));
   }
 
+  @Test
+  public void testEqualsTypeSafe() {
+    ImmutablePair<Integer, Boolean> pair1 = new ImmutablePair<Integer, Boolean>(1, true);
+    ImmutablePair<String, byte[]> pair2 = new ImmutablePair<String, byte[]>("1", "true".getBytes());
+    Assert.assertFalse(pair1.equals(pair2));
+    Assert.assertFalse(pair2.equals(pair1));
+    Assert.assertFalse(pair1.equals(new Integer(10)));
+  }
+
 
   @Test
   public void testHashCodeConsistency() throws Exception {

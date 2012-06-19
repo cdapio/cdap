@@ -4,6 +4,12 @@ buildscript {
     apply from: 'continuuity.gradle'
 }
 
+/*
+tasks.withType(Compile) { 
+    options.compilerArgs << "-Xlint:unchecked"
+} 
+*/
+
 /**
  * Specify all the dependencies
  */

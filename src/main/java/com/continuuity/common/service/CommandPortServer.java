@@ -22,15 +22,15 @@ import java.util.Map;
  * This works in conjunction with {@link AbstractRegisteredServer} only for now.
  *
  * This is how it can be used :
- * <code>
+ * <pre>
  *   CommandPortServer server = new CommandPortServer();
  *   server.addListener("stats", "Provides stats", new CommandListener() {
- *    @Override
+ *    {@literal @}Override
  *    public String act() {
  *      return whole_lot_of_stats;
  *    }
  *   });
- * </code>
+ * </pre>
  */
 public class CommandPortServer {
   private static final Logger Log = LoggerFactory.getLogger(CommandPortServer.class);

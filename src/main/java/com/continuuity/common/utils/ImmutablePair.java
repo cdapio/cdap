@@ -1,7 +1,6 @@
 package com.continuuity.common.utils;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ComparisonChain;
 
 /**
  * An {@link ImmutablePair} consists of two elements within. The elements once set
@@ -11,7 +10,7 @@ import com.google.common.collect.ComparisonChain;
  * objects within them can be, so in general it means that if there are mutable objects
  * within the pair then the pair itself is effectively mutable.
  *
- * <code>
+ * <pre>
  *   ImmutablePair<Tuple, TupleInputStreamIdentifier> tupleStreamPair= new
  *    ImmutablePair<Tuple, TupleInputStreamIdentifier> (tuple, identifier);
  *   ...
@@ -19,7 +18,7 @@ import com.google.common.collect.ComparisonChain;
  *   Tuple t = tupleStreamPair.getFirst();
  *   TupleInputStreamIdentifier identifier = tupleStreamPair.getSecond();
  *   ...
- * </code>
+ * </pre>
  */
 public final class ImmutablePair<A, B> {
   private final A first;
@@ -80,8 +79,8 @@ public final class ImmutablePair<A, B> {
   @Override
   public boolean equals(Object o) {
     if(o == null) return false;
-    ImmutablePair<A,B> other = (ImmutablePair) o;
+    if (!(o instanceof ImmutablePair)) return false;
+    ImmutablePair<?,?> other = (ImmutablePair<?,?>) o;
     return Objects.equal(first, other.first) && Objects.equal(second, other.second);
   }
-
 }

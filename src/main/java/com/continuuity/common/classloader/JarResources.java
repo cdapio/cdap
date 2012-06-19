@@ -44,6 +44,7 @@ public final class JarResources {
   /**
    * initializes internal hash tables with Jar file resources.
    */
+  @SuppressWarnings("unchecked")
   private void init() throws JarResourceException {
     try {
       // extracts just sizes only.

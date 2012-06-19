@@ -37,6 +37,7 @@ public class ServicePayloadSerializer implements
    * @throws Exception any errors
    */
   @Override
+  @SuppressWarnings("unchecked")
   public ServiceInstance<ServiceDiscoveryClient.ServicePayload> deserialize(byte[] bytes) throws Exception {
     ServiceInstance<ServiceDiscoveryClient.ServicePayload> payload;
     payload = gson.fromJson(new String(bytes), ServiceInstance.class);
