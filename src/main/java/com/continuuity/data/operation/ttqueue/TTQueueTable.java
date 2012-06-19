@@ -37,7 +37,6 @@ public interface TTQueueTable {
    * @param consumer
    * @param config
    * @param readPointer
-   * @return
    */
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
       QueueConfig config, ReadPointer readPointer);
@@ -48,7 +47,6 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @return
    */
   public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
@@ -58,7 +56,6 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @return
    */
   public boolean finalize(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
@@ -68,7 +65,6 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @return
    */
   boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);

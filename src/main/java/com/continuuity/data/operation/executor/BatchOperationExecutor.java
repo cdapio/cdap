@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.executor;
 
-import java.util.List;
-
 import com.continuuity.api.data.WriteOperation;
+
+import java.util.List;
 
 
 public interface BatchOperationExecutor {
@@ -23,7 +23,7 @@ public interface BatchOperationExecutor {
    * false is returned.  If all operations are performed successfully, returns
    * true.
    *
-   * @see TransactionalOperationExecutor#execute(WriteOperation[])
+   * @see TransactionalOperationExecutor#execute
    *
    * @param writes list of write operations to execute as a batch
    * @return result of batch operation (success/failure, msg, etc)

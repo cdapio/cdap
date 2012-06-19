@@ -13,3 +13,8 @@ build/
 .classpath
 .project
 .settings/
+
+#intlj stuff
+*.iml
+.idea/
+

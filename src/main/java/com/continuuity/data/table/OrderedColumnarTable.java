@@ -8,7 +8,6 @@ public interface OrderedColumnarTable extends ColumnarTable {
    * and stop row (exclusive).  Returns the latest version of each column.
    * @param startRow
    * @param stopRow
-   * @return
    */
   public Scanner scan(byte[] startRow, byte[] stopRow);
 
@@ -19,16 +18,12 @@ public interface OrderedColumnarTable extends ColumnarTable {
    * column.
    * @param startRow
    * @param stopRow
-   * @return
    */
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns);
 
 
   /**
    * Scans all columns of all rows.  Returns the latest version of each column.
-   * @param startRow
-   * @param stopRow
-   * @return
    */
   public Scanner scan();
 }

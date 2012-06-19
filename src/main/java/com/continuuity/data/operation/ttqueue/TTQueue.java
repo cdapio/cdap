@@ -35,7 +35,6 @@ public interface TTQueue {
    * @param consumer
    * @param config
    * @param readPointer
-   * @return
    */
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer);
@@ -45,7 +44,6 @@ public interface TTQueue {
    * that is acknowledging is allowed to do so, false if not.
    * @param entryPointer
    * @param consumer
-   * @return
    */
   public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer);
 
@@ -53,7 +51,6 @@ public interface TTQueue {
    * Finalizes an ack.
    * @param entryPointer
    * @param consumer
-   * @return
    */
   public boolean finalize(QueueEntryPointer entryPointer,
       QueueConsumer consumer);
@@ -62,7 +59,6 @@ public interface TTQueue {
    * Unacknowledges a previously acknowledge ack.
    * @param entryPointer
    * @param consumer
-   * @return
    */
   boolean unack(QueueEntryPointer entryPointer, QueueConsumer consumer);
 }
