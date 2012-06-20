@@ -14,6 +14,12 @@ dependencies
     testCompile "junit:junit:4.+"
 }
 
+configurations
+{
+    // ENG-336 - Exclude slf4j-log4j12 from all projects.
+    all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
 /**
  * Creates source jar
  */
