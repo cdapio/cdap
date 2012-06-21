@@ -45,7 +45,9 @@ io.sockets.on('connection', function (socket) {
 	socket.on('gateway', function (request) {
 		console.log('Gateway Request');
 		Env.api.gateway(request.method, request.params, function (error, response) {
-			
+			if (error) {
+				socket.emit('failure', error);
+			}
 		});
 	});
 

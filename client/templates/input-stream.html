@@ -7,14 +7,14 @@
 <div style="border: 1px solid #EDEDED;border-radius:4px;">
 	<table class="table table-condensed">
 		<thead>
-			<th>Stream</th>
+			<th>Input Stream</th>
 			<th>Count</th>
 			<th>&nbsp;</th>
 		</thead>
-		<tbody>
-			<td>IN</td>
+		{{#each App.Controllers.Flow.current.flowStreams tagName="tbody"}}
+			<td>{{name}}</td>
 			<td>{{current.metrics}}</td>
 			<td style="text-align: right;"><a href="#">Schema</a></td>
-		</tbody>
+		{{/each}}
 	</table>
 </div>
