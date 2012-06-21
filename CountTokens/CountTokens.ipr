@@ -13,7 +13,6 @@
           </element>
           <element id="module-output" name="CountTokens" />
         </element>
-        <element id="library" level="project" name="continuuity-singlenode" />
       </root>
     </artifact>
   </component>
