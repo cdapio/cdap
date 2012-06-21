@@ -1,7 +1,12 @@
-package CountTokens;
+package counttokens;
 
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.flow.flowlet.*;
+import com.continuuity.api.flow.flowlet.AbstractComputeFlowlet;
+import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.StreamsConfigurator;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
 
 public class CountByField extends AbstractComputeFlowlet

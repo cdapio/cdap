@@ -1,4 +1,4 @@
-package CountTokens;
+package counttokens;
 
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;

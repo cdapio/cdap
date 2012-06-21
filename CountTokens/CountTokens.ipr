@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AntConfiguration">
+    <defaultAnt bundledAnt="true" />
+  </component>
+  <component name="ArtifactManager">
+    <artifact build-on-make="true" name="CountTokens:jar">
+      <output-path>$PROJECT_DIR$/out/artifacts/CountTokens_jar</output-path>
+      <root id="root">
+        <element id="archive" name="CountTokens.jar">
+          <element id="directory" name="META-INF">
+            <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
+          </element>
+          <element id="module-output" name="CountTokens" />
+        </element>
+        <element id="library" level="project" name="continuuity-singlenode" />
+      </root>
+    </artifact>
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <resourceExtensions />
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.ftl" />
+    </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true" />
+  </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="GradleSettings">
+    <option name="gradleHome" value="/opt/gradle" />
+  </component>
+  <component name="GradleUISettings2">
+    <setting name="root">
+      <setting name="task-tab">
+        <setting name="show-description" value="true" />
+      </setting>
+      <setting name="favorites-tab" />
+      <setting name="command_line-tab" />
+      <setting name="setup-tab">
+        <setting name="setup">
+          <setting name="custom-gradle-executor" />
+          <setting name="current-directory" value="$PROJECT_DIR$" />
+          <setting name="log-level" value="LIFECYCLE" />
+        </setting>
+      </setting>
+    </setting>
+  </component>
+  <component name="IdProvider" IDEtalkID="0E5BC4105B494F99AB96A2B4D58E490B" />
+  <component name="ProjectKey">
+    <option name="state" value="git@github.com:continuuity/examples.git" />
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/CountTokens.iml" filepath="$PROJECT_DIR$/CountTokens.iml" />
+    </modules>
+  </component>
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6 jre" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="" />
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+  </component>
+  <component name="WebServicesPlugin" addRequiredLibraries="true" />
+  <component name="libraryTable">
+    <library name="continuuity-singlenode">
+      <CLASSES>
+        <root url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" />
+        <root url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" />
+        <root url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" />
+      </SOURCES>
+      <jarDirectory url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" recursive="false" />
+      <jarDirectory url="file://$USER_HOME$/continuuity/singlenode/build/install/singlenode/lib" recursive="false" type="SOURCES" />
+    </library>
+  </component>
+</project>
+
