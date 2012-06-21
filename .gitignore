@@ -4,3 +4,9 @@
 *.jar
 *.war
 *.ear
+
+# IDEA output
+out/
+.idea/
+.gradle/
+.clover/
