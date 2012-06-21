@@ -3,18 +3,21 @@ package com.continuuity.api.data;
 import java.util.Map;
 
 
-public class ColumnRead implements ReadOperation<Map<byte[], byte[]>> {
+public class ReadColumns implements ReadOperation<Map<byte[], byte[]>> {
 
   private final byte [] key;
   private final byte [][] columns;
 
   private Map<byte[], byte[]> result;
 
-  public ColumnRead(final byte [] key) {
-    this(key, null);
+  public ReadColumns(final byte [] key) {
+    this(key, new byte [][] { });
   }
 
-  public ColumnRead(final byte [] key, final byte [][] columns) {
+  public ReadColumns(final byte [] key, final byte [] column) {
+    this(key, new byte [][] { column } );
+  }
+  public ReadColumns(final byte [] key, final byte [][] columns) {
     this.key = key;
     this.columns = columns;
   }

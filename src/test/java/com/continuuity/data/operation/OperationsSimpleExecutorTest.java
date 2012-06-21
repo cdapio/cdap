@@ -6,7 +6,7 @@ package com.continuuity.data.operation;
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationGenerator;
-import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.ReadCounter;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -66,8 +66,8 @@ public class OperationsSimpleExecutorTest {
 
     assertTrue(this.executor.execute(writes).isSuccess());
 
-    Read [] reads = new Read [] {
-        new Read(keys[0]), new Read(keys[1]) };
+    ReadKey [] reads = new ReadKey [] {
+        new ReadKey(keys[0]), new ReadKey(keys[1]) };
 
     byte [] value = this.executor.execute(reads[0]);
     assertEquals(new String(values[0]), new String(value));
@@ -92,7 +92,7 @@ public class OperationsSimpleExecutorTest {
     assertTrue(this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo)));
 
     // Read normally, get valueTwo
-    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new Read(key))));
+    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new ReadKey(key))));
 
     // Bad CAS from One to Two
     assertFalse(this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo)));
@@ -101,31 +101,31 @@ public class OperationsSimpleExecutorTest {
     assertTrue(this.executor.execute(new CompareAndSwap(key, valueTwo, valueTwo)));
 
     // Read normally, get valueTwo
-    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new Read(key))));
+    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new ReadKey(key))));
 
     // CAS(key, valueTwo, valueThree)
     assertTrue(this.executor.execute(new CompareAndSwap(key, valueTwo, valueThree)));
 
     // Read normally, get valueThree
-    assertTrue(Bytes.equals(valueThree, this.executor.execute(new Read(key))));
+    assertTrue(Bytes.equals(valueThree, this.executor.execute(new ReadKey(key))));
 
     // Bad CAS from null to two
     assertFalse(this.executor.execute(new CompareAndSwap(key, null, valueTwo)));
 
     // Read normally, get valueThree
-    assertTrue(Bytes.equals(valueThree, this.executor.execute(new Read(key))));
+    assertTrue(Bytes.equals(valueThree, this.executor.execute(new ReadKey(key))));
 
     // CAS from three to null
     assertTrue(this.executor.execute(new CompareAndSwap(key, valueThree, null)));
 
     // Read, should not exist
-    assertNull(this.executor.execute(new Read(key)));
+    assertNull(this.executor.execute(new ReadKey(key)));
 
     // CAS from null to one
     assertTrue(this.executor.execute(new CompareAndSwap(key, null, valueOne)));
 
     // Read normally, get valueOne
-    assertTrue(Bytes.equals(valueOne, this.executor.execute(new Read(key))));
+    assertTrue(Bytes.equals(valueOne, this.executor.execute(new ReadKey(key))));
 
     byte [] valueChainKey = Bytes.toBytes("chainkey");
     byte [][] valueChain = generateRandomByteArrays(20, 20);
@@ -144,7 +144,7 @@ public class OperationsSimpleExecutorTest {
 
     // Verify the current value is the last in the chain
     assertTrue(Bytes.equals(valueChain[valueChain.length-1],
-        this.executor.execute(new Read(valueChainKey))));
+        this.executor.execute(new ReadKey(valueChainKey))));
   }
 
   @Test
@@ -274,14 +274,14 @@ public class OperationsSimpleExecutorTest {
       assertTrue(this.executor.execute(new ReadModifyWrite(key, incrementer)));
 
     // verify value is 10L
-    assertEquals(10L, Bytes.toLong(this.executor.execute(new Read(key))));
+    assertEquals(10L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
 
     // decrement 12 times
     for (int i=0; i<12; i++)
       assertTrue(this.executor.execute(new ReadModifyWrite(key, decrementer)));
 
     // verify value is -2L
-    assertEquals(-2L, Bytes.toLong(this.executor.execute(new Read(key))));
+    assertEquals(-2L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
 
   }
 
@@ -319,8 +319,8 @@ public class OperationsSimpleExecutorTest {
     System.out.println("Wrote two key-values");
 
     // Client Developer : Make two read operations
-    Read [] reads = new Read [] {
-        new Read(keys[0]), new Read(keys[1]) };
+    ReadKey [] reads = new ReadKey [] {
+        new ReadKey(keys[0]), new ReadKey(keys[1]) };
 
     // Runner : Execute reads through the SimpleMemoryOperationExecutor
     byte [] value = memoryOperationExecutor.execute(reads[0]);

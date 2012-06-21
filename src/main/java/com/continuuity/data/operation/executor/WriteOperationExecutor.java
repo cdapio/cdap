@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.ColumnDelete;
+import com.continuuity.api.data.ColumnWrite;
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
@@ -55,6 +57,22 @@ public interface WriteOperationExecutor {
    */
   public boolean execute(CompareAndSwap cas);
 
+  // Columnar
+  
+  /**
+   * Performs a {@link ColumnWrite} operation.
+   * @param write
+   * @return true if success, false if failure
+   */
+  public boolean execute(ColumnWrite write);
+
+  /**
+   * Performs a {@link ColumnDelete} operation.
+   * @param delete
+   * @return true if success, false if failure
+   */
+  public boolean execute(ColumnDelete delete);
+  
   // TTQueues
 
   /**

@@ -2,7 +2,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -112,7 +112,7 @@ public class TestOmidExecutorLikeAFlow {
 
     // Verify value = 1
     assertTrue(Bytes.equals(Bytes.toBytes(1L),
-        this.executor.execute(new Read(key))));
+        this.executor.execute(new ReadKey(key))));
 
     // Create batch with increment and compareAndSwap
     // first try (CAS(1->3),Increment(3->4))
@@ -123,7 +123,7 @@ public class TestOmidExecutorLikeAFlow {
 
     // verify value = 4
     // (value = 2 if no ReadOwnWrites)
-    byte [] value = this.executor.execute(new Read(key));
+    byte [] value = this.executor.execute(new ReadKey(key));
     assertEquals(4L, Bytes.toLong(value));
 
     // Create another batch with increment and compareAndSwap, change order
@@ -134,7 +134,7 @@ public class TestOmidExecutorLikeAFlow {
         isSuccess());
 
     // verify value = 1
-    value = this.executor.execute(new Read(key));
+    value = this.executor.execute(new ReadKey(key));
     assertEquals(1L, Bytes.toLong(value));
   }
 
@@ -249,7 +249,7 @@ public class TestOmidExecutorLikeAFlow {
 
     // Verify value from operations was done in order
     assertEquals(expectedVal,
-        Bytes.toLong(this.executor.execute(new Read(dataKey))));
+        Bytes.toLong(this.executor.execute(new ReadKey(dataKey))));
 
     // Dequeue from both dest queues, verify, ack
     DequeueResult destDequeueResult = this.executor.execute(
@@ -341,7 +341,7 @@ public class TestOmidExecutorLikeAFlow {
     // Verify three values from increment operations
     for (int i=0; i<3; i++) {
       assertEquals(expectedVals[i],
-          Bytes.toLong(this.executor.execute(new Read(dataKeys[i]))));
+          Bytes.toLong(this.executor.execute(new ReadKey(dataKeys[i]))));
     }
 
     // Dequeue from both dest queues, verify, ack
@@ -394,7 +394,7 @@ public class TestOmidExecutorLikeAFlow {
     // All values from increments should be the same as before
     for (int i=0; i<3; i++) {
       assertEquals(expectedVals[i],
-          Bytes.toLong(this.executor.execute(new Read(dataKeys[i]))));
+          Bytes.toLong(this.executor.execute(new ReadKey(dataKeys[i]))));
     }
 
     // Dest queues should still be empty

@@ -1,11 +1,11 @@
 package com.continuuity.api.data;
 
 
-public class Read implements ReadOperation<byte[]> {
+public class ReadKey implements ReadOperation<byte[]> {
 
   private final byte [] key;
 
-  public Read(final byte [] key) {
+  public ReadKey(final byte [] key) {
     this.key = key;
   }
 

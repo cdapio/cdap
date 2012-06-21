@@ -8,7 +8,7 @@ import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationGenerator;
-import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.ReadCounter;
 import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.SyncReadTimeoutException;
@@ -150,7 +150,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
   // Simple Reads
 
   @Override
-  public byte[] execute(Read read) throws SyncReadTimeoutException {
+  public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
     return this.randomTable.get(read.getKey(), COLUMN);
   }
 

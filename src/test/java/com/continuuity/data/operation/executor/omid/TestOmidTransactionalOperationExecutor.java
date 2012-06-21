@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
@@ -72,13 +72,13 @@ public class TestOmidTransactionalOperationExecutor {
     rows.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
 
     // commit
     assertTrue(executor.commitTransaction(pointer, rows));
 
     // read should see the write
-    byte [] readValue = executor.execute(new Read(key));
+    byte [] readValue = executor.execute(new ReadKey(key));
     assertNotNull(readValue);
     assertTrue(Bytes.equals(readValue, value));
   }
@@ -100,7 +100,7 @@ public class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
 
     // start tx two
     ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
@@ -113,13 +113,13 @@ public class TestOmidTransactionalOperationExecutor {
     rowsTwo.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
 
     // commit tx two, should succeed
     assertTrue(executor.commitTransaction(pointerTwo, rowsTwo));
 
     // even though tx one not committed, we can see two already
-    byte [] readValue = executor.execute(new Read(key));
+    byte [] readValue = executor.execute(new ReadKey(key));
     assertNotNull(readValue);
     assertTrue(Bytes.equals(readValue, valueTwo));
 
@@ -127,7 +127,7 @@ public class TestOmidTransactionalOperationExecutor {
     assertFalse(executor.commitTransaction(pointerOne, rowsOne));
 
     // should still see two
-    readValue = executor.execute(new Read(key));
+    readValue = executor.execute(new ReadKey(key));
     assertNotNull(readValue);
     assertTrue(Bytes.equals(readValue, valueTwo));
   }
@@ -169,7 +169,7 @@ public class TestOmidTransactionalOperationExecutor {
 
     // read should see value 1 not 2
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(1)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(1)));
   }
 
   @Test
@@ -187,14 +187,14 @@ public class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
 
     // commit write 1
     assertTrue(executor.commitTransaction(pointerWOne, rowsOne));
 
     // read sees 1
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(1)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(1)));
 
     // open long-running read
     ImmutablePair<ReadPointer, Long> pointerReadOne =
@@ -209,12 +209,12 @@ public class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.commitTransaction(pointerWTwo, rowsTwo));
 
     // read sees 2
-    byte [] value = executor.execute(new Read(key));
+    byte [] value = executor.execute(new ReadKey(key));
     assertNotNull(value);
     System.out.println("Value is : " + value.length + ", " +
         Bytes.toInt(value));
     assertTrue("expect 2, actually " + Bytes.toInt(value),
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(2)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(2)));
 
     // open long-running read
     ImmutablePair<ReadPointer, Long> pointerReadTwo =
@@ -238,25 +238,25 @@ public class TestOmidTransactionalOperationExecutor {
 
     // read sees 2 still
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(2)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(2)));
 
     // commit 4, should be successful
     assertTrue(executor.commitTransaction(pointerWFour, rowsFour));
 
     // read sees 4
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(4)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(4)));
 
     // commit 3, should fail
     assertFalse(executor.commitTransaction(pointerWThree, rowsThree));
 
     // read still sees 4
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(4)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(4)));
 
     // now read with long-running read 1, should see value = 1
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadOne.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadOne.getFirst()),
             Bytes.toBytes(1)));
 
     // now do the same thing but in reverse order of conflict
@@ -279,14 +279,14 @@ public class TestOmidTransactionalOperationExecutor {
 
     // read sees 4 still
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(4)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(4)));
 
     // long running reads should still see their respective values
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadOne.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadOne.getFirst()),
             Bytes.toBytes(1)));
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadTwo.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadTwo.getFirst()),
             Bytes.toBytes(2)));
 
     // commit 5, should be successful
@@ -294,14 +294,14 @@ public class TestOmidTransactionalOperationExecutor {
 
     // read sees 5
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(5)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(5)));
 
     // long running reads should still see their respective values
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadOne.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadOne.getFirst()),
             Bytes.toBytes(1)));
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadTwo.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadTwo.getFirst()),
             Bytes.toBytes(2)));
 
     // commit 6, should fail
@@ -309,14 +309,14 @@ public class TestOmidTransactionalOperationExecutor {
 
     // read still sees 5
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), Bytes.toBytes(5)));
+        Bytes.equals(executor.execute(new ReadKey(key)), Bytes.toBytes(5)));
 
     // long running reads should still see their respective values
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadOne.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadOne.getFirst()),
             Bytes.toBytes(1)));
     assertTrue(
-        Bytes.equals(executor.read(new Read(key), pointerReadTwo.getFirst()),
+        Bytes.equals(executor.read(new ReadKey(key), pointerReadTwo.getFirst()),
             Bytes.toBytes(2)));
   }
 
@@ -384,7 +384,7 @@ public class TestOmidTransactionalOperationExecutor {
     assertTrue(dequeueResult.isEmpty());
 
     // Incremented value should be 5
-    assertEquals(5L, Bytes.toLong(executor.execute(new Read(key))));
+    assertEquals(5L, Bytes.toLong(executor.execute(new ReadKey(key))));
 
   }
 
@@ -416,14 +416,14 @@ public class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
 
     // commit
     assertTrue(executor.commitTransaction(pointerOne, rowsOne));
     
     // dirty read should see it
     assertTrue(
-        Bytes.equals(executor.read(new Read(key),
+        Bytes.equals(executor.read(new ReadKey(key),
             new MemoryReadPointer(Long.MAX_VALUE)),
             valueOne));
     
@@ -438,28 +438,28 @@ public class TestOmidTransactionalOperationExecutor {
     
     // clean read should see it still
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), valueOne));
+        Bytes.equals(executor.execute(new ReadKey(key)), valueOne));
     
     // dirty read should NOT see it
-    assertNull(executor.read(new Read(key),
+    assertNull(executor.read(new ReadKey(key),
             new MemoryReadPointer(Long.MAX_VALUE)));
     
     // commit it
     assertTrue(executor.commitTransaction(pointerTwo, rowsTwo));
     
     // clean read will not see it now
-    assertNull(executor.execute(new Read(key)));
+    assertNull(executor.execute(new ReadKey(key)));
     
     // write value two
     executor.execute(new Write(key, valueTwo));
     
     // clean read sees it
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), valueTwo));
+        Bytes.equals(executor.execute(new ReadKey(key)), valueTwo));
     
     // dirty read sees it
     assertTrue(
-        Bytes.equals(executor.read(new Read(key),
+        Bytes.equals(executor.read(new ReadKey(key),
             new MemoryReadPointer(Long.MAX_VALUE)), valueTwo));
 
     // start tx three
@@ -482,9 +482,9 @@ public class TestOmidTransactionalOperationExecutor {
     
     // verify clean and dirty reads still see the value (it was undeleted)
     assertTrue(
-        Bytes.equals(executor.execute(new Read(key)), valueTwo));
+        Bytes.equals(executor.execute(new ReadKey(key)), valueTwo));
     assertTrue(
-        Bytes.equals(executor.read(new Read(key),
+        Bytes.equals(executor.read(new ReadKey(key),
             new MemoryReadPointer(Long.MAX_VALUE)), valueTwo));
   }
 
