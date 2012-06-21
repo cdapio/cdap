@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="eb739280-b8f7-43b8-9ea4-95c13b6dd3d5" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CountTokens.ipr" afterPath="$PROJECT_DIR$/CountTokens.ipr" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CountTokens.iws" afterPath="$PROJECT_DIR$/CountTokens.iws" />
-    </list>
+    <list default="true" id="eb739280-b8f7-43b8-9ea4-95c13b6dd3d5" name="Default" comment="" />
     <ignored path="CountTokens.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -142,21 +139,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Tokenizer.java" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="Tokenizer.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/counttokens/Tokenizer.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="15" column="43" selection-start="663" selection-end="663" vertical-scroll-proportion="0.0">
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="CountTokens.ipr" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/CountTokens.ipr">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="55" column="0" selection-start="2008" selection-end="2008" vertical-scroll-proportion="0.9268293">
+            <state line="15" column="43" selection-start="663" selection-end="663" vertical-scroll-proportion="0.023076924">
               <folding />
             </state>
           </provider>
@@ -198,8 +184,8 @@
         <option value="$PROJECT_DIR$/src/counttokens/CountTokenFlow.java" />
         <option value="$PROJECT_DIR$/src/counttokens/CountByField.java" />
         <option value="$PROJECT_DIR$/src/counttokens/StreamSource.java" />
-        <option value="$PROJECT_DIR$/src/counttokens/Tokenizer.java" />
         <option value="$PROJECT_DIR$/CountTokens.ipr" />
+        <option value="$PROJECT_DIR$/src/counttokens/Tokenizer.java" />
       </list>
     </option>
   </component>
@@ -234,6 +220,16 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope">
+        <subPane subId="Project Files">
+          <PATH>
+            <PATH_ELEMENT USER_OBJECT="Root">
+              <option name="myItemId" value="" />
+              <option name="myItemType" value="" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -286,16 +282,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope">
-        <subPane subId="Project Files">
-          <PATH>
-            <PATH_ELEMENT USER_OBJECT="Root">
-              <option name="myItemId" value="" />
-              <option name="myItemType" value="" />
-            </PATH_ELEMENT>
-          </PATH>
-        </subPane>
-      </pane>
       <pane id="PackagesPane" />
     </panes>
   </component>
@@ -313,8 +299,8 @@
     <property name="FullScreen" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="GoToClass.includeLibraries" value="false" />
-    <property name="options.searchVisible" value="true" />
     <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="Remote" factoryName="Remote">
@@ -420,7 +406,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1394" height="798" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Data Sources" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -442,7 +428,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="JSON Formatter" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24962853" sideWeight="0.6706056" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24888559" sideWeight="0.6706056" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Test Runs" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
@@ -536,18 +522,16 @@
         <state line="5" column="13" selection-start="121" selection-end="121" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/counttokens/Tokenizer.java">
+    <entry file="file://$PROJECT_DIR$/CountTokens.ipr">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="43" selection-start="663" selection-end="663" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state line="55" column="0" selection-start="2008" selection-end="2008" vertical-scroll-proportion="0.024390243">
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/CountTokens.ipr">
+    <entry file="file://$PROJECT_DIR$/src/counttokens/Tokenizer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="55" column="0" selection-start="2008" selection-end="2008" vertical-scroll-proportion="0.9268293">
+        <state line="15" column="43" selection-start="663" selection-end="663" vertical-scroll-proportion="0.023076924">
           <folding />
         </state>
       </provider>
