@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -39,6 +40,72 @@ public abstract class TestOVCTable {
   private static final byte [] COL = new byte [] { (byte)0 };
   private static final MemoryReadPointer RP_MAX =
       new MemoryReadPointer(Long.MAX_VALUE);
+
+  @Test
+  public void testSimpleReadWrite() {
+
+    byte [] row = Bytes.toBytes("testSimpleReadWrite");
+
+    this.table.put(row, COL, 1L, row);
+
+    assertEquals(Bytes.toString(row),
+        Bytes.toString(this.table.get(row, COL, RP_MAX)));
+    assertEquals(Bytes.toString(row),
+        Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(1L))));
+
+  }
+
+  @Test
+  public void testSimpleIncrement() {
+
+    byte [] row = Bytes.toBytes("testSimpleIncrement");
+
+    assertEquals(1L, this.table.increment(row, COL, 1L, RP_MAX, 1L));
+
+    assertEquals(3L, this.table.increment(row, COL, 2L, RP_MAX, 2L));
+
+    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+
+  }
+
+  @Test
+  public void testSimpleCompareAndSwap() {
+
+    byte [] row = Bytes.toBytes("testSimpleCompareAndSwap");
+
+    byte [] valueOne = Bytes.toBytes("valueOne");
+    byte [] valueTwo = Bytes.toBytes("valueTwo");
+
+    this.table.put(row, COL, 1L, valueOne);
+
+    assertTrue(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+
+    assertFalse(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+
+    assertEquals(Bytes.toString(valueTwo),
+        Bytes.toString(this.table.get(row, COL, RP_MAX)));
+    assertEquals(Bytes.toString(valueTwo),
+        Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(2L))));
+
+    assertTrue(
+        this.table.compareAndSwap(row, COL, valueTwo, valueOne, RP_MAX, 2L));
+
+  }
+
+  @Test
+  public void testIncrementsSupportReadAndWritePointers() {
+
+    byte [] row = Bytes.toBytes("testIncrementsSupportReadAndWritePointers");
+
+    assertEquals(1L, this.table.increment(row, COL, 1L, RP_MAX, 1L));
+
+    assertEquals(3L, this.table.increment(row, COL, 2L, RP_MAX, 2L));
+
+    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
+
+  }
 
   @Test
   public void testSameVersionOverwritesExisting() {
@@ -174,7 +241,7 @@ public abstract class TestOVCTable {
     assertEquals(4L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
 
   }
-  
+
   @Test
   public void testGetAllKeys() {
 
@@ -182,12 +249,12 @@ public abstract class TestOVCTable {
     List<byte[]> keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
     assertNotNull(keys);
     assertTrue(keys.isEmpty());
-    
+
     // write 10 rows
     for (int i=0; i<10; i++) {
       this.table.put(Bytes.toBytes("row" + i), COL, 10, Bytes.toBytes(i));
     }
-    
+
     // get all keys and get all 10 back
     keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
     assertEquals(10, keys.size());
@@ -195,7 +262,7 @@ public abstract class TestOVCTable {
       assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
           Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
     }
-    
+
     // try out a smaller limit
     keys = this.table.getKeys(5, 0, RP_MAX);
     assertEquals(5, keys.size());
@@ -203,7 +270,7 @@ public abstract class TestOVCTable {
       assertTrue("On i=" + i + ", got row " + new String(keys.get(i)),
           Bytes.equals(Bytes.toBytes("row" + i), keys.get(i)));
     }
-    
+
     // try out an offset and limit
     keys = this.table.getKeys(5, 2, RP_MAX);
     assertEquals(5, keys.size());
@@ -213,20 +280,20 @@ public abstract class TestOVCTable {
           new String(keys.get(i)),
           Bytes.equals(row.getBytes(), keys.get(i)));
     }
-    
+
     // too big of an offset
     keys = this.table.getKeys(5, 10, RP_MAX);
     assertEquals(0, keys.size());
-    
+
     // delete three of the rows, undelete one of them
     this.table.delete(Bytes.toBytes("row" + 4), COL, 10);
     this.table.deleteAll(Bytes.toBytes("row" + 6), COL, 10);
     this.table.deleteAll(Bytes.toBytes("row" + 8), COL, 10);
     this.table.undeleteAll(Bytes.toBytes("row" + 6), COL, 10);
-    
+
     // get all keys and only get 8 back
     keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
     assertEquals(8, keys.size());
-    
+
   }
 }

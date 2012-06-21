@@ -1,6 +1,7 @@
 package com.continuuity.data.engine.hbase;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -12,6 +13,8 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -209,6 +212,36 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) {
+    List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
+    int returned = 0;
+    int skipped = 0;
+    try {
+      Scan scan = new Scan();
+      scan.setTimeRange(0, getMaxStamp(readPointer));
+      scan.setMaxVersions();
+      ResultScanner scanner = this.table.getScanner(scan);
+      Result result = null;
+      while ((result = scanner.next()) != null) {
+        for (KeyValue kv : result.raw()) {
+          if (!readPointer.isVisible(kv.getTimestamp())) continue;
+          if (skipped < offset) {
+            skipped++;
+          } else if (returned < limit) {
+            returned++;
+            keys.add(kv.getRow());
+          }
+          if (returned == limit) return keys;
+          break;
+        }
+      }
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+    return keys;
+  }
+
+  @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
     try {
@@ -290,12 +323,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 
