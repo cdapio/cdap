@@ -2,13 +2,24 @@ package com.continuuity.api.data;
 
 import java.util.Map;
 
+/**
+ * Atomic increments of 8 byte (long) counters.
+ * 
+ * 
+ */
+public class Increment
+implements WriteOperation, ReadOperation<Map<byte[],Long>> {
 
-public class Increment implements WriteOperation, ReadOperation<Map<byte[],Long>> {
-
+  /** The key/row */
   private final byte [] key;
+  
+  /** The columns to be incremented */
   private final byte [][] columns;
+  
+  /** The amounts to increment the columns by */
   private final long [] amounts;
 
+  /** The values of the counters after being incremented */
   private Map<byte[],Long> incrementedValues;
 
   /**
