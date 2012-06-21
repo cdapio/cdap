@@ -31,3 +31,6 @@ clover.license
 
 # Ignore Node stuff
 npm*
+
+# Ignore log files
+logs/
