@@ -14,7 +14,8 @@ public interface QueuePartitioner {
    * Returns true if the specified entry should be emitted to the specified
    * consumer.
    * @param consumer
-   * @param entry
+   * @param entryId
+   * @param value
    * @return true if entry should be emitted to consumer, false if not
    */
   public boolean shouldEmit(QueueConsumer consumer, long entryId,

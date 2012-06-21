@@ -11,7 +11,6 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @param limit
    * @param offset
    * @param readPointer
-   * @return
    */
   public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer);
 
@@ -22,7 +21,6 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @param startRow
    * @param stopRow
    * @param readPointer
-   * @return
    */
   public Scanner scan(byte[] startRow, byte[] stopRow,
       ReadPointer readPointer);
@@ -35,7 +33,6 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @param startRow
    * @param stopRow
    * @param readPointer
-   * @return
    */
   public Scanner scan(byte[] startRow, byte[] stopRow,
       byte[][] columns, ReadPointer readPointer);
@@ -44,10 +41,7 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
   /**
    * Scans all columns of all rows.  Returns the latest visible version of each
    * column.
-   * @param startRow
-   * @param stopRow
    * @param readPointer
-   * @return
    */
   public Scanner scan(ReadPointer readPointer);
 }

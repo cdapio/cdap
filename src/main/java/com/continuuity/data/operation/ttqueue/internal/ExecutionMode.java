@@ -4,7 +4,7 @@ import com.continuuity.data.operation.ttqueue.QueueConfig;
 import com.google.common.base.Objects;
 
 /**
- * The execution mode of a {@link QueueConsumer}s within a group.
+ * The execution mode of a {@link com.continuuity.data.operation.ttqueue.QueueConsumer}s within a group.
  */
 public enum ExecutionMode {
   SINGLE_ENTRY,

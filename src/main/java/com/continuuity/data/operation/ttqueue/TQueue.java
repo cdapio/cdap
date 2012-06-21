@@ -21,7 +21,6 @@ public interface TQueue {
    * consumer from the specified group, according to the specified config.
    * @param consumer
    * @param config
-   * @return
    */
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config);
 
@@ -30,7 +29,6 @@ public interface TQueue {
    * that is acknowledging is allowed to do so, false if not.
    * @param entryPointer
    * @param consumer
-   * @return
    */
   public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer);
 }
