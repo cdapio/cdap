@@ -135,10 +135,12 @@ tasks.distZip {
     appendix = "singlenode"
     version = ""
     classifier = ""
+//    exclude 'slf4j-log4j12-1.6.1.jar'
 }
 
-distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', stageConfSingleNode 
+run.dependsOn ':web-cloud-app:build'
 installApp.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', stageConfSingleNode 
+distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', stageConfSingleNode 
 
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
@@ -179,4 +181,8 @@ project.parent.subprojects.each { p ->
     } else {
         //println "skipping bin for ${p.name} - no bin dir"
     }
+}
+
+artifacts {
+    archives distZip
 }
