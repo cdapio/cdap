@@ -1,6 +1,7 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
@@ -45,7 +46,7 @@ public class EventClient {
   boolean help = false;          // whether --help was there
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
-  String connector = null;       // the name of the rest accessor
+  String connector = null;       // the name of the rest collector
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file that contains the body in binary form
   String destination = null;     // the destination stream
@@ -61,8 +62,9 @@ public class EventClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
+    Copyright.print(out);
     out.println("Usage: EventClient <option> ... with");
-    out.println("  --base <url>            To specify the port to use");
+    out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      To specify the name of the rest collector");
     out.println("  --stream <name>         To specify the destination event stream");
@@ -196,7 +198,7 @@ public class EventClient {
 
     // get the body as a byte array
     byte[] binaryBody = readBody();
-    if (body == null) {
+    if (binaryBody == null) {
       System.err.println("Cannot send an event without body. Please use --body or --body-file to specify the body.");
       return null;
     }

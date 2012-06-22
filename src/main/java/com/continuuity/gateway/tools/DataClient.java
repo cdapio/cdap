@@ -1,6 +1,7 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.gateway.accessor.RestAccessor;
 import com.continuuity.gateway.util.Util;
 import org.apache.http.HttpResponse;
@@ -73,6 +74,7 @@ public class DataClient {
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = this.getClass().getSimpleName();
+    Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " read --key <string> [ <options> ]");
     out.println("  " + name + " write --key <string> --value value [ <options> ]");
