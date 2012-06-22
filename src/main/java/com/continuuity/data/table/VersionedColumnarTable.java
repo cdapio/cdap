@@ -46,6 +46,14 @@ public interface VersionedColumnarTable {
   public void delete(byte [] row, byte [] column, long version);
 
   /**
+   * Deletes the specified version of the specified row and columns.
+   * @param row
+   * @param columns
+   * @param version
+   */
+  public void delete(byte [] row, byte [][] columns, long version);
+
+  /**
    * Deletes all versions of the specified row and column that have a version
    * less than or equal to the specified version.
    * @param row
@@ -55,6 +63,15 @@ public interface VersionedColumnarTable {
   public void deleteAll(byte [] row, byte [] column, long version);
 
   /**
+   * Deletes all versions of the specified row and columns that have a version
+   * less than or equal to the specified version.
+   * @param row
+   * @param columns
+   * @param version
+   */
+  public void deleteAll(byte [] row, byte [][] columns, long version);
+
+  /**
    * Undeletes (invalidates) a previously executed
    * {@link #deleteAll(byte[], byte[], long)} operation.
    * @param row
@@ -62,6 +79,15 @@ public interface VersionedColumnarTable {
    * @param version
    */
   public void undeleteAll(byte [] row, byte [] column, long version);
+
+  /**
+   * Undeletes (invalidates) a previously executed
+   * {@link #deleteAll(byte[], byte[][], long)} operation.
+   * @param row
+   * @param columns
+   * @param version
+   */
+  public void undeleteAll(byte [] row, byte [][] columns, long version);
 
   /**
    * Reads the latest version of all columns in the specified row, utilizing
@@ -134,6 +160,21 @@ public interface VersionedColumnarTable {
    * @return value of counter after this increment is performed
    */
   public long increment(byte [] row, byte [] column, long amount,
+      ReadPointer readPointer, long writeVersion);
+
+  /**
+   * Increments (atomically) the specified row and columns by the specified
+   * amounts, utilizing the specified read pointer to enforce visibility
+   * constraints when performing the initial reads.  The specified write version
+   * will be used when performing the post-incremented writes.
+   * @param row
+   * @param columns
+   * @param amounts amounts to increment columns by
+   * @param readPointer
+   * @param writeVersion
+   * @return values of counters after the increments are performed
+   */
+  public Map<byte[],Long> increment(byte [] row, byte [][] columns, long [] amounts,
       ReadPointer readPointer, long writeVersion);
 
   /**

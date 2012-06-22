@@ -1,6 +1,10 @@
 package com.continuuity.api.data;
 
-
+/**
+ * Write the value of a key or the values of columns in a row.
+ * 
+ * Supports both key-value and columnar operations.
+ */
 public class Write implements WriteOperation {
 
   /** The key/row being written to */
@@ -24,15 +28,33 @@ public class Write implements WriteOperation {
     this(key, KV_COL_ARR, new byte [][] { value });
   }
 
-  public Write(final byte [] key, final byte [] column,
+  /**
+   * Writes the specified value for the specified column in the specified row.
+   * 
+   * This is a columnar operation.
+   * 
+   * @param row
+   * @param column
+   * @param value
+   */
+  public Write(final byte [] row, final byte [] column,
       final byte [] value) {
-    this(key, new byte [][] { column }, new byte [][] { value } );
+    this(row, new byte [][] { column }, new byte [][] { value } );
   }
 
-  public Write(final byte [] key, final byte [][] columns,
+  /**
+   * Writes the specified values for the specified columns in the specified row.
+   * 
+   * This is a columnar operation.
+   * 
+   * @param row
+   * @param columns
+   * @param values
+   */
+  public Write(final byte [] row, final byte [][] columns,
       final byte [][] values) {
     checkColumnArgs(columns, values);
-    this.key = key;
+    this.key = row;
     this.columns = columns;
     this.values = values;
   }
@@ -82,8 +104,8 @@ public class Write implements WriteOperation {
    * @throws IllegalArgumentException if number of columns does not match number
    *                                  of values
    */
-  public static void checkColumnArgs(final byte [][] columns,
-      final byte [][] values) {
+  public static void checkColumnArgs(final Object [] columns,
+      final Object [] values) {
     if (columns == null || columns.length == 0)
       throw new IllegalArgumentException("Must contain at least one column");
     if (values == null || values.length == 0)

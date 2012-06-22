@@ -72,31 +72,50 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public void delete(byte[] row, byte[] column, long version) {
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    columnMap.put(Version.delete(version), Value.delete());
-    unlockRow(r);
+    performDelete(row, column, version, Version.Type.DELETE);
+  }
+
+  @Override
+  public void delete(byte[] row, byte[][] columns, long version) {
+    performDelete(row, columns, version, Version.Type.DELETE);
   }
 
   @Override
   public void deleteAll(byte[] row, byte[] column, long version) {
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    columnMap.put(Version.deleteAll(version), Value.delete());
-    unlockRow(r);
+    performDelete(row, column, version, Version.Type.DELETE_ALL);
+  }
+
+  @Override
+  public void deleteAll(byte[] row, byte[][] columns, long version) {
+    performDelete(row, columns, version, Version.Type.DELETE_ALL);
   }
 
   @Override
   public void undeleteAll(byte[] row, byte[] column, long version) {
-    Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    columnMap.put(Version.undeleteAll(version), Value.delete());
-    unlockRow(r);
+    performDelete(row, column, version, Version.Type.UNDELETE_ALL);
   }
 
+  @Override
+  public void undeleteAll(byte[] row, byte[][] columns, long version) {
+    performDelete(row, columns, version, Version.Type.UNDELETE_ALL);
+  }
+
+  private void performDelete(byte [] row, byte [] column, long version,
+      Version.Type type) {
+    performDelete(row, new byte [][] { column }, version, type);
+  }
+  
+  private void performDelete(byte [] row, byte [][] columns, long version,
+      Version.Type type) {
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    for (byte [] column : columns) {
+      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+      columnMap.put(new Version(version, type), Value.delete());
+    }
+    unlockRow(r);
+  }
+  
   @Override
   public Map<byte[], byte[]> get(byte[] row, ReadPointer pointer) {
     Row r = new Row(row);
@@ -276,17 +295,32 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
+    return increment(row, new byte [][] { column }, new long [] { amount },
+        readPointer, writeVersion).get(column);
+  }
+
+  @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
+      long[] amounts, ReadPointer readPointer, long writeVersion) {
     Row r = new Row(row);
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-    NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-    long existingAmount = 0L;
-    ImmutablePair<Long, byte[]> latest = filteredLatest(columnMap, readPointer);
-    if (latest != null) existingAmount = Bytes.toLong(latest.getSecond());
-    long newAmount = existingAmount + amount;
-    columnMap.put(new Version(writeVersion),
-        new Value(Bytes.toBytes(newAmount)));
+    Map<byte[],Long> newAmounts =
+        new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    for (int i=0; i<columns.length; i++) {
+      byte [] column = columns[i];
+      long amount = amounts[i];
+      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
+      long existingAmount = 0L;
+      ImmutablePair<Long, byte[]> latest =
+          filteredLatest(columnMap, readPointer);
+      if (latest != null) existingAmount = Bytes.toLong(latest.getSecond());
+      long newAmount = existingAmount + amount;
+      columnMap.put(new Version(writeVersion),
+          new Value(Bytes.toBytes(newAmount)));
+      newAmounts.put(column, newAmount);
+    }
     unlockRow(r);
-    return newAmount;
+    return newAmounts;
   }
 
   @Override

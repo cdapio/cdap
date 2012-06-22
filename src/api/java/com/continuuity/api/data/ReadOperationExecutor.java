@@ -5,7 +5,7 @@ import java.util.Map;
 
 
 /**
- * Defines the execution of all supported {@link ReadOperation} types.
+ * Executes a {@link ReadOperation}.
  */
 public interface ReadOperationExecutor {
 
@@ -18,28 +18,29 @@ public interface ReadOperationExecutor {
   public byte[] execute(ReadKey read) throws SyncReadTimeoutException;
 
   /**
-   * Executes a {@link ReadCounter} operation.
-   * @param readCounter
-   * @return value of counter, 0 if counter not found
-   * @throws SyncReadTimeoutException
-   */
-  public long execute(ReadCounter readCounter) throws SyncReadTimeoutException;
-
-  /**
-   * Executes a {@link ReadColumns} operation.
+   * Executes a {@link Read} operation.
    * @param read
    * @return map of columns to values, empty map if none found
    * @throws SyncReadTimeoutException
    */
-  public Map<byte[], byte[]> execute(ReadColumns read)
+  public Map<byte[], byte[]> execute(Read read)
       throws SyncReadTimeoutException;
-  
+
   /**
-   * Executes a {@link ReadKeys} operation.
+   * Executes a {@link ReadAllKeys} operation.
    * @param readKeys
    * @return list of keys, empty list if none found
    * @throws SyncReadTimeoutException
    */
-  public List<byte[]> execute(ReadKeys readKeys)
+  public List<byte[]> execute(ReadAllKeys readKeys)
+      throws SyncReadTimeoutException;
+
+  /**
+   * Executes a {@link ReadColumnRange} operation.
+   * @param readColumnRange
+   * @return map of columns to values
+   * @throws SyncReadTimeoutException
+   */
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
       throws SyncReadTimeoutException;
 }

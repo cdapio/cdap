@@ -1,8 +1,7 @@
 package com.continuuity.api.data;
 
 /**
- * Operations are the core building blocks of all data access.
- *
+ * A read or write data operation.
  */
 public interface Operation {
 

@@ -70,7 +70,19 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler.handle(e);
     }
   }
-  
+
+  @Override
+  public void delete(byte[] row, byte[][] columns, long version) {
+    try {
+      Delete delete = new Delete(row);
+      for (byte [] column : columns)
+        delete.deleteColumn(this.family, column, version);
+      this.table.delete(delete);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
+  }
+
   @Override
   public void deleteAll(byte[] row, byte[] column, long version) {
     try {
@@ -79,11 +91,28 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.table.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
-    }    
+    }
+  }
+
+  @Override
+  public void deleteAll(byte[] row, byte[][] columns, long version) {
+    try {
+      Delete delete = new Delete(row);
+      for (byte [] column : columns)
+        delete.deleteColumns(this.family, column, version);
+      this.table.delete(delete);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    }
   }
 
   @Override
   public void undeleteAll(byte[] row, byte[] column, long version) {
+    throw new RuntimeException("undelete operation not supported by hbase");
+  }
+
+  @Override
+  public void undeleteAll(byte[] row, byte[][] columns, long version) {
     throw new RuntimeException("undelete operation not supported by hbase");
   }
 
@@ -248,7 +277,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       // TODO: This currently does not support passing a read pointer or a write
       //       pointer!
       Increment increment = new Increment(row);
-      increment.addColumn(family, column, amount);
+      increment.addColumn(this.family, column, amount);
       increment.setTimeRange(0, getMaxStamp(readPointer));
       Result result = this.table.increment(increment);
       if (result.isEmpty()) return 0L;
@@ -260,14 +289,35 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
+      long[] amounts, ReadPointer readPointer, long writeVersion) {
+    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    try {
+      // TODO: This currently does not support passing a read pointer or a write
+      //       pointer!
+      Increment increment = new Increment(row);
+      increment.setTimeRange(0, getMaxStamp(readPointer));
+      for (int i=0; i<columns.length; i++)
+        increment.addColumn(this.family, columns[i], amounts[i]);
+      Result result = this.table.increment(increment);
+      for (KeyValue kv : result.raw())
+        ret.put(kv.getRow(), Bytes.toLong(kv.getValue()));
+      return ret;
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return ret;
+    }
+  }
+
+  @Override
   public boolean compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) {
     try {
       // TODO: This currently does not support passing a read pointer!
       Put put = new Put(row);
-      put.add(family, column, writeVersion, newValue);
-      return this.table.checkAndPut(row, family, column, expectedValue, put);
+      put.add(this.family, column, writeVersion, newValue);
+      return this.table.checkAndPut(row, this.family, column, expectedValue, put);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return false;

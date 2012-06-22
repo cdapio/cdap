@@ -1,7 +1,7 @@
 package com.continuuity.api.data;
 
 /**
- * Read operations 
+ * An {@link Operation} that reads and returns data.
  */
 public interface ReadOperation<T> extends Operation {
 

@@ -3,11 +3,25 @@
  */
 package com.continuuity.data.operation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationGenerator;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.ReadCounter;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -16,17 +30,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import static org.junit.Assert.*;
 
 /**
  * Simple test of operations stuff.
@@ -147,6 +150,11 @@ public class OperationsSimpleExecutorTest {
         this.executor.execute(new ReadKey(valueChainKey))));
   }
 
+  private long bytesToCounter(byte [] bytes) {
+    if (bytes == null || bytes.length != 8) return 0L;
+    return Bytes.toLong(bytes);
+  }
+  
   @Test
   public void testIncrement() throws Exception {
 
@@ -160,7 +168,7 @@ public class OperationsSimpleExecutorTest {
 
     // iterate all keys, only first half should have value of 1, others 0
     for (int i=0; i<keys.length; i++) {
-      long count = this.executor.execute(new ReadCounter(keys[i]));
+      long count = bytesToCounter(this.executor.execute(new ReadKey(keys[i])));
       if (i < keys.length/2) {
         assertEquals(1L, count);
       } else {
@@ -174,7 +182,8 @@ public class OperationsSimpleExecutorTest {
     }
 
     for (int i=0; i<keys.length; i++) {
-      assertEquals(0L, this.executor.execute(new ReadCounter(keys[i])));
+      assertEquals(0L,
+          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
     }
 
     // increment each by their value of i
@@ -184,7 +193,8 @@ public class OperationsSimpleExecutorTest {
 
     // read them back backwards, expecting their amount to = their position
     for (int i=keys.length-1; i>=0; i--) {
-      assertEquals(i, this.executor.execute(new ReadCounter(keys[i])));
+      assertEquals(i,
+          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
     }
 
     // increment each by the total number minus their position
@@ -195,93 +205,98 @@ public class OperationsSimpleExecutorTest {
 
     // read them back, all should have the same value of keys.length
     for (int i=0; i<keys.length; i++) {
-      assertEquals(keys.length, this.executor.execute(new ReadCounter(keys[i])));
+      assertEquals((long)keys.length,
+          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
     }
 
   }
 
-  @Test
+  @Test @Ignore
   public void testIncrementChain() throws Exception {
 
-    byte [] rawCounterKey = Bytes.toBytes("raw");
-    final byte [] stepCounterKey = Bytes.toBytes("step");
-
+    // Currently we do not support increment chaining
+    
+//    byte [] rawCounterKey = Bytes.toBytes("raw");
+//    final byte [] stepCounterKey = Bytes.toBytes("step");
+//
     // make a generator that increments every 10 increments
-    OperationGenerator<Long> generator = new OperationGenerator<Long>() {
-      @Override
-      public WriteOperation generateWriteOperation(Long amount) {
-        if (amount % 10 == 0) return new Increment(stepCounterKey, 10);
-        return null;
-      }
-    };
-
-    // increment 9 times, step counter should not exist
-    for (int i=0; i<9; i++) {
-      Increment increment = new Increment(rawCounterKey, 1);
-      increment.setPostIncrementOperationGenerator(generator);
-      assertTrue(this.executor.execute(increment));
-      assertEquals(new Long(i+1), increment.getResult());
-    }
-
-    // raw should be 9, step should be 0
-    assertEquals(9L, this.executor.execute(new ReadCounter(rawCounterKey)));
-    assertEquals(0L, this.executor.execute(new ReadCounter(stepCounterKey)));
-
-    // one more and raw should be 10, step should be 1
-    Increment increment = new Increment(rawCounterKey, 1);
-    increment.setPostIncrementOperationGenerator(generator);
-    assertTrue(this.executor.execute(increment));
-    assertEquals(10L, this.executor.execute(new ReadCounter(rawCounterKey)));
-    assertEquals(10L, this.executor.execute(new ReadCounter(stepCounterKey)));
-
-    // 15 more increments
-    for (int i=0; i<15; i++) {
-      increment = new Increment(rawCounterKey, 1);
-      increment.setPostIncrementOperationGenerator(generator);
-      assertTrue(this.executor.execute(increment));
-      assertEquals(new Long(i+11), increment.getResult());
-    }
-    // raw should be 25, step should be 20
-    assertEquals(25L, this.executor.execute(new ReadCounter(rawCounterKey)));
-    assertEquals(20L, this.executor.execute(new ReadCounter(stepCounterKey)));
+//    OperationGenerator<Long> generator = new OperationGenerator<Long>() {
+//      @Override
+//      public WriteOperation generateWriteOperation(Long amount) {
+//        if (amount % 10 == 0) return new Increment(stepCounterKey, 10);
+//        return null;
+//      }
+//    };
+//
+//    // increment 9 times, step counter should not exist
+//    for (int i=0; i<9; i++) {
+//      Increment increment = new Increment(rawCounterKey, 1);
+//      increment.setPostIncrementOperationGenerator(generator);
+//      assertTrue(this.executor.execute(increment));
+//      assertEquals(new Long(i+1), increment.getResult());
+//    }
+//
+//    // raw should be 9, step should be 0
+//    assertEquals(9L, this.executor.execute(new ReadCounter(rawCounterKey)));
+//    assertEquals(0L, this.executor.execute(new ReadCounter(stepCounterKey)));
+//
+//    // one more and raw should be 10, step should be 1
+//    Increment increment = new Increment(rawCounterKey, 1);
+//    increment.setPostIncrementOperationGenerator(generator);
+//    assertTrue(this.executor.execute(increment));
+//    assertEquals(10L, this.executor.execute(new ReadCounter(rawCounterKey)));
+//    assertEquals(10L, this.executor.execute(new ReadCounter(stepCounterKey)));
+//
+//    // 15 more increments
+//    for (int i=0; i<15; i++) {
+//      increment = new Increment(rawCounterKey, 1);
+//      increment.setPostIncrementOperationGenerator(generator);
+//      assertTrue(this.executor.execute(increment));
+//      assertEquals(new Long(i+11), increment.getResult());
+//    }
+//    // raw should be 25, step should be 20
+//    assertEquals(25L, this.executor.execute(new ReadCounter(rawCounterKey)));
+//    assertEquals(20L, this.executor.execute(new ReadCounter(stepCounterKey)));
   }
 
-  @Test
+  @Test @Ignore
   public void testReadModifyWrite() throws Exception {
 
-    byte [] key = Bytes.toBytes("keyrmw");
-    byte [] value = Bytes.toBytes(0L);
-
-    // write the first value (0)
-    assertTrue(this.executor.execute(new Write(key, value)));
-
-    // create two modifiers.  an incrementer and decrementer.
-    Modifier<byte[]> incrementer = new Modifier<byte[]>() {
-      @Override
-      public byte [] modify(byte [] bytes) {
-        return Bytes.toBytes(Bytes.toLong(bytes)+1);
-      }
-    };
-    Modifier<byte[]> decrementer = new Modifier<byte[]>() {
-      @Override
-      public byte [] modify(byte [] bytes) {
-        return Bytes.toBytes(Bytes.toLong(bytes)-1);
-      }
-    };
-
-    // increment 10 times
-    for (int i=0; i<10; i++)
-      assertTrue(this.executor.execute(new ReadModifyWrite(key, incrementer)));
-
-    // verify value is 10L
-    assertEquals(10L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
-
-    // decrement 12 times
-    for (int i=0; i<12; i++)
-      assertTrue(this.executor.execute(new ReadModifyWrite(key, decrementer)));
-
-    // verify value is -2L
-    assertEquals(-2L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
+    // Currently we do not support RMW
+//    
+//    byte [] key = Bytes.toBytes("keyrmw");
+//    byte [] value = Bytes.toBytes(0L);
+//
+//    // write the first value (0)
+//    assertTrue(this.executor.execute(new Write(key, value)));
+//
+//    // create two modifiers.  an incrementer and decrementer.
+//    Modifier<byte[]> incrementer = new Modifier<byte[]>() {
+//      @Override
+//      public byte [] modify(byte [] bytes) {
+//        return Bytes.toBytes(Bytes.toLong(bytes)+1);
+//      }
+//    };
+//    Modifier<byte[]> decrementer = new Modifier<byte[]>() {
+//      @Override
+//      public byte [] modify(byte [] bytes) {
+//        return Bytes.toBytes(Bytes.toLong(bytes)-1);
+//      }
+//    };
+//
+//    // increment 10 times
+//    for (int i=0; i<10; i++)
+//      assertTrue(this.executor.execute(new ReadModifyWrite(key, incrementer)));
+//
+//    // verify value is 10L
+//    assertEquals(10L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
+//
+//    // decrement 12 times
+//    for (int i=0; i<12; i++)
+//      assertTrue(this.executor.execute(new ReadModifyWrite(key, decrementer)));
+//
+//    // verify value is -2L
+//    assertEquals(-2L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
 
   }
 
@@ -297,7 +312,6 @@ public class OperationsSimpleExecutorTest {
     }
     return bytes;
   }
-
 
   @Test
   public void testSimpleMemoryReadWrite() throws Exception {

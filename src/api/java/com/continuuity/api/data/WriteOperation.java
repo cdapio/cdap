@@ -5,6 +5,10 @@ package com.continuuity.api.data;
  */
 public interface WriteOperation extends Operation {
 
+  /**
+   * Returns the key that this write operation acts upon.
+   * @return the key this write operation acts upon
+   */
   public byte [] getKey();
 
   /**
@@ -12,7 +16,7 @@ public interface WriteOperation extends Operation {
    * the order that this write operation will execute within a batched
    * transaction.  Lower priorities sort first.  User operations should all be
    * priority=1, enqueue=2, ack=3.
-   * @return
+   * @return the priority of this write operation
    */
   public int getPriority();
 }

@@ -1,13 +1,9 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.api.data.ColumnDelete;
-import com.continuuity.api.data.ColumnWrite;
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.Write;
-import com.continuuity.data.operation.OrderedWrite;
-import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 
@@ -30,20 +26,6 @@ public interface WriteOperationExecutor {
   public boolean execute(Delete delete);
 
   /**
-   * Performs an {@link OrderedWrite} operation.
-   * @param orderedWrite
-   * @return true if success, false if failure
-   */
-  public boolean execute(OrderedWrite orderedWrite);
-
-  /**
-   * Performs a {@link ReadModifyWrite} operation.
-   * @param rmw
-   * @return true if success, false if failure
-   */
-  public boolean execute(ReadModifyWrite rmw);
-
-  /**
    * Performs an {@link Increment} operation.
    * @param inc
    * @return true if success, false if failure
@@ -56,22 +38,6 @@ public interface WriteOperationExecutor {
    * @return true if success, false if failure
    */
   public boolean execute(CompareAndSwap cas);
-
-  // Columnar
-  
-  /**
-   * Performs a {@link ColumnWrite} operation.
-   * @param write
-   * @return true if success, false if failure
-   */
-  public boolean execute(ColumnWrite write);
-
-  /**
-   * Performs a {@link ColumnDelete} operation.
-   * @param delete
-   * @return true if success, false if failure
-   */
-  public boolean execute(ColumnDelete delete);
   
   // TTQueues
 

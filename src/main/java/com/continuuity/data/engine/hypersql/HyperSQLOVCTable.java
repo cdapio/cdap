@@ -19,7 +19,9 @@ import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
 
-
+/**
+ * Implementation of an OVCTable over a HyperSQL table.
+ */
 public class HyperSQLOVCTable
 implements OrderedVersionedColumnarTable {
 
@@ -38,6 +40,8 @@ implements OrderedVersionedColumnarTable {
   private static final String VALUE_TYPE = "VARBINARY(1024)";
 
   private static final byte [] NULL_VAL = new byte [0];
+
+  private static final byte [][] NULL_VAL_ARR = new byte [][] { NULL_VAL };
 
   private enum Type {
     UNDELETE_ALL (0),
@@ -125,13 +129,28 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void delete(byte[] row, byte[][] columns, long version) {
+    performInsert(row, columns, version, Type.DELETE, NULL_VAL_ARR);
+  }
+
+  @Override
   public void deleteAll(byte[] row, byte[] column, long version) {
     performInsert(row, column, version, Type.DELETE_ALL, NULL_VAL);
   }
 
   @Override
+  public void deleteAll(byte[] row, byte[][] columns, long version) {
+    performInsert(row, columns, version, Type.DELETE_ALL, NULL_VAL_ARR);
+  }
+
+  @Override
   public void undeleteAll(byte[] row, byte[] column, long version) {
     performInsert(row, column, version, Type.UNDELETE_ALL, NULL_VAL);
+  }
+
+  @Override
+  public void undeleteAll(byte[] row, byte[][] columns, long version) {
+    performInsert(row, columns, version, Type.UNDELETE_ALL, NULL_VAL_ARR);
   }
 
   // Read-Modify-Write Operations
@@ -177,6 +196,18 @@ implements OrderedVersionedColumnarTable {
         }
       }
     }
+  }
+
+  @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
+      long[] amounts, ReadPointer readPointer, long writeVersion) {
+    // TODO: This is not atomic across columns, it just loops over them
+    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    for (int i=0; i<columns.length; i++) {
+      ret.put(columns[i], increment(row, columns[i], amounts[i],
+          readPointer, writeVersion));
+    }
+    return ret;
   }
 
   @Override
@@ -506,6 +537,34 @@ implements OrderedVersionedColumnarTable {
       ps.setInt(4, type.i);
       ps.setBytes(5, value);
       ps.executeUpdate();
+    } catch (SQLException e) {
+      handleSQLException(e);
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          handleSQLException(e);
+        }
+      }
+    }
+  }
+
+  private void performInsert(byte [] row, byte [][] columns, long version,
+      Type type, byte [][] values) {
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement(
+          "INSERT INTO " + this.tableName +
+          " (row, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
+      for (int i=0; i<columns.length; i++) {
+        ps.setBytes(1, row);
+        ps.setBytes(2, columns[i]);
+        ps.setLong(3, version);
+        ps.setInt(4, type.i);
+        ps.setBytes(5, values[i]);
+        ps.executeUpdate();
+      }
     } catch (SQLException e) {
       handleSQLException(e);
     } finally {

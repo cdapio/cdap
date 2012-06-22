@@ -1,16 +1,19 @@
 package com.continuuity.data.operation.executor.simple;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationGenerator;
+import com.continuuity.api.data.Operation;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.ReadCounter;
-import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -91,19 +94,14 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public boolean execute(Write write) {
-    this.randomTable.put(write.getKey(), COLUMN, write.getValue());
+    this.randomTable.put(write.getKey(), write.getColumns(), write.getValues());
     return true;
   }
 
   @Override
   public boolean execute(Delete delete) {
-    this.randomTable.delete(delete.getKey(), COLUMN);
+    this.randomTable.delete(delete.getKey(), delete.getColumns()[0]);
     return true;
-  }
-
-  @Override
-  public boolean execute(OrderedWrite write) {
-    throw new RuntimeException("Ordered operations not currently supported");
   }
 
   // Conditional Writes
@@ -118,45 +116,21 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public boolean execute(Increment inc) {
-    long amount =
-        this.randomTable.increment(inc.getKey(), COLUMN, inc.getAmount());
-    inc.setResult(amount);
-    OperationGenerator<Long> generator =
-        inc.getPostIncrementOperationGenerator();
-    if (generator != null) {
-      WriteOperation writeOperation = generator.generateWriteOperation(amount);
-      if (writeOperation != null) {
-        return execute(writeOperation);
-      }
-    }
+    Long amount =
+        this.randomTable.increment(inc.getKey(), inc.getColumns()[0],
+            inc.getAmounts()[0]);
+    Map<byte[],Long> map = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    map.put(Operation.KV_COL, amount);
+    inc.setResult(map);
     return true;
   }
 
-  @Override
-  public boolean execute(ReadModifyWrite rmw) {
-    // retryable operation
-    int retries = 0;
-    while (retries++ < MAX_RETRIES) {
-      byte [] existingValue = this.randomTable.get(rmw.getKey(), COLUMN);
-      byte [] newValue = rmw.getModifier().modify(existingValue);
-      if (this.randomTable.compareAndSwap(
-          rmw.getKey(), COLUMN, existingValue, newValue)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   // Simple Reads
 
   @Override
   public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
-    return this.randomTable.get(read.getKey(), COLUMN);
-  }
-
-  @Override
-  public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
-    return this.randomTable.increment(readCounter.getKey(), COLUMN, 0);
+    return this.randomTable.get(read.getKey(), Operation.KV_COL);
   }
 
   @Override
@@ -190,7 +164,20 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public List<byte[]> execute(ReadKeys readKeys)
+  public List<byte[]> execute(ReadAllKeys readKeys)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Map<byte[], byte[]> execute(Read read) throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
       throws SyncReadTimeoutException {
     // TODO Auto-generated method stub
     return null;

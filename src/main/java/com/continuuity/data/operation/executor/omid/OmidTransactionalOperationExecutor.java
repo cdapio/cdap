@@ -7,22 +7,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationGenerator;
+import com.continuuity.api.data.Operation;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.ReadCounter;
-import com.continuuity.api.data.ReadKeys;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.OrderedWrite;
-import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.Undelete;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -46,20 +46,23 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
- *
+ * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
+ * that executes all operations within Omid-style transactions.
+ * 
+ * See https://github.com/yahoo/omid/ for more information on the Omid design.
  */
 @Singleton
 public class OmidTransactionalOperationExecutor
-    implements TransactionalOperationExecutor {
+implements TransactionalOperationExecutor {
 
   /**
-   * This is the Transaction oracle that we will use
+   * The Transaction Oracle used by this executor instance.
    */
   @Inject
   TransactionOracle oracle;
 
   /**
-   * This is the table handler that we will use.
+   * The {@link OVCTable} handle used to get references to tables.
    */
   @Inject
   OVCTableHandle tableHandle;
@@ -71,13 +74,11 @@ public class OmidTransactionalOperationExecutor
 
   private TTQueueTable queueTable;
 
-  static final byte [] COLUMN = Bytes.toBytes("c");
-
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
 
   // Single reads
-  
+
   @Override
   public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
     initialize();
@@ -85,28 +86,36 @@ public class OmidTransactionalOperationExecutor
   }
 
   byte [] read(ReadKey read, ReadPointer pointer) {
-    return this.randomTable.get(read.getKey(), COLUMN, pointer);
+    return this.randomTable.get(read.getKey(), Operation.KV_COL, pointer);
   }
 
   @Override
-  public long execute(ReadCounter readCounter) throws SyncReadTimeoutException {
-    initialize();
-    byte [] value = this.randomTable.get(readCounter.getKey(), COLUMN,
-        this.oracle.getReadPointer());
-    if (value == null || value.length != 8) return 0;
-    return Bytes.toLong(value);
-  }
-
-  @Override
-  public List<byte[]> execute(ReadKeys readKeys)
+  public List<byte[]> execute(ReadAllKeys readKeys)
       throws SyncReadTimeoutException {
     initialize();
     return this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
   }
-  
+
+  @Override
+  public Map<byte[], byte[]> execute(Read read)
+      throws SyncReadTimeoutException {
+    initialize();
+    return this.randomTable.get(read.getKey(), read.getColumns(),
+        this.oracle.getReadPointer());
+  }
+
+  @Override
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
+      throws SyncReadTimeoutException {
+    initialize();
+    return this.randomTable.get(readColumnRange.getKey(),
+        readColumnRange.getStartColumn(), readColumnRange.getStopColumn(),
+        this.oracle.getReadPointer());
+  }
+
   // Write batches
-  
+
   @Override
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws OmidTransactionException {
@@ -166,7 +175,7 @@ public class OmidTransactionalOperationExecutor
     if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
       QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
       new QueueFinalize(ack.getKey(), ack.getEntryPointer(), ack.getConsumer())
-          .execute(this.queueTable, pointer);
+      .execute(this.queueTable, pointer);
     }
 
     // Transaction was successfully committed
@@ -175,7 +184,7 @@ public class OmidTransactionalOperationExecutor
 
   @Override
   public OVCTableHandle getTableHandle() {
-    return tableHandle;
+    return this.tableHandle;
   }
 
   private class WriteTransactionResult {
@@ -214,8 +223,6 @@ public class OmidTransactionalOperationExecutor
       return write((Write)write, pointer);
     } else if (write instanceof Delete) {
       return write((Delete)write, pointer);
-    } else if (write instanceof ReadModifyWrite) {
-      return write((ReadModifyWrite)write, pointer);
     } else if (write instanceof Increment) {
       return write((Increment)write, pointer);
     } else if (write instanceof CompareAndSwap) {
@@ -231,60 +238,41 @@ public class OmidTransactionalOperationExecutor
   WriteTransactionResult write(Write write,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
-    this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(),
-        write.getValue());
-    return new WriteTransactionResult(true, new Delete(write.getKey()));
+    this.randomTable.put(write.getKey(), write.getColumns(),
+        pointer.getSecond(), write.getValues());
+    return new WriteTransactionResult(true,
+        new Delete(write.getKey(), write.getColumns()));
   }
 
-  WriteTransactionResult write(Delete write,
+  WriteTransactionResult write(Delete delete,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
-    this.randomTable.deleteAll(write.getKey(), COLUMN, pointer.getSecond());
-    return new WriteTransactionResult(true, new Undelete(write.getKey()));
-  }
-
-  WriteTransactionResult write(ReadModifyWrite write,
-      ImmutablePair<ReadPointer,Long> pointer) {
-    initialize();
-    // read
-    byte [] value = this.randomTable.get(write.getKey(), COLUMN,
-        pointer.getFirst());
-    // modify
-    byte [] newValue = write.getModifier().modify(value);
-    // write (should we do a CAS here?  seems like conflicts are handled)
-    this.randomTable.put(write.getKey(), COLUMN, pointer.getSecond(), newValue);
-    return new WriteTransactionResult(true, new Delete(write.getKey()));
+    this.randomTable.deleteAll(delete.getKey(), delete.getColumns(),
+        pointer.getSecond());
+    return new WriteTransactionResult(true,
+        new Undelete(delete.getKey(), delete.getColumns()));
   }
 
   WriteTransactionResult write(Increment increment,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
-    long incremented = this.randomTable.increment(increment.getKey(), COLUMN,
-        increment.getAmount(), pointer.getFirst(), pointer.getSecond());
-    List<Delete> deletes = new ArrayList<Delete>(2);
-    deletes.add(new Delete(increment.getKey()));
-    OperationGenerator<Long> generator =
-        increment.getPostIncrementOperationGenerator();
-    if (generator != null) {
-      WriteOperation writeOperation =
-          generator.generateWriteOperation(incremented);
-      if (writeOperation != null) {
-        WriteTransactionResult result = dispatchWrite(writeOperation, pointer);
-        deletes.addAll(result.deletes);
-        return new WriteTransactionResult(result.success, deletes);
-      }
-    }
+    Map<byte[],Long> map = this.randomTable.increment(increment.getKey(),
+        increment.getColumns(), increment.getAmounts(),
+        pointer.getFirst(), pointer.getSecond());
+    increment.setResult(map);
+    List<Delete> deletes = new ArrayList<Delete>(1);
+    deletes.add(new Delete(increment.getKey(), increment.getColumns()));
     return new WriteTransactionResult(true, deletes);
   }
 
   WriteTransactionResult write(CompareAndSwap write,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
-    boolean casReturn = this.randomTable.compareAndSwap(write.getKey(), COLUMN,
-        write.getExpectedValue(), write.getNewValue(), pointer.getFirst(),
-        pointer.getSecond());
+    boolean casReturn = this.randomTable.compareAndSwap(write.getKey(),
+        write.getColumn(), write.getExpectedValue(), write.getNewValue(),
+        pointer.getFirst(), pointer.getSecond());
     return new WriteTransactionResult(casReturn,
-        new Delete(write.getKey()));
+        new Delete(write.getKey(), write.getColumn()));
   }
 
   // TTQueues
@@ -363,10 +351,10 @@ public class OmidTransactionalOperationExecutor
    * @return
    */
   TransactionOracle getOracle() {
-    if (oracle == null) {
+    if (this.oracle == null) {
       throw new IllegalStateException("'oracle' field is null");
     }
-    return oracle;
+    return this.oracle;
   }
 
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
@@ -380,10 +368,11 @@ public class OmidTransactionalOperationExecutor
     for (Delete delete : deletes) {
       assert(delete != null);
       if (delete instanceof Undelete) {
-        this.randomTable.undeleteAll(delete.getKey(), COLUMN,
+        this.randomTable.undeleteAll(delete.getKey(), delete.getColumns(),
             pointer.getSecond());
       } else {
-        this.randomTable.delete(delete.getKey(), COLUMN, pointer.getSecond());
+        this.randomTable.delete(delete.getKey(), delete.getColumns(),
+            pointer.getSecond());
       }
     }
     // Notify oracle
@@ -416,21 +405,6 @@ public class OmidTransactionalOperationExecutor
   public boolean execute(Delete delete) {
     try {
       return executeAsBatch(delete);
-    } catch (OmidTransactionException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-  }
-  @Override
-  public boolean execute(OrderedWrite write) {
-    unsupported("Ordered operations not currently supported");
-    return false;
-  }
-
-  @Override
-  public boolean execute(ReadModifyWrite rmw) {
-    try {
-      return executeAsBatch(rmw);
     } catch (OmidTransactionException e) {
       e.printStackTrace();
       throw new RuntimeException(e);
@@ -484,11 +458,11 @@ public class OmidTransactionalOperationExecutor
    */
   private synchronized void initialize() {
 
-    if (randomTable == null) {
+    if (this.randomTable == null) {
 
-      this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
-      this.orderedTable = tableHandle.getTable(Bytes.toBytes("ordered"));
-      this.queueTable = tableHandle.getQueueTable(Bytes.toBytes("queues"));
+      this.randomTable = this.tableHandle.getTable(Bytes.toBytes("random"));
+      this.orderedTable = this.tableHandle.getTable(Bytes.toBytes("ordered"));
+      this.queueTable = this.tableHandle.getQueueTable(Bytes.toBytes("queues"));
     }
   }
 
