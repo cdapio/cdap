@@ -166,7 +166,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     for (int i = 0; i < columns.length; i++) {
       byte[] column = columns[i];
       NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-      ret.put(column, filteredLatest(columnMap, readPointer).getSecond());
+      ImmutablePair<Long,byte[]> latest =
+          filteredLatest(columnMap, readPointer);
+      ret.put(column, latest == null ? new byte[0] : latest.getSecond());
     }
     unlockRow(r);
     return ret;
