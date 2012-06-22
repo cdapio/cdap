@@ -147,7 +147,7 @@ public final class OptionsParser {
         }
 
         String kv = arg.startsWith("--") ? arg.substring(2) : arg.substring(1);
-        String [] splitKV = kv.split(" ", 2);
+        String [] splitKV = kv.split("=", 2);
         String key = splitKV[0];
         String value = splitKV.length == 2 ? splitKV[1] : "";
         parsedOptions.put(key, value);
