@@ -169,7 +169,13 @@ public class SQLMetricsHandler implements MetricsHandler {
           result.add(status);
         }
 
-        if (state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
+        /** Flow has been deleted then it should not be included. */
+        if(state == StateChangeType.DELETED.getType()) {
+          started.remove(appFlow);
+          stopped.remove(appFlow);
+          runs.remove(appFlow);
+          states.remove(appFlow);
+        } else if (state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
           started.put(appFlow, timestamp);
         } else if (state == StateChangeType.STOPPING.getType()
           || state == StateChangeType.STOPPED.getType() || state == StateChangeType.FAILED.getType()) {
@@ -191,8 +197,13 @@ public class SQLMetricsHandler implements MetricsHandler {
       String flow = state.getFlowId();
       String app = state.getApplicationId();
       String appFlow = String.format("%s.%s", app, flow);
+
       if (started.containsKey(appFlow)) {
         state.setLastStarted(started.get(appFlow));
+      } else {
+        /* Flow might have been deployed. */
+        result.remove(state);
+        continue;
       }
       if (stopped.containsKey(appFlow)) {
         state.setLastStopped(stopped.get(appFlow));

@@ -10,7 +10,8 @@ public enum StateChangeType {
   RUNNING(4),
   STOPPING(5),
   STOPPED(6),
-  FAILED(7);
+  FAILED(7),
+  DELETED(8);
 
   int type;
 
@@ -42,6 +43,8 @@ public enum StateChangeType {
         return STOPPED;
       case 7:
         return FAILED;
+      case 8:
+        return DELETED;
       default:
         return null;
     }
