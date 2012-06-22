@@ -131,7 +131,7 @@ public interface VersionedColumnarTable {
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param readPointer
-   * @return map of columns to values
+   * @return map of columns to values, never null
    */
   public Map<byte [], byte []> get(byte [] row, byte [] startColumn,
       byte [] stopColumn, ReadPointer readPointer);
@@ -142,7 +142,7 @@ public interface VersionedColumnarTable {
    * @param row
    * @param columns
    * @param readPointer
-   * @return map of columns to values
+   * @return map of columns to values, never null
    */
   public Map<byte [], byte []> get(byte [] row, byte [][] columns,
       ReadPointer readPointer);
@@ -172,7 +172,7 @@ public interface VersionedColumnarTable {
    * @param amounts amounts to increment columns by
    * @param readPointer
    * @param writeVersion
-   * @return values of counters after the increments are performed
+   * @return values of counters after the increments are performed, never null
    */
   public Map<byte[],Long> increment(byte [] row, byte [][] columns, long [] amounts,
       ReadPointer readPointer, long writeVersion);

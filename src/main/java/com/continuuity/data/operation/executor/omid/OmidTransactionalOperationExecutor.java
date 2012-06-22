@@ -82,7 +82,9 @@ implements TransactionalOperationExecutor {
   @Override
   public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
     initialize();
-    return read(read, this.oracle.getReadPointer());
+    byte [] result = read(read, this.oracle.getReadPointer());
+    read.setResult(result);
+    return result;
   }
 
   byte [] read(ReadKey read, ReadPointer pointer) {
@@ -93,25 +95,31 @@ implements TransactionalOperationExecutor {
   public List<byte[]> execute(ReadAllKeys readKeys)
       throws SyncReadTimeoutException {
     initialize();
-    return this.randomTable.getKeys(readKeys.getLimit(),
+    List<byte[]> result = this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
+    readKeys.setResult(result);
+    return result;
   }
 
   @Override
   public Map<byte[], byte[]> execute(Read read)
       throws SyncReadTimeoutException {
     initialize();
-    return this.randomTable.get(read.getKey(), read.getColumns(),
-        this.oracle.getReadPointer());
+    Map<byte[],byte[]> result = this.randomTable.get(read.getKey(),
+        read.getColumns(), this.oracle.getReadPointer());
+    read.setResult(result);
+    return result;
   }
 
   @Override
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
       throws SyncReadTimeoutException {
     initialize();
-    return this.randomTable.get(readColumnRange.getKey(),
+    Map<byte[],byte[]> result = this.randomTable.get(readColumnRange.getKey(),
         readColumnRange.getStartColumn(), readColumnRange.getStopColumn(),
         this.oracle.getReadPointer());
+    readColumnRange.setResult(result);
+    return result;
   }
 
   // Write batches
