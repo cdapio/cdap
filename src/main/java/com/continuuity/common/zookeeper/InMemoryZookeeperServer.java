@@ -1,5 +1,6 @@
 package com.continuuity.common.zookeeper;
 
+import com.continuuity.common.utils.DirUtils;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
