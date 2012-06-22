@@ -4,6 +4,8 @@
  */
 package com.continuuity.common.options;
 
+import com.continuuity.common.utils.Copyright;
+
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -167,8 +169,9 @@ public final class OptionsParser {
     final String NON_DEFAULT_FORMAT_STRING = " --%-20s %-20s %-20s\n";
     final String DEFAULT_FORMAT_STRING = " --%-20s %-20s %-50s\t(Default=%s)\n";
 
+    Copyright.print(out);
     out.print(String.format("%s - v%s\n", appName, appVersion));
-    out.print(String.format("%s\n", "Copyright (c) to Continuuity Inc. All rights reserved.\n\nOptions:"));
+    out.println("Options:");
 
     if(!options.containsKey("help")) {
       out.printf(NON_DEFAULT_FORMAT_STRING, "help", "", "\tDisplay this help message");
