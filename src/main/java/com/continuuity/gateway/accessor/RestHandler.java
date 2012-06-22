@@ -1,11 +1,10 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadKeys;
-import com.continuuity.api.data.Write;
-import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.gateway.util.Util;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -17,10 +16,12 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.Write;
+import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.gateway.util.Util;
 
 /**
  * This is the http request handler for the rest accessor. At this time it only accepts
@@ -180,7 +181,8 @@ public class RestHandler extends NettyRestHandler {
         byte[] value;
         try {
           Read read = new Read(keyBinary);
-          value = this.accessor.getExecutor().execute(read);
+          this.accessor.getExecutor().execute(read);
+          value = read.getKeyResult();
         } catch (Exception e) {
          LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -227,7 +229,7 @@ public class RestHandler extends NettyRestHandler {
         }
         List<byte[]> keys = null;
         try {
-          ReadKeys read = new ReadKeys(start, limit);
+          ReadAllKeys read = new ReadAllKeys(start, limit);
           keys = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
           LOG.error("Error listing keys: " + e.getMessage() + ".", e);
@@ -253,7 +255,8 @@ public class RestHandler extends NettyRestHandler {
       case DELETE : {
         // first perform a Read to determine whether the key exists
         Read read = new Read(keyBinary);
-        byte[] value = this.accessor.getExecutor().execute(read);
+        this.accessor.getExecutor().execute(read);
+        byte[] value = read.getKeyResult();
         if (value == null) {
           // key does not exist -> Not Found
           respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
