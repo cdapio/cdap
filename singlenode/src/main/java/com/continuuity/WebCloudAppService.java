@@ -72,7 +72,7 @@ public class WebCloudAppService implements Server {
       }.start();
 
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new ServerException(e.getMessage());
     }
   }
 

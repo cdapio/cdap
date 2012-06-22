@@ -3,6 +3,7 @@
  */
 package com.continuuity;
 
+import ch.qos.logback.classic.Level;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
@@ -15,12 +16,13 @@ import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.metrics.service.MetricsServer;
 import com.continuuity.runtime.MetricsModules;
+import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.slf4j.Logger;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
-
+import ch.qos.logback.classic.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -36,7 +38,7 @@ public class SingleNodeMain {
    * This is our Logger instance
    */
   private static final Logger logger =
-      LoggerFactory.getLogger(SingleNodeMain.class);
+      (Logger)LoggerFactory.getLogger(SingleNodeMain.class);
 
   /**
    * This is the Zookeeper service.
@@ -88,99 +90,27 @@ public class SingleNodeMain {
    * TODO: Create a "service" interface that all our top level services can
    * implement. We can then clean up the code below and generify it.
    */
-  private void bootStrapServices() {
+  private void bootStrapServices() throws Exception {
+    Preconditions.checkNotNull(theOverlord);
+    Preconditions.checkNotNull(theGateway);
+    Preconditions.checkNotNull(theFARServer);
+    Preconditions.checkNotNull(theFlowManager);
 
-    System.out.println("====================================================" +
-      "========================");
-    System.out.println(" Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All " +
-      "Rights Reserved.");
-    System.out.println("");
-
-
-    try {
-
-      System.out.println(" Starting Zookeeper Service");
-      startZookeeper();
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    if (theOverlord != null) {
-      try {
-
-        System.out.println(" Starting Metrics Service");
-        theOverlord.start(null, myConfiguration);
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, Metrics service is null");
-    }
-
-    if (theGateway != null) {
-      try {
-
-        System.out.println(" Starting Gateway Service");
-        theGateway.start(null, myConfiguration);
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, Gateway service is null");
-    }
-
-    if (theFARServer != null) {
-      try {
-
-        System.out.println(" Starting FlowArchive Service");
-        theFARServer.start(null, myConfiguration);
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, FlowArchive service is null");
-    }
-
-    if (theFlowManager != null) {
-      try {
-
-        System.out.println(" Starting FlowManager Service");
-        theFlowManager.start(null, myConfiguration);
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      throw new IllegalStateException(
-        "Unable to start, FlowManager service is null");
-    }
-
-
-
-    try {
-
-      System.out.println(" Starting Monitoring Webapp");
-      theWebApp = new WebCloudAppService();
-      theWebApp.start(null, myConfiguration);
-
-      String hostname = InetAddress.getLocalHost().getHostName();
-      System.out.println("   You can connect to it here: http://" + hostname +
-        ":9999");
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    System.out.println(" Bigflow started successfully");
-
-
+    System.out.println(" Starting Zookeeper Service");
+    startZookeeper();
+    System.out.println(" Starting Metrics Service");
+    theOverlord.start(null, myConfiguration);
+    System.out.println(" Starting Gateway Service");
+    theGateway.start(null, myConfiguration);
+    System.out.println(" Starting FlowArchive Service");
+    theFARServer.start(null, myConfiguration);
+    System.out.println(" Starting FlowManager Service");
+    theFlowManager.start(null, myConfiguration);
+    System.out.println(" Starting Monitoring Webapp");
+    theWebApp = new WebCloudAppService();
+    theWebApp.start(null, myConfiguration);
+    String hostname = InetAddress.getLocalHost().getHostName();
+    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
   } // end of bootStrapServices
 
   /**
@@ -226,7 +156,6 @@ public class SingleNodeMain {
     myConfiguration.addResource("continuuity-flow.xml");
     myConfiguration.addResource("continuuity-gateway.xml");
     myConfiguration.addResource("continuuity-webapp.xml");
-
   } // end of loadConfiguration
 
 
@@ -236,7 +165,6 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-
     // We don't support command line options currently
 
     // Retrieve all of the modules from each of the components
@@ -262,7 +190,16 @@ public class SingleNodeMain {
     continuuity.loadConfiguration();
 
     // Now bootstrap all of the services
-    continuuity.bootStrapServices();
+    try {
+      System.out.println(StringUtils.repeat("=", 80));
+      System.out.print("Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All Rights Reserved.\n");
+      System.out.println(StringUtils.repeat("=", 80));
+      continuuity.bootStrapServices();
+      System.out.println(StringUtils.repeat("=", 80));
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
 
   }
 
