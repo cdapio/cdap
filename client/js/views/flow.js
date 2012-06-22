@@ -29,6 +29,27 @@ define([
 		showError: function (message) {
 			$('#flow-alert').removeClass('alert-success')
 				.addClass('alert-error').html('Error: ' + message).show();
+		},
+		delete: function () {
+			var id = 0;
+			$('#modal-from-dom').data('id', id).modal('show');
+		},
+		confirmed: function (event) {
+
+			var control = $(event.srcElement);
+			var id = control.attr('flow-id');
+			var app = control.attr('flow-app');
+
+			App.socket.request('manager', {
+				method: 'remove',
+				params: ['demo', app, id]
+			}, function (response) {
+				$('#modal-from-dom').modal('hide');
+				App.router.set('location', '#/');
+			});
+		},
+		canceled: function () {
+			$('#modal-from-dom').modal('hide');
 		}
 	});
 

@@ -33,6 +33,12 @@ a.brand {
 	background-color: #061c35;
 	border-right: 1px solid #152c52;
 }
+#modal-from-dom {
+	display: none;
+}
+.modal-footer .btn {
+	margin :0;
+}
 .table {
 	margin: 0;
 }

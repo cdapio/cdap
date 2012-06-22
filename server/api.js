@@ -83,6 +83,15 @@ try {
 						});
 						Manager.status(null, identifier, done);
 					break;
+					case 'remove':
+						var identifier = new flowservices_types.FlowIdentifier({
+							accountId: params[0],
+							app: params[1],
+							flow: params[2],
+							version: -1
+						});
+						Manager.remove(null, identifier, done);
+						break;
 					default:
 						Manager[method].apply(Manager, params.concat(done));
 				}
@@ -96,7 +105,7 @@ try {
 
 	this.gateway = function (method, params, done) {
 
-		var post_data = params.payload;
+		var post_data = params.payload || "";
 		var post_options = {
 		host: this.config.gateway.host,
 		port: this.config.gateway.port,

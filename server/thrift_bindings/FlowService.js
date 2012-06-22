@@ -416,6 +416,128 @@ FlowService_stop_result.prototype.write = function(output) {
   return;
 };
 
+var FlowService_remove_args = function(args) {
+  this.token = null;
+  this.identifier = null;
+  if (args) {
+    if (args.token !== undefined) {
+      this.token = args.token;
+    }
+    if (args.identifier !== undefined) {
+      this.identifier = args.identifier;
+    }
+  }
+};
+FlowService_remove_args.prototype = {};
+FlowService_remove_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.token = new ttypes.DelegationToken();
+        this.token.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.identifier = new ttypes.FlowIdentifier();
+        this.identifier.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_remove_args.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_remove_args');
+  if (this.token) {
+    output.writeFieldBegin('token', Thrift.Type.STRUCT, 1);
+    this.token.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.identifier) {
+    output.writeFieldBegin('identifier', Thrift.Type.STRUCT, 2);
+    this.identifier.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowService_remove_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+FlowService_remove_result.prototype = {};
+FlowService_remove_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.FlowServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_remove_result.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_remove_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FlowServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -537,6 +659,41 @@ FlowServiceClient.prototype.recv_stop = function(input,mtype,rseqid) {
   }
   return callback('stop failed: unknown result');
 };
+FlowServiceClient.prototype.remove = function(token, identifier, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_remove(token, identifier);
+};
+
+FlowServiceClient.prototype.send_remove = function(token, identifier) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('remove', Thrift.MessageType.CALL, this.seqid);
+  var args = new FlowService_remove_args();
+  args.token = token;
+  args.identifier = identifier;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FlowServiceClient.prototype.recv_remove = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FlowService_remove_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
 var FlowServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -591,6 +748,20 @@ FlowServiceProcessor.prototype.process_stop = function(seqid, input, output) {
   this._handler.stop(args.token, args.identifier, function (success) {
     result.success = success;
     output.writeMessageBegin("stop", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FlowServiceProcessor.prototype.process_remove = function(seqid, input, output) {
+  var args = new FlowService_remove_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FlowService_remove_result();
+  this._handler.remove(args.token, args.identifier, function (success) {
+    result.success = success;
+    output.writeMessageBegin("remove", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

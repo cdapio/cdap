@@ -4,6 +4,10 @@
 
 define([], function () {
 
+	$('body').click(function () {
+		App.Views.Flowlet.hide();
+	});
+
 	return Em.ArrayProxy.create({
 		content: [],
 

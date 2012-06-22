@@ -176,4 +176,9 @@ service FlowService {
    * Stops a Flow
    */
   RunIdentifier stop(1: DelegationToken token,  2: FlowIdentifier identifier) throws(1: FlowServiceException e),
+
+  /**
+   * Disables a Flow
+   */
+  void remove(1: DelegationToken token, 2: FlowIdentifier identifier) throws(1: FlowServiceException e),
 }
