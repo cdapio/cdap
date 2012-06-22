@@ -26,7 +26,7 @@ public class Read implements ReadOperation<Map<byte[], byte[]>> {
    * @param key the key to read
    */
   public Read(final byte [] key) {
-    this(key, new byte [][] { });
+    this(key, KV_COL_ARR);
   }
 
   /**
