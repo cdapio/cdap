@@ -31,13 +31,13 @@
 
     <property>
         <name>resource.manager.remote.dir</name>
-        <value>build/continuuity/flow/manager/remote</value>
+        <value>data/flow/manager/remote</value>
         <description>Specifies the base directory for storing resources</description>
     </property>
 
     <property>
         <name>resource.manager.local.dir</name>
-        <value>build/continuuity/flow/manager/local</value>
+        <value>data/flow/manager/local</value>
         <description>Specifies the base directory for storing resources</description>
     </property>
 
@@ -57,6 +57,11 @@
         <name>zookeeper.quorum</name>
         <value>localhost:2181</value>
         <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>data.dir</name>
+        <value>/tmp/continuuity</value>
     </property>
 
 

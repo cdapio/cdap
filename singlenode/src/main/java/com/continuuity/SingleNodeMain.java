@@ -3,9 +3,10 @@
  */
 package com.continuuity;
 
-import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FARServer;
@@ -22,7 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -96,6 +97,8 @@ public class SingleNodeMain {
     Preconditions.checkNotNull(theFARServer);
     Preconditions.checkNotNull(theFlowManager);
 
+    Copyright.print();
+
     System.out.println(" Starting Zookeeper Service");
     startZookeeper();
     System.out.println(" Starting Metrics Service");
@@ -107,10 +110,10 @@ public class SingleNodeMain {
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
     System.out.println(" Starting Monitoring Webapp");
-    theWebApp = new WebCloudAppService();
-    theWebApp.start(null, myConfiguration);
-    String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
+//    theWebApp = new WebCloudAppService();
+//    theWebApp.start(null, myConfiguration);
+//    String hostname = InetAddress.getLocalHost().getHostName();
+//    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
   } // end of bootStrapServices
 
   /**
@@ -156,6 +159,7 @@ public class SingleNodeMain {
     myConfiguration.addResource("continuuity-flow.xml");
     myConfiguration.addResource("continuuity-gateway.xml");
     myConfiguration.addResource("continuuity-webapp.xml");
+    myConfiguration.addResource("continuuity-overlord.xml");
   } // end of loadConfiguration
 
 

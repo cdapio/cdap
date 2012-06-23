@@ -153,7 +153,7 @@ distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:a
 
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
-    into "docs"
+    into "docs/api"
 }
 
 // include :web-cloud-app/build/client directly
