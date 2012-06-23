@@ -97,8 +97,6 @@ public class SingleNodeMain {
     Preconditions.checkNotNull(theFARServer);
     Preconditions.checkNotNull(theFlowManager);
 
-    Copyright.print();
-
     System.out.println(" Starting Zookeeper Service");
     startZookeeper();
     System.out.println(" Starting Metrics Service");
@@ -195,9 +193,7 @@ public class SingleNodeMain {
 
     // Now bootstrap all of the services
     try {
-      System.out.println(StringUtils.repeat("=", 80));
-      System.out.print("Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All Rights Reserved.\n");
-      System.out.println(StringUtils.repeat("=", 80));
+      Copyright.print();
       continuuity.bootStrapServices();
       System.out.println(StringUtils.repeat("=", 80));
     } catch (Exception e) {
