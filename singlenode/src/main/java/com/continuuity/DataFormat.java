@@ -81,8 +81,8 @@ public class DataFormat {
         // check if directory exists and process the delete
         File datadir = new File(datadirpath);
         if(!datadir.exists()) {
-            System.out.println("Error: No existing data found.");
-            System.exit(-1);
+            System.out.println("No existing data found. Format operation unnecessary.");
+            System.exit(0);
         } else {
             try {
                 //System.out.println("deleting contents of " + datadir.toString());
