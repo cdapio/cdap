@@ -40,7 +40,7 @@ public class DataFabricLocalModule extends AbstractModule {
     conf.addResource("continuuity-data-fabric.xml");
     this.hyperSqlJDCBString = conf.get("data.local.jdbc",    
           System.getProperty("java.io.tmpdir")) +
-          System.getProperty("path.separator") + "fabricdb";
+          System.getProperty("file.separator") + "fabricdb";
     this.hyperSqlProperties = DEFAULT_PROPERTIES;
   }
   
