@@ -100,10 +100,11 @@ public final class OptionsParser {
    * Prints usage based on info specified by annotation in the instance
    * of class specified <code>object</code>.
    * @param object instance of class containing annotations for Options.
+
    * @param out stream to output usage.
    */
-  public static void printUsage(Object object, PrintStream out) {
-    printUsage(extractDeclarations(object), out);
+  public static void printUsage(Object object, String appName, String appVersion, PrintStream out) {
+    printUsage(extractDeclarations(object), appName, appVersion, out);
   }
 
   /**
