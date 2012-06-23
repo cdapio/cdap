@@ -34,6 +34,7 @@ public class MetricsSingleNodeServer implements MetricsServer {
   private final MetricsHandler handler;
   private final StateChangeCallback callback;
   private StateChangeListener listener;
+  private static final String DEFAULT_JDBC_URI="jdbc:hsqldb:mem:fmdb";
 
   @Inject
   public MetricsSingleNodeServer(MetricsHandler handler, StateChangeCallback callback) {
@@ -49,6 +50,15 @@ public class MetricsSingleNodeServer implements MetricsServer {
    */
   @Override
   public void start(String[] args, CConfiguration conf) throws ServerException {
+    String uri = conf.get("overlord.jdbc.uri", DEFAULT_JDBC_URI);
+
+    try {
+      handler.init(uri);
+      callback.init(uri);
+    } catch (Exception e) {
+      throw new ServerException(e.getMessage());
+    }
+
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     try {
       executorService = Executors.newCachedThreadPool();
@@ -82,10 +92,13 @@ public class MetricsSingleNodeServer implements MetricsServer {
       }).start();
     } catch (IOException e) {
       Log.error("Failed to create FARService server. Reason : {}", e.getMessage());
+      throw new ServerException("Failed to create FARService server", e);
     } catch (TTransportException e) {
       Log.error("Non-blocking server error. Reason : {}", e.getMessage());
+      throw new ServerException("Non-blocking server error.", e);
     } catch (StateChangeListenerException e) {
       Log.error("Error listening to state change queue.");
+      throw new ServerException("Error listening to state change queue.", e);
     }
   }
 

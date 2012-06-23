@@ -19,15 +19,12 @@ import java.util.Map;
  */
 public class SQLMetricsHandler implements MetricsHandler {
   private static final Logger Log = LoggerFactory.getLogger(SQLMetricsHandler.class);
-  private final String url;
-  private final Connection connection;
+  private String url;
+  private Connection connection;
   private volatile boolean running;
 
   @Inject
-  public SQLMetricsHandler(@Named("Flow Monitor JDBC URL") final String url) throws SQLException {
-    this.url = url;
-    connection = DriverManager.getConnection(url, "sa", "");
-    initialization();
+  public SQLMetricsHandler() throws SQLException {
     running = false;
   }
 
@@ -35,7 +32,11 @@ public class SQLMetricsHandler implements MetricsHandler {
     return connection;
   }
 
-  public void initialization() {
+  @Override
+  public void init(final String url) throws SQLException {
+    this.url = url;
+    this.connection = DriverManager.getConnection(url, "sa", "");
+    running = true;
     try {
       connection.prepareStatement(
         "CREATE TABLE flow_metrics (id BIGINT IDENTITY, timestamp INTEGER, accountid VARCHAR, " +
@@ -142,14 +143,18 @@ public class SQLMetricsHandler implements MetricsHandler {
     Map<String, Integer> runs = Maps.newHashMap();
     Map<String, Integer> deployed = Maps.newHashMap();
     Map<String, Integer> states = Maps.newHashMap();
+    Map<String, Integer> deleted = Maps.newHashMap();
 
     List<FlowState> result = Lists.newArrayList();
+
     String sql = "SELECT id, timestamp, application, flow, state " +
       "FROM flow_state WHERE account = ? ORDER by id";
+
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setString(1, accountId);
       ResultSet rs = stmt.executeQuery();
+
       while (rs.next()) {
         String app = rs.getString("application");
         String flow = rs.getString("flow");
@@ -171,10 +176,7 @@ public class SQLMetricsHandler implements MetricsHandler {
 
         /** Flow has been deleted then it should not be included. */
         if(state == StateChangeType.DELETED.getType()) {
-          started.remove(appFlow);
-          stopped.remove(appFlow);
-          runs.remove(appFlow);
-          states.remove(appFlow);
+          deleted.put(appFlow, 1);
         } else if (state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
           started.put(appFlow, timestamp);
         } else if (state == StateChangeType.STOPPING.getType()
@@ -198,13 +200,14 @@ public class SQLMetricsHandler implements MetricsHandler {
       String app = state.getApplicationId();
       String appFlow = String.format("%s.%s", app, flow);
 
+      if(deleted.containsKey(appFlow)) {
+        result.remove(state);
+      }
+
       if (started.containsKey(appFlow)) {
         state.setLastStarted(started.get(appFlow));
-      } else {
-        /* Flow might have been deployed. */
-        result.remove(state);
-        continue;
       }
+
       if (stopped.containsKey(appFlow)) {
         state.setLastStopped(stopped.get(appFlow));
       }

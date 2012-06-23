@@ -3,6 +3,7 @@ package com.continuuity.metrics.service;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
@@ -91,6 +92,16 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
    */
   @Override
   protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer> configure(String[] args, Configuration conf) {
+    String uri = conf.get("overlord.jdbc.uri", null);
+
+    try {
+      handler.init(uri);
+      callback.init(uri);
+    } catch (Exception e) {
+      Log.error("Failed to initialize metrics handler. Reason : {}", e.getMessage());
+      return null;
+    }
+
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     try {
       executorService = Executors.newCachedThreadPool();

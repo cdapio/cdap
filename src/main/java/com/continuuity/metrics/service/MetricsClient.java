@@ -6,6 +6,7 @@ import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.*;
+import com.google.common.base.Preconditions;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
@@ -79,7 +80,6 @@ public class MetricsClient implements Closeable {
   }
 
   private FlowMonitor.Client connect(boolean autoDiscovery) {
-
     if(autoDiscovery) {
       endpoint = getServiceEndpoint();
     }
@@ -93,6 +93,7 @@ public class MetricsClient implements Closeable {
     try {
       transport.open();
     } catch (TTransportException e) {
+      Log.error("Unable to connect to server. Reason : {}", e.getMessage());
       return null;
     }
     TProtocol protocol = new TBinaryProtocol(transport);
@@ -100,6 +101,8 @@ public class MetricsClient implements Closeable {
   }
 
   public void add(FlowMetric metric) {
+    Preconditions.checkNotNull(client);
+
     int i = 0;
 
     while (i < MAX_RETRY) {
@@ -122,18 +125,22 @@ public class MetricsClient implements Closeable {
 
 
   public List<FlowState> getFlows(String accountId) throws TException {
+    Preconditions.checkNotNull(client);
     return client.getFlows(accountId);
   }
 
   public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId) throws TException {
+    Preconditions.checkNotNull(client);
     return client.getFlowHistory(accountId, appId, flowId);
   }
 
   public String getFlowDefinition(String accountId, String appId, String flowId, String versionId) throws TException {
+    Preconditions.checkNotNull(client);
     return client.getFlowDefinition(accountId, appId, flowId, versionId);
   }
 
   public List<Metric> getFlowMetrics(String accountId, String appId, String flowId, String rid) throws TException {
+    Preconditions.checkNotNull(client);
     return client.getFlowMetrics(accountId, appId, flowId, rid);
   }
 

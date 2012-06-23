@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 /**
  *
@@ -53,6 +56,7 @@ public class StateChangeTest {
 
     listener.listen("/continuuity/system/queue", new StateChangeCallback<StateChangeData>() {
       private int i = 0;
+      private Connection connection;
 
       @Override
       public void process(StateChangeData data) {
@@ -61,6 +65,18 @@ public class StateChangeTest {
         Assert.assertTrue(data.getType() == StateChangeType.DEPLOYED);
         ++i;
         Log.info(data.toString());
+      }
+
+      @Override
+      public void init(String uri) throws Exception {
+        connection = DriverManager.getConnection(uri, "sa", "");
+        try {
+          connection.prepareStatement(
+            "CREATE TABLE flow_state ( id BIGINT IDENTITY, timestamp INTEGER, account VARCHAR, application VARCHAR, runid VARCHAR, flow VARCHAR, " +
+              " payload VARCHAR, state INTEGER)"
+          ).execute();
+        } catch (SQLException e) {
+        }
       }
 
       @Override

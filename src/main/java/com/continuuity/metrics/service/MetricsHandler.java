@@ -8,6 +8,16 @@ import java.util.List;
  *
  */
 public interface MetricsHandler {
+
+
+  /**
+   * Initializes metrics handler.
+   *
+   * @param uri Specifies URI to storage.
+   * @throws Exception
+   */
+  public void init(final String uri) throws Exception;
+
   /**
    * Adds a metric for a flow.
    *
@@ -28,7 +38,7 @@ public interface MetricsHandler {
    *
    * @param accountId for which the flows belong to.
    * @param appId  to which the flows belong to.
-   * @param flowId is the id of the flow runs to be returned.
+   * @param flowId to which the flows belong to.
    * @return
    */
   public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId);
@@ -36,13 +46,22 @@ public interface MetricsHandler {
   /**
    * Returns the flow definition.
    *
-   * @param accountId
-   * @param appId
-   * @param flowId
-   * @param versionId
+   * @param accountId  for which the flows belong to.
+   * @param appId  to which the flows belong to.
+   * @param flowId  to which the flows belong to.
+   * @param versionId of the flow for which the definition needs to be retrieved.
    * @return
    */
   String getFlowDefinition(String accountId, String appId, String flowId, String versionId);
 
-  List<Metric> getFlowMetric(String accountId, String app, String flow, String rid);
+  /**
+   * Returns metrics for a given a run id.
+   *
+   * @param accountId  for which the flows belong to.
+   * @param appId  to which the flows belong to.
+   * @param flowId  to which the flows belong to.
+   * @param rid run id of the flow.
+   * @return
+   */
+  List<Metric> getFlowMetric(String accountId, String appId, String flowId, String rid);
 }

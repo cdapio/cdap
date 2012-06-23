@@ -20,19 +20,20 @@ import java.sql.SQLException;
  */
 public class SQLStateChangeSyncer implements StateChangeCallback<StateChangeData> {
   private static final Logger Log = LoggerFactory.getLogger(SQLStateChangeSyncer.class);
-  private final Connection connection;
+  private Connection connection;
 
   @Inject
-  public SQLStateChangeSyncer(@Named("Flow Monitor JDBC URL") final String url) throws SQLException {
-    connection = DriverManager.getConnection(url, "sa", "");
-    initialization();
+  public SQLStateChangeSyncer() {
+
   }
 
   public Connection getConnection() {
     return connection;
   }
 
-  public void initialization() {
+  @Override
+  public void init(final String uri) throws Exception {
+    connection = DriverManager.getConnection(uri, "sa", "");
     try {
       connection.prepareStatement(
         "CREATE TABLE flow_state ( id BIGINT IDENTITY, timestamp INTEGER, account VARCHAR, application VARCHAR, runid VARCHAR, flow VARCHAR, " +
