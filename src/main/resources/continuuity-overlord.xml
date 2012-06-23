@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <property>
+        <name>overlord.jdbc.uri</name>
+        <value>jdbc:hsqldb:file:data/metricsdb</value>
+        <description>Specifies URI for metrics DB</description>
+    </property>
+
+</configuration>
