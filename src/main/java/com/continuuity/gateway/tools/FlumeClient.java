@@ -1,7 +1,8 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.options.Option;
+import com.continuuity.common.options.OptionsParser;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
@@ -38,14 +39,32 @@ public class FlumeClient {
    */
   public static boolean debug = false;
 
+  @Option(name = "verbose", usage = "for more verbose output")
   boolean verbose = false;       // for debug output
+
+  @Option(name = "help", usage = "to print this message")
   boolean help = false;          // whether --help was there
+
+  @Option(name = "port", type = "number", usage = "to specify the port to use")
   int port = -1;                 // the Flume port of the gateway
+
+  @Option(name = "host", type = "host-name", usage = "to specify the hostname to send to")
   String hostname = null;        // the hostname of the gateway
+
+  @Option(name = "connector", type = "connector name", usage = "to specify the name of the flume collector")
   String connector = null;       // the name of the flume collector
+
+  @Option(name = "body", type = "body text", usage = "to specify the body of the event as a string")
   String body = null;            // the body of the event as a String
+
+  @Option(name = "body-file", type = "binary file name", usage = "to specify the namer of a file containing the binary body")
   String bodyFile = null;        // the file that contains the body in binary form
+
+  @Option(name = "stream", type = "flow[/stream]", usage = "to specify the destination stream of the event")
   String destination = null;     // the destination stream
+
+  @Option(name = "header", type = "name:value", usage = "to specify a header, multiple headers are allowed")
+  String[] headerArgs = null;
   Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
 
   /**
@@ -57,17 +76,20 @@ public class FlumeClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
+    OptionsParser.printUsage(this, this.getClass().getSimpleName(), "0.1.0", out);
+    /*
     Copyright.print(out);
     out.println("Usage: FlumeClient <option> ... with");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      To specify the name of the rest collector");
+    out.println("  --connector <name>      To specify the name of the flume` collector");
     out.println("  --stream <name>         To specify the destination event stream");
     out.println("  --header <name> <value> To specify a header for the event to send. Can be used multiple times");
     out.println("  --body <value>          To specify the body of the event as a string");
     out.println("  --body-file <path>      To specify a file containing the binary body of the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
+    */
     if (error) {
       throw new IllegalArgumentException();
     }
@@ -257,7 +279,7 @@ public class FlumeClient {
     CConfiguration config = CConfiguration.create();
     config.addResource("continuuity-gateway.xml");
     // create an event client and run it with the given arguments
-    EventClient instance = new EventClient();
+    FlumeClient instance = new FlumeClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
     if (value == null) System.exit(1);
