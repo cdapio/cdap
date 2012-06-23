@@ -137,6 +137,7 @@ tasks.startScripts {
     }
 }
 
+
 /**
  * Configure distZip task
  */
@@ -155,6 +156,30 @@ distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:a
 applicationDistribution.from("$buildDir/javadoc") {
     into "docs/api"
 }
+
+// include examples from example project
+task createExamples (type: Copy) {
+    def examplesdir = file ("$buildDir/docs/examples")
+    //outputs.dir examplesdir
+    from project(':examples').projectDir
+    into examplesdir 
+    exclude "README.md"
+}
+applicationDistribution.from(createExamples) {
+    into "docs/examples"
+}
+
+task createApiJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    version ""
+    classifier ""
+    from project(':flow').sourceSets.api.output
+    from project(':data-fabric').sourceSets.api.output
+}
+applicationDistribution.from(createApiJar) {
+}
+
 
 // include :web-cloud-app/build/client directly
 applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
@@ -250,3 +275,4 @@ task deploystart << {
     command: "sh -c \"cd singleNode ; unzip bigFlow-singlenode.zip ; cd bigFlow-singlenode/bin ; nohup ./bigFlow > /dev/null 2>&1 &\"")
 
 }
+
