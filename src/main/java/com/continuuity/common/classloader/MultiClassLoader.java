@@ -50,7 +50,7 @@ public abstract class MultiClassLoader extends ClassLoader {
       result = super.findSystemClass(className);
       return result;
     } catch (ClassNotFoundException e) {
-      Log.info("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+      Log.debug("System class '{}' loading error. Reason : {}.", className, e.getMessage());
     }
 
     //Try to load it from preferred source
