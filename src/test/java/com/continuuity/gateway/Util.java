@@ -423,7 +423,8 @@ public class Util {
 
     // read the key/value back from the data fabric
     Read read = new Read(key);
-    byte[] bytes = executor.execute(read);
+    executor.execute(read);
+    byte[] bytes = read.getKeyResult();
     Assert.assertNotNull(bytes);
 
     // verify the read value is the same as the original value
