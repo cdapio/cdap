@@ -3,6 +3,7 @@
  */
 package com.continuuity.data.runtime;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hypersql.HyperSQLColumnarTableHandle;
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -35,7 +36,12 @@ public class DataFabricLocalModule extends AbstractModule {
   }
   
   public DataFabricLocalModule() {
-    this("jdbc:hsqldb:mem:dflmmem", DEFAULT_PROPERTIES);
+    CConfiguration conf = CConfiguration.create();
+    conf.addResource("continuuity-data-fabric.xml");
+    this.hyperSqlJDCBString = conf.get("data.local.jdbc",    
+          System.getProperty("java.io.tmpdir")) +
+          System.getProperty("path.separator") + "fabricdb";
+    this.hyperSqlProperties = DEFAULT_PROPERTIES;
   }
   
   public DataFabricLocalModule(String hyperSqlJDBCString) {

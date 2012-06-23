@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <property>
+        <name>data.local.jdbc</name>
+        <value>jdbc:hsqldb:file:data/fabricdb</value>
+        <description>Specifies local file system implementation</description>
+    </property>
+
+</configuration>
