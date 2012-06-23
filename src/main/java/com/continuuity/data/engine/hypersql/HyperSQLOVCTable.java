@@ -1,23 +1,18 @@
 package com.continuuity.data.engine.hypersql;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Implementation of an OVCTable over a HyperSQL table.
@@ -392,7 +387,7 @@ implements OrderedVersionedColumnarTable {
       ps = this.connection.prepareStatement(
           "SELECT column, version, kvtype, id, value " +
               "FROM " + this.tableName + " " +
-              "WHERE row = ? AND (" + columnChecks + ") " +
+              "WHERE row = ? AND (" + columnCheck + ") " +
           "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
       int idx = 2;
