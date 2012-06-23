@@ -64,6 +64,10 @@ a strong {
 }
 #action-buttons {
 	margin-top: 8px;
+	padding-right: 0;
+}
+#action-buttons .btn {
+	margin-right:0;
 }
 
 .btn-group.pull-right > .btn {
@@ -127,6 +131,12 @@ td a {
 }
 #interstitial * {
 	padding-top: 52px;
+}
+.product {
+	width:200px;
+	height:10px;
+	background-image: url(../img/product-header.png);
+	margin: 15px 12px 0px 0px;
 }
 .widget {
 	border-radius: 5px;

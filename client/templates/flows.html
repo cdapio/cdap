@@ -27,7 +27,7 @@
 		{{#each App.Controllers.Flows tagName="tbody"}}
 		<tr>
 			<td style="width: 18px;">
-				<div class="btn-group">
+				<div class="btn-group" style="padding:0;">
 					<button class="btn dropdown-toggle" data-toggle="dropdown">
 						<span class="caret"></span>
 					</button>
@@ -44,7 +44,7 @@
 			<td>{{runs}}</td>
 			<td style="width: 84px;text-align: right;"><span {{bindAttr class="statusClass"}}>{{currentState}}</span></td>
 			<td style="width: 64px;">
-				<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-app="applicationId"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;width: 60px;">{{defaultAction}}</button>
+				<button class="btn" {{action "exec" on="click"}} {{bindAttr flow-app="applicationId"}} {{bindAttr flow-id="flowId"}} {{bindAttr flow-action="defaultAction"}} style="padding: 4px 13px 4px;margin:0;width: 60px;">{{defaultAction}}</button>
 				</div>
 			</td>
 		</tr>

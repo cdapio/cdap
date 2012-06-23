@@ -61,6 +61,10 @@ define([
 
 			var payload = this.get('payload');
 			var flow = App.Views.Flow.current.get('meta').name;
+			var stream = '';
+			if (App.Views.Flow.current.get('flowStreams')) {
+				stream = App.Views.Flow.current.get('flowStreams')[0].name;
+			}
 
 			this.set('payload', '');
 
@@ -68,6 +72,7 @@ define([
 				method: 'POST',
 				params: {
 					name: flow,
+					stream: stream,
 					payload: payload
 				}
 			}, function (response) {
