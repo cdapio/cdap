@@ -14,7 +14,7 @@ import java.util.Hashtable;
  * with large modifications.
  */
 public abstract class MultiClassLoader extends ClassLoader {
-  private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
+  private static final Logger Log = LoggerFactory.getLogger(MultiClassLoader.class);
   private Hashtable classes = new Hashtable();
   private char      classNameReplacementChar;
 
@@ -49,7 +49,9 @@ public abstract class MultiClassLoader extends ClassLoader {
     try {
       result = super.findSystemClass(className);
       return result;
-    } catch (ClassNotFoundException e) { }
+    } catch (ClassNotFoundException e) {
+      Log.info("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+    }
 
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
