@@ -107,10 +107,10 @@ public class SingleNodeMain {
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
     System.out.println(" Starting Monitoring Webapp");
-    theWebApp = new WebCloudAppService();
-    theWebApp.start(null, myConfiguration);
-    String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
+//    theWebApp = new WebCloudAppService();
+//    theWebApp.start(null, myConfiguration);
+//    String hostname = InetAddress.getLocalHost().getHostName();
+//    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
   } // end of bootStrapServices
 
   /**
@@ -156,6 +156,7 @@ public class SingleNodeMain {
     myConfiguration.addResource("continuuity-flow.xml");
     myConfiguration.addResource("continuuity-gateway.xml");
     myConfiguration.addResource("continuuity-webapp.xml");
+    myConfiguration.addResource("continuuity-overlord.xml");
   } // end of loadConfiguration
 
 

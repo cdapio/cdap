@@ -147,9 +147,9 @@ tasks.distZip {
     classifier = ""
 }
 
-run.dependsOn ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble'
-installApp.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', stageConfSingleNode 
-distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', stageConfSingleNode 
+run.dependsOn ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble'
+installApp.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble', stageConfSingleNode
+distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble', stageConfSingleNode
 
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
