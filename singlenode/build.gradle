@@ -147,13 +147,13 @@ tasks.distZip {
     classifier = ""
 }
 
-run.dependsOn ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble'
-installApp.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble', stageConfSingleNode
-distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':overlord:assemble', stageConfSingleNode
+run.dependsOn ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':common:assemble', ':overlord:assemble'
+installApp.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':common:assemble', ':overlord:assemble', stageConfSingleNode 
+distZip.dependsOn javadoc, ':web-cloud-app:build', ':flow:assemble', ':gateway:assemble', ':data-fabric:assemble', ':common:assemble', ':overlord:assemble', stageConfSingleNode 
 
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
-    into "docs"
+    into "docs/api"
 }
 
 // include :web-cloud-app/build/client directly
@@ -177,15 +177,13 @@ import org.apache.tools.ant.filters.ReplaceTokens
 project.parent.subprojects.each { p ->
     //println "    name: ${p.name}"
     if (p.file('bin').isDirectory()) {
-        if (p != project) { //exclude self (singlenode)
-            //println "configuring bin for ${p.name}"
-            applicationDistribution.from(project(":${p.name}").file('bin')) {
-                into "bin"
-                exclude 'node'
-                def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-                cp += ":\$APP_HOME/conf/"
-                filter(ReplaceTokens, tokens: [classpath: cp])
-            }
+        //println "configuring bin for ${p.name}"
+        applicationDistribution.from(project(":${p.name}").file('bin')) {
+            into "bin"
+            exclude 'node'
+            def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+            cp += ":\$APP_HOME/conf/"
+            filter(ReplaceTokens, tokens: [classpath: cp])
         }
     } else {
         //println "skipping bin for ${p.name} - no bin dir"
@@ -194,4 +192,61 @@ project.parent.subprojects.each { p ->
 
 artifacts {
     archives distZip
+}
+
+
+/*------------- experimental --------------*/
+
+configurations { 
+    antssh
+} 
+
+dependencies { 
+    antssh group: 'org.apache.ant', name: 'ant-jsch', version: '1.8.2'
+} 
+
+// add additional jars to the AntBuilder classpath for use within the imported build. 
+ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader 
+configurations.antssh.each { File f -> 
+  antClassLoader.addURL(f.toURI().toURL()) 
+} 
+
+//task deployclean << { 
+//    ant.taskdef(name: 'sshexec', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp', classpath: configurations.scp.asPath) 
+//   ant.scp(remoteToDir: 'user@host:someDir', password: 'password') {
+//        fileset(dir: 'src/main/velocity') {
+//            include(name: '**/*.vm')
+//        }
+//    }
+//}
+
+//println "zip: "
+//println distZip.archivePath
+
+task deployclean << {
+    ant.sshexec(host: 'staging.continuuity.com', 
+    username: 'deploy',
+    keyfile: 'deploy_key',
+    trust: 'true', 
+    verbose: 'true', 
+    failonerror: 'true',
+    command: "cd singleNode && rm bigFlow-singlenode.zip")
+
+}
+
+task deployzip << {
+    ant.scp(file: distZip.archivePath, toDir: 'deploy@staging.continuuity.com:~/singleNode', keyfile: 'deploy_key') 
+}
+
+task deploystart << {
+    ant.sshexec(host: 'staging.continuuity.com',
+    username: 'deploy',
+    keyfile: 'deploy_key',
+    trust: 'true',
+    verbose: 'true',
+    failonerror: 'true',
+    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
+    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
+    command: "sh -c \"cd singleNode ; unzip bigFlow-singlenode.zip ; cd bigFlow-singlenode/bin ; nohup ./bigFlow > /dev/null 2>&1 &\"")
+
 }
