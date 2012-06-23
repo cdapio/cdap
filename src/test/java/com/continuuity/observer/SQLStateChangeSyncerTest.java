@@ -62,6 +62,8 @@ public class SQLStateChangeSyncerTest {
 
     Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     StateChangeCallback callback = injector.getInstance(StateChangeCallback.class);
+    callback.init("jdbc:hsqldb:mem:fmdb");
+
     listener.listen("/continuuity/system/queue", callback);
 
     for (int i = 0; i < 100; ++i) {
