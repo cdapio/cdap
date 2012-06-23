@@ -3,9 +3,10 @@
  */
 package com.continuuity;
 
-import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FARServer;
@@ -22,7 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -95,6 +96,8 @@ public class SingleNodeMain {
     Preconditions.checkNotNull(theGateway);
     Preconditions.checkNotNull(theFARServer);
     Preconditions.checkNotNull(theFlowManager);
+
+    Copyright.print();
 
     System.out.println(" Starting Zookeeper Service");
     startZookeeper();
