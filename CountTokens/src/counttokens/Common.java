@@ -2,7 +2,7 @@ package counttokens;
 
 public class Common {
 
-  static boolean verbose = true;
-  static boolean debug = true;
+  static boolean verbose = false;
+  static boolean debug = false;
 
 }

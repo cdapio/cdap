@@ -18,3 +18,8 @@ CountTokens:
      the body of the event, 'text')
 - All of the cloned tokens are counted using increment operations.
 
+CountRandom:
+- Generates Random numbers between 0 and 9999
+- For each number i, spits out i%10000, i%1000, i%100, i%10
+- For each number increment its counter.
+ 
