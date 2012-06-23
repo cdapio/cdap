@@ -7,4 +7,12 @@ public class ServerException extends Exception {
   public ServerException(String reason) {
     super(reason);
   }
+
+  public ServerException(String reason, Throwable throwable) {
+    super(reason, throwable);
+  }
+
+  public ServerException(Throwable throwable) {
+    super(throwable);
+  }
 }
