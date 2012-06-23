@@ -1,11 +1,13 @@
 package com.continuuity.common.utils;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.PrintStream;
 
 public class Copyright {
 
   private static final String[] lines = {
-      "============================================================================",
+      StringUtils.repeat("=", 80),
       " Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All Rights Reserved.",
       ""
   };
