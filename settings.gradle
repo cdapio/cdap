@@ -12,6 +12,7 @@ gitRepos << new GitRepo(name: "data-fabric");
 gitRepos << new GitRepo(name: "flow");
 gitRepos << new GitRepo(name: "overlord");
 gitRepos << new GitRepo(name: "web-cloud-app");
+gitRepos << new GitRepo(name: "examples");
 
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
