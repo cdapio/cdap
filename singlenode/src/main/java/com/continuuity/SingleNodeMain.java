@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FARServer;
@@ -90,12 +91,7 @@ public class SingleNodeMain {
    */
   private void bootStrapServices() {
 
-    System.out.println("====================================================" +
-      "========================");
-    System.out.println(" Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All " +
-      "Rights Reserved.");
-    System.out.println("");
-
+    Copyright.print();
 
     try {
 
