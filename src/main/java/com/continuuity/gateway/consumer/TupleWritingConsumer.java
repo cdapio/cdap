@@ -73,7 +73,7 @@ public class TupleWritingConsumer extends Consumer {
         destination = "default";
       }
       // construct the stream URI to use for the data fabric
-      String queueURI = FlowStream.buildStreamURI(destination);
+      String queueURI = FlowStream.buildStreamURI(destination).toString();
       operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
       LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
 

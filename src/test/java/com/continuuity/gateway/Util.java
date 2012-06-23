@@ -1,14 +1,15 @@
 package com.continuuity.gateway;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.flow.definition.impl.FlowStream;
+import com.continuuity.flow.flowlet.internal.EventSerializer;
+import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -26,22 +27,14 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.internal.TupleSerializer;
-import com.continuuity.flow.flowlet.internal.EventSerializer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Util {
 
@@ -277,7 +270,7 @@ public class Util {
   static void consumeQueueAsEvents(OperationExecutor executor, String destination,
                                    String collectorName, int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(destination).getBytes();
+    byte[] queueURI = FlowStream.buildStreamURI(destination).toString().getBytes();
     // one deserializer to reuse
     EventSerializer deserializer = new EventSerializer();
     // prepare the queue consumer
@@ -315,7 +308,7 @@ public class Util {
   static void consumeQueueAsTuples(OperationExecutor executor, String destination,
                                    String collectorName, int tuplesExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(destination).getBytes();
+    byte[] queueURI = FlowStream.buildStreamURI(destination).toString().getBytes();
     // one deserializer to reuse
     TupleSerializer deserializer = new TupleSerializer(false);
     // prepare the queue consumer

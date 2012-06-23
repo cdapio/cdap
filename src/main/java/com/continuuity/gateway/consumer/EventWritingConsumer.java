@@ -1,12 +1,5 @@
 package com.continuuity.gateway.consumer;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -17,6 +10,12 @@ import com.continuuity.flow.flowlet.internal.EventSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class EventWritingConsumer extends Consumer {
 
@@ -64,7 +63,7 @@ public class EventWritingConsumer extends Consumer {
         destination = "default";
       }
       // construct the stream URO to use for the data fabric
-      String queueURI = FlowStream.buildStreamURI(destination);
+      String queueURI = FlowStream.buildStreamURI(destination).toString();
       operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
     }
     BatchOperationResult result = this.executor.execute(operations);
