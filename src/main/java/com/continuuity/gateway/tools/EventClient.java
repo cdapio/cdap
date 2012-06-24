@@ -125,6 +125,8 @@ public class EventClient {
         usage(false);
         help = true;
         return;
+      } else if ("--verbose".equals(arg)) {
+        verbose = true;
       } else {  // unkown argument
         usage(true);
       }
