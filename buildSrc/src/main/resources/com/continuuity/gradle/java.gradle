@@ -71,7 +71,7 @@ artifacts {
  * A file named 'generated-classpath' is added to project/build directory.
  */
 task classpathGenerator << {
-    def classpath = new File('build/generated-classpath')
+    def classpath = new File(project.name + '/build/generated-classpath')
     configurations.compile.each { File file ->  classpath.append(file.toString() + ':') }
 }
 
