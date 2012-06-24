@@ -147,6 +147,8 @@ public class FlumeClient {
         usage(false);
         help = true;
         return;
+      } else if ("--verbose".equals(arg)) {
+        verbose = true;
       } else {  // unkown argument
         usage(true);
       }
@@ -190,7 +192,7 @@ public class FlumeClient {
    * @param flumeName The name of the flume collector, optional
    * @return The port number if found, or -1 otherwise.
    */
-  static int findFlumePort(CConfiguration config, String flumeName) {
+  int findFlumePort(CConfiguration config, String flumeName) {
 
     if (flumeName == null) {
       // find the name of the flume collector
@@ -198,7 +200,8 @@ public class FlumeClient {
       if (flumeName == null) {
         return -1;
       } else {
-        LOG.info("Reading configuration for connector '" + flumeName + "'.");
+        if (verbose)
+          System.out.println("Reading configuration for connector '" + flumeName + "'.");
       }
     }
     // get the collector's port number from the config
@@ -228,7 +231,8 @@ public class FlumeClient {
     }
     // determine the gateway host
     if (hostname == null) hostname = "localhost";
-    if (verbose) System.out.println("Using flume port: " + hostname + ":" + port);
+    if (verbose)
+      System.out.println("Using flume port: " + hostname + ":" + port);
 
     // get the body as a byte array
     byte[] binaryBody = readBody();
