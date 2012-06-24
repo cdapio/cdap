@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,6 +19,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 
 public abstract class TestTTQueue {
@@ -104,6 +106,18 @@ public abstract class TestTTQueue {
         new MemoryReadPointer(timeOracle.getTimestamp())).isEmpty());
     assertTrue(queue.dequeue(consumerAsync, configAsync,
         new MemoryReadPointer(timeOracle.getTimestamp())).isEmpty());
+  }
+
+  @Test
+  public void testGroupIdGen() throws Exception {
+    TTQueue queue = createQueue();
+    int n = 1024;
+    Set<Long> groupids = new HashSet<Long>(n);
+    for (int i=0; i<n; i++) {
+      long groupid = queue.getGroupID();
+      assertFalse(groupids.contains(groupid));
+      groupids.add(groupid);
+    }
   }
 
   @Test
@@ -814,9 +828,11 @@ public abstract class TestTTQueue {
       }
     }
 
+    long numEnqueues = 0;
     // enqueue the first four values
     for (int i=0; i<n; i++) {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
+      numEnqueues++;
     }
 
     // wait for n^2 more queuedequeue() returns
@@ -961,6 +977,7 @@ public abstract class TestTTQueue {
     // enqueue everything!
     for (int i=0; i<n*n; i++) {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
+      numEnqueues++;
     }
 
     // wait for n^2 more queuedequeue() wake-ups
@@ -999,6 +1016,12 @@ public abstract class TestTTQueue {
         dequeuers[i][j].shutdown();
       }
     }
+
+    // check on the queue meta
+    QueueMeta meta = queue.getQueueMeta();
+    assertEquals(numEnqueues, meta.currentWritePointer);
+    assertEquals(numEnqueues, meta.globalHeadPointer);
+    assertEquals(n, meta.groups.length);
   }
 
   private void waitForAndAssertCount(long expected, AtomicLong wakeUps) {

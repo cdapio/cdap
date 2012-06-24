@@ -24,6 +24,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
@@ -178,6 +180,13 @@ public class SimpleOperationExecutor implements OperationExecutor {
 
   @Override
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public QueueMeta execute(GetQueueMeta getQueueMeta)
       throws SyncReadTimeoutException {
     // TODO Auto-generated method stub
     return null;

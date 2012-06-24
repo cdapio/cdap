@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
@@ -10,6 +11,7 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
@@ -38,10 +40,10 @@ public class TTQueueOnVCTable implements TTQueue {
   long maxBytesPerShard;
   long maxAgeBeforeExpirationInMillis;
   long maxAgeBeforeSemiAckedToAcked;
-  
+
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
-  
+
   // Row header names and flags
   static final byte [] GLOBAL_ENTRY_HEADER = bytes((byte)10);
   static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = bytes((byte)20);
@@ -59,6 +61,7 @@ public class TTQueueOnVCTable implements TTQueue {
   static final byte [] GLOBAL_SHARD_META = bytes((byte)10);
 
   // Columns for row = GLOBAL_GROUPS_HEADER
+  static final byte [] GROUP_ID_GEN = bytes((byte)5);
   static final byte [] GROUP_STATE = bytes((byte)10);
 
   // Columns for row = GLOBAL_DATA_HEADER
@@ -163,15 +166,15 @@ public class TTQueueOnVCTable implements TTQueue {
     // Insert entry at active shard
     this.table.put(makeRow(GLOBAL_DATA_HEADER, shardMeta.getShardId()),
         new byte [][] {
-          makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META) 
-        }, cleanWriteVersion,
-        new byte [][] {
-          data, new EntryMeta(EntryState.VALID).getBytes()
-        });
+      makeColumn(entryId, ENTRY_DATA), makeColumn(entryId, ENTRY_META)
+    }, cleanWriteVersion,
+    new byte [][] {
+      data, new EntryMeta(EntryState.VALID).getBytes()
+    });
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueStatus.SUCCESS,
-        new QueueEntryPointer(queueName, entryId, shardMeta.getShardId()));
+        new QueueEntryPointer(this.queueName, entryId, shardMeta.getShardId()));
   }
 
   @Override
@@ -186,20 +189,21 @@ public class TTQueueOnVCTable implements TTQueue {
         makeColumn(entryPointer.getEntryId(), ENTRY_DATA), cleanWriteVersion);
     log("Invalidated " + entryPointer);
   }
-  
+
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) {
 
     if (TRACE)
-      log("Attempting dequeue [curNumDequeues=" + dequeueReturns.get() + "] (" +
-        consumer + ", " + config + ", " + readPointer + ")");
+      log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() + "] (" +
+          consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
 
     // Loop until we have properly upserted and verified group information
     GroupState groupState = null;
+    byte [] groupListRow = makeRow(GLOBAL_GROUPS_HEADER, -1);
     byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, consumer.getGroupId());
     while (true) { // TODO: Should probably put a max retry on here
 
@@ -217,7 +221,9 @@ public class TTQueueOnVCTable implements TTQueue {
         // Atomically insert group state
         if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
             groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-          // CAS was successful, we created the group, exit loop
+          // CAS was successful, we created the group, add us to list, exit loop
+          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+              dirty.getSecond(), groupState.getBytes());
           break;
         } else {
           // CAS was not successful, someone else created group, loop
@@ -250,7 +256,9 @@ public class TTQueueOnVCTable implements TTQueue {
             groupState.getHead(), ExecutionMode.fromQueueConfig(config));
         if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
             groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-          // Group config update success, break from loop
+          // Group config update success, update state, break from loop
+          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+              dirty.getSecond(), groupState.getBytes());
           log("Group config updated successfully!");
           break;
         } else {
@@ -416,7 +424,7 @@ public class TTQueueOnVCTable implements TTQueue {
                 entryGroupMetaData, newEntryGroupMeta.getBytes(),
                 dirty.getFirst(), dirty.getSecond())) {
               // Successfully updated timestamp, still own it, return this
-              dequeueReturns.incrementAndGet();
+              this.dequeueReturns.incrementAndGet();
               return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
                   this.table.get(shardRow,
                       makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
@@ -433,7 +441,7 @@ public class TTQueueOnVCTable implements TTQueue {
           if (entryGroupMeta.getTimestamp() + this.maxAgeBeforeExpirationInMillis >=
               now()) {
             log("Entry is dequeued but not expired! (entryGroupMetaTS=" +
-              entryGroupMeta.getTimestamp() + ", maxAge=" +
+                entryGroupMeta.getTimestamp() + ", maxAge=" +
                 this.maxAgeBeforeExpirationInMillis + ", now=" + now());
             // Entry is dequeued and not expired, move to next entry in shard
             entryPointer = new EntryPointer(
@@ -465,7 +473,7 @@ public class TTQueueOnVCTable implements TTQueue {
           entryGroupMetaData, newEntryGroupMeta.getBytes(),
           dirty.getFirst(), dirty.getSecond())) {
         // We own it!  Return it.
-        dequeueReturns.incrementAndGet();
+        this.dequeueReturns.incrementAndGet();
         if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
         return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
       } else {
@@ -627,7 +635,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   public static boolean TRACE = false;
-  
+
   private void log(String msg) {
     if (TRACE) System.out.println(Thread.currentThread().getId() + " : " + msg);
     // LOG.debug(msg);
@@ -637,12 +645,57 @@ public class TTQueueOnVCTable implements TTQueue {
     return new byte [] { b };
   }
 
+  @Override
+  public long getGroupID() {
+    // Get a dirty pointer
+    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+    // Get our unique entry id
+    long groupId = this.table.increment(makeRow(GLOBAL_GROUPS_HEADER),
+        GROUP_ID_GEN, 1, dirty.getFirst(), dirty.getSecond());
+    return groupId;
+  }
+
+  @Override
+  public QueueMeta getQueueMeta() {
+
+    // Get global queue state information
+
+    QueueMeta meta = new QueueMeta();
+    
+    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+    long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
+        GLOBAL_ENTRYID_COUNTER, dirty.getFirst()));
+    meta.globalHeadPointer = nextEntryId;
+
+    byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
+    long curEntryLock = getCounter(entryWritePointerRow,
+        GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, dirty.getFirst());
+    meta.currentWritePointer = curEntryLock;
+
+    // Get group state information
+    byte [] groupListRow = makeRow(GLOBAL_GROUPS_HEADER, -1);
+    
+    // Do a dirty read of the global group information
+    Map<byte[],byte[]> groups = this.table.get(groupListRow, dirty.getFirst());
+    if (groups == null || groups.isEmpty()) {
+      meta.groups = null;
+      return meta;
+    }
+    
+    meta.groups = new GroupState[groups.size()];
+    int i=0;
+    for (Map.Entry<byte[],byte[]> entry : groups.entrySet()) {
+      meta.groups[i] = GroupState.fromBytes(entry.getValue());
+    }
+    return meta;
+  }
+
   public String getInfo(int groupId) {
-    
+
     StringBuilder sb = new StringBuilder();
-    sb.append("TTQueueONVCTable (" + Bytes.toString(queueName) + ")\n");
-    sb.append("DequeueReturns = " + dequeueReturns.get() + "\n");
-    
+    sb.append("TTQueueONVCTable (" + Bytes.toString(this.queueName) + ")\n");
+    sb.append("DequeueReturns = " + this.dequeueReturns.get() + "\n");
+
     // Get global queue state information
 
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
@@ -659,13 +712,13 @@ public class TTQueueOnVCTable implements TTQueue {
     ShardMeta shardMeta = ShardMeta.fromBytes(this.table.get(shardMetaRow,
         GLOBAL_SHARD_META, dirty.getFirst()));
     sb.append("Shard meta: " + shardMeta.toString() + "\n");
-    
-    
+
+
     // Get group state information
     sb.append("\nGroup State Info (groupid= " + groupId + ")\n");
 
     byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, groupId);
-      // Do a dirty read of the global group information
+    // Do a dirty read of the global group information
     byte [] existingValue = this.table.get(groupRow, GROUP_STATE,
         dirty.getFirst());
 
@@ -676,12 +729,12 @@ public class TTQueueOnVCTable implements TTQueue {
       GroupState groupState = GroupState.fromBytes(existingValue);
       sb.append(groupState.toString() + "\n");
     }
-    
+
     return sb.toString();
   }
 
   public String getEntryInfo(long entryId) {
-    
+
     long curShard = 1;
     long curEntry = 1;
     ReadPointer rp = new MemoryReadPointer(Long.MAX_VALUE);
@@ -693,7 +746,7 @@ public class TTQueueOnVCTable implements TTQueue {
       // Do a dirty read of the entry meta data
       ImmutablePair<byte[],Long> entryMetaDataAndStamp =
           this.table.getWithVersion(shardRow, entryMetaColumn, rp);
-      
+
       if (entryMetaDataAndStamp == null) {
         if (entryId == curEntry) {
           return "Iterated all the way to specified entry but that did not " +
@@ -704,16 +757,16 @@ public class TTQueueOnVCTable implements TTQueue {
               curShard + ")";
         }
       }
-      
+
       EntryMeta entryMeta =
           EntryMeta.fromBytes(entryMetaDataAndStamp.getFirst());
-      
+
       if (curEntry == entryId) {
         return "Found entry at " + entryId + " in shard " + curShard + " (" +
             entryMeta.toString() + ") with timestamp = " +
             entryMetaDataAndStamp.getSecond();
       }
-      
+
       if (entryMeta.isInvalid() || entryMeta.isValid()) {
         // Move to next entry
         curEntry++;

@@ -6,6 +6,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 
@@ -81,5 +82,15 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   @Override
   public String getEntryInfo(byte[] queueName, long entryId) {
     return getQueue(queueName).getEntryInfo(entryId);
+  }
+
+  @Override
+  public long getGroupID(byte[] queueName) {
+    return getQueue(queueName).getGroupID();
+  }
+
+  @Override
+  public QueueMeta getQueueMeta(byte[] queueName) {
+    return getQueue(queueName).getQueueMeta();
   }
 }

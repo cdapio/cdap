@@ -36,6 +36,8 @@ import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
@@ -345,6 +347,19 @@ implements TransactionalOperationExecutor {
         " millis");
   }
 
+  @Override
+  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
+    unsupported("Getting group ID currently not implemented");
+    return 0L;
+  }
+
+  @Override
+  public QueueMeta execute(GetQueueMeta getQueueMeta)
+      throws SyncReadTimeoutException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
   ImmutablePair<ReadPointer, Long> startTransaction() {
     return this.oracle.getNewPointer();
   }
@@ -391,12 +406,6 @@ implements TransactionalOperationExecutor {
 
   private void unsupported(String msg) {
     throw new RuntimeException(msg);
-  }
-
-  @Override
-  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
-    unsupported("Getting group ID currently not implemented");
-    return 0L;
   }
 
   @Override

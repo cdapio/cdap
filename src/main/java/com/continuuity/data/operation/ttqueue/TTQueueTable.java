@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 
 /**
@@ -68,6 +69,25 @@ public interface TTQueueTable {
    */
   boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
+
+  /**
+   * Generates and returns a unique group id for the specified queue.
+   * 
+   * Note: uniqueness only guaranteed if you always use this call to generate
+   * groups ids.
+   * 
+   * @param queueName
+   * @return a unique group id for the specified queue
+   */
+  public long getGroupID(byte [] queueName);
+
+  /**
+   * Gets the meta information for the specified queue.  This includes all meta
+   * data available without walking the entire queue.
+   * @param queueName
+   * @return global meta information for the queue and its groups
+   */
+  public QueueMeta getQueueMeta(byte [] queueName);
 
   public String getGroupInfo(byte[] queueName, int groupId);
 
