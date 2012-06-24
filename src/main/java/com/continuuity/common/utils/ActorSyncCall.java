@@ -46,7 +46,7 @@ public class ActorSyncCall<T> {
       Future<Object> future = Patterns.ask(ref, message, timeout);
       object = (T) Await.result(future, timeout.duration());
     } catch (Exception e) {
-      Log.error("Failed to get response from actor {} for message {}", new Object[]{ref.toString(), message});
+      Log.warn("Failed to get response from actor {} for message {}", new Object[]{ref.toString(), message});
     }
     return object;
   }

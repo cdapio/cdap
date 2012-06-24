@@ -63,7 +63,7 @@ public abstract class MultiClassLoader extends ClassLoader {
     //Define it (parse the class file)
     result = defineClass(className, classBytes, 0, classBytes.length);
     if (result == null) {
-      throw new ClassFormatError();
+      throw new ClassFormatError("Error parsing class " + className);
     }
 
     //Resolve if necessary
