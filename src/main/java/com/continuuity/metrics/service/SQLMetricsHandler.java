@@ -8,7 +8,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Named;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +174,11 @@ public class SQLMetricsHandler implements MetricsHandler {
         }
 
         /** Flow has been deleted then it should not be included. */
-        if(state == StateChangeType.DELETED.getType()) {
+        if(state == StateChangeType.DEPLOYED.getType()) {
+          if(deleted.containsKey(appFlow)) {
+            deleted.remove(appFlow);
+          }
+        } else if(state == StateChangeType.DELETED.getType()) {
           deleted.put(appFlow, 1);
         } else if (state == StateChangeType.STARTING.getType() || state == StateChangeType.RUNNING.getType()) {
           started.put(appFlow, timestamp);
@@ -195,13 +198,15 @@ public class SQLMetricsHandler implements MetricsHandler {
       Log.error("Unable to retrieve information about flows for account {}. Reason : {}.", accountId, e.getMessage());
     }
 
+    List<FlowState> filteredResults = Lists.newArrayList();
+
     for (FlowState state : result) {
       String flow = state.getFlowId();
       String app = state.getApplicationId();
       String appFlow = String.format("%s.%s", app, flow);
 
       if(deleted.containsKey(appFlow)) {
-        result.remove(state);
+        continue;
       }
 
       if (started.containsKey(appFlow)) {
@@ -211,15 +216,19 @@ public class SQLMetricsHandler implements MetricsHandler {
       if (stopped.containsKey(appFlow)) {
         state.setLastStopped(stopped.get(appFlow));
       }
+
       if (runs.containsKey(appFlow)) {
         state.setRuns(runs.get(appFlow));
       }
+
       if (states.containsKey(appFlow)) {
         int i = states.get(appFlow);
         state.setCurrentState(StateChangeType.value(i).name());
       }
+
+      filteredResults.add(state);
     }
-    return result;
+    return filteredResults;
   }
 
 
