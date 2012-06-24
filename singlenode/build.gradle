@@ -112,20 +112,10 @@ applicationDistribution.from("$buildDir/conf") {
 
 /**
  * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
+ *
+ * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
  */
-
-// how to change the gradle default
-/*
 startScripts {
-    doLast {
-        def uss = new File('unixStartScript.txt')
-        unixScript.text = uss.text
-        tasks.startScripts.generate()
-    }
-}
-*/
-
-tasks.startScripts {
     applicationName = "bigFlow"
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
@@ -135,8 +125,14 @@ tasks.startScripts {
         def scriptFileWin = file "${outputDir}/${applicationName}.bat"
         scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=$1;%APP_HOME%\\\\conf\\\\')
     }
+    jvmOpts = "-Xmx1024m" 
+    inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
+    doLast { 
+        def optsEnvVar = "DEFAULT_JVM_OPTS" 
+        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}", "$optsEnvVar=${'"'}$jvmOpts${'"'}") 
+        windowsScript.text = windowsScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts") 
+    }
 }
-
 
 /**
  * Configure distZip task
