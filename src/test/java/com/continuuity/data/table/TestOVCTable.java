@@ -360,7 +360,8 @@ public abstract class TestOVCTable {
     assertTrue(
         this.table.compareAndSwap(row, COL, valueTwo, null, RP_MAX, 5L));
 
-    assertNull(this.table.get(row, COL, RP_MAX));
+    byte [] val = this.table.get(row, COL, RP_MAX);
+    assertNull("expected null but was " + Bytes.toString(val), val);
   }
 
   @Test

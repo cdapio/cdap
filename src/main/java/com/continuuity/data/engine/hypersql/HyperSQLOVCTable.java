@@ -36,8 +36,6 @@ implements OrderedVersionedColumnarTable {
 
   private static final byte [] NULL_VAL = new byte [0];
 
-  private static final byte [][] NULL_VAL_ARR = new byte [][] { NULL_VAL };
-
   private enum Type {
     UNDELETE_ALL (0),
     DELETE_ALL   (1),
@@ -123,7 +121,8 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void delete(byte[] row, byte[][] columns, long version) {
-    performInsert(row, columns, version, Type.DELETE, NULL_VAL_ARR);
+    performInsert(row, columns, version, Type.DELETE,
+        generateDeleteVals(columns.length));
   }
 
   @Override
@@ -133,7 +132,8 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void deleteAll(byte[] row, byte[][] columns, long version) {
-    performInsert(row, columns, version, Type.DELETE_ALL, NULL_VAL_ARR);
+    performInsert(row, columns, version, Type.DELETE_ALL,
+        generateDeleteVals(columns.length));
   }
 
   @Override
@@ -143,7 +143,14 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void undeleteAll(byte[] row, byte[][] columns, long version) {
-    performInsert(row, columns, version, Type.UNDELETE_ALL, NULL_VAL_ARR);
+    performInsert(row, columns, version, Type.UNDELETE_ALL,
+        generateDeleteVals(columns.length));
+  }
+
+  private byte[][] generateDeleteVals(int length) {
+    byte [][] values = new byte[length][];
+    for (int i=0;i<values.length;i++) values[i] = NULL_VAL;
+    return values;
   }
 
   // Read-Modify-Write Operations
@@ -240,7 +247,7 @@ implements OrderedVersionedColumnarTable {
       // if newValue is null, just delete.
       // TODO: this can't be rolled back!
       if (newValue == null) {
-        delete(row, column, latest.getFirst());
+        deleteAll(row, column, latest.getFirst());
         return true;
       }
 
