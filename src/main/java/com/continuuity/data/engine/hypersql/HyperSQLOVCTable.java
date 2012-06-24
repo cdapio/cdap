@@ -111,9 +111,7 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public void put(byte[] row, byte[][] columns, long version, byte[][] values) {
-    for (int i=0; i<columns.length; i++) {
-      put(row, columns[i], version, values[i]);
-    }
+    performInsert(row, columns, version, Type.VALUE, values);
   }
 
   // Delete Operations

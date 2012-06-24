@@ -152,6 +152,38 @@ public abstract class TestOVCTable {
     // get(row,RP=9) = 0 cols
     colMap = this.table.get(row, new MemoryReadPointer(9));
     assertEquals(0, colMap.size());
+    
+    // delete the first 5 as point deletes
+    subCols = Arrays.copyOfRange(columns, 0, 5);
+    this.table.delete(row, subCols, version);
+    
+    // get returns 5 less
+    colMap = this.table.get(row, RP_MAX);
+    assertEquals(ncols - 5, colMap.size());
+    
+    // delete the second 5 as delete alls
+    subCols = Arrays.copyOfRange(columns, 5, 10);
+    this.table.deleteAll(row, subCols, version);
+    
+    // get returns 10 less
+    colMap = this.table.get(row, RP_MAX);
+    assertEquals(ncols - 10, colMap.size());
+    
+    // delete the third 5 as delete alls
+    subCols = Arrays.copyOfRange(columns, 10, 15);
+    this.table.deleteAll(row, subCols, version);
+    
+    // get returns 15 less
+    colMap = this.table.get(row, RP_MAX);
+    assertEquals(ncols - 15, colMap.size());
+    
+    // undelete the second 5
+    subCols = Arrays.copyOfRange(columns, 5, 10);
+    this.table.undeleteAll(row, subCols, version);
+    
+    // get returns 10 less
+    colMap = this.table.get(row, RP_MAX);
+    assertEquals(ncols - 10, colMap.size());
   }
 
   @Test
@@ -294,6 +326,41 @@ public abstract class TestOVCTable {
     assertTrue(
         this.table.compareAndSwap(row, COL, valueTwo, valueOne, RP_MAX, 2L));
 
+  }
+
+  @Test
+  public void testNullCompareAndSwaps() {
+
+    byte [] row = Bytes.toBytes("testNullCompareAndSwaps");
+
+    byte [] valueOne = Bytes.toBytes("valueOne");
+    byte [] valueTwo = Bytes.toBytes("valueTwo");
+
+    assertNull(this.table.get(row, COL, RP_MAX));
+
+    // compare and swap from null to valueOne
+    assertFalse(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+    
+    assertTrue(
+        this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
+    
+    assertTrue(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+
+    assertFalse(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 4L));
+
+    assertEquals(Bytes.toString(valueTwo),
+        Bytes.toString(this.table.get(row, COL, RP_MAX)));
+
+    assertFalse(
+        this.table.compareAndSwap(row, COL, null, valueTwo, RP_MAX, 5L));
+
+    assertTrue(
+        this.table.compareAndSwap(row, COL, valueTwo, null, RP_MAX, 5L));
+
+    assertNull(this.table.get(row, COL, RP_MAX));
   }
 
   @Test
