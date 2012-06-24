@@ -49,7 +49,7 @@
 
     <property>
         <name>zookeeper.datadir</name>
-        <value>/tmp/continuuity/data</value>
+        <value>data/zookeeper</value>
         <description>Specifies the zookeeper data directory</description>
     </property>
 
