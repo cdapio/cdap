@@ -6,13 +6,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 
 /**
@@ -56,6 +59,169 @@ public abstract class TestOVCTable {
   }
 
   @Test
+  public void testMultiColumnReadsAndWrites() {
+
+    byte [] row = Bytes.toBytes("testMultiColumnReadsAndWrites");
+
+    int ncols = 100;
+    assertTrue(ncols % 2 == 0); // needs to be even in this test
+    byte [][] columns = new byte[ncols][];
+    for (int i=0;i<ncols;i++) {
+      columns[i] = Bytes.toBytes(new Long(i));
+    }
+    byte [][] values = new byte[ncols][];
+    for (int i=0;i<ncols;i++) values[i] = Bytes.toBytes(Math.abs(r.nextLong()));
+
+    // insert a version of every column, two at a time
+    long version = 10L;
+    for (int i=0;i<ncols;i+=2) {
+      this.table.put(row, new byte [][] { columns[i], columns[i+1] }, version,
+          new byte [][] { values[i], values[i+1] });
+    }
+
+    // read them all back at once using all the various read apis
+
+    // get(row)
+    Map<byte[],byte[]> colMap = this.table.get(row, RP_MAX);
+    assertEquals(ncols, colMap.size());
+    int idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+
+    // get(row,col)
+    for(int i=0;i<ncols;i++) {
+      byte [] value = this.table.get(row, columns[i], RP_MAX);
+      assertTrue(Bytes.equals(value, values[i]));
+    }
+
+    // getWV(row,col)
+    for(int i=0;i<ncols;i++) {
+      ImmutablePair<byte[],Long> valueAndVersion =
+          this.table.getWithVersion(row, columns[i], RP_MAX);
+      assertTrue(Bytes.equals(valueAndVersion.getFirst(), values[i]));
+      assertEquals(new Long(version), valueAndVersion.getSecond());
+    }
+
+    // get(row,startCol,stopCol)
+    
+    // get(row,start=null,stop=null)
+    colMap = this.table.get(row, null, null, RP_MAX);
+    assertEquals(ncols, colMap.size());
+    idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+    // get(row,start=0,stop=ncols+1)
+    colMap = this.table.get(row, Bytes.toBytes((long)0),
+        Bytes.toBytes((long)ncols+1), RP_MAX);
+    assertEquals(ncols, colMap.size());
+    idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+    // get(row,cols[ncols])
+    colMap = this.table.get(row, columns, RP_MAX);
+    assertEquals(ncols, colMap.size());
+    idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+
+    // get(row,cols[ncols-2])
+    byte [][] subCols = (byte[][])Arrays.copyOfRange(columns, 1, ncols - 1);
+    colMap = this.table.get(row, subCols, RP_MAX);
+    assertEquals(ncols - 2, colMap.size());
+    idx=1;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+
+    // get(row,RP=9) = 0 cols
+    colMap = this.table.get(row, new MemoryReadPointer(9));
+    assertEquals(0, colMap.size());
+  }
+
+  @Test
+  public void testReadColumnRange() {
+
+    byte [] row = Bytes.toBytes("testMultiColumnReadsAndWrites");
+
+    int ncols = 100;
+    assertTrue(ncols % 2 == 0); // needs to be even in this test
+    byte [][] columns = new byte[ncols][];
+    for (int i=0;i<ncols;i++) {
+      columns[i] = Bytes.toBytes(new Long(i));
+    }
+    byte [][] values = new byte[ncols][];
+    for (int i=0;i<ncols;i++) values[i] = Bytes.toBytes(Math.abs(r.nextLong()));
+
+    // insert a version of every column, two at a time
+    long version = 10L;
+    for (int i=0;i<ncols;i+=2) {
+      this.table.put(row, new byte [][] { columns[i], columns[i+1] }, version,
+          new byte [][] { values[i], values[i+1] });
+    }
+
+    // get(row,startCol,stopCol)
+    // get(row,start=null,stop=null)
+    Map<byte[],byte[]> colMap = this.table.get(row, null, null, RP_MAX);
+    assertEquals(ncols, colMap.size());
+    int idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+    // get(row,start=0,stop=ncols+1)
+    colMap = this.table.get(row, Bytes.toBytes((long)0),
+        Bytes.toBytes((long)ncols+1), RP_MAX);
+    assertEquals(ncols, colMap.size());
+    idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+    // get(row,start=1,stop=ncols) = ncols-2
+    colMap = this.table.get(row, Bytes.toBytes((long)1),
+        Bytes.toBytes((long)ncols-1), RP_MAX);
+    assertEquals(ncols - 2, colMap.size());
+    idx=1;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+    // get(row,start=10,stop=20) = 10
+    colMap = this.table.get(row, Bytes.toBytes((long)10),
+        Bytes.toBytes((long)20), RP_MAX);
+    assertEquals(10, colMap.size());
+    idx=10;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+    
+  }
+  
+  @Test
   public void testSimpleIncrement() {
 
     byte [] row = Bytes.toBytes("testSimpleIncrement");
@@ -66,6 +232,42 @@ public abstract class TestOVCTable {
 
     assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
 
+  }
+  
+  @Test
+  public void testMultiColumnIncrement() {
+
+    byte [] row = Bytes.toBytes("testMultiColumnIncrement");
+    
+    int ncols = 100;
+    assertTrue(ncols % 2 == 0); // needs to be even in this test
+    byte [][] columns = new byte[ncols][];
+    for (int i=0;i<ncols;i++) {
+      columns[i] = Bytes.toBytes(new Long(i));
+    }
+    
+    // increment the evens individually
+    long version = 10;
+    for (int i=0; i<ncols; i+=2) {
+      assertEquals(1L,
+          this.table.increment(row, columns[i], 1, RP_MAX, version));
+    }
+    
+    // increment everything at once
+    long [] amounts = new long[ncols];
+    for (int i=0;i<ncols;i++) amounts[i] = (long)i+1;
+    Map<byte[],Long> counters =
+        this.table.increment(row, columns, amounts, RP_MAX, version);
+    assertEquals(ncols, counters.size());
+    int idx = 0;
+    for (Map.Entry<byte[], Long> counter : counters.entrySet()) {
+      assertTrue(Bytes.equals(counter.getKey(), columns[idx]));
+      // evens are +1, odds are +0
+      Long expected = new Long(idx+1);
+      if (idx % 2 == 0) expected++;
+      assertEquals("idx=" + idx, expected, counter.getValue());
+      idx++;
+    }
   }
 
   @Test

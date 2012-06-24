@@ -38,7 +38,7 @@ import com.google.common.base.Objects;
  * This version of MemoryTable is currently NOT sorted by row.
  */
 public class MemoryOVCTable implements OrderedVersionedColumnarTable {
-
+  
   private final byte[] name;
 
   private final ConcurrentNavigableMap<Row, // row to
@@ -181,7 +181,13 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
     Map<byte[], byte[]> ret = new TreeMap<byte[], byte[]>(
         Bytes.BYTES_COMPARATOR);
-    SortedMap<Column, NavigableMap<Version, Value>> sub = p.getSecond().subMap(
+    SortedMap<Column, NavigableMap<Version, Value>> sub = null;
+    if (isEmpty(startColumn) && isEmpty(stopColumn)) sub = p.getSecond();
+    else if (isEmpty(startColumn))
+      sub = p.getSecond().headMap(new Column(stopColumn));
+    else if (isEmpty(stopColumn))
+      sub = p.getSecond().tailMap(new Column(startColumn));
+    else sub = p.getSecond().subMap(
         new Column(startColumn), new Column(stopColumn));
     for (Map.Entry<Column, NavigableMap<Version, Value>> entry : sub.entrySet()) {
       NavigableMap<Version, Value> columnMap = entry.getValue();
@@ -190,6 +196,10 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
     unlockRow(r);
     return ret;
+  }
+
+  private boolean isEmpty(byte[] column) {
+    return column == null || column.length == 0;
   }
 
   @Override
