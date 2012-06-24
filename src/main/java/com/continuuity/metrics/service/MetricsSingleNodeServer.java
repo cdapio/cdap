@@ -109,7 +109,9 @@ public class MetricsSingleNodeServer implements MetricsServer {
    */
   @Override
   public void stop(boolean now) throws ServerException {
-
+    if(server != null) {
+      server.stop();
+    }
   }
 
 }
