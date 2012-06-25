@@ -466,7 +466,7 @@ public class DataClient {
       else if (encoding != null) requestUrl += "&enc=" + encoding;
       else requestUrl += "&enc=" + Charset.defaultCharset().displayName();
       if (start > 0) requestUrl += "&start=" + start;
-      if (limit > 0) requestUrl += "&limit=" + start;
+      if (limit > 0) requestUrl += "&limit=" + limit;
       if (verbose) System.out.println("Request URI is: " + requestUrl);
       try {
         uri = URI.create(requestUrl);
