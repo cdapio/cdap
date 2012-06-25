@@ -4,10 +4,6 @@
 
 define([], function () {
 
-	$('body').click(function () {
-		App.Views.Flowlet.hide();
-	});
-
 	return Em.ArrayProxy.create({
 		content: [],
 
@@ -63,6 +59,8 @@ define([], function () {
 
 			this.set('current', null);
 
+			clearInterval(this.interval);
+
 		},
 
 		load: function (app, id, run) {
@@ -77,9 +75,17 @@ define([], function () {
 			App.socket.request('monitor', {
 				method: 'getFlowHistory',
 				params: ['demo', app, id]
-			}, function (response) {
+			}, function (error, response) {
 				var hist = response.params;
-				for (var i = 0; i < hist.length; i ++) {
+
+				if (!hist) {
+					return;
+				}
+
+				// This reverses and limits the history. API will handle this in the future.
+				var length = (hist.length < 10 ? 0 : hist.length - 10);
+
+				for (var i = hist.length - 1; i >= length; i --) {
 
 					hist[i] = App.Models.Run.create(hist[i]);
 
@@ -106,7 +112,12 @@ define([], function () {
 			App.socket.request('monitor', {
 				method: 'getFlowDefinition',
 				params: ['demo', app, id, '']
-			}, function (response) {
+			}, function (error, response) {
+
+				if (error) {
+					App.interstitial.label(error);
+					return;
+				}
 
 				if (!response.params) {
 					App.interstitial.label('Flow not found.', {
@@ -137,7 +148,7 @@ define([], function () {
 				App.socket.request('manager', {
 					method: 'status',
 					params: [app, id, -1]
-				}, function (response) {
+				}, function (error, response) {
 
 					self.set('currentRun', response.params.runId.id);
 
@@ -148,17 +159,48 @@ define([], function () {
 
 					App.interstitial.hide();
 
+					self.interval = setInterval(function () {
+						self.refresh();
+					}, 1000);
+
 				});
 
 			});
 
+		},
+		refresh: function () {
+
+			var self = this;
+			var app = this.get('current').get('meta').app;
+			var id = this.get('current').get('meta').name;
+
+			if (App.Controllers.Flows.pending) {
+				return;
+			}
+
+			App.socket.request('manager', {
+				method: 'status',
+				params: [app, id, -1]
+			}, function (error, response) {
+
+				self.get('current').set('currentState', response.params.status);
+
+			});
+		},
+		
+		startStats: function () {
+			var self = this;
+			clearTimeout(this.updateTimeout);
+			this.updateTimeout = setTimeout(function () {
+				self.updateStats(self.get('run'));
+			}, 1000);
 		},
 
 		updateStats: function (for_run_id) {
 			var self = this;
 
 			if (!this.get('current')) {
-				console.log('no current flow');
+				self.startStats();
 				return;
 			}
 
@@ -167,13 +209,14 @@ define([], function () {
 			var run = for_run_id || this.get('currentRun');
 
 			if (!for_run_id && self.get('current').get('currentState') !== 'RUNNING') {
+				self.startStats();
 				return;
 			}
 
 			App.socket.request('monitor', {
 				method: 'getFlowMetrics',
 				params: ['demo', app, id, run]
-			}, function (response) {
+			}, function (error, response) {
 			
 				var flowlets = response.params;
 				for (var i = 0; i < flowlets.length; i ++) {
@@ -198,9 +241,7 @@ define([], function () {
 				}
 
 				if (!for_run_id) {
-					self.updateTimeout = setTimeout(function () {
-						self.updateStats(self.get('run'));
-					}, 1000);
+					self.startStats();
 				}
 			});
 

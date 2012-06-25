@@ -7,10 +7,10 @@ define([], function () {
 		var pending = {};
 		var current_id = 0;
 
-		socket.on('exec', function (response) {
+		socket.on('exec', function (error, response) {
 			
 			if (typeof pending[response.id] === 'function') {
-				pending[response.id](response);
+				pending[response.id](error, response);
 				delete pending[response.id];
 			}
 

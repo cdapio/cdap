@@ -21,7 +21,12 @@ function(Models, Views, Controllers, Router, Socket){
 						App.Controllers.Flows.forEach(function (model) {
 							model.set('timeTrigger', trigger);
 						});
-					}, 100);
+						if (App.Controllers.Flow.current) {
+							App.Controllers.Flow.history.forEach(function (model) {
+								model.set('timeTrigger', trigger);
+							});
+						}
+					}, 5000);
 
 					App.interstitial = $('#interstitial');
 					App.interstitial.label = function (message) {

@@ -75,8 +75,12 @@ define([
 					stream: stream,
 					payload: payload
 				}
-			}, function (response) {
-				console.log(response);
+			}, function (error, response) {
+
+				if (error) {
+					App.Views.Flow.showError('There was a problem connecting to the gateway.');
+				}
+
 			});
 		}
 	}).append();

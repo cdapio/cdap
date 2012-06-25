@@ -18,7 +18,7 @@
 	{{#if App.Controllers.Flows.length}}
 		<table class="table">
 		<thead>
-			<th colspan="2" style="width: 215px;">Name</th>
+			<th>Name</th>
 			<th style="width: 120px;">Last Started</th>
 			<th style="width: 120px;">Last Stopped</th>
 			<th style="width: 32px;">Runs</th>
@@ -26,18 +26,7 @@
 		</thead>
 		{{#each App.Controllers.Flows tagName="tbody"}}
 		<tr>
-			<td style="width: 18px;">
-				<div class="btn-group" style="padding:0;">
-					<button class="btn dropdown-toggle" data-toggle="dropdown">
-						<span class="caret"></span>
-					</button>
-					<ul class="dropdown-menu">
-						<li><a {{bindAttr href="href"}}>View Detail</a></li>
-						<li><a href="#/upload/new">Upload a New Version</a></li>
-						<li><a {{bindAttr href="undeployHref"}}>Undeploy This Flow</a></li>
-					</ul>
-				</div>
-			</td>
+			
 			<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
 			<td style="width: 140px;">{{started}}</td>
 			<td style="width: 140px;">{{stopped}}</td>

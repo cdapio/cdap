@@ -30,39 +30,35 @@ io.sockets.on('connection', function (socket) {
 	socket.on('manager', function (request) {
 		console.log('Manager Request', request);
 		Env.api.manager(request.method, request.params, function (error, response) {
-			if (error) {
-				socket.emit('failure', error);
-			} else {
-				socket.emit('exec', {
-					method: request.method,
-					params: typeof response === "string" ? JSON.parse(response) : response,
-					id: request.id
-				});
-			}
+			
+			socket.emit('exec', error, {
+				method: request.method,
+				params: typeof response === "string" ? JSON.parse(response) : response,
+				id: request.id
+			});
+			
 		});
 	});
 
 	socket.on('gateway', function (request) {
 		console.log('Gateway Request');
 		Env.api.gateway(request.method, request.params, function (error, response) {
-			if (error) {
-				socket.emit('failure', error);
-			}
+			
+			socket.emit('exec', error, response);
+
 		});
 	});
 
 	socket.on('monitor', function (request) {
 		console.log('Monitor Request', request);
 		Env.api.monitor(request.method, request.params, function (error, response) {
-			if (error) {
-				socket.emit('failure', error);
-			} else {
-				socket.emit('exec', {
-					method: request.method,
-					params: typeof response === "string" ? JSON.parse(response) : response,
-					id: request.id
-				});
-			}
+			
+			socket.emit('exec', error, {
+				method: request.method,
+				params: typeof response === "string" ? JSON.parse(response) : response,
+				id: request.id
+			});
+		
 		});
 	});
 

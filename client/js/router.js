@@ -14,6 +14,10 @@ define([], function () {
 					this._super(stateManager, transition);
 					App.interstitial.hide();
 					App.Controllers.Flows.load();
+				},
+				exit: function (stateManager, transition) {
+					this._super(stateManager, transition);
+					App.Controllers.Flows.unload();
 				}
 			}),
 

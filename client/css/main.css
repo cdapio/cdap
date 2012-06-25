@@ -22,6 +22,9 @@ a {
 a:hover {
 	color: #152c52;
 }
+li a {
+	cursor: pointer;
+}
 a.brand {
 	width: 140px;
 	height: 40px;

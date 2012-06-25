@@ -6,6 +6,7 @@ define([], function () {
 
 		load: function () {
 
+			var self = this;
 			this.clear();
 
 			App.interstitial.loading();
@@ -13,7 +14,12 @@ define([], function () {
 			App.socket.request('monitor', {
 				method: 'getFlows',
 				params: ['demo']
-			}, function (response) {
+			}, function (error, response) {
+
+				if (error) {
+					App.interstitial.label('Unable to connect to FlowMonitor.');
+					return;
+				}
 
 				var flows = response.params;
 				if (!flows) {
@@ -26,7 +32,47 @@ define([], function () {
 				}
 
 				App.interstitial.hide();
+				self.interval = setInterval(function () {
+					self.refresh();
+				}, 1000);
+
 			});
+		},
+		unload: function () {
+			clearInterval(this.interval);
+		},
+		refresh: function () {
+
+			if (this.pending) {
+				return;
+			}
+
+			App.socket.request('monitor', {
+				method: 'getFlows',
+				params: ['demo']
+			}, function (error, response) {
+
+				var flows = response.params;
+				if (!flows) {
+					return;
+				}
+
+				var content = App.Controllers.Flows.content;
+
+				for (var i = 0; i < flows.length; i ++) {
+
+					for (var j = 0; j < content.length; j ++) {
+
+						if (content[j].applicationId === flows[i].applicationId &&
+							content[j].flowId === flows[i].flowId) {
+							content[j].set('lastStarted', flows[i].lastStarted);
+							content[j].set('lastStopped', flows[i].lastStopped);
+							content[j].set('currentState', flows[i].currentState);
+						}
+					}
+				}
+			});
+
 		},
 		start: function (app, id, version) {
 
@@ -46,18 +92,20 @@ define([], function () {
 				}
 			}
 
+			App.Controllers.Flows.pending = true;
 			thisFlow.set('currentState', 'STARTING');
 
 			App.socket.request('manager', {
 				method: 'start',
 				params: [app, id, version]
-			}, function (response) {
+			}, function (error, response) {
+
+				App.Controllers.Flows.pending = false;
 
 				if (App.Controllers.Flow.current) {
 					App.Controllers.Flow.set('currentRun', response.params.id);
 				}
 
-				thisFlow.set('currentState', 'RUNNING');
 				thisFlow.set('lastStarted', new Date().getTime() / 1000);
 
 				if (App.Controllers.Flow.current) {
@@ -85,27 +133,30 @@ define([], function () {
 				}
 			}
 
+			App.Controllers.Flows.pending = true;
 			thisFlow.set('currentState', 'STOPPING');
 
 			App.socket.request('manager', {
 				method: 'stop',
 				params: [app, id, version]
-			}, function (response) {
+			}, function (error, response) {
+
+				App.Controllers.Flows.pending = false;
 
 				if (App.Controllers.Flow.current) {
 
-					App.Controllers.Flow.history.pushObject(App.Models.Run.create({
+					App.Controllers.Flow.history.unshiftObject(App.Models.Run.create({
 						"runId": response.params.id,
 						"endStatus": "STOPPED",
 						"startTime": thisFlow.get('lastStarted'),
 						"endTime": new Date().getTime() / 1000
 					}));
+					App.Controllers.Flow.history.popObject();
 
 					App.Controllers.Flow.stop_spin();
 				}
 
 				thisFlow.set('runs', thisFlow.runs + 1);
-				thisFlow.set('currentState', 'STOPPED');
 				thisFlow.set('lastStopped', new Date().getTime() / 1000);
 
 			});

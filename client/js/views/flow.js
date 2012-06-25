@@ -31,8 +31,13 @@ define([
 				.addClass('alert-error').html('Error: ' + message).show();
 		},
 		delete: function () {
-			var id = 0;
-			$('#modal-from-dom').data('id', id).modal('show');
+			
+			if (App.Controllers.Flow.current.get('currentState') !== 'STOPPED' &&
+				App.Controllers.Flow.current.get('currentState') !== 'DEPLOYED') {
+				App.Views.Flow.showError('Cannot remove: Please stop the flow before removing.');
+			} else {
+				$('#modal-from-dom').modal('show');
+			}
 		},
 		confirmed: function (event) {
 
@@ -43,9 +48,16 @@ define([
 			App.socket.request('manager', {
 				method: 'remove',
 				params: ['demo', app, id]
-			}, function (response) {
+			}, function (error, response) {
+
 				$('#modal-from-dom').modal('hide');
-				App.router.set('location', '#/');
+
+				if (error) {
+					App.Views.Flow.showError(error.message);
+				} else {
+					App.router.set('location', '#/');
+				}
+
 			});
 		},
 		canceled: function () {
