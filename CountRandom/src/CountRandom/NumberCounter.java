@@ -1,4 +1,4 @@
-package my1stapp;
+package CountRandom;
 
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;

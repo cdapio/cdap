@@ -10,3 +10,11 @@ out/
 .idea/
 .gradle/
 .clover/
+*.iml
+
+# build output
+build/
+classes/
+
+#MacOS files
+.DS_Store

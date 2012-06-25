@@ -1,4 +1,4 @@
-package my1stapp;
+package CountRandom;
 
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
