@@ -62,15 +62,21 @@ public class EventClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
+    String name = this.getClass().getSimpleName();
     Copyright.print(out);
-    out.println("Usage: EventClient <option> ... with");
+    out.println("Usage: ");
+    out.println("  " + name + " --stream <name> --body <value> [ <option> ... ]");
+    out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      To specify the name of the rest collector");
-    out.println("  --stream <name>         To specify the destination event stream");
-    out.println("  --header <name> <value> To specify a header for the event to send. Can be used multiple times");
+    out.println("  --stream <name>         To specify the destination event stream of the");
+    out.println("                          form <flowname> or <flowname>/<streamname>");
+    out.println("  --header <name> <value> To specify a header for the event to send. Can");
+    out.println("                          be used multiple times");
     out.println("  --body <value>          To specify the body of the event as a string");
-    out.println("  --body-file <path>      To specify a file containing the binary body of the event");
+    out.println("  --body-file <path>      To specify a file containing the binary body of");
+    out.println("                          the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {

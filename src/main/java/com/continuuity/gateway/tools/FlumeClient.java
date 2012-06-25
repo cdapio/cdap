@@ -2,7 +2,7 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.options.Option;
-import com.continuuity.common.options.OptionsParser;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
@@ -76,20 +76,23 @@ public class FlumeClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    OptionsParser.printUsage(this, this.getClass().getSimpleName(), "0.1.0", out);
-    /*
+    String name = this.getClass().getSimpleName();
     Copyright.print(out);
-    out.println("Usage: FlumeClient <option> ... with");
+    out.println("Usage: ");
+    out.println("  " + name + " --stream <name> --body <value> [ <option> ... ]");
+    out.println("Options:");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      To specify the name of the flume` collector");
-    out.println("  --stream <name>         To specify the destination event stream");
-    out.println("  --header <name> <value> To specify a header for the event to send. Can be used multiple times");
+    out.println("  --stream <name>         To specify the destination event stream of the");
+    out.println("                          form <flowname> or <flowname>/<streamname>");
+    out.println("  --header <name> <value> To specify a header for the event to send. Can");
+    out.println("                          be used multiple times");
     out.println("  --body <value>          To specify the body of the event as a string");
-    out.println("  --body-file <path>      To specify a file containing the binary body of the event");
+    out.println("  --body-file <path>      To specify a file containing the binary body of");
+    out.println("                          the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
-    */
     if (error) {
       throw new IllegalArgumentException();
     }
