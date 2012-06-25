@@ -40,6 +40,7 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.TTQueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
@@ -75,6 +76,8 @@ implements TransactionalOperationExecutor {
   private OrderedVersionedColumnarTable orderedTable;
 
   private TTQueueTable queueTable;
+
+  private TTQueueTable streamTable;
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
@@ -185,7 +188,7 @@ implements TransactionalOperationExecutor {
     if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
       QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
       new QueueFinalize(ack.getKey(), ack.getEntryPointer(), ack.getConsumer())
-      .execute(this.queueTable, pointer);
+      .execute(getQueueTable(ack.getKey()), pointer);
     }
 
     // Transaction was successfully committed
@@ -298,8 +301,8 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(QueueEnqueue enqueue,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
-    EnqueueResult result = this.queueTable.enqueue(enqueue.getKey(),
-        enqueue.getData(), pointer.getSecond());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(
+        enqueue.getKey(), enqueue.getData(), pointer.getSecond());
     enqueue.setResult(result);
     return new WriteTransactionResult(true,
         new QueueUnenqueue(enqueue.getKey(), result.getEntryPointer()));
@@ -308,8 +311,8 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(QueueAck ack,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
-    boolean result = this.queueTable.ack(ack.getKey(), ack.getEntryPointer(),
-        ack.getConsumer());
+    boolean result = getQueueTable(ack.getKey()).ack(ack.getKey(),
+        ack.getEntryPointer(), ack.getConsumer());
     if (!result) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(false);
@@ -324,8 +327,9 @@ implements TransactionalOperationExecutor {
     initialize();
     int retries = 0;
     long start = System.currentTimeMillis();
+    TTQueueTable queueTable = getQueueTable(dequeue.getKey());
     while (retries < MAX_DEQUEUE_RETRIES) {
-      DequeueResult result = this.queueTable.dequeue(dequeue.getKey(),
+      DequeueResult result = queueTable.dequeue(dequeue.getKey(),
           dequeue.getConsumer(), dequeue.getConfig(),
           this.oracle.getReadPointer());
       if (result.shouldRetry()) {
@@ -385,7 +389,7 @@ implements TransactionalOperationExecutor {
           throws OmidTransactionException {
     // Perform queue invalidates
     for (QueueInvalidate invalidate : invalidates) {
-      invalidate.execute(this.queueTable, pointer);
+      invalidate.execute(getQueueTable(invalidate.queueName), pointer);
     }
     // Perform deletes
     for (Delete delete : deletes) {
@@ -468,6 +472,15 @@ implements TransactionalOperationExecutor {
     }
   }
 
+  private TTQueueTable getQueueTable(byte[] queueName) {
+    if (Bytes.startsWith(queueName, TTQueue.QUEUE_NAME_PREFIX))
+      return this.queueTable;
+    if (Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX))
+      return this.streamTable;
+    // by default, use queue table
+    return this.queueTable;
+  }
+  
   /**
    * A utility method that ensures this class is properly initialized before
    * it can be used. This currently entails creating real objects for all
@@ -480,6 +493,7 @@ implements TransactionalOperationExecutor {
       this.randomTable = this.tableHandle.getTable(Bytes.toBytes("random"));
       this.orderedTable = this.tableHandle.getTable(Bytes.toBytes("ordered"));
       this.queueTable = this.tableHandle.getQueueTable(Bytes.toBytes("queues"));
+      this.streamTable = this.tableHandle.getStreamTable(Bytes.toBytes("streams"));
     }
   }
 

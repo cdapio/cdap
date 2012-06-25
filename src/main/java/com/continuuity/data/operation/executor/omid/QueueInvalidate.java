@@ -28,7 +28,7 @@ public abstract class QueueInvalidate {
         .toString();
   }
   
-  public abstract void execute(TTQueueTable queueTabler,
+  public abstract void execute(TTQueueTable queueTable,
       ImmutablePair<ReadPointer,Long> txPointer);
 
   public static class QueueUnenqueue extends QueueInvalidate {

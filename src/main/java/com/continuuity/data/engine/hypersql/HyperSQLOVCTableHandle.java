@@ -16,11 +16,11 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
-  
+
   private final String hyperSqlJDBCString;
   private final Properties hyperSqlProperties;
   private final Connection connection;
-  
+
   @Inject
   public HyperSQLOVCTableHandle(
       @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString,
@@ -31,7 +31,7 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
     this.connection = DriverManager.getConnection(this.hyperSqlJDBCString,
         this.hyperSqlProperties);
   }
-  
+
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
     HyperSQLOVCTable table =

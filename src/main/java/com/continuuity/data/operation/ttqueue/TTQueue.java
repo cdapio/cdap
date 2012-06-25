@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 
@@ -11,6 +13,9 @@ import com.continuuity.data.table.ReadPointer;
  */
 public interface TTQueue {
 
+  public static final byte [] QUEUE_NAME_PREFIX = Bytes.toBytes("queue://");
+  public static final byte [] STREAM_NAME_PREFIX = Bytes.toBytes("stream://");
+  
   /**
    * Inserts an entry into the tail of the queue using the specified write
    * version.

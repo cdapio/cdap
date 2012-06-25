@@ -19,6 +19,10 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   private final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
+  
+  private final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
+      new ConcurrentSkipListMap<byte[],TTQueueTable>(
+          Bytes.BYTES_COMPARATOR);
 
   /**
    * This is the timestamp generator that we will use
@@ -44,7 +48,9 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     return existing != null ? existing : table;
   }
 
-  private static final byte [] queueOVCTable = Bytes.toBytes("__queueOVCTable");
+  public static final byte [] queueOVCTable = Bytes.toBytes("__queueOVCTable");
+
+  public static final byte [] streamOVCTable = Bytes.toBytes("__streamOVCTable");
   
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName) {
@@ -56,6 +62,18 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
+  }
+  
+  @Override
+  public TTQueueTable getStreamTable(byte[] streamTableName) {
+    TTQueueTable streamTable = this.streamTables.get(streamTableName);
+    if (streamTable != null) return streamTable;
+    OrderedVersionedColumnarTable table = getTable(streamOVCTable);
+    
+    streamTable = new TTQueueTableOnVCTable(table, timeOracle, conf);
+    TTQueueTable existing = this.streamTables.putIfAbsent(
+        streamTableName, streamTable);
+    return existing != null ? existing : streamTable;
   }
 
   public abstract OrderedVersionedColumnarTable createNewTable(

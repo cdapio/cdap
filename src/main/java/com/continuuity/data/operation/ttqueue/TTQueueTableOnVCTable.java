@@ -19,9 +19,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   private final TimestampOracle timeOracle;
   private final Configuration conf;
 
-  private final ConcurrentSkipListMap<byte[], TTQueueOnVCTable> queues =
-      new ConcurrentSkipListMap<byte[],TTQueueOnVCTable>(
-          Bytes.BYTES_COMPARATOR);
+  private final ConcurrentSkipListMap<byte[], TTQueue> queues =
+      new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
   public TTQueueTableOnVCTable(VersionedColumnarTable table,
       TimestampOracle timeOracle, Configuration conf) {
@@ -30,11 +29,12 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
     this.conf = conf;
   }
 
-  private TTQueueOnVCTable getQueue(byte [] queueName) {
-    TTQueueOnVCTable queue = this.queues.get(queueName);
+  private TTQueue getQueue(byte [] queueName) {
+    TTQueue queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueOnVCTable(this.table, queueName, this.timeOracle, this.conf);
-    TTQueueOnVCTable existing = this.queues.putIfAbsent(queueName, queue);
+    queue = new TTQueueOnVCTable(this.table, queueName, this.timeOracle,
+        this.conf);
+    TTQueue existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;
   }
 
@@ -76,12 +76,18 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   @Override
   public String getGroupInfo(byte[] queueName, int groupId) {
-    return getQueue(queueName).getInfo(groupId);
+    TTQueue queue = getQueue(queueName);
+    if (queue instanceof TTQueueOnVCTable)
+      return ((TTQueueOnVCTable)queue).getInfo(groupId);
+    return "GroupInfo not supported";
   }
 
   @Override
   public String getEntryInfo(byte[] queueName, long entryId) {
-    return getQueue(queueName).getEntryInfo(entryId);
+    TTQueue queue = getQueue(queueName);
+    if (queue instanceof TTQueueOnVCTable)
+      return ((TTQueueOnVCTable)queue).getEntryInfo(entryId);
+    return "EntryInfo not supported";
   }
 
   @Override

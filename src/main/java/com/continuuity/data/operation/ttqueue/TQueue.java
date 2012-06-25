@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 
+
 /**
  * A Transactional Tabular Queue interface.
  *
@@ -8,7 +9,7 @@ package com.continuuity.data.operation.ttqueue;
  * for more information about TTQueue semantics.
  */
 public interface TQueue {
-
+  
   /**
    * Inserts an entry into the tail of the queue.
    * @param data the data to be inserted into the queue
