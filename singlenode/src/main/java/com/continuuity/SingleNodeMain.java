@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetAddress;
 
 /**
@@ -162,12 +163,42 @@ public class SingleNodeMain {
 
 
   /**
+   * Print the usage statement and return null.
+   *
+   * @param error indicates whether this was invoked as the result of an error
+   * @throws IllegalArgumentException in case of error
+   */
+  static void usage(boolean error) {
+    PrintStream out = (error ? System.err : System.out);
+    Copyright.print(out);
+    out.println("Requirements: ");
+    out.println("  Java:    JDK 1.6+ must be installed and JAVA_HOME environment variable set to the java executable");
+    out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  The \"node\" executable must be in the system $PATH environment variable");
+    out.println("");
+    out.println("Usage: ");
+    out.println("  ./bigFlow [options]");
+    out.println("");
+    out.println("Additional options:");
+    out.println("  --help      To print this message");
+    if (error) {
+      throw new IllegalArgumentException();
+    }
+  }
+
+
+  /**
    * The root of all goodness!
    *
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-    // We don't support command line options currently
+    // We only support 'help' command line options currently
+    if (args.length > 0) {
+      if ("--help".equals(args[0]) || "-h".equals(args[0])) {
+          usage(false);
+          return;
+      }
+    }
 
     // Retrieve all of the modules from each of the components
     FARModules farModules = new FARModules();
