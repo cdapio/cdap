@@ -71,12 +71,12 @@ public class EventClient {
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --connector <name>      To specify the name of the rest collector");
     out.println("  --stream <name>         To specify the destination event stream of the");
-    out.println("                          form <flowname> or <flowname>/<streamname>");
+    out.println("                          form <flow> or <flow>/<stream>.");
     out.println("  --header <name> <value> To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
     out.println("  --body <value>          To specify the body of the event as a string");
-    out.println("  --body-file <path>      To specify a file containing the binary body of");
-    out.println("                          the event");
+    out.println("  --body-file <path>      Alternative to --body, to specify a file that");
+    out.println("                          contains the binary body of the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -231,12 +231,27 @@ public class EventClient {
       System.err.println("Error sending HTTP request: " + e.getMessage());
       return null;
     }
-    // show the HTTP status and verify it was successful
-    System.out.println(response.getStatusLine());
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      return null;
-    }
+    if (!checkHttpStatus(response)) return null;
     return "OK.";
+  }
+
+  /**
+   * Check whether the Http return code is positive. If not, print the error message
+   * and return false. Otherwise, if verbose is on, print the response status line.
+   * @param response the HTTP response
+   * @return whether the response indicates success
+   */
+  boolean checkHttpStatus(HttpResponse response) {
+    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      if (verbose)
+        System.out.println(response.getStatusLine());
+      else
+        System.err.println(response.getStatusLine().getReasonPhrase());
+      return false;
+    }
+    if (verbose)
+      System.out.println(response.getStatusLine());
+    return true;
   }
 
   public String execute(String[] args, CConfiguration config) {

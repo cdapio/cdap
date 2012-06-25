@@ -323,6 +323,10 @@ public class DataClient {
    * return the resulting value to the use, following arguments
    */
   String writeList(byte[] binaryResponse) {
+    if (binaryResponse.length == 0) {
+      System.out.println("No results.");
+      return "No results.";
+    }
     // was a file specified to write to?
     if (valueFile != null) {
       try {
@@ -338,7 +342,7 @@ public class DataClient {
     else {
       try {
         System.out.write(binaryResponse);
-        return binaryResponse.length + " bytes written to standard out";
+        return binaryResponse.length + " bytes written to standard out.";
       } catch (IOException e) {
         System.err.println("Error writing to standard out: " + e.getMessage());
         return null;
@@ -408,13 +412,7 @@ public class DataClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      // show the HTTP status and verify it was successful
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        System.err.println(response.getStatusLine());
-        return null;
-      } else {
-        if (verbose) System.out.println(response.getStatusLine());
-      }
+      if (!checkHttpStatus(response)) return null;
       // read the binary value from the HTTP response
       binaryValue = Util.readHttpResponse(response);
       if (binaryValue == null) return null;
@@ -431,13 +429,7 @@ public class DataClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      // show the HTTP status and verify it was successful
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        System.err.println(response.getStatusLine());
-        return null;
-      } else {
-        if (verbose) System.out.println(response.getStatusLine());
-      }
+      if (!checkHttpStatus(response)) return null;
       return "OK.";
     }
     else if ("delete".equals(command)) {
@@ -448,13 +440,7 @@ public class DataClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      // show the HTTP status and verify it was successful
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        System.err.println(response.getStatusLine());
-        return null;
-      } else {
-        if (verbose) System.out.println(response.getStatusLine());
-      }
+      if (!checkHttpStatus(response)) return null;
       return "OK.";
     }
     else if ("list".equals(command)) {
@@ -484,12 +470,8 @@ public class DataClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        System.err.println(response.getStatusLine());
-        return null;
-      } else {
-        if (verbose) System.out.println(response.getStatusLine());
-      }
+      if (!checkHttpStatus(response)) return null;
+
       // read the binary value from the HTTP response
       binaryValue = Util.readHttpResponse(response);
       if (binaryValue == null) return null;
@@ -497,6 +479,25 @@ public class DataClient {
       return writeList(binaryValue);
     }
     return null;
+  }
+
+  /**
+   * Check whether the Http return code is positive. If not, print the error message
+   * and return false. Otherwise, if verbose is on, print the response status line.
+   * @param response the HTTP response
+   * @return whether the response indicates success
+   */
+  boolean checkHttpStatus(HttpResponse response) {
+    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      if (verbose)
+        System.out.println(response.getStatusLine());
+      else
+        System.err.println(response.getStatusLine().getReasonPhrase());
+      return false;
+    }
+    if (verbose)
+      System.out.println(response.getStatusLine());
+    return true;
   }
 
   public String execute(String[] args, CConfiguration config) {
