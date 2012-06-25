@@ -139,8 +139,8 @@ startScripts {
  */
 tasks.distZip {
     baseName = "bigFlow"
-    appendix = "singlenode"
-    version = ""
+    appendix = "Developer-Edition"
+    version = "1.0.0"
     classifier = ""
 }
 
