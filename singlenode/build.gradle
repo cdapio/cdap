@@ -125,7 +125,7 @@ startScripts {
         def scriptFileWin = file "${outputDir}/${applicationName}.bat"
         scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=$1;%APP_HOME%\\\\conf\\\\')
     }
-    jvmOpts = "-Xmx1024m" 
+    ext.jvmOpts = "-Xmx1024m" 
     inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
     doLast { 
         def optsEnvVar = "DEFAULT_JVM_OPTS" 
