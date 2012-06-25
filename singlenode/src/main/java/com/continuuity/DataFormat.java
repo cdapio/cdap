@@ -1,6 +1,7 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.DirUtils;
 
 import java.io.*;
@@ -16,6 +17,28 @@ public class DataFormat {
      * The name of the configuration governing where data-fabric data is stored
      */
     private static String dataDirPropName = "data.local.jdbc";
+
+    /**
+     * Print the usage statement and return null.
+     *
+     * @param error indicates whether this was invoked as the result of an error
+     * @throws IllegalArgumentException in case of error
+     */
+    static void usage(boolean error) {
+        PrintStream out = (error ? System.err : System.out);
+        Copyright.print(out);
+        out.println("data-format utility:");
+        out.println("  This utility will reformat the continuuity data-store, wiping out any existing user data.  The bigFlow application must first be stopped before reformatting.");
+        out.println("");
+        out.println("Usage: ");
+        out.println("  ./data-format [options]");
+        out.println("");
+        out.println("options:");
+        out.println("  --help      To print this message");
+        if (error) {
+            throw new IllegalArgumentException();
+        }
+    }
 
     /**
      *
@@ -45,6 +68,14 @@ public class DataFormat {
       * @param args
      */
     public static void main(String[] args) {
+        // We only support 'help' command line options currently
+        if (args.length > 0) {
+            if ("--help".equals(args[0]) || "-h".equals(args[0])) {
+                usage(false);
+                return;
+            }
+        }
+
         // first confirm user intends to delete all data
         String userinput = promptUser("Warning: this will delete any existing Continuuity user data.  Proceed? (yes/no): ");
         if(!("yes".equals(userinput) || "no".equals(userinput))) {
