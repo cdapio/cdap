@@ -59,6 +59,8 @@ public class DataClient {
   boolean urlEncoded = false;    // whether --key and display of value use url encoding
   String keyFile = null;         // the file to read the key from
   String valueFile = null;       // the file to read/write the value from/to
+  int start = -1;                // the index to start the list from
+  int limit = -1;                // the number of elements to list
 
   boolean keyNeeded;             // does the command require a key?
   boolean valueNeeded;           // does the command require a value?
@@ -91,6 +93,8 @@ public class DataClient {
     out.println("  --hex                   To use hexadecimal encoding for key and value");
     out.println("  --ascii                 To use ASCII encoding for key and value");
     out.println("  --url                   To use URL encoding for key and value");
+    out.println("  --start <n>             To start at the nth element - only for list");
+    out.println("  --limit <k>             To list at most k elements - only for list");
     out.println("  --encoding <name>       To use this encoding for key and value");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
@@ -144,6 +148,22 @@ public class DataClient {
       } else if ("--value-file".equals(arg)) {
         if (++pos >= args.length) usage(true);
         valueFile = args[pos];
+      } else if ("--start".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        try {
+          start = Integer.valueOf(args[pos]);
+          continue;
+        } catch (NumberFormatException e) {
+          usage(true);
+        }
+      } else if ("--limit".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        try {
+          limit = Integer.valueOf(args[pos]);
+          continue;
+        } catch (NumberFormatException e) {
+          usage(true);
+        }
       } else if ("--encoding".equals(arg)) {
         if (++pos >= args.length) usage(true);
         encoding = args[pos];
@@ -176,6 +196,8 @@ public class DataClient {
     // verify that either --key or --key-file is given, and same for --value and --value-file
     if (key != null && keyFile != null) usage("Only one of --key and --key-file may be specified");
     if (value != null && valueFile != null) usage("Only one of --value and --value-file may be specified");
+    // verify that --limit or --start are only given for list command
+    if (!"list".equals(command) && (start >= 0 || limit >= 0)) usage("--start and --limit are only allowed for list");
     // verify that only one encoding was given
     int encodings = 0;
     keyNeeded = !command.equals("list");
@@ -443,6 +465,8 @@ public class DataClient {
       else if (hexEncoded) requestUrl += "&enc=hex";
       else if (encoding != null) requestUrl += "&enc=" + encoding;
       else requestUrl += "&enc=" + Charset.defaultCharset().displayName();
+      if (start > 0) requestUrl += "&start=" + start;
+      if (limit > 0) requestUrl += "&limit=" + start;
       if (verbose) System.out.println("Request URI is: " + requestUrl);
       try {
         uri = URI.create(requestUrl);
