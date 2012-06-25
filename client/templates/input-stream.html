@@ -1,8 +1,12 @@
 
 <i {{action hide on="click"}} class="icon-remove-sign pull-right" /><h4>Inject a Value</h4>
 <div class="well" style="border: 1px solid #EDEDED;border-radius:4px;padding:4px 5px;margin-bottom:6px;">
-	{{view App.Views.Flowlet.PayloadView id="stream-inject" placeholder="Payload"}}
-	<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
+	{{#if App.Controllers.Flow.run}}
+		Cannot inject into an historical flow.
+	{{else}}
+		{{view App.Views.Flowlet.PayloadView id="stream-inject" placeholder="Payload"}}
+		<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
+	{{/if}}
 </div>
 <div style="border: 1px solid #EDEDED;border-radius:4px;">
 	<table class="table table-condensed">
