@@ -155,7 +155,7 @@ applicationDistribution.from("$buildDir/javadoc") {
 
 // include examples from example project
 task createExamples (type: Copy) {
-    def examplesdir = file ("$buildDir/docs/examples")
+    def examplesdir = file ("$buildDir/examples")
     //outputs.dir examplesdir
     from project(':examples').projectDir
     into examplesdir 
