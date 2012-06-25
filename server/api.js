@@ -99,6 +99,39 @@ try {
 			} else {
 				done('Unknown method for service Manager: ' + method, null);
 			}
+
+			conn.end();
+
+		});
+
+	};
+
+	this.monitor = function (method, params, done) {
+
+		params = params || [];
+
+		var conn = thrift.createConnection(
+			this.config.monitor.host,
+			this.config.monitor.port, {
+			transport: ttransport.TFramedTransport,
+			protocol: tprotocol.TBinaryProtocol
+		});
+
+		conn.on('error', function (error) {
+			console.log('FlowMonitor: ', error);
+			done('Could not connect to FlowMonitor.');
+		});
+		
+		conn.on('connect', function (response) {
+			var Monitor = thrift.createClient(FlowMonitor, conn);
+			if (method in Monitor) {
+				Monitor[method].apply(Monitor, params.concat(done));
+			} else {
+				done('Unknown method for service Monitor: ' + method, null);
+			}
+
+			conn.end();
+			
 		});
 
 	};
@@ -134,33 +167,6 @@ try {
 
 		post_req.write(post_data);
 		post_req.end();
-
-	};
-
-	this.monitor = function (method, params, done) {
-
-		params = params || [];
-
-		var conn = thrift.createConnection(
-			this.config.monitor.host,
-			this.config.monitor.port, {
-			transport: ttransport.TFramedTransport,
-			protocol: tprotocol.TBinaryProtocol
-		});
-
-		conn.on('error', function (error) {
-			console.log('FlowMonitor: ', error);
-			done('Could not connect to FlowMonitor.');
-		});
-		
-		conn.on('connect', function (response) {
-			var Monitor = thrift.createClient(FlowMonitor, conn);
-			if (method in Monitor) {
-				Monitor[method].apply(Monitor, params.concat(done));
-			} else {
-				done('Unknown method for service Monitor: ' + method, null);
-			}
-		});
 
 	};
 
