@@ -1,5 +1,5 @@
 <?xml version="1.0" ?> 
-<project name="CountRandom" default="jar">
+<project name="CountTokens" default="jar">
 
     <property name="bigflow.lib" value="../.."/>
     <property name="example.name" value="${ant.project.name}"/>

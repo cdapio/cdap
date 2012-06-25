@@ -1,4 +1,4 @@
-package counttokens;
+package CountTokens;
 
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.AbstractComputeFlowlet;

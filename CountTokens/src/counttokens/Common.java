@@ -1,4 +1,4 @@
-package counttokens;
+package CountTokens;
 
 public class Common {
 

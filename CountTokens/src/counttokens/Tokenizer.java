@@ -1,4 +1,4 @@
-package counttokens;
+package CountTokens;
 
 import com.continuuity.api.flow.flowlet.AbstractComputeFlowlet;
 import com.continuuity.api.flow.flowlet.OutputCollector;

@@ -1,9 +1,9 @@
-package counttokens;
+package CountTokens;
 
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 
-public class CountTokenFlow implements Flow {
+public class Main implements Flow {
   public void configure(FlowSpecifier specifier) {
     specifier.name("CountTokens");
     specifier.email("me@continuuity.com");
