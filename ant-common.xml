@@ -1,0 +1,49 @@
+<?xml version="1.0" ?> 
+<project name="examples" default="jar">
+
+    <property environment="env"/>
+    <property name="bigflow.home" value="${env.BIGFLOW_HOME}"/>
+    <!-- if BIGFLOW_HOME is set, use it to find the libraries; otherwise use ../.. -->
+    <condition property="bigflow.lib" value="../.." else="${bigflow.home}">
+        <matches string="${bigflow.home}" pattern="..env.BIGFLOW_HOME."/>
+    </condition>
+    <echo message="Expecting BigFlow API libraries in ${bigflow.lib}"/>
+    <property name="example.name" value="${ant.project.name}"/>
+    <property name="main.class" value="${example.name}.Main"/>
+    <property name="jar.name" value="${example.name}.jar" />
+    <property name="build.dir" value="classes"/>
+    <property name="source.dir" value="src"/>
+    <property name="manifest.file" value="${build.dir}/META-INF/MANIFEST.MF"/>
+
+    <path id="bigflow.classpath">
+        <fileset dir="${bigflow.lib}">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <target name="init">
+		<mkdir dir="${build.dir}" />
+	</target>
+
+	<target name="compile" depends="init">
+		<javac srcdir="${source.dir}" destdir="${build.dir}"
+               classpathref="bigflow.classpath"  includeantruntime="false" />
+	</target>
+	
+    <target name="manifest" depends="init">
+        <mkdir dir="${build.dir}/META-INF"/>
+        <manifest file="${manifest.file}">
+            <attribute name="Main-Class" value="${main.class}" />
+        </manifest>
+    </target>
+
+    <target name="jar" depends="compile, manifest">
+        <jar destfile="${jar.name}" basedir="classes" manifest="${manifest.file}"/>
+    </target>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete file="${jar.name}" />
+	</target>
+	
+</project>
