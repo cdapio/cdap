@@ -1,0 +1,33 @@
+<project name="Continuuity Example Builds" default="examplesJar">
+<property environment="env"/>
+  <macrodef name="iterate">
+    <attribute name="target"/>
+    <sequential>
+      <subant target="@{target}">
+        <fileset dir="." includes="*/build.xml"/>
+      </subant>
+    </sequential>
+  </macrodef>
+
+  <target name="examplesClean">
+    <iterate target="clean"/>
+  </target>
+
+  <target name="examplesInit">
+    <iterate target="init"/>
+  </target>
+
+  <target name="examplesManifest">
+    <iterate target="manifest"/>
+  </target>
+
+  <target name="examplesCompile">
+    <iterate target="compile"/>
+  </target>
+
+  <target name="examplesJar">
+<echo>CLASSPATH = ${env.CLASSPATH}</echo>
+    <iterate target="jar"/>
+  </target>
+
+</project>
