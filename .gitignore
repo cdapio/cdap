@@ -35,3 +35,6 @@ npm*
 
 # Ignore log files
 logs/
+
+# MacOS files
+.DS_Store
