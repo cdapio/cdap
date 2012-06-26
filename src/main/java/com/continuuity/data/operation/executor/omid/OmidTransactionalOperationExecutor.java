@@ -136,7 +136,7 @@ implements TransactionalOperationExecutor {
     if (formatFabric.shouldFormatQueues()) this.queueTable.format();
     if (formatFabric.shouldFormatStreams()) this.streamTable.format();
   }
-  
+
   // Write batches
 
   @Override
@@ -364,15 +364,21 @@ implements TransactionalOperationExecutor {
 
   @Override
   public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
-    unsupported("Getting group ID currently not implemented");
-    return 0L;
+    initialize();
+    TTQueueTable table = getQueueTable(getGroupId.getQueueName());
+    long groupid = table.getGroupID(getGroupId.getQueueName());
+    getGroupId.setResult(groupid);
+    return groupid;
   }
 
   @Override
   public QueueMeta execute(GetQueueMeta getQueueMeta)
       throws SyncReadTimeoutException {
-    // TODO Auto-generated method stub
-    return null;
+    initialize();
+    TTQueueTable table = getQueueTable(getQueueMeta.getQueueName());
+    QueueMeta queueMeta = table.getQueueMeta(getQueueMeta.getQueueName());
+    getQueueMeta.setResult(queueMeta);
+    return queueMeta;
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {
@@ -419,6 +425,7 @@ implements TransactionalOperationExecutor {
 
   // Single Write Operations (Wrapped and called in a transaction batch)
 
+  @SuppressWarnings("unused")
   private void unsupported(String msg) {
     throw new RuntimeException(msg);
   }
@@ -491,7 +498,7 @@ implements TransactionalOperationExecutor {
     // by default, use queue table
     return this.queueTable;
   }
-  
+
   /**
    * A utility method that ensures this class is properly initialized before
    * it can be used. This currently entails creating real objects for all
