@@ -1,14 +1,13 @@
 package CountTokens;
 
 import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
-import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
+import com.continuuity.api.flow.flowlet.builders.*;
 
 public class UpperCaser extends AbstractComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {
-    TupleSchema schema = new TupleSchemaBuilderImpl().
+    TupleSchema schema = new TupleSchemaBuilder().
         add("field", String.class).
         add("word", String.class).
         create();
@@ -25,7 +24,7 @@ public class UpperCaser extends AbstractComputeFlowlet {
     if (word == null) return;
     String upper = word.toUpperCase();
 
-    Tuple output = new TupleBuilderImpl().
+    Tuple output = new TupleBuilder().
         set("word", upper).
         create();
 

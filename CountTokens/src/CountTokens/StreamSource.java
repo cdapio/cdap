@@ -1,14 +1,7 @@
 package CountTokens;
 
-import com.continuuity.api.flow.flowlet.AbstractComputeFlowlet;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.flow.definition.impl.FlowStream;
-import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
-import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
+import com.continuuity.api.flow.flowlet.*;
+import com.continuuity.api.flow.flowlet.builders.*;
 
 import java.util.HashMap;
 
@@ -16,7 +9,7 @@ public class StreamSource extends AbstractComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {
-    TupleSchema out = new TupleSchemaBuilderImpl().
+    TupleSchema out = new TupleSchemaBuilder().
         add("title", String.class).
         add("text", String.class).
         create();
@@ -35,7 +28,7 @@ public class StreamSource extends AbstractComputeFlowlet {
     String title = headers.get("title");
     String text = body == null ? null :new String(body);
 
-    Tuple output = new TupleBuilderImpl().
+    Tuple output = new TupleBuilder().
         set("title", title).
         set("text", text).
         create();

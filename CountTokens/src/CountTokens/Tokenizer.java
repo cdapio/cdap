@@ -1,25 +1,19 @@
 package CountTokens;
 
-import com.continuuity.api.flow.flowlet.AbstractComputeFlowlet;
-import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
-import com.continuuity.api.flow.flowlet.Tuple;
-import com.continuuity.api.flow.flowlet.TupleContext;
-import com.continuuity.api.flow.flowlet.TupleSchema;
-import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
-import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
+import com.continuuity.api.flow.flowlet.*;
+import com.continuuity.api.flow.flowlet.builders.*;
 
 public class Tokenizer extends AbstractComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {
-    TupleSchema in = new TupleSchemaBuilderImpl().
+    TupleSchema in = new TupleSchemaBuilder().
         add("title", String.class).
         add("text", String.class).
         create();
     configurator.getDefaultTupleInputStream().setSchema(in);
 
-    TupleSchema out = new TupleSchemaBuilderImpl().
+    TupleSchema out = new TupleSchemaBuilder().
         add("field", String.class).
         add("word", String.class).
         create();
@@ -44,7 +38,7 @@ public class Tokenizer extends AbstractComputeFlowlet {
 
     for (String token : tokens) {
 
-      Tuple output = new TupleBuilderImpl().
+      Tuple output = new TupleBuilder().
           set("field", field).
           set("word", token).
           create();
