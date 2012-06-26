@@ -1,4 +1,4 @@
-<?xml version="1.0" ?> 
+<?xml version="1.0" ?>
 <project name="examples" default="jar">
 
     <property environment="env"/>
@@ -22,14 +22,14 @@
     </path>
 
     <target name="init">
-		<mkdir dir="${build.dir}" />
-	</target>
+        <mkdir dir="${build.dir}" />
+    </target>
 
-	<target name="compile" depends="init">
-		<javac srcdir="${source.dir}" destdir="${build.dir}"
+    <target name="compile" depends="init">
+        <javac srcdir="${source.dir}" destdir="${build.dir}"
                classpathref="bigflow.classpath"  includeantruntime="false" />
-	</target>
-	
+    </target>
+
     <target name="manifest" depends="init">
         <mkdir dir="${build.dir}/META-INF"/>
         <manifest file="${manifest.file}">
@@ -41,9 +41,9 @@
         <jar destfile="${jar.name}" basedir="classes" manifest="${manifest.file}"/>
     </target>
 
-	<target name="clean">
-		<delete dir="${build.dir}" />
-		<delete file="${jar.name}" />
-	</target>
-	
+    <target name="clean">
+        <delete dir="${build.dir}" />
+        <delete file="${jar.name}" />
+    </target>
+
 </project>
