@@ -139,7 +139,7 @@ startScripts {
  */
 tasks.distZip {
     baseName = "bigFlow"
-    appendix = "Developer-Edition"
+    appendix = "developer-edition"
     version = "1.0.0"
     classifier = ""
 }
@@ -156,13 +156,15 @@ applicationDistribution.from("$buildDir/javadoc") {
 // include examples from example project
 task createExamples (type: Copy) {
     def examplesdir = file ("$buildDir/examples")
-    //outputs.dir examplesdir
     from project(':examples').projectDir
     into examplesdir 
     exclude "README.md"
+    exclude "build/"
+    exclude ".gitignore"
+    exclude "**/*.gradle"
 }
 applicationDistribution.from(createExamples) {
-    into "docs/examples"
+    into "examples"
 }
 
 task createApiJar(type: Jar) {
