@@ -239,13 +239,15 @@ public class RestHandler extends NettyRestHandler {
         }
         // valid consumer id, dequeue and return it
         String queueURI = FlowStream.buildStreamURI(destination).toString();
+        // 0th instance of group 'id' of size 1
+        QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+        // singleEntry = true means we must ack before we can see the next entry
+        QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
         QueueDequeue dequeue = new QueueDequeue(
-            queueURI.getBytes(),
-            new QueueConsumer(0, id, 1),
-            new QueueConfig(new QueuePartitioner.RandomPartitioner(), false)); // false means we don't need to ack
+            queueURI.getBytes(), queueConsumer, queueConfig);
         DequeueResult result = this.collector.getExecutor().execute(dequeue);
         if (result.isFailure()) {
-          LOG.error("Error dequeueing from stream " + queueURI + ": " + result.getMsg());
+          LOG.error("Error dequeueing from stream " + queueURI + " with consumer " + queueConsumer + ": " + result.getMsg());
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
@@ -267,6 +269,15 @@ public class RestHandler extends NettyRestHandler {
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
+        // ack the entry so that the next request can see the next entry
+        QueueAck ack = new QueueAck(queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
+        if (!this.collector.getExecutor().execute(ack)) {
+          LOG.error("Ack failed to for queue " + queueURI + ", consumer "
+              + queueConsumer + " and pointer " + result.getEntryPointer());
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
+
         // prefix each header with the destination to distinguish them from HTTP headers
         Map<String, String> prefixedHeaders = Maps.newHashMap();
         for (Map.Entry<String, String> header : headers.entrySet())

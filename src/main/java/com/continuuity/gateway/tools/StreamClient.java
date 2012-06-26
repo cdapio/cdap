@@ -2,6 +2,7 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
@@ -58,7 +59,7 @@ public class StreamClient {
   String bodyFile = null;        // the file that contains the body in binary form
   String destination = null;     // the destination stream
   Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
-
+  Long consumer = null;          // the consumer group id to fetch from the stream
 
   /**
    * Print the usage statement and return null (or empty string if this is not an error case).
@@ -73,8 +74,8 @@ public class StreamClient {
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " send --stream <name> --body <value> [ <option> ... ]");
-    out.println("  " + name + " id --stream [ <option> ]");
-    out.println("  " + name + " fetch --stream [ <option> ]");
+    out.println("  " + name + " id --stream <name> [ <option> ... ]");
+    out.println("  " + name + " fetch --stream <name> --consumer <id> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -88,6 +89,8 @@ public class StreamClient {
     out.println("                          contains the binary body of the event");
     out.println("  --hex                   To specify hexadecimal encoding for --body");
     out.println("  --url                   To specify url encoding for --body");
+    out.println("  --consumer <id>         To specify a consumer group id for the stream, as ");
+    out.println("                          obtained by " + name + " id");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -144,6 +147,14 @@ public class StreamClient {
         hex = true;
       } else if ("--url".equals(arg)) {
         urlenc = true;
+      } else if ("--consumer".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        try {
+          consumer = Long.valueOf(args[pos]);
+          continue;
+        } catch (NumberFormatException e) {
+          usage(true);
+        }
       } else if ("--help".equals(arg)) {
         usage(false);
         help = true;
@@ -156,7 +167,7 @@ public class StreamClient {
     }
   }
 
-  static List<String> supportedCommands = Arrays.asList("send", "id", "grab");
+  static List<String> supportedCommands = Arrays.asList("send", "id", "fetch");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -174,6 +185,8 @@ public class StreamClient {
     // verify that only one encoding is given for the body
     if (hex && urlenc) usage("Only one of --hex or --url may be specified");
     if (bodyFile != null && (hex || urlenc)) usage("Options --hex and --url are incompatible with --body-file (binary input)");
+    // make sure that fetch command has a consumer id
+    if ("fetch".equals(command) && consumer == null) usage("--consumer must be specified for fetch");
   }
 
   /**
@@ -307,7 +320,7 @@ public class StreamClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
       // read the binary value from the HTTP response
       byte[] binaryValue = Util.readHttpResponse(response);
       if (binaryValue == null) {
@@ -322,6 +335,7 @@ public class StreamClient {
       // prepare for HTTP
       HttpClient client = new DefaultHttpClient();
       HttpGet get = new HttpGet(uri);
+      get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer.toString());
       HttpResponse response;
       try {
         response = client.execute(get);
@@ -330,32 +344,72 @@ public class StreamClient {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
       }
-      if (!checkHttpStatus(response)) return null;
+      // we expect either OK for an event, or NO_CONTENT for end of stream
+      if (!checkHttpStatus(response, Arrays.asList(HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT)))
+        return null;
+      // did we reach the end of the stream?
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+        System.out.println("Nothing to fetch.");
+        return "Nothing to fetch.";
+      }
       // read the binary value from the HTTP response
       byte[] binaryValue = Util.readHttpResponse(response);
       if (binaryValue == null) {
         System.err.println("Unexpected response without body.");
         return null;
       }
+      // print all the headers
       for (org.apache.http.Header header : response.getAllHeaders()) {
         String name = header.getName();
         if (name.startsWith(destination)) {
           System.out.println(name.substring(destination.length() + 1) + ": " + header.getValue());
         }
       }
+      // and finally write out the body
       return writeBody(binaryValue);
     }
     return null;
   }
 
   /**
-   * Check whether the Http return code is positive. If not, print the error message
+   * Check whether the Http return code is 200 OK. If not, print the error message
    * and return false. Otherwise, if verbose is on, print the response status line.
    * @param response the HTTP response
-   * @return whether the response indicates success
+   * @return whether the response is OK
    */
   boolean checkHttpStatus(HttpResponse response) {
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+    return checkHttpStatus(response, HttpStatus.SC_OK);
+  }
+
+  /**
+   * Check whether the Http return code is as expected. If not, print the error message
+   * and return false. Otherwise, if verbose is on, print the response status line.
+   * @param response the HTTP response
+   * @param expected the expected HTTP status code
+   * @return whether the response is as expected
+   */
+  boolean checkHttpStatus(HttpResponse response, int expected) {
+    if (response.getStatusLine().getStatusCode() != expected) {
+      if (verbose)
+        System.out.println(response.getStatusLine());
+      else
+        System.err.println(response.getStatusLine().getReasonPhrase());
+      return false;
+    }
+    if (verbose)
+      System.out.println(response.getStatusLine());
+    return true;
+  }
+
+  /**
+   * Check whether the Http return code is as expected. If not, print the status message
+   * and return false. Otherwise, if verbose is on, print the response status line.
+   * @param response the HTTP response
+   * @param expected the list of expected HTTP status codes
+   * @return whether the response is as expected
+   */
+  boolean checkHttpStatus(HttpResponse response, List<Integer> expected) {
+    if (!expected.contains(response.getStatusLine().getStatusCode())) {
       if (verbose)
         System.out.println(response.getStatusLine());
       else
