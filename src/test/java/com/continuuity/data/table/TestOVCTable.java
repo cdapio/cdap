@@ -59,6 +59,28 @@ public abstract class TestOVCTable {
   }
 
   @Test
+  public void testFormatVerySimply() {
+    byte [] row = Bytes.toBytes("testFormat");
+
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    this.table.put(row, COL, 1L, row);
+
+    assertEquals(Bytes.toString(row),
+        Bytes.toString(this.table.get(row, COL, RP_MAX)));
+    
+    this.table.format();
+
+    assertNull(this.table.get(row, COL, RP_MAX));
+    
+    this.table.put(row, COL, 1L, row);
+
+    assertEquals(Bytes.toString(row),
+        Bytes.toString(this.table.get(row, COL, RP_MAX)));
+    
+  }
+  
+  @Test
   public void testMultiColumnReadsAndWrites() {
 
     byte [] row = Bytes.toBytes("testMultiColumnReadsAndWrites");

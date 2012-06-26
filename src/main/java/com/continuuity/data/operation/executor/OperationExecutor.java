@@ -13,7 +13,7 @@ import com.continuuity.data.table.OVCTableHandle;
  */
 public interface OperationExecutor
   extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor,
-          InternalReadOperationExecutor {
+          InternalOperationExecutor {
 
   public OVCTableHandle getTableHandle();
 

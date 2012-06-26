@@ -26,6 +26,7 @@ import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
@@ -83,6 +84,82 @@ public class TestOmidTransactionalOperationExecutor {
     assertTrue(Bytes.equals(readValue, value));
   }
 
+  @Test
+  public void testFormatFabric() throws Exception {
+    byte [] dataKey = Bytes.toBytes("dataKey");
+    byte [] queueKey = Bytes.toBytes("queue://queueKey");
+    byte [] streamKey = Bytes.toBytes("stream://streamKey");
+    
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConfig config =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    
+    // insert to all three types
+    executor.execute(new Write(dataKey, dataKey));
+    executor.execute(new QueueEnqueue(queueKey, queueKey));
+    executor.execute(new QueueEnqueue(streamKey, streamKey));
+    
+    // read data from all three types
+    assertTrue(Bytes.equals(dataKey, executor.execute(new ReadKey(dataKey))));
+    assertTrue(Bytes.equals(queueKey, executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).getValue()));
+    assertTrue(Bytes.equals(streamKey, executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).getValue()));
+    
+    // format data only
+    executor.execute(new FormatFabric(true, false, false));
+    
+    // data is gone, queues still there
+    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(Bytes.equals(queueKey, executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).getValue()));
+    assertTrue(Bytes.equals(streamKey, executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).getValue()));
+    
+    // format queues
+    executor.execute(new FormatFabric(false, true, true));
+    
+    // everything is gone
+    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).isEmpty());
+    assertTrue(executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+    
+    // insert data to all three again
+    executor.execute(new Write(dataKey, dataKey));
+    executor.execute(new QueueEnqueue(queueKey, queueKey));
+    executor.execute(new QueueEnqueue(streamKey, streamKey));
+    
+    // read data from all three types
+    assertTrue(Bytes.equals(dataKey, executor.execute(new ReadKey(dataKey))));
+    assertTrue(Bytes.equals(queueKey, executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).getValue()));
+    assertTrue(Bytes.equals(streamKey, executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).getValue()));
+    
+    // wipe just the streams
+    executor.execute(new FormatFabric(false, false, true));
+    
+    // streams gone, queues and data remain
+    assertTrue(Bytes.equals(dataKey, executor.execute(new ReadKey(dataKey))));
+    assertTrue(Bytes.equals(queueKey, executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).getValue()));
+    assertTrue(executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+    
+    // wipe data and queues
+    executor.execute(new FormatFabric(true, true, false));
+    
+    // everything is gone
+    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(executor.execute(
+        new QueueDequeue(queueKey, consumer, config)).isEmpty());
+    assertTrue(executor.execute(
+        new QueueDequeue(streamKey, consumer, config)).isEmpty());
+    
+  }
+  
   @Test
   public void testOverlappingConcurrentWrites() throws Exception {
 

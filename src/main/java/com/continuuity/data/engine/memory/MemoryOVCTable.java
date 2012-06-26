@@ -53,6 +53,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void format() {
+    map.clear();
+  }
+
+  @Override
   public void put(byte[] row, byte[] column, long version, byte[] value) {
     put(row, new byte[][] { column }, version, new byte[][] { value });
   }

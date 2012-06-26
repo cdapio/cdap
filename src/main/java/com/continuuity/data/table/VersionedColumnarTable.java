@@ -194,4 +194,9 @@ public interface VersionedColumnarTable {
   public boolean compareAndSwap(byte [] row, byte [] column,
       byte [] expectedValue, byte [] newValue, ReadPointer readPointer,
       long writeVersion);
+
+  /**
+   * Formats this table, completely wiping all data irrecoverably.
+   */
+  public void format();
 }

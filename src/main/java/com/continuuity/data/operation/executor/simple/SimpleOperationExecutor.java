@@ -17,6 +17,7 @@ import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -190,5 +191,11 @@ public class SimpleOperationExecutor implements OperationExecutor {
       throws SyncReadTimeoutException {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  @Override
+  public void execute(FormatFabric formatFabric) {
+    // TODO Auto-generated method stub
+    
   }
 }

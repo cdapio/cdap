@@ -100,6 +100,27 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
+  // Administrative Operations
+
+  @Override
+  public void format() {
+    PreparedStatement ps = null;
+    try {
+      ps = this.connection.prepareStatement("DELETE FROM " + this.tableName);
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException("SQL Exception", e);
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+  
   // Simple Write Operations
 
   @Override

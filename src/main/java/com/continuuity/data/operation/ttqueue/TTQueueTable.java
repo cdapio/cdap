@@ -95,6 +95,13 @@ public interface TTQueueTable {
    */
   public QueueMeta getQueueMeta(byte [] queueName);
 
+  /**
+   * Formats this queue table, completely wiping all queues.
+   */
+  public void format();
+  
+  // Old debugging methods
+  
   public String getGroupInfo(byte[] queueName, int groupId);
 
   public String getEntryInfo(byte[] queueName, long entryId);

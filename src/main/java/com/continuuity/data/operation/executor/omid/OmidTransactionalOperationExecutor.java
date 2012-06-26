@@ -23,6 +23,7 @@ import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.Undelete;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -127,6 +128,15 @@ implements TransactionalOperationExecutor {
     return result;
   }
 
+  // Administrative calls
+
+  @Override
+  public void execute(FormatFabric formatFabric) {
+    if (formatFabric.shouldFormatData()) this.randomTable.format();
+    if (formatFabric.shouldFormatQueues()) this.queueTable.format();
+    if (formatFabric.shouldFormatStreams()) this.streamTable.format();
+  }
+  
   // Write batches
 
   @Override

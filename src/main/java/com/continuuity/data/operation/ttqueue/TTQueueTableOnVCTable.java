@@ -99,4 +99,9 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   public QueueMeta getQueueMeta(byte[] queueName) {
     return getQueue(queueName).getQueueMeta();
   }
+
+  @Override
+  public void format() {
+    table.format();
+  }
 }
