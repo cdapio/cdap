@@ -139,7 +139,7 @@ startScripts {
  */
 tasks.distZip {
     baseName = "bigFlow"
-    appendix = "Developer-Edition"
+    appendix = "developer-edition"
     version = "1.0.0"
     classifier = ""
 }
