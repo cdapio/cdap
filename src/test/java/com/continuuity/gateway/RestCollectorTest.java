@@ -128,7 +128,7 @@ public class RestCollectorTest {
     Assert.assertEquals(404, Util.sendPostRequest(baseUrl));
 
     // submit a GET to the collector (which only supports POST) -> 405 Not Allowed
-    Assert.assertEquals(405, Util.sendGetRequest(baseUrl));
+    Assert.assertEquals(404, Util.sendGetRequest(baseUrl));
 
     // submit a POST with destination name but more after that in the path -> 404 Not Found
     Assert.assertEquals(404, Util.sendPostRequest(baseUrl + "flow/stream/"));

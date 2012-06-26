@@ -1,7 +1,9 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.gateway.Collector;
+import com.continuuity.gateway.DataAccessor;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;
 import com.continuuity.gateway.util.NettyRequestHandlerFactory;
@@ -20,10 +22,25 @@ import java.util.concurrent.Executors;
  * It uses Netty to start up the service, and the RestHandler to implement the
  * handling of a request.
  */
-public class RestCollector extends Collector implements NettyRequestHandlerFactory {
+public class RestCollector extends Collector implements DataAccessor, NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(RestCollector.class);
+
+  /**
+   * the data fabric executor to use for all data access
+   */
+  protected OperationExecutor executor;
+
+  @Override
+  public void setExecutor(OperationExecutor executor) {
+    this.executor = executor;
+  }
+
+  @Override
+  public OperationExecutor getExecutor() {
+    return this.executor;
+  }
 
   /**
    * this will provide defaults for the HTTP service, such as port and paths

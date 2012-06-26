@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
@@ -287,16 +286,11 @@ public class DataClient {
         return null;
       } }
     // was hex encoding requested?
-    if (hexEncoded) {
+    if (hexEncoded)
       value = Util.toHex(binaryValue);
-    }
     // or was URl encoding specified?
-    else if (urlEncoded) {
-      try { // use a base encoding that supports all byte values
-        value = URLEncoder.encode(new String(binaryValue, "ISO8859_1"), "ISO8859_1");
-      } catch (UnsupportedEncodingException e) {
-        e.printStackTrace(); // this cannot happen
-      } }
+    else if (urlEncoded)
+      value = Util.urlEncode(binaryValue);
     // was a different encoding specified?
     else if (encoding != null) {
       try { // this may fail because encoding was user-specified

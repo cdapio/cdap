@@ -9,11 +9,14 @@ import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * This is a base class for the gateway's Netty-based Http request handlers. It
  * implements common methods such as returning an error or sending an OK response.
  */
 public class NettyRestHandler extends SimpleChannelUpstreamHandler {
+  @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
       .getLogger(NettyRestHandler.class);
 
@@ -61,12 +64,54 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    *
    * @param channel the channel on which the request came
    * @param request the original request (to determine whether to keep the connection alive)
+   */
+  protected void respondSuccess(Channel channel, HttpRequest request) {
+    respondSuccess(channel, request, null, null, null);
+  }
+
+  /**
+   * Respond to the client with success. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   *
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the connection alive)
    * @param content the content of the response to send
    */
   protected void respondSuccess(Channel channel, HttpRequest request, byte[] content) {
+    respondSuccess(channel, request, null, null, content);
+  }
+
+  /**
+   * Respond to the client with success. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   *
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the connection alive)
+   * @param status the status code to respond with. Defaults to 200-OK if null
+   */
+  protected void respondSuccess(Channel channel, HttpRequest request, HttpResponseStatus status) {
+    respondSuccess(channel, request, status, null, null);
+  }
+
+  /**
+   * Respond to the client with success. This keeps the connection alive
+   * unless specified otherwise in the original request.
+   *
+   * @param channel the channel on which the request came
+   * @param request the original request (to determine whether to keep the connection alive)
+   * @param status the status code to respond with. Defaults to 200-OK if null
+   * @param headers additional headers to send with the response. May be null.
+   * @param content the content of the response to send
+   */
+  protected void respondSuccess(Channel channel, HttpRequest request, HttpResponseStatus status,
+                                Map<String, String> headers, byte[] content) {
     HttpResponse response = new DefaultHttpResponse(
-        HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
     boolean keepAlive = HttpHeaders.isKeepAlive(request);
+    if (headers != null) {
+      for (Map.Entry<String, String> entry : headers.entrySet())
+        response.addHeader(entry.getKey(), entry.getValue());
+    }
     response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content == null ? 0 : content.length);
     if (content != null) {
       response.setContent(ChannelBuffers.wrappedBuffer(content));

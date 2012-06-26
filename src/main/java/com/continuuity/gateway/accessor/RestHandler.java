@@ -1,10 +1,11 @@
 package com.continuuity.gateway.accessor;
 
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.Write;
+import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.gateway.util.Util;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -16,12 +17,10 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.Write;
-import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.gateway.util.Util;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is the http request handler for the rest accessor. At this time it only accepts
@@ -227,7 +226,7 @@ public class RestHandler extends NettyRestHandler {
             return;
           }
         }
-        List<byte[]> keys = null;
+        List<byte[]> keys;
         try {
           ReadAllKeys read = new ReadAllKeys(start, limit);
           keys = this.accessor.getExecutor().execute(read);
@@ -265,7 +264,7 @@ public class RestHandler extends NettyRestHandler {
         Delete delete = new Delete(keyBinary);
         if (this.accessor.getExecutor().execute(delete)) {
           // deleted successfully
-          respondSuccess(message.getChannel(), request, null);
+          respondSuccess(message.getChannel(), request);
         } else {
           // something went wrong, internal error
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -287,7 +286,7 @@ public class RestHandler extends NettyRestHandler {
         Write write = new Write(keyBinary, bytes);
         if (this.accessor.getExecutor().execute(write)) {
           // written successfully
-          respondSuccess(message.getChannel(), request, null);
+          respondSuccess(message.getChannel(), request);
         } else {
           // something went wrong, internal error
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -297,7 +296,6 @@ public class RestHandler extends NettyRestHandler {
       default: {
         // this should not happen because we already checked above -> internal error
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
       }
     }
   }

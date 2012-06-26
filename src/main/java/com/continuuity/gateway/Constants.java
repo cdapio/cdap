@@ -19,6 +19,12 @@ public class Constants {
   /**
    * Used by the external client to identify and authenticate the client
    */
+  public static final String HEADER_STREAM_CONSUMER
+      = CONTINUUITY_PREFIX + "stream.consumer";
+
+  /**
+   * Used by the external client to identify and authenticate the client
+   */
   public static final String HEADER_CLIENT_TOKEN
       = CONTINUUITY_PREFIX + "token";
 

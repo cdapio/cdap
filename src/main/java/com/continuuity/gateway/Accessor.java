@@ -7,27 +7,19 @@ import com.continuuity.data.operation.executor.OperationExecutor;
  * allows external clients to access the data persisted in the data fabric via
  * RPC calls.
  */
-public abstract class Accessor extends Connector {
+public abstract class Accessor extends Connector implements DataAccessor {
 
   /**
    * the data fabric executor to use for all data access
    */
   protected OperationExecutor executor;
 
-  /**
-   * Set the operations executor to use for all data fabric access
-   *
-   * @param executor the operation executor to use
-   */
+  @Override
   public void setExecutor(OperationExecutor executor) {
     this.executor = executor;
   }
 
-  /**
-   * Get the executor to use for all data fabric access
-   *
-   * @return the operations executor to use
-   */
+  @Override
   public OperationExecutor getExecutor() {
     return this.executor;
   }

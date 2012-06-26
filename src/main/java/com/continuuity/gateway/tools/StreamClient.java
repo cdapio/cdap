@@ -8,12 +8,14 @@ import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
@@ -34,6 +36,7 @@ import java.util.Map;
  */
 public class StreamClient {
 
+@SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
       .getLogger(StreamClient.class);
 
@@ -70,6 +73,8 @@ public class StreamClient {
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " send --stream <name> --body <value> [ <option> ... ]");
+    out.println("  " + name + " id --stream [ <option> ]");
+    out.println("  " + name + " fetch --stream [ <option> ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -151,7 +156,7 @@ public class StreamClient {
     }
   }
 
-  static List<String> supportedCommands = Arrays.asList("send");
+  static List<String> supportedCommands = Arrays.asList("send", "id", "grab");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -160,7 +165,7 @@ public class StreamClient {
     // first validate the command
     if (!supportedCommands.contains(command)) usage("Unsupported command '" + command + "'.");
     // verify that either --body or --body-file is given
-    if (body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
+    if ("send".equals(command) && body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
     // verify that a destination was given
     if (destination == null) usage("A destination stream must be specified.");
     // verify that only one hint is given for the URL
@@ -186,6 +191,38 @@ public class StreamClient {
     else if (bodyFile != null)
       return Util.readBinaryFile(bodyFile);
     return null;
+  }
+
+  /*
+   * return the resulting value to the use, following arguments
+   */
+  String writeBody(byte[] binaryBody) {
+    // was a file specified to write to?
+    if (bodyFile != null) {
+      try {
+        FileOutputStream out = new FileOutputStream(bodyFile);
+        out.write(binaryBody);
+        out.close();
+        if (verbose) System.out.println(binaryBody.length + " bytes written to file " + bodyFile + ".");
+        return binaryBody.length + " bytes written to file";
+      } catch (IOException e) {
+        System.err.println("Error writing to file " + bodyFile + ": " + e.getMessage());
+        return null;
+      } }
+    String body;
+    // was hex encoding requested?
+    if (hex)
+      body = Util.toHex(binaryBody);
+    // or was URl encoding specified?
+    else if (urlenc)
+      body = Util.urlEncode(binaryBody);
+    // by default, assume the same encoding for the value as for the key
+    else
+      body = new String(binaryBody);
+
+    if (verbose) System.out.println("Body[" + binaryBody.length + " bytes]: " + body);
+    else System.out.println(body);
+    return body;
   }
 
   /**
@@ -214,7 +251,10 @@ public class StreamClient {
 
     // build the full URI for the request and validate it
     String requestUrl = baseUrl + destination;
-    URI uri = null;
+    if ("id".equals(command)) requestUrl += "?q=newConsumer";
+    else if ("fetch".equals(command)) requestUrl += "?q=dequeue";
+
+    URI uri;
     try {
       uri = new URI(requestUrl);
     } catch (URISyntaxException e) {
@@ -224,35 +264,88 @@ public class StreamClient {
       return null;
     }
 
-    // get the body as a byte array
-    byte[] binaryBody = readBody();
-    if (binaryBody == null) {
-      System.err.println("Cannot send an event without body. Please use --body or --body-file to specify the body.");
-      return null;
+    if ("send".equals(command)) {
+      // get the body as a byte array
+      byte[] binaryBody = readBody();
+      if (binaryBody == null) {
+        System.err.println("Cannot send an event without body. Please use --body or --body-file to specify the body.");
+        return null;
+      }
+
+      // create an HttpPost
+      HttpPost post = new HttpPost(uri);
+      for (String header : headers.keySet()) {
+        post.setHeader(destination + "." + header, headers.get(header));
+
+      }
+      post.setEntity(new ByteArrayEntity(binaryBody));
+      // post is now fully constructed, ready to send
+
+      // prepare for HTTP
+      HttpClient client = new DefaultHttpClient();
+      HttpResponse response;
+
+      try {
+        response = client.execute(post);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) return null;
+      return "OK.";
     }
-
-    // create an HttpPost
-    HttpPost post = new HttpPost(uri);
-    for (String header : headers.keySet()) {
-      post.setHeader(destination + "." + header, headers.get(header));
-
+    else if ("id".equals(command)) {
+      // prepare for HTTP
+      HttpClient client = new DefaultHttpClient();
+      HttpGet get = new HttpGet(uri);
+      HttpResponse response;
+      try {
+        response = client.execute(get);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) return null;
+      // read the binary value from the HTTP response
+      byte[] binaryValue = Util.readHttpResponse(response);
+      if (binaryValue == null) {
+        System.err.println("Unexpected response without body.");
+        return null;
+      }
+      String id = new String(binaryValue);
+      System.out.println(id);
+      return "OK.";
     }
-    post.setEntity(new ByteArrayEntity(binaryBody));
-    // post is now fully constructed, ready to send
-
-    // prepare for HTTP
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response;
-
-    try {
-      response = client.execute(post);
-      client.getConnectionManager().shutdown();
-    } catch (IOException e) {
-      System.err.println("Error sending HTTP request: " + e.getMessage());
-      return null;
+    else if ("fetch".equals(command)) {
+      // prepare for HTTP
+      HttpClient client = new DefaultHttpClient();
+      HttpGet get = new HttpGet(uri);
+      HttpResponse response;
+      try {
+        response = client.execute(get);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) return null;
+      // read the binary value from the HTTP response
+      byte[] binaryValue = Util.readHttpResponse(response);
+      if (binaryValue == null) {
+        System.err.println("Unexpected response without body.");
+        return null;
+      }
+      for (org.apache.http.Header header : response.getAllHeaders()) {
+        String name = header.getName();
+        if (name.startsWith(destination)) {
+          System.out.println(name.substring(destination.length() + 1) + ": " + header.getValue());
+        }
+      }
+      return writeBody(binaryValue);
     }
-    if (!checkHttpStatus(response)) return null;
-    return "OK.";
+    return null;
   }
 
   /**
