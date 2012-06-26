@@ -2,7 +2,7 @@ package CountRandom;
 
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class NumberCounter extends AbstractComputeFlowlet {
 
@@ -14,7 +14,7 @@ public class NumberCounter extends AbstractComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator streamsConfigurator) {
-    TupleSchema in = new TupleSchemaBuilderImpl().
+    TupleSchema in = new TupleSchemaBuilder().
         add("number", Integer.class).
         create();
     streamsConfigurator.getDefaultTupleInputStream().setSchema(in);

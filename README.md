@@ -16,6 +16,25 @@ works when the examples are built from within the distribution). If the
 BIGFLOW_HOME environment variable is set, then it is expected to contain
 the libraries. Otherwise, specify the libraries with ant -Dbigflow.lib=...
 
+If you want to override the naming convention for your Main class that is
+identified in the MANIFEST.MF file in your Flow's jar, you can do this
+in your local ant build file with the following syntax:
+
+<?xml version="1.0" ?>
+<project name="TwitterScanner" default="jar">
+
+    <!-- Override the default main class defn -->
+    <property name="main.class" value="TwitterScanner.TwitterFlow"/>
+
+    <!-- Now import the common build file -->
+    <import file="../ant-common.xml"/>
+
+</project>
+
+Note: Due to the way Ant handles properties, it is important to insert the
+property BEFORE you import the common build file.
+
+
 List of Example Projects
 ========================
 

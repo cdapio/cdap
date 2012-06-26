@@ -1,8 +1,8 @@
 package CountRandom;
 
 import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
-import com.continuuity.flow.flowlet.internal.TupleSchemaBuilderImpl;
+import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 import java.util.Random;
 
@@ -12,13 +12,13 @@ public class RandomSource extends AbstractSourceFlowlet {
 
   @Override
   public void generate(OutputCollector outputCollector) {
-    Tuple out = new TupleBuilderImpl().set("number", new Integer(this.random.nextInt(10000))).create();
+    Tuple out = new TupleBuilder().set("number", new Integer(this.random.nextInt(10000))).create();
     outputCollector.emit(out);
   }
 
   @Override
   public void configure(StreamsConfigurator streamsConfigurator) {
-    TupleSchema out = new TupleSchemaBuilderImpl().
+    TupleSchema out = new TupleSchemaBuilder().
         add("number", Integer.class).
         create();
     streamsConfigurator.getDefaultTupleOutputStream().setSchema(out);
