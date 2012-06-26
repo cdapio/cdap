@@ -35,6 +35,7 @@ public class DataFormat {
         out.println("");
         out.println("options:");
         out.println("  --help      To print this message");
+        out.println("");
         if (error) {
             throw new IllegalArgumentException();
         }
@@ -73,6 +74,8 @@ public class DataFormat {
             if ("--help".equals(args[0]) || "-h".equals(args[0])) {
                 usage(false);
                 return;
+            } else {
+                usage(true);
             }
         }
 
