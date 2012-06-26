@@ -103,4 +103,8 @@ public class Constants {
     return collectorName + "." + propertyName;
   }
 
+  public static boolean isContinuuityHeader(String header) {
+    return header.startsWith(CONTINUUITY_PREFIX);
+  }
+
 } // end of Constants class
