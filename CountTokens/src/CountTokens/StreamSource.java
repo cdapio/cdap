@@ -14,7 +14,7 @@ public class StreamSource extends AbstractComputeFlowlet {
         add("text", String.class).
         create();
     configurator.getDefaultTupleOutputStream().setSchema(out);
-    configurator.getDefaultTupleInputStream().setSchema(FlowStream.eventStreamSchema);
+    configurator.getDefaultTupleInputStream().setSchema(TupleSchema.EVENT_SCHEMA);
   }
 
   @Override
