@@ -82,6 +82,7 @@ public class DataClient {
     out.println("  " + name + " write --key <string> --value value [ <options> ]");
     out.println("  " + name + " delete --key <string> [ <options> ]");
     out.println("  " + name + " list [ <options> ]");
+    out.println("  " + name + " format");
     out.println("Additional options:");
     out.println("  --base <url>            To specify the base url to send to");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -185,7 +186,7 @@ public class DataClient {
     }
   }
 
-  static List<String> supportedCommands = Arrays.asList("read", "write", "delete", "list");
+  static List<String> supportedCommands = Arrays.asList("read", "write", "delete", "list", "format");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -200,7 +201,7 @@ public class DataClient {
     if (!"list".equals(command) && (start >= 0 || limit >= 0)) usage("--start and --limit are only allowed for list");
     // verify that only one encoding was given
     int encodings = 0;
-    keyNeeded = !command.equals("list");
+    keyNeeded = !(command.equals("list") || command.equals("format"));
     valueNeeded = command.equals("write");
     outputNeeded = command.equals("read") || command.equals("list");
     boolean needsEncoding = (keyNeeded && keyFile == null) || ((valueNeeded || outputNeeded) && valueFile == null);
@@ -212,26 +213,21 @@ public class DataClient {
     // verify that only one hint is given for the URL
     if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
     if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
-    // based on the command, ensure all arguments are there
-    if ("read".equals(command)) {
-      // read needs a key and possibly a file for the value
-      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
-      if (value != null) usage("A value may not be specified for read.");
+    // verify that a key is provided iff the command supports one
+    if (keyNeeded) {
+      if (key == null && keyFile == null)
+        usage("A key must be specified for command " + command + " - use either --key or --key-file.");
+    } else {
+      if (key != null || keyFile != null)
+        usage("A key may not be specified for command " + command + ".");
     }
-    else if ("write".equals(command)) {
-      // write needs a key and a value
-      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
-      if (value == null && valueFile == null) usage("A value must be specified - use either --value or --value-file.");
-    }
-    else if ("delete".equals(command)) {
-      // delete needs a key but never a value
-      if (key == null && keyFile == null) usage("A key must be specified - use either --key or --key-file.");
-      if (value != null || valueFile != null) usage("A value may not be specified for delete.");
-    }
-    else if ("list".equals(command)) {
-      // list needs no key, but can have a file for the value
-      if (key != null || keyFile != null) usage("A key may not be specified for list.");
-      if (value != null) usage("A value may not be specified for list.");
+    // verify that a value is provided iff the command supports one
+    if (valueNeeded) {
+      if (value == null && valueFile == null)
+        usage("A value must be specified for command " + command + " - use either --value or --value-file.");
+    } else {
+      if ((value != null) || (!outputNeeded && valueFile != null))
+        usage("A value may not be specified for command " + command + ".");
     }
   }
 
@@ -477,6 +473,10 @@ public class DataClient {
       if (binaryValue == null) return null;
       // now make returned value available to user
       return writeList(binaryValue);
+    }
+    else if ("format".equals(command)) {
+      System.err.println("Format is not supported yet");
+      return null;
     }
     return null;
   }
