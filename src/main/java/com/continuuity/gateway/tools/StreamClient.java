@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,10 +32,10 @@ import java.util.Map;
  * <li>The body can be specified on command line or as a binary file.</li>
  * </ul>
  */
-public class EventClient {
+public class StreamClient {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(EventClient.class);
+      .getLogger(StreamClient.class);
 
   /**
    * for debugging. should only be set to true in unit tests.
@@ -42,8 +43,11 @@ public class EventClient {
    */
   public static boolean debug = false;
 
+  String command = null;         // the command to run
   boolean verbose = false;       // for debug output
   boolean help = false;          // whether --help was there
+  boolean hex = false;           // whether body is in hex noatation
+  boolean urlenc = false;        // whether body is in url encoding
   String baseUrl = null;         // the base url for HTTP requests
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the rest collector
@@ -65,7 +69,7 @@ public class EventClient {
     String name = this.getClass().getSimpleName();
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name + " --stream <name> --body <value> [ <option> ... ]");
+    out.println("  " + name + " send --stream <name> --body <value> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -77,6 +81,8 @@ public class EventClient {
     out.println("  --body <value>          To specify the body of the event as a string");
     out.println("  --body-file <path>      Alternative to --body, to specify a file that");
     out.println("                          contains the binary body of the event");
+    out.println("  --hex                   To specify hexadecimal encoding for --body");
+    out.println("  --url                   To specify url encoding for --body");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -102,9 +108,11 @@ public class EventClient {
       usage(false);
       help = true;
       return;
+    } else {
+      command = args[0];
     }
     // go through all the arguments
-    for (int pos = 0; pos < args.length; pos++) {
+    for (int pos = 1; pos < args.length; pos++) {
       String arg = args[pos];
       if ("--base".equals(arg)) {
         if (++pos >= args.length) usage(true);
@@ -127,6 +135,10 @@ public class EventClient {
       } else if ("--body-file".equals(arg)) {
         if (++pos >= args.length) usage(true);
         bodyFile = args[pos];
+      } else if ("--hex".equals(arg)) {
+        hex = true;
+      } else if ("--url".equals(arg)) {
+        urlenc = true;
       } else if ("--help".equals(arg)) {
         usage(false);
         help = true;
@@ -139,10 +151,14 @@ public class EventClient {
     }
   }
 
+  static List<String> supportedCommands = Arrays.asList("send");
+
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) return;
+    // first validate the command
+    if (!supportedCommands.contains(command)) usage("Unsupported command '" + command + "'.");
     // verify that either --body or --body-file is given
     if (body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
     // verify that a destination was given
@@ -150,6 +166,9 @@ public class EventClient {
     // verify that only one hint is given for the URL
     if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
     if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
+    // verify that only one encoding is given for the body
+    if (hex && urlenc) usage("Only one of --hex or --url may be specified");
+    if (bodyFile != null && (hex || urlenc)) usage("Options --hex and --url are incompatible with --body-file (binary input)");
   }
 
   /**
@@ -158,14 +177,15 @@ public class EventClient {
    */
   byte[] readBody() {
     if (body != null) {
+      if (urlenc)
+        return Util.urlDecode(body);
+      else if (hex)
+        return Util.hexValue(body);
       return body.getBytes();
     }
-    else if (bodyFile != null) {
+    else if (bodyFile != null)
       return Util.readBinaryFile(bodyFile);
-    }
-    else {
-      return null;
-    }
+    return null;
   }
 
   /**
@@ -275,7 +295,7 @@ public class EventClient {
     CConfiguration config = CConfiguration.create();
     config.addResource("continuuity-gateway.xml");
     // create an event client and run it with the given arguments
-    EventClient instance = new EventClient();
+    StreamClient instance = new StreamClient();
     String value = instance.execute(args, config);
     // exit with error in case fails
     if (value == null) System.exit(1);
