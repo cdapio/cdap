@@ -34,6 +34,7 @@ public class Main {
 
       // Load our configuration from our resource files
       CConfiguration configuration = CConfiguration.create();
+      configuration.addResource("continuuity-gateway.xml");
 
       // Start the gateway!
       theGateway.start(null, configuration);

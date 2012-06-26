@@ -141,8 +141,9 @@ public class Gateway implements Server {
       // TODO: This should probably be done in the addConnector method?
       if (connector instanceof Collector) {
         ((Collector) connector).setConsumer(this.consumer);
-      } else if (connector instanceof DataAccessor) {
-        ((Accessor) connector).setExecutor(this.executor);
+      }
+      if (connector instanceof DataAccessor) {
+        ((DataAccessor) connector).setExecutor(this.executor);
       }
 
       try {
