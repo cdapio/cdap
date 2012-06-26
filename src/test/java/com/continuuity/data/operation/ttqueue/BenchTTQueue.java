@@ -82,7 +82,7 @@ public abstract class BenchTTQueue {
       DequeueResult result = queue.dequeue(consumer, config, rp);
       assertTrue(result.isSuccess());
       assertTrue(queue.ack(result.getEntryPointer(), consumer));
-      assertTrue(queue.finalize(result.getEntryPointer(), consumer));
+      assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
       last = printStat(i, last, 1000);
     }
     long dend = now();

@@ -45,15 +45,17 @@ public abstract class QueueInvalidate {
 
   public static class QueueFinalize extends QueueInvalidate {
     private final QueueConsumer consumer;
+    private final int totalNumGroups;
     public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer,
-        QueueConsumer consumer) {
+        QueueConsumer consumer, int totalNumGroups) {
       super(queueName, entryPointer);
       this.consumer = consumer;
+      this.totalNumGroups = totalNumGroups;
     }
     @Override
     public void execute(TTQueueTable queueTable,
         ImmutablePair<ReadPointer,Long> txPointer) {
-      queueTable.finalize(queueName, entryPointer, consumer);
+      queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups);
     }
   }
 

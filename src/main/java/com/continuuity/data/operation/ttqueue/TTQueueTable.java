@@ -38,6 +38,7 @@ public interface TTQueueTable {
    * @param consumer
    * @param config
    * @param readPointer
+   * @return dequeue result object
    */
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
       QueueConfig config, ReadPointer readPointer);
@@ -48,6 +49,7 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
+   * @return true if successful, false if not
    */
   public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);
@@ -57,15 +59,19 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
+   * @param totalNumGroups total number of groups to use when doing evict-on-ack
+   *                       or -1 to disable
+   * @return true if successful, false if not
    */
   public boolean finalize(byte [] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer);
+      QueueConsumer consumer, int totalNumGroups);
 
   /**
    * Unacknowledges a previously acknowledge ack.
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
+   * @return true if successful, false if not
    */
   boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
       QueueConsumer consumer);

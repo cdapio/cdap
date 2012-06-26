@@ -187,8 +187,9 @@ implements TransactionalOperationExecutor {
     // If last operation was an ack, finalize it
     if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
       QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
-      new QueueFinalize(ack.getKey(), ack.getEntryPointer(), ack.getConsumer())
-      .execute(getQueueTable(ack.getKey()), pointer);
+      QueueFinalize finalize = new QueueFinalize(ack.getKey(),
+          ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups());
+      finalize.execute(getQueueTable(ack.getKey()), pointer);
     }
 
     // Transaction was successfully committed

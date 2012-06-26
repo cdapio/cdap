@@ -27,6 +27,7 @@ public interface BatchOperationExecutor {
    *
    * @param writes list of write operations to execute as a batch
    * @return result of batch operation (success/failure, msg, etc)
+   * @throws BatchOperationException 
    */
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws BatchOperationException;

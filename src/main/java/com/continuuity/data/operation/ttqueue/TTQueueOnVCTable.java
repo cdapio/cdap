@@ -310,10 +310,11 @@ public class TTQueueOnVCTable implements TTQueue {
       entryMeta = EntryMeta.fromBytes(entryMetaDataAndStamp.getFirst());
       if (TRACE) log("entryMeta : " + entryMeta.toString());
 
-      // Check if entry has been invalidated
-      if (entryMeta.isInvalid()) {
+      // Check if entry has been invalidated or evicted
+      if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
         // Invalidated.  Check head update and move to next entry in this shard
-        if (TRACE) log("Found invalidated entry at " + entryPointer);
+        if (TRACE) log("Found invalidated or evicted entry at " + entryPointer +
+            " (" + entryMeta.toString() + ")");
         EntryPointer nextEntryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         if (entryPointer.equals(groupState.getHead())) {
@@ -337,7 +338,7 @@ public class TTQueueOnVCTable implements TTQueue {
       }
 
       // Check if entry is an end-of-shard marker
-      if (entryMeta.iEndOfShard()) {
+      if (entryMeta.isEndOfShard()) {
         // Entry is an indicator that this is the end of the shard, move
         // to the next shardId with the same entryId, check head update
         if (TRACE) log("Found endOfShard marker to jump from " + entryPointer.getShardId()
@@ -520,7 +521,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @Override
   public boolean finalize(QueueEntryPointer entryPointer,
-      QueueConsumer consumer) {
+      QueueConsumer consumer, int totalNumGroups) {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry
@@ -539,8 +540,35 @@ public class TTQueueOnVCTable implements TTQueue {
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
-        newValue, dirty.getFirst(), dirty.getSecond());
+    boolean finalized = this.table.compareAndSwap(shardRow, groupColumn,
+        existingValue, newValue, dirty.getFirst(), dirty.getSecond());
+    if (finalized) {
+      // We successfully finalized our ack.  Perform evict-on-ack if possible.
+      if (totalNumGroups == 1 ||
+          (totalNumGroups > 0 && allOtherGroupsFinalized(entryPointer,
+              totalNumGroups, consumer.getGroupId(), dirty))) {
+        // Evict!
+        
+      }
+    }
+    return finalized;
+  }
+
+  private boolean allOtherGroupsFinalized(QueueEntryPointer entryPointer,
+      int totalNumGroups, long curGroup,
+      ImmutablePair<ReadPointer,Long> dirtyPointer) {
+    byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
+    for (long groupId = 1; groupId <= totalNumGroups ; groupId++) {
+      if (groupId == curGroup) continue;
+      byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
+          ENTRY_GROUP_META, groupId);
+      byte [] existingValue = this.table.get(shardRow, groupColumn,
+          dirtyPointer.getFirst());
+      if (existingValue == null || existingValue.length == 0) return false;
+      EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
+      if (!groupMeta.isAcked()) return false;
+    }
+    return true;
   }
 
   @Override
@@ -560,7 +588,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Should be in semiAcked state
     if (groupMeta != null && !groupMeta.isSemiAcked()) return false;
 
-    // It is in the right state, attempt atomic semi_ack to ack
+    // It is in the right state, attempt atomic semi_ack to dequeued
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
@@ -770,7 +798,7 @@ public class TTQueueOnVCTable implements TTQueue {
       if (entryMeta.isInvalid() || entryMeta.isValid()) {
         // Move to next entry
         curEntry++;
-      } else if (entryMeta.iEndOfShard()) {
+      } else if (entryMeta.isEndOfShard()) {
         // Move to next shard
         curShard++;
       }

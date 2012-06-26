@@ -64,8 +64,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   @Override
   public boolean finalize(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer) {
-    return getQueue(queueName).finalize(entryPointer, consumer);
+      QueueConsumer consumer, int totalNumGroups) {
+    return getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups);
   }
 
   @Override
