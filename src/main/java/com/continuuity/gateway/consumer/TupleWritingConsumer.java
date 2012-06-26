@@ -3,12 +3,12 @@ package com.continuuity.gateway.consumer;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
-import com.continuuity.flow.flowlet.internal.TupleBuilderImpl;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.google.inject.Inject;
@@ -55,7 +55,7 @@ public class TupleWritingConsumer extends Consumer {
     TupleSerializer serializer = new TupleSerializer(false);
     for (Event event : events) {
       // convert the event into a tuple
-      Tuple tuple = new TupleBuilderImpl().
+      Tuple tuple = new TupleBuilder().
           set("headers", event.getHeaders()).
           set("body", event.getBody()).
           create();
