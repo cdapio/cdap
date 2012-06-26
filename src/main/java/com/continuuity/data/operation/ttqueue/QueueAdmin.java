@@ -84,6 +84,18 @@ public class QueueAdmin {
     long currentWritePointer;
     GroupState [] groups;
 
+    public long getGlobalHeadPointer() {
+      return this.globalHeadPointer;
+    }
+    
+    public long getCurrentWritePointer() {
+      return this.currentWritePointer;
+    }
+    
+    public GroupState [] getGroups() {
+      return this.groups;
+    }
+    
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
