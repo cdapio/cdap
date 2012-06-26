@@ -120,16 +120,182 @@ public abstract class TestTTQueue {
     }
   }
 
-// TODO: Implement these tests
-//  @Test 
-//  public void testEvictOnAck_OneGroup() throws Exception {
-//    
-//  }
-//  
-//  @Test
-//  public void testEvictOnAck_ThreeGroups() throws Exception {
-//    
-//  }
+  @Test 
+  public void testEvictOnAck_OneGroup() throws Exception {
+    final boolean singleEntry = true;
+    long dirtyVersion = 1;
+    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    
+    // first try with evict-on-ack off
+    TTQueue queueNormal = createQueue();
+    int numGroups = -1;
+    
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      queueNormal.enqueue(Bytes.toBytes(i), dirtyVersion);
+    }
+    
+    // dequeue/ack/finalize 10 things w/ numGroups=-1
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+          queueNormal.dequeue(consumer, config, dirtyReadPointer);
+      assertTrue(
+          queueNormal.ack(result.getEntryPointer(), consumer));
+      assertTrue(
+          queueNormal.finalize(result.getEntryPointer(), consumer, numGroups));
+    }
+    
+    // dequeue is empty
+    assertTrue(
+        queueNormal.dequeue(consumer, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue with new consumer still has entries (expected)
+    assertFalse(
+        queueNormal.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+    
+    // now do it again with evict-on-ack turned on
+    TTQueue queueEvict = createQueue();
+    numGroups = 1;
+
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      queueEvict.enqueue(Bytes.toBytes(i), dirtyVersion);
+    }
+    
+    // dequeue/ack/finalize 10 things w/ numGroups=1
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+          queueEvict.dequeue(consumer, config, dirtyReadPointer);
+      assertTrue(
+          queueEvict.ack(result.getEntryPointer(), consumer));
+      assertTrue(
+          queueEvict.finalize(result.getEntryPointer(), consumer, numGroups));
+    }
+    
+    // dequeue is empty
+    assertTrue(
+        queueEvict.dequeue(consumer, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue with new consumer IS NOW EMPTY!
+    assertTrue(
+        queueEvict.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+    
+    
+  }
+  
+  @Test
+  public void testEvictOnAck_ThreeGroups() throws Exception {
+    TTQueue queue = createQueue();
+    final boolean singleEntry = true;
+    long dirtyVersion = 1;
+    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+
+    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1);
+    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1);
+    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    
+    // enable evict-on-ack for 3 groups
+    int numGroups = 3;
+    
+    // enqueue 10 things
+    for (int i=0; i<10; i++) {
+      queue.enqueue(Bytes.toBytes(i), dirtyVersion);
+    }
+    
+    // dequeue/ack/finalize 10 things w/ group1 and numGroups=3
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+          queue.dequeue(consumer1, config, dirtyReadPointer);
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(
+          queue.ack(result.getEntryPointer(), consumer1));
+      assertTrue(
+          queue.finalize(result.getEntryPointer(), consumer1, numGroups));
+    }
+    
+    // dequeue is empty
+    assertTrue(
+        queue.dequeue(consumer1, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue with consumer2 still has entries (expected)
+    assertFalse(
+        queue.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue everything with consumer2
+    for (int i=0; i<10; i++) {
+      DequeueResult result =
+          queue.dequeue(consumer2, config, dirtyReadPointer);
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(
+          queue.ack(result.getEntryPointer(), consumer2));
+      assertTrue(
+          queue.finalize(result.getEntryPointer(), consumer2, numGroups));
+    }
+
+    // dequeue is empty
+    assertTrue(
+        queue.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+
+    // dequeue with consumer3 still has entries (expected)
+    assertFalse(
+        queue.dequeue(consumer3, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue everything except the last entry with consumer3
+    for (int i=0; i<9; i++) {
+      DequeueResult result =
+          queue.dequeue(consumer3, config, dirtyReadPointer);
+      assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
+      assertTrue(
+          queue.ack(result.getEntryPointer(), consumer3));
+      assertTrue(
+          queue.finalize(result.getEntryPointer(), consumer3, numGroups));
+    }
+    
+    // now the first 9 entries should have been physically evicted!
+    
+    // create a new consumer and dequeue, should get the 10th entry!
+    QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1);
+    DequeueResult result = queue.dequeue(consumer4, config, dirtyReadPointer);
+    assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
+        Bytes.equals(Bytes.toBytes(9), result.getValue()));
+    queue.ack(result.getEntryPointer(), consumer4);
+    queue.finalize(result.getEntryPointer(), consumer4, numGroups);
+    
+    // dequeue again should be empty on consumer4
+    assertTrue(
+        queue.dequeue(consumer4, config, dirtyReadPointer).isEmpty());
+    
+    // dequeue is empty for 1 and 2
+    assertTrue(
+        queue.dequeue(consumer1, config, dirtyReadPointer).isEmpty());
+    assertTrue(
+        queue.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+    
+    // consumer 3 still gets entry 9
+    result = queue.dequeue(consumer3, config, dirtyReadPointer);
+    assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
+        Bytes.equals(Bytes.toBytes(9), result.getValue()));
+    queue.ack(result.getEntryPointer(), consumer3);
+    // finalize now with numGroups+1
+    queue.finalize(result.getEntryPointer(), consumer3, numGroups+1);
+    
+    // everyone is empty now!
+    assertTrue(
+        queue.dequeue(consumer1, config, dirtyReadPointer).isEmpty());
+    assertTrue(
+        queue.dequeue(consumer2, config, dirtyReadPointer).isEmpty());
+    assertTrue(
+        queue.dequeue(consumer3, config, dirtyReadPointer).isEmpty());
+    assertTrue(
+        queue.dequeue(consumer4, config, dirtyReadPointer).isEmpty());
+  }
   
   @Test
   public void testSingleConsumerSimple() throws Exception {

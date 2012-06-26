@@ -548,7 +548,10 @@ public class TTQueueOnVCTable implements TTQueue {
           (totalNumGroups > 0 && allOtherGroupsFinalized(entryPointer,
               totalNumGroups, consumer.getGroupId(), dirty))) {
         // Evict!
-        
+        byte [] entryMetaColumn = makeColumn(entryPointer.getEntryId(),
+            ENTRY_META);
+        this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
+            new EntryMeta(EntryState.EVICTED).getBytes());
       }
     }
     return finalized;
