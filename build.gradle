@@ -37,7 +37,7 @@ dependencies {
     else
     {
         compile group: 'com.continuuity', name: 'flow', version: "${continuuityVersion}"
-        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${continuuityVersion}"
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${continuuityVersion}", changing: true
     }
 
     // External dependencies.
