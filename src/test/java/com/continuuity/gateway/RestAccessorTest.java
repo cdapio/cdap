@@ -1,16 +1,26 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.flow.definition.impl.FlowStream;
+import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.accessor.RestAccessor;
+import com.continuuity.gateway.collector.RestCollector;
+import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class RestAccessorTest {
 
@@ -35,6 +46,11 @@ public class RestAccessorTest {
    * the rest accessor we will use in the tests
    */
   private RestAccessor accessor;
+
+  /**
+   * the rest collector we will use in the format test
+   */
+  private RestCollector collector;
 
   /**
    * Set up in-memory data fabric
@@ -75,6 +91,31 @@ public class RestAccessorTest {
     // all fine
     this.accessor = restAccessor;
     return "http://localhost:" + port + prefix + middle + "default/";
+  }
+
+  // we will need this to test the format API
+  String setupCollector(String name, String prefix, String middle) throws Exception {
+    // bring up a new collector
+    RestCollector restCollector = new RestCollector();
+    restCollector.setName(name);
+    // find a free port
+    int port = Util.findFreePort();
+    // configure it
+    CConfiguration configuration = new CConfiguration();
+    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
+    restCollector.configure(configuration);
+
+    TupleWritingConsumer consumer = new TupleWritingConsumer();
+    consumer.setExecutor(this.executor);
+    restCollector.setConsumer(consumer);
+    restCollector.setExecutor(this.executor);
+    // start the accessor
+    restCollector.start();
+    // all fine
+    this.collector = restCollector;
+    return "http://localhost:" + port + prefix + middle;
   }
 
   static String[][] keyValues = {
@@ -344,4 +385,157 @@ public class RestAccessorTest {
     // and finally shut down
     this.accessor.stop();
   }
+
+  @Test
+  public void testFormatData() throws Exception {
+    // setup accessor
+    String baseUrl = setupAccessor("access.rest", "/continuuity", "/data/");
+    String formatUrl = this.accessor.getHttpConfig().getBaseUrl() + "?format=";
+    // setup collector
+    String collectorUrl = setupCollector("collect.rest", "/continuuity", "/stream/");
+
+    // write and verify some data
+    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    // write and verify some stream
+    sendAndVerify(collectorUrl, "foo", 1);
+    // write and verify some queue
+    queueAndVerify("queue://foo/bar", 2);
+
+    // format all
+    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "all"));
+    // verify all are gone
+    verifyKeyGone("key");
+    verifyQueueGone("queue://foo/bar");
+    verifyStreamGone("foo");
+
+    // write and verify some data
+    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    // write and verify some stream
+    sendAndVerify(collectorUrl, "foo", 1);
+    // write and verify some queue
+    queueAndVerify("queue://foo/bar", 2);
+
+    // format data
+    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "data"));
+    // verify data is gone, rest is still there
+    verifyKeyGone("key");
+    verifyEvent("foo", 1);
+    verifyTuple("queue://foo/bar", 2);
+
+    // write and verify some data
+    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+
+    // format streams
+    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "streams"));
+    // verify streams are gone, rest is still there
+    // verify data is gone, rest is still there
+    verifyStreamGone("foo");
+    verifyKeyValue("key", "value");
+    verifyTuple("queue://foo/bar", 2);
+
+    // write and verify some stream
+    sendAndVerify(collectorUrl, "foo", 1);
+
+    // format queues
+    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "queues"));
+    // verify queues are gone, rest is still there
+    verifyQueueGone("queue://foo/bar");
+    verifyKeyValue("key", "value");
+    verifyEvent("foo", 1);
+
+    // write and verify some queue
+    queueAndVerify("queue://foo/bar", 2);
+  }
+
+  void sendEvent(String baseUrl, String stream, int n) throws Exception {
+    HttpPost post = new HttpPost(baseUrl + stream);
+    post.addHeader(stream + ".number", Integer.toString(n));
+    post.setEntity(new ByteArrayEntity(("This is event number " + n).getBytes()));
+    Util.sendRestEvent(post);
+  }
+
+  void verifyEvent(String stream, int n) throws Exception {
+    String streamUri = FlowStream.buildStreamURI(stream).toString();
+    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
+    long id = this.executor.execute(op);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+    // singleEntry = true means we must ack before we can see the next entry
+    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
+    DequeueResult result = this.executor.execute(dequeue);
+    Assert.assertFalse(result.isFailure());
+    Assert.assertFalse(result.isEmpty());
+    // try to deserialize into an event (tuple)
+    TupleSerializer serializer = new TupleSerializer(false);
+    Tuple tuple = serializer.deserialize(result.getValue());
+    Map<String, String> headers = tuple.get("headers");
+    byte[] body = tuple.get("body");
+    Assert.assertEquals(Integer.toString(n), headers.get("number"));
+    Assert.assertEquals(new String(body), "This is event number " + n);
+    // ack the entry so that the next request can see the next entry
+    QueueAck ack = new QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
+    Assert.assertTrue(this.collector.getExecutor().execute(ack));
+  }
+
+  void sendAndVerify(String baseUrl, String stream, int n) throws Exception {
+    sendEvent(baseUrl, stream, n);
+    verifyEvent(stream, n);
+  }
+
+  void sendTuple(String queueUri, int n) {
+    Tuple tuple = new TupleBuilder().set("number", n).create();
+    byte[] bytes = new TupleSerializer(false).serialize(tuple);
+    QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), bytes);
+    Assert.assertTrue(this.executor.execute(enqueue));
+  }
+
+  void verifyTuple(String queueUri, int n) throws Exception {
+    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
+    long id = this.executor.execute(op);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+    // singleEntry = true means we must ack before we can see the next entry
+    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    DequeueResult result = this.executor.execute(dequeue);
+    Assert.assertFalse(result.isFailure());
+    Assert.assertFalse(result.isEmpty());
+    // try to deserialize into a tuple
+    TupleSerializer serializer = new TupleSerializer(false);
+    Tuple tuple = serializer.deserialize(result.getValue());
+    // verify
+    Assert.assertEquals(tuple.get("number"), n);
+  }
+
+  void queueAndVerify(String streamUri, int n) throws Exception {
+    sendTuple(streamUri, n);
+    verifyTuple(streamUri, n);
+  }
+
+  void verifyKeyGone(String key) throws Exception {
+    ReadKey read = new ReadKey(key.getBytes());
+    Assert.assertNull(this.executor.execute(read));
+  }
+
+  void verifyKeyValue(String key, String value) throws Exception {
+    ReadKey read = new ReadKey(key.getBytes());
+    Assert.assertArrayEquals(value.getBytes(), this.executor.execute(read));
+  }
+
+  void verifyQueueGone(String queueUri) throws Exception {
+    QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
+    long id = this.executor.execute(op);
+    QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+    // singleEntry = true means we must ack before we can see the next entry
+    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    DequeueResult result = this.executor.execute(dequeue);
+    Assert.assertFalse(result.isFailure());
+    Assert.assertTrue(result.isEmpty());
+  }
+
+  void verifyStreamGone(String stream) throws Exception {
+    String streamUri = FlowStream.buildStreamURI(stream).toString();
+    verifyQueueGone(streamUri);
+  }
 }
+

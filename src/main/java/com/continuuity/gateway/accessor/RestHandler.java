@@ -318,7 +318,8 @@ public class RestHandler extends NettyRestHandler {
         boolean formatData = false, formatQueues = false, formatStreams = false;
         for (String param : formatParams) {
           for (String what : param.split(",")) {
-            if ("data".equals(what)) formatData = true;
+            if ("all".equals(what)) formatData = formatQueues = formatStreams = true;
+            else if ("data".equals(what)) formatData = true;
             else if ("queues".equals(what)) formatQueues = true;
             else if ("streams".equals(what)) formatStreams = true;
             else {
