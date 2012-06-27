@@ -144,8 +144,8 @@ tasks.distZip {
 
 build.dependsOn ':web-cloud-app:build', ':flow:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
 run.dependsOn build
-installApp.dependsOn build, javadoc
-distZip.dependsOn build, javadoc
+installApp.dependsOn build, javadoc, stageConfSingleNode
+distZip.dependsOn build, javadoc, stageConfSingleNode
 
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
