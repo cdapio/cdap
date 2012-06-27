@@ -415,6 +415,20 @@ public class RestAccessorTest {
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
+    // format all
+    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "queues,streams,data"));
+    // verify all are gone
+    verifyKeyGone("key");
+    verifyQueueGone("queue://foo/bar");
+    verifyStreamGone("foo");
+
+    // write and verify some data
+    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    // write and verify some stream
+    sendAndVerify(collectorUrl, "foo", 1);
+    // write and verify some queue
+    queueAndVerify("queue://foo/bar", 2);
+
     // format data
     Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "data"));
     // verify data is gone, rest is still there
