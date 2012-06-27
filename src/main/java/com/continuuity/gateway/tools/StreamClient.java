@@ -1,13 +1,16 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.collect.AllCollector;
+import com.continuuity.common.collect.Collector;
+import com.continuuity.common.collect.FirstNCollector;
+import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.util.Util;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -22,9 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +62,11 @@ public class StreamClient {
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file that contains the body in binary form
   String destination = null;     // the destination stream
-  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
-  String consumer = null;          // the consumer group id to fetch from the stream
+  String consumer = null;        // the consumer group id to fetch from the stream
   boolean all = false;           // whether to view all events in the stream
-  int last = -1;                 // to view the N last events in the stream
-  int first = -1;                // to view the N first events in the stream
+  Integer last = null;           // to view the N last events in the stream
+  Integer first = null;          // to view the N first events in the stream
+  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
 
   /**
    * Print the usage statement and return null (or empty string if this is not an error case).
@@ -97,7 +97,7 @@ public class StreamClient {
     out.println("                          contains the binary body of the event");
     out.println("  --hex                   To specify hexadecimal encoding for --body");
     out.println("  --url                   To specify url encoding for --body");
-    out.println("  --consumer <id>         To specify a consumer group id for the stream, as ");
+    out.println("  --id <group id>         To specify a consumer group id for the stream, as ");
     out.println("                          obtained by " + name + " id");
     out.println("  --all                   To view the entire stream.");
     out.println("  --first <number>        To view the first N events in the stream. Default ");
@@ -175,10 +175,11 @@ public class StreamClient {
         } catch (NumberFormatException e) {
           usage(true);
         }
-      } else if ("--consumer".equals(arg)) {
+      } else if ("--id".equals(arg)) {
         if (++pos >= args.length) usage(true);
         try {
           consumer = args[pos];
+          // validate that it is a number
           Long.valueOf(consumer);
         } catch (NumberFormatException e) {
           usage(true);
@@ -217,7 +218,9 @@ public class StreamClient {
     if ("fetch".equals(command) && consumer == null) usage("--consumer must be specified for fetch");
     // make sure that view command does not have contradicting options
     if ("view".equals(command)) {
-      if ((all && first != -1) || (all && last != -1) || (last != -1 && first != -1)) usage("Only one of --all, --first or --last may be specified");
+      if ((all && first != null) || (all && last != null) || (last != null && first != null)) usage("Only one of --all, --first or --last may be specified");
+      if (first != null && first < 1) usage("--first must be at least 1");
+      if (last != null && last < 1) usage("--last must be at least 1");
     }
   }
 
@@ -296,18 +299,6 @@ public class StreamClient {
 
     // build the full URI for the request and validate it
     String requestUrl = baseUrl + destination;
-    if ("id".equals(command)) requestUrl += "?q=newConsumer";
-    else if ("fetch".equals(command)) requestUrl += "?q=dequeue";
-
-    URI uri;
-    try {
-      uri = new URI(requestUrl);
-    } catch (URISyntaxException e) {
-      // this can only happen if the --host, --base, or --stream are not valid for a URL
-      System.err.println("Invalid request URI '" + requestUrl
-          + "'. Check the validity of --host, --base or --stream arguments.");
-      return null;
-    }
 
     if ("send".equals(command)) {
       // get the body as a byte array
@@ -318,7 +309,7 @@ public class StreamClient {
       }
 
       // create an HttpPost
-      HttpPost post = new HttpPost(uri);
+      HttpPost post = new HttpPost(requestUrl);
       for (String header : headers.keySet()) {
         post.setHeader(destination + "." + header, headers.get(header));
 
@@ -340,66 +331,32 @@ public class StreamClient {
       if (!checkHttpStatus(response)) return null;
       return "OK.";
     }
+
     else if ("id".equals(command)) {
-      // prepare for HTTP
-      HttpClient client = new DefaultHttpClient();
-      HttpGet get = new HttpGet(uri);
-      HttpResponse response;
-      try {
-        response = client.execute(get);
-        client.getConnectionManager().shutdown();
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      }
-      if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
-      // read the binary value from the HTTP response
-      byte[] binaryValue = Util.readHttpResponse(response);
-      if (binaryValue == null) {
-        System.err.println("Unexpected response without body.");
-        return null;
-      }
-      String id = new String(binaryValue);
+      String id = getConsumerId(requestUrl);
       System.out.println(id);
       return "OK.";
     }
+
     else if ("fetch".equals(command)) {
-      // prepare for HTTP
-      HttpClient client = new DefaultHttpClient();
-      HttpGet get = new HttpGet(uri);
-      get.addHeader(Constants.HEADER_STREAM_CONSUMER, consumer);
-      HttpResponse response;
+      Event event;
       try {
-        response = client.execute(get);
-        client.getConnectionManager().shutdown();
-      } catch (IOException e) {
-        System.err.println("Error sending HTTP request: " + e.getMessage());
-        return null;
-      }
-      // we expect either OK for an event, or NO_CONTENT for end of stream
-      if (!checkHttpStatus(response, Arrays.asList(HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT)))
-        return null;
-      // did we reach the end of the stream?
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-        System.out.println("Nothing to fetch.");
-        return "Nothing to fetch.";
-      }
-      // read the binary value from the HTTP response
-      byte[] binaryValue = Util.readHttpResponse(response);
-      if (binaryValue == null) {
-        System.err.println("Unexpected response without body.");
+        event = fetchOne(requestUrl, consumer);
+      } catch (Exception e) {
+        System.err.println(e.getMessage());
         return null;
       }
       // print all the headers
-      for (org.apache.http.Header header : response.getAllHeaders()) {
-        String name = header.getName();
-        if (name.startsWith(destination)) {
-          System.out.println(name.substring(destination.length() + 1) + ": " + header.getValue());
-        }
+      for (String name : event.getHeaders().keySet()) {
+        // unless --verbose was given, we suppress continuuity headers
+        if (!verbose && Constants.isContinuuityHeader(name))
+          continue;
+        System.out.println(name + ": " + event.getHeader(name));
       }
       // and finally write out the body
-      return writeBody(binaryValue);
+      return writeBody(event.getBody());
     }
+
     else if ("view".equals(command)) {
       if (consumer == null) {
         // prepare for HTTP
@@ -422,11 +379,11 @@ public class StreamClient {
         }
         consumer = new String(binaryValue);
       }
-      EventCollector collector =
-          all ? new AllCollector() :
-              first > 0 ? new FirstNCollector(first) :
-                  last > 0 ? new LastNCollector(last) :
-                      new FirstNCollector(10);
+      Collector<Event> collector =
+          all ? new AllCollector<Event>(Event.class) :
+              first != null ? new FirstNCollector<Event>(first, Event.class) :
+                  last != null ? new LastNCollector<Event>(last, Event.class) :
+                      new FirstNCollector<Event>(10, Event.class);
       try {
         Event[] events = fetchAll(requestUrl + "?q=dequeue", consumer, collector);
         return printEvents(events);
@@ -438,99 +395,62 @@ public class StreamClient {
     return null;
   }
 
-  /*
-   * This will be used to collect events for command=view. For every
-   * event we receive, we will add the event to the collector. The
-   * collector then indicates whether more events are needed (for
-   * instance, for --first N, we will use a collector that returns
-   * false after the Nth event has been added.
+  /**
+   * This implements --id, it obtains a new
+   * @param requestUrl the base url with the stream added to it
+   * @return the consumer group id returned by the gateway
    */
-  interface EventCollector {
-    /**
-     * collect one event
-     * @param event the event to collect
-     * @return whether more events need to be collected
-     */
-    public boolean addEvent(Event event);
+  String getConsumerId(String requestUrl) {
+    // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(requestUrl + "?q=newConsumer");
+    HttpResponse response;
+    try {
+      response = client.execute(get);
+      client.getConnectionManager().shutdown();
+    } catch (IOException e) {
+      System.err.println("Error sending HTTP request: " + e.getMessage());
+      return null;
+    }
+    // this call does not respond with 200 OK, but with 201 Created
+    if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
 
-    /**
-     * Finish collection of events and return all events that were added
-     * @return all the collected events
-     */
-    public Event[] finish();
+    // read the binary value from the HTTP response
+    byte[] binaryValue = Util.readHttpResponse(response);
+    if (binaryValue == null) {
+      System.err.println("Unexpected response without body.");
+      return null;
+    }
+    return new String(binaryValue);
   }
 
   /**
-   * This collector is used for view --first N, it stops after N events
-   * have been collected
+   * Helper method for --view, given a request URL already constructed, a consumer ID,
+   * and an event collector, it iterates over events from the stream until the stream
+   * is empty or the collector indicates to stop.
+   * @param uri The request URI including the stream name without the query
+   * @param consumer the consumer group id, as previously returned by getConsumerId()
+   * @param collector a collector for the events in the stream
+   * @return all events collected
+   * @throws Exception if something goes wrong
    */
-  class FirstNCollector implements EventCollector {
-    private Event[] events;
-    private int count = 0;
-    public FirstNCollector(int n) {
-      events = new Event[n];
-    }
-    public boolean addEvent(Event event) {
-      if (count >= events.length) return false;
-      events[count++] = event;
-      return (count < events.length);
-    }
-    public Event[] finish() {
-      return events;
-    }
-  }
-
-  /**
-   * This collector is used for view --all, it never stops
-   */
-  static class AllCollector implements EventCollector {
-    private ArrayList<Event> events = Lists.newArrayList();
-    public boolean addEvent(Event event) {
-      events.add(event);
-      return true;
-    }
-    public Event[] finish() {
-      return (Event[])events.toArray();
-    }
-  }
-
-  /**
-   * This collector is used for view --last N, it never stops
-   * but remembers only the most recent N events
-   */
-  class LastNCollector implements EventCollector {
-    private Event[] events;
-    private int count = 0;
-    public LastNCollector(int n) {
-      if (n <= 1) throw new IllegalArgumentException("n must be greater han 0");
-      events = new Event[n];
-    }
-    public boolean addEvent(Event event) {
-      events[count % events.length] = event;
-      count++;
-      return true;
-    }
-    public Event[] finish() {
-      if (count < events.length) {
-        return Arrays.copyOf(events, count);
-      } else {
-        Event[] array = new Event[events.length];
-        for (int i = 0; i < events.length; i++)
-          array[i] = events[(count + i) % events.length];
-        return array;
-      }
-    }
-  }
-
-  Event[] fetchAll(String uri, String consumer, EventCollector collector) throws Exception {
+  Event[] fetchAll(String uri, String consumer, Collector<Event> collector) throws Exception {
     while (true) {
       Event event = fetchOne(uri, consumer);
       if (event == null) return collector.finish();
-      boolean collectMore = collector.addEvent(event);
+      boolean collectMore = collector.addElement(event);
       if (!collectMore) return collector.finish();
     }
   }
 
+  /**
+   * Helper method for --view, given a request URL already constructed and a consumer ID,
+   * it fetches (dequeues) one event from the stream.
+   * @param uri The request URI including the stream name without the query
+   * @param consumer the consumer group id, as previously returned by getConsumerId()
+   * @return the event that was fetched, or null if the stream is empty
+   * @throws Exception if something goes wrong
+   */
   Event fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
@@ -569,6 +489,12 @@ public class StreamClient {
     return builder.create();
   }
 
+  /**
+   * Helper for --view. Prints all the collected events to stdout. This can be
+   * improved to use better formatting, shortening, etc.
+   * @param events An array of events
+   * @return a String indicating how many events were printed
+   */
   String printEvents(Event[] events) {
     System.out.println(events.length + " events: ");
     for (Event event : events) {
