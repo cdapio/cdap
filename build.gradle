@@ -1,0 +1,18 @@
+defaultTasks 'build'
+
+//import our single master ant build.xml
+ant.importBuild 'build.xml'
+
+//tell ant where our api jar is
+ant.properties['bigflow.home'] = '../../singlenode/build/libs/'
+
+//compile tasks depend on existence of api jar 
+examplesCompile.dependsOn ':singlenode:createApiJar'
+examplesJar.dependsOn ':singlenode:createApiJar'
+
+//set task dependencies to integrate into our master gradle build
+classes.dependsOn 'examplesCompile'
+build.dependsOn 'examplesJar'
+clean.dependsOn 'examplesClean'
+
+
