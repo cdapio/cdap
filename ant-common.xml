@@ -3,11 +3,13 @@
 
     <property environment="env"/>
     <property name="bigflow.home" value="${env.BIGFLOW_HOME}"/>
+
     <!-- if BIGFLOW_HOME is set, use it to find the libraries; otherwise use ../.. -->
     <condition property="bigflow.lib" value="../.." else="${bigflow.home}">
         <matches string="${bigflow.home}" pattern="..env.BIGFLOW_HOME."/>
     </condition>
     <echo message="Expecting BigFlow API libraries in ${bigflow.lib}"/>
+
     <property name="example.name" value="${ant.project.name}"/>
     <property name="main.class" value="${example.name}.Main"/>
     <property name="jar.name" value="${example.name}.jar" />
@@ -19,6 +21,12 @@
         <fileset dir="${bigflow.lib}">
             <include name="*.jar" />
         </fileset>
+
+        <!-- Pick up any libs that an example has included -->
+        <fileset dir="./lib" erroronmissingdir="false">
+            <include name="*.jar" />
+        </fileset>
+
     </path>
 
     <target name="init">
@@ -30,6 +38,7 @@
                classpathref="bigflow.classpath"  includeantruntime="false" />
     </target>
 
+    <!-- Creates a MANIFEST.MF class automatically -->
     <target name="manifest" depends="init">
         <mkdir dir="${build.dir}/META-INF"/>
         <manifest file="${manifest.file}">
