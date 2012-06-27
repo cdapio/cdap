@@ -130,7 +130,7 @@ public class RestHandler extends NettyRestHandler {
     }
 
     // respond with error for parameters if the operation does not allow them
-    if (operation != LIST && parameters != null && !parameters.isEmpty()) {
+    if (operation != LIST && operation != FORMAT && parameters != null && !parameters.isEmpty()) {
       LOG.debug("Received a " + method + " request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -143,7 +143,7 @@ public class RestHandler extends NettyRestHandler {
       String remainder = path.substring(this.pathPrefix.length());
       int pos = remainder.indexOf("/");
       if (pos < 0) {
-        destination = remainder;
+        destination = remainder.length() == 0 ? null : remainder;
         key = null;
       } else {
         destination = remainder.substring(0, pos);
@@ -316,18 +316,24 @@ public class RestHandler extends NettyRestHandler {
       case FORMAT : {
         // figure out what to format
         boolean formatData = false, formatQueues = false, formatStreams = false;
-        for (String what : formatParams) {
-          if ("data".equals(what)) formatData = true;
-          else if ("queues".equals(what)) formatQueues = true;
-          else if ("streams".equals(what)) formatStreams = true;
-          else {
-            LOG.debug("Received invalid format request with URI " + requestUri);
-            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-            break;
-          }
-        }
+        for (String param : formatParams) {
+          for (String what : param.split(",")) {
+            if ("data".equals(what)) formatData = true;
+            else if ("queues".equals(what)) formatQueues = true;
+            else if ("streams".equals(what)) formatStreams = true;
+            else {
+              LOG.debug("Received invalid format request with URI " + requestUri);
+              respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+              break;
+        } } }
         FormatFabric format = new FormatFabric(formatData, formatQueues, formatStreams);
-        this.accessor.getExecutor().execute(format);
+        try {
+          this.accessor.getExecutor().execute(format);
+        } catch (Exception e) {
+          LOG.error("Exception formatting data fabric: ", e);
+          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          break;
+        }
         respondSuccess(message.getChannel(), request);
         break;
       }

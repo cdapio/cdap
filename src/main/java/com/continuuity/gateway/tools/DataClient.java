@@ -495,7 +495,7 @@ public class DataClient {
       else if (formatStreams) requestUrl += "streams";
       // now execute this as a get
       try {
-        response = client.execute(new HttpPost(uri));
+        response = client.execute(new HttpPost(requestUrl));
         client.getConnectionManager().shutdown();
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
