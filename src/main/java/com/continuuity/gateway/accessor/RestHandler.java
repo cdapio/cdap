@@ -4,6 +4,7 @@ import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadAllKeys;
 import com.continuuity.api.data.Write;
+import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -34,7 +35,7 @@ public class RestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = {HttpMethod.GET, HttpMethod.DELETE, HttpMethod.PUT};
+  HttpMethod[] allowedMethods = { HttpMethod.GET, HttpMethod.DELETE, HttpMethod.PUT, HttpMethod.POST };
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -65,11 +66,13 @@ public class RestHandler extends NettyRestHandler {
     this.pathPrefix = accessor.getHttpConfig().getPathPrefix() + accessor.getHttpConfig().getPathMiddle();
   }
 
+  private static final int BAD = -1;
   private static final int UNKNOWN = 0;
   private static final int READ = 1;
   private static final int WRITE = 2;
   private static final int DELETE = 3;
   private static final int LIST = 4;
+  private static final int FORMAT = 5;
 
   @Override
   public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
@@ -80,7 +83,8 @@ public class RestHandler extends NettyRestHandler {
     LOG.debug("Request received: " + method + " " + requestUri);
 
     // we only support get requests for now
-    if (method != HttpMethod.GET && method != HttpMethod.DELETE && method != HttpMethod.PUT) {
+    if (method != HttpMethod.GET && method != HttpMethod.DELETE &&
+        method != HttpMethod.PUT && method != HttpMethod.POST) {
       LOG.debug("Received a " + method + " request, which is not supported");
       respondNotAllowed(message.getChannel(), allowedMethods);
       return;
@@ -89,20 +93,35 @@ public class RestHandler extends NettyRestHandler {
     // based on the request URL, determine what to do
     QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
     Map<String, List<String>> parameters = decoder.getParameters();
+    List<String> formatParams = null;
     int operation = UNKNOWN;
     if (method == HttpMethod.PUT)
       operation = WRITE;
     else if (method == HttpMethod.DELETE)
       operation = DELETE;
-    else if (method == HttpMethod.GET) {
+    else if (method == HttpMethod.POST) {
+      formatParams = parameters.get("format");
+      if (formatParams != null && formatParams.size() > 0)
+        operation = FORMAT;
+      else
+        operation = BAD;
+    } else if (method == HttpMethod.GET) {
       if (parameters == null || parameters.size() == 0)
         operation = READ;
       else {
         List<String> qParams = parameters.get("q");
         if (qParams != null && qParams.size() == 1 && "list".equals(qParams.get(0)))
           operation = LIST;
+        else
+          operation = BAD;
     } }
 
+    // respond with error for bad requests
+    if (operation == BAD) {
+      LOG.debug("Received an incomplete request '" + request.getUri() + "'.");
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
       LOG.debug("Received an unsupported " + method + " request '" + request.getUri() + "'.");
@@ -140,27 +159,28 @@ public class RestHandler extends NettyRestHandler {
     } } }
 
     // check that URL could be parsed up to destination
-    if (destination == null) {
+    // except for FORMAT, where no destination may be given
+    if ((destination == null && operation != FORMAT) || (destination != null && operation == FORMAT)) {
       LOG.debug("Received a request with unknown path '" + path + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    // all operations except for LIST need a key
-    if (operation != LIST && (key == null || key.length() == 0)) {
+    // all operations except for LIST and FORMAT need a key
+    if (operation != LIST && operation != FORMAT && (key == null || key.length() == 0)) {
       LOG.debug("Received a request with invalid path " + path + "(no key given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
-    // operation LIST must not have a key
-    if (operation == LIST && (key != null && key.length() > 0)) {
+    // operation LIST and FORMAT must not have a key
+    if ((operation == LIST || operation == FORMAT) && (key != null && key.length() > 0)) {
       LOG.debug("Received a request with invalid path " + path + "(no key may be given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
 
     // check that destination is valid - for now only "default" is allowed
-    if (!"default".equals(destination)) {
+    if (destination != null && !"default".equals(destination)) {
       LOG.debug("Received a request with path " + path + " for destination other than 'default'");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
@@ -293,6 +313,25 @@ public class RestHandler extends NettyRestHandler {
         }
         break;
       }
+      case FORMAT : {
+        // figure out what to format
+        boolean formatData = false, formatQueues = false, formatStreams = false;
+        for (String what : formatParams) {
+          if ("data".equals(what)) formatData = true;
+          else if ("queues".equals(what)) formatQueues = true;
+          else if ("streams".equals(what)) formatStreams = true;
+          else {
+            LOG.debug("Received invalid format request with URI " + requestUri);
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            break;
+          }
+        }
+        FormatFabric format = new FormatFabric(formatData, formatQueues, formatStreams);
+        this.accessor.getExecutor().execute(format);
+        respondSuccess(message.getChannel(), request);
+        break;
+      }
+
       default: {
         // this should not happen because we already checked above -> internal error
         respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);

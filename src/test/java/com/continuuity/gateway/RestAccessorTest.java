@@ -258,7 +258,7 @@ public class RestAccessorTest {
     // submit a request with correct prefix but non-existent table -> 404 Not Found
     Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
     // submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
-    Assert.assertEquals(405, Util.sendPostRequest(baseUrl));
+    Assert.assertEquals(400, Util.sendPostRequest(baseUrl));
     // submit a GET without key -> 404 Not Found
     Assert.assertEquals(400, Util.sendGetRequest(baseUrl));
     // submit a GET with existing key -> 200 OK
@@ -267,8 +267,8 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "does.not.exist"));
     // submit a GET with existing key but more after that in the path -> 404 Not Found
     Assert.assertEquals(400, Util.sendGetRequest(baseUrl + "x/y/z"));
-    // submit a GET with existing key but with query part -> 501 Not Implemented
-    Assert.assertEquals(501, Util.sendGetRequest(baseUrl + "x?query=none"));
+    // submit a GET with existing key but with query part -> 400 Bad Request
+    Assert.assertEquals(400, Util.sendGetRequest(baseUrl + "x?query=none"));
 
     // test some bad delete requests
     // submit a request without the correct prefix in the path -> 404 Not Found

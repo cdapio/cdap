@@ -9,6 +9,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -60,6 +61,10 @@ public class DataClient {
   String valueFile = null;       // the file to read/write the value from/to
   int start = -1;                // the index to start the list from
   int limit = -1;                // the number of elements to list
+  boolean formatAll = false;     // to format everything
+  boolean formatData = false;    // to format all table data
+  boolean formatQueues = false;  // to format all event streams
+  boolean formatStreams = false; // to format all intra-flow queues
 
   boolean keyNeeded;             // does the command require a key?
   boolean valueNeeded;           // does the command require a value?
@@ -81,7 +86,7 @@ public class DataClient {
     out.println("  " + name + " write --key <string> --value value [ <options> ]");
     out.println("  " + name + " delete --key <string> [ <options> ]");
     out.println("  " + name + " list [ <options> ]");
-    out.println("  " + name + " format");
+    out.println("  " + name + " format ( --all | --data | --queues | --streams )");
     out.println("Additional options:");
     out.println("  --base <url>            To specify the base url to send to");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -95,6 +100,10 @@ public class DataClient {
     out.println("  --url                   To use URL encoding for key and value");
     out.println("  --start <n>             To start at the nth element - only for list");
     out.println("  --limit <k>             To list at most k elements - only for list");
+    out.println("  --all                   To format all data");
+    out.println("  --data                  To format all table data");
+    out.println("  --streams               To format all event streams");
+    out.println("  --queues                To format all intra-flow queues");
     out.println("  --encoding <name>       To use this encoding for key and value");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
@@ -152,7 +161,6 @@ public class DataClient {
         if (++pos >= args.length) usage(true);
         try {
           start = Integer.valueOf(args[pos]);
-          continue;
         } catch (NumberFormatException e) {
           usage(true);
         }
@@ -160,7 +168,6 @@ public class DataClient {
         if (++pos >= args.length) usage(true);
         try {
           limit = Integer.valueOf(args[pos]);
-          continue;
         } catch (NumberFormatException e) {
           usage(true);
         }
@@ -173,6 +180,14 @@ public class DataClient {
         urlEncoded = true;
       } else if ("--hex".equals(arg)) {
         hexEncoded = true;
+      } else if ("--all".equals(arg)) {
+        formatAll = true;
+      } else if ("--data".equals(arg)) {
+        formatData = true;
+      } else if ("--queues".equals(arg)) {
+        formatQueues = true;
+      } else if ("--streams".equals(arg)) {
+        formatStreams = true;
       } else if ("--verbose".equals(arg)) {
         verbose = true;
       } else if ("--help".equals(arg)) {
@@ -227,6 +242,10 @@ public class DataClient {
     } else {
       if ((value != null) || (!outputNeeded && valueFile != null))
         usage("A value may not be specified for command " + command + ".");
+    }
+    // verify that format command specifies what to format
+    if ("format".equals(command)) {
+      if (!(formatAll || formatData || formatQueues || formatStreams)) usage("You must specify what to format - please us --all, --data, --queues, and/or --streams");
     }
   }
 
@@ -469,8 +488,21 @@ public class DataClient {
       return writeList(binaryValue);
     }
     else if ("format".equals(command)) {
-      System.err.println("Format is not supported yet");
-      return null;
+      requestUrl = baseUrl + "?format=";
+      if (formatAll) requestUrl += "data,queues,streams";
+      else if (formatData) requestUrl += "data";
+      else if (formatQueues) requestUrl += "queues";
+      else if (formatStreams) requestUrl += "streams";
+      // now execute this as a get
+      try {
+        response = client.execute(new HttpPost(uri));
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) return null;
+      return "OK.";
     }
     return null;
   }
