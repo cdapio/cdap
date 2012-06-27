@@ -276,7 +276,7 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + "/"));
     // no table
     Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
     // table without key
     Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
     Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
@@ -298,7 +298,7 @@ public class RestAccessorTest {
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + "/"));
     // no table
     Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
     // table without key
     Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
     Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
