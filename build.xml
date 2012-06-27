@@ -23,11 +23,12 @@
 
   <target name="examplesCompile">
     <iterate target="compile"/>
+    <echo>examples compiled successfully (target: compile)</echo>
   </target>
 
   <target name="examplesJar">
-<echo>CLASSPATH = ${env.CLASSPATH}</echo>
     <iterate target="jar"/>
+    <echo>examples jar'd successfully (target: jar)</echo>
   </target>
 
 </project>
