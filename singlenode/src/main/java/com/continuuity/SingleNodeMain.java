@@ -174,7 +174,7 @@ public class SingleNodeMain {
     out.println("Requirements: ");
     out.println("  Java:    JDK 1.6+ must be installed and JAVA_HOME environment variable set to the java executable");
     out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  ");
-    out.println("    The \"node\" executable must be in the system $PATH environment variable");
+    out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
     out.println("  ./bigFlow [options]");
