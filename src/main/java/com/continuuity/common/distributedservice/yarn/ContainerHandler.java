@@ -1,7 +1,7 @@
 package com.continuuity.common.distributedservice.yarn;
 
 import com.continuuity.common.distributedservice.ApplicationMasterService;
-import com.continuuity.common.distributedservice.ContainerGroupParameter;
+import com.continuuity.common.distributedservice.ContainerGroupSpecification;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.hadoop.yarn.api.ContainerManager;
@@ -26,16 +26,16 @@ public class ContainerHandler extends AbstractScheduledService {
   private static final int MAX_CHECK_FAILURES = 10;
 
   private final Container container;
-  private final ContainerGroupParameter parameter;
+  private final ContainerGroupSpecification specification;
   private final ApplicationMasterService amService;
   private final ContainerLaunchContextFactory containerLaunchContextFactory;
   private ContainerManager containerMgr;
   private ContainerStatus status;
   private int checkFailures = 0;
 
-  public ContainerHandler(ApplicationMasterService amService, Container container, ContainerGroupParameter parameter) {
+  public ContainerHandler(ApplicationMasterService amService, Container container, ContainerGroupSpecification specification) {
     this.container = container;
-    this.parameter = parameter;
+    this.specification = specification;
     this.amService = amService;
 
     ImmutablePair<Resource, Resource> clusterResources = amService.getClusterResourcesRange();
@@ -46,7 +46,7 @@ public class ContainerHandler extends AbstractScheduledService {
 
   @Override
   public void startUp() {
-    ContainerLaunchContext ctxt = containerLaunchContextFactory.create(parameter);
+    ContainerLaunchContext ctxt = containerLaunchContextFactory.create(specification);
     ctxt.setContainerId(container.getId());
     ctxt.setResource(container.getResource());
     containerMgr = amService.getContainerManagerConnection().connect(container);

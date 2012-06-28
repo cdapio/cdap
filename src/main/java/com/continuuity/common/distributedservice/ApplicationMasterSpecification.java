@@ -14,7 +14,7 @@ import java.util.Map;
  * The information that the {@code ApplicationMasterService} needs to know in order to
  * setup and manage a YARN application.
  */
-public class ApplicationMasterParameters {
+public class ApplicationMasterSpecification {
 
   /**
    * Instance of configuration object.
@@ -29,7 +29,7 @@ public class ApplicationMasterParameters {
   /**
    * Collection of container group parameters.
    */
-  private List<ContainerGroupParameter> containerGroupParameters = Lists.newArrayList();
+  private List<ContainerGroupSpecification> containerGroupSpecifications = Lists.newArrayList();
 
   /**
    * Number of failures of containers allowed across all the groups. -1 is unlimited.
@@ -51,7 +51,7 @@ public class ApplicationMasterParameters {
    */
   private String trackingUrl;
 
-  private ApplicationMasterParameters(Configuration configuration) {
+  private ApplicationMasterSpecification(Configuration configuration) {
     this.configuration = configuration;
   }
 
@@ -81,12 +81,12 @@ public class ApplicationMasterParameters {
    * Returns the parameters that will be used to launch the child containers for
    * this application.
    */
-  public List<ContainerGroupParameter> getAllContainerGroups() {
-    return containerGroupParameters;
+  public List<ContainerGroupSpecification> getAllContainerGroups() {
+    return containerGroupSpecifications;
   }
 
-  private void setAllContainerGroups(List<ContainerGroupParameter> containerGroupParameters) {
-    this.containerGroupParameters = containerGroupParameters;
+  private void setAllContainerGroups(List<ContainerGroupSpecification> containerGroupSpecifications) {
+    this.containerGroupSpecifications = containerGroupSpecifications;
   }
 
   /**
@@ -138,7 +138,7 @@ public class ApplicationMasterParameters {
   public class Builder {
     private Configuration configuration;
     private ApplicationAttemptId attemptId;
-    private List<ContainerGroupParameter> containerGroupParameters = Lists.newArrayList();
+    private List<ContainerGroupSpecification> containerGroupSpecifications = Lists.newArrayList();
     private int allowedFailures = -1;
     private String hostname = "*";
     private int clientPort = -1;
@@ -159,8 +159,8 @@ public class ApplicationMasterParameters {
       return this;
     }
 
-    public Builder addContainerGroupParameter(ContainerGroupParameter cgp) {
-      containerGroupParameters.add(cgp);
+    public Builder addContainerGroupSpecification(ContainerGroupSpecification cgp) {
+      containerGroupSpecifications.add(cgp);
       return this;
     }
 
@@ -179,10 +179,10 @@ public class ApplicationMasterParameters {
       return this;
     }
 
-    public ApplicationMasterParameters create() {
-      ApplicationMasterParameters amp = new ApplicationMasterParameters(configuration);
+    public ApplicationMasterSpecification create() {
+      ApplicationMasterSpecification amp = new ApplicationMasterSpecification(configuration);
       amp.setApplicationAttemptId(attemptId);
-      amp.setAllContainerGroups(containerGroupParameters);
+      amp.setAllContainerGroups(containerGroupSpecifications);
       amp.setAllowedFailures(allowedFailures);
       amp.setClientPort(clientPort);
       amp.setTrackingUrl(trackingUrl);

@@ -15,13 +15,24 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 
 /**
- *
- *
+ * Connection handler for managing connections to containers allocated.
  */
 public class CMConnectionHandler implements ContainerManagerConnectionHandler {
   private static Logger Log = LoggerFactory.getLogger(CMConnectionHandler.class);
+
+  /**
+   * Instance of configuration.
+   */
   private final Configuration configuration;
+
+  /**
+   * Instance of YarnRPC.
+   */
   private final YarnRPC rpc;
+
+  /**
+   * Maps of container ids to container.
+   */
   private final Map<String, ContainerManager> containerMgrs = Maps.newHashMap();
 
   public CMConnectionHandler(Configuration configuration) {
@@ -29,6 +40,12 @@ public class CMConnectionHandler implements ContainerManagerConnectionHandler {
     this.rpc = YarnRPC.create(configuration);
   }
 
+  /**
+   * Connects to the container manager on which the container would be run.
+   *
+   * @param container for which we container manager is requested.
+   * @return ContainerManager associated with the container.
+   */
   @Override
   public synchronized ContainerManager connect(Container container) {
     NodeId nodeId = container.getNodeId();

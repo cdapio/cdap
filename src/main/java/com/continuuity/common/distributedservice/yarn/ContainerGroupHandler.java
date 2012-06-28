@@ -1,7 +1,7 @@
 package com.continuuity.common.distributedservice.yarn;
 
 import com.continuuity.common.distributedservice.ApplicationMasterService;
-import com.continuuity.common.distributedservice.ContainerGroupParameter;
+import com.continuuity.common.distributedservice.ContainerGroupSpecification;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,7 +29,7 @@ public class ContainerGroupHandler {
   /**
    * Parameter for the group of containers managed by this class.
    */
-  private final ContainerGroupParameter parameter;
+  private final ContainerGroupSpecification specification;
 
   /**
    * Number of instances requested for this group of containers.
@@ -41,24 +41,46 @@ public class ContainerGroupHandler {
    */
   private volatile boolean stopping = false;
 
+  /**
+   * No of containers requested.
+   */
   private int requested = 0;
+
+  /**
+   * No of containers that are completed.
+   */
   private int completed = 0;
 
+  /**
+   * Generates a incremental new unique id.
+   */
   private final AtomicInteger requestId = new AtomicInteger();
+
+  /**
+   * Factory for container launch context
+   */
   private final ContainerLaunchContextFactory containerLaunchContextFactory;
+
+  /**
+   * Map of container id to container handler.
+   */
   private final Map<ContainerId, ContainerHandler> containerMgrs;
+
+  /**
+   * No of containers that have failed. All stage of failures are considered.
+   */
   private final AtomicInteger failures = new AtomicInteger();
 
   /**
    * Creates an instance of manager that is managing this group of containers.
    *
    * @param amService
-   * @param parameter for this group of containers.
+   * @param specification for this group of containers.
    */
-  public ContainerGroupHandler(ApplicationMasterService amService, ContainerGroupParameter parameter) {
+  public ContainerGroupHandler(ApplicationMasterService amService, ContainerGroupSpecification specification) {
     this.amService = amService;
-    this.parameter = parameter;
-    this.needed = parameter.getNumInstances();
+    this.specification = specification;
+    this.needed = specification.getNumInstances();
     ImmutablePair<Resource, Resource> clusterResources = amService.getClusterResourcesRange();
     containerLaunchContextFactory =
       new ContainerLaunchContextFactory(clusterResources.getFirst(), clusterResources.getSecond());
@@ -66,28 +88,36 @@ public class ContainerGroupHandler {
 
   }
 
+  /**
+   * Makes a request to allocate a container.
+   *
+   * @param id
+   * @param request
+   * @return
+   */
   private AMResponse allocate(int id, ResourceRequest request) {
     AllocateRequest req = Records.newRecord(AllocateRequest.class);
     req.setResponseId(id);
-    req.setApplicationAttemptId(amService.getParameters().getApplicationAttemptId());
+    req.setApplicationAttemptId(amService.getSpecification().getApplicationAttemptId());
     req.addAsk(request);
     try {
       return amService.getResourceManager().allocate(req).getAMResponse();
     } catch (YarnRemoteException e) {
-      Log.warn("Exception thrown during resource request", e);
+      Log.warn("There was a problem while requesting resource. Reason : {}", e.getMessage());
       return Records.newRecord(AllocateResponse.class).getAMResponse();
     }
   }
 
   /**
+   * Allocates, monitors and reallocates containers.
    *
-   * @return
+   * @return true to keep going; false otherwise.
    */
   public boolean process() {
     if(shouldProceed()) {
 
       /** Make resource request and request for 'needed' containers. */
-      ResourceRequest req = containerLaunchContextFactory.createResourceRequest(parameter);
+      ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specification);
 
       /** In case there is nothing required, zero request is sent to RM */
       req.setNumContainers(needed - requested);
@@ -99,7 +129,7 @@ public class ContainerGroupHandler {
       List<Container> newContainers = response.getAllocatedContainers();
       for(Container container : newContainers) {
         if(! containerMgrs.containsKey(container.getId())) {
-          ContainerHandler cm = new ContainerHandler(amService, container, parameter);
+          ContainerHandler cm = new ContainerHandler(amService, container, specification);
           containerMgrs.put(container.getId(), cm);
           cm.start();
         } else {
@@ -143,17 +173,28 @@ public class ContainerGroupHandler {
     return shouldProceed();
   }
 
+  /**
+   * Number of completed containers.
+   *
+   * @return number of completed containers.
+   */
   public int getCompleted() {
     return completed;
   }
 
+  /**
+   * Number of containers that failed. Inclusive of all stages of failures.
+   *
+   * @return number of failures.
+   */
   public int getFailures() {
     return failures.intValue();
   }
 
   /**
-   * Returns
-   * @return
+   * Returns whether group allocation, monitoring or reallocation should continue.
+   *
+   * @return true to continue; false otherwise.
    */
   private boolean shouldProceed() {
     return !stopping && completed < needed;

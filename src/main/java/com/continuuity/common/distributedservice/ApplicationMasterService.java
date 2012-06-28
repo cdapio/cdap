@@ -11,7 +11,7 @@ import org.apache.hadoop.yarn.api.records.Resource;
  *
  */
 public interface ApplicationMasterService extends Service {
-  ApplicationMasterParameters getParameters();
+  ApplicationMasterSpecification getSpecification();
   ApplicationAttemptId getApplicationAttemptId();
   AMRMProtocol getResourceManager();
   ImmutablePair<Resource, Resource> getClusterResourcesRange();

@@ -28,7 +28,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
   /**
    * Parameters settings for application master.
    */
-  private final ApplicationMasterParameters parameters;
+  private final ApplicationMasterSpecification specification;
 
   /**
    * Resource manager connection handler.
@@ -60,15 +60,15 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
    */
   private AMRMProtocol resourceMgr;
 
-  public AMService(ApplicationMasterParameters parameters) {
-    this(parameters,
-      new RMConnectionHandler(parameters.getConfiguration()),
-      new CMConnectionHandler(parameters.getConfiguration()));
+  public AMService(ApplicationMasterSpecification specification) {
+    this(specification,
+      new RMConnectionHandler(specification.getConfiguration()),
+      new CMConnectionHandler(specification.getConfiguration()));
   }
 
-  public AMService(ApplicationMasterParameters parameters, MasterConnectionHandler<AMRMProtocol> rmHandler,
+  public AMService(ApplicationMasterSpecification specification, MasterConnectionHandler<AMRMProtocol> rmHandler,
                    ContainerManagerConnectionHandler cmHandler) {
-    this.parameters = parameters;
+    this.specification = specification;
     this.rmHandler = rmHandler;
     this.cmHandler = cmHandler;
   }
@@ -84,10 +84,10 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
     RegisterApplicationMasterResponse registration = null;
     try {
       RegisterApplicationMasterRequest request = Records.newRecord(RegisterApplicationMasterRequest.class);
-      request.setApplicationAttemptId(parameters.getApplicationAttemptId());
-      request.setHost(parameters.getHostname());
-      request.setRpcPort(parameters.getClientPort());
-      request.setTrackingUrl(parameters.getTrackingUrl());
+      request.setApplicationAttemptId(specification.getApplicationAttemptId());
+      request.setHost(specification.getHostname());
+      request.setRpcPort(specification.getClientPort());
+      request.setTrackingUrl(specification.getTrackingUrl());
       registration = resourceMgr.registerApplicationMaster(request);
     } catch (YarnRemoteException e) {
       Log.error("There was problem during registering the application master. Reason : {}", e.getMessage());
@@ -99,7 +99,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
     maxClusterResource = registration.getMaximumResourceCapability();
 
     /** Gets all container group parameters*/
-    List<ContainerGroupParameter> containerGroups = parameters.getAllContainerGroups();
+    List<ContainerGroupSpecification> containerGroups = specification.getAllContainerGroups();
 
     if(containerGroups.size() < 1) {
       Log.info("No containers have been configured to be started. Stopping now");
@@ -108,7 +108,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
 
     /** Iterate through all container groups, initialize and start them. */
     for(int i = 0; i < containerGroups.size(); ++i) {
-      ContainerGroupParameter clp = containerGroups.get(i);
+      ContainerGroupSpecification clp = containerGroups.get(i);
       containerGroupHandlers.add(new ContainerGroupHandler(this, clp));
     }
   }
@@ -134,7 +134,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
      * If total failures across all container groups crosses the threshold for application, then we force
      * fail the application master service.
      */
-    if(totalFailures > parameters.getAllowedFailures() && parameters.getAllowedFailures() != -1) {
+    if(totalFailures > specification.getAllowedFailures() && specification.getAllowedFailures() != -1) {
       stop();
       return;
     }
@@ -172,7 +172,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
 
     if(state() == State.FAILED) {
       request.setFinishApplicationStatus(FinalApplicationStatus.FAILED);
-    } else if(totalFailures > parameters.getAllowedFailures()) {
+    } else if(totalFailures > specification.getAllowedFailures()) {
       request.setFinishApplicationStatus(FinalApplicationStatus.FAILED);
     } else {
       request.setFinishApplicationStatus(FinalApplicationStatus.SUCCEEDED);
@@ -200,8 +200,8 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
    * @return parameters of application parameters.
    */
   @Override
-  public ApplicationMasterParameters getParameters() {
-    return parameters;
+  public ApplicationMasterSpecification getSpecification() {
+    return specification;
   }
 
   /**
@@ -211,7 +211,7 @@ public class AMService extends AbstractScheduledService implements ApplicationMa
    */
   @Override
   public ApplicationAttemptId getApplicationAttemptId() {
-    return parameters.getApplicationAttemptId();
+    return specification.getApplicationAttemptId();
   }
 
   /**

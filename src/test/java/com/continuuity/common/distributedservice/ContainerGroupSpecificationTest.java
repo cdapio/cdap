@@ -7,12 +7,12 @@ import org.junit.Test;
  *
  *
  */
-public class ContainerGroupParameterTest {
+public class ContainerGroupSpecificationTest {
 
   @Test
   public void testBasicGroupParameter() throws Exception {
-    ContainerGroupParameter cgp
-      = new ContainerGroupParameter.Builder()
+    ContainerGroupSpecification cgp
+      = new ContainerGroupSpecification.Builder()
               .setMemory(1024)
               .addEnv("A", "B")
               .addEnv("C", "D")

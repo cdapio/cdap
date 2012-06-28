@@ -12,7 +12,7 @@ import java.util.Map;
  * The parameters that are common to launching both application masters and node tasks via
  * a {@code ContainerLaunchContext} instance.
  */
-public class ContainerGroupParameter {
+public class ContainerGroupSpecification {
 
   private String user;
   private int memory;
@@ -154,8 +154,8 @@ public class ContainerGroupParameter {
       return this;
     }
 
-    public ContainerGroupParameter create() {
-      ContainerGroupParameter cgp = new ContainerGroupParameter();
+    public ContainerGroupSpecification create() {
+      ContainerGroupSpecification cgp = new ContainerGroupSpecification();
       cgp.setUser(user);
       cgp.setMemory(memory);
       cgp.setPriority(priority);

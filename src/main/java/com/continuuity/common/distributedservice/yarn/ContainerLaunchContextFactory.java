@@ -1,6 +1,6 @@
 package com.continuuity.common.distributedservice.yarn;
 
-import com.continuuity.common.distributedservice.ContainerGroupParameter;
+import com.continuuity.common.distributedservice.ContainerGroupSpecification;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
 import org.apache.hadoop.yarn.api.records.Priority;
 import org.apache.hadoop.yarn.api.records.Resource;
@@ -19,7 +19,7 @@ public class ContainerLaunchContextFactory {
     this.clusterMax = clusterMax;
   }
 
-  public ContainerLaunchContext create(ContainerGroupParameter parameters) {
+  public ContainerLaunchContext create(ContainerGroupSpecification parameters) {
     ContainerLaunchContext clc = Records.newRecord(ContainerLaunchContext.class);
     clc.setCommands(parameters.getCommands());
     clc.setEnvironment(parameters.getEnvironment());
@@ -29,7 +29,7 @@ public class ContainerLaunchContextFactory {
     return clc;
   }
 
-  public ResourceRequest createResourceRequest(ContainerGroupParameter parameters) {
+  public ResourceRequest createResourceRequest(ContainerGroupSpecification parameters) {
     ResourceRequest req = Records.newRecord(ResourceRequest.class);
     req.setCapability(parameters.getContainerResource(clusterMin, clusterMax));
     req.setPriority(createPriority(parameters.getPriority()));
