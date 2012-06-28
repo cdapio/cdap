@@ -1,4 +1,4 @@
-package com.continuuity.common.distributedservice;
+package com.continuuity.common.service.distributed;
 
 import org.junit.Assert;
 import org.junit.Test;

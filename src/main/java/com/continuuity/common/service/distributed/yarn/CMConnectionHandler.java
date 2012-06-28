@@ -1,6 +1,6 @@
-package com.continuuity.common.distributedservice.yarn;
+package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.distributedservice.ContainerManagerConnectionHandler;
+import com.continuuity.common.service.distributed.ContainerManagerConnectionHandler;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.net.NetUtils;

@@ -1,6 +1,6 @@
-package com.continuuity.common.distributedservice.yarn;
+package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.distributedservice.ContainerGroupSpecification;
+import com.continuuity.common.service.distributed.ContainerGroupSpecification;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
 import org.apache.hadoop.yarn.api.records.Priority;
 import org.apache.hadoop.yarn.api.records.Resource;

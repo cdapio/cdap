@@ -1,4 +1,4 @@
-package com.continuuity.common.distributedservice;
+package com.continuuity.common.service.distributed;
 
 import org.apache.hadoop.yarn.api.ContainerManager;
 import org.apache.hadoop.yarn.api.records.Container;

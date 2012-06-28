@@ -1,6 +1,7 @@
-package com.continuuity.common.distributedservice.yarn;
+package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.distributedservice.*;
+import com.continuuity.common.service.distributed.*;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;

@@ -1,6 +1,6 @@
-package com.continuuity.common.distributedservice.yarn;
+package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.distributedservice.MasterConnectionHandler;
+import com.continuuity.common.service.distributed.MasterConnectionHandler;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.yarn.api.AMRMProtocol;

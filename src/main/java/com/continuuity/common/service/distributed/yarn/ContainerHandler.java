@@ -1,7 +1,7 @@
-package com.continuuity.common.distributedservice.yarn;
+package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.distributedservice.ApplicationMasterService;
-import com.continuuity.common.distributedservice.ContainerGroupSpecification;
+import com.continuuity.common.service.distributed.ApplicationMasterService;
+import com.continuuity.common.service.distributed.ContainerGroupSpecification;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.hadoop.yarn.api.ContainerManager;
