@@ -132,6 +132,7 @@ implements TransactionalOperationExecutor {
 
   @Override
   public void execute(FormatFabric formatFabric) {
+    initialize();
     if (formatFabric.shouldFormatData()) this.randomTable.format();
     if (formatFabric.shouldFormatQueues()) this.queueTable.format();
     if (formatFabric.shouldFormatStreams()) this.streamTable.format();

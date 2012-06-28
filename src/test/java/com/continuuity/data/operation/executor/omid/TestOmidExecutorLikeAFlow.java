@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.omid;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -26,6 +27,7 @@ import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
@@ -93,6 +95,54 @@ public class TestOmidExecutorLikeAFlow {
     assertEquals(1L, meta.getGlobalHeadPointer());
     assertEquals(1, meta.getGroups().length);
     assertEquals(1L, meta.getGroups()[0].getHead().getEntryId());
+  }
+
+  @Test
+  public void testFormatFabric() throws Exception {
+    byte [] queueName = Bytes.toBytes("queue://testFormatFabric_queue");
+    byte [] streamName = Bytes.toBytes("stream://testFormatFabric_stream");
+    byte [] keyAndValue = Bytes.toBytes("testFormatFabric");
+
+    // format first to catch ENG-375
+    this.executor.execute(new FormatFabric());
+    
+    long groupid = this.executor.execute(new GetGroupID(queueName));
+    assertEquals(1L, groupid);
+
+    QueueConsumer consumer = new QueueConsumer(0, groupid, 1);
+    QueueConfig config = new QueueConfig(
+        new QueuePartitioner.RandomPartitioner(), true);
+
+    // enqueue to queue, stream, and write data
+    this.executor.execute(new QueueEnqueue(queueName, queueName));
+    this.executor.execute(new QueueEnqueue(streamName, streamName));
+    this.executor.execute(new Write(keyAndValue, keyAndValue));
+    
+    // verify it can all be read
+    assertTrue(this.executor.execute(
+        new QueueDequeue(queueName, consumer, config)).isSuccess());
+    assertTrue(this.executor.execute(
+        new QueueDequeue(streamName, consumer, config)).isSuccess());
+    assertTrue(Bytes.equals(keyAndValue, this.executor.execute(
+        new ReadKey(keyAndValue))));
+    
+    // and it can be read twice
+    assertTrue(this.executor.execute(
+        new QueueDequeue(queueName, consumer, config)).isSuccess());
+    assertTrue(this.executor.execute(
+        new QueueDequeue(streamName, consumer, config)).isSuccess());
+    assertTrue(Bytes.equals(keyAndValue, this.executor.execute(
+        new ReadKey(keyAndValue))));
+    
+    // but if we format the fabric they all disappear
+    this.executor.execute(new FormatFabric());
+    
+    // everything is gone!
+    assertTrue(this.executor.execute(
+        new QueueDequeue(queueName, consumer, config)).isEmpty());
+    assertTrue(this.executor.execute(
+        new QueueDequeue(streamName, consumer, config)).isEmpty());
+    assertNull(this.executor.execute(new ReadKey(keyAndValue)));
   }
   @Test
   public void testStandaloneSimpleDequeue() throws Exception {
