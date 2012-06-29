@@ -33,10 +33,9 @@ dependencies {
     compile sourceSets.api.output
     
     /// External dependencies.
-    compile group: 'org.apache.hbase', name: 'hbase', version: '0.92.1'
+    compile group: 'org.apache.hbase', name: 'hbase', version: '0.94.1-SNAPSHOT', classifier: 'continuuity'
     compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.0.2'
-    testCompile group: 'org.apache.hbase', name: 'hbase-test', version: '0.92.1'
-    testCompile group: 'org.apache.hbase', name: 'hbase-test', version: '0.92.1'
+    testCompile group: 'org.apache.hbase', name: 'hbase', version: '0.94.1-SNAPSHOT', classifier: 'continuuity-tests'
     compile group: 'org.apache.hadoop', name: 'hadoop-test', version: '1.0.2'
 }
 

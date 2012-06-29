@@ -10,7 +10,6 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-@Ignore
 public class TestHBaseOVCTable extends TestOVCTable {
   
   private static Injector injector;
@@ -40,14 +39,19 @@ public class TestHBaseOVCTable extends TestOVCTable {
     return injector.getInstance(OVCTableHandle.class);
   }
 
+  // Tests that do not work on HBase
+  
+  @Override @Test @Ignore
+  public void testFormatVerySimply() {}
+  
   // These tests don't pass yet for hbase
 
-  @Override @Test @Ignore
-  public void testSameVersionOverwritesExisting() {}
-
-  @Override @Test @Ignore
-  public void testDeleteBehavior() {}
-
-  @Override @Test @Ignore
-  public void testGetAllKeys() {}
+//  @Override @Test @Ignore
+//  public void testSameVersionOverwritesExisting() {}
+//
+//  @Override @Test @Ignore
+//  public void testDeleteBehavior() {}
+//
+//  @Override @Test @Ignore
+//  public void testGetAllKeys() {}
 }

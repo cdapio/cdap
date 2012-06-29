@@ -7,10 +7,14 @@ import java.util.Random;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -110,7 +114,7 @@ public abstract class HBaseTestBase {
     Thread.sleep(1000);
     hbaseCluster = new MiniHBaseCluster(c, 1, 1);
     System.err.println("Just waiting around for a bit now");
-    Thread.sleep(10000);
+    Thread.sleep(1000);
   }
   
   @AfterClass
@@ -152,5 +156,27 @@ public abstract class HBaseTestBase {
     fs.mkdirs(hbaseRootdir);
     FSUtils.setVersion(fs, hbaseRootdir);
     return hbaseRootdir;
+  }
+
+  // HRegion-level testing
+
+  public static HRegion createHRegion(byte[] tableName, byte[] startKey,
+      byte[] stopKey, String callingMethod, Configuration conf,
+      byte[]... families)
+      throws IOException {
+    if (conf == null) conf = new Configuration();
+    HTableDescriptor htd = new HTableDescriptor(tableName);
+    for(byte [] family : families) {
+      htd.addFamily(new HColumnDescriptor(family));
+    }
+    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
+    Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
+    FileSystem fs = FileSystem.get(conf);
+    if (fs.exists(path)) {
+      if (!fs.delete(path, true)) {
+        throw new IOException("Failed delete of " + path);
+      }
+    }
+    return HRegion.createHRegion(info, path, conf, htd);
   }
 }

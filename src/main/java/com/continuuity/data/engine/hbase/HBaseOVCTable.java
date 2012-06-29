@@ -2,14 +2,17 @@ package com.continuuity.data.engine.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -24,96 +27,162 @@ import com.continuuity.data.table.Scanner;
 
 public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
-  private final HTable table;
+  private final HTable readTable;
 
+  private final LinkedList<HTable> writeTables;
+
+  private final Configuration conf;
+
+  private final byte[] tableName;
+  
   private final byte[] family;
 
   private final IOExceptionHandler exceptionHandler;
 
-  public HBaseOVCTable(HTable table, final byte[] family,
-      IOExceptionHandler exceptionHandler) {
-    this.table = table;
+  public HBaseOVCTable(Configuration conf, final byte [] tableName,
+      final byte[] family, IOExceptionHandler exceptionHandler)
+  throws IOException {
+    this.readTable = new HTable(conf, tableName);
+    this.writeTables = new LinkedList<HTable>();
+    this.writeTables.add(new HTable(conf, tableName));
+    this.writeTables.add(new HTable(conf, tableName));
+    this.conf = conf;
+    this.tableName = tableName;
     this.family = family;
     this.exceptionHandler = exceptionHandler;
   }
 
+  private synchronized HTable getWriteTable() throws IOException {
+    HTable writeTable = writeTables.pollFirst();
+    return writeTable == null ? new HTable(conf, tableName) : writeTable;
+  }
+  
+  private synchronized void returnWriteTable(HTable table) {
+    writeTables.add(table);
+  }
+  
   @Override
   public void put(byte[] row, byte[] column, long version, byte[] value) {
+    HTable writeTable = null;
     try {
-      this.table.put(new Put(row).add(this.family, column, version, value));
+      writeTable = getWriteTable();
+      writeTable.put(new Put(row).add(this.family, column, version, value));
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void put(byte[] row, byte[][] columns, long version, byte[][] values) {
     assert (columns.length == values.length);
+    HTable writeTable = null;
     try {
+      writeTable = getWriteTable();
       Put put = new Put(row);
       for (int i = 0; i < columns.length; i++) {
         put.add(this.family, columns[i], version, values[i]);
       }
-      this.table.put(put);
+      writeTable.put(put);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void delete(byte[] row, byte[] column, long version) {
+    HTable writeTable = null;
     try {
+      writeTable = getWriteTable();
       Delete delete = new Delete(row);
       delete.deleteColumn(this.family, column, version);
-      this.table.delete(delete);
+      writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void delete(byte[] row, byte[][] columns, long version) {
+    HTable writeTable = null;
     try {
+      writeTable = getWriteTable();
       Delete delete = new Delete(row);
       for (byte [] column : columns)
         delete.deleteColumn(this.family, column, version);
-      this.table.delete(delete);
+      writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void deleteAll(byte[] row, byte[] column, long version) {
+    HTable writeTable = null;
     try {
+      writeTable = getWriteTable();
       Delete delete = new Delete(row);
       delete.deleteColumns(this.family, column, version);
-      this.table.delete(delete);
+      writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void deleteAll(byte[] row, byte[][] columns, long version) {
+    HTable writeTable = null;
     try {
+      writeTable = getWriteTable();
       Delete delete = new Delete(row);
       for (byte [] column : columns)
         delete.deleteColumns(this.family, column, version);
-      this.table.delete(delete);
+      writeTable.delete(delete);
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 
   @Override
   public void undeleteAll(byte[] row, byte[] column, long version) {
-    throw new RuntimeException("undelete operation not supported by hbase");
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      Delete delete = new Delete(row);
+      delete.undeleteColumns(this.family, column, version);
+      writeTable.delete(delete);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
+    }
   }
 
   @Override
   public void undeleteAll(byte[] row, byte[][] columns, long version) {
-    throw new RuntimeException("undelete operation not supported by hbase");
+    HTable writeTable = null;
+    try {
+      writeTable = getWriteTable();
+      Delete delete = new Delete(row);
+      for (byte [] column : columns)
+        delete.undeleteColumns(this.family, column, version);
+      writeTable.delete(delete);
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+    } finally {
+      if (writeTable != null) returnWriteTable(writeTable);
+    }
   }
 
   @Override
@@ -123,7 +192,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.addFamily(this.family);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
-      Result result = this.table.get(get);
+      Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
       byte[] last = null;
@@ -149,11 +218,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.addColumn(this.family, column);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
-      Result result = this.table.get(get);
+      Result result = this.readTable.get(get);
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
-        return kv.getValue();
+        byte [] value = kv.getValue();
+        return value == null || value.length == 0 ? null : value;
       }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -174,7 +244,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.addColumn(this.family, column);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
-      Result result = this.table.get(get);
+      Result result = this.readTable.get(get);
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
@@ -194,7 +264,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.addFamily(this.family);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
-      Result result = this.table.get(get);
+      Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
       byte[] last = null;
@@ -203,6 +273,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         if (!readPointer.isVisible(version)) continue;
         byte [] column = kv.getQualifier();
         if (Bytes.equals(last, column)) continue;
+        if (startColumn != null &&
+            Bytes.compareTo(startColumn, column) > 0) continue;
+        if (stopColumn != null &&
+            Bytes.compareTo(column, stopColumn) >= 0) break;
         map.put(column, kv.getValue());
         last = column;
       }
@@ -221,7 +295,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       for (byte [] column : columns) get.addColumn(this.family, column);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
-      Result result = this.table.get(get);
+      Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
       byte[] last = null;
@@ -249,7 +323,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Scan scan = new Scan();
       scan.setTimeRange(0, getMaxStamp(readPointer));
       scan.setMaxVersions();
-      ResultScanner scanner = this.table.getScanner(scan);
+      ResultScanner scanner = this.readTable.getScanner(scan);
       Result result = null;
       while ((result = scanner.next()) != null) {
         for (KeyValue kv : result.raw()) {
@@ -279,7 +353,8 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Increment increment = new Increment(row);
       increment.addColumn(this.family, column, amount);
       increment.setTimeRange(0, getMaxStamp(readPointer));
-      Result result = this.table.increment(increment);
+      increment.setWriteVersion(writeVersion);
+      Result result = this.readTable.increment(increment);
       if (result.isEmpty()) return 0L;
       return Bytes.toLong(result.value());
     } catch (IOException e) {
@@ -297,11 +372,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       //       pointer!
       Increment increment = new Increment(row);
       increment.setTimeRange(0, getMaxStamp(readPointer));
+      increment.setWriteVersion(writeVersion);
       for (int i=0; i<columns.length; i++)
         increment.addColumn(this.family, columns[i], amounts[i]);
-      Result result = this.table.increment(increment);
+      Result result = this.readTable.increment(increment);
       for (KeyValue kv : result.raw())
-        ret.put(kv.getRow(), Bytes.toLong(kv.getValue()));
+        ret.put(kv.getQualifier(), Bytes.toLong(kv.getValue()));
       return ret;
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
@@ -314,10 +390,17 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
       long writeVersion) {
     try {
-      // TODO: This currently does not support passing a read pointer!
-      Put put = new Put(row);
-      put.add(this.family, column, writeVersion, newValue);
-      return this.table.checkAndPut(row, this.family, column, expectedValue, put);
+      if (newValue == null) {
+        Delete delete = new Delete(row);
+        delete.deleteColumns(family, column, writeVersion);
+        return this.readTable.checkAndDelete(row, this.family, column,
+            expectedValue, readPointer.getMaximum(), delete);
+      } else {
+        Put put = new Put(row);
+        put.add(this.family, column, writeVersion, newValue);
+        return this.readTable.checkAndPut(row, this.family, column, expectedValue,
+            readPointer.getMaximum(), put);
+      }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
       return false;
