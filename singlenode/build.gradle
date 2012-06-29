@@ -153,6 +153,8 @@ applicationDistribution.from("$buildDir/javadoc") {
 }
 
 // include examples from example project
+//   the "exclude */*.jar" is to exclude any local-gradle-compiled jars we have in our work area.
+//   any "*/lib/*.jar" should still be included
 task copyExamples (type: Copy) {
     def examplesdir = file ("$buildDir/examples")
     from project(':examples').projectDir
@@ -162,7 +164,7 @@ task copyExamples (type: Copy) {
     exclude ".gitignore"
     exclude "**/*.gradle"
     exclude "**/classes/"
-    exclude "**/*.jar"
+    exclude "*/*.jar"
 }
 applicationDistribution.from(copyExamples) {
     into "examples"
