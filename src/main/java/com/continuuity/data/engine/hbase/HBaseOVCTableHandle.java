@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
@@ -40,7 +41,8 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
     HBaseOVCTable table = null;
     try {
-      table = new HBaseOVCTable(createTable(tableName), FAMILY,
+      createTable(tableName);
+      table = new HBaseOVCTable(conf, tableName, FAMILY,
           new HBaseIOExceptionHandler());
     } catch (IOException e) {
       exceptionHandler.handle(e);

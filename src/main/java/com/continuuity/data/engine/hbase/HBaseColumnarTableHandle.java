@@ -43,7 +43,8 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
       TimestampOracle timeOracle) {
     HBaseOVCTable table = null;
     try {
-      table = new HBaseOVCTable(createTable(tableName), FAMILY,
+      createTable(tableName);
+      table = new HBaseOVCTable(conf, tableName, FAMILY,
           new HBaseIOExceptionHandler());
     } catch (IOException e) {
       exceptionHandler.handle(e);

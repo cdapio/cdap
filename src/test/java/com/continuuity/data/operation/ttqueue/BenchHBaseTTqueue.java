@@ -1,61 +1,63 @@
 package com.continuuity.data.operation.ttqueue;
 
-import org.junit.Ignore;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
-@Ignore
-public abstract class BenchHBaseTTqueue extends BenchTTQueue {
-//
-//  private static final HBaseTestingUtility hbTestUtil =
-//      new HBaseTestingUtility();
-//
-//  private static MiniHBaseCluster miniCluster;
-//
-//  private static final Configuration conf = hbTestUtil.getConfiguration();
-//  
-//  private static final Injector injector =
-//      Guice.createInjector(new DataFabricDistributedModule(conf));
-//
-//  private static final OVCTableHandle handle =
-//      injector.getInstance(OVCTableHandle.class);
-//
-//  // Configuration for hypersql bench
-//  private static final BenchConfig config = new BenchConfig();
-//  static {
-//    config.numJustEnqueues = 1000;
-//    config.queueEntrySize = 10;
-//    config.numEnqueuesThenSyncDequeueAckFinalize = 1000;
-//  }
-//
-//  @BeforeClass @Ignore
-//  public static void startEmbeddedHBase() {
-//    try {
-//      miniCluster = hbTestUtil.startMiniCluster(1, 1);
-//    } catch (Exception e) {
-//      throw new RuntimeException(e);
-//    }
-//  }
-//
-//  @AfterClass @Ignore
-//  public static void stopEmbeddedHBase() {
-//    try {
-//      if (miniCluster != null) miniCluster.shutdown();
-//    } catch (Exception e) {
-//      throw new RuntimeException(e);
-//    }
-//  }
-//  
-//  @Override
-//  protected TTQueue createQueue(CConfiguration conf) {
-//    String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
-//    return new TTQueueOnVCTable(
-//        handle.getTable(Bytes.toBytes("BenchTable" + rand)),
-//        Bytes.toBytes("BQN" + rand),
-//        TestTTQueue.timeOracle, conf);
-//  }
-//
-//  @Override
-//  protected BenchConfig getConfig() {
-//    return config;
-//  }
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.table.OVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
+public class BenchHBaseTTqueue extends BenchTTQueue {
+
+  private static Injector injector;
+
+  private static OVCTableHandle handle;
+
+  @BeforeClass
+  public static void startEmbeddedHBase() {
+    try {
+      HBaseTestBase.startHBase();
+      injector = Guice.createInjector(
+          new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      handle = injector.getInstance(OVCTableHandle.class);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @AfterClass
+  public static void stopEmbeddedHBase() {
+    try {
+      HBaseTestBase.stopHBase();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  protected TTQueue createQueue(CConfiguration conf) {
+    String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
+    return new TTQueueOnVCTable(
+        handle.getTable(Bytes.toBytes("BenchTable" + rand)),
+        Bytes.toBytes("BQN" + rand),
+        TestTTQueue.timeOracle, conf);
+  }
+
+  // Configuration for hypersql bench
+  private static final BenchConfig config = new BenchConfig();
+  static {
+    config.numJustEnqueues = 500;
+    config.queueEntrySize = 10;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 500;
+  }
+
+  @Override
+  protected BenchConfig getConfig() {
+    return config;
+  }
 
 }
