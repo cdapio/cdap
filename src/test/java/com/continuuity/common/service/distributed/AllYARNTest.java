@@ -10,7 +10,7 @@ public class AllYARNTest extends YARNTestBase {
 
   @Test
   public void simple() throws Exception {
-    ContainerGroupSpecification cgs = new ContainerGroupSpecification.Builder()
+    ContainerGroupSpecification cgs = new ContainerGroupSpecification.Builder(getConfiguration())
       .setPriority(0)
       .setMemory(1024)
       .setNumInstances(2)
