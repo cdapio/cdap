@@ -3,7 +3,7 @@ package com.continuuity.common.service.distributed.yarn;
 import com.continuuity.common.service.distributed.ClientService;
 import com.continuuity.common.service.distributed.ClientSpecification;
 import com.continuuity.common.service.distributed.ContainerGroupSpecification;
-import com.continuuity.common.service.distributed.MasterConnectionHandler;
+import com.continuuity.common.service.distributed.ResourceManagerConnectionHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.hadoop.conf.Configuration;
@@ -33,7 +33,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   private static Logger Log = LoggerFactory.getLogger(ClientServiceImpl.class);
 
   private final ClientSpecification specification;
-  private final MasterConnectionHandler<ClientRMProtocol> appMgrHandler;
+  private final ResourceManagerConnectionHandler<ClientRMProtocol> appMgrHandler;
   private ClientRMProtocol appMgr;
   private ApplicationId applicationId;
   private ApplicationReport applicationReport;
@@ -45,7 +45,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   /**
    * Handler for managing connection to Resource manager.
    */
-  private static class ApplicationManagerConnectionHandler implements MasterConnectionHandler<ClientRMProtocol> {
+  private static class ApplicationManagerConnectionHandler implements ResourceManagerConnectionHandler<ClientRMProtocol> {
     private static final Logger Log = LoggerFactory.getLogger(ApplicationManagerConnectionHandler.class);
     private final Configuration configuration;
     private final YarnRPC rpc;

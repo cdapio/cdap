@@ -23,7 +23,6 @@ dependencies {
     compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
 
     /** All hadoop related dependencies */
-    compile group: 'org.apache.hadoop', name: 'hadoop-common', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-annotations', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-common', version:'2.0.0-alpha'

@@ -19,21 +19,21 @@ public class ContainerLaunchContextFactory {
     this.clusterMax = clusterMax;
   }
 
-  public ContainerLaunchContext create(ContainerGroupSpecification parameters) {
+  public ContainerLaunchContext create(ContainerGroupSpecification specification) {
     ContainerLaunchContext clc = Records.newRecord(ContainerLaunchContext.class);
-    clc.setCommands(parameters.getCommands());
-    clc.setEnvironment(parameters.getEnvironment());
-    //clc.setLocalResources(parameters.getLocalResources());
-    clc.setResource(parameters.getContainerResource(clusterMin, clusterMax));
-    clc.setUser(parameters.getUser());
+    clc.setCommands(specification.getCommands());
+    clc.setEnvironment(specification.getEnvironment());
+    //clc.setLocalResources(specification.getLocalResources());
+    clc.setResource(specification.getContainerResource(clusterMin, clusterMax));
+    clc.setUser(specification.getUser());
     return clc;
   }
 
-  public ResourceRequest createResourceRequest(ContainerGroupSpecification parameters) {
+  public ResourceRequest createResourceRequest(ContainerGroupSpecification specification) {
     ResourceRequest req = Records.newRecord(ResourceRequest.class);
-    req.setCapability(parameters.getContainerResource(clusterMin, clusterMax));
-    req.setPriority(createPriority(parameters.getPriority()));
-    req.setNumContainers(parameters.getNumInstances());
+    req.setCapability(specification.getContainerResource(clusterMin, clusterMax));
+    req.setPriority(createPriority(specification.getPriority()));
+    req.setNumContainers(specification.getNumInstances());
     req.setHostName("*"); /** right now we don't care where the containers are started. */
     return req;
   }

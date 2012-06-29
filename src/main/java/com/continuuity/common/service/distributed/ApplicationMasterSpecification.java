@@ -135,14 +135,14 @@ public class ApplicationMasterSpecification {
     this.trackingUrl = trackingUrl;
   }
 
-  public class Builder {
+  public static class Builder {
     private Configuration configuration;
     private ApplicationAttemptId attemptId;
     private List<ContainerGroupSpecification> containerGroupSpecifications = Lists.newArrayList();
     private int allowedFailures = -1;
-    private String hostname = "*";
-    private int clientPort = -1;
-    private String trackingUrl = null;
+    private String hostname = "";
+    private int clientPort = 0;
+    private String trackingUrl = "";
 
     public Builder() {
       Map<String, String> env = System.getenv();
@@ -184,8 +184,10 @@ public class ApplicationMasterSpecification {
       amp.setApplicationAttemptId(attemptId);
       amp.setAllContainerGroups(containerGroupSpecifications);
       amp.setAllowedFailures(allowedFailures);
+      amp.setHostname(hostname);
       amp.setClientPort(clientPort);
       amp.setTrackingUrl(trackingUrl);
+      amp.setConfiguration(configuration);
       return amp;
     }
   }

@@ -222,46 +222,6 @@ public class ApplicationManagerServiceImpl extends AbstractScheduledService impl
   }
 
   /**
-   * Returns an instance to resource manager.
-   *
-   * @return instance of resource manager.
-   */
-  @Override
-  public AMRMProtocol getResourceManager() {
-    return resourceMgr;
-  }
-
-  /**
-   * Pair of min and max cluster resources.
-   *
-   * @return pair of min & max cluster resources.
-   */
-  @Override
-  public ImmutablePair<Resource, Resource> getClusterResourcesRange() {
-    return new ImmutablePair<Resource, Resource>(minClusterResource, maxClusterResource);
-  }
-
-  /**
-   * Return CM connection handler.
-   *
-   * @return handler to connection manager.
-   */
-  @Override
-  public ContainerManagerConnectionHandler getContainerManagerConnection() {
-    return cmHandler;
-  }
-
-  /**
-   * Return RM connection handler.
-   *
-   * @return handler to resource manager.
-   */
-  @Override
-  public ResourceManagerConnectionHandler getMasterConnection() {
-    return rmHandler;
-  }
-
-  /**
    * Makes a request to allocate a container.
    *
    * @param requestId
@@ -274,7 +234,7 @@ public class ApplicationManagerServiceImpl extends AbstractScheduledService impl
     req.setApplicationAttemptId(getSpecification().getApplicationAttemptId());
     req.addAsk(request);
     try {
-      return getResourceManager().allocate(req).getAMResponse();
+      return resourceMgr.allocate(req).getAMResponse();
     } catch (YarnRemoteException e) {
       Log.warn("There was a problem while requesting resource. Reason : {}", e.getMessage());
     }
@@ -470,7 +430,7 @@ public class ApplicationManagerServiceImpl extends AbstractScheduledService impl
       ContainerLaunchContext ctxt = containerLaunchContextFactory.create(specification);
       ctxt.setContainerId(container.getId());
       ctxt.setResource(container.getResource());
-      containerMgr = getContainerManagerConnection().connect(container);
+      containerMgr = cmHandler.connect(container);
       if(containerMgr == null) {
         Log.warn("Failed connecting to container manager for container {}", container.toString());
         stop();

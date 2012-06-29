@@ -11,9 +11,10 @@ import java.util.Map;
 /**
  * The parameters that are common to launching both application masters and node tasks via
  * a {@code ContainerLaunchContext} instance.
+ *
+ * TODO: TaskDescriptor and ResourceDescriptor make up a ContainerSpecification. When we refactor.
  */
 public class ContainerGroupSpecification {
-
   private String user;
   private int memory;
   private int priority;

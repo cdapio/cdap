@@ -11,10 +11,17 @@ import org.apache.hadoop.yarn.api.records.Resource;
  *
  */
 public interface ApplicationMasterService extends Service {
+  /**
+   * Returns an {@code ApplicationMasterSpecification} object.
+   *
+   * @return instance of {@code ApplicationMasterSpecification}
+   */
   ApplicationMasterSpecification getSpecification();
+
+  /**
+   * Returns the application attempt Id.
+   *
+   * @return application instance id associated with run.
+   */
   ApplicationAttemptId getApplicationAttemptId();
-  AMRMProtocol getResourceManager();
-  ImmutablePair<Resource, Resource> getClusterResourcesRange();
-  ContainerManagerConnectionHandler getContainerManagerConnection();
-  MasterConnectionHandler getMasterConnection();
 }
