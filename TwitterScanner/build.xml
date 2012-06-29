@@ -1,0 +1,12 @@
+<?xml version="1.0" ?> 
+<project name="TwitterScanner" default="jar">
+
+    <!-- Override the default main class defn -->
+    <property name="main.class" value="TwitterScanner.TwitterFlow"/>
+
+    <!-- Now import the common build file -->
+    <import file="../ant-common.xml"/>
+
+    <!-- Pick up any project jars -->
+
+</project>
