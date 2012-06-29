@@ -110,7 +110,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       String user = UserGroupInformation.getCurrentUser().getShortUserName();
 
       /** Build the container specification for launching application manager. */
-      ContainerGroupSpecification.Builder builder = new ContainerGroupSpecification.Builder();
+      ContainerGroupSpecification.Builder builder = new ContainerGroupSpecification.Builder(specification.getConfiguration());
       builder.setMemory(specification.getMemory());
       for(String command : specification.getCommands()) {
         builder.addCommand(command);
