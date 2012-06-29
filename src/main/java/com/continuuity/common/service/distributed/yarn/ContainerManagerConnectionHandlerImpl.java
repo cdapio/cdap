@@ -17,8 +17,8 @@ import java.util.Map;
 /**
  * Connection handler for managing connections to containers allocated.
  */
-public class CMConnectionHandler implements ContainerManagerConnectionHandler {
-  private static Logger Log = LoggerFactory.getLogger(CMConnectionHandler.class);
+public class ContainerManagerConnectionHandlerImpl implements ContainerManagerConnectionHandler {
+  private static Logger Log = LoggerFactory.getLogger(ContainerManagerConnectionHandlerImpl.class);
 
   /**
    * Instance of configuration.
@@ -35,7 +35,7 @@ public class CMConnectionHandler implements ContainerManagerConnectionHandler {
    */
   private final Map<String, ContainerManager> containerMgrs = Maps.newHashMap();
 
-  public CMConnectionHandler(Configuration configuration) {
+  public ContainerManagerConnectionHandlerImpl(Configuration configuration) {
     this.configuration = configuration;
     this.rpc = YarnRPC.create(configuration);
   }

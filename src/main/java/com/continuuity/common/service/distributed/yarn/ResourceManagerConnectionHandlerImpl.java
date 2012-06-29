@@ -1,6 +1,6 @@
 package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.service.distributed.MasterConnectionHandler;
+import com.continuuity.common.service.distributed.ResourceManagerConnectionHandler;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.yarn.api.AMRMProtocol;
@@ -15,13 +15,13 @@ import java.net.InetSocketAddress;
  *
  *
  */
-public class RMConnectionHandler implements MasterConnectionHandler<AMRMProtocol> {
-  private static Logger Log = LoggerFactory.getLogger(RMConnectionHandler.class);
+public class ResourceManagerConnectionHandlerImpl implements ResourceManagerConnectionHandler<AMRMProtocol> {
+  private static Logger Log = LoggerFactory.getLogger(ResourceManagerConnectionHandlerImpl.class);
 
   private final Configuration configuration;
   private final YarnRPC rpc;
 
-  public RMConnectionHandler(Configuration configuration) {
+  public ResourceManagerConnectionHandlerImpl(Configuration configuration) {
     this.configuration = configuration;
     this.rpc = YarnRPC.create(configuration);
   }

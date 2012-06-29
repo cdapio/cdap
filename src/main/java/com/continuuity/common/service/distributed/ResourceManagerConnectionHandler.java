@@ -4,6 +4,6 @@ package com.continuuity.common.service.distributed;
  *
  *
  */
-public interface MasterConnectionHandler<T> {
+public interface ResourceManagerConnectionHandler<T> {
   T connect();
 }
