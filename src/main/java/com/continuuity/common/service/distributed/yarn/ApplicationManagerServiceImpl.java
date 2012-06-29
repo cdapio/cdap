@@ -430,6 +430,7 @@ public class ApplicationManagerServiceImpl extends AbstractScheduledService impl
       ContainerLaunchContext ctxt = containerLaunchContextFactory.create(specification);
       ctxt.setContainerId(container.getId());
       ctxt.setResource(container.getResource());
+      ctxt.setLocalResources(specification.getNamedLocalResources());
       containerMgr = cmHandler.connect(container);
       if(containerMgr == null) {
         Log.warn("Failed connecting to container manager for container {}", container.toString());
