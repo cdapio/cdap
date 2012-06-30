@@ -1,83 +1,75 @@
-Copyright 2012 Continuuity Inc. All Rights Reserved.
+© Copyright 2012 Continuuity, Inc.  All rights reserved.
 
-The BigFlow Developer Edition software is Copyright 2012 Continuuity Inc. All
-rights reserved. This software may not, in whole or in any part, be
-copied, reproduced, transmitted, translated (into any language, natural
-or computer), stored in a retrieval system, reduced to any electronic
-medium or machine readable format, or by any other form or means
-without prior consent, in writing, from Continuuity Inc.You are granted
-a limited license to use this software. The software may be used or copied
-only in accordance with the terms of that license, which is described in the
-following paragraphs.
+BY INSTALLING AND/OR USING THE PLATFORM, YOU HEREBY AGREE TO ALL OF THE TERMS
+AND CONDITIONS SET FORTH IN THIS LICENSE
 
-TRADEMARKS:
-BigFlow is trademark of Continuuity Inc.
+Continuuity hereby grants you, during the term of this License, a free,
+personal,non-exclusive, non-sublicensable, non-transferable, limited license to
+access and use the Platform solely for your internal development and test
+purposes only. “Platform” means Continuuity’s BigData Platform, which is a
+developer-focused platform that allows customers to build bigdata analytic
+applications.  Continuuity retains all right, title and interest in and to the
+Platform and all improvements, modifications and derivative works thereto.
+You are not granted any right to the Platform or any components thereof, except
+for the limited license expressly set forth herein.
 
-LICENSE:
-"THE SOFTWARE" SHALL BE TAKEN TO MEAN THE SOFTWARE
-CONTAINED IN THIS PACKAGE AND ANY SUBEQUENT
-VERSIONS OR UPGRADES RECEIVED AS A RESULT OF HAVING
-PURCHASED THIS PACKAGE. "BUYER" SHALL BE TAKEN AS
-THE ORIGINAL PURCHASER OF THE SOFTWARE.
+You agree that:  (a)  You will access and use the Platform solely in accordance
+with the terms of this Agreement and any additional applicable principles or
+guidelines communicated to you in writing by Continuuity; (b) you will not
+distribute the Platform or otherwise provide any third party with access to or
+use of the Platform; (c) you will not use the Platform in any manner that:
+(i) violates any provision set forth herein; (ii) is prohibited by any
+applicable law, rule or regulation; (iii) promotes or facilitates illegal
+activity; (iv) violates, infringes or misappropriates any intellectual property
+right of any third party or of Continuuity; or (v) utilizes any malware, harmful
+code, or otherwise interferes with, disrupts, damages or accesses in an
+unauthorized manner the Platform or any software, hardware, data, systems,
+networks, or other property or services of Continuuity or any third party;
+(d)  you will not (and will not allow others to) copy, modify, decompile,
+reverse engineer or create a derivative work of all or any portion of the
+Platform; (e)  you will not alter, obscure or remove any copyright, trademark
+or other proprietary rights notices that may be affixed to or contained within
+the Platform; and (f)  you will defend, indemnify and hold harmless Continuuity,
+its affiliates and their respective directors, officers, employees and agents,
+from and against any and all third party claims, actions, suits or proceedings,
+as well as any and all losses, liabilities, damages, costs and expenses
+(including reasonable attorneys fees) arising out of or accruing from your
+breach of any of your warranties, representations or obligations set forth
+herein.
 
-BUYER HAS THE NON-EXCLUSIVE RIGHT TO USE THE
-SOFTWARE ONLY ON A SINGLE COMPUTER. BUYER MAY NOT
-ELECTRONICALLY TRANSFER THE PROGRAM FROM ONE
-COMPUTER TO ANOTHER OVER ANY TYPE OF NETWORK.
-BUYER MAY NOT DISTRIBUTE COPIES OF THE SOFTWARE OR
-THE ACCOMPANYING DOCUMENTATION TO OTHERS EITHER
-FOR A FEE OR WITHOUT CHARGE. BUYER MAY NOT MODIFY
-OR TRANSLATE THE PROGRAM OR DOCUMENTATION. USER
-MAY NOT DISASSEMBLE THE PROGRAM OR ALLOW IT TO BE
-DISASSEMBLED INTO ITS CONTITUENT SOURCE CODE.
+Continuuity shall have the right to terminate this License upon written notice
+to you at any time.  Upon any such termination, your access to and use of the
+Platform will immediately terminate.  Sections relating to intellectual property
+ownership, disclaimer of warranties, limitations of liability and indemnity by
+you shall survive termination of this License.
 
-BUYER'S USE OF THE SOFTWARE INDICATES HIS/HER
-ACCEPTANCE OF THESE TERMS AND CONDITIONS. IF BUYER
-DOES NOT AGREE TO THESE CONDITIONS, RETURN THE
-DISTRIBUTION MEDIA, DOCUMENTATION, AND ASSOCIATED
-MATERIALS TO THE VENDOR FROM WHOM THE SOFTWARE
-WAS PURCHASED, AND ERASE THE SOFTWARE FROM ANY
-AND ALL STORAGE DEVICES UPON WHICH IT MAY HAVE BEEN
-INSTALLED.
+THE PLATFORM IS PROVIDED “AS IS” WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS
+OR IMPLIED, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE  AND NON-INFRINGEMENTS OF
+INTELLECTUAL PROPERTY RIGHTS.  EXCEPT AS EXPRESSLY SET FORTH HEREIN, YOUR ACCESS
+TO AND USE OF THE PLATFORM AND ANY OTHER ACTIONS TAKEN BY YOU IN CONNECTION
+THEREWITH ARE DONE ENTIRELY AT YOUR OWN RISK.
 
-THIS LICENSE AGREEMENT SHALL BE GOVERNED BY THE
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, AND REGARDLESS OF THE FORM OF ACTION,
+CONTINUUITY SHALL HAVE NO LIABILITY WHATSOEVER FOR INDIRECT, INCIDENTAL, SPECIAL
+OR CONSEQUENTIAL DAMAGES OR LOSSES RELATING TO THE PLATFORM, YOUR USE THEREOF,
+OR OTHERWISE ARISING UNDER THIS AGREEMENT, EVEN IF CONTINUUITY HAS BEEN ADVISED
+OF, OR MIGHT HAVE ANTICIPATED THE POSSIBILITY OF, SUCH DAMAGES OR LOSSES. IN ANY
+EVENT, THE AGGREGATE LIABILITY OF CONTINUUITY FOR ANY AND ALL DAMAGES ARISING
+FROM OR RELATING TO THIS AGREEMENT OR YOUR ACCESS AND USE OF THE PLATFORM IS
+LIMITED TO THE GREATER OF THE FEES EARNED UNDER THIS AGREEMENT DURING THE SIX
+(6) MONTHS PRIOR TO THE INCIDENT GIVING RISE TO THE CLAIM, OR $100.
 
-LAWS OF THE UNITED STATES OF AMERICA, California
-AND SHALL INURE TO THE BENEFIT OF Continuuity Inc
-OR ITS ASSIGNS.
-
-
-DISCLAIMER / LIMITATION OF LIABILITY:
-
-BUYER ACKNOWLEDGES THAT THE SOFTWARE MAY NOT BE
-FREE FROM DEFECTS AND MAY NOT SATISFY ALL OF BUYER'S
-NEEDS. Continuuity Inc WARRANTS ALL MEDIA ON WHICH THE
-SOFTWARE IS DISTRIBUTED FOR 60 DAYS TO BE FREE FROM
-DEFECTS IN MATERIALS AND WORKMANSHIP UNDER NORMAL
-USE. THE SOFTWARE AND ANY ACCOMPANYING WRITTEN
-MATERIALS ARE LICENSED "AS IS". BUYER'S EXCLUSIVE
-REMEDY DURING THE WARRANTY PERIOD SHALL CONSIST OF
-REPLACEMENT OF DISTRIBUTION MEDIA IF DETERMINED TO
-BE FAULTY. IN NO EVENT WILL Continuuity Inc BE LIABLE FOR
-DIRECT, INDIRECT, INCIDENTAL OR CONSEQUENTIAL DAMAGE
-OR DAMAGES RESULTING FROM LOSS OF USE, OR LOSS OF
-ANTICIPATED PROFITS RESULTING FROM ANY DEFECT IN THE
-PROGRAM, EVEN IF IT HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE. SOME LAWS DO NOT ALLOW
-THE EXCLUSION OR LIMITATION OF IMPLIED WARRANTIES OR
-LIABILITIES FOR INCIDENTAL OR CONSEQUENTIAL DAMAGES,
-SO THE ABOVE LIMITATIONS OR EXCLUSION MAY NOT APPLY.
+You may not assign or transfer this Agreement or any of your rights or
+obligations hereunder, absent the prior written consent of Continuuity.
+This Agreement shall be governed by, and construed in accordance with, the
+laws of the State of California, without regard to conflict of law principles.
+This Agreement constitutes the complete understanding between you and
+Continuuity with respect to the subject matter contained herein, and supersedes
+all prior written or oral communications, understandings and agreements.  Any
+amendment or modification to this Agreement must be mutually agreed by the
+parties in writing.  If any provision of this Agreement is deemed to be illegal,
+invalid or unenforceable, then that provision shall be removed and the remaining
+terms will continue to be valid and enforceable.
 
 
-SPECIFIC RESTRICTIONS:
-
-IN ACCORDANCE WITH THE COMPUTER SOFTWARE RENTAL
-ACT OF 1990, THIS SOFTWARE MAY NOT BE RENTED, LENT OR
-LEASED.
-
-THE SOFTWARE AND ACCOMPANYING DOCUMENTATION MAY
-NOT BE PROVIDED BY A "BACKUP SERVICE" OR ANY OTHER
-VENDOR WHICH DOES NOT PROVIDE AN ORIGINAL PACKAGE
-AS COMPOSED BY Continuuity Inc, INCLUDING BUT NOT
-LIMITED TO ALL ORIGINAL DISTRIBUTION MEDIA,
-DOCUMENTATION, REGISTRATION CARDS, AND INSERTIONS.
