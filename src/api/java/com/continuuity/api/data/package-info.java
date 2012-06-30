@@ -74,7 +74,7 @@
  *
  * <p>
  * Flow merely defines how the topology of the flow would look like. Next step is to provide the
- * the Flow to a FlowRunner to start and manage while it's running. {@link FlowRunner} can be used
+ * the Flow to a FlowRunner to start and manage while it's running. {@link com.continuuity.api.flow.FlowRunner} can be used
  * to start a flow. Following is an example of how to start a flow in-memory.
  *
  * <pre>
