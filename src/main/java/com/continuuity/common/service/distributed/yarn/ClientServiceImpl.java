@@ -2,7 +2,7 @@ package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.ClientService;
 import com.continuuity.common.service.distributed.ClientSpecification;
-import com.continuuity.common.service.distributed.ContainerGroupSpecification;
+import com.continuuity.common.service.distributed.TaskSpecification;
 import com.continuuity.common.service.distributed.ResourceManagerConnectionHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -110,7 +110,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       String user = UserGroupInformation.getCurrentUser().getShortUserName();
 
       /** Build the container specification for launching application manager. */
-      ContainerGroupSpecification.Builder builder = new ContainerGroupSpecification.Builder(specification.getConfiguration());
+      TaskSpecification.Builder builder = new TaskSpecification.Builder(specification.getConfiguration());
       builder.setMemory(specification.getMemory());
       for(String command : specification.getCommands()) {
         builder.addCommand(command);
@@ -120,7 +120,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       }
       builder.setUser(user);
       builder.setPriority(0);
-      ContainerGroupSpecification appMasterSpecs = builder.create();
+      TaskSpecification appMasterSpecs = builder.create();
 
       /** Create and populate container launch context. */
       ContainerLaunchContext clc = containerLaunchContextFactory.create(appMasterSpecs);
