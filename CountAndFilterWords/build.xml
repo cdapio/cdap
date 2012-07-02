@@ -1,0 +1,4 @@
+<?xml version="1.0" ?> 
+<project name="CountAndFilterWords" default="jar">
+    <import file="../ant-common.xml"/>
+</project>
