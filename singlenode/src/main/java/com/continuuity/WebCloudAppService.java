@@ -50,7 +50,6 @@ public class WebCloudAppService implements Server {
 
       // Keep running..
       final Process localProcess = webAppProcess;
-      final CountDownLatch latch = new CountDownLatch(1);
       new Thread() {
         @Override
         public void run() {
@@ -67,21 +66,11 @@ public class WebCloudAppService implements Server {
             while ((line = br.readLine()) != null) {
               logger.debug(line);
             }
-            latch.countDown();
           } catch (IOException ie) {
             logger.error(ie.getMessage());
           }
         }
       }.start();
-
-      try {
-        latch.await(2, TimeUnit.SECONDS);
-        if(latch.getCount() != 0) {
-          throw new ServerException("There was a problem starting the nodejs server.");
-        }
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
     } catch (IOException e) {
       throw new ServerException(e.getMessage());
     }
