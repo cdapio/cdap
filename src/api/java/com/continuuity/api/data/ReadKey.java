@@ -10,6 +10,8 @@ public class ReadKey implements ReadOperation<byte[]> {
   /** The key to read */
   private final byte [] key;
 
+  private byte [] value;
+
   /**
    * Reads the value of the specified key.
    * @param key the key to read
@@ -24,13 +26,12 @@ public class ReadKey implements ReadOperation<byte[]> {
 
   @Override
   public byte [] getResult() {
-    return null;
+    return this.value;
   }
 
   @Override
   public void setResult(byte[] t) {
-    // TODO Auto-generated method stub
-    
+    this.value = t;
   }
   
   @Override
