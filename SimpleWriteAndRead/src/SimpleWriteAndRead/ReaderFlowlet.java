@@ -13,13 +13,6 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
         add("column", byte[].class).
         create();
     configurator.getDefaultTupleInputStream().setSchema(in);
-
-    TupleSchema out = new TupleSchemaBuilder().
-        add("row", byte[].class).
-        add("column", byte[].class).
-        add("value", byte[].class).
-        create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
   }
 
   @Override
@@ -34,13 +27,11 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
     ReadOperationExecutor executor =
       getFlowletLaunchContext().getReadExecutor();
     byte [] value = executor.execute(read).get(column);
-    
-    // output a tuple, adding the value
-    Tuple outputTuple = new TupleBuilder().
-        set("row", row).
-        set("column", column).
-        set("value", value).
-        create();
-    outputCollector.emit(outputTuple);
+  
+    if (Common.debug)
+      System.out.println(this.getClass().getSimpleName() + ": Read value (" +
+          new String(value) + ") for row (" + new String(row) + ") column (" +
+          new String(column) + ")");
+
   }
 }
