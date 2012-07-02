@@ -12,7 +12,6 @@ var io = require('socket.io').listen(app);
 app.use(express.bodyParser());
 
 Env.configure(app, express, io);
-app.listen(Env.PORT);
 
 var id = "default";
 var sockets = {};
@@ -63,3 +62,9 @@ io.sockets.on('connection', function (socket) {
 	});
 
 });
+
+app.on('error', function () {
+	process.exit(1);
+});
+
+app.listen(Env.PORT);
