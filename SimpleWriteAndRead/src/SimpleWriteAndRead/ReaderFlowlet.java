@@ -9,8 +9,7 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
   @Override
   public void configure(StreamsConfigurator configurator) {
     TupleSchema in = new TupleSchemaBuilder().
-        add("row", byte[].class).
-        add("column", byte[].class).
+        add("key", byte[].class).
         create();
     configurator.getDefaultTupleInputStream().setSchema(in);
   }
@@ -20,18 +19,16 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
 
-    // perform inline read of row+column
-    byte [] row = tuple.get("row");
-    byte [] column = tuple.get("column");
-    Read read = new Read(row, column);
+    // perform inline read of key
+    byte [] key = tuple.get("key");
+    Read read = new Read(key);
     ReadOperationExecutor executor =
       getFlowletLaunchContext().getReadExecutor();
-    byte [] value = executor.execute(read).get(column);
+    byte [] value = executor.execute(read).getKeyResult();
   
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Read value (" +
-          new String(value) + ") for row (" + new String(row) + ") column (" +
-          new String(column) + ")");
+          new String(value) + ") for key (" + new String(key) + ")");
 
   }
 }
