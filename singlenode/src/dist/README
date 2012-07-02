@@ -1,2 +1,35 @@
 BigFlow (tm) Developer Edition
 Copyright (c) to Continuuity Inc, 2012. All rights reserved.
+
+
+Directory Structure
+===================================================================================
+Following is the directory structure on how the bigflow distro is layed out.
+
+bigflow-developer-edition-1.0.0-alpha
+  |
+  |-- README
+  |-- LICENSE
+  |-- continuuity-api.jar
+  |-- lib
+  |-- docs
+  |     |-- api
+  |-- conf
+  |     |-- logback.xml
+  |     |-- continuuity-webapp.xml
+  |     |-- continuuity-overlord.xml
+  |     |-- continuuity-gateway.xml
+  |     |-- continuuity-flow.xm
+  |     |-- continuuity-data-fabric.xml
+  |-- bin
+  |     |-- bigFlow
+  |     |-- bigFlow.bat
+  |     |-- data-format
+  |     |-- stream-client
+  |     |-- data-client
+  |     |-- flow-client
+  |-- web-app
+  |-- examples
+  |     |-- CountTokens
+  |     |-- CountRandom
+  |     |-- build.xml
