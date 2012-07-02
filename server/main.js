@@ -64,6 +64,7 @@ io.sockets.on('connection', function (socket) {
 });
 
 app.on('error', function () {
+	console.log('Error: port ' + Env.PORT + ' is in use.');
 	process.exit(1);
 });
 
