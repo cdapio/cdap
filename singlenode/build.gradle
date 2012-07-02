@@ -168,6 +168,7 @@ task copyExamples (type: Copy) {
     exclude "**/*.gradle"
     exclude "**/classes/"
     exclude "*/*.jar"
+    exclude "TwitterScanner/"
 }
 applicationDistribution.from(copyExamples) {
     into "examples"
@@ -208,6 +209,9 @@ project.parent.subprojects.each { p ->
         applicationDistribution.from(project(":${p.name}").file('bin')) {
             into "bin"
             exclude 'node'
+            exclude 'far-server'
+            exclude 'run-java'
+            exclude 'flow-config.sh'
             def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
             cp += ":\$APP_HOME/conf/"
             filter(ReplaceTokens, tokens: [classpath: cp])
