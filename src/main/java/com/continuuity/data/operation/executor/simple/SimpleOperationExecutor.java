@@ -132,7 +132,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
   // Simple Reads
 
   @Override
-  public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
+  public byte[] execute(ReadKey read) {
     return this.randomTable.get(read.getKey(), Operation.KV_COL);
   }
 
@@ -167,21 +167,19 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public List<byte[]> execute(ReadAllKeys readKeys)
-      throws SyncReadTimeoutException {
+  public List<byte[]> execute(ReadAllKeys readKeys) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Map<byte[], byte[]> execute(Read read) throws SyncReadTimeoutException {
+  public Map<byte[], byte[]> execute(Read read) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
-      throws SyncReadTimeoutException {
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
     // TODO Auto-generated method stub
     return null;
   }
