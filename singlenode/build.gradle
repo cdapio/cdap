@@ -214,6 +214,43 @@ project.parent.subprojects.each { p ->
     }
 }
 
+// configurations/dependencies required for ant scp/ssh tasks
+configurations { 
+    antssh
+} 
+
+dependencies { 
+    antssh group: 'org.apache.ant', name: 'ant-jsch', version: '1.8.2'
+} 
+
+// scp distribution zip to destination staging.continuuity.com
+task distro_uploadZip (dependsOn: distZip) << {
+    println "uploading ${distZip.archiveName} to staging.continuuity.com using key $System.env.HOME/.ssh/deploy_key"
+    ant.scp(file: distZip.archivePath, toDir: 'deploy@staging.continuuity.com:~/singleNode/incoming', keyfile: "$System.env.HOME/.ssh/deploy_key") 
+}
+
+// archive uploaded distribution zip and rotate symlink to always point to the latest
+task distro (dependsOn: distro_uploadZip) {
+    group = 'Distribution'
+    description = 'creates/archives distribution zip to configured target server'
+    doLast {
+        //move uploaded zip to /YYYY/mm/dd/, and symlink to it (replacing any previous symlinks)
+        ext.archive_cmd = 'YEAR=`date +%Y` && MONTH=`date +%m` && DAY=`date +%d` && mkdir -p singleNode/$YEAR/$MONTH/$DAY'
+        ext.archive_cmd += ' && mv --backup --suffix=$(date +-%H:%M:%S) singleNode/incoming/' + "${distZip.archiveName}" + ' singleNode/$YEAR/$MONTH/$DAY/.'
+        ext.archive_cmd += ' && ln -s $YEAR/$MONTH/$DAY/' + "${distZip.archiveName}" + ' singleNode/latest.zip.new'
+        ext.archive_cmd += " && mv -Tf singleNode/latest.zip.new singleNode/${distZip.archiveName}"
+
+        ant.sshexec(host: 'staging.continuuity.com',
+        username: 'deploy',
+        keyfile: "$System.env.HOME/.ssh/deploy_key",
+        trust: 'true',
+        verbose: 'true',
+        failonerror: 'true',
+        command: ext.archive_cmd)
+    }
+}
+      
+
 /*------------- experimental --------------*/
 
 /*
@@ -223,53 +260,12 @@ artifacts {
         builtBy distZip
     }
 }
-*/
-
-configurations { 
-    antssh
-} 
-
-dependencies { 
-    antssh group: 'org.apache.ant', name: 'ant-jsch', version: '1.8.2'
-} 
-
-// add additional jars to the AntBuilder classpath for use within the imported build. 
-ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader 
-configurations.antssh.each { File f -> 
-  antClassLoader.addURL(f.toURI().toURL()) 
-} 
-
-//task deployclean << { 
-//    ant.taskdef(name: 'sshexec', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp', classpath: configurations.scp.asPath) 
-//   ant.scp(remoteToDir: 'user@host:someDir', password: 'password') {
-//        fileset(dir: 'src/main/velocity') {
-//            include(name: '**/*.vm')
-//        }
-//    }
-//}
-
-//println "zip: "
-//println distZip.archivePath
-
-task deployclean << {
-    ant.sshexec(host: 'staging.continuuity.com', 
-    username: 'deploy',
-    keyfile: 'deploy_key',
-    trust: 'true', 
-    verbose: 'true', 
-    failonerror: 'true',
-    command: "cd singleNode && rm bigFlow-singlenode.zip")
-
-}
-
-task deployzip << {
-    ant.scp(file: distZip.archivePath, toDir: 'deploy@staging.continuuity.com:~/singleNode', keyfile: 'deploy_key') 
-}
+ 
 
 task deploystart << {
     ant.sshexec(host: 'staging.continuuity.com',
     username: 'deploy',
-    keyfile: 'deploy_key',
+    keyfile: "$System.env.HOME/.ssh/deploy_key",
     trust: 'true',
     verbose: 'true',
     failonerror: 'true',
@@ -278,3 +274,15 @@ task deploystart << {
     command: "sh -c \"cd singleNode ; unzip bigFlow-singlenode.zip ; cd bigFlow-singlenode/bin ; nohup ./bigFlow > /dev/null 2>&1 &\"")
 
 }
+
+task deployclean << {
+    ant.sshexec(host: 'staging.continuuity.com',
+    username: 'deploy',
+    keyfile: "$System.env.HOME/.ssh/deploy_key",
+    trust: 'true',
+    verbose: 'true',
+    failonerror: 'true',
+    command: "cd singleNode && rm ${distZip.archiveName}")
+
+}
+*/
