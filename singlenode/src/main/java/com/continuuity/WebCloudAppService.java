@@ -10,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * WebCloudAppService is a basic Server wrapper that launches node.js and our
@@ -48,6 +50,7 @@ public class WebCloudAppService implements Server {
 
       // Keep running..
       final Process localProcess = webAppProcess;
+      final CountDownLatch latch = new CountDownLatch(1);
       new Thread() {
         @Override
         public void run() {
@@ -64,13 +67,21 @@ public class WebCloudAppService implements Server {
             while ((line = br.readLine()) != null) {
               logger.debug(line);
             }
-
+            latch.countDown();
           } catch (IOException ie) {
             logger.error(ie.getMessage());
           }
         }
       }.start();
 
+      try {
+        latch.await(2, TimeUnit.SECONDS);
+        if(latch.getCount() != 0) {
+          throw new ServerException("There was a problem starting the nodejs server.");
+        }
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     } catch (IOException e) {
       throw new ServerException(e.getMessage());
     }
