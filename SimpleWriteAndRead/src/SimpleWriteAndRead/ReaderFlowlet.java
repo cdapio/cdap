@@ -21,10 +21,10 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
 
     // perform inline read of key
     byte [] key = tuple.get("key");
-    Read read = new Read(key);
+    ReadKey read = new ReadKey(key);
     ReadOperationExecutor executor =
       getFlowletLaunchContext().getReadExecutor();
-    byte [] value = executor.execute(read).getKeyResult();
+    byte [] value = executor.execute(read);
   
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Read value (" +
