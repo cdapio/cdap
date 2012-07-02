@@ -30,7 +30,7 @@ define([
 			$('#flow-alert').removeClass('alert-success')
 				.addClass('alert-error').html('Error: ' + message).show();
 		},
-		delete: function () {
+		"delete": function () {
 			
 			if (App.Controllers.Flow.current.get('currentState') !== 'STOPPED' &&
 				App.Controllers.Flow.current.get('currentState') !== 'DEPLOYED') {

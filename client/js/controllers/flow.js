@@ -305,7 +305,7 @@ define([], function () {
 
 			var fs = App.Controllers.Flow.current.flowletStreams;
 			
-			for (var i in fs) {
+			for (i in fs) {
 
 				var flowlet, streams = [];
 				for (var k = 0; k < App.Controllers.Flow.content.length; k ++) {
@@ -314,7 +314,7 @@ define([], function () {
 						break;
 					}
 				}
-				for (var j in fs[i]) {
+				for (j in fs[i]) {
 					streams.push(App.Models.Stream.create({
 						id: j,
 						type: fs[i][j].second,

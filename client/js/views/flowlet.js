@@ -4,7 +4,7 @@ define([
 	'lib/text!../../templates/input-stream.html'
 	], function (Flowlet, Input) {
 
-		Ember.TEMPLATES['flowlet'] = Em.Handlebars.compile(Flowlet);
+		Ember.TEMPLATES.flowlet = Em.Handlebars.compile(Flowlet);
 		Ember.TEMPLATES['input-stream'] = Em.Handlebars.compile(Input);
 	
 	return Em.View.create({

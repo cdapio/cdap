@@ -52,21 +52,23 @@ try {
 
 			if (method in Manager) {
 
+				var identifier;
+
 				switch (method) {
 					case 'start':
-						var identifier = new flowservices_types.FlowDescriptor({
+						identifier = new flowservices_types.FlowDescriptor({
 							identifier: new flowservices_types.FlowIdentifier({
 								app: params[0],
 								flow: params[1],
 								version: parseInt(params[2], 10),
 								accountId: 'demo'
 							}),
-							arguments: []
+							"arguments": []
 						});
 						Manager.start(null, identifier, done);
 					break;
 					case 'stop':
-						var identifier = new flowservices_types.FlowIdentifier({
+						identifier = new flowservices_types.FlowIdentifier({
 							app: params[0],
 							flow: params[1],
 							version: parseInt(params[2], 10),
@@ -75,7 +77,7 @@ try {
 						Manager.stop(null, identifier, done);
 					break;
 					case 'status':
-						var identifier = new flowservices_types.FlowIdentifier({
+						identifier = new flowservices_types.FlowIdentifier({
 							app: params[0],
 							flow: params[1],
 							version: parseInt(params[2], 10),
@@ -84,7 +86,7 @@ try {
 						Manager.status(null, identifier, done);
 					break;
 					case 'remove':
-						var identifier = new flowservices_types.FlowIdentifier({
+						identifier = new flowservices_types.FlowIdentifier({
 							accountId: params[0],
 							app: params[1],
 							flow: params[2],
