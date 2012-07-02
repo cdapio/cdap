@@ -147,6 +147,9 @@ run.dependsOn build
 installApp.dependsOn build, javadoc, stageConfSingleNode
 distZip.dependsOn build, javadoc, stageConfSingleNode
 
+//exclude any .gitignores (used as placeholders for empty dirs: logs, data
+applicationDistribution.exclude(".gitignore")
+
 // include api javadoc   
 applicationDistribution.from("$buildDir/javadoc") {
     into "docs/api"
