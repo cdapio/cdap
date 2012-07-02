@@ -86,7 +86,7 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public byte[] execute(ReadKey read) throws SyncReadTimeoutException {
+  public byte[] execute(ReadKey read) {
     initialize();
     byte [] result = read(read, this.oracle.getReadPointer());
     read.setResult(result);
@@ -98,8 +98,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public List<byte[]> execute(ReadAllKeys readKeys)
-      throws SyncReadTimeoutException {
+  public List<byte[]> execute(ReadAllKeys readKeys) {
     initialize();
     List<byte[]> result = this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
@@ -108,8 +107,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public Map<byte[], byte[]> execute(Read read)
-      throws SyncReadTimeoutException {
+  public Map<byte[], byte[]> execute(Read read) {
     initialize();
     Map<byte[],byte[]> result = this.randomTable.get(read.getKey(),
         read.getColumns(), this.oracle.getReadPointer());
@@ -118,8 +116,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
-      throws SyncReadTimeoutException {
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
     initialize();
     Map<byte[],byte[]> result = this.randomTable.get(readColumnRange.getKey(),
         readColumnRange.getStartColumn(), readColumnRange.getStopColumn(),
