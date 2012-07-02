@@ -19,7 +19,6 @@ import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadAllKeys;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
@@ -331,8 +330,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue)
-      throws SyncReadTimeoutException {
+  public DequeueResult execute(QueueDequeue dequeue) {
     initialize();
     int retries = 0;
     long start = System.currentTimeMillis();
@@ -361,7 +359,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
+  public long execute(GetGroupID getGroupId) {
     initialize();
     TTQueueTable table = getQueueTable(getGroupId.getQueueName());
     long groupid = table.getGroupID(getGroupId.getQueueName());
@@ -370,8 +368,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public QueueMeta execute(GetQueueMeta getQueueMeta)
-      throws SyncReadTimeoutException {
+  public QueueMeta execute(GetQueueMeta getQueueMeta) {
     initialize();
     TTQueueTable table = getQueueTable(getQueueMeta.getQueueName());
     QueueMeta queueMeta = table.getQueueMeta(getQueueMeta.getQueueName());

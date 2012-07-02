@@ -14,7 +14,6 @@ import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadAllKeys;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.FormatFabric;
@@ -137,14 +136,13 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue)
-      throws SyncReadTimeoutException {
+  public DequeueResult execute(QueueDequeue dequeue) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public long execute(GetGroupID getGroupId) throws SyncReadTimeoutException {
+  public long execute(GetGroupID getGroupId) {
     // TODO Auto-generated method stub
     return 0;
   }
@@ -185,8 +183,7 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public QueueMeta execute(GetQueueMeta getQueueMeta)
-      throws SyncReadTimeoutException {
+  public QueueMeta execute(GetQueueMeta getQueueMeta) {
     // TODO Auto-generated method stub
     return null;
   }

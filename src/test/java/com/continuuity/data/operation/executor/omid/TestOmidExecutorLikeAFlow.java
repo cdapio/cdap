@@ -24,7 +24,6 @@ import org.junit.Test;
 import com.continuuity.api.data.CompareAndSwap;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.FormatFabric;
@@ -589,14 +588,8 @@ public class TestOmidExecutorLikeAFlow {
       public void run() {
         boolean lastSuccess = false;
         while (lastSuccess || !stop.get()) {
-          DequeueResult result;
-          try {
-            result = executorFinal.execute(
+          DequeueResult result = executorFinal.execute(
                 new QueueDequeue(queueName, consumer, config));
-          } catch (SyncReadTimeoutException e) {
-            e.printStackTrace();
-            return;
-          }
           if (result.isFailure()) {
             System.out.println("Dequeue failed! " + result);
             return;
@@ -871,9 +864,6 @@ public class TestOmidExecutorLikeAFlow {
           } else {
             fail("What is this?");
           }
-        } catch (SyncReadTimeoutException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
         } catch (OmidTransactionException e) {
           e.printStackTrace();
           throw new RuntimeException(e);

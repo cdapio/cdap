@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.api.data.SyncReadTimeoutException;
 import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
@@ -12,14 +11,11 @@ public interface InternalOperationExecutor {
   
   // TTQueues
 
-  public DequeueResult execute(QueueDequeue dequeue)
-      throws SyncReadTimeoutException;
+  public DequeueResult execute(QueueDequeue dequeue);
 
-  public long execute(GetGroupID getGroupId)
-      throws SyncReadTimeoutException;
+  public long execute(GetGroupID getGroupId);
 
-  public QueueMeta execute(GetQueueMeta getQueueMeta)
-      throws SyncReadTimeoutException;
+  public QueueMeta execute(GetQueueMeta getQueueMeta);
 
   // Fabric Administration
 
