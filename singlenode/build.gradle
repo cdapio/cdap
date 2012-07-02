@@ -209,7 +209,7 @@ project.parent.subprojects.each { p ->
         applicationDistribution.from(project(":${p.name}").file('bin')) {
             into "bin"
             exclude 'node'
-            exclude 'flow-server'
+            exclude 'far-server'
             exclude 'run-java'
             exclude 'flow-config.sh'
             def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
