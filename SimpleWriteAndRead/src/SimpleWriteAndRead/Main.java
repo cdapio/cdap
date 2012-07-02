@@ -1,4 +1,3 @@
-package CountAndFilterWords;
 
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;

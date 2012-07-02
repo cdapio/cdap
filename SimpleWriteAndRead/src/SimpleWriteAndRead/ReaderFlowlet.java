@@ -1,4 +1,4 @@
-package CountAndFilterWords;
+package SimpleWriteAndRead;
 
 import com.continuuity.api.data.*;
 import com.continuuity.api.flow.flowlet.*;

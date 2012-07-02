@@ -1,4 +1,4 @@
-package CountAndFilterWords;
+package SimpleWriteAndRead;
 
 public class Common {
 
