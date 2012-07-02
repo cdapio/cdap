@@ -3,6 +3,8 @@ apply plugin: 'idea'
 
 defaultTasks 'build'
 
+group = 'com.continuuity'
+
 void setDefault (String name, Object value)
 {
     if(!project.hasProperty (name))
