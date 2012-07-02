@@ -101,7 +101,9 @@ public class MetricsClient implements Closeable {
   }
 
   public void add(FlowMetric metric) {
-    Preconditions.checkNotNull(client);
+    if(client == null) {
+      return;
+    }
 
     int i = 0;
 
