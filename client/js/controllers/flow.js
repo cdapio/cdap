@@ -133,8 +133,7 @@ define([], function () {
 				response.params.version = -1;
 
 				self.set('current', App.Models.Flow.create(response.params));
-			
-
+	
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
 					self.pushObject(App.Models.Flowlet.create(flowlets[i]));
@@ -220,24 +219,20 @@ define([], function () {
 			
 				var flowlets = response.params;
 				for (var i = 0; i < flowlets.length; i ++) {
-					// var start = parseInt($('#stat' + flowlets[i].id).html(), 10);
 
 					if (flowlets[i].name !== 'processed') {
 						continue;
 					}
 
 					var finish = flowlets[i].value;
-					self.get_flowlet(flowlets[i].id).set('metrics', finish);
+					var flowlet = self.get_flowlet(flowlets[i].id);
 
-					if (for_run_id) {
-						$('#stat' + flowlets[i].id).html(finish);
-					} else {
-						// if (!isNaN(start)) {
-						//	self.spins($('#stat' + flowlets[i].id), start, finish, 1000);
-						// } else {
-							$('#stat' + flowlets[i].id).html(finish);
-						//}
+					var fs = flowlet.streams;
+					for (var j = 0; j < fs.length; j ++) {
+						fs[j].set('metrics', finish);
 					}
+
+					$('#stat' + flowlets[i].id).html(finish);
 				}
 
 				if (!for_run_id) {
@@ -285,6 +280,7 @@ define([], function () {
 			var self = this;
 
 			
+			// Adapt connection format
 
 			var flowSource = null;
 
@@ -303,6 +299,31 @@ define([], function () {
 				if (!conns[flowlets[j].name]) {
 					conns[flowlets[j].name] = [];
 				}
+			}
+
+			// Adapt flowstream format
+
+			var fs = App.Controllers.Flow.current.flowletStreams;
+			
+			for (var i in fs) {
+
+				var flowlet, streams = [];
+				for (var k = 0; k < App.Controllers.Flow.content.length; k ++) {
+					if (App.Controllers.Flow.content[k].name === i) {
+						flowlet = App.Controllers.Flow.content[k];
+						break;
+					}
+				}
+				for (var j in fs[i]) {
+					streams.push(App.Models.Stream.create({
+						id: j,
+						type: fs[i][j].second,
+						url: fs[i][j].first
+					}));
+				}
+
+				flowlet.streams = streams;
+				
 			}
 
 			function show_detail(el) {
@@ -325,7 +346,7 @@ define([], function () {
 				var elId;
 
 				var el = $('<div id="flowlet' + id +
-					'" flowlet-id="' + id + '" class="window' + ('input-stream' === id ? ' source' : (connectTo ? '' : ' source')) + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
+					'" flowlet-id="' + id + '" class="window' + ('input-stream' === id ? ' source' : '') + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
 					'</strong></div><div class="window-value" id="stat' + id + '">' + ('input-stream' === id ? '' : '0') +
 					'</div></div>').click(function () {
 						show_detail($(this));

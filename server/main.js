@@ -17,9 +17,9 @@ app.listen(Env.PORT);
 var id = "default";
 var sockets = {};
 
-app.post('/upload', function (req, res) {
+app.post('/upload/:file', function (req, res) {
 
-	Env.api.upload(req, res, sockets[id]);
+	Env.api.upload(req, res, req.params.file, sockets[id]);
 
 });
 

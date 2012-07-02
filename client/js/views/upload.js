@@ -17,13 +17,9 @@ define([
 
 				if (!App.Controllers.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
-					var files = dt.files;
-
-					if(files.length > 0){
-						var file = dt.files[0];
-						App.Controllers.Upload.sendFile(file);
-					}
-
+					
+					App.Controllers.Upload.sendFiles(dt.files);
+	
 					$('#far-upload-alert').hide();
 				}
 			}

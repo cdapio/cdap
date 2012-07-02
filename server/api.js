@@ -170,7 +170,7 @@ try {
 
 	};
 
-	this.upload = function (req, res, socket) {
+	this.upload = function (req, res, file, socket) {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
@@ -186,7 +186,12 @@ try {
 			idx += raw.length;
 		});
 
+		console.log(file);
+
 		req.on('end', function() {
+
+			res.redirect('back');
+			res.end();
 
 			var conn = thrift.createConnection(
 				self.config.upload.host,
@@ -201,7 +206,7 @@ try {
 			
 			var FAR = thrift.createClient(FARService, conn);
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
-				'filename': 'upload.jar',
+				'filename': file,
 				'size': data.length,
 				'modtime': new Date().getTime()
 			}), function (error, resource_identifier) {
@@ -209,26 +214,32 @@ try {
 					console.log('FARManager init', error);
 				} else {
 
-					socket.emit('upload', {'status': 'initialized', 'resource_identifier': resource_identifier});
+					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
 					FAR.chunk(auth_token, resource_identifier, data, function (error, result) {
 						if (error) {
 							console.log('FARManager chunk', error);
 						} else {
 
-							socket.emit('upload', {'status': 'delivered'});
+							socket.emit('upload', {'status': 'Delivered...'});
 							FAR.deploy(auth_token, resource_identifier, function (error, result) {
 								if (error) {
 									console.log('FARManager deploy', error);
 								} else {
 
-									socket.emit('upload', {'status': 'verifying'});
+									socket.emit('upload', {'status': 'Verifying...'});
+
+									var current_status = -1;
+
 									var status_interval = setInterval(function () {
 										FAR.status(auth_token, resource_identifier, function (error, result) {
 											if (error) {
 												console.log('FARManager verify', error);
 											} else {
 
-												socket.emit('upload', {'status': 'verify', 'step': result.overall, 'message': result.message, 'flows': result.verification});
+												if (current_status !== result.overall) {
+													socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});
+													current_status = result.overall;
+												}
 												if (result.overall === 0 ||	// Not Found
 													result.overall === 4 || // Failed
 													result.overall === 5 || // Success
@@ -245,7 +256,6 @@ try {
 					});
 				}
 			});
-			res.redirect('back');
 		});
 	};
 	

@@ -9,13 +9,15 @@
 	<table class="table table-condensed">
 		<thead>
 			<th>Stream</th>
+			<th>Type</th>
 			<th>Count</th>
-			<th>&nbsp;</th>
 		</thead>
-		<tbody>
-			<td>IN</td>
-			<td>{{current.metrics}}</td>
-			<td style="text-align: right;"><a href="#">Schema</a></td>
-		</tbody>
+		{{#each current.streams tagName="tbody"}}
+		<tr>
+			<td>{{id}}</td>
+			<td>{{type}}</td>
+			<td>{{metrics}}</td>
+		</tr>
+		{{/each}}
 	</table>
 </div>
