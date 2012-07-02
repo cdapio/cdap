@@ -22,7 +22,6 @@
  * 
  * <pre>
  * public class JoinUserEmailFlowlet extends AbstractComputeFlowlet {
- *   @Override
  *   public void configure(StreamsConfigurator configurator) {
  *     // input = {(userid, byte[])}
  *     configurator.getDefaultTupleInputStream().setSchema(
@@ -37,7 +36,6 @@
  *         .create());
  *   }
  *
- *   @Override
  *   public void process(Tuple tuple, TupleContext context,
  *       OutputCollector collector) {
  *     byte [] userid = tuple.get("userid");
@@ -74,7 +72,6 @@
  * 
  * <pre>
  * public class StoreUserEmailFlowlet extends AbstractComputeFlowlet {
- *   @Override
  *   public void configure(StreamsConfigurator configurator) {
  *     // input = {(userid, byte[]), (email, byte[])}
  *     configurator.getDefaultTupleInputStream().setSchema(
@@ -89,7 +86,6 @@
  *         .create());
  *   }
  *
- *   @Override
  *   public void process(Tuple tuple, TupleContext context,
  *       OutputCollector collector) {
  *     byte [] userid = tuple.get("userid");
