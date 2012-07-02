@@ -218,10 +218,15 @@ project.parent.subprojects.each { p ->
 configurations { 
     antssh
 } 
-
 dependencies { 
     antssh group: 'org.apache.ant', name: 'ant-jsch', version: '1.8.2'
 } 
+
+// add the additional jar to the AntBuilder classpath for use with the ant tasks
+ClassLoader antClassLoader = org.apache.tools.ant.Project.class.classLoader
+configurations.antssh.each { File f ->
+    antClassLoader.addURL(f.toURI().toURL())
+}
 
 // scp distribution zip to destination staging.continuuity.com
 task distro_uploadZip (dependsOn: distZip) << {
