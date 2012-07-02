@@ -5,6 +5,7 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.DirUtils;
 
 import java.io.*;
+import java.net.ServerSocket;
 
 public class DataFormat {
 
@@ -17,6 +18,13 @@ public class DataFormat {
      * The name of the configuration governing where data-fabric data is stored
      */
     private static String dataDirPropName = "data.local.jdbc";
+
+    /**
+     *  The name of the configuration governing the port which resourceMgr listens.
+     *
+     *  Used to confirm if the application is currently running
+     */
+    private static String resourceMgrPortPropName = "resource.manager.server.port";
 
     /**
      * Print the usage statement and return null.
@@ -64,6 +72,35 @@ public class DataFormat {
 
     /**
      *
+     * determine if singleNode is already running.  Do so by attempting to open a socket on the resourceMgr port
+     *
+     * @param port - the port on which resourceMgr is configured to run
+     * @return - true if the port was taken (singleNode is running), else false
+     */
+    private static boolean checkIfRunning(int port) {
+        boolean portTaken = false;
+        ServerSocket socket = null;
+        try {
+            socket = new ServerSocket(port);
+            socket.setReuseAddress(true);
+        } catch (IOException e) {
+            portTaken = true;
+        } finally {
+            // Clean up
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    /* should not be thrown */
+                }
+            }
+        }
+        return portTaken;
+    }
+
+
+    /**
+     *
      * Main method
      *
       * @param args
@@ -100,15 +137,27 @@ public class DataFormat {
         myConfiguration.addResource("continuuity-webapp.xml");
         myConfiguration.addResource("continuuity-data-fabric.xml");
 
+
         // read the relevant property
         String datadirjdbc = myConfiguration.get(dataDirPropName);
         // extract the relative file path from the jdbc string
         String datadirpath = datadirjdbc.replaceAll(".*file:", "");
 
-
         //String datadirpath = myConfiguration.get(dataDirPropName);
         if(datadirpath == null) {
             System.out.println("Error: cannot read data-fabric configuration. Aborting...");
+            System.exit(-1);
+        }
+
+        // read the resourceMgr port configuration
+        String port = myConfiguration.get(resourceMgrPortPropName);
+        if(port == null) {
+            System.out.println("Error: cannot read configuration. Aborting...");
+            System.exit(-1);
+        }
+        // determine if singleNode is already running
+        if(checkIfRunning(Integer.parseInt(port))) {
+            System.out.println("Error: bigFlow must first be stopped.");
             System.exit(-1);
         }
 
