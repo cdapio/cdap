@@ -26,7 +26,7 @@ You are now ready to start BigFlow. Do so by running the 'bigflow' script in
 the $BIGFLOW_DIR/bin folder. E.g.
 
   %> cd ~/Projects/bigflow-developer-edition-1.0.0-alpha
-  %> bin/bigflow
+  %> bin/bigFlow
 
 
 Directory Structure
