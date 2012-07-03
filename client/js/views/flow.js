@@ -10,7 +10,7 @@ define([
 		historyBinding: 'App.Controllers.Flow.history',
 		exec: function (event) {
 
-			var control = $(event.srcElement);
+			var control = $(event.target);
 			var id = control.attr('flow-id');
 			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
@@ -21,7 +21,7 @@ define([
 		},
 		loadRun: function (event) {
 
-			var td = $(event.srcElement);
+			var td = $(event.target);
 			var href = td.parent().attr('href');
 			
 			App.router.set('location', href);
@@ -41,7 +41,7 @@ define([
 		},
 		confirmed: function (event) {
 
-			var control = $(event.srcElement);
+			var control = $(event.target);
 			var id = control.attr('flow-id');
 			var app = control.attr('flow-app');
 

@@ -7,7 +7,7 @@ define([
 		template: Em.Handlebars.compile(Template),
 		exec: function (event) {
 
-			var control = $(event.srcElement);
+			var control = $(event.target);
 			var id = control.attr('flow-id');
 			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
