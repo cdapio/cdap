@@ -138,7 +138,7 @@ startScripts {
 tasks.distZip {
     baseName = "bigflow"
     appendix = "developer-edition"
-    version = "1.0.0"
+    version = "1.0.1"
     classifier = "alpha"
 }
 
