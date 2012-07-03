@@ -10,14 +10,14 @@
   <name>DependencyRandomNumber</name>
   <dependencies>
     <!-- Add the internal continuuity-api jar -->
-	  <dependency>
+    <dependency>
       <groupId>com.continuuity</groupId>
-	    <artifactId>bigflow-api</artifactId>
+      <artifactId>bigflow-api</artifactId>
       <version>1.0.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/../../continuuity-api.jar</systemPath>
-	  </dependency>
-	  <!-- Add an external dependency -->
+    </dependency>
+    <!-- Add an external dependency -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
