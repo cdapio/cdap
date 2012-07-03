@@ -22,7 +22,7 @@ public class EvenOddCounter extends AbstractComputeFlowlet {
           ": Received tuple " + tuple);
 
     // count the number of odd or even numbers
-    long randomNumber = tuple.get("randomNumber");
+    long randomNumber = ((Long)tuple.get("randomNumber")).longValue();
     boolean isEven = (randomNumber % 2) == 0;
     
     // generate an increment operation
