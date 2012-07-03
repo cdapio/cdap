@@ -1,0 +1,12 @@
+DependencyRandomNumber example Flow
+
+This flow is built with Maven rather than Ant and includes an external
+dependency.
+
+To build the single deployable flow jar:
+
+	mvn assembly:single
+
+To create eclipse project files:
+
+	mvn eclipse:eclipse
