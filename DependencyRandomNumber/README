@@ -5,7 +5,7 @@ dependency.
 
 To build the single deployable flow jar:
 
-	mvn assembly:single
+	mvn assembly:assembly
 
 To create eclipse project files:
 
