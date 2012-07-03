@@ -54,24 +54,30 @@
 </div>
 
 <div id="object-list">
-	{{#if history.length}}
-	<table class="table table-condensed">
-		<thead>
-			<tr><th style="width: 215px;">Started</th>
-			<th>Ended</th>
-			<th style="width:250px;">Result</th>
-		</tr></thead>
-		{{#each history tagName="tbody"}}
-			<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
-				<td>{{started}}</td>
-				<td>{{ended}}</td>
-				<td>{{detail}}</td>
-			</tr>
-		{{/each}}
-	</table>
+	{{#if run}}
+		<div class="object-list-empty">
+			To view run history, <a {{bindAttr href="current.href"}}>return to the flow.</a>
+		</div>
 	{{else}}
-	<div class="object-list-empty">
-		This flow has not completed a run yet.
-	</div>
+		{{#if history.length}}
+		<table class="table table-condensed">
+			<thead>
+				<tr><th style="width: 215px;">Started</th>
+				<th>Ended</th>
+				<th style="width:250px;">Result</th>
+			</tr></thead>
+			{{#each history tagName="tbody"}}
+				<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
+					<td>{{started}}</td>
+					<td>{{ended}}</td>
+					<td>{{detail}}</td>
+				</tr>
+			{{/each}}
+		</table>
+		{{else}}
+		<div class="object-list-empty">
+			This flow has not completed a run yet.
+		</div>
+		{{/if}}
 	{{/if}}
 </div>
