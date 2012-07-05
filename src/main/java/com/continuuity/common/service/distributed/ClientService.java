@@ -1,12 +1,13 @@
 package com.continuuity.common.service.distributed;
 
+import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 
 /**
  * Client service API for managing interaction with resource and application master.
  */
-public interface ClientService {
+public interface ClientService extends Service {
   /**
    * Returns the specification used to configure this service.
    *
