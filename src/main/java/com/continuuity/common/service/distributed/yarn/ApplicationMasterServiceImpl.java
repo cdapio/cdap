@@ -1,7 +1,6 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.*;
-import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
@@ -19,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,7 +45,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   /**
    * Collection of container groups managed by this application manager.
    */
-  private final List<TasksHandler> tasksHandlers = Lists.newArrayList();
+  private TasksHandler tasksHandler;
 
   /**
    * Minimum cluster resources.
@@ -116,10 +114,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     }
 
     /** Iterate through all container groups, initialize and start them. */
-    for(int i = 0; i < tasks.size(); ++i) {
-      TaskSpecification clp = tasks.get(i);
-      tasksHandlers.add(new TasksHandler(clp));
-    }
+    tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
   }
 
   /**
@@ -134,10 +129,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   protected void runOneIteration() throws Exception {
 
     /** Iterate and collection total number of failures across all the container groups. */
-    int totalFailures = 0;
-    for(int i = 0; i < tasksHandlers.size(); ++i) {
-      totalFailures += tasksHandlers.get(i).getFailures();
-    }
+    int totalFailures = tasksHandler.getFailures();
 
     /**
      * If total failures across all container groups crosses the threshold for application, then we force
@@ -151,12 +143,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     /**
      * Iterate through all container groups.
      */
-    boolean keepGoing = false;
-    for(TasksHandler tasksHandler : tasksHandlers) {
-      keepGoing |= tasksHandler.process();
-    }
-
-    if(! keepGoing) {
+    if(! tasksHandler.process()) {
       stop();
     }
   }
@@ -169,11 +156,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     Log.info("Shutting down the application service.");
 
     /** Iterate through all the groups and request them to be stopped. */
-    int totalFailures = 0;
-    for(TasksHandler tasksHandler : tasksHandlers) {
-      totalFailures += tasksHandler.getFailures();
-      tasksHandler.stop();
-    }
+    int totalFailures = tasksHandler.getFailures();
 
     /** Let resource manager know that you are done. */
     FinishApplicationMasterRequest request = Records.newRecord(FinishApplicationMasterRequest.class);
@@ -227,21 +210,24 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * Makes a request to allocate a container.
    *
    * @param requestId
-   * @param request
+   * @param requests
    * @return
    */
-  private AMResponse allocate(int requestId, List<ResourceRequest> request) {
+  private AMResponse allocate(int requestId, List<ResourceRequest> requests, List<ContainerId> releases) {
     AllocateRequest req = Records.newRecord(AllocateRequest.class);
     req.setResponseId(requestId);
     req.setApplicationAttemptId(getSpecification().getApplicationAttemptId());
-    req.addAllAsks(request);
+    req.addAllAsks(requests);
+    req.addAllReleases(releases);
     try {
       return resourceMgr.allocate(req).getAMResponse();
     } catch (YarnRemoteException e) {
       Log.warn("There was a problem while requesting resource. Reason : {}", e.getMessage());
     }
+
     return Records.newRecord(AllocateResponse.class).getAMResponse();
   }
+
 
   /**
    * Manages a group of like containers.
@@ -298,6 +284,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     private final AtomicInteger failures = new AtomicInteger();
 
     /**
+     * List of containers that are failed.
+     */
+   private final List<ContainerId> releaseContainers = Lists.newArrayList();
+
+    /**
      * Stop watch to time the amount of time to get the resources requested. If takes more than
      * the conifigured amount of time, we want to TasksHandler to avoid deadlocks.
      */
@@ -327,7 +318,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       if(shouldProceed()) {
 
         /**
-         * Go through the tasks specification and figure out if there are any tasks that are not running
+         * Go through the tasks specification and figure out if there are any tasks that are not running.
          */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
         for(TaskSpecification specification : specifications) {
@@ -346,12 +337,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          */
         if(resourceRequests.isEmpty()) {
           ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specifications.get(0));
-          req.setNumContainers(0);
           resourceRequests.add(req);
         }
 
         /** Make a request to allocate the containers. */
-        AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests);
+        AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, releaseContainers);
         List<Container> newContainers = response.getAllocatedContainers();
 
         /** Iterate through each container and assign them to a non running task specification */
@@ -398,33 +388,79 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           containerStatus.put(status.getContainerId(), status);
         }
 
-        int complete = 0;
-        Set<ContainerId> failed = Sets.newHashSet();
+        /** Create a list of failed container ids for them to released. */
+        releaseContainers.clear();
         for(ContainerId containerId : containerMgrs.keySet()) {
           if(containerStatus.containsKey(containerId)) {
             int exitStatus = containerStatus.get(containerId).getExitStatus();
-            if (exitStatus == 0) {
-              complete++;
-            } else {
-              Log.debug("Container with id {}, failed. Will be attempted to be started.", containerId);
-              failed.add(containerId);
+            if(exitStatus != 0) {
+              String diagnostics = containerStatus.get(containerId).getDiagnostics();
+              Log.debug("Container with id {} failed. Reason : {}", containerId);
+              releaseContainers.add(containerId);
+              String taskId = containerTaskMap.get(containerId).getId();
+              containerTaskMap.remove(containerId);
+              containerMgrs.remove(containerId);
+              runningTasks.remove(taskId);
+            } else if(exitStatus == 0) {
+              Log.debug("Container with id {} has completed successfully.");
             }
           }
         }
+      } else {
 
-        if (!failed.isEmpty()) {
-          failures.addAndGet(failed.size());
-          requested -= failed.size();
-          for(ContainerId failedId : failed) {
-            String taskId = containerTaskMap.get(failedId).getId();
-            containerTaskMap.remove(failedId);
-            runningTasks.remove(taskId);
-            containerMgrs.remove(failedId);
+        /** Till all the containers are released or we hit a timeout we don't exit this loop */
+        StopWatch releaseTimer = new StopWatch();
+        boolean tryingToStop = true;
+
+        while(tryingToStop) {
+
+          /** We wait for 120 seconds to stop. */
+          if(releaseTimer.getTime() > 120*1000 )  {
+            tryingToStop = false;
+          }
+
+          /** Add to the release list all the containers that are currently active and you want to release them. */
+          for(ContainerId containerId : containerMgrs.keySet()) {
+            releaseContainers.add(containerId);
+          }
+
+          /** Create a zero allocation request with all the release requests to RM */
+          List<ResourceRequest> resourceRequests = Lists.newArrayList();
+          ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specifications.get(0));
+          req.setNumContainers(0);
+          resourceRequests.add(req);
+
+          /** Make a request to RM */
+          AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, releaseContainers);
+          List<Container> newContainers = response.getAllocatedContainers();
+
+          /** Clear the list */
+          releaseContainers.clear();
+
+          /** If there were any new containers allocated from the previous request, release them immediately. */
+          if(! newContainers.isEmpty()) {
+            for(Container container : newContainers) {
+              releaseContainers.add(container.getId());
+            }
+          }
+
+          /** Check the status of each containers */
+          List<ContainerStatus> containerStatuses = response.getCompletedContainersStatuses();
+          if(containerStatuses.isEmpty()) {
+            tryingToStop = false;
+          } else {
+            for(ContainerStatus containerStatus : containerStatuses) {
+              int exitStatus = containerStatus.getExitStatus();
+              if(exitStatus == 0) {
+                Log.debug("Container with id {} stopped successfully.", containerStatus.getContainerId());
+              } else {
+                Log.debug("Container with id {} failed to stop cleanly. Reason : {}", containerStatus.getContainerId(), containerStatus.getDiagnostics());
+              }
+            }
           }
         }
-
-        completed = complete;
       }
+
       return shouldProceed();
     }
 
