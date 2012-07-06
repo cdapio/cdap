@@ -12,7 +12,6 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -34,14 +33,14 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   private final Configuration conf;
 
   private final byte[] tableName;
-  
+
   private final byte[] family;
 
   private final IOExceptionHandler exceptionHandler;
 
   public HBaseOVCTable(Configuration conf, final byte [] tableName,
       final byte[] family, IOExceptionHandler exceptionHandler)
-  throws IOException {
+          throws IOException {
     this.readTable = new HTable(conf, tableName);
     this.writeTables = new LinkedList<HTable>();
     this.writeTables.add(new HTable(conf, tableName));
@@ -53,14 +52,14 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   private synchronized HTable getWriteTable() throws IOException {
-    HTable writeTable = writeTables.pollFirst();
-    return writeTable == null ? new HTable(conf, tableName) : writeTable;
+    HTable writeTable = this.writeTables.pollFirst();
+    return writeTable == null ? new HTable(this.conf, this.tableName) : writeTable;
   }
-  
+
   private synchronized void returnWriteTable(HTable table) {
-    writeTables.add(table);
+    this.writeTables.add(table);
   }
-  
+
   @Override
   public void put(byte[] row, byte[] column, long version, byte[] value) {
     HTable writeTable = null;
@@ -348,8 +347,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
     try {
-      // TODO: This currently does not support passing a read pointer or a write
-      //       pointer!
       Increment increment = new Increment(row);
       increment.addColumn(this.family, column, amount);
       increment.setTimeRange(0, getMaxStamp(readPointer));
@@ -368,8 +365,6 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       long[] amounts, ReadPointer readPointer, long writeVersion) {
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     try {
-      // TODO: This currently does not support passing a read pointer or a write
-      //       pointer!
       Increment increment = new Increment(row);
       increment.setTimeRange(0, getMaxStamp(readPointer));
       increment.setWriteVersion(writeVersion);
@@ -392,7 +387,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     try {
       if (newValue == null) {
         Delete delete = new Delete(row);
-        delete.deleteColumns(family, column, writeVersion);
+        delete.deleteColumns(this.family, column, writeVersion);
         return this.readTable.checkAndDelete(row, this.family, column,
             expectedValue, readPointer.getMaximum(), delete);
       } else {
@@ -461,7 +456,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public void format() {
     // TODO Auto-generated method stub
-    
+
   }
 
 

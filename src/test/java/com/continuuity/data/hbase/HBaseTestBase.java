@@ -73,7 +73,8 @@ public abstract class HBaseTestBase {
   }
   
   // Test startup / teardown
-  
+
+  @SuppressWarnings("deprecation")
   @BeforeClass
   public static void startHBase() throws Exception {
     conf = new Configuration();

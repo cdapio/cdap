@@ -10,7 +10,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
@@ -20,10 +19,10 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
-  
+
   private final Configuration conf;
   private final HBaseAdmin admin;
-  
+
   private static final IOExceptionHandler exceptionHandler =
       new HBaseIOExceptionHandler();
 
@@ -32,17 +31,17 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   @Inject
   public HBaseOVCTableHandle(
       @Named("HBaseOVCTableHandleConfig")Configuration conf)
-  throws IOException {
+          throws IOException {
     this.conf = conf;
     this.admin = new HBaseAdmin(conf);
   }
-  
+
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
     HBaseOVCTable table = null;
     try {
       createTable(tableName);
-      table = new HBaseOVCTable(conf, tableName, FAMILY,
+      table = new HBaseOVCTable(this.conf, tableName, FAMILY,
           new HBaseIOExceptionHandler());
     } catch (IOException e) {
       exceptionHandler.handle(e);
@@ -52,13 +51,13 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
   private HTable createTable(byte [] tableName) throws IOException {
     if (this.admin.tableExists(tableName)) {
-      return new HTable(conf, tableName);
+      return new HTable(this.conf, tableName);
     }
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor hcd = new HColumnDescriptor(FAMILY);
     htd.addFamily(hcd);
     this.admin.createTable(htd);
-    return new HTable(conf, tableName);
+    return new HTable(this.conf, tableName);
   }
 
   public static class HBaseIOExceptionHandler implements IOExceptionHandler {
