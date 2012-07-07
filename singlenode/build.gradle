@@ -35,9 +35,6 @@ dependencies {
         compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
     }
-
-    compile group: 'junit', name: 'junit', version: '4.+'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
 /**
