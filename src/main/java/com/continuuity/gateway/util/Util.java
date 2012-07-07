@@ -291,4 +291,34 @@ public class Util {
       }
   }
 
+  /**
+   * Convert a long value into a big-endian byte array
+   * @param value the value to convert
+   * @return the bytes of the value
+   */
+  public static byte[] longToBytes(long value) {
+    byte[] bytes = new byte[8];
+    for (int i = 7; i >=0; i--) {
+      bytes[i] = (byte)(value & 0xff);
+      value = value >> 8;
+    }
+    return bytes;
+  }
+
+  /**
+   * Convert a big-endian byte-array into a long. This is intended to be used
+   * with 8-byte arrays, but it does not check the length of the array. For
+   * arrays of less than 8 bytes, this will produce the same value as if the
+   * array was left-padded with zeros. For arrays longer than 8 bytes, only
+   * the last 8 bytes are used.
+   * @param bytes the byte array to convert
+   * @return the long value of the byte array
+   */
+  public static long bytesToLong(byte[] bytes) {
+    long value = 0;
+    for (int i = 0; i < bytes.length; i++) {
+      value = (value << 8) | (((long)bytes[i]) & 0xff);
+    }
+    return value;
+  }
 }

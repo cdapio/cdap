@@ -57,6 +57,7 @@ public class DataClient {
   String encoding = null;        // the encoding for --key and for display of the value
   boolean hexEncoded = false;    // whether --key and display of value use hexadecimal encoding
   boolean urlEncoded = false;    // whether --key and display of value use url encoding
+  boolean counter = false;       // whether --value should be interpreted as a long counter
   String keyFile = null;         // the file to read the key from
   String valueFile = null;       // the file to read/write the value from/to
   int start = -1;                // the index to start the list from
@@ -98,6 +99,7 @@ public class DataClient {
     out.println("  --hex                   To use hexadecimal encoding for key and value");
     out.println("  --ascii                 To use ASCII encoding for key and value");
     out.println("  --url                   To use URL encoding for key and value");
+    out.println("  --counter               To interpret value as a long counter");
     out.println("  --start <n>             To start at the nth element - only for list");
     out.println("  --limit <k>             To list at most k elements - only for list");
     out.println("  --all                   To format all data");
@@ -180,6 +182,8 @@ public class DataClient {
         urlEncoded = true;
       } else if ("--hex".equals(arg)) {
         hexEncoded = true;
+      } else if ("--counter".equals(arg)) {
+        counter = true;
       } else if ("--all".equals(arg)) {
         formatAll = true;
       } else if ("--data".equals(arg)) {
@@ -223,7 +227,7 @@ public class DataClient {
     if (urlEncoded) ++encodings;
     if (encoding != null) ++encodings;
     if (needsEncoding && encodings > 1) usage("Only one encoding can be specified.");
-    if (!needsEncoding && encodings > 0) usage("Encoding may not be specified foe binary file.");
+    if (!needsEncoding && encodings > 0) usage("Encoding may not be specified for binary file.");
     // verify that only one hint is given for the URL
     if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
     if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
@@ -245,7 +249,12 @@ public class DataClient {
     }
     // verify that format command specifies what to format
     if ("format".equals(command)) {
-      if (!(formatAll || formatData || formatQueues || formatStreams)) usage("You must specify what to format - please us --all, --data, --queues, and/or --streams");
+      if (!(formatAll || formatData || formatQueues || formatStreams)) usage("You must specify what to format - please us --all, --data, --queues, and/or --streams.");
+    }
+    // --counter is only allowed for read and write, and not in conjunction with --value-file
+    if (counter) {
+      if (!"read".equals(command) && !"write".equals(command)) usage("--counter is only allowed for read and write.");
+      if (valueFile != null) usage("Only one of --value-file and --counter may be specified.");
     }
   }
 
@@ -259,6 +268,13 @@ public class DataClient {
       binary = Util.readBinaryFile(keyFile);
       if (binary == null) {
         System.err.println("Cannot read " + what + " from file " + file + ".");
+        return null;
+    } }
+    else if (counter && "value".equals(what)) {
+      try {
+        binary = Util.longToBytes(Long.valueOf(str));
+      } catch (NumberFormatException e) {
+        System.err.println("Cannot parse '" + str + "' as long: " + e.getMessage());
         return null;
     } }
     // or is it in hexadecimal?
@@ -304,8 +320,10 @@ public class DataClient {
         System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
         return null;
       } }
+    if (counter)
+      value = Long.toString(Util.bytesToLong(binaryValue));
     // was hex encoding requested?
-    if (hexEncoded)
+    else if (hexEncoded)
       value = Util.toHex(binaryValue);
     // or was URl encoding specified?
     else if (urlEncoded)

@@ -41,33 +41,33 @@ public class FlumeCollectorTest {
   @Test
   public void testStartStop() throws Exception {
     String name = "other";
-    int port = Util.findFreePort();
+    int port = TestUtil.findFreePort();
     String stream = "pfunk";
     // configure collector but don't start
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     Collector collector = newCollector(name);
     collector.configure(configuration);
-    collector.setConsumer(new Util.NoopConsumer());
+    collector.setConsumer(new TestUtil.NoopConsumer());
     // create an event to reuse
-    SimpleEvent event = Util.createFlumeEvent(42, stream);
+    SimpleEvent event = TestUtil.createFlumeEvent(42, stream);
     try { // verify send fails before start()
-      Util.sendFlumeEvent(port, event);
+      TestUtil.sendFlumeEvent(port, event);
       Assert.fail("Exception expected when collector has not started");
     } catch (Exception e) {
     }
     collector.start();
     // send should now succeed
-    Util.sendFlumeEvent(port, event);
+    TestUtil.sendFlumeEvent(port, event);
     collector.stop();
     try { // verify send fails after stop
-      Util.sendFlumeEvent(port, event);
+      TestUtil.sendFlumeEvent(port, event);
       Assert.fail("Exception expected when collector has not started");
     } catch (Exception e) {
     }
     collector.start();
     // after restart it should succeed again
-    Util.sendFlumeEvent(port, event);
+    TestUtil.sendFlumeEvent(port, event);
     collector.stop();
   }
 
@@ -77,20 +77,20 @@ public class FlumeCollectorTest {
   @Test
   public void testTransformEvent() throws Exception {
     String name = "other";
-    int port = Util.findFreePort();
+    int port = TestUtil.findFreePort();
     String stream = "foo";
     int eventsToSend = 10;
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     Collector collector = newCollector(name);
     collector.configure(configuration);
-    collector.setConsumer(new Util.VerifyConsumer(17, name, stream));
+    collector.setConsumer(new TestUtil.VerifyConsumer(17, name, stream));
     collector.start();
-    Util.sendFlumeEvent(port, Util.createFlumeEvent(17, stream));
+    TestUtil.sendFlumeEvent(port, TestUtil.createFlumeEvent(17, stream));
     collector.stop();
-    collector.setConsumer(new Util.VerifyConsumer(name, stream));
+    collector.setConsumer(new TestUtil.VerifyConsumer(name, stream));
     collector.start();
-    Util.sendFlumeEvents(port, stream, eventsToSend, 4);
+    TestUtil.sendFlumeEvents(port, stream, eventsToSend, 4);
     collector.stop();
     Assert.assertEquals(eventsToSend, collector.getConsumer().eventsReceived());
     Assert.assertEquals(eventsToSend, collector.getConsumer().eventsSucceeded());
