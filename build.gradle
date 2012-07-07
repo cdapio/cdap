@@ -29,5 +29,9 @@ dependencies {
     compile group: 'org.apache.hadoop', name: 'hadoop-yarn-common', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-yarn-api', version:'2.0.0-alpha'
     testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version:'2.0.0-alpha'
+
+    /** common test dependencies */
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
