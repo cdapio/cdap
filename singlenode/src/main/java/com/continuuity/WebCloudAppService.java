@@ -1,3 +1,6 @@
+/*
+ * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ */
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -10,8 +13,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * WebCloudAppService is a basic Server wrapper that launches node.js and our
