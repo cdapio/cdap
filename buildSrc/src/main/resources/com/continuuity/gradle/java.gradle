@@ -85,6 +85,43 @@ task classpathGenerator << {
 
 build.dependsOn classpathGenerator
 
+/**
+ * Create Release TAR ball
+ * To create distribution for each component - run gradle release
+ */
+task release (type:  Tar, dependsOn: jar)  {
+    group = 'Continuuity'
+    description = 'Generates distribution tar file.'
 
+    /** Set the compression to gzip */
+    compression = Compression.GZIP
+
+    /** Copy everything from bin into project/bin */
+    from('bin') {
+        into("${project.name}-${project.version}/bin")
+    }
+
+    /** Copy everything from conf into project/conf */
+    from('conf') {
+        into("${project.name}-${project.version}/conf")
+    }
+
+    /** Copy everything from src/main/resources into project/conf */
+    into("${project.name}-${project.version}/conf") {
+        from sourceSets.main.output.resourcesDir
+    }
+
+    /** Copy all dependencies with flow and data-fabric included (for now) into projects/libs */
+    into("${project.name}-${project.version}/libs") {
+        from configurations.compile
+        from jar.outputs.files
+        if(project.hasProperty('mutliModule')) {
+            from project(":data-fabric").apiJar.archivePath
+            from project(":flow").apiJar.archivePath
+        } else {
+            /** Whoever builds this in standalone mode has to figure how to get data-fabric and flow api jars */
+        }
+    }
+}
 
 
