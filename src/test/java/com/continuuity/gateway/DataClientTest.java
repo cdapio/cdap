@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
@@ -10,6 +11,7 @@ import com.continuuity.gateway.accessor.RestAccessor;
 import com.continuuity.gateway.tools.DataClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,11 +29,20 @@ public class DataClientTest {
 
   private OperationExecutor executor = null;
 
+  Gateway gateway = null;
+
+  String name = "access.rest";
+  String prefix = "/continuuity";
+  String path = "/table/";
+  int port = 0;
+
+  CConfiguration configuration = null;
+
   /**
    * Set up our data fabric and insert some test key/value pairs.
    */
   @Before
-  public void setupDataFabric() throws Exception {
+  public void setupDataFabricAndGateway() throws Exception {
     DataClient.debug = true;
 
     // Set up our Guice injections
@@ -52,6 +63,32 @@ public class DataClientTest {
     // execute the batch and ensure it was successful
     BatchOperationResult result = executor.execute(operations);
     Assert.assertTrue(result.isSuccess());
+
+    // configure a gateway
+    port = TestUtil.findFreePort();
+    configuration = new CConfiguration();
+    configuration.set(Constants.CONFIG_CONNECTORS, name);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_MIDDLE), path);
+
+    // Now create our Gateway with a dummy consumer (we don't run collectors)
+    // and make sure to pass the data fabric executor to the gateway.
+    gateway = new Gateway();
+    gateway.setExecutor(this.executor);
+    gateway.setConsumer(new TestUtil.NoopConsumer());
+    gateway.start(null, configuration);
+  }
+
+  @After
+  public void shutDownGateway() throws Exception {
+    // and shut down
+    gateway.stop(false);
   }
 
   /**
@@ -65,30 +102,6 @@ public class DataClientTest {
    */
   @Test
   public void testUsage() throws Exception {
-
-    // configure a gateway
-    final String name = "access.rest";
-    final String prefix = "/continuuity";
-    final String path = "/table/";
-    final int port = Util.findFreePort();
-
-    CConfiguration configuration = new CConfiguration();
-    configuration.set(Constants.CONFIG_CONNECTORS, name);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
-    configuration.setInt(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_PATH_MIDDLE), path);
-
-    // Now create our Gateway with a dummy consumer (we don't run collectors)
-    // and make sure to pass the data fabric executor to the gateway.
-    Gateway gateway = new Gateway();
-    gateway.setExecutor(this.executor);
-    gateway.setConsumer(new Util.NoopConsumer());
-    gateway.start(null, configuration);
 
     // argument combinations that should return success
     String[][] goodArgsList = {
@@ -162,8 +175,13 @@ public class DataClientTest {
       LOG.info("Testing: " + Arrays.toString(args));
       Assert.assertNull(new DataClient().execute(args, configuration));
     }
+  }
 
-    // and shut down
-    gateway.stop(false);
+  @Test
+  public void testValueAsCounter() {
+    Assert.assertEquals("OK.", new DataClient().execute(new String[] { "write", "--key", "mycount", "--counter", "--value", "41" }, configuration));
+    Increment increment = new Increment("mycount".getBytes(), 1);
+    Assert.assertTrue(this.executor.execute(increment));
+    Assert.assertEquals("42", new DataClient().execute(new String[] { "read", "--key", "mycount", "--counter" }, configuration));
   }
 }

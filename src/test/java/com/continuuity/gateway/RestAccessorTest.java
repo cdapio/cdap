@@ -78,7 +78,7 @@ public class RestAccessorTest {
     RestAccessor restAccessor = new RestAccessor();
     restAccessor.setName(name);
     // find a free port
-    int port = Util.findFreePort();
+    int port = TestUtil.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
@@ -99,7 +99,7 @@ public class RestAccessorTest {
     RestCollector restCollector = new RestCollector();
     restCollector.setName(name);
     // find a free port
-    int port = Util.findFreePort();
+    int port = TestUtil.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
@@ -147,7 +147,7 @@ public class RestAccessorTest {
 
     // write value via executor, then retrieve it back via REST
     for (String[] keyValue : keyValues) {
-      Util.writeAndGet(this.executor, uri, keyValue[0], keyValue[1]);
+      TestUtil.writeAndGet(this.executor, uri, keyValue[0], keyValue[1]);
     }
 
     // shut it down
@@ -173,7 +173,7 @@ public class RestAccessorTest {
 
     // write value via REST, then retrieve it back via executor
     for (String[] keyValue : keyValues) {
-      Util.putAndRead(this.executor, uri, keyValue[0], keyValue[1]);
+      TestUtil.putAndRead(this.executor, uri, keyValue[0], keyValue[1]);
     }
 
     // shut it down
@@ -189,9 +189,9 @@ public class RestAccessorTest {
     String uri = setupAccessor("rest", "/v0.1", "/table/");
 
     // write value via REST, then retrieve it back via executor
-    Util.putAndRead(this.executor, uri, "ki", "velu");
+    TestUtil.putAndRead(this.executor, uri, "ki", "velu");
     // write new value for the same key via REST, then retrieve it back via executor
-    Util.putAndRead(this.executor, uri, "ki", "nuvelu");
+    TestUtil.putAndRead(this.executor, uri, "ki", "nuvelu");
 
     // shut it down
     this.accessor.stop();
@@ -211,14 +211,14 @@ public class RestAccessorTest {
 
     // write a value and verify it can be read
     String key = "to be deleted";
-    Util.writeAndGet(this.executor, uri, key, "foo");
+    TestUtil.writeAndGet(this.executor, uri, key, "foo");
 
     // now delete it
-    Assert.assertEquals(200, Util.sendDeleteRequest(uri, key));
+    Assert.assertEquals(200, TestUtil.sendDeleteRequest(uri, key));
     // verify that it's gone
-    Assert.assertEquals(404, Util.sendGetRequest(uri, key));
+    Assert.assertEquals(404, TestUtil.sendGetRequest(uri, key));
     // and verify that a repeated delete fails
-    Assert.assertEquals(404, Util.sendDeleteRequest(uri, key));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(uri, key));
 
     this.accessor.stop();
   }
@@ -236,10 +236,10 @@ public class RestAccessorTest {
     int port = this.accessor.getHttpConfig().getPort();
 
     // write some values and verify they can be read
-    Util.writeAndGet(this.executor, uri, "a", "bar");
-    Util.writeAndGet(this.executor, uri, "a", "foo"); // a should only show once in the list!
-    Util.writeAndGet(this.executor, uri, "b", "foo");
-    Util.writeAndGet(this.executor, uri, "c", "foo");
+    TestUtil.writeAndGet(this.executor, uri, "a", "bar");
+    TestUtil.writeAndGet(this.executor, uri, "a", "foo"); // a should only show once in the list!
+    TestUtil.writeAndGet(this.executor, uri, "b", "foo");
+    TestUtil.writeAndGet(this.executor, uri, "c", "foo");
 
     // now send a list request
     String requestUri = uri + "?q=list";
@@ -289,70 +289,70 @@ public class RestAccessorTest {
     int port = this.accessor.getHttpConfig().getPort();
 
     // test one valid key
-    Util.writeAndGet(this.executor, baseUrl, "x", "y");
+    TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
 
     // submit a request without prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + "/somewhere"));
-    Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + "/data"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + "/somewhere"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + prefix + "/data"));
     // submit a request with correct prefix but no table -> 404 Not Found
-    Assert.assertEquals(400, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
+    Assert.assertEquals(400, TestUtil.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
     // submit a request with correct prefix but non-existent table -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
     // submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
-    Assert.assertEquals(400, Util.sendPostRequest(baseUrl));
+    Assert.assertEquals(400, TestUtil.sendPostRequest(baseUrl));
     // submit a GET without key -> 404 Not Found
-    Assert.assertEquals(400, Util.sendGetRequest(baseUrl));
+    Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl));
     // submit a GET with existing key -> 200 OK
-    Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
     // submit a GET with non-existing key -> 404 Not Found
-    Assert.assertEquals(404, Util.sendGetRequest(baseUrl + "does.not.exist"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest(baseUrl + "does.not.exist"));
     // submit a GET with existing key but more after that in the path -> 404 Not Found
-    Assert.assertEquals(400, Util.sendGetRequest(baseUrl + "x/y/z"));
+    Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl + "x/y/z"));
     // submit a GET with existing key but with query part -> 400 Bad Request
-    Assert.assertEquals(400, Util.sendGetRequest(baseUrl + "x?query=none"));
+    Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl + "x?query=none"));
 
     // test some bad delete requests
     // submit a request without the correct prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port));
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + "/"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + "/"));
     // no table
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(400, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
-    Assert.assertEquals(404, Util.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
-    Assert.assertEquals(400, Util.sendDeleteRequest(baseUrl));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest(baseUrl));
     // non-existent key
-    Assert.assertEquals(404, Util.sendDeleteRequest(baseUrl + "no-exist"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(baseUrl + "no-exist"));
     // correct key but more in the path
-    Assert.assertEquals(400, Util.sendDeleteRequest(baseUrl + "x/a"));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
-    Assert.assertEquals(501, Util.sendDeleteRequest(baseUrl + "x?force=true"));
+    Assert.assertEquals(501, TestUtil.sendDeleteRequest(baseUrl + "x?force=true"));
 
     // test some bad put requests
     // submit a request without the correct prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port));
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + "/"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + "/"));
     // no table
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + "/table"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(400, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
-    Assert.assertEquals(404, Util.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
-    Assert.assertEquals(400, Util.sendPutRequest(baseUrl));
+    Assert.assertEquals(400, TestUtil.sendPutRequest(baseUrl));
     // correct key but more in the path
-    Assert.assertEquals(400, Util.sendPutRequest(baseUrl + "x/"));
-    Assert.assertEquals(400, Util.sendPutRequest(baseUrl + "x/a"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest(baseUrl + "x/"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
-    Assert.assertEquals(501, Util.sendPutRequest(baseUrl + "x?force=true"));
+    Assert.assertEquals(501, TestUtil.sendPutRequest(baseUrl + "x?force=true"));
 
     // and shutdown
     this.accessor.stop();
@@ -366,14 +366,14 @@ public class RestAccessorTest {
     // configure an accessor
     String baseUrl = setupAccessor("access.rest", "/continuuity", "/table/");
     // test one valid key
-    Util.writeAndGet(this.executor, baseUrl, "x", "y");
+    TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
     // submit a GET with existing key -> 200 OK
-    Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
     // stop the connector
     this.accessor.stop();
     // verify that GET fails now. Should throw an exception
     try {
-      Util.sendGetRequest(baseUrl + "x");
+      TestUtil.sendGetRequest(baseUrl + "x");
       Assert.fail("Expected HttpHostConnectException because connector was stopped.");
     } catch (HttpHostConnectException e) {
       // this is expected
@@ -381,7 +381,7 @@ public class RestAccessorTest {
     // restart the connector
     this.accessor.start();
     // submit a GET with existing key -> 200 OK
-    Assert.assertEquals(200, Util.sendGetRequest(baseUrl + "x"));
+    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
     // and finally shut down
     this.accessor.stop();
   }
@@ -395,52 +395,52 @@ public class RestAccessorTest {
     String collectorUrl = setupCollector("collect.rest", "/continuuity", "/stream/");
 
     // write and verify some data
-    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
     // write and verify some stream
     sendAndVerify(collectorUrl, "foo", 1);
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
     // format all
-    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "all"));
+    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "all"));
     // verify all are gone
     verifyKeyGone("key");
     verifyQueueGone("queue://foo/bar");
     verifyStreamGone("foo");
 
     // write and verify some data
-    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
     // write and verify some stream
     sendAndVerify(collectorUrl, "foo", 1);
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
     // format all
-    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "queues,streams,data"));
+    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "queues,streams,data"));
     // verify all are gone
     verifyKeyGone("key");
     verifyQueueGone("queue://foo/bar");
     verifyStreamGone("foo");
 
     // write and verify some data
-    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
     // write and verify some stream
     sendAndVerify(collectorUrl, "foo", 1);
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
     // format data
-    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "data"));
+    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "data"));
     // verify data is gone, rest is still there
     verifyKeyGone("key");
     verifyEvent("foo", 1);
     verifyTuple("queue://foo/bar", 2);
 
     // write and verify some data
-    Util.writeAndGet(this.executor, baseUrl, "key", "value");
+    TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
 
     // format streams
-    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "streams"));
+    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "streams"));
     // verify streams are gone, rest is still there
     // verify data is gone, rest is still there
     verifyStreamGone("foo");
@@ -451,7 +451,7 @@ public class RestAccessorTest {
     sendAndVerify(collectorUrl, "foo", 1);
 
     // format queues
-    Assert.assertEquals(200, Util.sendPostRequest(formatUrl + "queues"));
+    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "queues"));
     // verify queues are gone, rest is still there
     verifyQueueGone("queue://foo/bar");
     verifyKeyValue("key", "value");
@@ -465,7 +465,7 @@ public class RestAccessorTest {
     HttpPost post = new HttpPost(baseUrl + stream);
     post.addHeader(stream + ".number", Integer.toString(n));
     post.setEntity(new ByteArrayEntity(("This is event number " + n).getBytes()));
-    Util.sendRestEvent(post);
+    TestUtil.sendRestEvent(post);
   }
 
   void verifyEvent(String stream, int n) throws Exception {

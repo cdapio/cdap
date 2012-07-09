@@ -50,7 +50,7 @@ public class GatewayRestAccessorTest {
     this.executor = injector.getInstance(OperationExecutor.class);
 
     // Look for a free port
-    port = Util.findFreePort();
+    port = TestUtil.findFreePort();
 
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();
@@ -68,7 +68,7 @@ public class GatewayRestAccessorTest {
     // Now create our Gateway
     theGateway = new Gateway();
     theGateway.setExecutor(this.executor);
-    theGateway.setConsumer(new Util.NoopConsumer());
+    theGateway.setConsumer(new TestUtil.NoopConsumer());
     theGateway.start(null, configuration);
 
   } // end of setupGateway
@@ -84,7 +84,7 @@ public class GatewayRestAccessorTest {
 
     // Send some REST events
     for (int i = 0; i < valuesToGet; i++) {
-      Util.writeAndGet(this.executor,
+      TestUtil.writeAndGet(this.executor,
           "http://localhost:" + port + prefix + path + "default/",
           "key" + i, "value" + i);
     }

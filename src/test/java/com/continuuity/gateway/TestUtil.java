@@ -36,9 +36,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Util {
+public class TestUtil {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Util.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
 
   /**
    * Utility to find a free port to use for a server.
@@ -182,7 +182,7 @@ public class Util {
   static void sendRestEvents(int port, String prefix, String path, String dest, int eventsToSend)
       throws IOException {
     for (int i = 0; i < eventsToSend; i++) {
-      Util.sendRestEvent(createHttpPost(port, prefix, path, dest, i));
+      TestUtil.sendRestEvent(createHttpPost(port, prefix, path, dest, i));
     }
   }
 
@@ -253,7 +253,7 @@ public class Util {
 
     @Override
     protected void single(Event event) throws Exception {
-      Util.verifyEvent(event, this.collectorName, this.destination, this.expectedNumber);
+      TestUtil.verifyEvent(event, this.collectorName, this.destination, this.expectedNumber);
     }
   }
 
@@ -284,7 +284,7 @@ public class Util {
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
       Event event = deserializer.deserialize(result.getValue());
-      Util.verifyEvent(event, collectorName, destination, null);
+      TestUtil.verifyEvent(event, collectorName, destination, null);
       // message number should be in the header "messageNumber"
       LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
       // ack the event so that it disappers from the queue
@@ -322,7 +322,7 @@ public class Util {
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
       Tuple tuple = deserializer.deserialize(result.getValue());
-      Util.verifyTuple(tuple, collectorName, destination, null);
+      TestUtil.verifyTuple(tuple, collectorName, destination, null);
       // message number should be in the header "messageNumber"
       Map<String, String> headers = tuple.get("headers");
       LOG.info("Popped one event, message number: " + headers.get("messageNumber"));

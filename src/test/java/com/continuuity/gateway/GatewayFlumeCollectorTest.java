@@ -56,7 +56,7 @@ public class GatewayFlumeCollectorTest {
     this.executor = injector.getInstance(OperationExecutor.class);
 
     // Look for a free port
-    port = Util.findFreePort();
+    port = TestUtil.findFreePort();
 
     // Create and populate a new config object
     myConfiguration = new CConfiguration();
@@ -103,11 +103,11 @@ public class GatewayFlumeCollectorTest {
     }
 
     // Send some events
-    Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
     Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
     Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
     Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
-    Util.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
+    TestUtil.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
 
     // Stop the Gateway
     theGateway.stop(false);
@@ -126,11 +126,11 @@ public class GatewayFlumeCollectorTest {
     }
 
     // Send some events
-    Util.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
     Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
     Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
     Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    Util.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
+    TestUtil.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
 
     // Stop the Gateway
     theGateway.stop(false);
