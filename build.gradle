@@ -11,9 +11,6 @@ test {
 	testLogging.showStandardStreams = false
 	jvmArgs '-Xmx512m'
 	
-	beforeTest { descriptor ->
-		logger.lifecycle("Running test: " + descriptor)
-	}
 	onOutput { descriptor, event ->
 //		logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message)
 	}
