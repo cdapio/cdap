@@ -41,6 +41,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
     = EnumSet.of(YarnApplicationState.FAILED, YarnApplicationState.KILLED);
   private volatile boolean stopped = true;
   private volatile boolean failed = false;
+  private boolean useProvidedApplicationId = false;
 
   /**
    * Handler for managing connection to Resource manager.
@@ -70,6 +71,19 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
     }
   }
 
+  public ClientServiceImpl(ApplicationId applicationId, Configuration configuration) {
+    this(applicationId,  new ApplicationManagerConnectionHandler(configuration));
+  }
+
+  public ClientServiceImpl(ApplicationId applicationId, ApplicationManagerConnectionHandler appMgrHandler) {
+    Preconditions.checkNotNull(applicationId);
+    Preconditions.checkNotNull(appMgrHandler);
+    this.applicationId = applicationId;
+    this.appMgrHandler = appMgrHandler;
+    this.specification = null;
+    this.useProvidedApplicationId = true;
+  }
+
   public ClientServiceImpl(ClientSpecification specification) {
     this(specification, new ApplicationManagerConnectionHandler(specification.getConfiguration()));
   }
@@ -84,6 +98,15 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   public void startUp() {
     Log.info("Connecting to resource manager ...");
     appMgr = appMgrHandler.connect();
+
+    /**
+     *  If requested to use application id, then don't attempt to spawn a app master, but use
+     *  the application id for monitoring status and stopping the application.
+     */
+    if(useProvidedApplicationId) {
+      stopped = false;
+      return;
+    }
 
     /** Get a new application id. */
     GetNewApplicationResponse response = null;

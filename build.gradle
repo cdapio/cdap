@@ -31,3 +31,13 @@ dependencies {
     testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version:'2.0.0-alpha'
 }
 
+/**
+ * Create Release TAR ball
+ */
+task dist(type:  Tar, dependsOn: jar) {
+    group = 'Continuuity'
+    description = 'Generates distribution tar file.'
+    from('bin') {
+        into('common/bin')
+    }
+}

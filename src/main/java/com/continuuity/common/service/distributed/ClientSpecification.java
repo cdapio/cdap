@@ -133,7 +133,7 @@ public class ClientSpecification {
   public static class Builder {
     private String applicationName = "no-app-name";
     private String queue = "default";
-    private Configuration configuration;
+    private Configuration configuration = new Configuration();
     private List<String> commands = Lists.newArrayList();
     private Map<String, String> environment = Maps.newHashMap();
     private int memory = 512;

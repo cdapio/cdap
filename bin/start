@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# Copyright (c) to Continuuity Inc. All rights reserved.
+
+NAME=`basename $0`
+
+if [[ "X$NAME" == "Xstart" ]]; then
+  echo "Create a soft link to this script as start-<component>-<service>"
+  echo "E.g. ln -s start-flow-far bin/start"
+  exit 1
+fi
+
+APP=`echo $NAME | awk -F"-" ' { print $2 } '`; export APP
+SERVICE=`echo $NAME | awk -F"-" ' { print $3 }'`; export SERVICE
+
+if [ ! -n "$CONTINUUITY_HOME" ]; then
+  echo "CONTINUUITY_HOME is not set. Please set it."
+  exit 1
+fi
+
+COMMON_BIN="$CONTINUUITY_HOME"/bin
+if [ ! -d "$COMMON_BIN" ]; then
+ if [ -d "$CONTINUUITY_HOME"/common/bin ]; then
+   COMMON_BIN="$CONTINUUITY_HOME"/common/bin
+ fi
+fi
+
+# Load comman.sh
+source $COMMON_BIN/common.sh
+
+# Load common environment file too
+source $COMMON_BIN/common-env.sh
+
+# Set the app home.
+APP_HOME="$CONTINUUITY_HOME"/"$APP"
+
+# Load app specific configuration.
+SERVICE_ENVIRONMENT_FILE="$APP_HOME"/conf/"$SERVICE"-env.sh
+if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
+ . "$SERVICE_ENVIRONMENT_FILE"
+fi
+
+# Check and set classpath if in development environment. 
+check_and_set_classpath_for_dev_environment $APP_HOME
+
+# Setup classpaths.
+CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+
+export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
+export LOGFILE=$LOG_PREFIX.log
+loglog="${LOG_DIR}/${LOGFILE}"
+
+pid=$PID_DIR/$SERVICE-${IDENT_STRING}.pid
+loggc=$LOG_DIR/$LOG_PREFIX.gc
+
+if [ "$NICENESS" = "" ]; then
+ export NICENESS=0
+fi
+
+# sets the JAVA variable.
+set_java
+
+# Setup classpaths.
+CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+
+rotate_log $loggc
+check_before_start
+
+echo "`date` Starting $SERVICE service component $APP on `hostname`"
+echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
+echo "`ulimit -a`" >> $loglog 2>&1
+
+nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
+echo $! >$pid
+
+sleep 1
