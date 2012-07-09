@@ -89,10 +89,10 @@ public class SingleNodeMain {
    * Bootstrap is where we initialize all the services that make up the
    * SingleNode version.
    *
-   * TODO: Create a "service" interface that all our top level services can
-   * implement. We can then clean up the code below and generify it.
    */
   private void bootStrapServices() throws Exception {
+
+    // Check all our preconditions (which should have been injected)
     Preconditions.checkNotNull(theOverlord);
     Preconditions.checkNotNull(theGateway);
     Preconditions.checkNotNull(theFARServer);
@@ -100,19 +100,27 @@ public class SingleNodeMain {
 
     System.out.println(" Starting Zookeeper Service");
     startZookeeper();
+
     System.out.println(" Starting Metrics Service");
     theOverlord.start(null, myConfiguration);
+
     System.out.println(" Starting Gateway Service");
     theGateway.start(null, myConfiguration);
+
     System.out.println(" Starting FlowArchive Service");
     theFARServer.start(null, myConfiguration);
+
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
+
     System.out.println(" Starting Monitoring Webapp");
     theWebApp = new WebCloudAppService();
     theWebApp.start(null, myConfiguration);
+
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println(" Bigflow started successfully. Connect to UI : http://" + hostname + ":9999");
+    System.out.println(" Bigflow started successfully. Connect to UI @ http://"
+      + hostname + ":9999");
+
   } // end of bootStrapServices
 
   /**
@@ -159,6 +167,7 @@ public class SingleNodeMain {
     myConfiguration.addResource("continuuity-gateway.xml");
     myConfiguration.addResource("continuuity-webapp.xml");
     myConfiguration.addResource("continuuity-overlord.xml");
+
   } // end of loadConfiguration
 
 
@@ -169,8 +178,14 @@ public class SingleNodeMain {
    * @throws IllegalArgumentException in case of error
    */
   static void usage(boolean error) {
+
+    // Which output stream should we use?
     PrintStream out = (error ? System.err : System.out);
+
+    // Print our generic Copyright
     Copyright.print(out);
+
+    // And our requirements and usage
     out.println("Requirements: ");
     out.println("  Java:    JDK 1.6+ must be installed and JAVA_HOME environment variable set to the java executable");
     out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  ");
@@ -182,6 +197,7 @@ public class SingleNodeMain {
     out.println("Additional options:");
     out.println("  --help      To print this message");
     out.println("");
+
     if (error) {
       throw new IllegalArgumentException();
     }

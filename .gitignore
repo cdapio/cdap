@@ -33,8 +33,9 @@ clover.license
 # Ignore Node stuff
 npm*
 
-# Ignore log files
+# Ignore Singlenode files
 logs/
+data/
 
 # MacOS files
 .DS_Store

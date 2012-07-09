@@ -35,9 +35,6 @@ dependencies {
         compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
     }
-
-    testCompile group: 'junit', name: 'junit', version: '4.+'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
 /**
@@ -138,7 +135,7 @@ startScripts {
 tasks.distZip {
     baseName = "bigflow"
     appendix = "developer-edition"
-    version = "1.0.0"
+    version = "1.0.1"
     classifier = "alpha"
 }
 
@@ -182,7 +179,30 @@ task createApiJar(type: Jar) {
     from project(':flow').sourceSets.api.output
     from project(':data-fabric').sourceSets.api.output
 }
+
+task createApiSourceJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix "source"
+    version ""
+    classifier ""
+    from project(':flow').sourceSets.api.allSource
+    from project(':data-fabric').sourceSets.api.allSource
+}
+
+task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
+    baseName "continuuity-api"
+    appendix "javadoc"
+    version ""
+    classifier ""
+    from javadoc.destinationDir
+}
+
+
 applicationDistribution.from(createApiJar) {
+}
+applicationDistribution.from(createApiSourceJar) {
+}
+applicationDistribution.from(createApiJavadocJar) {
 }
 
 // include :web-cloud-app/build/client directly
@@ -212,6 +232,7 @@ project.parent.subprojects.each { p ->
             exclude 'far-server'
             exclude 'run-java'
             exclude 'flow-config.sh'
+            exclude 'flow-client'
             def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
             cp += ":\$APP_HOME/conf/"
             filter(ReplaceTokens, tokens: [classpath: cp])

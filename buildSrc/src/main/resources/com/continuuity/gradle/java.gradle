@@ -2,8 +2,7 @@
 apply plugin: 'java'
 
 /// Define common dependencies.
-dependencies
-{
+dependencies {
     compile "org.slf4j:slf4j-api:1.6.4"
     compile "ch.qos.logback:logback-core:1.0.+"
     compile "ch.qos.logback:logback-classic:1.0.+"
@@ -14,10 +13,16 @@ dependencies
     testCompile "junit:junit:4.+"
 }
 
-configurations
-{
+configurations {
     // ENG-336 - Exclude slf4j-log4j12 from all projects.
     all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+// Write out some useful information when tests run
+test {
+    beforeTest { descriptor ->
+        logger.lifecycle("Running " + descriptor)
+    }
 }
 
 /**
