@@ -29,6 +29,7 @@ class ContinuuityPlugin implements Plugin<Project> {
                 /// Apply the allproject.gradle file to all projects.
                 p.allprojects {
                     extensions.getExtraProperties().set("multiModule", true);
+                    extensions.getExtraProperties().set("buildingRelease", false);
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
                 }
 
@@ -61,6 +62,7 @@ class ContinuuityPlugin implements Plugin<Project> {
 
                 p.allprojects {
                     extensions.getExtraProperties().set("multiModule", false);
+                    extensions.getExtraProperties().set("buildingRelease", false);
                 }
 
                 displayProjectInfo(p);
