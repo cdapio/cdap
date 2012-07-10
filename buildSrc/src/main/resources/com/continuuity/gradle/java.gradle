@@ -121,9 +121,9 @@ task release (type:  Tar, dependsOn: jar)  {
 
     /** Load all the dependencies into the libs directory. */
     into("${project.name}-${project.version}/libs") {
-      from configurations.runtime
-      from jar.archivePath
-      from project(":data-fabric").artifacts
-      from project(":flow").artifacts
+        from configurations.runtime
+        from jar.archivePath
+        from project(":data-fabric").artifacts
+        from project(":flow").artifacts
     }
 }
