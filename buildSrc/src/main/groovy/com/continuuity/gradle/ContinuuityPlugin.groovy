@@ -29,12 +29,14 @@ class ContinuuityPlugin implements Plugin<Project> {
                 /// Apply the allproject.gradle file to all projects.
                 p.allprojects {
                     extensions.getExtraProperties().set("multiModule", true);
-                    extensions.getExtraProperties().set("buildingRelease", false);
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/allprojects.gradle")
                 }
 
                 /// Apply the java.gradle file to all subprojects (this needs to be done first).
                 p.subprojects {
+                    if(! getProject().hasProperty("buildingRelease")) {
+                      extensions.getExtraProperties().set("buildingRelease", false);
+                    }
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/java.gradle")
                     applyFrom(getProject(), "classpath:com/continuuity/gradle/maven.gradle")
                 }
@@ -62,7 +64,9 @@ class ContinuuityPlugin implements Plugin<Project> {
 
                 p.allprojects {
                     extensions.getExtraProperties().set("multiModule", false);
-                    extensions.getExtraProperties().set("buildingRelease", false);
+                    if(! getProject().hasProperty("buildingRelease")) {
+                      extensions.getExtraProperties().set("buildingRelease", false);
+                    }
                 }
 
                 displayProjectInfo(p);
