@@ -83,7 +83,7 @@ project.parent.subprojects.each { p ->
 task stageConfSingleNode (type: Copy) {
     group 'Deployment'
     description "Copies src/main/resources to \$buildDir/conf for singlenode"
-    println "staging conf for singlenode"
+    //println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
     include 'continuuity-webapp.xml'
     include 'logback.xml'
