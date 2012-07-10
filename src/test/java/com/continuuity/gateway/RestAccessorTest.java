@@ -25,8 +25,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -34,9 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 public class RestAccessorTest {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(RestAccessorTest.class);
 
   /**
    * this is the executor for all access to the data fabric
@@ -49,7 +44,7 @@ public class RestAccessorTest {
   private RestAccessor accessor;
 
   /**
-   * the rest collector we will use in the format test
+   * the rest collector we will use in the clear test
    */
   private RestCollector collector;
 
@@ -98,7 +93,7 @@ public class RestAccessorTest {
     return "http://localhost:" + port + prefix + middle + "default/";
   }
 
-  // we will need this to test the format API
+  // we will need this to test the clear API
   String setupCollector(String name, String prefix, String middle)
       throws Exception {
     // bring up a new collector
@@ -219,7 +214,6 @@ public class RestAccessorTest {
   public void testDelete() throws Exception {
     // configure an accessor
     String uri = setupAccessor("access.rest", "/", "table/");
-    int port = this.accessor.getHttpConfig().getPort();
 
     // write a value and verify it can be read
     String key = "to be deleted";
@@ -245,7 +239,6 @@ public class RestAccessorTest {
   public void testList() throws Exception {
     // configure an accessor
     String uri = setupAccessor("access.rest", "/", "table/");
-    int port = this.accessor.getHttpConfig().getPort();
 
     // write some values and verify they can be read
     TestUtil.writeAndGet(this.executor, uri, "a", "bar");
@@ -423,10 +416,10 @@ public class RestAccessorTest {
   }
 
   @Test
-  public void testFormatData() throws Exception {
+  public void testClearData() throws Exception {
     // setup accessor
     String baseUrl = setupAccessor("access.rest", "/continuuity", "/data/");
-    String formatUrl = this.accessor.getHttpConfig().getBaseUrl() + "?format=";
+    String clearUrl = this.accessor.getHttpConfig().getBaseUrl() + "?clear=";
     // setup collector
     String collectorUrl =
         setupCollector("collect.rest", "/continuuity", "/stream/");
@@ -438,8 +431,8 @@ public class RestAccessorTest {
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
-    // format all
-    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "all"));
+    // clear all
+    Assert.assertEquals(200, TestUtil.sendPostRequest(clearUrl + "all"));
     // verify all are gone
     verifyKeyGone("key");
     verifyQueueGone("queue://foo/bar");
@@ -452,9 +445,9 @@ public class RestAccessorTest {
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
-    // format all
+    // clear all
     Assert.assertEquals(200, TestUtil.
-        sendPostRequest(formatUrl + "queues,streams,data"));
+        sendPostRequest(clearUrl + "queues,streams,data"));
     // verify all are gone
     verifyKeyGone("key");
     verifyQueueGone("queue://foo/bar");
@@ -467,8 +460,8 @@ public class RestAccessorTest {
     // write and verify some queue
     queueAndVerify("queue://foo/bar", 2);
 
-    // format data
-    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "data"));
+    // clear data
+    Assert.assertEquals(200, TestUtil.sendPostRequest(clearUrl + "data"));
     // verify data is gone, rest is still there
     verifyKeyGone("key");
     verifyEvent("foo", 1);
@@ -477,8 +470,8 @@ public class RestAccessorTest {
     // write and verify some data
     TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
 
-    // format streams
-    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "streams"));
+    // clear streams
+    Assert.assertEquals(200, TestUtil.sendPostRequest(clearUrl + "streams"));
     // verify streams are gone, rest is still there
     // verify data is gone, rest is still there
     verifyStreamGone("foo");
@@ -488,8 +481,8 @@ public class RestAccessorTest {
     // write and verify some stream
     sendAndVerify(collectorUrl, "foo", 1);
 
-    // format queues
-    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "queues"));
+    // clear queues
+    Assert.assertEquals(200, TestUtil.sendPostRequest(clearUrl + "queues"));
     // verify queues are gone, rest is still there
     verifyQueueGone("queue://foo/bar");
     verifyKeyValue("key", "value");

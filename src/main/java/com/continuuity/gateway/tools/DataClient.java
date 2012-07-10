@@ -66,10 +66,10 @@ public class DataClient {
   String valueFile = null;       // the file to read/write the value from/to
   int start = -1;                // the index to start the list from
   int limit = -1;                // the number of elements to list
-  boolean formatAll = false;     // to format everything
-  boolean formatData = false;    // to format all table data
-  boolean formatQueues = false;  // to format all event streams
-  boolean formatStreams = false; // to format all intra-flow queues
+  boolean clearAll = false;      // to clear everything
+  boolean clearData = false;     // to clear all table data
+  boolean clearQueues = false;   // to clear all event streams
+  boolean clearStreams = false;  // to clear all intra-flow queues
 
   boolean keyNeeded;             // does the command require a key?
   boolean valueNeeded;           // does the command require a value?
@@ -95,7 +95,7 @@ public class DataClient {
     out.println("  " + name + " delete --key <string> [ <options> ]");
     out.println("  " + name + " list [ <options> ]");
     out.println("  " + name +
-        " format ( --all | --data | --queues | --streams )");
+        " clear ( --all | --data | --queues | --streams )");
     out.println("Additional options:");
     out.println("  --base <url>            " +
         "To specify the base url to send to");
@@ -120,10 +120,10 @@ public class DataClient {
         "To start at the nth element - only for list");
     out.println("  --limit <k>             " +
         "To list at most k elements - only for list");
-    out.println("  --all                   To format all data");
-    out.println("  --data                  To format all table data");
-    out.println("  --streams               To format all event streams");
-    out.println("  --queues                To format all intra-flow queues");
+    out.println("  --all                   To clear all data");
+    out.println("  --data                  To clear all table data");
+    out.println("  --streams               To clear all event streams");
+    out.println("  --queues                To clear all intra-flow queues");
     out.println("  --encoding <name>       " +
         "To use this encoding for key and value");
     out.println("  --verbose               To see more verbose output");
@@ -204,13 +204,13 @@ public class DataClient {
       } else if ("--counter".equals(arg)) {
         counter = true;
       } else if ("--all".equals(arg)) {
-        formatAll = true;
+        clearAll = true;
       } else if ("--data".equals(arg)) {
-        formatData = true;
+        clearData = true;
       } else if ("--queues".equals(arg)) {
-        formatQueues = true;
+        clearQueues = true;
       } else if ("--streams".equals(arg)) {
-        formatStreams = true;
+        clearStreams = true;
       } else if ("--verbose".equals(arg)) {
         verbose = true;
       } else if ("--help".equals(arg)) {
@@ -224,7 +224,7 @@ public class DataClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("read", "write", "delete", "list", "format");
+      Arrays.asList("read", "write", "delete", "list", "clear");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -244,7 +244,7 @@ public class DataClient {
       usage("--start and --limit are only allowed for list");
     // verify that only one encoding was given
     int encodings = 0;
-    keyNeeded = !(command.equals("list") || command.equals("format"));
+    keyNeeded = !(command.equals("list") || command.equals("clear"));
     valueNeeded = command.equals("write");
     outputNeeded = command.equals("read") || command.equals("list");
     boolean needsEncoding = (keyNeeded && keyFile == null)
@@ -279,10 +279,10 @@ public class DataClient {
       if ((value != null) || (!outputNeeded && valueFile != null))
         usage("A value may not be specified for command " + command + ".");
     }
-    // verify that format command specifies what to format
-    if ("format".equals(command)) {
-      if (!(formatAll || formatData || formatQueues || formatStreams))
-        usage("You must specify what to format - please us --all, --data, " +
+    // verify that clear command specifies what to clear
+    if ("clear".equals(command)) {
+      if (!(clearAll || clearData || clearQueues || clearStreams))
+        usage("You must specify what to clear - please us --all, --data, " +
             "--queues, and/or --streams.");
     }
     // --counter is only allowed for read and write, and not in conjunction
@@ -553,12 +553,12 @@ public class DataClient {
       // now make returned value available to user
       return writeList(binaryValue);
     }
-    else if ("format".equals(command)) {
-      requestUrl = baseUrl + "?format=";
-      if (formatAll) requestUrl += "data,queues,streams";
-      else if (formatData) requestUrl += "data";
-      else if (formatQueues) requestUrl += "queues";
-      else if (formatStreams) requestUrl += "streams";
+    else if ("clear".equals(command)) {
+      requestUrl = baseUrl + "?clear=";
+      if (clearAll) requestUrl += "data,queues,streams";
+      else if (clearData) requestUrl += "data";
+      else if (clearQueues) requestUrl += "queues";
+      else if (clearStreams) requestUrl += "streams";
       // now execute this as a get
       try {
         response = client.execute(new HttpPost(requestUrl));

@@ -1,7 +1,7 @@
 package com.continuuity.gateway.accessor;
 
 import com.continuuity.api.data.*;
-import com.continuuity.data.operation.FormatFabric;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -78,7 +78,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int WRITE = 2;
   private static final int DELETE = 3;
   private static final int LIST = 4;
-  private static final int FORMAT = 5;
+  private static final int CLEAR = 5;
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -100,16 +100,16 @@ public class RestHandler extends NettyRestHandler {
     // based on the request URL, determine what to do
     QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
     Map<String, List<String>> parameters = decoder.getParameters();
-    List<String> formatParams = null;
+    List<String> clearParams = null;
     int operation = UNKNOWN;
     if (method == HttpMethod.PUT)
       operation = WRITE;
     else if (method == HttpMethod.DELETE)
       operation = DELETE;
     else if (method == HttpMethod.POST) {
-      formatParams = parameters.get("format");
-      if (formatParams != null && formatParams.size() > 0)
-        operation = FORMAT;
+      clearParams = parameters.get("clear");
+      if (clearParams != null && clearParams.size() > 0)
+        operation = CLEAR;
       else
         operation = BAD;
     } else if (method == HttpMethod.GET) {
@@ -139,7 +139,7 @@ public class RestHandler extends NettyRestHandler {
     }
 
     // respond with error for parameters if the operation does not allow them
-    if (operation != LIST && operation != FORMAT &&
+    if (operation != LIST && operation != CLEAR &&
         parameters != null && !parameters.isEmpty()) {
       LOG.debug("Received a " + method +
           " request with query parameters, which is not supported");
@@ -172,24 +172,24 @@ public class RestHandler extends NettyRestHandler {
     } } }
 
     // check that URL could be parsed up to destination
-    // except for FORMAT, where no destination may be given
-    if ((destination == null && operation != FORMAT) ||
-        (destination != null && operation == FORMAT)) {
+    // except for CLEAR, where no destination may be given
+    if ((destination == null && operation != CLEAR) ||
+        (destination != null && operation == CLEAR)) {
       LOG.debug("Received a request with unknown path '" + path + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    // all operations except for LIST and FORMAT need a key
-    if (operation != LIST && operation != FORMAT &&
+    // all operations except for LIST and CLEAR need a key
+    if (operation != LIST && operation != CLEAR &&
         (key == null || key.length() == 0)) {
       LOG.debug("Received a request with invalid path " +
           path + "(no key given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
-    // operation LIST and FORMAT must not have a key
-    if ((operation == LIST || operation == FORMAT) &&
+    // operation LIST and CLEAR must not have a key
+    if ((operation == LIST || operation == CLEAR) &&
         (key != null && key.length() > 0)) {
       LOG.debug("Received a request with invalid path " +
           path + "(no key may be given)");
@@ -339,34 +339,34 @@ public class RestHandler extends NettyRestHandler {
         }
         break;
       }
-      case FORMAT : {
-        // figure out what to format
-        boolean formatData = false;
-        boolean formatQueues = false;
-        boolean formatStreams = false;
-        for (String param : formatParams) {
+      case CLEAR : {
+        // figure out what to clear
+        boolean clearData = false;
+        boolean clearQueues = false;
+        boolean clearStreams = false;
+        for (String param : clearParams) {
           for (String what : param.split(",")) {
             if ("all".equals(what))
-              formatData = formatQueues = formatStreams = true;
+              clearData = clearQueues = clearStreams = true;
             else if ("data".equals(what))
-              formatData = true;
+              clearData = true;
             else if ("queues".equals(what))
-              formatQueues = true;
+              clearQueues = true;
             else if ("streams".equals(what))
-              formatStreams = true;
+              clearStreams = true;
             else {
-              LOG.debug("Received invalid format request with URI " +
+              LOG.debug("Received invalid clear request with URI " +
                   requestUri);
               respondError(message.getChannel(),
                   HttpResponseStatus.BAD_REQUEST);
               break;
         } } }
-        FormatFabric format =
-            new FormatFabric(formatData, formatQueues, formatStreams);
+        ClearFabric clearFabric =
+            new ClearFabric(clearData, clearQueues, clearStreams);
         try {
-          this.accessor.getExecutor().execute(format);
+          this.accessor.getExecutor().execute(clearFabric);
         } catch (Exception e) {
-          LOG.error("Exception formatting data fabric: ", e);
+          LOG.error("Exception clearing data fabric: ", e);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           break;
