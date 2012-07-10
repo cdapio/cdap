@@ -26,14 +26,18 @@ public class RestCollectorTest {
     int port = TestUtil.findFreePort();
     // configure collector but don't start
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
+    configuration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.NoopConsumer());
     // create an http post
-    HttpPost post = TestUtil.createHttpPost(port, prefix, path, destination, 42);
+    HttpPost post =
+        TestUtil.createHttpPost(port, prefix, path, destination, 42);
     try { // verify send fails before start()
       TestUtil.sendRestEvent(post);
       Assert.fail("Exception expected when collector has not started");
@@ -66,26 +70,33 @@ public class RestCollectorTest {
     int eventsToSend = 10;
     int port = TestUtil.findFreePort();
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
+    configuration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.set(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), path);
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(15, name, destination));
     collector.start();
-    TestUtil.sendRestEvent(TestUtil.createHttpPost(port, prefix, path, destination, 15));
+    TestUtil.sendRestEvent(TestUtil.
+        createHttpPost(port, prefix, path, destination, 15));
     collector.stop();
     collector.setConsumer(new TestUtil.VerifyConsumer(name, destination));
     collector.start();
     TestUtil.sendRestEvents(port, prefix, path, destination, eventsToSend);
     collector.stop();
-    Assert.assertEquals(eventsToSend, collector.getConsumer().eventsReceived());
-    Assert.assertEquals(eventsToSend, collector.getConsumer().eventsSucceeded());
+    Assert.assertEquals(eventsToSend,
+        collector.getConsumer().eventsReceived());
+    Assert.assertEquals(eventsToSend,
+        collector.getConsumer().eventsSucceeded());
     Assert.assertEquals(0, collector.getConsumer().eventsFailed());
   }
 
   /**
-   * This tests that the collector returns the correct HTTP codes for invalid requests
+   * This tests that the collector returns the correct HTTP codes for
+   * invalid requests
    */
   @Test
   public void testBadRequests() throws Exception {
@@ -121,21 +132,23 @@ public class RestCollectorTest {
     Assert.assertEquals(200, TestUtil.sendPostRequest(baseUrl + "events/more"));
 
     // submit a request without prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendPostRequest("http://localhost:" + port + "/somewhere"));
-    Assert.assertEquals(404, TestUtil.sendPostRequest("http://localhost:" + port + "/continuuity/data"));
+    Assert.assertEquals(404, TestUtil.sendPostRequest(
+        "http://localhost:" + port + "/somewhere"));
+    Assert.assertEquals(404, TestUtil.sendPostRequest(
+        "http://localhost:" + port + "/continuuity/data"));
 
     // submit a request with correct prefix but no destination -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl));
 
-    // submit a GET to the collector (which only supports POST) -> 405 Not Allowed
-    Assert.assertEquals(404, TestUtil.sendGetRequest(baseUrl));
+    // POST with destination but more after that in the path -> 404 Not Found
+    Assert.assertEquals(404, TestUtil.sendPostRequest(
+        baseUrl + "flow/stream/"));
+    Assert.assertEquals(404, TestUtil.sendPostRequest(
+        baseUrl + "flow/events/more"));
 
-    // submit a POST with destination name but more after that in the path -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl + "flow/stream/"));
-    Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl + "flow/events/more"));
-
-    // submit a POST with existing key but with query part -> 501 Not Implemented
-    Assert.assertEquals(501, TestUtil.sendPostRequest(baseUrl + "x?query=none"));
+    // POST with existing key but with query part -> 501 Not Implemented
+    Assert.assertEquals(501, TestUtil.sendPostRequest(
+        baseUrl + "x?query=none"));
 
     // and shutdown
     collector.stop();

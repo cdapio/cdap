@@ -12,8 +12,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * This is a base class for the gateway's Netty-based Http request handlers. It
- * implements common methods such as returning an error or sending an OK response.
+ * This is a base class for the gateway's Netty-based Http request handlers.
+ * It implements common methods such as returning an error or sending an OK
+ * response.
  */
 public class NettyRestHandler extends SimpleChannelUpstreamHandler {
   @SuppressWarnings("unused")
@@ -42,7 +43,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param channel        the channel on which the request came
    * @param allowedMethods the HTTP methods that are accepted
    */
-  protected void respondNotAllowed(Channel channel, HttpMethod[] allowedMethods) {
+  protected void respondNotAllowed(Channel channel,
+                                   HttpMethod[] allowedMethods) {
     HttpResponse response = new DefaultHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED);
     StringBuilder allowed = new StringBuilder();
@@ -63,7 +65,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * unless specified otherwise in the original request.
    *
    * @param channel the channel on which the request came
-   * @param request the original request (to determine whether to keep the connection alive)
+   * @param request the original request (to determine whether to keep
+   *                the connection alive)
    */
   protected void respondSuccess(Channel channel, HttpRequest request) {
     respondSuccess(channel, request, null, null, null);
@@ -74,10 +77,12 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * unless specified otherwise in the original request.
    *
    * @param channel the channel on which the request came
-   * @param request the original request (to determine whether to keep the connection alive)
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
    * @param content the content of the response to send
    */
-  protected void respondSuccess(Channel channel, HttpRequest request, byte[] content) {
+  protected void respondSuccess(Channel channel, HttpRequest request,
+                                byte[] content) {
     respondSuccess(channel, request, null, null, content);
   }
 
@@ -86,10 +91,12 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * unless specified otherwise in the original request.
    *
    * @param channel the channel on which the request came
-   * @param request the original request (to determine whether to keep the connection alive)
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
    * @param status the status code to respond with. Defaults to 200-OK if null
    */
-  protected void respondSuccess(Channel channel, HttpRequest request, HttpResponseStatus status) {
+  protected void respondSuccess(Channel channel, HttpRequest request,
+                                HttpResponseStatus status) {
     respondSuccess(channel, request, status, null, null);
   }
 
@@ -98,12 +105,14 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * unless specified otherwise in the original request.
    *
    * @param channel the channel on which the request came
-   * @param request the original request (to determine whether to keep the connection alive)
+   * @param request the original request (to determine whether to keep the
+   *                connection alive)
    * @param status the status code to respond with. Defaults to 200-OK if null
    * @param headers additional headers to send with the response. May be null.
    * @param content the content of the response to send
    */
-  protected void respondSuccess(Channel channel, HttpRequest request, HttpResponseStatus status,
+  protected void respondSuccess(Channel channel, HttpRequest request,
+                                HttpResponseStatus status,
                                 Map<String, String> headers, byte[] content) {
     HttpResponse response = new DefaultHttpResponse(
         HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
@@ -112,7 +121,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       for (Map.Entry<String, String> entry : headers.entrySet())
         response.addHeader(entry.getKey(), entry.getValue());
     }
-    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH, content == null ? 0 : content.length);
+    response.addHeader(HttpHeaders.Names.CONTENT_LENGTH,
+        content == null ? 0 : content.length);
     if (content != null) {
       response.setContent(ChannelBuffers.wrappedBuffer(content));
     }

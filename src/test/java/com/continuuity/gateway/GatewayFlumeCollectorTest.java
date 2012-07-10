@@ -65,8 +65,8 @@ public class GatewayFlumeCollectorTest {
     myConfiguration.set(
         Constants.buildConnectorPropertyName(name, Constants.CONFIG_CLASSNAME),
         NettyFlumeCollector.class.getCanonicalName());
-    myConfiguration.setInt(
-        Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    myConfiguration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
 
     // Now create our Gateway
     theGateway = new Gateway();
@@ -107,7 +107,8 @@ public class GatewayFlumeCollectorTest {
     Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsReceived());
     Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
     Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsEvents(this.executor, destination, name, eventsToSend);
+    TestUtil.consumeQueueAsEvents(this.executor, destination, name,
+        eventsToSend);
 
     // Stop the Gateway
     theGateway.stop(false);
@@ -130,7 +131,8 @@ public class GatewayFlumeCollectorTest {
     Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
     Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
     Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsTuples(this.executor, destination, name, eventsToSend);
+    TestUtil.consumeQueueAsTuples(this.executor, destination, name,
+        eventsToSend);
 
     // Stop the Gateway
     theGateway.stop(false);

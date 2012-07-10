@@ -1,6 +1,5 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.Read;
 import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -69,7 +68,8 @@ public class TestUtil {
    * Creates a flume event that has
    * <ul>
    * <li>a header named "messageNumber" with the string value of a number i</li>
-   * <li>a header named "HEADER_DESTINATION_STREAM" with the name of a destination</li>
+   * <li>a header named "HEADER_DESTINATION_STREAM" with the name of a
+   *  destination</li>
    * <li>a body with the text "This is message number i.</li>
    * </ul>
    *
@@ -88,7 +88,8 @@ public class TestUtil {
   }
 
   /**
-   * Uses Flumes RPC client to send a number of flume events to a specified port.
+   * Uses Flumes RPC client to send a number of flume events to a specified
+   * port.
    *
    * @param port        The port to use
    * @param dest        The destination name to use as the destination
@@ -96,7 +97,8 @@ public class TestUtil {
    * @param batchSize   Batch size to use for sending
    * @throws EventDeliveryException If sending fails for any reason
    */
-  static void sendFlumeEvents(int port, String dest, int numMessages, int batchSize)
+  static void sendFlumeEvents(int port, String dest, int numMessages,
+                              int batchSize)
       throws EventDeliveryException {
 
     RpcClient client = RpcClientFactory.
@@ -125,7 +127,8 @@ public class TestUtil {
    * @param event The event
    * @throws EventDeliveryException If something went wrong while sending
    */
-  static void sendFlumeEvent(int port, SimpleEvent event) throws EventDeliveryException {
+  static void sendFlumeEvent(int port, SimpleEvent event)
+      throws EventDeliveryException {
     RpcClient client = RpcClientFactory.
         getDefaultInstance("localhost", port, 1);
     try {
@@ -147,7 +150,8 @@ public class TestUtil {
    * @param i The number to use
    * @return a flume event
    */
-  static HttpPost createHttpPost(int port, String prefix, String path, String dest, int i) {
+  static HttpPost createHttpPost(int port, String prefix, String path,
+                                 String dest, int i) {
     String url = "http://localhost:" + port + prefix + path + dest;
     HttpPost post = new HttpPost(url);
     post.setHeader(dest + ".messageNumber", Integer.toString(i));
@@ -180,7 +184,8 @@ public class TestUtil {
    * @param dest   The destination name to use as the destination
    * @throws IOException if sending fails
    */
-  static void sendRestEvents(int port, String prefix, String path, String dest, int eventsToSend)
+  static void sendRestEvents(int port, String prefix, String path,
+                             String dest, int eventsToSend)
       throws IOException {
     for (int i = 0; i < eventsToSend; i++) {
       TestUtil.sendRestEvent(createHttpPost(port, prefix, path, dest, i));
@@ -188,40 +193,61 @@ public class TestUtil {
   }
 
   /**
-   * Verify that an event corresponds to the form as created by createFlumeEvent or createHttpPost
+   * Verify that an event corresponds to the form as created by
+   * createFlumeEvent or createHttpPost
    *
    * @param event         The event to verify
    * @param collectorName The name of the collector that the event was sent to
-   * @param destination   The name of the destination that the event was routed to
-   * @param expectedNo    The number of the event, it should be both in the messageNumber header and in the body.
-   *                      If null, then this method checks whether the number in the header matches the body.
+   * @param destination   The name of the destination that the event was routed
+   *                      to
+   * @param expectedNo    The number of the event, it should be both in the
+   *                      messageNumber header and in the body.
+   *                      If null, then this method checks whether the number
+   *                      in the header matches the body.
    */
-  static void verifyEvent(Event event, String collectorName, String destination, Integer expectedNo) {
+  static void verifyEvent(Event event, String collectorName,
+                          String destination, Integer expectedNo) {
     Assert.assertNotNull(event.getHeader("messageNumber"));
     int messageNumber = Integer.valueOf(event.getHeader("messageNumber"));
-    if (expectedNo != null) Assert.assertEquals(messageNumber, expectedNo.intValue());
-    if (collectorName != null) Assert.assertEquals(collectorName, event.getHeader(Constants.HEADER_FROM_COLLECTOR));
-    if (destination != null) Assert.assertEquals(destination, event.getHeader(Constants.HEADER_DESTINATION_STREAM));
+    if (expectedNo != null)
+      Assert.assertEquals(messageNumber, expectedNo.intValue());
+    if (collectorName != null)
+      Assert.assertEquals(collectorName,
+          event.getHeader(Constants.HEADER_FROM_COLLECTOR));
+    if (destination != null)
+      Assert.assertEquals(destination,
+          event.getHeader(Constants.HEADER_DESTINATION_STREAM));
     Assert.assertArrayEquals(createMessage(messageNumber), event.getBody());
   }
 
   /**
-   * Verify that an tuple corresponds to an event of the form as created by createFlumeEvent or createHttpPost
+   * Verify that an tuple corresponds to an event of the form as created by
+   * createFlumeEvent or createHttpPost
    *
    * @param tuple         The tuple to verify
    * @param collectorName The name of the collector that the event was sent to
-   * @param destination   The name of the destination that the event was routed to
-   * @param expectedNo    The number of the event, it should be both in the messageNumber header and in the body.
-   *                      If null, then this method checks whether the number in the header matches the body.
+   * @param destination   The name of the destination that the event was routed
+   *                      to
+   * @param expectedNo    The number of the event, it should be both in the
+   *                      messageNumber header and in the body.
+   *                      If null, then this method checks whether the number
+   *                      in the header matches the body.
    */
-  static void verifyTuple(Tuple tuple, String collectorName, String destination, Integer expectedNo) {
+  static void verifyTuple(Tuple tuple, String collectorName,
+                          String destination, Integer expectedNo) {
     Map<String, String> headers = tuple.get("headers");
     Assert.assertNotNull(headers.get("messageNumber"));
     int messageNumber = Integer.valueOf(headers.get("messageNumber"));
-    if (expectedNo != null) Assert.assertEquals(messageNumber, expectedNo.intValue());
-    if (collectorName != null) Assert.assertEquals(collectorName, headers.get(Constants.HEADER_FROM_COLLECTOR));
-    if (destination != null) Assert.assertEquals(destination, headers.get(Constants.HEADER_DESTINATION_STREAM));
-    Assert.assertArrayEquals(createMessage(messageNumber), (byte[]) tuple.get("body"));
+    if (expectedNo != null)
+      Assert.assertEquals(messageNumber, expectedNo.intValue());
+    if (collectorName != null)
+      Assert.assertEquals(collectorName,
+          headers.get(Constants.HEADER_FROM_COLLECTOR));
+    if (destination != null)
+      Assert.assertEquals(destination,
+          headers.get(Constants.HEADER_DESTINATION_STREAM));
+    Assert.assertArrayEquals(
+        createMessage(messageNumber), (byte[]) tuple.get("body"));
   }
 
   /**
@@ -254,29 +280,35 @@ public class TestUtil {
 
     @Override
     protected void single(Event event) throws Exception {
-      TestUtil.verifyEvent(event, this.collectorName, this.destination, this.expectedNumber);
+      TestUtil.verifyEvent(event, this.collectorName,
+          this.destination, this.expectedNumber);
     }
   }
 
   /**
-   * Consume the events in a queue and verify that they correspond to the format as created by
-   * createHttpPost() or createFlumeEvent()
+   * Consume the events in a queue and verify that they correspond to the
+   * format as created by createHttpPost() or createFlumeEvent()
    *
    * @param executor       The executor to use for access to the data fabric
-   * @param destination    The name of the flow (destination) that the events were sent to
+   * @param destination    The name of the flow (destination) that the events
+   *                       were sent to
    * @param collectorName  The name of the collector that received the events
    * @param eventsExpected How many events should be read
    * @throws Exception
    */
-  static void consumeQueueAsEvents(OperationExecutor executor, String destination,
-                                   String collectorName, int eventsExpected) throws Exception {
+  static void consumeQueueAsEvents(OperationExecutor executor,
+                                   String destination,
+                                   String collectorName,
+                                   int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(destination).toString().getBytes();
+    byte[] queueURI = FlowStream.
+        buildStreamURI(destination).toString().getBytes();
     // one deserializer to reuse
     EventSerializer deserializer = new EventSerializer();
     // prepare the queue consumer
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -287,7 +319,8 @@ public class TestUtil {
       Event event = deserializer.deserialize(result.getValue());
       TestUtil.verifyEvent(event, collectorName, destination, null);
       // message number should be in the header "messageNumber"
-      LOG.info("Popped one event, message number: " + event.getHeader("messageNumber"));
+      LOG.info("Popped one event, message number: " +
+          event.getHeader("messageNumber"));
       // ack the event so that it disappers from the queue
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
@@ -301,20 +334,25 @@ public class TestUtil {
    * createHttpPost() or createFlumeEvent()
    *
    * @param executor       The executor to use for access to the data fabric
-   * @param destination    The name of the flow (destination) that the events were sent to
+   * @param destination    The name of the flow (destination) that the events
+   *                       were sent to
    * @param collectorName  The name of the collector that received the events
    * @param tuplesExpected How many tuples should be read
    * @throws Exception
    */
-  static void consumeQueueAsTuples(OperationExecutor executor, String destination,
-                                   String collectorName, int tuplesExpected) throws Exception {
+  static void consumeQueueAsTuples(OperationExecutor executor,
+                                   String destination,
+                                   String collectorName,
+                                   int tuplesExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.buildStreamURI(destination).toString().getBytes();
+    byte[] queueURI = FlowStream.
+        buildStreamURI(destination).toString().getBytes();
     // one deserializer to reuse
     TupleSerializer deserializer = new TupleSerializer(false);
     // prepare the queue consumer
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = tuplesExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -326,7 +364,8 @@ public class TestUtil {
       TestUtil.verifyTuple(tuple, collectorName, destination, null);
       // message number should be in the header "messageNumber"
       Map<String, String> headers = tuple.get("headers");
-      LOG.info("Popped one event, message number: " + headers.get("messageNumber"));
+      LOG.info("Popped one event, message number: " +
+          headers.get("messageNumber"));
       // ack the event so that it disappers from the queue
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
@@ -336,7 +375,8 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be retrieved for a given key via http GET request
+   * Verify that a given value can be retrieved for a given key via http GET
+   * request
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for get request, without the key
@@ -345,7 +385,8 @@ public class TestUtil {
    * @throws Exception if an exception occurs
    */
   static void writeAndGet(OperationExecutor executor,
-                          String baseUri, byte[] key, byte[] value) throws Exception {
+                          String baseUri, byte[] key, byte[] value)
+      throws Exception {
     // add the key/value to the data fabric
     Write write = new Write(key, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
@@ -353,7 +394,8 @@ public class TestUtil {
     Assert.assertTrue(executor.execute(operations).isSuccess());
 
     // make a get URL
-    String getUrl = baseUri + URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
+    String getUrl = baseUri +
+        URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
     LOG.info("GET request URI for key '" + new String(key) + "' is " + getUrl);
 
     // and issue a GET request to the server
@@ -362,7 +404,8 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
 
     // verify the response is ok
-    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpStatus.SC_OK,
+        response.getStatusLine().getStatusCode());
 
     // verify the length of the return value is the same as the original value's
     int length = (int) response.getEntity().getContentLength();
@@ -381,9 +424,9 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be retrieved for a given key via http GET request.
-   * This converts the key and value from String to bytes and calls the byte-based
-   * method writeAndGet.
+   * Verify that a given value can be retrieved for a given key via http GET
+   * request. This converts the key and value from String to bytes and calls
+   * the byte-based method writeAndGet.
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for get request, without the key
@@ -392,12 +435,15 @@ public class TestUtil {
    * @throws Exception if an exception occurs
    */
   static void writeAndGet(OperationExecutor executor,
-                          String baseUri, String key, String value) throws Exception {
-    writeAndGet(executor, baseUri, key.getBytes("ISO8859_1"), value.getBytes("ISO8859_1"));
+                          String baseUri, String key, String value)
+      throws Exception {
+    writeAndGet(executor, baseUri, key.getBytes("ISO8859_1"),
+        value.getBytes("ISO8859_1"));
   }
 
   /**
-   * Verify that a given value can be stored for a given key via http PUT request
+   * Verify that a given value can be stored for a given key via http PUT
+   * request
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for PUT request, without the key
@@ -406,11 +452,14 @@ public class TestUtil {
    * @throws Exception if an exception occurs
    */
   static void putAndRead(OperationExecutor executor,
-                         String baseUri, byte[] key, byte[] value) throws Exception {
+                         String baseUri, byte[] key, byte[] value)
+      throws Exception {
 
     // make a get URL
-    String putUrl = baseUri + URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
-    LOG.info("PUT request URI for key '" + new String(key, "ISO8859_1") + "' is " + putUrl);
+    String putUrl = baseUri +
+        URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
+    LOG.info("PUT request URI for key '" +
+        new String(key, "ISO8859_1") + "' is " + putUrl);
 
     // and issue a PUT request to the server
     HttpClient client = new DefaultHttpClient();
@@ -420,7 +469,8 @@ public class TestUtil {
     client.getConnectionManager().shutdown();
 
     // verify the response is ok
-    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpStatus.SC_OK,
+        response.getStatusLine().getStatusCode());
 
     // read the key/value back from the data fabric
     ReadKey read = new ReadKey(key);
@@ -432,9 +482,9 @@ public class TestUtil {
   }
 
   /**
-   * Verify that a given value can be stored for a given key via http PUT request.
-   * This converts the key and value from String to bytes and calls the byte-based
-   * method putAndRead.
+   * Verify that a given value can be stored for a given key via http PUT
+   * request. This converts the key and value from String to bytes and calls
+   * the byte-based method putAndRead.
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for REST request, without the key
@@ -443,8 +493,10 @@ public class TestUtil {
    * @throws Exception if an exception occurs
    */
   static void putAndRead(OperationExecutor executor,
-                         String baseUri, String key, String value) throws Exception {
-    putAndRead(executor, baseUri, key.getBytes("ISO8859_1"), value.getBytes("ISO8859_1"));
+                         String baseUri, String key, String value)
+      throws Exception {
+    putAndRead(executor, baseUri, key.getBytes("ISO8859_1"),
+        value.getBytes("ISO8859_1"));
   }
 
   /**
@@ -465,7 +517,8 @@ public class TestUtil {
    * @param baseUrl the baseURL
    * @param key     the key to delete
    */
-  public static int sendGetRequest(String baseUrl, String key) throws Exception {
+  public static int sendGetRequest(String baseUrl, String key)
+      throws Exception {
     String urlKey = URLEncoder.encode(key, "ISO8859_1");
     return sendGetRequest(baseUrl + urlKey);
   }
@@ -483,12 +536,14 @@ public class TestUtil {
   }
 
   /**
-   * Send a DELETE request to the given URL for the given key and return the HTTP status
+   * Send a DELETE request to the given URL for the given key and return the
+   * HTTP status
    *
    * @param baseUrl the baseURL
    * @param key     the key to delete
    */
-  public static int sendDeleteRequest(String baseUrl, String key) throws Exception {
+  public static int sendDeleteRequest(String baseUrl, String key)
+      throws Exception {
     String urlKey = URLEncoder.encode(key, "ISO8859_1");
     String url = baseUrl + urlKey;
     return sendDeleteRequest(url);

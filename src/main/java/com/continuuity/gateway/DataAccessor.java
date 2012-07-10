@@ -3,10 +3,10 @@ package com.continuuity.gateway;
 import com.continuuity.data.operation.executor.OperationExecutor;
 
 /**
- * This is the base interface for all Accessors. An Accessor is a type of Connector
- * allows external clients to access the data persisted in the data fabric via
- * RPC calls. This interface ensures that all accessors have common way to get
- * the operations executor
+ * This is the base interface for all data accessors. An accessor is a type of
+ * Connector that allows external clients to access the data persisted in the
+ * data fabric via RPC calls. This interface ensures that all accessors have
+ * common way to get the operations executor
  */
 public interface DataAccessor {
   /**

@@ -73,6 +73,7 @@ public abstract class FlumeCollector extends Collector {
    */
   public String toString() {
     return this.getClass().getName() + " at :" + this.getPort() + " (" +
-        (this.consumer == null ? "no consumer set" : this.consumer.getClass().getName()) + ")";
+        (this.consumer == null ? "no consumer set" :
+            this.consumer.getClass().getName()) + ")";
   }
 }

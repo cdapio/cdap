@@ -60,49 +60,62 @@ public class StreamClient {
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the rest collector
   String body = null;            // the body of the event as a String
-  String bodyFile = null;        // the file that contains the body in binary form
+  String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
-  String consumer = null;        // the consumer group id to fetch from the stream
+  String consumer = null;        // consumer group id to fetch from the stream
   boolean all = false;           // whether to view all events in the stream
   Integer last = null;           // to view the N last events in the stream
   Integer first = null;          // to view the N first events in the stream
-  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
+  Map<String, String> headers = Maps.newHashMap(); // to accumulate all headers
 
   /**
-   * Print the usage statement and return null (or empty string if this is not an error case).
-   * See getValue() for an explanation of the return type.
+   * Print the usage statement and return null (or empty string if this is not
+   * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error, an empty string in case of success
+   * @throws IllegalArgumentException in case of error, an empty string in case
+   * of success
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = this.getClass().getSimpleName();
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name + " send --stream <name> --body <value> [ <option> ... ]");
+    out.println("  " + name +
+        " send --stream <name> --body <value> [ <option> ... ]");
     out.println("  " + name + " id --stream <name> [ <option> ... ]");
-    out.println("  " + name + " fetch --stream <name> --consumer <id> [ <option> ... ]");
+    out.println("  " + name +
+        " fetch --stream <name> --consumer <id> [ <option> ... ]");
     out.println("  " + name + " view --stream <name> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      To specify the name of the rest collector");
-    out.println("  --stream <name>         To specify the destination event stream of the");
+    out.println("  --connector <name>      " +
+        "To specify the name of the rest collector");
+    out.println("  --stream <name>         " +
+        "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
-    out.println("  --header <name> <value> To specify a header for the event to send. Can");
+    out.println("  --header <name> <value> " +
+        "To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
-    out.println("  --body <value>          To specify the body of the event as a string");
-    out.println("  --body-file <path>      Alternative to --body, to specify a file that");
-    out.println("                          contains the binary body of the event");
-    out.println("  --hex                   To specify hexadecimal encoding for --body");
+    out.println("  --body <value>          " +
+        "To specify the body of the event as a string");
+    out.println("  --body-file <path>      " +
+        "Alternative to --body, to specify a file that");
+    out.println("                          " +
+        "contains the binary body of the event");
+    out.println("  --hex                   " +
+        "To specify hexadecimal encoding for --body");
     out.println("  --url                   To specify url encoding for --body");
-    out.println("  --id <group id>         To specify a consumer group id for the stream, as ");
+    out.println("  --id <group id>         " +
+        "To specify a consumer group id for the stream, as ");
     out.println("                          obtained by " + name + " id");
     out.println("  --all                   To view the entire stream.");
-    out.println("  --first <number>        To view the first N events in the stream. Default ");
+    out.println("  --first <number>        " +
+        "To view the first N events in the stream. Default ");
     out.println("                          for view is --first 10.");
-    out.println("  --last <number>         To view the last N events in the stream.");
+    out.println("  --last <number>         " +
+        "To view the last N events in the stream.");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -196,29 +209,39 @@ public class StreamClient {
     }
   }
 
-  static List<String> supportedCommands = Arrays.asList("send", "id", "fetch", "view");
+  static List<String> supportedCommands =
+      Arrays.asList("send", "id", "fetch", "view");
 
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) return;
     // first validate the command
-    if (!supportedCommands.contains(command)) usage("Unsupported command '" + command + "'.");
+    if (!supportedCommands.contains(command))
+      usage("Unsupported command '" + command + "'.");
     // verify that either --body or --body-file is given
-    if ("send".equals(command) && body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
+    if ("send".equals(command) && body != null && bodyFile != null)
+      usage("Either --body or --body-file must be specified.");
     // verify that a destination was given
     if (destination == null) usage("A destination stream must be specified.");
     // verify that only one hint is given for the URL
-    if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
-    if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
+    if (hostname != null && baseUrl != null)
+      usage("Only one of --host or --base may be specified.");
+    if (connector != null && baseUrl != null)
+      usage("Only one of --connector or --base may be specified.");
     // verify that only one encoding is given for the body
     if (hex && urlenc) usage("Only one of --hex or --url may be specified");
-    if (bodyFile != null && (hex || urlenc)) usage("Options --hex and --url are incompatible with --body-file (binary input)");
+    if (bodyFile != null && (hex || urlenc))
+      usage("Options --hex and --url are incompatible with --body-file " +
+          "(binary input)");
     // make sure that fetch command has a consumer id
-    if ("fetch".equals(command) && consumer == null) usage("--consumer must be specified for fetch");
+    if ("fetch".equals(command) && consumer == null)
+      usage("--consumer must be specified for fetch");
     // make sure that view command does not have contradicting options
     if ("view".equals(command)) {
-      if ((all && first != null) || (all && last != null) || (last != null && first != null)) usage("Only one of --all, --first or --last may be specified");
+      if ((all && first != null) || (all && last != null) ||
+          (last != null && first != null))
+        usage("Only one of --all, --first or --last may be specified");
       if (first != null && first < 1) usage("--first must be at least 1");
       if (last != null && last < 1) usage("--last must be at least 1");
     }
@@ -251,10 +274,12 @@ public class StreamClient {
         FileOutputStream out = new FileOutputStream(bodyFile);
         out.write(binaryBody);
         out.close();
-        if (verbose) System.out.println(binaryBody.length + " bytes written to file " + bodyFile + ".");
+        if (verbose) System.out.println(binaryBody.length +
+            " bytes written to file " + bodyFile + ".");
         return binaryBody.length + " bytes written to file";
       } catch (IOException e) {
-        System.err.println("Error writing to file " + bodyFile + ": " + e.getMessage());
+        System.err.println(
+            "Error writing to file " + bodyFile + ": " + e.getMessage());
         return null;
       } }
     String body;
@@ -268,19 +293,21 @@ public class StreamClient {
     else
       body = new String(binaryBody);
 
-    if (verbose) System.out.println("Body[" + binaryBody.length + " bytes]: " + body);
+    if (verbose) System.out.println(
+        "Body[" + binaryBody.length + " bytes]: " + body);
     else System.out.println(body);
     return body;
   }
 
   /**
-   * This is actually the main method, but in order to make it testable, instead of exiting in case
-   * of error it returns null, whereas in case of success it returns the retrieved value as shown
-   * on the console.
+   * This is actually the main method, but in order to make it testable,
+   * instead of exiting in case of error it returns null, whereas in case of
+   * success it returns the retrieved value as shown on the console.
    *
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
-   * @return null in case of error, an string representing the retrieved value in case of success
+   * @return null in case of error, an string representing the retrieved value
+   * in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
@@ -288,10 +315,11 @@ public class StreamClient {
     if (help) return "";
 
     // determine the base url for the GET request
-    if (baseUrl == null)
-      baseUrl = Util.findBaseUrl(config, RestCollector.class, connector, hostname);
+    if (baseUrl == null) baseUrl =
+        Util.findBaseUrl(config, RestCollector.class, connector, hostname);
     if (baseUrl == null) {
-      System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
+      System.err.println("Can't figure out the URL to send to. " +
+          "Please use --base or --connector to specify.");
       return null;
     } else {
       if (verbose) System.out.println("Using base URL: " + baseUrl);
@@ -304,7 +332,8 @@ public class StreamClient {
       // get the body as a byte array
       byte[] binaryBody = readBody();
       if (binaryBody == null) {
-        System.err.println("Cannot send an event without body. Please use --body or --body-file to specify the body.");
+        System.err.println("Cannot send an event without body. " +
+            "Please use --body or --body-file to specify the body.");
         return null;
       }
 
@@ -385,7 +414,8 @@ public class StreamClient {
                   last != null ? new LastNCollector<Event>(last, Event.class) :
                       new FirstNCollector<Event>(10, Event.class);
       try {
-        Event[] events = fetchAll(requestUrl + "?q=dequeue", consumer, collector);
+        Event[] events =
+            fetchAll(requestUrl + "?q=dequeue", consumer, collector);
         return printEvents(events);
       } catch (Exception e) {
         System.err.println(e.getMessage());
@@ -425,16 +455,18 @@ public class StreamClient {
   }
 
   /**
-   * Helper method for --view, given a request URL already constructed, a consumer ID,
-   * and an event collector, it iterates over events from the stream until the stream
-   * is empty or the collector indicates to stop.
+   * Helper method for --view, given a request URL already constructed, a
+   * consumer ID, and an event collector, it iterates over events from the
+   * stream until the stream is empty or the collector indicates to stop.
    * @param uri The request URI including the stream name without the query
-   * @param consumer the consumer group id, as previously returned by getConsumerId()
+   * @param consumer the consumer group id, as previously returned by
+   *                 getConsumerId()
    * @param collector a collector for the events in the stream
    * @return all events collected
    * @throws Exception if something goes wrong
    */
-  Event[] fetchAll(String uri, String consumer, Collector<Event> collector) throws Exception {
+  Event[] fetchAll(String uri, String consumer, Collector<Event> collector)
+      throws Exception {
     while (true) {
       Event event = fetchOne(uri, consumer);
       if (event == null) return collector.finish();
@@ -444,10 +476,11 @@ public class StreamClient {
   }
 
   /**
-   * Helper method for --view, given a request URL already constructed and a consumer ID,
-   * it fetches (dequeues) one event from the stream.
+   * Helper method for --view, given a request URL already constructed and a
+   * consumer ID, it fetches (dequeues) one event from the stream.
    * @param uri The request URI including the stream name without the query
-   * @param consumer the consumer group id, as previously returned by getConsumerId()
+   * @param consumer the consumer group id, as previously returned by
+   *                 getConsumerId()
    * @return the event that was fetched, or null if the stream is empty
    * @throws Exception if something goes wrong
    */
@@ -468,7 +501,8 @@ public class StreamClient {
       return null;
     // check that the response is OK
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-      throw new Exception("HTTP request unsuccessful: " + response.getStatusLine());
+      throw new Exception(
+          "HTTP request unsuccessful: " + response.getStatusLine());
     // read the binary value from the HTTP response
     byte[] binaryValue = Util.readHttpResponse(response);
     if (binaryValue == null)
@@ -516,8 +550,9 @@ public class StreamClient {
   }
 
   /**
-   * Check whether the Http return code is 200 OK. If not, print the error message
-   * and return false. Otherwise, if verbose is on, print the response status line.
+   * Check whether the Http return code is 200 OK. If not, print the error
+   * message and return false. Otherwise, if verbose is on, print the response
+   * status line.
    * @param response the HTTP response
    * @return whether the response is OK
    */
@@ -526,8 +561,9 @@ public class StreamClient {
   }
 
   /**
-   * Check whether the Http return code is as expected. If not, print the error message
-   * and return false. Otherwise, if verbose is on, print the response status line.
+   * Check whether the Http return code is as expected. If not, print the error
+   * message and return false. Otherwise, if verbose is on, print the response
+   * status line.
    * @param response the HTTP response
    * @param expected the expected HTTP status code
    * @return whether the response is as expected
@@ -546,8 +582,9 @@ public class StreamClient {
   }
 
   /**
-   * Check whether the Http return code is as expected. If not, print the status message
-   * and return false. Otherwise, if verbose is on, print the response status line.
+   * Check whether the Http return code is as expected. If not, print the
+   * status message and return false. Otherwise, if verbose is on, print the
+   * response status line.
    * @param response the HTTP response
    * @param expected the list of expected HTTP status codes
    * @return whether the response is as expected
@@ -570,7 +607,8 @@ public class StreamClient {
       return execute0(args, config);
     } catch (IllegalArgumentException e) {
       if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
+        System.err.println("Exception for arguments: " +
+            Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
     }

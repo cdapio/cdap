@@ -43,11 +43,12 @@ class FlumeAdapter implements AvroSourceProtocol {
   ///CLOVER OFF
 
   /**
-   * prevent using the default constructor, to ensure the collector is always set
+   * prevent using default constructor, to ensure the collector is always set
    */
   private FlumeAdapter() {
     LOG.error("Attempt to call default constructor.");
-    throw new UnsupportedOperationException("Attempt to call default constructor for FlumeAdapter.");
+    throw new UnsupportedOperationException(
+        "Attempt to call default constructor for FlumeAdapter.");
   }
   ///CLOVER ON
 
@@ -115,8 +116,8 @@ class FlumeAdapter implements AvroSourceProtocol {
   }
 
   /**
-   * Converts a Flume event to am Event. This is a pure copy of the headers and body.
-   * In addition, the collector name header is set.
+   * Converts a Flume event to am Event. This is a pure copy of the headers
+   * and body. In addition, the collector name header is set.
    *
    * @param flumeEvent the flume event to be converted
    * @return the resulting event
@@ -125,14 +126,17 @@ class FlumeAdapter implements AvroSourceProtocol {
     EventBuilder builder = new EventBuilder();
     builder.setBody(flumeEvent.getBody().array());
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
-      builder.setHeader(header.toString(), flumeEvent.getHeaders().get(header).toString());
+      builder.setHeader(header.toString(),
+          flumeEvent.getHeaders().get(header).toString());
     }
-    builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.getCollector().getName());
+    builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
+        this.getCollector().getName());
     return builder.create();
   }
 
   /**
-   * Converts a batch of Flume event to a lis of Events, using @ref convertFlume2Event
+   * Converts a batch of Flume event to a lis of Events, using @ref
+   * convertFlume2Event
    *
    * @param flumeEvents the flume events to be converted
    * @return the resulting events

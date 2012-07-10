@@ -13,7 +13,8 @@ import com.continuuity.common.conf.CConfiguration;
  * <li>Instantiate the connector using the default constructor.</li>
  * <li>Set the name of the connector via connector.setName().</li>
  * <li>Configure the connector by calling connector.configure().</li>
- * <li>Connector-type specific initialization (such as, setConsumer() for a collector).</li>
+ * <li>Connector-type specific initialization (such as, setConsumer() for a
+ *    collector).</li>
  * <li>Start the connector via connector.start()</li>
  * <li>...</li>
  * <li>Stop the connector via connector.stop()</li>
@@ -69,15 +70,16 @@ public abstract class Connector {
   }
 
   /**
-   * Start this connector. After this, the connector is assumed to be fully operational.
+   * Start this connector. After this, the connector is assumed to be fully
+   * operational.
    *
    * @throws Exception if any exception occurs during start up
    */
   public abstract void start() throws Exception;
 
   /**
-   * Stop this connector. This should perform all necessary deinitialization, such
-   * as closing files or sockets.
+   * Stop this connector. This should perform all necessary deinitialization,
+   * such as closing files or sockets.
    *
    * @throws Exception if any exception occurs during stop
    */

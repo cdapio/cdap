@@ -53,12 +53,13 @@ public class DataClientTest {
     String[][] keyValues = {
         { "cat", "pfunk" }, // a simple key and value
         { "the cat", "pfunk" }, // a key with a blank
-        { "k\u00eby", "v\u00e4l\u00fce" } // key and value with non-ascii characters
+        { "k\u00eby", "v\u00e4l\u00fce" } // key and value with non-ascii chars
     };
     // create a batch of writes
     List<WriteOperation> operations = new ArrayList<WriteOperation>(keyValues.length);
     for (String[] kv : keyValues) {
-      operations.add(new Write(kv[0].getBytes("ISO8859_1"), kv[1].getBytes("ISO8859_1")));
+      operations.add(new Write(kv[0].getBytes("ISO8859_1"),
+          kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
     BatchOperationResult result = executor.execute(operations);
@@ -108,10 +109,13 @@ public class DataClientTest {
         { "--help" }, // print help
 
         { "read", "--key", "cat" }, // simple key
-        { "read", "--key", "k\u00eby", "--encoding", "Latin1" }, // non-ascii key with latin1 encoding
+        { "read", "--key", "k\u00eby", "--encoding", "Latin1" }, // non-ascii
+                                                   // key with latin1 encoding
         { "read", "--key", "636174", "--hex" }, // "cat" in hex notation
-        { "read", "--key", "6beb79", "--hex" }, // non-Ascii "këy" in hex notation
-        { "read", "--key", "cat", "--base", "http://localhost:" + port + prefix + path }, // explicit base url
+        { "read", "--key", "6beb79", "--hex" }, // non-Ascii "këy" in hex
+                                                // notation
+        { "read", "--key", "cat", "--base",
+            "http://localhost:" + port + prefix + path }, // explicit base url
         { "read", "--key", "cat", "--host", "localhost" }, // correct hostname
         { "read", "--key", "cat", "--connector", name }, // valid connector name
 
@@ -121,8 +125,9 @@ public class DataClientTest {
         { "list", "--encoding", "Latin1" },
 
         { "write", "--key", "pfunk", "--value", "the cat" },
-        { "write", "--key", "c\u00e4t", "--value", "pf\u00fcnk", "--encoding", "Latin1" }, // non-Ascii cät=pfünk
-        { "write", "--key", "cafebabe", "--value", "deadbeef", "--hex" }, // hex values
+        { "write", "--key", "c\u00e4t", "--value",
+                "pf\u00fcnk", "--encoding", "Latin1" }, // non-Ascii cät=pfünk
+        { "write", "--key", "cafebabe", "--value", "deadbeef", "--hex" }, // hex
 
         // delete the value just written
         { "delete", "--key", "pfunk" },
@@ -144,13 +149,22 @@ public class DataClientTest {
         { "read", "--connector" }, // missing argument
         { "read", "--connector", "fantasy.name" }, // invalid connector name
         { "read", "--key", "funk", "--hex" }, // non-hexadecimal key with --hex
-        { "read", "--key", "babed", "--hex" }, // key of uneven length with --hex
-        { "read", "--key", "pfunk", "--encoding", "fantasy string" }, // invalid encoding
-        { "read", "--key", "k\u00eby", "--ascii" }, // non-ascii key with --ascii. Note that this drops the msb of the ë and hance uses "key" as the key -> 404
-        { "read", "--key", "key with blanks", "--url" }, // url-encoded key may not contain blanks
-        { "read", "--key", "cat", "--base", "http://localhost" + prefix + path }, // explicit but port is missing -> connection refused
-        { "read", "--key", "cat", "--base", "http://localhost:" + port + "/gataca" + path }, // explicit but wrong base -> 404
-        { "read", "--key", "cat", "--host", "my.fantasy.hostname" }, // bad hostname -> 404
+        { "read", "--key", "babed", "--hex" }, // key of odd length with --hex
+        { "read", "--key", "pfunk", "--encoding", "fantasy string" }, // invalid
+                                                                     // encoding
+        { "read", "--key", "k\u00eby", "--ascii" }, // non-ascii key with
+                              // --ascii. Note that this drops the msb of the ë
+                              // and hence uses "key" as the key -> 404
+        { "read", "--key", "key with blanks", "--url" }, // url-encoded key may
+                                                          // not contain blanks
+        { "read", "--key", "cat", "--base",
+            "http://localhost" + prefix + path }, // explicit but port is
+                                              // missing -> connection refused
+        { "read", "--key", "cat", "--base",
+            "http://localhost:" + port + "/gataca" + path }, // explicit but
+                                                            // wrong base -> 404
+        { "read", "--key", "cat", "--host", "my.fantasy.hostname" }, // bad host
+                                                                  // name -> 404
         { "read", "--host", "localhost" }, // no key given
 
         { "list", "--encoding" }, // missing encoding
@@ -160,7 +174,8 @@ public class DataClientTest {
         { "delete" }, // key missing
         { "delete", "--key", "pfunks", "--hex" }, // not a hex string
         { "delete", "--key", "cafebab", "--hex" }, // not a hex string
-        { "delete", "--key", "cafe babe", "--url" }, // url string can't have blank
+        { "delete", "--key", "cafe babe", "--url" }, // url string can't have
+                                                     // blank
         { "delete", "--value", "cafe babe" }, // can't delete by value
 
     };
@@ -179,9 +194,12 @@ public class DataClientTest {
 
   @Test
   public void testValueAsCounter() {
-    Assert.assertEquals("OK.", new DataClient().execute(new String[] { "write", "--key", "mycount", "--counter", "--value", "41" }, configuration));
+    Assert.assertEquals("OK.", new DataClient().execute(new String[] {
+        "write", "--key", "mycount", "--counter", "--value", "41" },
+        configuration));
     Increment increment = new Increment("mycount".getBytes(), 1);
     Assert.assertTrue(this.executor.execute(increment));
-    Assert.assertEquals("42", new DataClient().execute(new String[] { "read", "--key", "mycount", "--counter" }, configuration));
+    Assert.assertEquals("42", new DataClient().execute(new String[] {
+        "read", "--key", "mycount", "--counter" }, configuration));
   }
 }

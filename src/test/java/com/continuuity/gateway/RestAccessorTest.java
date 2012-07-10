@@ -35,7 +35,8 @@ import java.util.Map;
 
 public class RestAccessorTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RestAccessorTest.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(RestAccessorTest.class);
 
   /**
    * this is the executor for all access to the data fabric
@@ -73,7 +74,8 @@ public class RestAccessorTest {
    * @param middle The path middle for the URI
    * @return the accessor's base URL for REST requests
    */
-  String setupAccessor(String name, String prefix, String middle) throws Exception {
+  String setupAccessor(String name, String prefix, String middle)
+      throws Exception {
     // bring up a new accessor
     RestAccessor restAccessor = new RestAccessor();
     restAccessor.setName(name);
@@ -81,9 +83,12 @@ public class RestAccessorTest {
     int port = TestUtil.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_MIDDLE), middle);
     restAccessor.configure(configuration);
     restAccessor.setExecutor(this.executor);
     // start the accessor
@@ -94,7 +99,8 @@ public class RestAccessorTest {
   }
 
   // we will need this to test the format API
-  String setupCollector(String name, String prefix, String middle) throws Exception {
+  String setupCollector(String name, String prefix, String middle)
+      throws Exception {
     // bring up a new collector
     RestCollector restCollector = new RestCollector();
     restCollector.setName(name);
@@ -102,9 +108,12 @@ public class RestAccessorTest {
     int port = TestUtil.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_PREFIX), prefix);
-    configuration.set(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PATH_MIDDLE), middle);
+    configuration.setInt(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PORT), port);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_PREFIX), prefix);
+    configuration.set(Constants.buildConnectorPropertyName(name,
+        Constants.CONFIG_PATH_MIDDLE), middle);
     restCollector.configure(configuration);
 
     TupleWritingConsumer consumer = new TupleWritingConsumer();
@@ -129,7 +138,8 @@ public class RestAccessorTest {
   };
 
   /**
-   * Starts up a REST accessor, then tests retrieval of several combinations of keys and values
+   * Starts up a REST accessor, then tests retrieval of several combinations
+   * of keys and values
    * <ul>
    * <li>of ASCII letters only</li>
    * <li>of special characters</li>
@@ -155,7 +165,8 @@ public class RestAccessorTest {
   }
 
   /**
-   * Starts up a REST accessor, then tests storing of several combinations of keys and values
+   * Starts up a REST accessor, then tests storing of several combinations
+   * of keys and values
    * <ul>
    * <li>of ASCII letters only</li>
    * <li>of special characters</li>
@@ -190,7 +201,8 @@ public class RestAccessorTest {
 
     // write value via REST, then retrieve it back via executor
     TestUtil.putAndRead(this.executor, uri, "ki", "velu");
-    // write new value for the same key via REST, then retrieve it back via executor
+    // write new value for the same key via REST, then retrieve it
+    // back via executor
     TestUtil.putAndRead(this.executor, uri, "ki", "nuvelu");
 
     // shut it down
@@ -198,8 +210,8 @@ public class RestAccessorTest {
   }
 
   /**
-   * This tests that deletes work: A key that exists can be deleted, and another attempt
-   * to delete the same key fails with 404 Not Found.
+   * This tests that deletes work: A key that exists can be deleted,
+   * and another attempt to delete the same key fails with 404 Not Found.
    *
    * @throws Exception if anything goes wrong
    */
@@ -237,7 +249,8 @@ public class RestAccessorTest {
 
     // write some values and verify they can be read
     TestUtil.writeAndGet(this.executor, uri, "a", "bar");
-    TestUtil.writeAndGet(this.executor, uri, "a", "foo"); // a should only show once in the list!
+    // a should only show once in the list!
+    TestUtil.writeAndGet(this.executor, uri, "a", "foo");
     TestUtil.writeAndGet(this.executor, uri, "b", "foo");
     TestUtil.writeAndGet(this.executor, uri, "c", "foo");
 
@@ -248,7 +261,8 @@ public class RestAccessorTest {
     client.getConnectionManager().shutdown();
 
     // verify the response is ok
-    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpStatus.SC_OK,
+        response.getStatusLine().getStatusCode());
 
     // verify the length of the return value is greater than 0
     int length = (int) response.getEntity().getContentLength();
@@ -277,7 +291,8 @@ public class RestAccessorTest {
   // TODO test list with start/limit
 
   /**
-   * This tests that the accessor returns the correct HTTP codes for invalid requests
+   * This tests that the accessor returns the correct HTTP codes for
+   * invalid requests
    *
    * @throws Exception if anything goes wrong
    */
@@ -292,38 +307,49 @@ public class RestAccessorTest {
     TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
 
     // submit a request without prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + "/somewhere"));
-    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + prefix + "/data"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest(
+        "http://localhost:" + port + "/somewhere"));
+    Assert.assertEquals(404, TestUtil.sendGetRequest(
+        "http://localhost:" + port + prefix + "/data"));
     // submit a request with correct prefix but no table -> 404 Not Found
-    Assert.assertEquals(400, TestUtil.sendGetRequest("http://localhost:" + port + prefix + middle + "x"));
-    // submit a request with correct prefix but non-existent table -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendGetRequest("http://localhost:" + port + prefix + middle + "other/x"));
-    // submit a POST to the accessor (which only supports GET) -> 405 Not Allowed
-    Assert.assertEquals(400, TestUtil.sendPostRequest(baseUrl));
+    Assert.assertEquals(400, TestUtil.sendGetRequest(
+        "http://localhost:" + port + prefix + middle + "x"));
+    // a request with correct prefix but non-existent table -> 404 Not Found
+    Assert.assertEquals(404, TestUtil.sendGetRequest(
+        "http://localhost:" + port + prefix + middle + "other/x"));
     // submit a GET without key -> 404 Not Found
     Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl));
     // submit a GET with existing key -> 200 OK
     Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
     // submit a GET with non-existing key -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendGetRequest(baseUrl + "does.not.exist"));
-    // submit a GET with existing key but more after that in the path -> 404 Not Found
+    Assert.assertEquals(404, TestUtil.sendGetRequest(
+        baseUrl + "does.not.exist"));
+    // GET with existing key but more after that in the path -> 404 Not Found
     Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl + "x/y/z"));
     // submit a GET with existing key but with query part -> 400 Bad Request
     Assert.assertEquals(400, TestUtil.sendGetRequest(baseUrl + "x?query=none"));
 
     // test some bad delete requests
     // submit a request without the correct prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port));
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + "/"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + "/"));
     // no table
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + "/table"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(400, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(400, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
-    Assert.assertEquals(404, TestUtil.sendDeleteRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + middle + "sometable/x"));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(
+        "http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
     Assert.assertEquals(400, TestUtil.sendDeleteRequest(baseUrl));
     // non-existent key
@@ -331,21 +357,30 @@ public class RestAccessorTest {
     // correct key but more in the path
     Assert.assertEquals(400, TestUtil.sendDeleteRequest(baseUrl + "x/a"));
     // correct key but unsupported query -> 501 Not Implemented
-    Assert.assertEquals(501, TestUtil.sendDeleteRequest(baseUrl + "x?force=true"));
+    Assert.assertEquals(501, TestUtil.sendDeleteRequest(
+        baseUrl + "x?force=true"));
 
     // test some bad put requests
     // submit a request without the correct prefix in the path -> 404 Not Found
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port));
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + "/"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port + "/"));
     // no table
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + "/table"));
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + "/table"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + middle));
     // table without key
-    Assert.assertEquals(400, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "default"));
-    Assert.assertEquals(400, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + middle + "default"));
+    Assert.assertEquals(400, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + middle + "sometable"));
     // unknown table
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/x"));
-    Assert.assertEquals(404, TestUtil.sendPutRequest("http://localhost:" + port + prefix + middle + "sometable/pfunk"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + middle + "sometable/x"));
+    Assert.assertEquals(404, TestUtil.sendPutRequest(
+        "http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
     Assert.assertEquals(400, TestUtil.sendPutRequest(baseUrl));
     // correct key but more in the path
@@ -374,7 +409,8 @@ public class RestAccessorTest {
     // verify that GET fails now. Should throw an exception
     try {
       TestUtil.sendGetRequest(baseUrl + "x");
-      Assert.fail("Expected HttpHostConnectException because connector was stopped.");
+      Assert.fail("Expected HttpHostConnectException because connector was " +
+          "stopped.");
     } catch (HttpHostConnectException e) {
       // this is expected
     }
@@ -392,7 +428,8 @@ public class RestAccessorTest {
     String baseUrl = setupAccessor("access.rest", "/continuuity", "/data/");
     String formatUrl = this.accessor.getHttpConfig().getBaseUrl() + "?format=";
     // setup collector
-    String collectorUrl = setupCollector("collect.rest", "/continuuity", "/stream/");
+    String collectorUrl =
+        setupCollector("collect.rest", "/continuuity", "/stream/");
 
     // write and verify some data
     TestUtil.writeAndGet(this.executor, baseUrl, "key", "value");
@@ -416,7 +453,8 @@ public class RestAccessorTest {
     queueAndVerify("queue://foo/bar", 2);
 
     // format all
-    Assert.assertEquals(200, TestUtil.sendPostRequest(formatUrl + "queues,streams,data"));
+    Assert.assertEquals(200, TestUtil.
+        sendPostRequest(formatUrl + "queues,streams,data"));
     // verify all are gone
     verifyKeyGone("key");
     verifyQueueGone("queue://foo/bar");
@@ -464,7 +502,8 @@ public class RestAccessorTest {
   void sendEvent(String baseUrl, String stream, int n) throws Exception {
     HttpPost post = new HttpPost(baseUrl + stream);
     post.addHeader(stream + ".number", Integer.toString(n));
-    post.setEntity(new ByteArrayEntity(("This is event number " + n).getBytes()));
+    post.setEntity(new ByteArrayEntity(
+        ("This is event number " + n).getBytes()));
     TestUtil.sendRestEvent(post);
   }
 
@@ -474,8 +513,10 @@ public class RestAccessorTest {
     long id = this.executor.execute(op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
-    QueueDequeue dequeue = new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
+    QueueConfig queueConfig =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue =
+        new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
     Assert.assertFalse(result.isFailure());
     Assert.assertFalse(result.isEmpty());
@@ -487,7 +528,8 @@ public class RestAccessorTest {
     Assert.assertEquals(Integer.toString(n), headers.get("number"));
     Assert.assertEquals(new String(body), "This is event number " + n);
     // ack the entry so that the next request can see the next entry
-    QueueAck ack = new QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
+    QueueAck ack = new
+        QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
     Assert.assertTrue(this.collector.getExecutor().execute(ack));
   }
 
@@ -508,8 +550,10 @@ public class RestAccessorTest {
     long id = this.executor.execute(op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
-    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    QueueConfig queueConfig =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue =
+        new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
     Assert.assertFalse(result.isFailure());
     Assert.assertFalse(result.isEmpty());
@@ -540,8 +584,10 @@ public class RestAccessorTest {
     long id = this.executor.execute(op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
-    QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
-    QueueDequeue dequeue = new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
+    QueueConfig queueConfig =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue =
+        new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
     Assert.assertFalse(result.isFailure());
     Assert.assertTrue(result.isEmpty());

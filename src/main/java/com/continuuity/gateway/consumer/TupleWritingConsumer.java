@@ -69,7 +69,8 @@ public class TupleWritingConsumer extends Consumer {
       // figure out where to write it
       String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
       if (destination == null) {
-        LOG.debug("Enqueuing an event that has no destination. Using 'default' instead.");
+        LOG.debug("Enqueuing an event that has no destination. " +
+            "Using 'default' instead.");
         destination = "default";
       }
       // construct the stream URI to use for the data fabric
@@ -80,7 +81,8 @@ public class TupleWritingConsumer extends Consumer {
     }
     BatchOperationResult result = this.executor.execute(operations);
     if (!result.isSuccess()) {
-      Exception e = new Exception("Failed to enqueue event(s). " + result.getMessage());
+      Exception e = new Exception(
+          "Failed to enqueue event(s). " + result.getMessage());
       LOG.error(e.getMessage(), e);
       throw e;
     }
