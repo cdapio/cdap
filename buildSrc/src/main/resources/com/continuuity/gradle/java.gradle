@@ -99,7 +99,8 @@ task release (type:  Tar, dependsOn: jar)  {
     description = 'Generates distribution tar file.'
 
     /** Sets a property 'release' to true. This is used during inclusion of dependencies.*/
-    extensions.getExtraProperties().set("buildingRelease", true);
+    println "***** SETTING BUILDING_RELEASE to true ********"
+    getProject().extensions.getExtraProperties().set("buildingRelease", true);
 
     /** Set the compression to gzip */
     compression = Compression.GZIP
