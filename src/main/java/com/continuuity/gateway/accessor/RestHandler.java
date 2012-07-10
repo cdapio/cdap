@@ -1,9 +1,6 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.Write;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
@@ -24,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is the http request handler for the rest accessor. At this time it only accepts
- * GET requests to retrieve a value for a key from a named table.
+ * This is the http request handler for the rest accessor. At this time it
+ * only accepts GET requests to retrieve a value for a key from a named table.
  */
 public class RestHandler extends NettyRestHandler {
 
@@ -35,7 +32,12 @@ public class RestHandler extends NettyRestHandler {
   /**
    * The allowed methods for this handler
    */
-  HttpMethod[] allowedMethods = { HttpMethod.GET, HttpMethod.DELETE, HttpMethod.PUT, HttpMethod.POST };
+  HttpMethod[] allowedMethods = {
+      HttpMethod.GET,
+      HttpMethod.DELETE,
+      HttpMethod.PUT,
+      HttpMethod.POST
+  };
 
   /**
    * Will help validate URL paths, and also has the name of the connector and
@@ -44,9 +46,11 @@ public class RestHandler extends NettyRestHandler {
   private RestAccessor accessor;
 
   /**
-   * All the paths have to be of the form http://host:port&lt;pathPrefix>&lt;table>/&lt;key>
-   * For instance, if config(prefix="/v0.1/" path="table/"), then pathPrefix will be
-   * "/v0.1/table/", and a valid request is GET http://host:port/v0.1/table/mytable/12345678
+   * All the paths have to be of the form
+   * http://host:port&lt;pathPrefix>&lt;table>/&lt;key>
+   * For instance, if config(prefix="/v0.1/" path="table/"),
+   * then pathPrefix will be "/v0.1/table/", and a valid request is
+   * GET http://host:port/v0.1/table/mytable/12345678
    */
   private String pathPrefix;
 
@@ -63,7 +67,9 @@ public class RestHandler extends NettyRestHandler {
    */
   RestHandler(RestAccessor accessor) {
     this.accessor = accessor;
-    this.pathPrefix = accessor.getHttpConfig().getPathPrefix() + accessor.getHttpConfig().getPathMiddle();
+    this.pathPrefix =
+        accessor.getHttpConfig().getPathPrefix() +
+        accessor.getHttpConfig().getPathMiddle();
   }
 
   private static final int BAD = -1;
@@ -75,7 +81,8 @@ public class RestHandler extends NettyRestHandler {
   private static final int FORMAT = 5;
 
   @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
+  public void messageReceived(ChannelHandlerContext context,
+                              MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
     HttpMethod method = request.getMethod();
     String requestUri = request.getUri();
@@ -110,7 +117,8 @@ public class RestHandler extends NettyRestHandler {
         operation = READ;
       else {
         List<String> qParams = parameters.get("q");
-        if (qParams != null && qParams.size() == 1 && "list".equals(qParams.get(0)))
+        if (qParams != null && qParams.size() == 1
+            && "list".equals(qParams.get(0)))
           operation = LIST;
         else
           operation = BAD;
@@ -124,19 +132,23 @@ public class RestHandler extends NettyRestHandler {
     }
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
-      LOG.debug("Received an unsupported " + method + " request '" + request.getUri() + "'.");
+      LOG.debug("Received an unsupported " + method + " request '"
+          + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
 
     // respond with error for parameters if the operation does not allow them
-    if (operation != LIST && operation != FORMAT && parameters != null && !parameters.isEmpty()) {
-      LOG.debug("Received a " + method + " request with query parameters, which is not supported");
+    if (operation != LIST && operation != FORMAT &&
+        parameters != null && !parameters.isEmpty()) {
+      LOG.debug("Received a " + method +
+          " request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
 
-    // we only support requests of the form POST http://host:port/prefix/path/<tablename>/<key>
+    // we only support requests of the form
+    // POST http://host:port/prefix/path/<tablename>/<key>
     String destination = null, key = null;
     String path = decoder.getPath();
     if (path.startsWith(this.pathPrefix)) {
@@ -153,35 +165,42 @@ public class RestHandler extends NettyRestHandler {
         } else if (remainder.indexOf('/', pos + 1) < 0)
           key = remainder.substring(pos + 1);
         else {
-          LOG.debug("Received a request with invalid path " + path + "(path does not end with key)");
+          LOG.debug("Received a request with invalid path " +
+              path + "(path does not end with key)");
           respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
           return;
     } } }
 
     // check that URL could be parsed up to destination
     // except for FORMAT, where no destination may be given
-    if ((destination == null && operation != FORMAT) || (destination != null && operation == FORMAT)) {
+    if ((destination == null && operation != FORMAT) ||
+        (destination != null && operation == FORMAT)) {
       LOG.debug("Received a request with unknown path '" + path + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
 
     // all operations except for LIST and FORMAT need a key
-    if (operation != LIST && operation != FORMAT && (key == null || key.length() == 0)) {
-      LOG.debug("Received a request with invalid path " + path + "(no key given)");
+    if (operation != LIST && operation != FORMAT &&
+        (key == null || key.length() == 0)) {
+      LOG.debug("Received a request with invalid path " +
+          path + "(no key given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
     // operation LIST and FORMAT must not have a key
-    if ((operation == LIST || operation == FORMAT) && (key != null && key.length() > 0)) {
-      LOG.debug("Received a request with invalid path " + path + "(no key may be given)");
+    if ((operation == LIST || operation == FORMAT) &&
+        (key != null && key.length() > 0)) {
+      LOG.debug("Received a request with invalid path " +
+          path + "(no key may be given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
 
     // check that destination is valid - for now only "default" is allowed
     if (destination != null && !"default".equals(destination)) {
-      LOG.debug("Received a request with path " + path + " for destination other than 'default'");
+      LOG.debug("Received a request with path " + path +
+          " for destination other than 'default'");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -199,12 +218,13 @@ public class RestHandler extends NettyRestHandler {
         // Get the value from the data fabric
         byte[] value;
         try {
-          Read read = new Read(keyBinary);
-          this.accessor.getExecutor().execute(read);
-          value = read.getKeyResult();
+          ReadKey read = new ReadKey(keyBinary);
+          value = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
-         LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+         LOG.error("Error reading value for key '" +
+             key + "': " + e.getMessage() + ".", e);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         if (value == null) {
@@ -216,13 +236,14 @@ public class RestHandler extends NettyRestHandler {
       }
       case LIST : {
         int start = 0, limit = 100;
-        String encoding = "url";
+        String enc = "url";
         List<String> startParams = parameters.get("start");
         if (startParams != null && !startParams.isEmpty()) {
           try {
             start = Integer.valueOf(startParams.get(0));
           } catch (NumberFormatException e) {
-            LOG.debug("Received a request with invalid start '" + startParams.get(0) + "' (not an integer).");
+            LOG.debug("Received a request with invalid start '" +
+                startParams.get(0) + "' (not an integer).");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
@@ -232,16 +253,18 @@ public class RestHandler extends NettyRestHandler {
           try {
             limit = Integer.valueOf(limitParams.get(0));
           } catch (NumberFormatException e) {
-            LOG.debug("Received a request with invalid limit '" + limitParams.get(0) + "' (not an integer).");
+            LOG.debug("Received a request with invalid limit '" +
+                limitParams.get(0) + "' (not an integer).");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
         }
         List<String> encParams = parameters.get("enc");
         if (encParams != null && !encParams.isEmpty()) {
-          encoding = encParams.get(0);
-          if (!"hex".equals(encoding) && !"url".equals(encoding) && !Charset.isSupported(encoding)) {
-            LOG.debug("Received a request with invalid encoding '" + encoding + "'.");
+          enc = encParams.get(0);
+          if (!"hex".equals(enc) && !"url".equals(enc) &&
+              !Charset.isSupported(enc)) {
+            LOG.debug("Received a request with invalid encoding " + enc + ".");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
@@ -252,30 +275,31 @@ public class RestHandler extends NettyRestHandler {
           keys = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
           LOG.error("Error listing keys: " + e.getMessage() + ".", e);
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         if (keys == null) {
           // something went wrong, internal error
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         StringBuilder builder = new StringBuilder();
         for (byte[] keyBytes : keys) {
-          builder.append(Util.encode(keyBytes, encoding));
+          builder.append(Util.encode(keyBytes, enc));
           builder.append('\n');
         }
-        // if encoding was hex or url, send it back as ASCII, otherwise use encoding
+        // for hex or url, send it back as ASCII, otherwise use encoding
         byte[] responseBody = builder.toString().getBytes(
-            "url".equals(encoding) || "hex".equals(encoding) ? "ASCII" : encoding);
+            "url".equals(enc) || "hex".equals(enc) ? "ASCII" : enc);
         respondSuccess(message.getChannel(), request, responseBody);
         break;
       }
       case DELETE : {
         // first perform a Read to determine whether the key exists
-        Read read = new Read(keyBinary);
-        this.accessor.getExecutor().execute(read);
-        byte[] value = read.getKeyResult();
+        ReadKey read = new ReadKey(keyBinary);
+        byte[] value = this.accessor.getExecutor().execute(read);
         if (value == null) {
           // key does not exist -> Not Found
           respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
@@ -287,7 +311,8 @@ public class RestHandler extends NettyRestHandler {
           respondSuccess(message.getChannel(), request);
         } else {
           // something went wrong, internal error
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
         break;
       }
@@ -309,30 +334,41 @@ public class RestHandler extends NettyRestHandler {
           respondSuccess(message.getChannel(), request);
         } else {
           // something went wrong, internal error
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
         break;
       }
       case FORMAT : {
         // figure out what to format
-        boolean formatData = false, formatQueues = false, formatStreams = false;
+        boolean formatData = false;
+        boolean formatQueues = false;
+        boolean formatStreams = false;
         for (String param : formatParams) {
           for (String what : param.split(",")) {
-            if ("all".equals(what)) formatData = formatQueues = formatStreams = true;
-            else if ("data".equals(what)) formatData = true;
-            else if ("queues".equals(what)) formatQueues = true;
-            else if ("streams".equals(what)) formatStreams = true;
+            if ("all".equals(what))
+              formatData = formatQueues = formatStreams = true;
+            else if ("data".equals(what))
+              formatData = true;
+            else if ("queues".equals(what))
+              formatQueues = true;
+            else if ("streams".equals(what))
+              formatStreams = true;
             else {
-              LOG.debug("Received invalid format request with URI " + requestUri);
-              respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+              LOG.debug("Received invalid format request with URI " +
+                  requestUri);
+              respondError(message.getChannel(),
+                  HttpResponseStatus.BAD_REQUEST);
               break;
         } } }
-        FormatFabric format = new FormatFabric(formatData, formatQueues, formatStreams);
+        FormatFabric format =
+            new FormatFabric(formatData, formatQueues, formatStreams);
         try {
           this.accessor.getExecutor().execute(format);
         } catch (Exception e) {
           LOG.error("Exception formatting data fabric: ", e);
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           break;
         }
         respondSuccess(message.getChannel(), request);
@@ -340,8 +376,9 @@ public class RestHandler extends NettyRestHandler {
       }
 
       default: {
-        // this should not happen because we already checked above -> internal error
-        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        // this should not happen because we checked above -> internal error
+        respondError(message.getChannel(),
+            HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }
@@ -349,7 +386,8 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    LOG.error("Exception caught for connector '" + this.accessor.getName() + "'. ", e.getCause());
+    LOG.error("Exception caught for connector '" +
+        this.accessor.getName() + "'. ", e.getCause());
     e.getChannel().close();
   }
 }

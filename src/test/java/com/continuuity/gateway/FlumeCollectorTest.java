@@ -29,7 +29,8 @@ public class FlumeCollectorTest {
 
     name = "otherflume";
     int port = 9000;
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     collector = newCollector(name);
     collector.configure(configuration);
     Assert.assertEquals(port, collector.getPort());
@@ -45,7 +46,8 @@ public class FlumeCollectorTest {
     String stream = "pfunk";
     // configure collector but don't start
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.NoopConsumer());
@@ -81,7 +83,8 @@ public class FlumeCollectorTest {
     String stream = "foo";
     int eventsToSend = 10;
     CConfiguration configuration = new CConfiguration();
-    configuration.setInt(Constants.buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
+    configuration.setInt(Constants.
+        buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
     Collector collector = newCollector(name);
     collector.configure(configuration);
     collector.setConsumer(new TestUtil.VerifyConsumer(17, name, stream));
@@ -92,8 +95,10 @@ public class FlumeCollectorTest {
     collector.start();
     TestUtil.sendFlumeEvents(port, stream, eventsToSend, 4);
     collector.stop();
-    Assert.assertEquals(eventsToSend, collector.getConsumer().eventsReceived());
-    Assert.assertEquals(eventsToSend, collector.getConsumer().eventsSucceeded());
+    Assert.assertEquals(eventsToSend,
+        collector.getConsumer().eventsReceived());
+    Assert.assertEquals(eventsToSend,
+        collector.getConsumer().eventsSucceeded());
     Assert.assertEquals(0, collector.getConsumer().eventsFailed());
   }
 }

@@ -51,7 +51,8 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
     this.handlerFactory = handlerFactory;
     this.config = config;
     if (this.config.isSsl()) {
-      LOG.error("Attempt to create an SSL server, which is not implemented yet.");
+      LOG.error("Attempt to create an SSL server, " +
+          "which is not implemented yet.");
       throw new UnsupportedOperationException("SSL is not yet supported");
     }
   }
@@ -72,7 +73,8 @@ public class NettyHttpPipelineFactory implements ChannelPipelineFactory {
     pipeline.addLast("decoder", new HttpRequestDecoder());
     // use netty's default de-chunker
     if (this.config.isChunking()) {
-      pipeline.addLast("aggregator", new HttpChunkAggregator(this.config.getMaxContentSize()));
+      pipeline.addLast("aggregator",
+          new HttpChunkAggregator(this.config.getMaxContentSize()));
     }
     // use the default HTTP encoder from netty
     pipeline.addLast("encoder", new HttpResponseEncoder());

@@ -59,7 +59,8 @@ public class EventWritingConsumer extends Consumer {
       }
       String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
       if (destination == null) {
-        LOG.warn("Enqueuing an event that has no destination. Using 'default' instead.");
+        LOG.warn("Enqueuing an event that has no destination. " +
+            "Using 'default' instead.");
         destination = "default";
       }
       // construct the stream URO to use for the data fabric
@@ -68,7 +69,8 @@ public class EventWritingConsumer extends Consumer {
     }
     BatchOperationResult result = this.executor.execute(operations);
     if (!result.isSuccess()) {
-      Exception e = new Exception("Failed to enqueue event(s). " + result.getMessage());
+      Exception e = new Exception(
+          "Failed to enqueue event(s). " + result.getMessage());
       LOG.error(e.getMessage(), e);
       throw e;
     }

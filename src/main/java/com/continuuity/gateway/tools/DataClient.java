@@ -54,10 +54,14 @@ public class DataClient {
   String connector = null;       // the name of the rest accessor
   String key = null;             // the key to read/write/delete
   String value = null;           // the value to write
-  String encoding = null;        // the encoding for --key and for display of the value
-  boolean hexEncoded = false;    // whether --key and display of value use hexadecimal encoding
-  boolean urlEncoded = false;    // whether --key and display of value use url encoding
-  boolean counter = false;       // whether --value should be interpreted as a long counter
+  String encoding = null;        // the encoding for --key and for display
+                                 // of the value
+  boolean hexEncoded = false;    // whether --key and display of value use
+                                 // hexadecimal encoding
+  boolean urlEncoded = false;    // whether --key and display of value use
+                                 // url encoding
+  boolean counter = false;       // whether --value should be interpreted as
+                                 // a long counter
   String keyFile = null;         // the file to read the key from
   String valueFile = null;       // the file to read/write the value from/to
   int start = -1;                // the index to start the list from
@@ -69,14 +73,16 @@ public class DataClient {
 
   boolean keyNeeded;             // does the command require a key?
   boolean valueNeeded;           // does the command require a value?
-  boolean outputNeeded;          // does the command require to write an output value?
+  boolean outputNeeded;          // does the command require to write an
+                                 // output value?
 
   /**
-   * Print the usage statement and return null (or empty string if this is not an error case).
-   * See getValue() for an explanation of the return type.
+   * Print the usage statement and return null (or empty string if this is not
+   * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error, an empty string in case of success
+   * @throws IllegalArgumentException in case of error, an empty string in case
+   * of success
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -84,29 +90,42 @@ public class DataClient {
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " read --key <string> [ <options> ]");
-    out.println("  " + name + " write --key <string> --value value [ <options> ]");
+    out.println("  " + name +
+        " write --key <string> --value value [ <options> ]");
     out.println("  " + name + " delete --key <string> [ <options> ]");
     out.println("  " + name + " list [ <options> ]");
-    out.println("  " + name + " format ( --all | --data | --queues | --streams )");
+    out.println("  " + name +
+        " format ( --all | --data | --queues | --streams )");
     out.println("Additional options:");
-    out.println("  --base <url>            To specify the base url to send to");
-    out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      To specify the name of the rest connector");
+    out.println("  --base <url>            " +
+        "To specify the base url to send to");
+    out.println("  --host <name>           " +
+        "To specify the hostname to send to");
+    out.println("  --connector <name>      " +
+        "To specify the name of the rest connector");
     out.println("  --key <string>          To specify the key");
     out.println("  --key-file <path>       To read the binary key from a file");
     out.println("  --value <string>        To specify the value");
-    out.println("  --value-file <path>     To read/write the binary value from/to a file");
-    out.println("  --hex                   To use hexadecimal encoding for key and value");
-    out.println("  --ascii                 To use ASCII encoding for key and value");
-    out.println("  --url                   To use URL encoding for key and value");
-    out.println("  --counter               To interpret value as a long counter");
-    out.println("  --start <n>             To start at the nth element - only for list");
-    out.println("  --limit <k>             To list at most k elements - only for list");
+    out.println("  --value-file <path>     " +
+        "To read/write the binary value from/to a file");
+    out.println("  --hex                   " +
+        "To use hexadecimal encoding for key and value");
+    out.println("  --ascii                 " +
+        "To use ASCII encoding for key and value");
+    out.println("  --url                   " +
+        "To use URL encoding for key and value");
+    out.println("  --counter               " +
+        "To interpret value as a long counter");
+    out.println("  --start <n>             " +
+        "To start at the nth element - only for list");
+    out.println("  --limit <k>             " +
+        "To list at most k elements - only for list");
     out.println("  --all                   To format all data");
     out.println("  --data                  To format all table data");
     out.println("  --streams               To format all event streams");
     out.println("  --queues                To format all intra-flow queues");
-    out.println("  --encoding <name>       To use this encoding for key and value");
+    out.println("  --encoding <name>       " +
+        "To use this encoding for key and value");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -204,37 +223,49 @@ public class DataClient {
     }
   }
 
-  static List<String> supportedCommands = Arrays.asList("read", "write", "delete", "list", "format");
+  static List<String> supportedCommands =
+      Arrays.asList("read", "write", "delete", "list", "format");
 
   void validateArguments(String[] args) {
     // first parse command arguments
     parseArguments(args);
     if (help) return;
     // first validate the command
-    if (!supportedCommands.contains(command)) usage("Unsupported command '" + command + "'.");
-    // verify that either --key or --key-file is given, and same for --value and --value-file
-    if (key != null && keyFile != null) usage("Only one of --key and --key-file may be specified");
-    if (value != null && valueFile != null) usage("Only one of --value and --value-file may be specified");
+    if (!supportedCommands.contains(command))
+      usage("Unsupported command '" + command + "'.");
+    // verify that either --key or --key-file is given,
+    // and same for --value and --value-file
+    if (key != null && keyFile != null)
+      usage("Only one of --key and --key-file may be specified");
+    if (value != null && valueFile != null)
+      usage("Only one of --value and --value-file may be specified");
     // verify that --limit or --start are only given for list command
-    if (!"list".equals(command) && (start >= 0 || limit >= 0)) usage("--start and --limit are only allowed for list");
+    if (!"list".equals(command) && (start >= 0 || limit >= 0))
+      usage("--start and --limit are only allowed for list");
     // verify that only one encoding was given
     int encodings = 0;
     keyNeeded = !(command.equals("list") || command.equals("format"));
     valueNeeded = command.equals("write");
     outputNeeded = command.equals("read") || command.equals("list");
-    boolean needsEncoding = (keyNeeded && keyFile == null) || ((valueNeeded || outputNeeded) && valueFile == null);
+    boolean needsEncoding = (keyNeeded && keyFile == null)
+        || ((valueNeeded || outputNeeded) && valueFile == null);
     if (hexEncoded) ++encodings;
     if (urlEncoded) ++encodings;
     if (encoding != null) ++encodings;
-    if (needsEncoding && encodings > 1) usage("Only one encoding can be specified.");
-    if (!needsEncoding && encodings > 0) usage("Encoding may not be specified for binary file.");
+    if (needsEncoding && encodings > 1)
+      usage("Only one encoding can be specified.");
+    if (!needsEncoding && encodings > 0)
+      usage("Encoding may not be specified for binary file.");
     // verify that only one hint is given for the URL
-    if (hostname != null && baseUrl != null) usage("Only one of --host or --base may be specified.");
-    if (connector != null && baseUrl != null) usage("Only one of --connector or --base may be specified.");
+    if (hostname != null && baseUrl != null)
+      usage("Only one of --host or --base may be specified.");
+    if (connector != null && baseUrl != null)
+      usage("Only one of --connector or --base may be specified.");
     // verify that a key is provided iff the command supports one
     if (keyNeeded) {
       if (key == null && keyFile == null)
-        usage("A key must be specified for command " + command + " - use either --key or --key-file.");
+        usage("A key must be specified for command " + command +
+            " - use either --key or --key-file.");
     } else {
       if (key != null || keyFile != null)
         usage("A key may not be specified for command " + command + ".");
@@ -242,19 +273,25 @@ public class DataClient {
     // verify that a value is provided iff the command supports one
     if (valueNeeded) {
       if (value == null && valueFile == null)
-        usage("A value must be specified for command " + command + " - use either --value or --value-file.");
+        usage("A value must be specified for command " + command +
+            " - use either --value or --value-file.");
     } else {
       if ((value != null) || (!outputNeeded && valueFile != null))
         usage("A value may not be specified for command " + command + ".");
     }
     // verify that format command specifies what to format
     if ("format".equals(command)) {
-      if (!(formatAll || formatData || formatQueues || formatStreams)) usage("You must specify what to format - please us --all, --data, --queues, and/or --streams.");
+      if (!(formatAll || formatData || formatQueues || formatStreams))
+        usage("You must specify what to format - please us --all, --data, " +
+            "--queues, and/or --streams.");
     }
-    // --counter is only allowed for read and write, and not in conjunction with --value-file
+    // --counter is only allowed for read and write, and not in conjunction
+    // with --value-file
     if (counter) {
-      if (!"read".equals(command) && !"write".equals(command)) usage("--counter is only allowed for read and write.");
-      if (valueFile != null) usage("Only one of --value-file and --counter may be specified.");
+      if (!"read".equals(command) && !"write".equals(command))
+        usage("--counter is only allowed for read and write.");
+      if (valueFile != null)
+        usage("Only one of --value-file and --counter may be specified.");
     }
   }
 
@@ -274,7 +311,8 @@ public class DataClient {
       try {
         binary = Util.longToBytes(Long.valueOf(str));
       } catch (NumberFormatException e) {
-        System.err.println("Cannot parse '" + str + "' as long: " + e.getMessage());
+        System.err.println(
+            "Cannot parse '" + str + "' as long: " + e.getMessage());
         return null;
     } }
     // or is it in hexadecimal?
@@ -282,7 +320,8 @@ public class DataClient {
       try {
         binary = Util.hexValue(str);
       } catch (NumberFormatException e) {
-        System.err.println("Cannot parse '" + str + "' as hexadecimal: " + e.getMessage());
+        System.err.println(
+            "Cannot parse '" + str + "' as hexadecimal: " + e.getMessage());
         return null;
     } }
     // or is it in URL encoding?
@@ -314,10 +353,12 @@ public class DataClient {
         FileOutputStream out = new FileOutputStream(valueFile);
         out.write(binaryValue);
         out.close();
-        if (verbose) System.out.println(binaryValue.length + " bytes written to file " + valueFile + ".");
+        if (verbose) System.out.println(binaryValue.length
+            + " bytes written to file " + valueFile + ".");
         return binaryValue.length + " bytes written to file";
       } catch (IOException e) {
-        System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
+        System.err.println(
+            "Error writing to file " + valueFile + ": " + e.getMessage());
         return null;
       } }
     if (counter)
@@ -341,7 +382,8 @@ public class DataClient {
     else
       value = new String(binaryValue);
 
-    if (verbose) System.out.println("Value[" + binaryValue.length + " bytes]: " + value);
+    if (verbose) System.out.println(
+        "Value[" + binaryValue.length + " bytes]: " + value);
     else System.out.println(value);
     return value;
   }
@@ -360,10 +402,12 @@ public class DataClient {
         FileOutputStream out = new FileOutputStream(valueFile);
         out.write(binaryResponse);
         out.close();
-        if (verbose) System.out.println(binaryResponse.length + " bytes written to file " + valueFile + ".");
+        if (verbose) System.out.println(binaryResponse.length +
+            " bytes written to file " + valueFile + ".");
         return binaryResponse.length + " bytes written to file";
       } catch (IOException e) {
-        System.err.println("Error writing to file " + valueFile + ": " + e.getMessage());
+        System.err.println(
+            "Error writing to file " + valueFile + ": " + e.getMessage());
         return null;
     } }
     else {
@@ -378,13 +422,15 @@ public class DataClient {
   }
 
   /**
-   * This is actually the main method, but in order to make it testable, instead of exiting in case
-   * of error it returns null, whereas in case of success it returns the retrieved value as shown
+   * This is actually the main method, but in order to make it testable,
+   * instead of exiting in case of error it returns null, whereas in case of
+   * success it returns the retrieved value as shown
    * on the console.
    *
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
-   * @return null in case of error, an string representing the retrieved value in case of success
+   * @return null in case of error, an string representing the retrieved value
+   * in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
@@ -392,10 +438,11 @@ public class DataClient {
     if (help) return "";
 
     // determine the base url for the GET request
-    if (baseUrl == null)
-      baseUrl = Util.findBaseUrl(config, RestAccessor.class, connector, hostname);
+    if (baseUrl == null) baseUrl =
+        Util.findBaseUrl(config, RestAccessor.class, connector, hostname);
     if (baseUrl == null) {
-      System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
+      System.err.println("Can't figure out the URL to send to. " +
+          "Please use --base or --connector to specify.");
       return null;
     } else {
       if (verbose) System.out.println("Using base URL: " + baseUrl);
@@ -415,7 +462,8 @@ public class DataClient {
     // construct the full URL and verify its well-formedness
     String requestUrl = baseUrl + "default";
     if (keyNeeded) requestUrl += "/" + urlEncodedKey;
-    if (verbose && !"list".equals(command)) System.out.println("Request URI is: " + requestUrl);
+    if (verbose && !"list".equals(command))
+      System.out.println("Request URI is: " + requestUrl);
     URI uri;
     try {
       uri = URI.create(requestUrl);
@@ -526,8 +574,9 @@ public class DataClient {
   }
 
   /**
-   * Check whether the Http return code is positive. If not, print the error message
-   * and return false. Otherwise, if verbose is on, print the response status line.
+   * Check whether the Http return code is positive. If not, print the error
+   * message and return false. Otherwise, if verbose is on, print the response
+   * status line.
    * @param response the HTTP response
    * @return whether the response indicates success
    */
@@ -549,7 +598,8 @@ public class DataClient {
       return execute0(args, config);
     } catch (IllegalArgumentException e) {
       if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
+        System.err.println("Exception for arguments: " +
+            Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
     }

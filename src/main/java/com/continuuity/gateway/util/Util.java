@@ -29,10 +29,12 @@ public class Util {
    * then the result would be ambiguous).
    *
    * @param config             The gateway configuration
-   * @param connectorBaseClass The class of base class of the connector to be found
+   * @param connectorBaseClass The class of base class of the connector to
+   *                           be found
    * @return the name of connector if successful, otherwise null.
    */
-  public static String findConnector(CConfiguration config, Class connectorBaseClass) {
+  public static String findConnector(CConfiguration config,
+                                     Class connectorBaseClass) {
 
     List<String> connectorNames = new LinkedList<String>();
 
@@ -52,10 +54,11 @@ public class Util {
         continue;
       }
       try {
-        // test whether this connector is a subclass of the desired connector -> hit!
+        // test whether this connector is a subclass of the desired connector
         Class connectorClass = Class.forName(connectorClassName);
         if (testClass(connectorBaseClass, connectorClass)) {
-          LOG.debug("Found connector '" + connectorName + "' of type " + connectorClassName);
+          LOG.debug("Found connector '" + connectorName +
+              "' of type " + connectorClassName);
           connectorNames.add(connectorName);
         }
         // class cannot be found? skip!
@@ -66,10 +69,12 @@ public class Util {
     }
     // make sure there is exactly one flume collector
     if (connectorNames.size() == 0) {
-      LOG.error("No connector of type " + connectorBaseClass.getName() + " found in configuration.");
+      LOG.error("No connector of type " + connectorBaseClass.getName() +
+          " found in configuration.");
       return null;
     } else if (connectorNames.size() > 1) {
-      LOG.error("Multiple connectors of type " + connectorBaseClass.getName() + " found: " + connectorNames);
+      LOG.error("Multiple connectors of type " + connectorBaseClass.getName() +
+          " found: " + connectorNames);
       return null;
     }
     return connectorNames.iterator().next();
@@ -107,7 +112,8 @@ public class Util {
    *                 to correct the hostname portion of the returned url.
    * @return The base url if found, or null otherwise.
    */
-  public static String findBaseUrl(CConfiguration config, Class connectorClass, String connectorName, String hostname) {
+  public static String findBaseUrl(CConfiguration config, Class connectorClass,
+                                   String connectorName, String hostname) {
 
     if (connectorName == null) {
       // find the name of the connector
@@ -115,7 +121,8 @@ public class Util {
       if (connectorName == null) {
         return null;
       } else {
-        LOG.info("Reading configuration for connector '" + connectorName + "'.");
+        LOG.info("Reading configuration for connector '" +
+            connectorName + "'.");
       }
     }
     // get the collector's http config
@@ -146,7 +153,8 @@ public class Util {
       InputStream content = response.getEntity().getContent();
       binary = new byte[length];
       int offset = 0;
-      while (length > 0) { // must iterate because input stream is not guaranteed to return all at once
+      while (length > 0) {
+        // must iterate because input stream does not always return all at once
         int bytesRead = content.read(binary, offset, length);
         offset += bytesRead;
         length -= bytesRead;
@@ -186,7 +194,8 @@ public class Util {
     } catch (FileNotFoundException e) {
       LOG.error("File '" + filename + "' cannot be opened: " + e.getMessage());
     } catch (IOException e) {
-      LOG.error("Error reading from file '" + filename + "': " + e.getMessage());
+      LOG.error(
+          "Error reading from file '" + filename + "': " + e.getMessage());
     }
     return bytes;
   }
@@ -227,7 +236,8 @@ public class Util {
     else if (hex >= 'A' && hex <= 'F')
       return (byte) (hex - 'A' + 10);
     else
-      throw new NumberFormatException("'" + hex + "' is not a hexadecimal character.");
+      throw new NumberFormatException(
+          "'" + hex + "' is not a hexadecimal character.");
   }
 
   /**
@@ -268,7 +278,9 @@ public class Util {
     try { // we use a base encoding that accepts all byte values
       return URLEncoder.encode(new String(binary, "ISO8859_1"), "ISO8859_1");
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace(); return null; // this cannot happen with ISO8859_1 = Latin1
+      // this cannot happen with ISO8859_1 = Latin1
+      e.printStackTrace(); return null;
+
     }
   }
 

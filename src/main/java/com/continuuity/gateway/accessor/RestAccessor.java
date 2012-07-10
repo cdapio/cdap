@@ -20,7 +20,8 @@ import java.util.concurrent.Executors;
  * of values by key, but eventually it will expose more opretaions such as puts
  * and deletes, retrieve by secondary key etc.
  */
-public class RestAccessor extends Accessor implements NettyRequestHandlerFactory {
+public class RestAccessor
+    extends Accessor implements NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(RestAccessor.class);
@@ -54,7 +55,8 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
   @Override
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
-    this.httpConfig = HttpConfig.configure(this.name, configuration, defaultHttpConfig);
+    this.httpConfig = HttpConfig.configure(
+        this.name, configuration, defaultHttpConfig);
   }
 
   @Override
@@ -66,16 +68,18 @@ public class RestAccessor extends Accessor implements NettyRequestHandlerFactory
   public void start() throws Exception {
     LOG.debug("Starting up " + this);
     // construct the internet address
-    InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
+    InetSocketAddress address =
+        new InetSocketAddress(this.httpConfig.getPort());
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(
           new NioServerSocketChannelFactory(
               Executors.newCachedThreadPool(),
               Executors.newCachedThreadPool()));
-      // and use a pipeline factory that uses this to cnfigure itself and to
-      // create a request handler for each client request.
-      bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
+      // and use a pipeline factory that uses this to cnfigure itself
+      // and to create a request handler for each client request.
+      bootstrap.setPipelineFactory(
+          new NettyHttpPipelineFactory(this.httpConfig, this));
       // bind to the address = start the service
       this.serverChannel = bootstrap.bind(address);
       // server is now running

@@ -122,7 +122,8 @@ public class Gateway implements Server {
     }
     if (this.executor == null) {
       ServerException es =
-          new ServerException("Cannot start Gateway without an Operation Executor.");
+          new ServerException(
+              "Cannot start Gateway without an Operation Executor.");
       LOG.error(es.getMessage());
       throw es;
     }
@@ -206,7 +207,8 @@ public class Gateway implements Server {
     if (executor == null) {
       throw new IllegalArgumentException("'executor' argument was null");
     }
-    LOG.info("Setting Operations Executor to " + executor.getClass().getName() + ".");
+    LOG.info("Setting Operations Executor to " +
+        executor.getClass().getName() + ".");
     this.executor = executor;
   }
 
@@ -256,7 +258,8 @@ public class Gateway implements Server {
 
         } catch (Exception e) {
           LOG.error("Cannot instantiate class " + connectorClassName + "(" +
-              e.getMessage() + "). Skipping Connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping Connector '" +
+              connectorName + "'.");
           continue;
         }
 
@@ -265,7 +268,8 @@ public class Gateway implements Server {
           newConnector.configure(myConfiguration);
         } catch (Exception e) {
           LOG.error("Error configuring connector '" + connectorName + "' (" +
-              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping connector '" +
+              connectorName + "'.");
           continue;
         }
 
@@ -274,7 +278,8 @@ public class Gateway implements Server {
           this.addConnector(newConnector);
         } catch (Exception e) {
           LOG.error("Error adding connector '" + connectorName + "' (" +
-              e.getMessage() + "). Skipping connector '" + connectorName + "'.");
+              e.getMessage() + "). Skipping connector '" +
+              connectorName + "'.");
           // continue // unnecessary
         }
       }

@@ -4,14 +4,13 @@
 
 package com.continuuity.gateway;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.conf.CConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.flow.flowlet.Event;
-import com.continuuity.common.conf.CConfiguration;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The consumer is responsible for the actual ingestion of an event
@@ -52,7 +51,8 @@ public abstract class Consumer {
    */
   private AtomicLong eventsReceived = new AtomicLong();
   /**
-   * the number of events that were successfully consumed since the consumer started
+   * the number of events that were successfully consumed since the consumer
+   * started
    */
   private AtomicLong eventsSucceeded = new AtomicLong();
   /**
@@ -89,14 +89,16 @@ public abstract class Consumer {
   }
 
   /**
-   * @return the number of events that were successfully consumed since the consumer started
+   * @return the number of events that were successfully consumed since the
+   * consumer started
    */
   public long eventsSucceeded() {
     return this.eventsSucceeded.get();
   }
 
   /**
-   * @return the number of events that failed to be consumed since the consumer started
+   * @return the number of events that failed to be consumed since the
+   * consumer started
    */
   public long eventsFailed() {
     return this.eventsFailed.get();
@@ -133,7 +135,8 @@ public abstract class Consumer {
   protected abstract void single(Event event) throws Exception;
 
   /**
-   * Consume a batch of events. By default calls single() for every event in the batch.
+   * Consume a batch of events. By default calls single() for every event in
+   * the batch.
    *
    * @param events the batch of events to be consumed
    * @throws Exception if anything goes wrong
@@ -168,9 +171,12 @@ public abstract class Consumer {
   final void stopConsumer() {
     this.stop();
     LOG.info("Consumer Shutting down.");
-    LOG.info("  Calls/Events Received : " + this.callsReceived + "/" + this.eventsReceived);
-    LOG.info("  Calls/Events Succeeded: " + this.callsSucceeded + "/" + this.eventsSucceeded);
-    LOG.info("  Calls/Events Failed:    " + this.callsFailed + "/" + this.eventsFailed);
+    LOG.info("  Calls/Events Received : " +
+        this.callsReceived + "/" + this.eventsReceived);
+    LOG.info("  Calls/Events Succeeded: " +
+        this.callsSucceeded + "/" + this.eventsSucceeded);
+    LOG.info("  Calls/Events Failed:    " +
+        this.callsFailed + "/" + this.eventsFailed);
   }
 
   /**

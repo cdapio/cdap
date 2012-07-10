@@ -25,8 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is the http request handler for the rest collector. At this time it only accepts
- * POST requests to send an event to a stream.
+ * This is the http request handler for the rest collector. This supports
+ * POST requests to send an event to a stream, and GET requests to inspect
+ * or retrieve events from the stream.
  */
 public class RestHandler extends NettyRestHandler {
 
@@ -39,13 +40,15 @@ public class RestHandler extends NettyRestHandler {
   HttpMethod[] allowedMethods = { HttpMethod.POST, HttpMethod.GET };
 
   /**
-   * The collector that created this handler. It has collector name and the consumer
+   * The collector that created this handler. It has collector name and consumer
    */
   private RestCollector collector;
   /**
-   * All the paths have to be of the form http://host:port&lt;pathPrefix>&lt;stream>
-   * For instance, if config(prefix="/v0.1/" path="stream/"), then pathPrefix will be
-   * "/v0.1/stream/", and a valid request is POST http://host:port/v0.1/stream/mystream
+   * All the paths have to be of the form
+   * http://host:port&lt;pathPrefix>&lt;stream>
+   * For instance, if config(prefix="/v0.1/" path="stream/"),
+   * then pathPrefix will be "/v0.1/stream/",
+   * and a valid request is POST http://host:port/v0.1/stream/mystream
    */
   private String pathPrefix;
 
@@ -68,18 +71,20 @@ public class RestHandler extends NettyRestHandler {
   }
 
   /**
-   * Determines whether an HTTP header should be preserved in the persisted event,
-   * and if so returns the (possibly transformed) header name. We pass through
-   * all headers that start with the name of destination stream, but we strip of
-   * the stream name.
+   * Determines whether an HTTP header should be preserved in the persisted
+   * event, and if so returns the (possibly transformed) header name. We pass
+   * through all headers that start with the name of destination stream, but
+   * we strip off the stream name.
    *
    * @param destinationPrefix The name of the destination stream with . appended
    * @param name              The nameof the header to check
-   * @return the name to use for the header if it is perserved, or null otherwise.
+   * @return the name to use for the header if it is preserved, null otherwise.
    */
   private String isPreservedHeader(String destinationPrefix, String name) {
-    if (Constants.HEADER_CLIENT_TOKEN.equals(name)) return name;
-    if (name.startsWith(destinationPrefix)) return name.substring(destinationPrefix.length());
+    if (Constants.HEADER_CLIENT_TOKEN.equals(name))
+      return name;
+    if (name.startsWith(destinationPrefix))
+      return name.substring(destinationPrefix.length());
     return null;
   }
 
@@ -90,7 +95,8 @@ public class RestHandler extends NettyRestHandler {
   private static final int META = 4;
 
   @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent message) throws Exception {
+  public void messageReceived(ChannelHandlerContext context,
+                              MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
 
     LOG.debug("Request received");
@@ -124,19 +130,23 @@ public class RestHandler extends NettyRestHandler {
 
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
-      LOG.debug("Received an unsupported " + method + " request '" + request.getUri() + "'.");
+      LOG.debug("Received an unsupported " + method +
+          " request '" + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
 
-    if ((operation == ENQUEUE || operation == META) && parameters != null && !parameters.isEmpty()) {
-      LOG.debug("Received a request with query parameters, which is not supported");
+    if ((operation == ENQUEUE || operation == META) &&
+        parameters != null && !parameters.isEmpty()) {
+      LOG.debug(
+          "Received a request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
 
-    // does the path of the URL start with the correct prefix, and is it of the form
-    // <flowname> or <flowname</<streamname> after that? Otherwise we will not accept this request.
+    // does the path of the URL start with the correct prefix, and is it of
+    // the form <flowname> or <flowname</<streamname> after that? Otherwise
+    // we will not accept this request.
     String destination = null;
     String path = decoder.getPath();
     if (path.startsWith(this.pathPrefix)) {
@@ -167,7 +177,8 @@ public class RestHandler extends NettyRestHandler {
         // build a new event from the request
         EventBuilder builder = new EventBuilder();
         // set some built-in headers
-        builder.setHeader(Constants.HEADER_FROM_COLLECTOR, this.collector.getName());
+        builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
+            this.collector.getName());
         builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
         // and transfer all other headers that are to be preserved
         String prefix = destination + ".";
@@ -195,7 +206,8 @@ public class RestHandler extends NettyRestHandler {
           this.collector.getConsumer().consumeEvent(event);
         } catch (Exception e) {
           LOG.error("Error consuming single event: " + e.getMessage());
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         // all good - respond success
@@ -203,21 +215,25 @@ public class RestHandler extends NettyRestHandler {
         break;
       }
       case META: {
-        LOG.debug("Received a request for stream meta data, which is not implemented yet.");
+        LOG.debug("Received a request for stream meta data," +
+            " which is not implemented yet.");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
         return;
       }
       // GET means client wants to view the content of a queue.
       // 1. obtain a consumerId with GET stream?q=newConsumer
-      // 2. dequeue an event with GET stream?q=dequeue with the consumerId as an HTTP header
+      // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
+      //    an HTTP header
       case NEWID: {
         String queueURI = FlowStream.buildStreamURI(destination).toString();
-        QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueURI.getBytes());
+        QueueAdmin.GetGroupID op =
+            new QueueAdmin.GetGroupID(queueURI.getBytes());
         long id = this.collector.getExecutor().execute(op);
         byte[] responseBody = Long.toString(id).getBytes();
         Map<String, String> headers = Maps.newHashMap();
         headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
-        respondSuccess(message.getChannel(), request, HttpResponseStatus.CREATED, headers, responseBody);
+        respondSuccess(message.getChannel(), request,
+            HttpResponseStatus.CREATED, headers, responseBody);
         break;
       }
       case DEQUEUE: {
@@ -225,7 +241,8 @@ public class RestHandler extends NettyRestHandler {
         String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
         Long id = null;
         if (idHeader == null) {
-          LOG.debug("Received a dequeue request without header " + Constants.HEADER_STREAM_CONSUMER);
+          LOG.debug("Received a dequeue request without header " +
+              Constants.HEADER_STREAM_CONSUMER);
         } else {
           try {
             id = Long.valueOf(idHeader);
@@ -242,17 +259,21 @@ public class RestHandler extends NettyRestHandler {
         // 0th instance of group 'id' of size 1
         QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
         // singleEntry = true means we must ack before we can see the next entry
-        QueueConfig queueConfig = new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        QueueConfig queueConfig =
+            new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
         QueueDequeue dequeue = new QueueDequeue(
             queueURI.getBytes(), queueConsumer, queueConfig);
         DequeueResult result = this.collector.getExecutor().execute(dequeue);
         if (result.isFailure()) {
-          LOG.error("Error dequeueing from stream " + queueURI + " with consumer " + queueConsumer + ": " + result.getMsg());
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          LOG.error("Error dequeueing from stream " + queueURI +
+              " with consumer " + queueConsumer + ": " + result.getMsg());
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         if (result.isEmpty()) {
-          respondSuccess(message.getChannel(), request, HttpResponseStatus.NO_CONTENT);
+          respondSuccess(message.getChannel(), request,
+              HttpResponseStatus.NO_CONTENT);
           return;
         }
         // try to deserialize into an event (tuple)
@@ -266,29 +287,36 @@ public class RestHandler extends NettyRestHandler {
         } catch (Exception e) {
           LOG.error("Exception when deserializing data from stream "
               + queueURI + " into an event: " + e.getMessage());
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         // ack the entry so that the next request can see the next entry
-        QueueAck ack = new QueueAck(queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
+        QueueAck ack = new QueueAck(
+            queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
         if (!this.collector.getExecutor().execute(ack)) {
           LOG.error("Ack failed to for queue " + queueURI + ", consumer "
               + queueConsumer + " and pointer " + result.getEntryPointer());
-          respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
 
-        // prefix each header with the destination to distinguish them from HTTP headers
+        // prefix each header with the destination to distinguish them from
+        // HTTP headers
         Map<String, String> prefixedHeaders = Maps.newHashMap();
         for (Map.Entry<String, String> header : headers.entrySet())
-            prefixedHeaders.put(destination + "." + header.getKey(), header.getValue());
+            prefixedHeaders.put(destination + "." + header.getKey(),
+                header.getValue());
         // now the headers and body are ready to be sent back
-        respondSuccess(message.getChannel(), request, HttpResponseStatus.OK, prefixedHeaders, body);
+        respondSuccess(message.getChannel(), request,
+            HttpResponseStatus.OK, prefixedHeaders, body);
         break;
       }
       default: {
-        // this should not happen because we already checked above -> internal error
-        respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        // this should not happen because we checked above -> internal error
+        respondError(message.getChannel(),
+            HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }
@@ -296,7 +324,8 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    LOG.error("Exception caught for collector '" + this.collector.getName() + "'. ", e.getCause());
+    LOG.error("Exception caught for collector '" +
+        this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();
   }
 }

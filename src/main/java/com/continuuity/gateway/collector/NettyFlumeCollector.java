@@ -41,7 +41,8 @@ public class NettyFlumeCollector extends FlumeCollector {
         new InetSocketAddress(this.getPort()));
     this.server.start();
 
-    LOG.info("Collector '" + this.getName() + "' started on port " + port + ".");
+    LOG.info("Collector '" + this.getName() +
+        "' started on port " + port + ".");
   }
 
   @Override

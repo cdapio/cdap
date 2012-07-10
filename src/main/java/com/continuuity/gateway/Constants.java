@@ -79,13 +79,15 @@ public class Constants {
 
   /**
    * Path prefix in an HTTP URL.
-   * For instance, in http://g.d.c/rest/destination/myStream the prefix is /rest
+   * For instance, in http://g.d.c/rest/destination/myStream the prefix
+   * is "/rest"
    */
   public static final String CONFIG_PATH_PREFIX = "prefix";
 
   /**
    * Middle component in the HTTP URL
-   * For instance, in http://g.d.c/rest/destination/myStream the middle is /destination/
+   * For instance, in http://g.d.c/rest/destination/myStream the middle is
+   * /destination/
    */
   public static final String CONFIG_PATH_MIDDLE = "middle";
 

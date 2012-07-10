@@ -18,11 +18,12 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 /**
- * This collector that provides a RESTful interface to push events to an event stream.
- * It uses Netty to start up the service, and the RestHandler to implement the
- * handling of a request.
+ * This collector that provides a RESTful interface to push events to an event
+ * stream. It uses Netty to start up the service, and the RestHandler to
+ * implement the handling of a request.
  */
-public class RestCollector extends Collector implements DataAccessor, NettyRequestHandlerFactory {
+public class RestCollector extends Collector
+    implements DataAccessor, NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(RestCollector.class);
@@ -71,7 +72,8 @@ public class RestCollector extends Collector implements DataAccessor, NettyReque
   @Override
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
-    this.httpConfig = HttpConfig.configure(this.name, configuration, defaultConfig);
+    this.httpConfig =
+        HttpConfig.configure(this.name, configuration, defaultConfig);
   }
 
   @Override
@@ -83,7 +85,8 @@ public class RestCollector extends Collector implements DataAccessor, NettyReque
   public void start() throws Exception {
     LOG.debug("Starting up " + this);
     // construct the internet address
-    InetSocketAddress address = new InetSocketAddress(this.httpConfig.getPort());
+    InetSocketAddress address =
+        new InetSocketAddress(this.httpConfig.getPort());
     try {
       // create a server bootstrap
       ServerBootstrap bootstrap = new ServerBootstrap(
@@ -92,7 +95,8 @@ public class RestCollector extends Collector implements DataAccessor, NettyReque
               Executors.newCachedThreadPool()));
       // and use a pipeline factory that uses this to cnfigure itself and to
       // create a request handler for each client request.
-      bootstrap.setPipelineFactory(new NettyHttpPipelineFactory(this.httpConfig, this));
+      bootstrap.setPipelineFactory(
+          new NettyHttpPipelineFactory(this.httpConfig, this));
       // bind to the address = start the service
       this.serverChannel = bootstrap.bind(address);
       // server is now running

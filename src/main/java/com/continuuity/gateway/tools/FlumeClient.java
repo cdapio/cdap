@@ -45,34 +45,42 @@ public class FlumeClient {
   String hostname = null;        // the hostname of the gateway
   String connector = null;       // the name of the flume collector
   String body = null;            // the body of the event as a String
-  String bodyFile = null;        // the file that contains the body in binary form
+  String bodyFile = null;        // the file containing the body in binary form
   String destination = null;     // the destination stream
-  Map<String, String> headers = Maps.newHashMap(); // to accumulate all the headers for the event
+  Map<String, String> headers = Maps.newHashMap(); // to accumulate all headers
 
   /**
-   * Print the usage statement and return null (or empty string if this is not an error case).
-   * See getValue() for an explanation of the return type.
+   * Print the usage statement and return null (or empty string if this is not
+   * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error, an empty string in case of success
+   * @throws IllegalArgumentException in case of error, an empty string in case
+   * of success
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = this.getClass().getSimpleName();
     Copyright.print(out);
     out.println("Usage: ");
-    out.println("  " + name + " --stream <name> --body <value> [ <option> ... ]");
+    out.println("  " + name +
+        " --stream <name> --body <value> [ <option> ... ]");
     out.println("Options:");
     out.println("  --port <number>         To specify the port to use");
     out.println("  --host <name>           To specify the hostname to send to");
-    out.println("  --connector <name>      To specify the name of the flume` collector");
-    out.println("  --stream <name>         To specify the destination event stream of the");
+    out.println("  --connector <name>      " +
+        "To specify the name of the flume` collector");
+    out.println("  --stream <name>         " +
+        "To specify the destination event stream of the");
     out.println("                          form <flow> or <flow>/<stream>.");
-    out.println("  --header <name> <value> To specify a header for the event to send. Can");
+    out.println("  --header <name> <value> " +
+        "To specify a header for the event to send. Can");
     out.println("                          be used multiple times");
-    out.println("  --body <value>          To specify the body of the event as a string");
-    out.println("  --body-file <path>      Alternative to --body, to specify a file that");
-    out.println("                          contains the binary body of the event");
+    out.println("  --body <value>          " +
+        "To specify the body of the event as a string");
+    out.println("  --body-file <path>      " +
+        "Alternative to --body, to specify a file that");
+    out.println("                          " +
+        "contains the binary body of the event");
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
@@ -144,11 +152,14 @@ public class FlumeClient {
     parseArguments(args);
     if (help) return;
     // verify that either --body or --body-file is given
-    if (body != null && bodyFile != null) usage("Either --body or --body-file must be specified.");
+    if (body != null && bodyFile != null)
+      usage("Either --body or --body-file must be specified.");
     // verify that a destination was given
-    if (destination == null) usage("A destination stream must be specified.");
+    if (destination == null)
+      usage("A destination stream must be specified.");
     // verify that only one hint is given for the URL
-    if (connector != null && port != -1) usage("Only one of --connector or --port may be specified.");
+    if (connector != null && port != -1)
+      usage("Only one of --connector or --port may be specified.");
   }
 
   /**
@@ -184,8 +195,8 @@ public class FlumeClient {
       if (flumeName == null) {
         return -1;
       } else {
-        if (verbose)
-          System.out.println("Reading configuration for connector '" + flumeName + "'.");
+        if (verbose) System.out.println(
+            "Reading configuration for connector '" + flumeName + "'.");
       }
     }
     // get the collector's port number from the config
@@ -194,13 +205,14 @@ public class FlumeClient {
   }
 
   /**
-   * This is actually the main method, but in order to make it testable, instead of exiting in case
-   * of error it returns null, whereas in case of success it returns the retrieved value as shown
-   * on the console.
+   * This is actually the main method, but in order to make it testable,
+   * instead of exiting in case of error it returns null, whereas in case
+   * of success it returns the retrieved value as shown on the console.
    *
    * @param args   the command line arguments of the main method
    * @param config The configuration of the gateway
-   * @return null in case of error, an string representing the retrieved value in case of success
+   * @return null in case of error, an string representing the retrieved value
+   * in case of success
    */
   public String execute0(String[] args, CConfiguration config) {
     // parse and validate arguments
@@ -210,7 +222,8 @@ public class FlumeClient {
     // determine the flume port for the GET request
     if (port == -1) port = findFlumePort(config, connector);
     if (port == -1) {
-      System.err.println("Can't figure out the URL to send to. Please use --base or --connector to specify.");
+      System.err.println("Can't figure out the URL to send to. " +
+          "Please use --base or --connector to specify.");
       return null;
     }
     // determine the gateway host
@@ -221,7 +234,8 @@ public class FlumeClient {
     // get the body as a byte array
     byte[] binaryBody = readBody();
     if (binaryBody == null) {
-      System.err.println("Cannot send an event without body. Please use --body or --body-file to specify the body.");
+      System.err.println("Cannot send an event without body. " +
+          "Please use --body or --body-file to specify the body.");
       return null;
     }
 
@@ -251,7 +265,8 @@ public class FlumeClient {
       return execute0(args, config);
     } catch (IllegalArgumentException e) {
       if (debug) { // this is mainly for debugging the unit test
-        System.err.println("Exception for arguments: " + Arrays.toString(args) + ". Exception: " + e);
+        System.err.println("Exception for arguments: " +
+            Arrays.toString(args) + ". Exception: " + e);
         e.printStackTrace(System.err);
       }
     }

@@ -6,12 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This configures options for an HTTP connector. The general form of a server URL is
- * <code>http[s]://&lt;host>>:&lt;port>/&lt;prefix/&lt;middle/&lt;resource/...</code>
- * For instance, the REST collector could listen on <code>http://localhost:1066/rest/stream</code> as
+ * This configures options for an HTTP connector.
+ * The general form of a server URL is
+ * <code>http[s]://&lt;host>:&lt;port>/&lt;prefix/&lt;middle/&lt;resource/...
+ * </code> For instance, the REST collector could listen on
+ * <code>http://localhost:1066/rest/stream</code> as
  * its base URI, a valid POST to the stream named xyz would go to
- * <code>http://localhost:1066/rest/stream/xyz</code>. In this example the port is 1066,
- * the prefix <code>/rest</code>, the middle is <code>/stream/</code>.
+ * <code>http://localhost:1066/rest/stream/xyz</code>. In this example the
+ * port is 1066, the prefix <code>/rest</code>, the middle is
+ * <code>/stream/</code>.
  */
 public class HttpConfig {
 
@@ -210,19 +213,22 @@ public class HttpConfig {
     HttpConfig config = new HttpConfig(name);
     config.port = configuration.getInt(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PORT), defaults.getPort());
-    config.chunk = configuration.getBoolean(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_CHUNKING), defaults.isChunking());
+    config.chunk = configuration.getBoolean(
+        Constants.buildConnectorPropertyName(
+            name, Constants.CONFIG_CHUNKING), defaults.isChunking());
     config.ssl = configuration.getBoolean(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_SSL), defaults.isSsl());
     config.prefix = configuration.get(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PATH_PREFIX), defaults.getPathPrefix());
     config.middle = configuration.get(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PATH_MIDDLE), defaults.getPathMiddle());
-    config.maxContentSize = configuration.getInt(Constants.buildConnectorPropertyName(
-        name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
+    config.maxContentSize = configuration.getInt(
+        Constants.buildConnectorPropertyName(
+            name, Constants.CONFIG_MAX_SIZE), defaults.getMaxContentSize());
 
     if (config.ssl) {
-      LOG.warn("SSL is not implemented yet. Ignoring configuration for connector '" + name + "'.");
+      LOG.warn("SSL is not implemented yet. " +
+          "Ignoring configuration for connector '" + name + "'.");
       config.ssl = false;
     }
     return config;
