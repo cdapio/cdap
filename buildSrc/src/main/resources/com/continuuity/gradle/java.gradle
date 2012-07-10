@@ -120,7 +120,7 @@ task release (type:  Tar, dependsOn: jar)  {
     }
 
     /** Load all the dependencies into the libs directory. */
-    if(multiModule) {
+    if(project.hasProperty('multiModule')) {
       into("${project.name}-${project.version}/libs") {
         from configurations.runtime
         from jar.archivePath
