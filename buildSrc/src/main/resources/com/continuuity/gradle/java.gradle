@@ -119,11 +119,15 @@ task release (type:  Tar, dependsOn: jar)  {
         from sourceSets.main.output.resourcesDir
     }
 
+    /** Add the project package itself and all it's dependencies. */
+    into("${project.name}-${project.version}/libs") {
+      from configurations.runtime
+      from jar.archivePath
+    }
+
     /** Load all the dependencies into the libs directory. */
     if(project.hasProperty('multiModule')) {
       into("${project.name}-${project.version}/libs") {
-        from configurations.runtime
-        from jar.archivePath
         from project(":data-fabric").artifacts
         from project(":flow").artifacts
       }
