@@ -98,6 +98,9 @@ task release (type:  Tar, dependsOn: jar)  {
     group = 'Continuuity'
     description = 'Generates distribution tar file.'
 
+    /** Sets a property 'release' to true. This is used during inclusion of dependencies.*/
+    extensions.getExtraProperties().set("buildingRelease", true);
+
     /** Set the compression to gzip */
     compression = Compression.GZIP
 
@@ -116,17 +119,11 @@ task release (type:  Tar, dependsOn: jar)  {
         from sourceSets.main.output.resourcesDir
     }
 
-    /** Copy all dependencies with flow and data-fabric included (for now) into projects/libs */
+    /** Load all the dependencies into the libs directory. */
     into("${project.name}-${project.version}/libs") {
-        from configurations.compile
-        from jar.outputs.files
-        if(project.hasProperty('mutliModule')) {
-            from project(":data-fabric").apiJar.archivePath
-            from project(":flow").apiJar.archivePath
-        } else {
-            /** Whoever builds this in standalone mode has to figure how to get data-fabric and flow api jars */
-        }
+      from configurations.runtime
+      from jar.archivePath
+      from project(":data-fabric").artifacts
+      from project(":flow").artifacts
     }
 }
-
-
