@@ -7,7 +7,7 @@ import java.util.Map;
  * 
  * Supports both key-value and columnar operations.
  */
-public class Read implements ReadOperation<Map<byte[], byte[]>> {
+public class Read implements ReadOperation {
 
   /** The key/row to read */
   private final byte [] key;
@@ -57,23 +57,4 @@ public class Read implements ReadOperation<Map<byte[], byte[]>> {
   public byte [][] getColumns() {
     return this.columns;
   }
-
-  @Override
-  public Map<byte[], byte[]> getResult() {
-    return this.result;
-  }
-  
-  /**
-   * Returns the value of the specified key that was read.
-   * @return the value of the read key
-   */
-  public byte [] getKeyResult() {
-    return this.result.get(KV_COL);
-  }
-  
-  @Override
-  public void setResult(Map<byte[], byte[]> result) {
-    this.result = result;
-  }
-
 }

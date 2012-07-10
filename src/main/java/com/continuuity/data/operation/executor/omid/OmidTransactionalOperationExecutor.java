@@ -88,7 +88,6 @@ implements TransactionalOperationExecutor {
   public byte[] execute(ReadKey read) {
     initialize();
     byte [] result = read(read, this.oracle.getReadPointer());
-    read.setResult(result);
     return result;
   }
 
@@ -101,7 +100,6 @@ implements TransactionalOperationExecutor {
     initialize();
     List<byte[]> result = this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
-    readKeys.setResult(result);
     return result;
   }
 
@@ -110,7 +108,6 @@ implements TransactionalOperationExecutor {
     initialize();
     Map<byte[],byte[]> result = this.randomTable.get(read.getKey(),
         read.getColumns(), this.oracle.getReadPointer());
-    read.setResult(result);
     return result;
   }
 
@@ -120,7 +117,6 @@ implements TransactionalOperationExecutor {
     Map<byte[],byte[]> result = this.randomTable.get(readColumnRange.getKey(),
         readColumnRange.getStartColumn(), readColumnRange.getStopColumn(),
         this.oracle.getReadPointer());
-    readColumnRange.setResult(result);
     return result;
   }
 
@@ -280,7 +276,6 @@ implements TransactionalOperationExecutor {
     Map<byte[],Long> map = this.randomTable.increment(increment.getKey(),
         increment.getColumns(), increment.getAmounts(),
         pointer.getFirst(), pointer.getSecond());
-    increment.setResult(map);
     List<Delete> deletes = new ArrayList<Delete>(1);
     deletes.add(new Delete(increment.getKey(), increment.getColumns()));
     return new WriteTransactionResult(true, deletes);
@@ -311,7 +306,6 @@ implements TransactionalOperationExecutor {
     initialize();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(
         enqueue.getKey(), enqueue.getData(), pointer.getSecond());
-    enqueue.setResult(result);
     return new WriteTransactionResult(true,
         new QueueUnenqueue(enqueue.getKey(), result.getEntryPointer()));
   }
@@ -349,7 +343,6 @@ implements TransactionalOperationExecutor {
         }
         continue;
       }
-      dequeue.setResult(result);
       return result;
     }
     long end = System.currentTimeMillis();
@@ -363,7 +356,6 @@ implements TransactionalOperationExecutor {
     initialize();
     TTQueueTable table = getQueueTable(getGroupId.getQueueName());
     long groupid = table.getGroupID(getGroupId.getQueueName());
-    getGroupId.setResult(groupid);
     return groupid;
   }
 
@@ -372,7 +364,6 @@ implements TransactionalOperationExecutor {
     initialize();
     TTQueueTable table = getQueueTable(getQueueMeta.getQueueName());
     QueueMeta queueMeta = table.getQueueMeta(getQueueMeta.getQueueName());
-    getQueueMeta.setResult(queueMeta);
     return queueMeta;
   }
 

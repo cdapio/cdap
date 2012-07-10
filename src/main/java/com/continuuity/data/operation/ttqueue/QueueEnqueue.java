@@ -10,13 +10,11 @@ import com.google.common.base.Objects;
  * Inserts an entry to the tail of a queue.
  */
 public class QueueEnqueue
-implements WriteOperation, ReadOperation<EnqueueResult> {
+implements WriteOperation, ReadOperation {
 
   private final byte [] queueName;
   private final byte [] data;
 
-  private EnqueueResult result;
-  
   public QueueEnqueue(final byte [] queueName, final byte [] data) {
     this.queueName = queueName;
     this.data = data;
@@ -29,16 +27,6 @@ implements WriteOperation, ReadOperation<EnqueueResult> {
   @Override
   public byte[] getKey() {
     return this.queueName;
-  }
-
-  @Override
-  public void setResult(EnqueueResult result) {
-    this.result = result;
-  }
-
-  @Override
-  public EnqueueResult getResult() {
-    return this.result;
   }
 
   @Override

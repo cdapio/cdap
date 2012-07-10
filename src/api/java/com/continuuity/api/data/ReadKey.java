@@ -5,12 +5,10 @@ package com.continuuity.api.data;
  * 
  * Support only key-value operations.
  */
-public class ReadKey implements ReadOperation<byte[]> {
+public class ReadKey implements ReadOperation {
 
   /** The key to read */
   private final byte [] key;
-
-  private byte [] value;
 
   /**
    * Reads the value of the specified key.
@@ -24,16 +22,6 @@ public class ReadKey implements ReadOperation<byte[]> {
     return this.key;
   }
 
-  @Override
-  public byte [] getResult() {
-    return this.value;
-  }
-
-  @Override
-  public void setResult(byte[] t) {
-    this.value = t;
-  }
-  
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();

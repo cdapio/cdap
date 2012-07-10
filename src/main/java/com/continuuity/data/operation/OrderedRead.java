@@ -1,16 +1,12 @@
 package com.continuuity.data.operation;
 
-import java.util.Map;
-
 import com.continuuity.api.data.ReadOperation;
 
-public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
+public class OrderedRead implements ReadOperation {
 
   private final byte [] startKey;
   private final byte [] endKey;
   private final int limit;
-
-  private Map<byte[], byte[]> result;
 
   public OrderedRead(final byte [] key) {
     this(key, null, 1);
@@ -41,14 +37,4 @@ public class OrderedRead implements ReadOperation<Map<byte[], byte[]>> {
   public int getLimit() {
     return this.limit;
   }
-  @Override
-  public Map<byte[], byte[]> getResult() {
-    return this.result;
-  }
-  
-  @Override
-  public void setResult(Map<byte[], byte[]> result) {
-    this.result = result;
-  }
-
 }

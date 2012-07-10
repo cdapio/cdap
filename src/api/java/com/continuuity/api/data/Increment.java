@@ -1,7 +1,5 @@
 package com.continuuity.api.data;
 
-import java.util.Map;
-
 /**
  * Atomic increment operation.
  * 
@@ -10,8 +8,7 @@ import java.util.Map;
  * 
  * Supports key-value and columnar operations.
  */
-public class Increment
-implements WriteOperation, ReadOperation<Map<byte[],Long>> {
+public class Increment implements WriteOperation, ReadOperation {
 
   /** The key/row */
   private final byte [] key;
@@ -21,9 +18,6 @@ implements WriteOperation, ReadOperation<Map<byte[],Long>> {
   
   /** The amounts to increment the columns by */
   private final long [] amounts;
-
-  /** The values of the counters after being incremented */
-  private Map<byte[],Long> incrementedValues;
 
   /**
    * Increments the specified key by the specified amount.
@@ -80,24 +74,6 @@ implements WriteOperation, ReadOperation<Map<byte[],Long>> {
 
   public byte [][] getColumns() {
     return this.columns;
-  }
-
-  @Override
-  public void setResult(Map<byte[],Long> incrementedValues) {
-    this.incrementedValues = incrementedValues;
-  }
-
-  @Override
-  public Map<byte[],Long> getResult() {
-    return this.incrementedValues;
-  }
-
-  /**
-   * Returns the post-incremented value of a key (not column) increment.
-   * @return the long value of the key counter after being incremented
-   */
-  public Long getKeyResult() {
-    return this.incrementedValues.get(KV_COL);
   }
 
   @Override
