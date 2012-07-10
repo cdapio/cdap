@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.continuuity.data.operation.ClearFabric;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.CompareAndSwap;
@@ -22,7 +23,6 @@ import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.data.operation.Undelete;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -51,7 +51,7 @@ import com.google.inject.Singleton;
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
  * that executes all operations within Omid-style transactions.
- * 
+ *
  * See https://github.com/yahoo/omid/ for more information on the Omid design.
  */
 @Singleton
@@ -123,11 +123,11 @@ implements TransactionalOperationExecutor {
   // Administrative calls
 
   @Override
-  public void execute(FormatFabric formatFabric) {
+  public void execute(ClearFabric clearFabric) {
     initialize();
-    if (formatFabric.shouldFormatData()) this.randomTable.format();
-    if (formatFabric.shouldFormatQueues()) this.queueTable.format();
-    if (formatFabric.shouldFormatStreams()) this.streamTable.format();
+    if (clearFabric.shouldClearData()) this.randomTable.clear();
+    if (clearFabric.shouldClearQueues()) this.queueTable.clear();
+    if (clearFabric.shouldClearStreams()) this.streamTable.clear();
   }
 
   // Write batches

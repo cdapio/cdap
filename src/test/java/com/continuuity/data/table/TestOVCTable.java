@@ -1,22 +1,17 @@
 package com.continuuity.data.table;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import static org.junit.Assert.*;
 
 /**
  * Tests the contract and semantics of {@link OrderedVersionedColumnarTable}
@@ -60,27 +55,27 @@ public abstract class TestOVCTable {
   }
 
   @Test
-  public void testFormatVerySimply() {
-    byte [] row = Bytes.toBytes("testFormat");
+  public void testClearVerySimply() {
+    byte [] row = Bytes.toBytes("testClear");
 
     assertNull(this.table.get(row, COL, RP_MAX));
-    
+
     this.table.put(row, COL, 1L, row);
 
     assertEquals(Bytes.toString(row),
         Bytes.toString(this.table.get(row, COL, RP_MAX)));
-    
-    this.table.format();
+
+    this.table.clear();
 
     assertNull(this.table.get(row, COL, RP_MAX));
-    
+
     this.table.put(row, COL, 1L, row);
 
     assertEquals(Bytes.toString(row),
         Bytes.toString(this.table.get(row, COL, RP_MAX)));
-    
+
   }
-  
+
   @Test
   public void testMultiColumnReadsAndWrites() {
 
@@ -129,7 +124,7 @@ public abstract class TestOVCTable {
     }
 
     // get(row,startCol,stopCol)
-    
+
     // get(row,start=null,stop=null)
     colMap = this.table.get(row, null, null, RP_MAX);
     assertEquals(ncols, colMap.size());
@@ -139,7 +134,7 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
     // get(row,start=0,stop=ncols+1)
     colMap = this.table.get(row, Bytes.toBytes((long)0),
         Bytes.toBytes((long)ncols+1), RP_MAX);
@@ -150,7 +145,7 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
     // get(row,cols[ncols])
     colMap = this.table.get(row, columns, RP_MAX);
     assertEquals(ncols, colMap.size());
@@ -175,35 +170,35 @@ public abstract class TestOVCTable {
     // get(row,RP=9) = 0 cols
     colMap = this.table.get(row, new MemoryReadPointer(9));
     assertEquals(0, colMap.size());
-    
+
     // delete the first 5 as point deletes
     subCols = Arrays.copyOfRange(columns, 0, 5);
     this.table.delete(row, subCols, version);
-    
+
     // get returns 5 less
     colMap = this.table.get(row, RP_MAX);
     assertEquals(ncols - 5, colMap.size());
-    
+
     // delete the second 5 as delete alls
     subCols = Arrays.copyOfRange(columns, 5, 10);
     this.table.deleteAll(row, subCols, version);
-    
+
     // get returns 10 less
     colMap = this.table.get(row, RP_MAX);
     assertEquals(ncols - 10, colMap.size());
-    
+
     // delete the third 5 as delete alls
     subCols = Arrays.copyOfRange(columns, 10, 15);
     this.table.deleteAll(row, subCols, version);
-    
+
     // get returns 15 less
     colMap = this.table.get(row, RP_MAX);
     assertEquals(ncols - 15, colMap.size());
-    
+
     // undelete the second 5
     subCols = Arrays.copyOfRange(columns, 5, 10);
     this.table.undeleteAll(row, subCols, version);
-    
+
     // get returns 10 less
     colMap = this.table.get(row, RP_MAX);
     assertEquals(ncols - 10, colMap.size());
@@ -240,7 +235,7 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
     // get(row,start=0,stop=ncols+1)
     colMap = this.table.get(row, Bytes.toBytes((long)0),
         Bytes.toBytes((long)ncols+1), RP_MAX);
@@ -251,7 +246,7 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
     // get(row,start=1,stop=ncols-1) = ncols-2
     colMap = this.table.get(row, Bytes.toBytes((long)1),
         Bytes.toBytes((long)ncols-1), RP_MAX);
@@ -262,7 +257,7 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
     // get(row,start=10,stop=20) = 10
     colMap = this.table.get(row, Bytes.toBytes((long)10),
         Bytes.toBytes((long)20), RP_MAX);
@@ -273,9 +268,9 @@ public abstract class TestOVCTable {
       assertTrue(Bytes.equals(entry.getValue(), values[idx]));
       idx++;
     }
-    
+
   }
-  
+
   @Test
   public void testSimpleIncrement() {
 
@@ -288,26 +283,26 @@ public abstract class TestOVCTable {
     assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
 
   }
-  
+
   @Test
   public void testMultiColumnIncrement() {
 
     byte [] row = Bytes.toBytes("testMultiColumnIncrement");
-    
+
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
     byte [][] columns = new byte[ncols][];
     for (int i=0;i<ncols;i++) {
       columns[i] = Bytes.toBytes(new Long(i));
     }
-    
+
     // increment the evens individually
     long version = 10;
     for (int i=0; i<ncols; i+=2) {
       assertEquals(1L,
           this.table.increment(row, columns[i], 1, RP_MAX, version));
     }
-    
+
     // increment everything at once
     long [] amounts = new long[ncols];
     for (int i=0;i<ncols;i++) amounts[i] = (long)i+1;
@@ -364,10 +359,10 @@ public abstract class TestOVCTable {
     // compare and swap from null to valueOne
     assertFalse(
         this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
 
@@ -398,12 +393,12 @@ public abstract class TestOVCTable {
     assertNull(this.table.get(row, COL, RP_MAX));
 
     // compare and swap null to valueOne, max to v2
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
-    
+
     // null to valueTwo, read v1 write v3
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, null, valueTwo, new MemoryReadPointer(1L), 3L));
 
@@ -411,42 +406,42 @@ public abstract class TestOVCTable {
 
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(3))));
-    
+
     // read @ 2 gives value one
-    
+
     assertEquals(Bytes.toString(valueOne),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(2))));
-    
+
     // cas valueOne @ ts2 to valueTwo @ ts4
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(2L), 4L));
-    
+
     // cas valueTwo @ ts3 to valueOne @ ts5
-    
+
     assertTrue(
         this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(3L), 5L));
-    
+
     // read @ 5 gives value one
-    
+
     assertEquals(Bytes.toString(valueOne),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(5))));
-    
+
     // read @ 4 gives value two
 
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(4))));
-    
+
     // cas valueTwo @ ts5 to valueOne @ ts6 FAIL
-    
+
     assertFalse(
         this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(5L), 6L));
-    
+
     // cas valueOne @ ts4 to valueTwo @ ts6 FAIL
-    
+
     assertFalse(
         this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(4L), 6L));
-    
+
   }
 
   @Test
@@ -455,7 +450,7 @@ public abstract class TestOVCTable {
     byte [] row = Bytes.toBytes("testIncrementsSupportReadAndWritePointers");
 
     // increment with write pointers
-    
+
     assertEquals(1L, this.table.increment(row, COL, 1L, RP_MAX, 1L));
 
     assertEquals(1L, Bytes.toLong(
@@ -466,7 +461,7 @@ public abstract class TestOVCTable {
         this.table.get(row, COL, new MemoryReadPointer(3L))));
     assertEquals(1L, Bytes.toLong(
         this.table.get(row, COL, new MemoryReadPointer(4L))));
-    
+
     assertEquals(3L, this.table.increment(row, COL, 2L, RP_MAX, 3L));
 
     assertEquals(1L, Bytes.toLong(
@@ -479,19 +474,19 @@ public abstract class TestOVCTable {
         this.table.get(row, COL, new MemoryReadPointer(4L))));
 
     // test an increment with a read pointer
-    
+
     assertEquals(2L, this.table.increment(row, COL, 1L,
         new MemoryReadPointer(1L), 2L));
-    
+
     // read it back with read pointer reads
-    
+
     assertEquals(3L, Bytes.toLong(
         this.table.get(row, COL, new MemoryReadPointer(3L))));
     assertEquals(2L, Bytes.toLong(
         this.table.get(row, COL, new MemoryReadPointer(2L))));
     assertEquals(1L, Bytes.toLong(
         this.table.get(row, COL, new MemoryReadPointer(1L))));
-    
+
     // read it back with increment=0
 
     assertEquals(1L, this.table.increment(row, COL, 0L,

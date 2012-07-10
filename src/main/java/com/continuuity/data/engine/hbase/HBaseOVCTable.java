@@ -454,7 +454,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void format() {
+  public void clear() {
     // TODO Auto-generated method stub
 
   }

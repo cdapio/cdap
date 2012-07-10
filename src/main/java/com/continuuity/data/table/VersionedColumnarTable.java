@@ -1,8 +1,8 @@
 package com.continuuity.data.table;
 
-import java.util.Map;
-
 import com.continuuity.common.utils.ImmutablePair;
+
+import java.util.Map;
 
 /**
  * A core table interface that supports columnar and versioned tables.
@@ -182,7 +182,7 @@ public interface VersionedColumnarTable {
    * by looking for the specified expected value and if found, replacing with
    * the specified new value.  Utilizes the specified read pointer to enforce
    * visibility constraints on the read, utilizes the specified write version
-   * to perform 
+   * to perform
    * @param row
    * @param column
    * @param expectedValue
@@ -196,7 +196,7 @@ public interface VersionedColumnarTable {
       long writeVersion);
 
   /**
-   * Formats this table, completely wiping all data irrecoverably.
+   * Clears this table, completely wiping all data irrecoverably.
    */
-  public void format();
+  public void clear();
 }

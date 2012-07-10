@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.executor.simple;
 
 import com.continuuity.api.data.*;
-import com.continuuity.data.operation.FormatFabric;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -174,8 +174,8 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(FormatFabric formatFabric) {
+  public void execute(ClearFabric clearFabric) {
     // TODO Auto-generated method stub
-    
+
   }
 }

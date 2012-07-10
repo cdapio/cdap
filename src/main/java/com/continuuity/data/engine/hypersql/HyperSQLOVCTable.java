@@ -103,7 +103,7 @@ implements OrderedVersionedColumnarTable {
   // Administrative Operations
 
   @Override
-  public void format() {
+  public void clear() {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement("DELETE FROM " + this.tableName);
@@ -120,7 +120,7 @@ implements OrderedVersionedColumnarTable {
       }
     }
   }
-  
+
   // Simple Write Operations
 
   @Override
@@ -459,7 +459,7 @@ implements OrderedVersionedColumnarTable {
         // See if we already included this row
         byte [] row = result.getBytes(1);
         if (Bytes.equals(lastRow, row)) continue;
-        
+
         // See if this is a new row (clear col/del tracking if so)
         if (!Bytes.equals(curRow, row)) {
           lastCol = new byte[0];
@@ -468,12 +468,12 @@ implements OrderedVersionedColumnarTable {
           undeleted = -1;
         }
         curRow = row;
-        
+
         // Check visibility of this entry
         long curVersion = result.getLong(3);
         // Check if this entry is visible, skip if not
         if (!readPointer.isVisible(curVersion)) continue;
-      
+
         byte [] column = result.getBytes(2);
         // Check if this column has been completely deleted
         if (Bytes.equals(lastCol, column)) {

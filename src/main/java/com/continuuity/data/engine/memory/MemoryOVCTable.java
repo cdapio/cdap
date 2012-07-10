@@ -29,16 +29,16 @@ import com.google.common.base.Objects;
 
 /**
  * An in-memory implementation of a column-oriented table similar to HBase.
- * 
+ *
  * A row has one or more columns, and a column has one or more versions.
- * 
+ *
  * Columns are sorted in ascending binary order, versions of a column are sorted
  * in descending timestamp order.
- * 
+ *
  * This version of MemoryTable is currently NOT sorted by row.
  */
 public class MemoryOVCTable implements OrderedVersionedColumnarTable {
-  
+
   private final byte[] name;
 
   private final ConcurrentNavigableMap<Row, // row to
@@ -53,7 +53,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void format() {
+  public void clear() {
     map.clear();
   }
 
@@ -109,7 +109,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       Version.Type type) {
     performDelete(row, new byte [][] { column }, version, type);
   }
-  
+
   private void performDelete(byte [] row, byte [][] columns, long version,
       Version.Type type) {
     Row r = new Row(row);
@@ -120,7 +120,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
     unlockRow(r);
   }
-  
+
   @Override
   public Map<byte[], byte[]> get(byte[] row, ReadPointer pointer) {
     Row r = new Row(row);
@@ -228,7 +228,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
     return keys;
   }
-    
+
   private boolean hasAnyVisibleColumns(
       NavigableMap<Column, NavigableMap<Version, Value>> columns,
       ReadPointer readPointer) {
@@ -240,7 +240,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     }
     return false;
   }
-    
+
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow,
       ReadPointer readPointer) {
@@ -373,7 +373,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
    * Makes a copy of all visible versions of columns within the specified column
    * map, filtering out deleted values and everything with a version higher than
    * the specified version.
-   * 
+   *
    * @param columnMap
    * @param maxVersion
    * @return
@@ -409,7 +409,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
    * Returns the latest version of a column within the specified column map,
    * filtering out deleted values and everything with a version higher than the
    * specified version.
-   * 
+   *
    * @param columnMap
    * @param maxVersion
    * @return
@@ -443,7 +443,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   /**
    * Locks the specified row and returns the map of the columns of the row.
-   * 
+   *
    * @param row
    * @return
    */
