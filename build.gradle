@@ -25,7 +25,7 @@ tasks.withType(Compile) {
 dependencies {
 
     /// Internal dependencies.
-    if(multiModule)
+    if(multiModule && ! buildingRelease)
     {
         compile project(":flow")
         compile project(":flow").sourceSets.api.output
