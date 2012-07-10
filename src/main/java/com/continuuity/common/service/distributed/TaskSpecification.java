@@ -1,9 +1,7 @@
 package com.continuuity.common.service.distributed;
 
-import ch.qos.logback.core.pattern.ConverterUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -18,12 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The parameters that are common to launching both application masters and node tasks via
- * a {@code ContainerLaunchContext} instance.
- *
- * TODO: TaskDescriptor and ResourceDescriptor make up a ContainerSpecification. When we refactor.
+ * The task specification has two parts to it, namely Resource specification and Execution specification.
  */
-public class ContainerGroupSpecification {
+public class TaskSpecification {
   private String user;
   private int memory;
   private int priority;
@@ -31,6 +26,20 @@ public class ContainerGroupSpecification {
   private Map<String, String> env;
   private List<String> commands;
   private Map<String, LocalResource> namedLocalResources;
+  private String id;
+
+
+  /**
+   * Returns the task id associated
+   * @return
+   */
+  public String getId() {
+    return id;
+  }
+
+  private void setId(String id) {
+    this.id = id;
+  }
 
   /**
    * Returns the user the container would run as
@@ -144,15 +153,21 @@ public class ContainerGroupSpecification {
   public static class Builder {
     private String user;
     private int memory;
-    private int priority;
-    private int numInstances;
+    private int priority = 0;
+    private int numInstances = 1;
     private Map<String, String> env = Maps.newHashMap();
     private List<String> commands = Lists.newArrayList();
     private Map<String, String> namedResources = Maps.newHashMap();
     private final Configuration configuration;
+    private String id;
 
     public Builder(Configuration configuration) {
       this.configuration = configuration;
+    }
+
+    public Builder setId(String id) {
+      this.id = id;
+      return this;
     }
 
     public Builder setUser(String user) {
@@ -190,14 +205,15 @@ public class ContainerGroupSpecification {
       return this;
     }
 
-    public ContainerGroupSpecification create() throws IOException {
-      ContainerGroupSpecification cgp = new ContainerGroupSpecification();
+    public TaskSpecification create() throws IOException {
+      TaskSpecification cgp = new TaskSpecification();
       cgp.setUser(user);
       cgp.setMemory(memory);
       cgp.setPriority(priority);
       cgp.setNumInstances(numInstances);
       cgp.setEnvironment(env);
       cgp.setCommands(commands);
+      cgp.setId(id);
 
       Map<String, LocalResource> localResourceMap = Maps.newHashMap();
       FileSystem fs = FileSystem.get(configuration);

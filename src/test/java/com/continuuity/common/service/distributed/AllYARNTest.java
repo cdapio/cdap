@@ -1,6 +1,6 @@
 package com.continuuity.common.service.distributed;
 
-import com.continuuity.common.service.distributed.yarn.ApplicationManagerServiceImpl;
+import com.continuuity.common.service.distributed.yarn.ApplicationMasterServiceImpl;
 import org.junit.Test;
 
 /**
@@ -10,7 +10,7 @@ public class AllYARNTest extends YARNTestBase {
 
   @Test
   public void simple() throws Exception {
-    ContainerGroupSpecification cgs = new ContainerGroupSpecification.Builder(getConfiguration())
+    TaskSpecification cgs = new TaskSpecification.Builder(getConfiguration())
       .setPriority(0)
       .setMemory(1024)
       .setNumInstances(2)
@@ -22,7 +22,7 @@ public class AllYARNTest extends YARNTestBase {
       .addConfiguration(getConfiguration())
       .create();
 
-    ApplicationMasterService appMasterService = new ApplicationManagerServiceImpl(ams);
+    ApplicationMasterService appMasterService = new ApplicationMasterServiceImpl(ams);
     appMasterService.start();
     Thread.sleep(1000);
 

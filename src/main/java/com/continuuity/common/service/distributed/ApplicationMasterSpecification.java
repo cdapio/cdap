@@ -29,7 +29,7 @@ public class ApplicationMasterSpecification {
   /**
    * Collection of container group parameters.
    */
-  private List<ContainerGroupSpecification> containerGroupSpecifications = Lists.newArrayList();
+  private List<TaskSpecification> taskSpecifications = Lists.newArrayList();
 
   /**
    * Number of failures of containers allowed across all the groups. -1 is unlimited.
@@ -81,12 +81,12 @@ public class ApplicationMasterSpecification {
    * Returns the parameters that will be used to launch the child containers for
    * this application.
    */
-  public List<ContainerGroupSpecification> getAllContainerGroups() {
-    return containerGroupSpecifications;
+  public List<TaskSpecification> getAllContainerGroups() {
+    return taskSpecifications;
   }
 
-  private void setAllContainerGroups(List<ContainerGroupSpecification> containerGroupSpecifications) {
-    this.containerGroupSpecifications = containerGroupSpecifications;
+  private void setAllContainerGroups(List<TaskSpecification> taskSpecifications) {
+    this.taskSpecifications = taskSpecifications;
   }
 
   /**
@@ -138,7 +138,7 @@ public class ApplicationMasterSpecification {
   public static class Builder {
     private Configuration configuration;
     private ApplicationAttemptId attemptId;
-    private List<ContainerGroupSpecification> containerGroupSpecifications = Lists.newArrayList();
+    private List<TaskSpecification> taskSpecifications = Lists.newArrayList();
     private int allowedFailures = -1;
     private String hostname = "";
     private int clientPort = 0;
@@ -159,8 +159,8 @@ public class ApplicationMasterSpecification {
       return this;
     }
 
-    public Builder addContainerGroupSpecification(ContainerGroupSpecification cgp) {
-      containerGroupSpecifications.add(cgp);
+    public Builder addContainerGroupSpecification(TaskSpecification cgp) {
+      taskSpecifications.add(cgp);
       return this;
     }
 
@@ -182,7 +182,7 @@ public class ApplicationMasterSpecification {
     public ApplicationMasterSpecification create() {
       ApplicationMasterSpecification amp = new ApplicationMasterSpecification(configuration);
       amp.setApplicationAttemptId(attemptId);
-      amp.setAllContainerGroups(containerGroupSpecifications);
+      amp.setAllContainerGroups(taskSpecifications);
       amp.setAllowedFailures(allowedFailures);
       amp.setHostname(hostname);
       amp.setClientPort(clientPort);

@@ -8,13 +8,13 @@ import org.junit.Test;
  *
  *
  */
-public class ContainerGroupSpecificationTest {
+public class TaskSpecificationTest {
 
   @Test
   public void testBasicGroupParameter() throws Exception {
     Configuration conf = new Configuration();
-    ContainerGroupSpecification cgp
-      = new ContainerGroupSpecification.Builder(conf)
+    TaskSpecification cgp
+      = new TaskSpecification.Builder(conf)
               .setMemory(1024)
               .addEnv("A", "B")
               .addEnv("C", "D")

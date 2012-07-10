@@ -1,6 +1,6 @@
 package com.continuuity.common.service.distributed.yarn;
 
-import com.continuuity.common.service.distributed.ContainerGroupSpecification;
+import com.continuuity.common.service.distributed.TaskSpecification;
 import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
 import org.apache.hadoop.yarn.api.records.Priority;
 import org.apache.hadoop.yarn.api.records.Resource;
@@ -19,17 +19,17 @@ public class ContainerLaunchContextFactory {
     this.clusterMax = clusterMax;
   }
 
-  public ContainerLaunchContext create(ContainerGroupSpecification specification) {
+  public ContainerLaunchContext create(TaskSpecification specification) {
     ContainerLaunchContext clc = Records.newRecord(ContainerLaunchContext.class);
     clc.setCommands(specification.getCommands());
     clc.setEnvironment(specification.getEnvironment());
-    //clc.setLocalResources(specification.getLocalResources());
+    clc.setLocalResources(specification.getNamedLocalResources());
     clc.setResource(specification.getContainerResource(clusterMin, clusterMax));
     clc.setUser(specification.getUser());
     return clc;
   }
 
-  public ResourceRequest createResourceRequest(ContainerGroupSpecification specification) {
+  public ResourceRequest createResourceRequest(TaskSpecification specification) {
     ResourceRequest req = Records.newRecord(ResourceRequest.class);
     req.setCapability(specification.getContainerResource(clusterMin, clusterMax));
     req.setPriority(createPriority(specification.getPriority()));

@@ -2,7 +2,7 @@ package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.ClientService;
 import com.continuuity.common.service.distributed.ClientSpecification;
-import com.continuuity.common.service.distributed.ContainerGroupSpecification;
+import com.continuuity.common.service.distributed.TaskSpecification;
 import com.continuuity.common.service.distributed.ResourceManagerConnectionHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -41,6 +41,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
     = EnumSet.of(YarnApplicationState.FAILED, YarnApplicationState.KILLED);
   private volatile boolean stopped = true;
   private volatile boolean failed = false;
+  private boolean useProvidedApplicationId = false;
 
   /**
    * Handler for managing connection to Resource manager.
@@ -70,6 +71,19 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
     }
   }
 
+  public ClientServiceImpl(ApplicationId applicationId, Configuration configuration) {
+    this(applicationId,  new ApplicationManagerConnectionHandler(configuration));
+  }
+
+  public ClientServiceImpl(ApplicationId applicationId, ApplicationManagerConnectionHandler appMgrHandler) {
+    Preconditions.checkNotNull(applicationId);
+    Preconditions.checkNotNull(appMgrHandler);
+    this.applicationId = applicationId;
+    this.appMgrHandler = appMgrHandler;
+    this.specification = null;
+    this.useProvidedApplicationId = true;
+  }
+
   public ClientServiceImpl(ClientSpecification specification) {
     this(specification, new ApplicationManagerConnectionHandler(specification.getConfiguration()));
   }
@@ -84,6 +98,15 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   public void startUp() {
     Log.info("Connecting to resource manager ...");
     appMgr = appMgrHandler.connect();
+
+    /**
+     *  If requested to use application id, then don't attempt to spawn a app master, but use
+     *  the application id for monitoring status and stopping the application.
+     */
+    if(useProvidedApplicationId) {
+      stopped = false;
+      return;
+    }
 
     /** Get a new application id. */
     GetNewApplicationResponse response = null;
@@ -110,7 +133,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       String user = UserGroupInformation.getCurrentUser().getShortUserName();
 
       /** Build the container specification for launching application manager. */
-      ContainerGroupSpecification.Builder builder = new ContainerGroupSpecification.Builder(specification.getConfiguration());
+      TaskSpecification.Builder builder = new TaskSpecification.Builder(specification.getConfiguration());
       builder.setMemory(specification.getMemory());
       for(String command : specification.getCommands()) {
         builder.addCommand(command);
@@ -120,7 +143,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       }
       builder.setUser(user);
       builder.setPriority(0);
-      ContainerGroupSpecification appMasterSpecs = builder.create();
+      TaskSpecification appMasterSpecs = builder.create();
 
       /** Create and populate container launch context. */
       ContainerLaunchContext clc = containerLaunchContextFactory.create(appMasterSpecs);
