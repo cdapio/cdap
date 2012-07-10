@@ -14,6 +14,8 @@ tasks.withType(Compile) {
  * Specify all the dependencies
  */
 dependencies {
+
+    // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.1'
     compile group: 'com.google.guava', name: 'guava', version: '12.+'
     compile group: 'com.netflix.curator', name: 'curator-framework', version: '1.1.+'
@@ -22,7 +24,7 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
     compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
 
-    /** All hadoop related dependencies */
+    // All hadoop related dependencies
     compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-annotations', version:'2.0.0-alpha'
     compile group: 'org.apache.hadoop', name: 'hadoop-common', version:'2.0.0-alpha'
@@ -30,8 +32,5 @@ dependencies {
     compile group: 'org.apache.hadoop', name: 'hadoop-yarn-api', version:'2.0.0-alpha'
     testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version:'2.0.0-alpha'
 
-    /** common test dependencies */
-    testCompile group: 'junit', name: 'junit', version: '4.+'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.+'
 }
 
