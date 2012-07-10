@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
@@ -422,9 +423,8 @@ public class TestUtil {
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
     // read the key/value back from the data fabric
-    Read read = new Read(key);
-    executor.execute(read);
-    byte[] bytes = read.getKeyResult();
+    ReadKey read = new ReadKey(key);
+    byte[] bytes = executor.execute(read);
     Assert.assertNotNull(bytes);
 
     // verify the read value is the same as the original value

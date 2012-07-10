@@ -1,9 +1,6 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.Write;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.FormatFabric;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
@@ -199,9 +196,8 @@ public class RestHandler extends NettyRestHandler {
         // Get the value from the data fabric
         byte[] value;
         try {
-          Read read = new Read(keyBinary);
-          this.accessor.getExecutor().execute(read);
-          value = read.getKeyResult();
+          ReadKey read = new ReadKey(keyBinary);
+          value = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
          LOG.error("Error reading value for key '" + key + "': " + e.getMessage() + ".", e);
           respondError(message.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -273,9 +269,8 @@ public class RestHandler extends NettyRestHandler {
       }
       case DELETE : {
         // first perform a Read to determine whether the key exists
-        Read read = new Read(keyBinary);
-        this.accessor.getExecutor().execute(read);
-        byte[] value = read.getKeyResult();
+        ReadKey read = new ReadKey(keyBinary);
+        byte[] value = this.accessor.getExecutor().execute(read);
         if (value == null) {
           // key does not exist -> Not Found
           respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
