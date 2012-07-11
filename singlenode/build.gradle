@@ -223,23 +223,23 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // dynamically generate "stageConf-[project]" tasks
 project.parent.subprojects.each { p ->
-    //println "    name: ${p.name}"
-    if (p.file('bin').isDirectory()) {
-        //println "configuring bin for ${p.name}"
-        applicationDistribution.from(project(":${p.name}").file('bin')) {
-            into "bin"
-            exclude 'node'
-            exclude 'far-server'
-            exclude 'run-java'
-            exclude 'flow-config.sh'
-            exclude 'flow-client'
-            def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-            cp += ":\$APP_HOME/conf/"
-            filter(ReplaceTokens, tokens: [classpath: cp])
-        }
-    } else {
-        //println "skipping bin for ${p.name} - no bin dir"
-    }
+    // skip the common bin scripts which are for distributed mode
+    if (p.name != "common") {
+        if (p.file('bin').isDirectory()) {
+            //println "configuring bin for ${p.name}"
+            applicationDistribution.from(project(":${p.name}").file('bin')) {
+                into "bin"
+                exclude 'node'
+                exclude 'far-server'
+                exclude 'run-java'
+                exclude 'flow-config.sh'
+                exclude 'flow-client'
+                def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+                cp += ":\$APP_HOME/conf/"
+                filter(ReplaceTokens, tokens: [classpath: cp])
+            }
+        } 
+    }         
 }
 
 // configurations/dependencies required for ant scp/ssh tasks
