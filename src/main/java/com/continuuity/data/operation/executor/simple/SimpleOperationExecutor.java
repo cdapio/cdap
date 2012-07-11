@@ -144,7 +144,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
     return false;
   }
 
-  @Override
   public OVCTableHandle getTableHandle() {
     return null;
   }

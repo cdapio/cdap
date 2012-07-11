@@ -2,7 +2,6 @@ package com.continuuity.data.operation.executor;
 
 
 import com.continuuity.api.data.ReadOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
 
 /**
  * TODO: Write some docs
@@ -14,7 +13,4 @@ import com.continuuity.data.table.OVCTableHandle;
 public interface OperationExecutor
   extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor,
           InternalOperationExecutor {
-
-  public OVCTableHandle getTableHandle();
-
 }

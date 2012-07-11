@@ -199,7 +199,6 @@ implements TransactionalOperationExecutor {
     return new BatchOperationResult(true);
   }
 
-  @Override
   public OVCTableHandle getTableHandle() {
     return this.tableHandle;
   }
