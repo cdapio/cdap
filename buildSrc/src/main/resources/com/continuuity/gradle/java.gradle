@@ -91,15 +91,21 @@ task classpathGenerator << {
 build.dependsOn classpathGenerator
 
 /**
+ * Determine if the release task was specified and set the release flag.
+ *
+ * This should result in projects building in "standalone" mode, pulling in dependent jars from artifactory
+ */
+if (gradle.startParameter.getTaskNames().contains('release')) {
+    getProject().extensions.getExtraProperties().set("buildingRelease", true);
+} 
+
+/**
  * Create Release TAR ball
  * To create distribution for each component - run gradle release
  */
 task release (type:  Tar, dependsOn: jar)  {
     group = 'Continuuity'
     description = 'Generates distribution tar file.'
-
-    /** Sets a property 'release' to true. This is used during inclusion of dependencies.*/
-    getProject().extensions.getExtraProperties().set("buildingRelease", true);
 
     /** Set the compression to gzip */
     compression = Compression.GZIP
@@ -133,3 +139,4 @@ task release (type:  Tar, dependsOn: jar)  {
       }
     }
 }
+
