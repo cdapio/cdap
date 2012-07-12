@@ -465,11 +465,12 @@ public class TTQueueOnVCTable implements TTQueue {
       if (!config.getPartitioner().shouldEmit(consumer,
           entryPointer.getEntryId(), data)) {
         // Partitioner says skip, flag as available, move to next entry in shard
-        EntryGroupMeta availableEntryGroupMeta = new EntryGroupMeta(
-            EntryGroupState.AVAILABLE, now(), consumer.getInstanceId());
-        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-            entryGroupMetaData, availableEntryGroupMeta.getBytes(),
-            dirty.getFirst(), dirty.getSecond());
+        if (TRACE) log("Partitioner rejected this entry, set available and skip");
+//        EntryGroupMeta availableEntryGroupMeta = new EntryGroupMeta(
+//            EntryGroupState.AVAILABLE, now(), consumer.getInstanceId());
+//        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+//            entryGroupMetaData, availableEntryGroupMeta.getBytes(),
+//            dirty.getFirst(), dirty.getSecond());
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;
@@ -487,7 +488,7 @@ public class TTQueueOnVCTable implements TTQueue {
         return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
       } else {
         // Someone else has grabbed it, on to the next one
-        if (TRACE) log("Got a collision trying to own " + entryPointer);
+        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;

@@ -1145,6 +1145,7 @@ public abstract class TestTTQueue {
     }
 
     // enqueue everything!
+    TTQueueOnVCTable.TRACE = true;
     for (int i=0; i<n*n; i++) {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
       numEnqueues++;
@@ -1163,7 +1164,9 @@ public abstract class TestTTQueue {
           waitForAndAssertCount(localdequeues, dequeuers[i][j].dequeues);
           DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
           assertNotNull(result);
-          assertEquals((long)(k*n)+j, Bytes.toLong(result.getValue()));
+          assertEquals("i=" + i + ", j=" + j + ", k=" + k + ", threadid=" +
+              dequeuers[i][j].getId(),
+              (long)(k*n)+j, Bytes.toLong(result.getValue()));
           assertTrue("i=" + i + ",j=" + j + ",k=" + k,
               queue.ack(result.getEntryPointer(), consumers[i][j]));
           assertTrue(queue.finalize(result.getEntryPointer(), consumers[i][j],
@@ -1173,6 +1176,7 @@ public abstract class TestTTQueue {
         }
       }
     }
+    TTQueueOnVCTable.TRACE = false;
 
     // everyone should be empty
     for (int i=0; i<n; i++) {
