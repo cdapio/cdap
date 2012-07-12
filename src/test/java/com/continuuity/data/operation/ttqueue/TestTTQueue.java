@@ -413,8 +413,9 @@ public abstract class TestTTQueue {
     // but should not actually be "empty"
     // if we change config it should break
     QueueConfig badConfig = new QueueConfig(partitioner, !singleEntry);
-    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isFailure());
-
+    result = queue.dequeue(consumer, badConfig, dirtyReadPointer);
+    assertTrue("Expected failure but dequeue result was: " + result.toString(),
+        result.isFailure());
 
     // now sleep timeout+1 to allow semi-ack to timeout
     Thread.sleep(semiAckedTimeout + 1);
