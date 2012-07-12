@@ -43,6 +43,16 @@ public class GroupState {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof GroupState)) return false;
+    GroupState gs = (GroupState)o;
+    if (gs.getGroupSize() != this.groupSize) return false;
+    if (!gs.getHead().equals(this.head)) return false;
+    if (gs.getMode() != this.mode) return false; 
+    return true;
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("groupSize", this.groupSize)

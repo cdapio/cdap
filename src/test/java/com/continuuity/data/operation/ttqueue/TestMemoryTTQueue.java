@@ -17,6 +17,6 @@ public class TestMemoryTTQueue extends TestTTQueue {
 
   @Override
   protected int getNumIterations() {
-    return 2500;
+    return 250;
   }
 }
