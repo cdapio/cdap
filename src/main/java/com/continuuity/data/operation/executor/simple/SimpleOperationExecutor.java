@@ -1,37 +1,23 @@
 package com.continuuity.data.operation.executor.simple;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
-import com.continuuity.data.operation.FormatFabric;
+import com.continuuity.api.data.*;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OrderedWrite;
 import com.continuuity.data.operation.ReadModifyWrite;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.continuuity.data.table.OVCTableHandle;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class SimpleOperationExecutor implements OperationExecutor {
 
@@ -123,7 +109,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
             inc.getAmounts()[0]);
     Map<byte[],Long> map = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     map.put(Operation.KV_COL, amount);
-    inc.setResult(map);
     return true;
   }
 
@@ -159,7 +144,6 @@ public class SimpleOperationExecutor implements OperationExecutor {
     return false;
   }
 
-  @Override
   public OVCTableHandle getTableHandle() {
     return null;
   }
@@ -189,8 +173,8 @@ public class SimpleOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(FormatFabric formatFabric) {
+  public void execute(ClearFabric clearFabric) {
     // TODO Auto-generated method stub
-    
+
   }
 }

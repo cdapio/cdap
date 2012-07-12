@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.data.operation.FormatFabric;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
@@ -8,7 +8,7 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 
 public interface InternalOperationExecutor {
-  
+
   // TTQueues
 
   public DequeueResult execute(QueueDequeue dequeue);
@@ -19,5 +19,5 @@ public interface InternalOperationExecutor {
 
   // Fabric Administration
 
-  public void execute(FormatFabric formatFabric);
+  public void execute(ClearFabric clearFabric);
 }

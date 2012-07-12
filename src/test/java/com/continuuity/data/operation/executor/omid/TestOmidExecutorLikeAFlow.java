@@ -1,51 +1,29 @@
 package com.continuuity.data.operation.executor.omid;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.continuuity.api.data.*;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.executor.BatchOperationResult;
+import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
+import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
+import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.table.OVCTableHandle;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
-import com.continuuity.data.operation.FormatFabric;
-import com.continuuity.data.operation.executor.BatchOperationResult;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
-import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.table.OVCTableHandle;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.*;
 
 public class TestOmidExecutorLikeAFlow {
 
@@ -89,7 +67,7 @@ public class TestOmidExecutorLikeAFlow {
     this.executor.execute(new QueueDequeue(queueName, consumer, config));
 
     QueueMeta meta = this.executor.execute(new GetQueueMeta(queueName));
-    
+
     assertEquals(1L, meta.getCurrentWritePointer());
     assertEquals(1L, meta.getGlobalHeadPointer());
     assertEquals(1, meta.getGroups().length);
@@ -97,14 +75,14 @@ public class TestOmidExecutorLikeAFlow {
   }
 
   @Test
-  public void testFormatFabric() throws Exception {
-    byte [] queueName = Bytes.toBytes("queue://testFormatFabric_queue");
-    byte [] streamName = Bytes.toBytes("stream://testFormatFabric_stream");
-    byte [] keyAndValue = Bytes.toBytes("testFormatFabric");
+  public void testClearFabric() throws Exception {
+    byte [] queueName = Bytes.toBytes("queue://testClearFabric_queue");
+    byte [] streamName = Bytes.toBytes("stream://testClearFabric_stream");
+    byte [] keyAndValue = Bytes.toBytes("testClearFabric");
 
-    // format first to catch ENG-375
-    this.executor.execute(new FormatFabric());
-    
+    // clear first to catch ENG-375
+    this.executor.execute(new ClearFabric());
+
     long groupid = this.executor.execute(new GetGroupID(queueName));
     assertEquals(1L, groupid);
 
@@ -116,7 +94,7 @@ public class TestOmidExecutorLikeAFlow {
     this.executor.execute(new QueueEnqueue(queueName, queueName));
     this.executor.execute(new QueueEnqueue(streamName, streamName));
     this.executor.execute(new Write(keyAndValue, keyAndValue));
-    
+
     // verify it can all be read
     assertTrue(this.executor.execute(
         new QueueDequeue(queueName, consumer, config)).isSuccess());
@@ -124,7 +102,7 @@ public class TestOmidExecutorLikeAFlow {
         new QueueDequeue(streamName, consumer, config)).isSuccess());
     assertTrue(Bytes.equals(keyAndValue, this.executor.execute(
         new ReadKey(keyAndValue))));
-    
+
     // and it can be read twice
     assertTrue(this.executor.execute(
         new QueueDequeue(queueName, consumer, config)).isSuccess());
@@ -132,10 +110,10 @@ public class TestOmidExecutorLikeAFlow {
         new QueueDequeue(streamName, consumer, config)).isSuccess());
     assertTrue(Bytes.equals(keyAndValue, this.executor.execute(
         new ReadKey(keyAndValue))));
-    
-    // but if we format the fabric they all disappear
-    this.executor.execute(new FormatFabric());
-    
+
+    // but if we clear the fabric they all disappear
+    this.executor.execute(new ClearFabric());
+
     // everything is gone!
     assertTrue(this.executor.execute(
         new QueueDequeue(queueName, consumer, config)).isEmpty());

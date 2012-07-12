@@ -1,13 +1,11 @@
 package com.continuuity.api.data;
 
-import java.util.Map;
-
 /**
  * Read a range of columns in a row.
  * 
  * Supports only columnar operations.
  */
-public class ReadColumnRange implements ReadOperation<Map<byte[], byte[]>> {
+public class ReadColumnRange implements ReadOperation {
 
   /** The row */
   private final byte [] key;
@@ -20,9 +18,6 @@ public class ReadColumnRange implements ReadOperation<Map<byte[], byte[]>> {
   
   /** The maximum number of columns to return (CURRENTLY NOT SUPPORTED) */
   private final int limit;
-
-  /** The read columns */
-  private Map<byte[], byte[]> result;
 
   /**
    * Reads the range of columns in the specified row that are sorted after the
@@ -86,15 +81,4 @@ public class ReadColumnRange implements ReadOperation<Map<byte[], byte[]>> {
   int getLimit() {
     return this.limit;
   }
-
-  @Override
-  public Map<byte[], byte[]> getResult() {
-    return this.result;
-  }
-  
-  @Override
-  public void setResult(Map<byte[], byte[]> result) {
-    this.result = result;
-  }
-
 }

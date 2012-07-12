@@ -11,11 +11,9 @@ public class QueueAdmin {
   /**
    * Generates and returns a unique group id for the speicified queue.
    */
-  public static class GetGroupID implements ReadOperation<Long> {
+  public static class GetGroupID implements ReadOperation {
 
     private final byte [] queueName;
-
-    private long result;
 
     public GetGroupID(final byte [] queueName) {
       this.queueName = queueName;
@@ -26,30 +24,17 @@ public class QueueAdmin {
     }
 
     @Override
-    public void setResult(Long result) {
-      this.result = result;
-    }
-
-    @Override
-    public Long getResult() {
-      return this.result;
-    }
-
-    @Override
     public String toString() {
       return Objects.toStringHelper(this)
           .add("queuename", Bytes.toString(this.queueName))
-          .add("result", this.result)
           .toString();
     }
 
   }
 
-  public static class GetQueueMeta implements ReadOperation<QueueMeta> {
+  public static class GetQueueMeta implements ReadOperation {
 
     private final byte [] queueName;
-
-    private QueueMeta result;
 
     public GetQueueMeta(byte [] queueName) {
       this.queueName = queueName;
@@ -60,20 +45,9 @@ public class QueueAdmin {
     }
 
     @Override
-    public void setResult(QueueMeta result) {
-      this.result = result;
-    }
-
-    @Override
-    public QueueMeta getResult() {
-      return this.result;
-    }
-
-    @Override
     public String toString() {
       return Objects.toStringHelper(this)
           .add("queuename", Bytes.toString(this.queueName))
-          .add("result", this.result)
           .toString();
     }
 

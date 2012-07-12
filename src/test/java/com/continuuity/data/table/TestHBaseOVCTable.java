@@ -11,7 +11,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 public class TestHBaseOVCTable extends TestOVCTable {
-  
+
   private static Injector injector;
 
   @BeforeClass
@@ -33,17 +33,17 @@ public class TestHBaseOVCTable extends TestOVCTable {
       throw new RuntimeException(e);
     }
   }
-  
+
   @Override
   protected OVCTableHandle getTableHandle() {
     return injector.getInstance(OVCTableHandle.class);
   }
 
   // Tests that do not work on HBase
-  
+
   @Override @Test @Ignore
-  public void testFormatVerySimply() {}
-  
+  public void testClearVerySimply() {}
+
   // These tests don't pass yet for hbase
 
 //  @Override @Test @Ignore

@@ -78,10 +78,10 @@ public interface TTQueueTable {
 
   /**
    * Generates and returns a unique group id for the specified queue.
-   * 
+   *
    * Note: uniqueness only guaranteed if you always use this call to generate
    * groups ids.
-   * 
+   *
    * @param queueName
    * @return a unique group id for the specified queue
    */
@@ -96,12 +96,12 @@ public interface TTQueueTable {
   public QueueMeta getQueueMeta(byte [] queueName);
 
   /**
-   * Formats this queue table, completely wiping all queues.
+   * Clears this queue table, completely wiping all queues.
    */
-  public void format();
-  
+  public void clear();
+
   // Old debugging methods
-  
+
   public String getGroupInfo(byte[] queueName, int groupId);
 
   public String getEntryInfo(byte[] queueName, long entryId);

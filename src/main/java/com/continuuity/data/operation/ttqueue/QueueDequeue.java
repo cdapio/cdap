@@ -7,13 +7,11 @@ import com.continuuity.api.data.ReadOperation;
  * starting from the head of the queue. Entry selected depends on the mode of
  * dequeue execution.
  */
-public class QueueDequeue implements ReadOperation<DequeueResult> {
+public class QueueDequeue implements ReadOperation {
 
   private final byte [] queueName;
   private final QueueConsumer consumer;
   private final QueueConfig config;
-
-  private DequeueResult result;
 
   public QueueDequeue(final byte [] queueName, final QueueConsumer consumer,
       final QueueConfig config) {
@@ -32,14 +30,5 @@ public class QueueDequeue implements ReadOperation<DequeueResult> {
 
   public QueueConfig getConfig() {
     return this.config;
-  }
-  @Override
-  public void setResult(DequeueResult result) {
-    this.result = result;
-  }
-
-  @Override
-  public DequeueResult getResult() {
-    return this.result;
   }
 }
