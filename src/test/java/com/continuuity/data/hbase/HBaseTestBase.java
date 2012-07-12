@@ -74,10 +74,12 @@ public abstract class HBaseTestBase {
   
   // Test startup / teardown
 
-  @SuppressWarnings("deprecation")
   @BeforeClass
   public static void startHBase() throws Exception {
     conf = new Configuration();
+    // Set any necessary configurations (disable UIs to prevent port conflicts)
+    conf.setInt("hbase.regionserver.info.port", -1);
+    conf.setInt("hbase.master.info.port", -1);
     
     // Start ZooKeeper
     
