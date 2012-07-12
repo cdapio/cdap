@@ -406,24 +406,19 @@ public abstract class TestTTQueue {
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
     assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
 
-
     // queue should be empty
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
 
-    // but should not actually be "empty"
-    // if we change config it should break
-    QueueConfig badConfig = new QueueConfig(partitioner, !singleEntry);
-    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isFailure());
-
+    // since there are no pending entries, we can change our config
+    QueueConfig newConfig = new QueueConfig(partitioner, !singleEntry);
+    assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
 
     // now sleep timeout+1 to allow semi-ack to timeout
     Thread.sleep(semiAckedTimeout + 1);
 
-    // queue should be empty still
+    // queue should be empty still, and both configs should work
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
-
-    // now actually empty, changing config works and still empty!
-    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isEmpty());
+    assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
   }
 
   @Test
@@ -632,12 +627,8 @@ public abstract class TestTTQueue {
     assertTrue(queue.ack(resultOne.getEntryPointer(), consumer));
     assertTrue(queue.finalize(resultOne.getEntryPointer(), consumer, -1));
 
-    // though we are empty, the requirement is that you have to actually
-    // dequeue until you verify as empty, so trying a change now will fail
-    assertTrue(queue.dequeue(consumer, singleConfig, readPointer).isFailure());
-
-    // doing a dequeue with the old mode first will return empty
-    assertTrue(queue.dequeue(consumer, multiConfig, readPointer).isEmpty());
+    // everything is empty now, should be able to change config
+    assertTrue(queue.dequeue(consumer, singleConfig, readPointer).isEmpty());
 
     // now we are empty, try to change modes now, should pass and be empty
     DequeueResult result = queue.dequeue(consumer, singleConfig, readPointer);
