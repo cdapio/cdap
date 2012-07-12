@@ -465,12 +465,7 @@ public class TTQueueOnVCTable implements TTQueue {
       if (!config.getPartitioner().shouldEmit(consumer,
           entryPointer.getEntryId(), data)) {
         // Partitioner says skip, flag as available, move to next entry in shard
-        if (TRACE) log("Partitioner rejected this entry, set available and skip");
-//        EntryGroupMeta availableEntryGroupMeta = new EntryGroupMeta(
-//            EntryGroupState.AVAILABLE, now(), consumer.getInstanceId());
-//        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-//            entryGroupMetaData, availableEntryGroupMeta.getBytes(),
-//            dirty.getFirst(), dirty.getSecond());
+        if (TRACE) log("Partitioner rejected this entry, skip");
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;
@@ -685,13 +680,22 @@ public class TTQueueOnVCTable implements TTQueue {
           readPointer);
       if (entryGroupMetaData == null || entryGroupMetaData.length == 0) {
         // Group has not processed this entry yet, consider available for now
-        // (no pending entries, return false)
-        return false;
+        // There can currently be gaps in entries without group data in the case
+        // of using a hash partitioner.
+        // TODO: Optimize this (ENG-416)
+        curEntry = new EntryPointer(curEntry.getEntryId() + 1,
+            curEntry.getShardId());
+        continue;
       } else {
         EntryGroupMeta entryGroupMeta =
             EntryGroupMeta.fromBytes(entryGroupMetaData);
         // If we have an entry that is in a dequeued state, pending entry!
-        if (entryGroupMeta.isDequeued()) return true;
+        if (entryGroupMeta.isDequeued()) {
+          if (TRACE)
+            log("In pending entry check, found dequeued entry : " +
+                entryGroupMeta + " , " + curEntry);
+          return true;
+        }
         // Otherwise, it's either available or acked, both are okay, move entry
         curEntry = new EntryPointer(curEntry.getEntryId() + 1,
             curEntry.getShardId());
