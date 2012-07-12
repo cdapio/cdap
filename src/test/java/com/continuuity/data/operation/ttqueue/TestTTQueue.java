@@ -1365,7 +1365,6 @@ public abstract class TestTTQueue {
     }
 
     // enqueue everything!
-    TTQueueOnVCTable.TRACE = true;
     for (int i=0; i<n*n; i++) {
       assertTrue(queue.enqueue(values[i], version).isSuccess());
       numEnqueues++;
@@ -1396,7 +1395,6 @@ public abstract class TestTTQueue {
         }
       }
     }
-    TTQueueOnVCTable.TRACE = false;
 
     // everyone should be empty
     for (int i=0; i<n; i++) {
