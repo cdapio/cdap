@@ -2,20 +2,20 @@ package com.continuuity.api.data;
 
 /**
  * Read a range of columns in a row.
- * 
+ *
  * Supports only columnar operations.
  */
 public class ReadColumnRange implements ReadOperation {
 
   /** The row */
   private final byte [] key;
-  
+
   /** The start column (null for first column) */
   private final byte [] startColumn;
-  
+
   /** The stop column (null for last column) */
   private final byte [] stopColumn;
-  
+
   /** The maximum number of columns to return (CURRENTLY NOT SUPPORTED) */
   private final int limit;
 
@@ -48,9 +48,9 @@ public class ReadColumnRange implements ReadOperation {
    * Reads the range of columns in the specified row that are sorted after the
    * specified start column, inclusive, and before the specified stop column,
    * exclusive.
-   * 
+   *
    * Currently private because limit is unsupported.
-   * 
+   *
    * @param row the row
    * @param startColumn the first column in the range to be read, inclusive,
    *                    or null to start at the beginning of the range
@@ -78,7 +78,7 @@ public class ReadColumnRange implements ReadOperation {
     return this.stopColumn;
   }
 
-  int getLimit() {
+  public int getLimit() {
     return this.limit;
   }
 }

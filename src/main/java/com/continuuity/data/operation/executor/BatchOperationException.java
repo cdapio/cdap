@@ -6,4 +6,8 @@ public class BatchOperationException extends Exception {
   public BatchOperationException(String msg) {
     super(msg);
   }
+
+  public BatchOperationException(String msg, Exception cause) {
+    super(msg, cause);
+  }
 }

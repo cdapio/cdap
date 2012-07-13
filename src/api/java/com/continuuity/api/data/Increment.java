@@ -2,20 +2,20 @@ package com.continuuity.api.data;
 
 /**
  * Atomic increment operation.
- * 
+ *
  * Performs increments of 8 byte (long) keys and columns.  The increment is
  * performed atomically and the post-incremented value is returned.
- * 
+ *
  * Supports key-value and columnar operations.
  */
 public class Increment implements WriteOperation, ReadOperation {
 
   /** The key/row */
   private final byte [] key;
-  
+
   /** The columns to be incremented */
   private final byte [][] columns;
-  
+
   /** The amounts to increment the columns by */
   private final long [] amounts;
 
@@ -100,5 +100,18 @@ public class Increment implements WriteOperation, ReadOperation {
       throw new IllegalArgumentException("Number of columns (" +
           columns.length + ") does not match number of amounts (" +
           amounts.length + ")");
+  }
+
+  public String toString() {
+    StringBuilder builder = new StringBuilder("Increment '");
+    builder.append(new String(this.getKey()));
+    builder.append("':");
+    for (int i = 0; i < this.columns.length; i++) {
+      builder.append(" '");
+      builder.append(new String(this.columns[i]));
+      builder.append("'+=");
+      builder.append(this.amounts[i]);
+    }
+    return builder.toString();
   }
 }

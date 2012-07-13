@@ -61,15 +61,24 @@ public class QueueAdmin {
     public long getGlobalHeadPointer() {
       return this.globalHeadPointer;
     }
-    
+
     public long getCurrentWritePointer() {
       return this.currentWritePointer;
     }
-    
+
     public GroupState [] getGroups() {
       return this.groups;
     }
-    
+
+    public QueueMeta() { }
+
+    public QueueMeta(long globalHeadPointer, long currentWritePointer,
+                     GroupState[] groups) {
+      this.globalHeadPointer = globalHeadPointer;
+      this.currentWritePointer = globalHeadPointer;
+      this.groups = groups;
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
