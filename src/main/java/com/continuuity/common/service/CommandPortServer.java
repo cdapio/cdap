@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Map;
 
 /**
@@ -66,6 +67,11 @@ public class CommandPortServer {
   private boolean running = true;
 
   /**
+   * Time the server socket with be in accept state.
+   */
+  private static final int SERVERSOCKET_TIMEOUT = 1000;
+
+  /**
    * Creates an instance of CommandPortServer.
    *
    * @param serverName name of the service that uses command port.
@@ -112,8 +118,14 @@ public class CommandPortServer {
 
     try {
       port = serverSocket.getLocalPort();
+      serverSocket.setSoTimeout(SERVERSOCKET_TIMEOUT);
       while(running) {
-        Socket socket = serverSocket.accept(); /** wait for connection */
+        Socket socket = null;
+        try {
+          socket = serverSocket.accept(); /** wait for connection */
+        } catch (SocketTimeoutException e) {
+          continue;
+        }
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
         String command = fromClient.readLine();
