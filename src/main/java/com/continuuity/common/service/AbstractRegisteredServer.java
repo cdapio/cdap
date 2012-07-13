@@ -8,6 +8,7 @@ import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -39,10 +40,21 @@ public abstract class AbstractRegisteredServer {
   private CommandPortServer cmdPortServer;
 
   /**
+   * Indicates whether the registered server has started or no.
+   */
+  private volatile boolean running = false;
+
+  /**
    * Server thread returned from starting of the service. The service thread is
    * actually managedby the AbstractRegisteredServer.
    */
   private Thread serverThread;
+
+  /**
+   * Defines the time start will wait till it's started. if server is not started even after this
+   * time, then there is an issue and will throw a ServerException.
+   */
+  private static final long START_WAIT_TIME = 5 * 1000;
 
   /**
    * Set server name
@@ -156,17 +168,37 @@ public abstract class AbstractRegisteredServer {
       if(serverThread == null) {
         throw new ServerException("Thread returned from start is null");
       }
+
+      serverThread.setName(getServerName() + "-Thread");
       serverThread.start();
       cmdPortServer.serve();
+
+      // We wait till we either find that the service has started or reaches timeout.
+      StopWatch watch = new StopWatch();
+      watch.start();
+      while(watch.getTime() < START_WAIT_TIME) {
+        if(ruok()) {
+          running = true;
+          break;
+        }
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException e) {}
+      }
+      if(!running) {
+        throw new ServerException("Service not started even after waiting for " + START_WAIT_TIME + "ms.");
+      }
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
       stop(true);
       throw new ServerException("Unable to register the cmdPortServer with discovery service");
     } catch (CommandPortServer.CommandPortException e) {
       Log.warn("Error starting the command port service. Service not started. Reason : {}", e.getMessage());
+      stop(true);
       throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
     } catch (IOException e) {
       Log.error("Error starting the command port service. Reason : {}", e.getMessage());
+      stop(true);
       throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
     }
   }
@@ -178,8 +210,12 @@ public abstract class AbstractRegisteredServer {
    */
   public final void stop(boolean now) {
     try {
-      client.close();
-      cmdPortServer.stop();
+      if(client != null) {
+        client.close();
+      }
+      if(cmdPortServer != null) {
+        cmdPortServer.stop();
+      }
     } catch (IOException e) {
       Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
     }
