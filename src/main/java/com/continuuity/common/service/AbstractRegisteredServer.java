@@ -1,15 +1,14 @@
 package com.continuuity.common.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 
 import java.io.IOException;
 
@@ -212,7 +211,7 @@ public abstract class AbstractRegisteredServer {
    * @return Pair of args for registering the service and the port service is running on.
    */
   protected abstract ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
-    configure(String[] args, Configuration conf);
+    configure(String[] args, CConfiguration conf);
 
 
 }
