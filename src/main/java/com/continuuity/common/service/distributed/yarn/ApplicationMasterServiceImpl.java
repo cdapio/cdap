@@ -320,34 +320,43 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      */
     public boolean process() {
       Log.info("Starting TaskHandler process");
-      if(shouldProceed()) {
 
+      if(shouldProceed()) {
+        Log.info("Inside shoudlProceed");
         /**
          * Go through the tasks specification and figure out if there are any tasks that are not running.
          */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
         for(TaskSpecification specification : specifications) {
           if(runningTasks.containsKey(specification.getId())) {
+            Log.info("found task that was is already running.");
             continue;
           }
+          Log.info("Adding a task for resource request to resource manager.");
           ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specification);
           req.setNumContainers(specification.getNumInstances());
           resourceRequests.add(req);
           requested++;
         }
 
+        Log.info("total tasks requested : {}", requested);
+
         /**
          * If there are no resources to be requested from resource manager, we need to still
          * make a make a call with num instances set to 0.
          */
         if(resourceRequests.isEmpty()) {
+          Log.info("Resource request is empty adding an empty resource request.");
           ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specifications.get(0));
           resourceRequests.add(req);
         }
 
         /** Make a request to allocate the containers. */
+        Log.info("Total requested {}, Total releasing {}", resourceRequests.size(), releaseContainers.size());
         AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, releaseContainers);
         List<Container> newContainers = response.getAllocatedContainers();
+
+        Log.info("Received {} new containers to be allocated.", newContainers.size());
 
         /** Iterate through each container and assign them to a non running task specification */
         for(final Container container : newContainers) {
@@ -360,6 +369,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
               }
               Resource resource = container.getResource();
               if (resource.getMemory() == input.getMemory()) {
+                Log.info("Found matching resource for container {}", container.toString());
                 return true;
               }
               return false;
@@ -370,9 +380,12 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
            * If we have found a specification that matches the container allocated, start it and add that
            * the list of running containers after starting it.
            */
+
           if(matchingSpec.isPresent()) {
+            Log.info("Matching container found. Assigning task to it.");
             TaskSpecification specification = matchingSpec.get();
             if(! containerMgrs.containsKey(container.getId())) {
+              Log.info("Adding a container manager.");
               ContainerHandler cm = new ContainerHandler(container, specification);
               containerMgrs.put(container.getId(), cm);
               runningTasks.put(specification.getId(), container.getId());
