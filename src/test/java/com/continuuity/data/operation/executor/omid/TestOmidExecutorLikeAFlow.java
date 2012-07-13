@@ -1,37 +1,53 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.*;
-import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.executor.BatchOperationResult;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
-import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.table.OVCTableHandle;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.executor.BatchOperationResult;
+import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
+import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
+import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
+import com.continuuity.data.table.OVCTableHandle;
 
-import static org.junit.Assert.*;
-
-public class TestOmidExecutorLikeAFlow {
+public abstract class TestOmidExecutorLikeAFlow {
 
   private OmidTransactionalOperationExecutor executor;
 
   private OVCTableHandle handle;
-
-  private static Injector injector;
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
@@ -39,19 +55,22 @@ public class TestOmidExecutorLikeAFlow {
 
   @BeforeClass
   public static void initializeClass() {
-    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
     OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 200;
     OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 5;
   }
 
   @Before
   public void initializeBefore() {
-    this.executor =
-        (OmidTransactionalOperationExecutor)injector.getInstance(
-            OperationExecutor.class);
-    this.handle = this.executor.getTableHandle();
+    this.executor = getOmidExecutor();
+    this.handle = getTableHandle();
   }
 
+  protected abstract OmidTransactionalOperationExecutor getOmidExecutor();
+  
+  protected abstract OVCTableHandle getTableHandle();
+
+  protected abstract int getNumIterations();
+  
   @Test
   public void testGetGroupIdAndGetGroupMeta() throws Exception {
     byte [] queueName = Bytes.toBytes("testGetGroupIdAndGetGroupMeta");
@@ -478,7 +497,7 @@ public class TestOmidExecutorLikeAFlow {
   public void testLotsOfEnqueuesThenDequeues() throws Exception {
 
     byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
-    int numEntries = 1000;
+    int numEntries = getNumIterations();
 
     long startTime = System.currentTimeMillis();
 
@@ -551,7 +570,7 @@ public class TestOmidExecutorLikeAFlow {
   public void testConcurrentEnqueueDequeue() throws Exception {
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
-    final int n = 50000;
+    final int n = getNumIterations();
     final byte [] queueName = Bytes.toBytes("testConcurrentEnqueueDequeue");
 
     // Create and start a thread that dequeues in a loop
@@ -644,7 +663,7 @@ public class TestOmidExecutorLikeAFlow {
 
                 // Create P producer threads, each inserts N queue entries
                 int p = 5;
-                int n = 2000;
+                int n = getNumIterations();
                 Producer [] producers = new Producer[p];
                 for (int i=0;i<p;i++) {
                   producers[i] = new Producer(i, n, enqueuedMap);
