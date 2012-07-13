@@ -242,16 +242,18 @@ public class TTQueueOnVCTable implements TTQueue {
           break;
         }
 
-        // Group size and/or execution mode do not match, check if group empty
-        if (!groupIsEmpty(groupState, consumer.getGroupId(),
+        // Group configuration has changed
+        if (groupHasPendingEntries(groupState, consumer.getGroupId(),
             dirty.getFirst())) {
-          // Group is not empty, cannot change group size or exec mode
-          if (TRACE) log("Attempted to change group config but it is not empty");
+          // Group has pending entries but reconfig was attempted, fail
+          if (TRACE)
+            log("Attempted to change group config but entries pending");
           return new DequeueResult(DequeueStatus.FAILURE,
-              "Attempted to change group configuration when group not empty");
+              "Attempted to change group configuration but group has pending " +
+                  "entries not acked");
         }
-
-        // Group is empty so we can reconfigure, attempt atomic reconfig
+        
+        // Group has no outstanding entries, attempt atomic reconfig
         groupState = new GroupState(consumer.getGroupSize(),
             groupState.getHead(), ExecutionMode.fromQueueConfig(config));
         if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
@@ -263,7 +265,7 @@ public class TTQueueOnVCTable implements TTQueue {
           break;
         } else {
           // Update of group meta failed, someone else conflicted, loop
-          log("Group config update failed");
+          log("Group config atomic update failed, retry group validate");
           continue;
         }
       }
@@ -439,8 +441,9 @@ public class TTQueueOnVCTable implements TTQueue {
             }
           }
 
-          if (entryGroupMeta.getTimestamp() + this.maxAgeBeforeExpirationInMillis >=
-              now()) {
+          if (entryGroupMeta.isDequeued() &&
+              entryGroupMeta.getTimestamp() +
+                this.maxAgeBeforeExpirationInMillis >= now()) {
             log("Entry is dequeued but not expired! (entryGroupMetaTS=" +
                 entryGroupMeta.getTimestamp() + ", maxAge=" +
                 this.maxAgeBeforeExpirationInMillis + ", now=" + now());
@@ -461,7 +464,8 @@ public class TTQueueOnVCTable implements TTQueue {
       assert(data != null);
       if (!config.getPartitioner().shouldEmit(consumer,
           entryPointer.getEntryId(), data)) {
-        // Partitioner says skip, move to next entry in shard
+        // Partitioner says skip, flag as available, move to next entry in shard
+        if (TRACE) log("Partitioner rejected this entry, skip");
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;
@@ -479,7 +483,7 @@ public class TTQueueOnVCTable implements TTQueue {
         return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
       } else {
         // Someone else has grabbed it, on to the next one
-        if (TRACE) log("Got a collision trying to own " + entryPointer);
+        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
         entryPointer = new EntryPointer(
             entryPointer.getEntryId() + 1, entryPointer.getShardId());
         continue;
@@ -618,6 +622,91 @@ public class TTQueueOnVCTable implements TTQueue {
             now());
   }
 
+  /**
+   * Checks if the specified group has any currently pending entries (entries
+   * that have been dequeued but not acked).
+   * @param groupState
+   * @param readPointer
+   * @return true if there are pending entries, false if no pending entries
+   */
+  private boolean groupHasPendingEntries(GroupState groupState, long groupId,
+      ReadPointer readPointer) {
+    EntryPointer curEntry = groupState.getHead();
+    while (curEntry != null) {
+      // We are pointed at {entryPointer}=(shardid,entryid) and we are either
+      // at the head of this group or we have skipped everything between where
+      // we are and the head.
+      byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, curEntry.getShardId());
+      byte [] entryMetaColumn = makeColumn(curEntry.getEntryId(), ENTRY_META);
+
+      // Do a dirty read of the entry meta data
+      ImmutablePair<byte[],Long> entryMetaDataAndStamp =
+          this.table.getWithVersion(shardRow, entryMetaColumn, readPointer);
+      if (entryMetaDataAndStamp == null) {
+        // Entry does not exist, if we haven't found a pending entry by now
+        // then we are good (no pending entries, return false)
+        return false;
+      }
+      
+      // Entry exists, check if it should actually be visible
+      if (!readPointer.isVisible(entryMetaDataAndStamp.getSecond())) {
+        // We have reached a point of an actively being written queue entry
+        // No consumers will have ever gotten past here so if we make it here
+        // then we are good (no pending entries, return false)
+        return false;
+      }
+
+      // Queue entry exists and is visible, check the global state of it
+      EntryMeta entryMeta = EntryMeta.fromBytes(
+          entryMetaDataAndStamp.getFirst());
+      
+      if (entryMeta.isEndOfShard()) {
+        // Move to same entry in next shard
+        curEntry = new EntryPointer(curEntry.getEntryId(),
+            curEntry.getShardId() + 1);
+        continue;
+      }
+      
+      if (entryMeta.isInvalid() || entryMeta.isEvicted()) {
+        // Move to next entry in same shard
+        curEntry = new EntryPointer(curEntry.getEntryId() + 1,
+            curEntry.getShardId());
+        continue;
+      }
+      
+      byte [] entryGroupMetaColumn = makeColumn(curEntry.getEntryId(),
+          ENTRY_GROUP_META, groupId);
+      byte[] entryGroupMetaData = this.table.get(shardRow, entryGroupMetaColumn,
+          readPointer);
+      if (entryGroupMetaData == null || entryGroupMetaData.length == 0) {
+        // Group has not processed this entry yet, consider available for now
+        // There can currently be gaps in entries without group data in the case
+        // of using a hash partitioner.
+        // TODO: Optimize this (ENG-416)
+        curEntry = new EntryPointer(curEntry.getEntryId() + 1,
+            curEntry.getShardId());
+        continue;
+      } else {
+        EntryGroupMeta entryGroupMeta =
+            EntryGroupMeta.fromBytes(entryGroupMetaData);
+        // If we have an entry that is in a dequeued state, pending entry!
+        if (entryGroupMeta.isDequeued()) {
+          if (TRACE)
+            log("In pending entry check, found dequeued entry : " +
+                entryGroupMeta + " , " + curEntry);
+          return true;
+        }
+        // Otherwise, it's either available or acked, both are okay, move entry
+        curEntry = new EntryPointer(curEntry.getEntryId() + 1,
+            curEntry.getShardId());
+        continue;
+      }
+    }
+    // If we reach here, something has gone wrong
+    throw new RuntimeException("Bug in TTQueue groupHasPendingEntries check");
+  }
+
+  @SuppressWarnings("unused")
   private boolean groupIsEmpty(GroupState groupState, long groupId,
       ReadPointer readPointer) {
     // A group is empty if the head pointer points to the entry write pointer

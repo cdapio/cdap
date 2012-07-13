@@ -7,7 +7,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -406,24 +408,19 @@ public abstract class TestTTQueue {
     assertTrue(queue.ack(result.getEntryPointer(), consumer));
     assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
 
-
     // queue should be empty
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
 
-    // but should not actually be "empty"
-    // if we change config it should break
-    QueueConfig badConfig = new QueueConfig(partitioner, !singleEntry);
-    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isFailure());
-
+    // since there are no pending entries, we can change our config
+    QueueConfig newConfig = new QueueConfig(partitioner, !singleEntry);
+    assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
 
     // now sleep timeout+1 to allow semi-ack to timeout
     Thread.sleep(semiAckedTimeout + 1);
 
-    // queue should be empty still
+    // queue should be empty still, and both configs should work
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
-
-    // now actually empty, changing config works and still empty!
-    assertTrue(queue.dequeue(consumer, badConfig, dirtyReadPointer).isEmpty());
+    assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
   }
 
   @Test
@@ -632,12 +629,8 @@ public abstract class TestTTQueue {
     assertTrue(queue.ack(resultOne.getEntryPointer(), consumer));
     assertTrue(queue.finalize(resultOne.getEntryPointer(), consumer, -1));
 
-    // though we are empty, the requirement is that you have to actually
-    // dequeue until you verify as empty, so trying a change now will fail
-    assertTrue(queue.dequeue(consumer, singleConfig, readPointer).isFailure());
-
-    // doing a dequeue with the old mode first will return empty
-    assertTrue(queue.dequeue(consumer, multiConfig, readPointer).isEmpty());
+    // everything is empty now, should be able to change config
+    assertTrue(queue.dequeue(consumer, singleConfig, readPointer).isEmpty());
 
     // now we are empty, try to change modes now, should pass and be empty
     DequeueResult result = queue.dequeue(consumer, singleConfig, readPointer);
@@ -774,6 +767,224 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumers[1], multiConfig, readPointer).isEmpty());
   }
 
+  @Test
+  public void testSingleConsumerSingleGroup_dynamicReconfig() throws Exception {
+    TTQueue queue = createQueue();
+    long version = timeOracle.getTimestamp();
+    ReadPointer readPointer = new MemoryReadPointer(version);
+
+    // enqueue four entries
+    int n=4;
+    EnqueueResult [] results = new EnqueueResult[n];
+    for (int i=0;i<n;i++) {
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      assertTrue(results[i].isSuccess());
+    }
+
+    // single consumer in this test, switch between single and multi mode
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
+    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
+    QueueConfig multiConfig = new QueueConfig(partitioner, false);
+    QueueConfig singleConfig = new QueueConfig(partitioner, true);
+    
+    // use single config first
+    QueueConfig config = singleConfig;
+    
+    // dequeue and ack the first entry, value = 1
+    DequeueResult result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1)));
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
+    
+    // changing configuration to multi should work fine, should get next entry
+    // value = 2
+    config = multiConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    DequeueResult value2result = result;
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(2)));
+    // but don't ack yet
+    
+    // changing configuration back to single should not work (pending entry)
+    config = singleConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isFailure());
+    
+    // back to multi should work and give entry value = 3, ack it
+    config = multiConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(3)));
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    
+    // changing configuration back to single should still not work
+    config = singleConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isFailure());
+    
+    // back to multi should work and give entry value = 4, ack it
+    config = multiConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(4)));
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    
+    // we still have value=2 pending but dequeue will return empty in multiEntry
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isEmpty());
+    
+    // but we can't change config because value=2 still pending
+    config = singleConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isFailure());
+    
+    // now ack value=2
+    assertTrue(queue.ack(value2result.getEntryPointer(), consumer));
+    
+    // nothing pending and empty, can change config
+    config = singleConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isEmpty());
+    
+    // enqueue twice, dequeue/ack once
+    queue.enqueue(Bytes.toBytes(5), version);
+    queue.enqueue(Bytes.toBytes(6), version);
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(5)));
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
+    
+    // change config and dequeue
+    config = multiConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isSuccess());
+    assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(6)));
+    assertTrue(queue.ack(result.getEntryPointer(), consumer));
+    assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
+    
+    // nothing pending and empty, can change config
+    config = singleConfig;
+    result = queue.dequeue(consumer, config, readPointer);
+    assertTrue(result.isEmpty());
+    
+  }
+
+  @Test
+  public void testMultiConsumerSingleGroup_dynamicReconfig() throws Exception {
+    TTQueue queue = createQueue();
+    long version = timeOracle.getTimestamp();
+    ReadPointer readPointer = new MemoryReadPointer(version);
+
+    // enqueue one hundred entries
+    int n=100;
+    EnqueueResult [] results = new EnqueueResult[n];
+    for (int i=0;i<n;i++) {
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      assertTrue(results[i].isSuccess());
+    }
+    // we want to verify at the end of the test we acked every entry
+    Set<Integer> acked = new TreeSet<Integer>();
+
+    // two consumers with a hash partitioner, both single mode
+    QueueConsumer consumer1 = new QueueConsumer(0, 0, 2);
+    QueueConsumer consumer2 = new QueueConsumer(1, 0, 2);
+    QueuePartitioner partitioner = new QueuePartitioner.HashPartitioner();
+    QueueConfig multiConfig = new QueueConfig(partitioner, false);
+    
+    // use multi config
+    QueueConfig config = multiConfig;
+    
+    // dequeue all entries for consumer 1 but only ack until the first hole
+    boolean ack = true;
+    int last = -1;
+    Map<Integer,QueueEntryPointer> consumer1unacked =
+        new TreeMap<Integer,QueueEntryPointer>();
+    while (true) {
+      DequeueResult result = queue.dequeue(consumer1, config, readPointer);
+      assertFalse(result.isFailure());
+      if (result.isEmpty()) break;
+      assertTrue(result.isSuccess());
+      int value = Bytes.toInt(result.getValue());
+      System.out.println("Consumer 1 dequeued value = "+ value);
+      if (last > 0 && value != last + 1) ack = false;
+      if (ack) {
+        assertTrue(queue.ack(result.getEntryPointer(), consumer1));
+        assertTrue(queue.finalize(result.getEntryPointer(), consumer1, -1));
+        assertTrue(acked.add(value));
+        System.out.println("Consumer 1 acked value = "+ value);
+        last = value;
+      } else {
+        consumer1unacked.put(value, result.getEntryPointer());
+      }
+    }
+    
+    // everything for consumer 1 is dequeued but not acked, there is a gap
+    
+    // we should not be able to reconfigure (try to introduce consumer 3)
+    QueueConsumer consumer3 = new QueueConsumer(2, 0, 3);
+    DequeueResult result = queue.dequeue(consumer3, config, readPointer);
+    assertTrue(result.isFailure());
+    
+    // iterate back over unacked consumer 1 entries and ack everything
+    for (Map.Entry<Integer,QueueEntryPointer> entry:
+        consumer1unacked.entrySet()) {
+      assertTrue(queue.ack(entry.getValue(), consumer1));
+      assertTrue(queue.finalize(entry.getValue(), consumer1, -1));
+      assertTrue(acked.add(entry.getKey()));
+      System.out.println("Consumer 1 acked value = "+ entry.getKey());
+    }
+    
+    // now we can reconfigure to 3 consumers
+    result = queue.dequeue(consumer3, config, readPointer);
+    assertTrue("Expected success but was " + result, result.isSuccess());
+    
+    // dequeue/ack all entries with consumer 3
+    while (true) {
+      assertFalse(result.isFailure());
+      if (result.isEmpty()) break;
+      assertTrue(result.isSuccess());
+      int value = Bytes.toInt(result.getValue());
+      assertTrue(queue.ack(result.getEntryPointer(), consumer3));
+      assertTrue(queue.finalize(result.getEntryPointer(), consumer3, -1));
+      assertTrue(acked.add(value));
+      result = queue.dequeue(consumer3, config, readPointer);
+    }
+    
+    // reconfigure again back to 2 and dequeue everything
+    Map<Integer,QueueEntryPointer> consumer2unacked =
+        new TreeMap<Integer,QueueEntryPointer>();
+    while (true) {
+      result = queue.dequeue(consumer2, config, readPointer);
+      assertFalse(result.isFailure());
+      if (result.isEmpty()) break;
+      assertTrue(result.isSuccess());
+      consumer2unacked.put(Bytes.toInt(result.getValue()),
+          result.getEntryPointer());
+    }
+    
+    // should not be able to introduced consumer 4 (pending entries from 2)
+    QueueConsumer consumer4 = new QueueConsumer(3, 0, 4);
+    result = queue.dequeue(consumer4, config, readPointer);
+    assertTrue(result.isFailure());
+    
+    // ack all entries with consumer 2
+    for (Map.Entry<Integer,QueueEntryPointer> entry:
+        consumer2unacked.entrySet()) {
+      assertTrue(queue.ack(entry.getValue(), consumer2));
+      assertTrue(queue.finalize(entry.getValue(), consumer2, -1));
+      assertTrue(acked.add(entry.getKey()));
+      System.out.println("Consumer 2 acked value = "+ entry.getKey());
+    }
+    
+    // now introduce consumer 4, should be valid but empty
+    result = queue.dequeue(consumer4, config, readPointer);
+    assertTrue(result.isEmpty()); 
+    
+    // size of set should be equal to number of entries
+    assertEquals(n, acked.size());
+  }
 
   @Test
   public void testSingleConsumerThreaded() throws Exception {
@@ -1172,7 +1383,9 @@ public abstract class TestTTQueue {
           waitForAndAssertCount(localdequeues, dequeuers[i][j].dequeues);
           DequeueResult result = dequeuers[i][j].blockdequeue(DEQUEUE_BLOCK_TIMEOUT_MS);
           assertNotNull(result);
-          assertEquals((long)(k*n)+j, Bytes.toLong(result.getValue()));
+          assertEquals("i=" + i + ", j=" + j + ", k=" + k + ", threadid=" +
+              dequeuers[i][j].getId(),
+              (long)(k*n)+j, Bytes.toLong(result.getValue()));
           assertTrue("i=" + i + ",j=" + j + ",k=" + k,
               queue.ack(result.getEntryPointer(), consumers[i][j]));
           assertTrue(queue.finalize(result.getEntryPointer(), consumers[i][j],
