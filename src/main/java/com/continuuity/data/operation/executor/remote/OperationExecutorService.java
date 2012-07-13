@@ -47,7 +47,8 @@ public class OperationExecutorService {
         new DataFabricModules().getSingleNodeModules());
 
     // Get our fully wired Gateway
-    final OperationExecutor executor = injector.getInstance(OperationExecutor.class);
+    final OperationExecutor executor =
+        injector.getInstance(OperationExecutor.class);
 
     executor.execute(new Increment("count".getBytes(), 3));
     System.out.println("First Increment done");
