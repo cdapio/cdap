@@ -1,9 +1,9 @@
 package com.continuuity.metrics.service;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
@@ -15,7 +15,6 @@ import com.google.inject.Inject;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryUntilElapsed;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -91,7 +90,8 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
    * @return Pair of args for registering the service and the port service is running on.
    */
   @Override
-  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer> configure(String[] args, Configuration conf) {
+  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
+  configure(String[] args, CConfiguration conf) {
     String uri = conf.get("overlord.jdbc.uri", null);
 
     try {
