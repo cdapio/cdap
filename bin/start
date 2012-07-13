@@ -40,37 +40,63 @@ if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then
  . "$SERVICE_ENVIRONMENT_FILE"
 fi
 
-# Check and set classpath if in development environment. 
-check_and_set_classpath_for_dev_environment $APP_HOME
-
-# Setup classpaths.
-CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
-
+# Set Log location
 export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
 export LOGFILE=$LOG_PREFIX.log
 loglog="${LOG_DIR}/${LOGFILE}"
 
+# Set PID location
 pid=$PID_DIR/$SERVICE-${IDENT_STRING}.pid
 loggc=$LOG_DIR/$LOG_PREFIX.gc
 
+# Set Niceness
 if [ "$NICENESS" = "" ]; then
  export NICENESS=0
 fi
 
-# sets the JAVA variable.
-set_java
+if [ $MAIN_CMD ]; then
+#if [[ "X$SKIP_JAVA" == "Xtrue" ]] || [[ "X$SKIP_JAVA" == "XTRUE" ]]; then
+  # This app is configured as a NON-JAVA app
 
-# Setup classpaths.
-CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+  rotate_log $loglog
+  check_before_start
 
-rotate_log $loggc
-check_before_start
+  echo "`date` Starting $SERVICE service component $APP on `hostname`"
+  echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
+  echo "`ulimit -a`" >> $loglog 2>&1
 
-echo "`date` Starting $SERVICE service component $APP on `hostname`"
-echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
-echo "`ulimit -a`" >> $loglog 2>&1
+  nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >$loglog 2>&1 &
 
-nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
-echo $! >$pid
+  echo $! >$pid
+
+elif [ $MAIN_CLASS ]; then
+  # This app is configured as a JAVA app (default)
+
+  # Check and set classpath if in development environment. 
+  check_and_set_classpath_for_dev_environment $APP_HOME
+
+  # Setup classpaths.
+  CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+
+  # sets the JAVA variable.
+  set_java
+
+  # Setup classpaths.
+  CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+
+  rotate_log $loggc
+  check_before_start
+
+  echo "`date` Starting Java $SERVICE service component $APP on `hostname`"
+  echo "`date` Starting Java $SERVICE service component $APP on `hostname`" >> $loglog
+  echo "`ulimit -a`" >> $loglog 2>&1
+
+  nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
+  echo $! >$pid
+
+else 
+  echo "Error: Neither MAIN_CLASS or MAIN_CMD are set.  Please set one in $SERVICE_ENVIRONMENT_FILE"
+  exit -1
+fi  
 
 sleep 1

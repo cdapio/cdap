@@ -6,7 +6,7 @@ check_before_start()
   fi
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "FAR server running as process `cat $pid`. Stop it first."
+      echo "$APP $SERVICE running as process `cat $pid`. Stop it first."
       exit 1
     fi
   fi

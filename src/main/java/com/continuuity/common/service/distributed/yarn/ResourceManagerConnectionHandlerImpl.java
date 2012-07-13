@@ -29,18 +29,14 @@ public class ResourceManagerConnectionHandlerImpl implements ResourceManagerConn
   @Override
   public AMRMProtocol connect() {
     YarnConfiguration yarnConf = new YarnConfiguration(configuration);
-    InetSocketAddress rmAddress = NetUtils.createSocketAddr(
-      yarnConf.get(
-        YarnConfiguration.RM_SCHEDULER_ADDRESS,
-        YarnConfiguration.DEFAULT_RM_SCHEDULER_ADDRESS
-      )
+    InetSocketAddress rmAddress = yarnConf.getSocketAddr(
+      YarnConfiguration.RM_SCHEDULER_ADDRESS,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_ADDRESS,
+      YarnConfiguration.DEFAULT_RM_SCHEDULER_PORT
     );
-//    InetSocketAddress rmAddress = yarnConf.getSocketAddr(
-//      YarnConfiguration.RM_SCHEDULER_ADDRESS,
-//      YarnConfiguration.DEFAULT_RM_SCHEDULER_ADDRESS,
-//      YarnConfiguration.DEFAULT_RM_SCHEDULER_PORT
-//    );
     Log.info("Connecting to ResourceManager at " + rmAddress);
-    return ((AMRMProtocol) rpc.getProxy(AMRMProtocol.class, rmAddress, configuration));
+    AMRMProtocol protocol = ((AMRMProtocol) rpc.getProxy(AMRMProtocol.class, rmAddress, configuration));
+    Log.info("Connected to ResourceManager.");
+    return protocol;
   }
 }

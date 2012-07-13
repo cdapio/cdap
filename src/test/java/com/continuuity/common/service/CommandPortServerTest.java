@@ -2,6 +2,8 @@ package com.continuuity.common.service;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -13,6 +15,7 @@ import java.net.Socket;
  *
  */
 public class CommandPortServerTest {
+  private static final Logger Log = LoggerFactory.getLogger(CommandPortServerTest.class);
 
   private class IncrementCommand implements CommandPortServer.CommandListener {
     private int counter;
@@ -56,17 +59,15 @@ public class CommandPortServerTest {
       Socket clientSocket = new Socket("localhost", port);
       DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
       BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));;
-      for(int i = 0; i < 100; ++i) {
-        outToServer.writeBytes("increment\n");
-        outToServer.flush();
-        String response = inFromServer.readLine();
-        System.out.println("Response from server " + response);
-      }
+      outToServer.writeBytes("increment\n");
+      outToServer.flush();
+      String response = inFromServer.readLine();
+      Log.info("Response from server " + response);
       clientSocket.close();
     } catch (IOException e) {
       throw e;
     }
     server.stop();
-    Assert.assertTrue(incrementCommand.getCounter() == 100);
+    Assert.assertTrue(incrementCommand.getCounter() == 1);
   }
 }

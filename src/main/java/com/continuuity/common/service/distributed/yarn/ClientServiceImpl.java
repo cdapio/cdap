@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   private volatile boolean stopped = true;
   private volatile boolean failed = false;
   private boolean useProvidedApplicationId = false;
+  private final Configuration configuration;
 
   /**
    * Handler for managing connection to Resource manager.
@@ -72,26 +74,31 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
   }
 
   public ClientServiceImpl(ApplicationId applicationId, Configuration configuration) {
-    this(applicationId,  new ApplicationManagerConnectionHandler(configuration));
+    this(applicationId,  new ApplicationManagerConnectionHandler(configuration), configuration);
   }
 
-  public ClientServiceImpl(ApplicationId applicationId, ApplicationManagerConnectionHandler appMgrHandler) {
+  public ClientServiceImpl(ApplicationId applicationId,
+                           ApplicationManagerConnectionHandler appMgrHandler, Configuration configuration) {
     Preconditions.checkNotNull(applicationId);
     Preconditions.checkNotNull(appMgrHandler);
     this.applicationId = applicationId;
     this.appMgrHandler = appMgrHandler;
     this.specification = null;
     this.useProvidedApplicationId = true;
+    this.configuration = configuration;
   }
 
   public ClientServiceImpl(ClientSpecification specification) {
-    this(specification, new ApplicationManagerConnectionHandler(specification.getConfiguration()));
+    this(specification, new ApplicationManagerConnectionHandler(specification.getConfiguration()),
+      specification.getConfiguration());
   }
 
-  public ClientServiceImpl(ClientSpecification specification, ApplicationManagerConnectionHandler appMgrHandler) {
+  public ClientServiceImpl(ClientSpecification specification,
+                           ApplicationManagerConnectionHandler appMgrHandler, Configuration configuration) {
     Preconditions.checkNotNull(specification);
     this.specification = specification;
     this.appMgrHandler = appMgrHandler;
+    this.configuration = configuration;
   }
 
   @Override
@@ -134,6 +141,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
 
       /** Build the container specification for launching application manager. */
       TaskSpecification.Builder builder = new TaskSpecification.Builder(specification.getConfiguration());
+      builder.setId(specification.getApplicationName());
       builder.setMemory(specification.getMemory());
       for(String command : specification.getCommands()) {
         builder.addCommand(command);
@@ -143,9 +151,22 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       }
       builder.setUser(user);
       builder.setPriority(0);
+
+      /**
+       * Add the resources needed for Application Master to Task specification and make sure they are available
+       * on DFS.
+       */
+      DFSUtility dfsUtility = new DFSUtility(applicationId, configuration);
+      for(Map.Entry<String, String> entry : specification.getNamedLocalResources().entrySet()) {
+        dfsUtility.copyToHdfs(entry.getValue());
+        URI uri = dfsUtility.getResourceURI(entry.getValue());
+        builder.addNamedResource(entry.getKey(), uri.toString());
+      }
+
       TaskSpecification appMasterSpecs = builder.create();
 
       /** Create and populate container launch context. */
+
       ContainerLaunchContext clc = containerLaunchContextFactory.create(appMasterSpecs);
       context.setAMContainerSpec(clc);
       context.setUser(appMasterSpecs.getUser());
@@ -165,6 +186,7 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       stop();
     }
   }
+
 
   @Override
   public void shutDown() {
@@ -206,9 +228,11 @@ public class ClientServiceImpl extends AbstractScheduledService implements Clien
       } else if(FAILED.contains(applicationReport.getYarnApplicationState())) {
         stopped = true;
         failed = true;
+        stop();
       } else if(applicationReport.getYarnApplicationState() == YarnApplicationState.FINISHED) {
         stopped = true;
         failed = false;
+        stop();
       }
     } catch (YarnRemoteException e) {
       Log.warn("Unable to get status of application {}. Reason : {}", applicationId.toString(), e.getMessage());

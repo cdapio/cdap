@@ -3,8 +3,15 @@ package com.continuuity.common.service.distributed;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.util.ConverterUtils;
+import org.apache.hadoop.yarn.util.Records;
 import org.mortbay.log.Log;
 
 import java.io.IOException;
@@ -45,6 +52,11 @@ public class ClientSpecification {
    * Memory used by AM.
    */
   private int memory;
+
+  /**
+   * Named local resources.
+   */
+  private Map<String, String> namedLocalResources;
 
   /**
    * Preventing from ClientSpecification to be constructed directly.
@@ -129,6 +141,18 @@ public class ClientSpecification {
     this.memory = memory;
   }
 
+  /**
+   * Resource required by the container locally.
+   *
+   * @return resources needed by the container.
+   */
+  public Map<String, String> getNamedLocalResources() {
+    return namedLocalResources;
+  }
+
+  private void setNamedLocalResources(Map<String, String> namedLocalResources ){
+    this.namedLocalResources = namedLocalResources;
+  }
 
   public static class Builder {
     private String applicationName = "no-app-name";
@@ -137,6 +161,7 @@ public class ClientSpecification {
     private List<String> commands = Lists.newArrayList();
     private Map<String, String> environment = Maps.newHashMap();
     private int memory = 512;
+    private Map<String, String> namedResources = Maps.newHashMap();
 
     public void setApplicationName(String applicationName) {
       this.applicationName = applicationName;
@@ -162,7 +187,12 @@ public class ClientSpecification {
       this.memory = memory;
     }
 
-    public ClientSpecification create() {
+    public Builder addNamedResource(String name, String resource) {
+      namedResources.put(name, resource);
+      return this;
+    }
+
+    public ClientSpecification create() throws IOException {
       ClientSpecification specification = new ClientSpecification();
       specification.setApplicationName(applicationName);
       specification.setQueue(queue);
@@ -170,6 +200,7 @@ public class ClientSpecification {
       specification.setCommands(commands);
       specification.setEnvironment(environment);
       specification.setMemory(memory);
+      specification.setNamedLocalResources(namedResources);
       return specification;
     }
   }

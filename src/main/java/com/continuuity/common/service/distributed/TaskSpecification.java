@@ -7,6 +7,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
@@ -221,12 +223,15 @@ public class TaskSpecification {
         LocalResource localResource = Records.newRecord(LocalResource.class);
         Path path = new Path(entry.getValue());
         FileStatus stat = fs.getFileStatus(path);
+
+        localResource.setResource(ConverterUtils.getYarnUrlFromPath(path));
+        localResource.setType(LocalResourceType.FILE);
         localResource.setSize(stat.getLen());
         localResource.setTimestamp(stat.getModificationTime());
-        localResource.setResource(ConverterUtils.getYarnUrlFromPath(path));
+        localResource.setVisibility(LocalResourceVisibility.APPLICATION);
         localResourceMap.put(entry.getKey(), localResource);
       }
-
+      cgp.setNamedLocalResources(localResourceMap);
       return cgp;
     }
   }

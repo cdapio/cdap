@@ -116,20 +116,16 @@ public class CommandPortServer {
         Socket socket = serverSocket.accept(); /** wait for connection */
         BufferedReader fromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         DataOutputStream toClient = new DataOutputStream(socket.getOutputStream());
-        String command;
-        while((command = fromClient.readLine()) != null) {
-          if(command.isEmpty()) {
-            break;
-          }
-          if(command.equals("help")) {
+        String command = fromClient.readLine();
+        if(command != null) {
+          if("help".equals(command)) {
             toClient.writeBytes(helpString);
-          } else if(command.equals("exit")) {
-            break;
           } else if(listeners.containsKey(command)) {
             String message = listeners.get(command).act();
             toClient.writeBytes(message + "\n");
           }
         }
+        socket.close();
       }
     } catch (IOException e) {
       throw new CommandPortException(e.getMessage());
