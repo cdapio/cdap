@@ -35,11 +35,6 @@ public class ResourceManagerConnectionHandlerImpl implements ResourceManagerConn
         YarnConfiguration.DEFAULT_RM_SCHEDULER_ADDRESS
       )
     );
-//    InetSocketAddress rmAddress = yarnConf.getSocketAddr(
-//      YarnConfiguration.RM_SCHEDULER_ADDRESS,
-//      YarnConfiguration.DEFAULT_RM_SCHEDULER_ADDRESS,
-//      YarnConfiguration.DEFAULT_RM_SCHEDULER_PORT
-//    );
     Log.info("Connecting to ResourceManager at " + rmAddress);
     return ((AMRMProtocol) rpc.getProxy(AMRMProtocol.class, rmAddress, configuration));
   }
