@@ -86,8 +86,10 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   protected void startUp() {
     Log.info("Starting the application service.");
     resourceMgr = rmHandler.connect();
+    Log.info("Connected to resource manager.");
 
     /** Register the application master with the resource manager. */
+    Log.info("Registering flow runner with resource manager.");
     RegisterApplicationMasterResponse registration = null;
     try {
       RegisterApplicationMasterRequest request = Records.newRecord(RegisterApplicationMasterRequest.class);
@@ -104,6 +106,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     minClusterResource = registration.getMaximumResourceCapability();
     maxClusterResource = registration.getMaximumResourceCapability();
+
+    Log.info("Minimum Cluster Resource {}.", minClusterResource);
+    Log.info("Maximum Cluster Resource {}.", maxClusterResource);
 
     /** Gets all container group parameters*/
     List<TaskSpecification> tasks = specification.getAllContainerGroups();
@@ -314,7 +319,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @return true to keep going; false otherwise.
      */
     public boolean process() {
-
+      Log.info("Starting TaskHandler process");
       if(shouldProceed()) {
 
         /**
