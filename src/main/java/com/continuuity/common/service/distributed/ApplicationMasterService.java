@@ -24,4 +24,18 @@ public interface ApplicationMasterService extends Service {
    * @return application instance id associated with run.
    */
   ApplicationAttemptId getApplicationAttemptId();
+
+  /**
+   * Adds a task to be executed.
+   *
+   * @param specification specification of the task to be added for execution.
+   */
+  void addTask(TaskSpecification specification);
+
+  /**
+   * Removes a task from run
+   *
+   * @param specification of the task to be removed.
+   */
+  void removeTask(TaskSpecification specification);
 }
