@@ -81,8 +81,7 @@ public class TaskSpecification {
    */
   public Resource getContainerResource(Resource clusterMin, Resource clusterMax) {
     Resource rsrc = Records.newRecord(Resource.class);
-    rsrc.setMemory(Math.min(clusterMax.getMemory(),
-      Math.max(clusterMin.getMemory(), getMemory())));
+    rsrc.setMemory(this.memory);
     return rsrc;
   }
 
@@ -154,7 +153,7 @@ public class TaskSpecification {
 
   public static class Builder {
     private String user;
-    private int memory;
+    private int memory = 128;
     private int priority = 0;
     private int numInstances = 1;
     private Map<String, String> env = Maps.newHashMap();
