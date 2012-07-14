@@ -331,6 +331,8 @@ public class ConverterUtils {
 
   /** wrap a queue entry pointer */
   TQueueEntryPointer wrap(QueueEntryPointer entryPointer) {
+    if (entryPointer == null)
+      return null;
     return new TQueueEntryPointer(
         wrap(entryPointer.getQueueName()),
         entryPointer.getEntryId(),
@@ -338,6 +340,8 @@ public class ConverterUtils {
   }
   /** unwrap a queue entry pointer */
   QueueEntryPointer unwrap(TQueueEntryPointer tPointer) {
+    if (tPointer == null)
+      return null;
     return new QueueEntryPointer(
         tPointer.getQueueName(),
         tPointer.getEntryId(),

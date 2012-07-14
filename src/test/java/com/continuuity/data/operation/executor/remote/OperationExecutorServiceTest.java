@@ -8,6 +8,7 @@ import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -66,7 +67,7 @@ public class OperationExecutorServiceTest {
     // and wait until it has fully initialized
     StopWatch watch = new StopWatch();
     watch.start();
-    while(watch.getTime() < 5000) {
+    while(watch.getTime() < 10000) {
       if (opexService.ruok()) break;
     }
 
@@ -280,7 +281,7 @@ public class OperationExecutorServiceTest {
   }
 
   /** Tests Write, CompareAndSwap, Read */
-  @Test 
+  @Test
   public void testWriteThenSwapThenRead() throws Exception {
 
     // write a column with a value
@@ -393,6 +394,94 @@ public class OperationExecutorServiceTest {
   }
 
   // TODO test batch, one that succeeds and one that fails
+  @Test
+  public void testBatchSuccessAndFailure() throws Exception {
+    // clear the fabric
+    ClearFabric clearFabric = new ClearFabric(true, true, true);
+    remote.execute(clearFabric);
+
+    // write a row for deletion within the batch, and one compareAndSwap
+    Write write = new Write("b".getBytes(), "0".getBytes());
+    Assert.assertTrue(remote.execute(write));
+    write = new Write("d".getBytes(), "0".getBytes());
+    Assert.assertTrue(remote.execute(write));
+    // insert two elements into a queue, and dequeue one to get an ack
+    Assert.assertTrue(
+        remote.execute(new QueueEnqueue("q".getBytes(), "0".getBytes())));
+    Assert.assertTrue(
+        remote.execute(new QueueEnqueue("q".getBytes(), "1".getBytes())));
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
+    QueueConfig config =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueDequeue dequeue = new QueueDequeue("q".getBytes(), consumer, config);
+    DequeueResult dequeueResult = remote.execute(dequeue);
+    Assert.assertNotNull(dequeueResult);
+    Assert.assertTrue(dequeueResult.isSuccess());
+    Assert.assertFalse(dequeueResult.isEmpty());
+    Assert.assertArrayEquals("0".getBytes(), dequeueResult.getValue());
+
+    // create a batch of write, delete, increment, enqueue, ack, compareAndSwap
+    List<WriteOperation> writes = Lists.newArrayList();
+    writes.add(new Write("a".getBytes(), "1".getBytes()));
+    writes.add(new Delete("b".getBytes()));
+    writes.add(new Increment("c".getBytes(), 5));
+    writes.add(new QueueEnqueue("qq".getBytes(), "1".getBytes()));
+    writes.add(new QueueAck(
+        "q".getBytes(), dequeueResult.getEntryPointer(), consumer));
+    writes.add(new CompareAndSwap(
+        "d".getBytes(), Operation.KV_COL, "1".getBytes(), "2".getBytes()));
+
+    // execute the writes and verify it failed (compareAndSwap must fail)
+    BatchOperationResult result = remote.execute(writes);
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isSuccess());
+
+    // verify that all operations were rolled back
+    Assert.assertNull(remote.execute(new ReadKey("a".getBytes())));
+    Assert.assertArrayEquals("0".getBytes(),
+        remote.execute(new ReadKey("b".getBytes())));
+    Assert.assertNull(remote.execute(new ReadKey("c".getBytes())));
+    Assert.assertArrayEquals("0".getBytes(),
+        remote.execute(new ReadKey("d".getBytes())));
+    Assert.assertTrue(remote.execute(
+        new QueueDequeue("qq".getBytes(), consumer, config)).isEmpty());
+    // queue should return the same element until it is acked
+    dequeueResult = remote.execute(
+        new QueueDequeue("q".getBytes(), consumer, config));
+    Assert.assertTrue(dequeueResult.isSuccess());
+    Assert.assertFalse(dequeueResult.isEmpty());
+    Assert.assertArrayEquals("0".getBytes(), dequeueResult.getValue());
+
+    // set d to 1 to make compareAndSwap succeed
+    Assert.assertTrue(
+        remote.execute(new Write("d".getBytes(), "1".getBytes())));
+
+    // execute the writes again and verify it suceeded
+    result = remote.execute(writes);
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.isSuccess());
+
+    // verify that all operations were performed
+    Assert.assertArrayEquals("1".getBytes(),
+        remote.execute(new ReadKey("a".getBytes())));
+    Assert.assertNull(remote.execute(new ReadKey("b".getBytes())));
+    Assert.assertArrayEquals(new byte[] { 0,0,0,0,0,0,0,5 },
+        remote.execute(new ReadKey("c".getBytes())));
+    Assert.assertArrayEquals("2".getBytes(),
+        remote.execute(new ReadKey("d".getBytes())));
+    dequeueResult = remote.execute(
+        new QueueDequeue("qq".getBytes(), consumer, config));
+    Assert.assertTrue(dequeueResult.isSuccess());
+    Assert.assertFalse(dequeueResult.isEmpty());
+    Assert.assertArrayEquals("1".getBytes(), dequeueResult.getValue());
+    // queue should return the next element now that the previous one is acked
+    dequeueResult = remote.execute(
+        new QueueDequeue("q".getBytes(), consumer, config));
+    Assert.assertTrue(dequeueResult.isSuccess());
+    Assert.assertFalse(dequeueResult.isEmpty());
+    Assert.assertArrayEquals("1".getBytes(), dequeueResult.getValue());
+  }
+
   // TODO test clearFabric
   // TODO test readAllKeys
 
