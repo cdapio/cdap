@@ -9,6 +9,7 @@ import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,20 +109,20 @@ public class ConverterUtils {
   }
 
   /** wrap a map of byte arrays into a map of byte buffers */
-  Map<ByteBuffer, ByteBuffer> wrap(Map<byte[], byte[]> map) {
+  Map<ByteBuffer, TOptionalBinary> wrap(Map<byte[], byte[]> map) {
     if (map == null)
       return null;
-    Map<ByteBuffer, ByteBuffer> result = Maps.newHashMap();
+    Map<ByteBuffer, TOptionalBinary> result = Maps.newHashMap();
     for(Map.Entry<byte[], byte[]> entry : map.entrySet())
-      result.put(wrap(entry.getKey()), wrap(entry.getValue()));
+      result.put(wrap(entry.getKey()), wrapBinary(entry.getValue()));
     return result;
   }
   /** unwrap a map of byte arrays from a map of byte buffers */
-  Map<byte[], byte[]> unwrap(Map<ByteBuffer, ByteBuffer> map) {
+  Map<byte[], byte[]> unwrap(Map<ByteBuffer, TOptionalBinary> map) {
     if (map == null)
       return null;
-    Map<byte[], byte[]> result = Maps.newHashMap();
-    for(Map.Entry<ByteBuffer, ByteBuffer> entry : map.entrySet())
+    Map<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for(Map.Entry<ByteBuffer, TOptionalBinary> entry : map.entrySet())
       result.put(unwrap(entry.getKey()), unwrap(entry.getValue()));
     return result;
   }

@@ -196,8 +196,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         new Column(startColumn), new Column(stopColumn));
     for (Map.Entry<Column, NavigableMap<Version, Value>> entry : sub.entrySet()) {
       NavigableMap<Version, Value> columnMap = entry.getValue();
-      ret.put(entry.getKey().value, filteredLatest(columnMap, readPointer)
-          .getSecond());
+      ImmutablePair<Long, byte[]> latest =  filteredLatest(columnMap, readPointer);
+      if (latest != null)
+        ret.put(entry.getKey().value, latest.getSecond());
     }
     unlockRow(r);
     return ret;

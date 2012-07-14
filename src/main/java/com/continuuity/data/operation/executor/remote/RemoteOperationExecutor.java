@@ -1,6 +1,10 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.ServiceDiscoveryClient;
+import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -8,6 +12,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.common.collect.Lists;
+import com.netflix.curator.x.discovery.ProviderStrategy;
+import com.netflix.curator.x.discovery.ServiceInstance;
+import com.netflix.curator.x.discovery.strategies.RandomStrategy;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -23,6 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An operation executor that delegates all operations to a remote
+ * thrift service, which itself implements the operation executor
+ * interface. This is used in distributed mode to decouple the
+ * data fabric from the clients.
+ */
 public class RemoteOperationExecutor
     extends ConverterUtils
     implements OperationExecutor {
@@ -30,16 +43,100 @@ public class RemoteOperationExecutor
   private static final Logger Log =
       LoggerFactory.getLogger(RemoteOperationExecutor.class);
 
+  // thrift client
   TOperationExecutor.Client client;
 
-  public RemoteOperationExecutor(String host, int port) throws Exception {
+  // the client to discover where opex service is running
+  ServiceDiscoveryClient discoveryClient;
+
+  /**
+   * Create with explicit hostname and port. This will skip service
+   * discovery.
+   * @param host the host where the opex service is running
+   * @param port the port where the opex service is running
+   * @throws IOException
+   */
+  @SuppressWarnings("unused")
+  public RemoteOperationExecutor(String host, int port) throws IOException {
+    this.init(host, port);
+  }
+
+  /**
+   * Create from a configuration. This will first attempt to find a zookeeper
+   * for service discovery. Otherwise it will look for the port in the
+   * config and use localhost.
+   * @param config a configuration containing the zookeeper properties
+   * @throws IOException
+   */
+  public RemoteOperationExecutor(CConfiguration config) throws IOException {
+    this.init(config);
+  }
+
+  /**
+   * Initialize from a configuration. This will first attempt to find a
+   * zookeeper for service discovery. Otherwise it will look for the port
+   * in the config and use localhost.
+   * @param config a configuration containing the zookeeper properties
+   * @throws IOException
+   */
+  private void init(CConfiguration config) throws IOException {
+    // try to find the zookeeper ensemble in the config
+    String zookeeper = config.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    if (zookeeper == null) {
+      // no zookeeper, look for the port and use localhost
+      int port = config.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
+          Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
+      this.init("localhost", port);
+      return;
+    }
+    // attempt to discover the service
+    try {
+      this.discoveryClient = new ServiceDiscoveryClient(zookeeper);
+    } catch (ServiceDiscoveryClientException e) {
+      Log.error("Unable to start service discovery client: " + e.getMessage());
+      throw new IOException("Unable to start service dicovery client.", e);
+    }
+    String host;
+    int port;
+    try {
+      ServiceDiscoveryClient.ServiceProvider provider =
+          this.discoveryClient.getServiceProvider(
+              OperationExecutorService.SERVICE_NAME);
+      ProviderStrategy<ServiceDiscoveryClient.ServicePayload> strategy =
+          new RandomStrategy<ServiceDiscoveryClient.ServicePayload>();
+      ServiceInstance<ServiceDiscoveryClient.ServicePayload>
+          instance = strategy.getInstance(provider);
+      // found an instance, get its host name and port
+      host = instance.getAddress();
+      port = instance.getPort();
+    } catch (Exception e) {
+      Log.error("Unable to discover opex service: " + e.getMessage());
+      throw new IOException("Unable to discover opex service.", e);
+    }
+    // and initialize with the found address
+    this.init(host, port);
+    // the discovery client is now no longer needed
+    this.discoveryClient.close();
+  }
+
+  /**
+   * Initialize from explicit hostname and port. This will skip service
+   * discovery.
+   * @param host the host where the opex service is running
+   * @param port the port where the opex service is running
+   * @throws IOException
+   */
+  private void init(String host, int port) throws IOException {
+    // thrift transport layer
     TTransport transport = new TFramedTransport(new TSocket(host, port));
     try {
       transport.open();
     } catch (TTransportException e) {
       throw new IOException("Unable to connect to service", e);
     }
+    // thrift protocol layer, we use binary because so does the service
     TProtocol protocol = new TBinaryProtocol(transport);
+    // and create a thrift client
     client = new TOperationExecutor.Client(protocol);
   }
 
@@ -93,8 +190,7 @@ public class RemoteOperationExecutor
   @Override
   public long execute(QueueAdmin.GetGroupID getGroupId) {
     try {
-      return client.getGroupId(
-          new TGetGroupId(wrap(getGroupId.getQueueName())));
+      return client.getGroupId(wrap(getGroupId));
     } catch (TException e) {
       Log.error("Thrift Call for GetGroupId failed for queue " +
           new String(getGroupId.getQueueName()) + ": " + e.getMessage());
@@ -127,7 +223,7 @@ public class RemoteOperationExecutor
   @Override
   public byte[] execute(ReadKey readKey) {
     try {
-      return unwrap(client.readKey(new TReadKey(wrap(readKey.getKey()))));
+      return unwrap(client.readKey(wrap(readKey)));
     } catch (TException e) {
       Log.error("Thrift Call for ReadKey for key '" +
           new String(readKey.getKey()) +

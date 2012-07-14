@@ -38,7 +38,7 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     schemes.put(TupleScheme.class, new TOptionalBinaryTupleSchemeFactory());
   }
 
-  public ByteBuffer value; // required
+  public ByteBuffer value; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -99,23 +99,17 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.VALUE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOptionalBinary.class, metaDataMap);
   }
 
   public TOptionalBinary() {
-  }
-
-  public TOptionalBinary(
-    ByteBuffer value)
-  {
-    this();
-    this.value = value;
   }
 
   /**
@@ -274,13 +268,15 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     StringBuilder sb = new StringBuilder("TOptionalBinary(");
     boolean first = true;
 
-    sb.append("value:");
-    if (this.value == null) {
-      sb.append("null");
-    } else {
-      org.apache.thrift.TBaseHelper.toString(this.value, sb);
+    if (isSetValue()) {
+      sb.append("value:");
+      if (this.value == null) {
+        sb.append("null");
+      } else {
+        org.apache.thrift.TBaseHelper.toString(this.value, sb);
+      }
+      first = false;
     }
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -347,9 +343,11 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.value != null) {
-        oprot.writeFieldBegin(VALUE_FIELD_DESC);
-        oprot.writeBinary(struct.value);
-        oprot.writeFieldEnd();
+        if (struct.isSetValue()) {
+          oprot.writeFieldBegin(VALUE_FIELD_DESC);
+          oprot.writeBinary(struct.value);
+          oprot.writeFieldEnd();
+        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();

@@ -6,26 +6,14 @@
  */
 package com.continuuity.data.operation.executor.remote.stubs;
 
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBinaryMap, TOptionalBinaryMap._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinaryMap");
@@ -38,7 +26,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     schemes.put(TupleScheme.class, new TOptionalBinaryMapTupleSchemeFactory());
   }
 
-  public Map<ByteBuffer,ByteBuffer> theMap; // required
+  public Map<ByteBuffer,TOptionalBinary> theMap; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -99,13 +87,14 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.THE_MAP};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.THE_MAP, new org.apache.thrift.meta_data.FieldMetaData("theMap", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true), 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true))));
+    tmpMap.put(_Fields.THE_MAP, new org.apache.thrift.meta_data.FieldMetaData("theMap", org.apache.thrift.TFieldRequirementType.OPTIONAL,
+        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP,
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true),
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinary.class))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOptionalBinaryMap.class, metaDataMap);
   }
@@ -113,29 +102,21 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   public TOptionalBinaryMap() {
   }
 
-  public TOptionalBinaryMap(
-    Map<ByteBuffer,ByteBuffer> theMap)
-  {
-    this();
-    this.theMap = theMap;
-  }
-
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TOptionalBinaryMap(TOptionalBinaryMap other) {
     if (other.isSetTheMap()) {
-      Map<ByteBuffer,ByteBuffer> __this__theMap = new HashMap<ByteBuffer,ByteBuffer>();
-      for (Map.Entry<ByteBuffer, ByteBuffer> other_element : other.theMap.entrySet()) {
+      Map<ByteBuffer,TOptionalBinary> __this__theMap = new HashMap<ByteBuffer,TOptionalBinary>();
+      for (Map.Entry<ByteBuffer, TOptionalBinary> other_element : other.theMap.entrySet()) {
 
         ByteBuffer other_element_key = other_element.getKey();
-        ByteBuffer other_element_value = other_element.getValue();
+        TOptionalBinary other_element_value = other_element.getValue();
 
         ByteBuffer __this__theMap_copy_key = org.apache.thrift.TBaseHelper.copyBinary(other_element_key);
 ;
 
-        ByteBuffer __this__theMap_copy_value = org.apache.thrift.TBaseHelper.copyBinary(other_element_value);
-;
+        TOptionalBinary __this__theMap_copy_value = new TOptionalBinary(other_element_value);
 
         __this__theMap.put(__this__theMap_copy_key, __this__theMap_copy_value);
       }
@@ -156,18 +137,18 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     return (this.theMap == null) ? 0 : this.theMap.size();
   }
 
-  public void putToTheMap(ByteBuffer key, ByteBuffer val) {
+  public void putToTheMap(ByteBuffer key, TOptionalBinary val) {
     if (this.theMap == null) {
-      this.theMap = new HashMap<ByteBuffer,ByteBuffer>();
+      this.theMap = new HashMap<ByteBuffer,TOptionalBinary>();
     }
     this.theMap.put(key, val);
   }
 
-  public Map<ByteBuffer,ByteBuffer> getTheMap() {
+  public Map<ByteBuffer,TOptionalBinary> getTheMap() {
     return this.theMap;
   }
 
-  public TOptionalBinaryMap setTheMap(Map<ByteBuffer,ByteBuffer> theMap) {
+  public TOptionalBinaryMap setTheMap(Map<ByteBuffer,TOptionalBinary> theMap) {
     this.theMap = theMap;
     return this;
   }
@@ -193,7 +174,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       if (value == null) {
         unsetTheMap();
       } else {
-        setTheMap((Map<ByteBuffer,ByteBuffer>)value);
+        setTheMap((Map<ByteBuffer,TOptionalBinary>)value);
       }
       break;
 
@@ -290,13 +271,15 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     StringBuilder sb = new StringBuilder("TOptionalBinaryMap(");
     boolean first = true;
 
-    sb.append("theMap:");
-    if (this.theMap == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.theMap);
+    if (isSetTheMap()) {
+      sb.append("theMap:");
+      if (this.theMap == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.theMap);
+      }
+      first = false;
     }
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -335,7 +318,7 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       while (true)
       {
         schemeField = iprot.readFieldBegin();
-        if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (schemeField.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (schemeField.id) {
@@ -343,19 +326,20 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
                 org.apache.thrift.protocol.TMap _map64 = iprot.readMapBegin();
-                struct.theMap = new HashMap<ByteBuffer,ByteBuffer>(2*_map64.size);
+                struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map64.size);
                 for (int _i65 = 0; _i65 < _map64.size; ++_i65)
                 {
                   ByteBuffer _key66; // required
-                  ByteBuffer _val67; // optional
+                  TOptionalBinary _val67; // optional
                   _key66 = iprot.readBinary();
-                  _val67 = iprot.readBinary();
+                  _val67 = new TOptionalBinary();
+                  _val67.read(iprot);
                   struct.theMap.put(_key66, _val67);
                 }
                 iprot.readMapEnd();
               }
               struct.setTheMapIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
@@ -375,17 +359,19 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.theMap != null) {
-        oprot.writeFieldBegin(THE_MAP_FIELD_DESC);
-        {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.theMap.size()));
-          for (Map.Entry<ByteBuffer, ByteBuffer> _iter68 : struct.theMap.entrySet())
+        if (struct.isSetTheMap()) {
+          oprot.writeFieldBegin(THE_MAP_FIELD_DESC);
           {
-            oprot.writeBinary(_iter68.getKey());
-            oprot.writeBinary(_iter68.getValue());
+            oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.theMap.size()));
+            for (Map.Entry<ByteBuffer, TOptionalBinary> _iter68 : struct.theMap.entrySet())
+            {
+              oprot.writeBinary(_iter68.getKey());
+              _iter68.getValue().write(oprot);
+            }
+            oprot.writeMapEnd();
           }
-          oprot.writeMapEnd();
+          oprot.writeFieldEnd();
         }
-        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -412,10 +398,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       if (struct.isSetTheMap()) {
         {
           oprot.writeI32(struct.theMap.size());
-          for (Map.Entry<ByteBuffer, ByteBuffer> _iter69 : struct.theMap.entrySet())
+          for (Map.Entry<ByteBuffer, TOptionalBinary> _iter69 : struct.theMap.entrySet())
           {
             oprot.writeBinary(_iter69.getKey());
-            oprot.writeBinary(_iter69.getValue());
+            _iter69.getValue().write(oprot);
           }
         }
       }
@@ -427,14 +413,15 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TMap _map70 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.theMap = new HashMap<ByteBuffer,ByteBuffer>(2*_map70.size);
+          org.apache.thrift.protocol.TMap _map70 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map70.size);
           for (int _i71 = 0; _i71 < _map70.size; ++_i71)
           {
             ByteBuffer _key72; // required
-            ByteBuffer _val73; // optional
+            TOptionalBinary _val73; // optional
             _key72 = iprot.readBinary();
-            _val73 = iprot.readBinary();
+            _val73 = new TOptionalBinary();
+            _val73.read(iprot);
             struct.theMap.put(_key72, _val73);
           }
         }

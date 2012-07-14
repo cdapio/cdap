@@ -161,15 +161,15 @@ struct TBatchOperationResult {
 }
 
 struct TOptionalBinary {
-  1: binary value,
+  1: optional binary value,
 }
 
 struct TOptionalBinaryList {
-  1: list<binary> theList,
+  1: optional list<binary> theList,
 }
 
 struct TOptionalBinaryMap {
-  1: map<binary,binary> theMap,
+  1: optional map<binary,TOptionalBinary> theMap,
 }
 
 exception TBatchOperationException {

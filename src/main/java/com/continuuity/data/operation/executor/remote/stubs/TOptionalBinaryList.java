@@ -38,7 +38,7 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     schemes.put(TupleScheme.class, new TOptionalBinaryListTupleSchemeFactory());
   }
 
-  public List<ByteBuffer> theList; // required
+  public List<ByteBuffer> theList; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -99,10 +99,11 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.THE_LIST};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.THE_LIST, new org.apache.thrift.meta_data.FieldMetaData("theList", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.THE_LIST, new org.apache.thrift.meta_data.FieldMetaData("theList", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -110,13 +111,6 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
   }
 
   public TOptionalBinaryList() {
-  }
-
-  public TOptionalBinaryList(
-    List<ByteBuffer> theList)
-  {
-    this();
-    this.theList = theList;
   }
 
   /**
@@ -285,13 +279,15 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     StringBuilder sb = new StringBuilder("TOptionalBinaryList(");
     boolean first = true;
 
-    sb.append("theList:");
-    if (this.theList == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.theList);
+    if (isSetTheList()) {
+      sb.append("theList:");
+      if (this.theList == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.theList);
+      }
+      first = false;
     }
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -368,16 +364,18 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.theList != null) {
-        oprot.writeFieldBegin(THE_LIST_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.theList.size()));
-          for (ByteBuffer _iter59 : struct.theList)
+        if (struct.isSetTheList()) {
+          oprot.writeFieldBegin(THE_LIST_FIELD_DESC);
           {
-            oprot.writeBinary(_iter59);
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.theList.size()));
+            for (ByteBuffer _iter59 : struct.theList)
+            {
+              oprot.writeBinary(_iter59);
+            }
+            oprot.writeListEnd();
           }
-          oprot.writeListEnd();
+          oprot.writeFieldEnd();
         }
-        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
