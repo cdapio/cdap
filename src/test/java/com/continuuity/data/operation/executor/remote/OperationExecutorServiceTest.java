@@ -5,14 +5,21 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.lang.time.StopWatch;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 public class OperationExecutorServiceTest {
@@ -273,7 +280,7 @@ public class OperationExecutorServiceTest {
   }
 
   /** Tests Write, CompareAndSwap, Read */
-  @Test @Ignore // ignored for now - there seems to be a bug in Delete
+  @Test 
   public void testWriteThenSwapThenRead() throws Exception {
 
     // write a column with a value
@@ -304,32 +311,96 @@ public class OperationExecutorServiceTest {
     Assert.assertArrayEquals("2".getBytes(), columns.get("x".getBytes()));
 
     // delete the row
-    Delete delete = new Delete("swap".getBytes());
+    Delete delete = new Delete("swap".getBytes(), "x".getBytes());
     Assert.assertTrue(remote.execute(delete));
 
-    // verify the row is not there any more
+    // verify the row is not there any more, actually the read will return
+    // a map with an entry for x, but with a null value
     columns = remote.execute(read);
-    Assert.assertNotNull(columns); // why does This FAIL ????????????????????????????????????????
-    Assert.assertEquals(0, columns.size());
+    Assert.assertNotNull(columns);
+    Assert.assertEquals(1, columns.size());
+    Assert.assertTrue(columns.containsKey("x".getBytes()));
+    Assert.assertNull(columns.get("x".getBytes()));
 
     // compareAndSwap
     compareAndSwap = new CompareAndSwap("swap".getBytes(),
         "x".getBytes(), "2".getBytes(), "3".getBytes());
-    Assert.assertTrue(remote.execute(compareAndSwap));
+    Assert.assertFalse(remote.execute(compareAndSwap));
 
     // verify the row is still not there
     columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(0, columns.size());
+    Assert.assertEquals(1, columns.size());
+    Assert.assertTrue(columns.containsKey("x".getBytes()));
+    Assert.assertNull(columns.get("x".getBytes()));
   }
+
+  /** clear the tables, then write a batch of keys, then readAllKeys */
+  @Test
+  public void testWriteBatchThenReadAllKeys() throws Exception  {
+    // clear the fabric
+    ClearFabric clearFabric = new ClearFabric(true, false, false);
+    remote.execute(clearFabric);
+    // list all keys, verify it is empty
+    ReadAllKeys readAllKeys = new ReadAllKeys(0, 1);
+    List<byte[]> keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(0, keys.size());
+    // write a batch, some k/v, some single column, some multi-column
+    List<WriteOperation> writes = Lists.newArrayList();
+    writes.add(new Write("a".getBytes(), "1".getBytes()));
+    writes.add(new Write("b".getBytes(), "2".getBytes()));
+    writes.add(new Write("c".getBytes(), "3".getBytes()));
+    writes.add(new Write("d".getBytes(), "x".getBytes(), "4".getBytes()));
+    writes.add(new Write("e".getBytes(), "y".getBytes(), "5".getBytes()));
+    writes.add(new Write("f".getBytes(), "z".getBytes(), "6".getBytes()));
+    writes.add(new Write("g".getBytes(),
+        new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
+        new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
+    BatchOperationResult result = remote.execute(writes);
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.isSuccess());
+
+    // readAllKeys with > number of writes
+    readAllKeys = new ReadAllKeys(0, 10);
+    keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(7, keys.size());
+
+    // readAllKeys with < number of writes
+    readAllKeys = new ReadAllKeys(0, 5);
+    keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(5, keys.size());
+
+    // readAllKeys with offset and returning all
+    readAllKeys = new ReadAllKeys(4, 4);
+    keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(3, keys.size());
+
+    // readAllKeys with offset not returning all
+    readAllKeys = new ReadAllKeys(2, 4);
+    keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(4, keys.size());
+
+    // readAllKeys with offset returning none
+    readAllKeys = new ReadAllKeys(7, 5);
+    keys = remote.execute(readAllKeys);
+    Assert.assertNotNull(keys);
+    Assert.assertEquals(0, keys.size());
+  }
+
+  // TODO test batch, one that succeeds and one that fails
+  // TODO test clearFabric
+  // TODO test readAllKeys
 
 
   // TODO test Enqueue
-  // TODO test Dequeue
-  // TODO test Ack
-  // TODO test batch
   // TODO test getGroupId
+  // TODO test Dequeue, with Hash and with Random
+  // TODO test Ack, with multi and single
   // TODO test getQueueMeta
-  // TODO test clearFabric
 
 }
