@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -84,12 +86,10 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    */
   @Override
   protected void startUp() {
-    Log.info("Starting the application service.");
+    Log.info("Starting the flow runner.");
     resourceMgr = rmHandler.connect();
-    Log.info("Connected to resource manager.");
 
     /** Register the application master with the resource manager. */
-    Log.info("Registering flow runner with resource manager.");
     RegisterApplicationMasterResponse registration = null;
     try {
       RegisterApplicationMasterRequest request = Records.newRecord(RegisterApplicationMasterRequest.class);
@@ -107,8 +107,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     minClusterResource = registration.getMaximumResourceCapability();
     maxClusterResource = registration.getMaximumResourceCapability();
 
-    Log.info("Minimum Cluster Resource {}.", minClusterResource);
-    Log.info("Maximum Cluster Resource {}.", maxClusterResource);
+    Log.debug("Minimum Cluster Resource {}.", minClusterResource);
+    Log.debug("Maximum Cluster Resource {}.", maxClusterResource);
 
     /** Gets all container group parameters*/
     List<TaskSpecification> tasks = specification.getAllContainerGroups();
@@ -212,6 +212,26 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   }
 
   /**
+   * Adds a task to be executed.
+   *
+   * @param specification of the task to be added for execution.
+   */
+  @Override
+  public void addTask(TaskSpecification specification) {
+    tasksHandler.removeTaskSpecification(specification);
+  }
+
+  /**
+   * Removes a task from run
+   *
+   * @param specification of the task to be removed.
+   */
+  @Override
+  public void removeTask(TaskSpecification specification) {
+    tasksHandler.removeTaskSpecification(specification);
+  }
+
+  /**
    * Makes a request to allocate a container.
    *
    * @param requestId
@@ -222,8 +242,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     AllocateRequest req = Records.newRecord(AllocateRequest.class);
     req.setResponseId(requestId);
     req.setApplicationAttemptId(getSpecification().getApplicationAttemptId());
+    req.setProgress(10.0f); // We need something sensible here.
     req.addAllAsks(requests);
-    req.addAllReleases(releases);
+    if(releases.size() > 0) {
+      req.addAllReleases(releases);
+    }
     try {
       return resourceMgr.allocate(req).getAMResponse();
     } catch (YarnRemoteException e) {
@@ -238,30 +261,55 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * Manages a group of like containers.
    */
   public class TasksHandler {
-    /**
-     * Parameter for the group of containers managed by this class.
-     */
-    private final ImmutableList<TaskSpecification> specifications;
 
     /**
-     * Number of instances requested for this group of containers.
+     * Lists of tasks that are not yet running, but are ready for to be run.
+     * When a task is running in container, it's moved to <code>runningTaskQueue</code>
+     * Upon failures, a task could be added back to this queue.
      */
-    private final int needed;
+    private final Map<String, TaskSpecification> readyToRunQueue = Maps.newConcurrentMap();
+
+    /**
+     * Lists of tasks that are currently running within a container.
+     */
+    private final Map<String, TaskSpecification> runningTaskQueue = Maps.newConcurrentMap();
+
+    /**
+     * List of containers to be released.
+     */
+    private final List<ContainerId> toRelease = new LinkedList<ContainerId>();
+
+    /**
+     * Keeps track of containers that was released or not. false if not, true if released.
+     */
+    private final Map<ContainerId, Boolean> releaseContainerTab = Maps.newConcurrentMap();
+
+    /**
+     * Mapping from task specification id to the container they are assigned to.
+     * This map is populated only for the running tasks.
+     */
+    private final Map<String, ContainerId> taskToContainerId = Maps.newConcurrentMap();
+
+    /**
+     * Mapping from container ids to task. This mapping is there only for tasks that
+     * are running within a container.
+     */
+    private final Map<ContainerId, String> containerIdToTask = Maps.newConcurrentMap();
+
+    /**
+     * Metric of number of times a given task has failed.
+     */
+    private final Map<String, Integer> failedTaskMetrics = Maps.newHashMap();
+
+    /**
+     * Total failed tasks.
+     */
+    private Integer totalFailedTasks = 0;
 
     /**
      * Flag indicating whether group of containers managed by this class should be stopped.
      */
     private volatile boolean stopping = false;
-
-    /**
-     * No of containers requested.
-     */
-    private int requested = 0;
-
-    /**
-     * No of containers that are completed.
-     */
-    private int completed = 0;
 
     /**
      * Factory for container launch context
@@ -271,33 +319,13 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     /**
      * Map of container id to container handler.
      */
-    private final Map<ContainerId, ContainerHandler> containerMgrs;
+    private final Map<ContainerId, ContainerHandler> containerMgrs = Maps.newConcurrentMap();
 
     /**
-     * Maps a task id to a container id for all running tasks.
+     * Sample Task specification for creating empty requests.
      */
-    private final Map<String, ContainerId> runningTasks = Maps.newHashMap();
+    private final TaskSpecification sampleSpecification;
 
-    /**
-     * Maps a container id to a specification for all the running tasks.
-     */
-    private final Map<ContainerId, TaskSpecification> containerTaskMap = Maps.newHashMap();
-
-    /**
-     * No of containers that have failed. All stage of failures are considered.
-     */
-    private final AtomicInteger failures = new AtomicInteger();
-
-    /**
-     * List of containers that are failed.
-     */
-   private final List<ContainerId> releaseContainers = Lists.newArrayList();
-
-    /**
-     * Stop watch to time the amount of time to get the resources requested. If takes more than
-     * the conifigured amount of time, we want to TasksHandler to avoid deadlocks.
-     */
-    private final StopWatch stopWatch;
 
     /**
      * Creates an instance of manager that is managing this group of containers.
@@ -305,12 +333,24 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @param specifications for this group of containers.
      */
     public TasksHandler(ImmutableList<TaskSpecification> specifications) {
-      this.specifications = specifications;
+      /** Based on the limitations of the cluster, a launch context factory is created. */
       containerLaunchContextFactory =
         new ContainerLaunchContextFactory(minClusterResource, maxClusterResource);
-      this.needed = specifications.size();
-      containerMgrs = Maps.newHashMapWithExpectedSize(needed);
-      stopWatch = new StopWatch();
+
+      sampleSpecification = specifications.get(0);
+
+      /** Add the initial task specification to ready to run queue. */
+      for(TaskSpecification specification : specifications) {
+        addTaskSpecification(specification);
+      }
+    }
+
+    public synchronized void addTaskSpecification(TaskSpecification specification) {
+
+    }
+
+    public synchronized void removeTaskSpecification(TaskSpecification specification) {
+
     }
 
     /**
@@ -319,62 +359,105 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @return true to keep going; false otherwise.
      */
     public boolean process() {
-      Log.info("Starting TaskHandler process");
+      Log.info("Starting TasksHandler process");
 
       if(shouldProceed()) {
-        Log.info("Inside shoudlProceed");
+
         /**
-         * Go through the tasks specification and figure out if there are any tasks that are not running.
+         * We go through the list of entries in <code>readyToRunQueue</code>, if they are
+         * not already in the <code>runningTaskQueue</code> we make the request for them.
+         * NOTE: When ever we make a request to YARN they would be the whole request as
+         * YARN to override the previous request.
          */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
-        for(TaskSpecification specification : specifications) {
-          if(runningTasks.containsKey(specification.getId())) {
-            Log.info("found task that was is already running.");
+
+        int toBeRequested = 0;
+        int toBeReleased = toRelease.size();
+
+        Log.info("Number of tasks in queue waiting to be requested for container is {}", readyToRunQueue.size());
+        for(TaskSpecification specification : readyToRunQueue.values()) {
+          /** Initialize the failed task counter. */
+          if(! failedTaskMetrics.containsKey(specification.getId())) {
+            failedTaskMetrics.put(specification.getId(), 0);
+          }
+          if(runningTaskQueue.containsKey(specification.getId())) {
+            Log.warn("Task with id {} already running. This should never happen.", specification.getId());
             continue;
           }
-          Log.info("Adding a task for resource request to resource manager.");
+          Log.info("Preparing to request a container for a task with ID {}", specification.getId());
           ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specification);
           req.setNumContainers(specification.getNumInstances());
           resourceRequests.add(req);
-          requested++;
+          toBeRequested++;
         }
-
-        Log.info("total tasks requested : {}", requested);
 
         /**
          * If there are no resources to be requested from resource manager, we need to still
-         * make a make a call with num instances set to 0.
+         * make a make a call with not asks. That is don't use <code>setNumContainers</code>.
          */
         if(resourceRequests.isEmpty()) {
           Log.info("Resource request is empty adding an empty resource request.");
-          ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specifications.get(0));
+          ResourceRequest req = containerLaunchContextFactory.createResourceRequest(sampleSpecification);
           resourceRequests.add(req);
         }
 
-        /** Make a request to allocate the containers. */
-        Log.info("Total requested {}, Total releasing {}", resourceRequests.size(), releaseContainers.size());
-        AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, releaseContainers);
+        /**
+         * Create a unique request for each allocate request, include containers to be requested and containers
+         * to be released.
+         */
+        Log.info("Requesting {} containers, Releasing {} containers.", toBeRequested, toBeReleased);
+        AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, toRelease);
+
+        /**
+         * YARN Returned some containers for us to assign some tasks to it.
+         */
         List<Container> newContainers = response.getAllocatedContainers();
 
-        Log.info("Received {} new containers to be allocated.", newContainers.size());
+        /** Clear up toRelease object, so that new once can be added to it. */
+        toRelease.clear();
+
+        Log.info("Received {} new allocated containers, Requested {}.", newContainers.size(), toBeRequested);
 
         /** Iterate through each container and assign them to a non running task specification */
         for(final Container container : newContainers) {
-          /** find resource specification of a non running task that matches the resource spec of the container. */
-          Optional<TaskSpecification> matchingSpec = Iterators.tryFind(specifications.iterator(), new Predicate<TaskSpecification>() {
-            @Override
-            public boolean apply(@Nullable TaskSpecification input) {
-              if (runningTasks.containsKey(input)) {
+          Log.info("Assigning a task to the container {}", container.toString());
+
+          /** Add to the tab a the container id that needs to be released. */
+          releaseContainerTab.put(container.getId(), false);
+
+          /**
+           * We want to make sure that we do not use the container that was already assigned to some task
+           * in past. So, we check if it was already assigned. If it was assigned, we request it to released
+           * back.
+           */
+          if(containerMgrs.containsKey(container.getId())) {
+            Log.warn("Was allocated a container with id {} that was running a task in past. " +
+              "Will not use that container. Requesting it to be released.", container.getId());
+
+            /** If the container is still running, then make sure we do not release that. */
+            if(containerMgrs.get(container.getId()) == null) {
+              toRelease.add(container.getId());
+            }
+            continue;
+          }
+
+          /**
+           * For a given container, we need to find a task specification that matches the container
+           * specification. The tasks are picked up from readyToRunQueue to be matched against the
+           * container at hand.
+           */
+          Optional<TaskSpecification> matchingSpec = Iterators.tryFind(readyToRunQueue.values().iterator(),
+            new Predicate<TaskSpecification>() {
+              @Override
+              public boolean apply(@Nullable TaskSpecification input) {
+                Resource resource = container.getResource();
+                if (resource.getMemory() == input.getMemory()) {
+                  Log.info("Found matching task specification for container {}", container.toString());
+                  return true;
+                }
                 return false;
               }
-              Resource resource = container.getResource();
-              if (resource.getMemory() == input.getMemory()) {
-                Log.info("Found matching resource for container {}", container.toString());
-                return true;
-              }
-              return false;
-            }
-          });
+            });
 
           /**
            * If we have found a specification that matches the container allocated, start it and add that
@@ -383,17 +466,30 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
           if(matchingSpec.isPresent()) {
             Log.info("Matching container found. Assigning task to it.");
+
+            /** Create a container handler and assign a task specification to it. */
             TaskSpecification specification = matchingSpec.get();
-            if(! containerMgrs.containsKey(container.getId())) {
-              Log.info("Adding a container manager.");
-              ContainerHandler cm = new ContainerHandler(container, specification);
-              containerMgrs.put(container.getId(), cm);
-              runningTasks.put(specification.getId(), container.getId());
-              containerTaskMap.put(container.getId(), specification);
-              cm.start();
-            } else {
-              Log.warn("Container '{}' that is already running was returned during allocation.", container.toString());
-            }
+            ContainerHandler ch = new ContainerHandler(container, specification);
+            ch.start();
+
+            /** Add the container to container manager. */
+            containerMgrs.put(container.getId(), ch);
+
+            /**
+             * Now a task specification is assigned to a container, move the task specification from
+             * readyToRunQueue to runningTaskQueue.
+             */
+            readyToRunQueue.remove(specification.getId());
+            runningTaskQueue.put(specification.getId(), specification);
+
+            /**
+             * Keep a map from container id to task id and task id to container id.
+             */
+            taskToContainerId.put(specification.getId(), container.getId());
+            containerIdToTask.put(container.getId(), specification.getId());
+          } else {
+            Log.warn("No matching task specification found for the container. Container ID {}. Requesting release.", container.toString());
+            toRelease.add(container.getId());
           }
         }
 
@@ -401,94 +497,61 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          * Now, we get the status of all the containers, if there are some failed container, then, we start them
          * again.
          */
-        Map<ContainerId, ContainerStatus> containerStatus = Maps.newHashMapWithExpectedSize(needed);
         for(ContainerStatus status : response.getCompletedContainersStatuses()) {
-          containerStatus.put(status.getContainerId(), status);
-        }
+          int exitStatus = status.getExitStatus();
+          ContainerId containerId = status.getContainerId();
 
-        /** Create a list of failed container ids for them to released. */
-        releaseContainers.clear();
-        for(ContainerId containerId : containerMgrs.keySet()) {
-          if(containerStatus.containsKey(containerId)) {
-            int exitStatus = containerStatus.get(containerId).getExitStatus();
-            if(exitStatus != 0) {
-              String diagnostics = containerStatus.get(containerId).getDiagnostics();
-              Log.debug("Container with id {} failed. Reason : {}", containerId);
-              releaseContainers.add(containerId);
-              String taskId = containerTaskMap.get(containerId).getId();
-              containerTaskMap.remove(containerId);
-              containerMgrs.remove(containerId);
-              runningTasks.remove(taskId);
-            } else if(exitStatus == 0) {
-              Log.debug("Container with id {} has completed successfully.");
-            }
-          }
-        }
-      } else {
-
-        /** Till all the containers are released or we hit a timeout we don't exit this loop */
-        StopWatch releaseTimer = new StopWatch();
-        boolean tryingToStop = true;
-
-        while(tryingToStop) {
-
-          /** We wait for 120 seconds to stop. */
-          if(releaseTimer.getTime() > 120*1000 )  {
-            tryingToStop = false;
+          /** If the container has not yet completed, then we have nothing to do, we let it run. */
+          if(status.getState() != ContainerState.COMPLETE) {
+            Log.info("Container id {} is still running or is new. So skipping it.", containerId.toString());
+            continue;
           }
 
-          /** Add to the release list all the containers that are currently active and you want to release them. */
-          for(ContainerId containerId : containerMgrs.keySet()) {
-            releaseContainers.add(containerId);
+          /** Mark this container as released. */
+          releaseContainerTab.put(containerId, true);
+
+          if(! containerIdToTask.containsKey(containerId)) {
+            Log.warn("Container id {} was not associated with any tasks. This should not be happening. Check logic");
+            continue;
           }
 
-          /** Create a zero allocation request with all the release requests to RM */
-          List<ResourceRequest> resourceRequests = Lists.newArrayList();
-          ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specifications.get(0));
-          req.setNumContainers(0);
-          resourceRequests.add(req);
+          String taskId = containerIdToTask.get(containerId);
+          Log.info("Status of container id {}, task id {} is {}", new Object[] { containerId, taskId, exitStatus});
 
-          /** Make a request to RM */
-          AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, releaseContainers);
-          List<Container> newContainers = response.getAllocatedContainers();
-
-          /** Clear the list */
-          releaseContainers.clear();
-
-          /** If there were any new containers allocated from the previous request, release them immediately. */
-          if(! newContainers.isEmpty()) {
-            for(Container container : newContainers) {
-              releaseContainers.add(container.getId());
-            }
+          if(! runningTaskQueue.containsKey(taskId)) {
+            Log.warn("Task id {} was supposedly assigned to container with id {}. " +
+              "Seems like something is wrong. Check logic.", taskId, containerId);
+            continue;
           }
 
-          /** Check the status of each containers */
-          List<ContainerStatus> containerStatuses = response.getCompletedContainersStatuses();
-          if(containerStatuses.isEmpty()) {
-            tryingToStop = false;
+          TaskSpecification specification = runningTaskQueue.get(taskId);
+
+          /**
+           * Now if task within the container has exited with non-zero code, then we need to move the task
+           * from runningTaskQueue to readyToRunQueue.
+           */
+          runningTaskQueue.remove(taskId);
+          if(exitStatus != 0) {
+            readyToRunQueue.put(taskId, specification);
+            int taskFailure = failedTaskMetrics.get(taskId);
+            totalFailedTasks++;
+            failedTaskMetrics.put(taskId, taskFailure++);
           } else {
-            for(ContainerStatus containerStatus : containerStatuses) {
-              int exitStatus = containerStatus.getExitStatus();
-              if(exitStatus == 0) {
-                Log.debug("Container with id {} stopped successfully.", containerStatus.getContainerId());
-              } else {
-                Log.debug("Container with id {} failed to stop cleanly. Reason : {}", containerStatus.getContainerId(), containerStatus.getDiagnostics());
-              }
+            /**
+             * Container and task within the container has terminated with exit code of zero, so just remove
+             * if from running state, but do not add it to readyToRunQueue. This might be the case when user
+             * of other system has requested this container to be stopped.
+             *
+             * Make sure the task associated with that container is removed from runningTaskQueue and also
+             * make sure there is nothing in readyToRunQueue.
+             */
+            if(readyToRunQueue.containsKey(taskId)) {
+              readyToRunQueue.remove(taskId);
             }
           }
         }
       }
-
       return shouldProceed();
-    }
-
-    /**
-     * Number of completed containers.
-     *
-     * @return number of completed containers.
-     */
-    public int getCompleted() {
-      return completed;
     }
 
     /**
@@ -497,7 +560,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @return number of failures.
      */
     public int getFailures() {
-      return failures.intValue();
+      return totalFailedTasks;
     }
 
     /**
@@ -514,9 +577,76 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      */
     public void stop() {
       stopping = true;
-      for(ContainerHandler cmgr : containerMgrs.values()) {
-        if(cmgr != null) {
-          cmgr.stop();
+
+      /**
+       * Till all the containers are released or we hit a timeout we don't exit this loop
+       */
+      StopWatch releaseTimer = new StopWatch();
+      boolean keepRunning = true;
+
+      Log.info("Application Master service has been requested to be stopped.");
+
+      while(keepRunning) {
+
+        /** We wait for 120 seconds to stop. */
+        if(releaseTimer.getTime() > 120*1000 )  {
+          keepRunning = false;
+          /** We let it run one last time. */
+        }
+
+        /** We pickup all the containers that are currently running. */
+        boolean foundNoContainersToBeReleased = true;
+        for(Map.Entry<ContainerId, Boolean> container : releaseContainerTab.entrySet()) {
+          ContainerId containerId = container.getKey();
+
+          /** The container is not released yet. So, check if there is task running within it. */
+          if(releaseContainerTab.get(containerId) == false) {
+            foundNoContainersToBeReleased = false;
+            if(containerMgrs.containsKey(containerId) && containerMgrs.get(containerId) != null) {
+              Log.info("Attempting to stop container {}", containerId);
+              /** Stop the container. */
+              containerMgrs.get(containerId).stopAndWait();
+            }
+            Log.info("Adding the container {} to be released.", containerId);
+            /** Add the container to be released. */
+            toRelease.add(containerId);
+          }
+        }
+
+        /** We found no containers that are yet to be released and there is nothing in release list.*/
+        if(foundNoContainersToBeReleased && toRelease.isEmpty()) {
+          keepRunning = true;
+        }
+
+        /** Create a zero allocation request with all the release requests to RM */
+        List<ResourceRequest> resourceRequests = Lists.newArrayList();
+        ResourceRequest req = containerLaunchContextFactory.createResourceRequest(sampleSpecification);
+        req.setNumContainers(0);
+        resourceRequests.add(req);
+
+        /** Make a request to RM */
+        AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, toRelease);
+        List<Container> newContainers = response.getAllocatedContainers();
+
+        /** Clear the list */
+        toRelease.clear();
+
+        /** If there were any new containers allocated from the previous request, release them immediately. */
+        if(! newContainers.isEmpty()) {
+          for(Container container : newContainers) {
+            releaseContainerTab.put(container.getId(), false);
+            toRelease.add(container.getId());
+          }
+        }
+
+        /** Check the status of each containers */
+        List<ContainerStatus> containerStatuses = response.getCompletedContainersStatuses();
+        for(ContainerStatus status : containerStatuses) {
+          if(status.getState() != ContainerState.COMPLETE) {
+            toRelease.add(status.getContainerId());
+            continue;
+          }
+          releaseContainerTab.put(status.getContainerId(), true);
         }
       }
     }
