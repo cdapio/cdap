@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import org.apache.flume.event.SimpleEvent;
@@ -42,7 +43,7 @@ public class FlumeCollectorTest {
   @Test
   public void testStartStop() throws Exception {
     String name = "other";
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     String stream = "pfunk";
     // configure collector but don't start
     CConfiguration configuration = new CConfiguration();
@@ -79,7 +80,7 @@ public class FlumeCollectorTest {
   @Test
   public void testTransformEvent() throws Exception {
     String name = "other";
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     String stream = "foo";
     int eventsToSend = 10;
     CConfiguration configuration = new CConfiguration();

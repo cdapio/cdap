@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 public class GatewayRestAccessorTest {
 
   // Our logger object
+  @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory
       .getLogger(GatewayRestAccessorTest.class);
 
@@ -26,7 +28,6 @@ public class GatewayRestAccessorTest {
   static String name = "access.rest";
   static final String prefix = "/continuuity";
   static final String path = "/table/";
-  static final String table = "default";
   static final int valuesToGet = 10;
   static int port = 10000;
 
@@ -50,7 +51,7 @@ public class GatewayRestAccessorTest {
     this.executor = injector.getInstance(OperationExecutor.class);
 
     // Look for a free port
-    port = TestUtil.findFreePort();
+    port = PortDetector.findFreePort();
 
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();

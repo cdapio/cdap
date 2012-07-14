@@ -1,6 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.gateway.collector.RestCollector;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
@@ -23,7 +24,7 @@ public class RestCollectorTest {
     String prefix = "/continuuity";
     String path = "/q/";
     String destination = "pfunk";
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     // configure collector but don't start
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.
@@ -68,7 +69,7 @@ public class RestCollectorTest {
     String path = "/stream/";
     String destination = "foo/bar";
     int eventsToSend = 10;
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.
         buildConnectorPropertyName(name, Constants.CONFIG_PORT), port);
@@ -104,7 +105,7 @@ public class RestCollectorTest {
     final String name = "collect.rest";
     final String prefix = "/continuuity";
     final String path = "/stream/";
-    final int port = TestUtil.findFreePort();
+    final int port = PortDetector.findFreePort();
 
     CConfiguration configuration = new CConfiguration();
     configuration.set(Constants.CONFIG_CONNECTORS, name);

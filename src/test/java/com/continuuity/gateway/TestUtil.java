@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,20 +38,6 @@ import java.util.Map;
 public class TestUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
-
-  /**
-   * Utility to find a free port to use for a server.
-   *
-   * @return a free port number
-   * @throws IOException if any socket exception occurs
-   */
-  static int findFreePort() throws IOException {
-    Socket socket = new Socket();
-    socket.bind(null);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
-  }
 
   /**
    * Creates a string containing a number

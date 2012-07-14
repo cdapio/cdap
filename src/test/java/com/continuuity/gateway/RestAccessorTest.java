@@ -4,6 +4,7 @@ import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -75,7 +76,7 @@ public class RestAccessorTest {
     RestAccessor restAccessor = new RestAccessor();
     restAccessor.setName(name);
     // find a free port
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name,
@@ -100,7 +101,7 @@ public class RestAccessorTest {
     RestCollector restCollector = new RestCollector();
     restCollector.setName(name);
     // find a free port
-    int port = TestUtil.findFreePort();
+    int port = PortDetector.findFreePort();
     // configure it
     CConfiguration configuration = new CConfiguration();
     configuration.setInt(Constants.buildConnectorPropertyName(name,

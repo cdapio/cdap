@@ -4,6 +4,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -66,7 +67,7 @@ public class DataClientTest {
     Assert.assertTrue(result.isSuccess());
 
     // configure a gateway
-    port = TestUtil.findFreePort();
+    port = PortDetector.findFreePort();
     configuration = new CConfiguration();
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,

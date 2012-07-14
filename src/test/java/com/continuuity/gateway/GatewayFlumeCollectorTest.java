@@ -2,6 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
@@ -56,7 +57,7 @@ public class GatewayFlumeCollectorTest {
     this.executor = injector.getInstance(OperationExecutor.class);
 
     // Look for a free port
-    port = TestUtil.findFreePort();
+    port = PortDetector.findFreePort();
 
     // Create and populate a new config object
     myConfiguration = new CConfiguration();
