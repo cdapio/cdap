@@ -33,6 +33,7 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
   private static final org.apache.thrift.protocol.TField GROUP_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("groupSize", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField HEAD_FIELD_DESC = new org.apache.thrift.protocol.TField("head", org.apache.thrift.protocol.TType.STRUCT, (short)2);
   private static final org.apache.thrift.protocol.TField MODE_FIELD_DESC = new org.apache.thrift.protocol.TField("mode", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField NULLED_FIELD_DESC = new org.apache.thrift.protocol.TField("nulled", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,6 +48,7 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
    * @see TExecutionMode
    */
   public TExecutionMode mode; // required
+  public boolean nulled; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -56,7 +58,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
      * 
      * @see TExecutionMode
      */
-    MODE((short)3, "mode");
+    MODE((short)3, "mode"),
+    NULLED((short)4, "nulled");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -77,6 +80,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
           return HEAD;
         case 3: // MODE
           return MODE;
+        case 4: // NULLED
+          return NULLED;
         default:
           return null;
       }
@@ -118,7 +123,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
 
   // isset id assignments
   private static final int __GROUPSIZE_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private static final int __NULLED_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -128,6 +134,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT        , "TEntryPointer")));
     tmpMap.put(_Fields.MODE, new org.apache.thrift.meta_data.FieldMetaData("mode", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TExecutionMode.class)));
+    tmpMap.put(_Fields.NULLED, new org.apache.thrift.meta_data.FieldMetaData("nulled", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TGroupState.class, metaDataMap);
   }
@@ -138,13 +146,16 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
   public TGroupState(
     int groupSize,
     TQueueEntryPointer head,
-    TExecutionMode mode)
+    TExecutionMode mode,
+    boolean nulled)
   {
     this();
     this.groupSize = groupSize;
     setGroupSizeIsSet(true);
     this.head = head;
     this.mode = mode;
+    this.nulled = nulled;
+    setNulledIsSet(true);
   }
 
   /**
@@ -160,6 +171,7 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
     if (other.isSetMode()) {
       this.mode = other.mode;
     }
+    this.nulled = other.nulled;
   }
 
   public TGroupState deepCopy() {
@@ -172,6 +184,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
     this.groupSize = 0;
     this.head = null;
     this.mode = null;
+    setNulledIsSet(false);
+    this.nulled = false;
   }
 
   public int getGroupSize() {
@@ -253,6 +267,29 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
     }
   }
 
+  public boolean isNulled() {
+    return this.nulled;
+  }
+
+  public TGroupState setNulled(boolean nulled) {
+    this.nulled = nulled;
+    setNulledIsSet(true);
+    return this;
+  }
+
+  public void unsetNulled() {
+    __isset_bit_vector.clear(__NULLED_ISSET_ID);
+  }
+
+  /** Returns true if field nulled is set (has been assigned a value) and false otherwise */
+  public boolean isSetNulled() {
+    return __isset_bit_vector.get(__NULLED_ISSET_ID);
+  }
+
+  public void setNulledIsSet(boolean value) {
+    __isset_bit_vector.set(__NULLED_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case GROUP_SIZE:
@@ -279,6 +316,14 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       }
       break;
 
+    case NULLED:
+      if (value == null) {
+        unsetNulled();
+      } else {
+        setNulled((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -292,6 +337,9 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
 
     case MODE:
       return getMode();
+
+    case NULLED:
+      return Boolean.valueOf(isNulled());
 
     }
     throw new IllegalStateException();
@@ -310,6 +358,8 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       return isSetHead();
     case MODE:
       return isSetMode();
+    case NULLED:
+      return isSetNulled();
     }
     throw new IllegalStateException();
   }
@@ -351,6 +401,15 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       if (!(this_present_mode && that_present_mode))
         return false;
       if (!this.mode.equals(that.mode))
+        return false;
+    }
+
+    boolean this_present_nulled = true;
+    boolean that_present_nulled = true;
+    if (this_present_nulled || that_present_nulled) {
+      if (!(this_present_nulled && that_present_nulled))
+        return false;
+      if (this.nulled != that.nulled)
         return false;
     }
 
@@ -400,6 +459,16 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetNulled()).compareTo(typedOther.isSetNulled());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetNulled()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.nulled, typedOther.nulled);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -438,6 +507,10 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
     } else {
       sb.append(this.mode);
     }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("nulled:");
+    sb.append(this.nulled);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -508,6 +581,14 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // NULLED
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.nulled = iprot.readBool();
+              struct.setNulledIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -536,6 +617,9 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
         oprot.writeI32(struct.mode.getValue());
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(NULLED_FIELD_DESC);
+      oprot.writeBool(struct.nulled);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -563,7 +647,10 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       if (struct.isSetMode()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetNulled()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetGroupSize()) {
         oprot.writeI32(struct.groupSize);
       }
@@ -573,12 +660,15 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       if (struct.isSetMode()) {
         oprot.writeI32(struct.mode.getValue());
       }
+      if (struct.isSetNulled()) {
+        oprot.writeBool(struct.nulled);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TGroupState struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.groupSize = iprot.readI32();
         struct.setGroupSizeIsSet(true);
@@ -591,6 +681,10 @@ public class TGroupState implements org.apache.thrift.TBase<TGroupState, TGroupS
       if (incoming.get(2)) {
         struct.mode = TExecutionMode.findByValue(iprot.readI32());
         struct.setModeIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.nulled = iprot.readBool();
+        struct.setNulledIsSet(true);
       }
     }
   }

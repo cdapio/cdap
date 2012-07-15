@@ -437,13 +437,19 @@ public class ConverterUtils {
   List<TGroupState> wrap(GroupState[] groupStates) {
     List<TGroupState> list = new ArrayList<TGroupState>(groupStates.length);
     for (GroupState groupState : groupStates) {
-      TExecutionMode tMode = wrap(groupState.getMode());
-      if (tMode == null)
+      if (groupState == null) {
+        list.add(new TGroupState(0, null, null, true));
         continue;
+      }
+      TExecutionMode tMode = wrap(groupState.getMode());
+      if (tMode == null) {
+        list.add(new TGroupState(0, null, null, true));
+        continue;
+      }
       list.add(new TGroupState(
           groupState.getGroupSize(),
           wrap(groupState.getHead()),
-          tMode));
+          tMode, false));
     }
     return list;
   }
@@ -451,9 +457,15 @@ public class ConverterUtils {
   GroupState[] unwrap(List<TGroupState> tGroupStates) {
     ArrayList<GroupState> groups = Lists.newArrayList();
     for (TGroupState tGroupState : tGroupStates) {
-      ExecutionMode mode = unwrap(tGroupState.getMode());
-      if (mode == null)
+      if (tGroupState.nulled) {
+        groups.add(null);
         continue;
+      }
+      ExecutionMode mode = unwrap(tGroupState.getMode());
+      if (mode == null) {
+        groups.add(null);
+        continue;
+      }
       groups.add(new GroupState(
           tGroupState.getGroupSize(),
           unwrapEntryPointer(tGroupState.getHead()),

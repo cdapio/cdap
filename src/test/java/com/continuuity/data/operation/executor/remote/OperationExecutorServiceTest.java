@@ -18,6 +18,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import scala.actors.threadpool.Arrays;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -551,9 +552,107 @@ public class OperationExecutorServiceTest {
         remote.execute(new QueueDequeue(s, consumer, config)).isEmpty());
   }
 
-  // TODO test getGroupId
-  // TODO test Dequeue, with Hash and with Random
-  // TODO test Ack, with multi and single
-  // TODO test getQueueMeta
+  /** tests enqueue, getGroupId and dequeue with ack for different groups */
+  @Test
+  public void testEnqueueThenDequeueAndAckWithDifferentGroups()  {
+    final byte[] q = "queue://q".getBytes();
+    // enqueue a bunch of entries, each one twice.
+    // why twice? with hash partitioner, the same value will go to the same
+    // consumer twice. With random partitioner, they go in the order of request
+    // insert enough to be sure that even with hash partitioning, none of the
+    // consumers will run out of entries to dequeue
+    for (byte i = 0; i < 100; i++) {
+      Assert.assertTrue(remote.execute(new QueueEnqueue(q, new byte[] { i })));
+      Assert.assertTrue(remote.execute(new QueueEnqueue(q, new byte[] { i })));
+    }
+    // get two groupids
+    long id1 = remote.execute(new QueueAdmin.GetGroupID(q));
+    long id2 = remote.execute(new QueueAdmin.GetGroupID(q));
+    Assert.assertFalse(id1 == id2);
 
+    // create 2 consumers for each groupId
+    QueueConsumer cons11 = new QueueConsumer(0, id1, 2);
+    QueueConsumer cons12 = new QueueConsumer(1, id1, 2);
+    QueueConsumer cons21 = new QueueConsumer(0, id2, 2);
+    QueueConsumer cons22 = new QueueConsumer(1, id2, 2);
+
+    // creeate two configs, one hash, one random, one single, one multi
+    QueueConfig conf1 =
+        new QueueConfig(new QueuePartitioner.HashPartitioner(), false);
+    QueueConfig conf2 =
+        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+
+    // dequeue with each consumer
+    DequeueResult res11 = remote.execute(new QueueDequeue(q, cons11, conf1));
+    DequeueResult res12 = remote.execute(new QueueDequeue(q, cons12, conf1));
+    DequeueResult res21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    DequeueResult res22 = remote.execute(new QueueDequeue(q, cons22, conf2));
+
+    // verify that all results are successful
+    Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
+    Assert.assertTrue(res12.isSuccess() && !res12.isEmpty());
+    Assert.assertTrue(res21.isSuccess() && !res21.isEmpty());
+    Assert.assertTrue(res22.isSuccess() && !res22.isEmpty());
+
+    // verify that the values from group 1 are different (hash partitioner)
+    Assert.assertFalse(Arrays.equals(res11.getValue(), res12.getValue()));
+    // and that the two values for group 2 are equal (random paritioner)
+    Assert.assertArrayEquals(res21.getValue(), res22.getValue());
+
+    // verify that group1 (multi-entry config) can dequeue more elements
+    DequeueResult next11 = remote.execute(new QueueDequeue(q, cons11, conf1));
+    Assert.assertTrue(next11.isSuccess() && !next11.isEmpty());
+    // for the second read we expect the same value again (enqueued twice)
+    Assert.assertArrayEquals(res11.getValue(), next11.getValue());
+    // but if we dequeue again, we should see a different one.
+    next11 = remote.execute(new QueueDequeue(q, cons11, conf1));
+    Assert.assertTrue(next11.isSuccess() && !next11.isEmpty());
+    Assert.assertFalse(Arrays.equals(res11.getValue(), next11.getValue()));
+
+    // verify that group2 (single-entry config) cannot dequeue more elements
+    DequeueResult next21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    // other than for group1 above, we would see a different value right
+    // away (because the first two, identical value have been dequeued)
+    // but this queue is in single-entry mode and requires an ack before
+    // the next element can be read. Thus we should see the same value
+    Assert.assertArrayEquals(res21.getValue(), next21.getValue());
+    // just to be sure, do it again
+    next21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    Assert.assertArrayEquals(res21.getValue(), next21.getValue());
+
+    // ack group 1 to verify that it did not affect group 2
+    QueueEntryPointer pointer11 = res11.getEntryPointer();
+    Assert.assertTrue(remote.execute(new QueueAck(q, pointer11, cons11)));
+    // dequeue group 2 again
+    next21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    Assert.assertArrayEquals(res21.getValue(), next21.getValue());
+    // just to be sure, do it twice
+    next21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    Assert.assertArrayEquals(res21.getValue(), next21.getValue());
+
+    // ack group 2, consumer 1,
+    QueueEntryPointer pointer21 = res21.getEntryPointer();
+    Assert.assertTrue(remote.execute(new QueueAck(q, pointer21, cons21)));
+    // dequeue group 2 again
+    next21 = remote.execute(new QueueDequeue(q, cons21, conf2));
+    Assert.assertTrue(next21.isSuccess() && !next21.isEmpty());
+    Assert.assertFalse(Arrays.equals(res21.getValue(), next21.getValue()));
+
+    // verify that consumer 2 of group 2 can still not see new entries
+    DequeueResult next22 = remote.execute(new QueueDequeue(q, cons22, conf2));
+    Assert.assertTrue(next22.isSuccess() && !next22.isEmpty());
+    Assert.assertArrayEquals(res22.getValue(), next22.getValue());
+
+    // get queue meta with remote and opex, verify they are equal
+    QueueAdmin.GetQueueMeta getQueueMeta = new QueueAdmin.GetQueueMeta(q);
+    QueueAdmin.QueueMeta metaLocal = opex.execute(getQueueMeta);
+    QueueAdmin.QueueMeta metaRemote = remote.execute(getQueueMeta);
+    Assert.assertNotNull(metaLocal);
+    Assert.assertNotNull(metaRemote);
+    Assert.assertEquals(metaLocal, metaRemote);
+  }
 }

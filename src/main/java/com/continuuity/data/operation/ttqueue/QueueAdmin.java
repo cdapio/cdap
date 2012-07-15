@@ -6,6 +6,8 @@ import com.continuuity.api.data.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.google.common.base.Objects;
 
+import java.util.Arrays;
+
 public class QueueAdmin {
 
   /**
@@ -75,7 +77,7 @@ public class QueueAdmin {
     public QueueMeta(long globalHeadPointer, long currentWritePointer,
                      GroupState[] groups) {
       this.globalHeadPointer = globalHeadPointer;
-      this.currentWritePointer = globalHeadPointer;
+      this.currentWritePointer = currentWritePointer;
       this.groups = groups;
     }
 
@@ -86,6 +88,16 @@ public class QueueAdmin {
           .add("currentWritePointer", this.currentWritePointer)
           .add("groups", this.groups)
           .toString();
+    }
+
+    public boolean equals(Object object) {
+      if (object == null || !(object instanceof QueueMeta))
+        return false;
+      QueueMeta other = (QueueMeta)object;
+      return
+          this.currentWritePointer == other.currentWritePointer &&
+          this.globalHeadPointer == other.globalHeadPointer &&
+          Arrays.equals(this.groups, other.groups);
     }
   }
 }

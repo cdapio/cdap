@@ -125,6 +125,7 @@ struct TGroupState {
   1: i32 groupSize,
   2: TEntryPointer head,
   3: TExecutionMode mode,
+  4: bool nulled,
 }
 
 // we add a virtual field "nulled" to indicate a null object
