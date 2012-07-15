@@ -603,6 +603,7 @@ public class OperationExecutorServiceTest {
 
     // verify that all results are successful
     Assert.assertNotNull(res11);
+    System.err.println("res11.message: " + res11.getMsg());
     Assert.assertTrue(res11.isSuccess());
     Assert.assertFalse(res11.isEmpty());
     Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
