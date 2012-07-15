@@ -557,6 +557,11 @@ public class OperationExecutorServiceTest {
   @Test
   public void testEnqueueThenDequeueAndAckWithDifferentGroups()  {
     final byte[] q = "queue://q".getBytes();
+
+    // attempt to see whether the failure in TeamCity is caused by RemoteOpex
+    // or whether the same failure would happen with the actual local opex.
+    OperationExecutor remote = opex;
+
     // enqueue a bunch of entries, each one twice.
     // why twice? with hash partitioner, the same value will go to the same
     // consumer twice. With random partitioner, they go in the order of request
