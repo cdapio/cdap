@@ -602,6 +602,9 @@ public class OperationExecutorServiceTest {
     DequeueResult res22 = remote.execute(new QueueDequeue(q, cons22, conf2));
 
     // verify that all results are successful
+    Assert.assertNotNull(res11);
+    Assert.assertTrue(res11.isSuccess());
+    Assert.assertFalse(res11.isEmpty());
     Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
     Assert.assertTrue(res12.isSuccess() && !res12.isEmpty());
     Assert.assertTrue(res21.isSuccess() && !res21.isEmpty());
