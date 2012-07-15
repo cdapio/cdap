@@ -23,6 +23,7 @@ import scala.actors.threadpool.Arrays;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class OperationExecutorServiceTest {
 
@@ -561,9 +562,12 @@ public class OperationExecutorServiceTest {
     // consumer twice. With random partitioner, they go in the order of request
     // insert enough to be sure that even with hash partitioning, none of the
     // consumers will run out of entries to dequeue
-    for (byte i = 0; i < 100; i++) {
-      Assert.assertTrue(remote.execute(new QueueEnqueue(q, new byte[] { i })));
-      Assert.assertTrue(remote.execute(new QueueEnqueue(q, new byte[] { i })));
+    Random rand = new Random(42);
+    for (int i = 0; i < 100; i++) {
+      QueueEnqueue enqueue = new
+          QueueEnqueue(q, ("" + rand.nextInt(1000)).getBytes());
+      Assert.assertTrue(remote.execute(enqueue));
+      Assert.assertTrue(remote.execute(enqueue));
     }
     // get two groupids
     long id1 = remote.execute(new QueueAdmin.GetGroupID(q));
