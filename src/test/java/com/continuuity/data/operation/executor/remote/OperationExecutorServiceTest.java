@@ -14,6 +14,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.lang.time.StopWatch;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -571,6 +572,9 @@ public class OperationExecutorServiceTest {
     for (int i = 0; i < 100; i++) {
       QueueEnqueue enqueue = new
           QueueEnqueue(q, ("" + rand.nextInt(1000)).getBytes());
+      System.err.println("Enqueue: " + new String(enqueue.getData())
+          + ": hash % 2 = " + Bytes.hashCode(enqueue.getData())
+          + " % 2 = " + Bytes.hashCode(enqueue.getData()) % 2);
       Assert.assertTrue(remote.execute(enqueue));
       Assert.assertTrue(remote.execute(enqueue));
     }
