@@ -1,5 +1,6 @@
 package com.continuuity.common.service.distributed;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -150,9 +151,23 @@ public class TaskSpecification {
     this.namedLocalResources = namedLocalResources;
   }
 
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("id", id)
+      .add("user", user)
+      .add("memory", memory)
+      .add("priority", priority)
+      .add("numinstances", numInstances)
+      .add("env", env)
+      .add("commands", commands)
+      .add("resource", namedLocalResources)
+      .toString();
+  }
+
 
   public static class Builder {
-    private String user;
+    private String user = "";
     private int memory = 128;
     private int priority = 0;
     private int numInstances = 1;

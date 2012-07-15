@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.Service;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.yarn.api.AMRMProtocol;
 import org.apache.hadoop.yarn.api.ContainerManager;
@@ -358,7 +359,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @return true to keep going; false otherwise.
      */
     public boolean process() {
-      Log.info("Starting TasksHandler process");
 
       if(shouldProceed()) {
         /**
@@ -479,6 +479,23 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           } else {
             Log.warn("No matching task specification found for the container. Container ID {}. Requesting release.", container.toString());
             toRelease.add(container.getId());
+          }
+        }
+
+        /**
+         * Check the container managers and find if there are Tasks that have been terminated
+         * or have failed. If there are any, then we request the container running that task
+         * to be terminated.
+         */
+        for(Map.Entry<ContainerId, TaskHandler> entry : containerMgrs.entrySet()) {
+          if(entry.getValue() == null) {
+            continue;
+          }
+          Service.State state = entry.getValue().state();
+          if(state == State.FAILED || state == State.TERMINATED) {
+            Log.info("Task running with container {} has been terminated. Releasing the container.",
+              entry.getKey().getId());
+            toRelease.add(entry.getKey());
           }
         }
 
@@ -649,7 +666,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * Manages a single task within a container.
    */
   public class TaskHandler extends AbstractScheduledService {
-    private static final int MAX_CHECK_FAILURES = 10;
+    private static final int MAX_CHECK_FAILURES = 1000;
 
     private final Container container;
     private final TaskSpecification specification;
@@ -668,25 +685,34 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     @Override
     public void startUp() {
-      ContainerLaunchContext ctxt = containerLaunchContextFactory.create(specification);
-      ctxt.setContainerId(container.getId());
 
+      /** Connect to container manager. */
       containerMgr = cmHandler.connect(container);
+
       if(containerMgr == null) {
         Log.warn("Failed connecting to container manager for container {}", container.toString());
         stop();
         return;
       }
 
+      Log.info("Assigning a task with specification {}", specification.toString());
+      ContainerLaunchContext launchContext = containerLaunchContextFactory.create(specification);
+      launchContext.setContainerId(container.getId());
+
       StartContainerRequest startRequest = Records.newRecord(StartContainerRequest.class);
-      startRequest.setContainerLaunchContext(ctxt);
+      startRequest.setContainerLaunchContext(launchContext);
+
       Log.info("Starting task {} in container {}.", specification.getId(), container);
       Log.info("Task {} run start request : {}", specification.getId(), startRequest.toString());
+
       try {
-        StartContainerResponse response = containerMgr.startContainer(startRequest);
+        containerMgr.startContainer(startRequest);
         Log.info("Started task {}", specification.getId());
       } catch (YarnRemoteException e) {
         Log.info("Failed starting container {}. Reason : {}", container.toString(), e.getMessage());
+        stop();
+      } catch (Throwable e) {
+        Log.info("Horrible happened. Reason : {}", e.getMessage());
         stop();
       }
     }
@@ -705,13 +731,15 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     @Override
     protected void runOneIteration() throws Exception {
-      Log.info("Checking status of task {}", specification.getId());
+      Log.info("Checking status of task {}, Container {}", specification.getId(), container.getId().toString());
+
       GetContainerStatusRequest req = Records.newRecord(GetContainerStatusRequest.class);
       req.setContainerId(container.getId());
+
       try {
         GetContainerStatusResponse resp = containerMgr.getContainerStatus(req);
         status = resp.getStatus();
-        Log.info("Container {} status {}.", container.toString(), status.toString());
+        Log.info("Container {} status {}.", container.getId().toString(), status.toString());
         if (status != null && status.getState() == ContainerState.COMPLETE) {
           stop();
         }
@@ -719,11 +747,16 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         Log.info("There was problem receiving the status of container {}. Reason : {}",
           container.toString(), e.getMessage());
         checkFailures++;
-        if(status == null || checkFailures > MAX_CHECK_FAILURES) {
-          Log.info("Failed after max retry to get status of container {}", container.toString());
-          stop();
-        }
+
+      } catch (Throwable e) {
+        Log.info("An error was thrown while checking the status of a container. Reason : {}", e.getMessage());
       }
+
+      if(status == null || checkFailures > MAX_CHECK_FAILURES) {
+        Log.info("Failed after max retry to get status of container {}", container.toString());
+        stop();
+      }
+
     }
 
     @Override

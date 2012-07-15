@@ -1,16 +1,18 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.TaskSpecification;
-import org.apache.hadoop.yarn.api.records.ContainerLaunchContext;
-import org.apache.hadoop.yarn.api.records.Priority;
-import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.hadoop.yarn.api.records.ResourceRequest;
+import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.util.Records;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Factory that is used for constructing YARN objects from the <code>ContainerGroupParameter</code>
  */
 public class ContainerLaunchContextFactory {
+  private static final Logger Log = LoggerFactory.getLogger(ContainerLaunchContextFactory.class);
   private final Resource clusterMin;
   private final Resource clusterMax;
 
@@ -21,11 +23,15 @@ public class ContainerLaunchContextFactory {
 
   public ContainerLaunchContext create(TaskSpecification specification) {
     ContainerLaunchContext clc = Records.newRecord(ContainerLaunchContext.class);
-    clc.setCommands(specification.getCommands());
-    clc.setEnvironment(specification.getEnvironment());
-    clc.setLocalResources(specification.getNamedLocalResources());
+    Log.info("Cluster Min {}, Cluster Max {}", clusterMin, clusterMax);
     clc.setResource(specification.getContainerResource(clusterMin, clusterMax));
+    for(String cmd : specification.getCommands()) {
+      Log.info("Command : {}", cmd);
+    }
+    clc.setCommands(specification.getCommands());
     clc.setUser(specification.getUser());
+    clc.setLocalResources(specification.getNamedLocalResources());
+    clc.setEnvironment(specification.getEnvironment());
     return clc;
   }
 
