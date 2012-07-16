@@ -70,14 +70,19 @@ public class SQLMetricsHandler implements MetricsHandler {
   }
 
   /**
-   * @param accountId
-   * @param app
-   * @param flow
-   * @param rid
-   * @return
+   * Returns metrics for a given a run id.
+   *
+   * @param accountId  for which the flows belong to.
+   * @param appid  to which the flows belong to.
+   * @param flowId  to which the flows belong to.
+   * @param rid run id of the flow.
+   *
+   * @return A list of Metrics for the given run id
    */
   @Override
-  public List<Metric> getFlowMetric(String accountId, String app, String flow, String rid) {
+  public List<Metric> getFlowMetric(String accountId, String appid,
+                                    String flowId, String rid) {
+
     List<Metric> result = Lists.newArrayList();
 
     String maxTimeSQL = "SELECT MAX(timestamp) as maxtimestamp FROM flow_metrics " +
@@ -86,21 +91,21 @@ public class SQLMetricsHandler implements MetricsHandler {
     try {
       PreparedStatement maxTimeStmt = connection.prepareStatement(maxTimeSQL);
       maxTimeStmt.setString(1, accountId);
-      maxTimeStmt.setString(2, app);
-      maxTimeStmt.setString(3, flow);
+      maxTimeStmt.setString(2, appid);
+      maxTimeStmt.setString(3, flowId);
       maxTimeStmt.setString(4, rid);
       ResultSet rs = maxTimeStmt.executeQuery();
       rs.next();
       maxTimestamp = rs.getInt("maxtimestamp");
     } catch (SQLException e) {
       Log.warn("Unable to retrieve max timestamp for application '{}', Flow '{}', Run ID '{}'" +
-        new Object[]{app, flow, rid});
+        new Object[]{appid, flowId, rid});
       return result;
     }
 
     if(maxTimestamp == -1) {
       Log.warn("Unable to find max timestamp for application '{}', Flow '{}', Run ID '{}'" +
-        new Object[]{app, flow, rid});
+        new Object[]{appid, flowId, rid});
       return result;
     }
 
@@ -109,8 +114,8 @@ public class SQLMetricsHandler implements MetricsHandler {
     try {
       PreparedStatement stmt = connection.prepareStatement(sql);
       stmt.setString(1, accountId);
-      stmt.setString(2, app);
-      stmt.setString(3, flow);
+      stmt.setString(2, appid);
+      stmt.setString(3, flowId);
       stmt.setString(4, rid);
       stmt.setInt(5, maxTimestamp);
       ResultSet rs = stmt.executeQuery();
@@ -124,16 +129,19 @@ public class SQLMetricsHandler implements MetricsHandler {
       }
     } catch (SQLException e) {
       Log.warn("Unable to retrieve flow metrics. Application '{}', Flow '{}', Run ID '{}'",
-        new Object[]{app, flow, rid});
+        new Object[]{appid, flowId, rid});
     }
     return result;
   }
 
   /**
-   * FIXME: This was done in hurry and can be written in a much better way.
+   * Returns list of flows and their state for a given account id.
    *
-   * @param accountId
-   * @return
+   * TODO: This was done in hurry and can be written in a much better way.
+   *
+   * @param accountId specifying the flows to be returned.
+   *
+   * @return list of flow state.
    */
   @Override
   public List<FlowState> getFlows(String accountId) {
@@ -186,7 +194,7 @@ public class SQLMetricsHandler implements MetricsHandler {
           || state == StateChangeType.STOPPED.getType() || state == StateChangeType.FAILED.getType()) {
           stopped.put(appFlow, timestamp);
           if (runs.containsKey(flow)) {
-            int run = runs.get(flow).intValue();
+            int run = runs.get(flow);
             runs.put(appFlow, run + 1);
           } else {
             runs.put(appFlow, 1);
@@ -233,12 +241,15 @@ public class SQLMetricsHandler implements MetricsHandler {
 
 
   /**
-   * FIXME : I am probably most duplicate of getFlows - Refactor me.
+   * Returns a list of runs for a given flow.
+   *
+   * TODO: This was done in hurry and can be written in a much better way.
    *
    * @param accountId for which the flows belong to.
    * @param appId  to which the flows belong to.
-   * @param flowId is the id of the flow runs to be returned.
-   * @return
+   * @param flowId to which the flows belong to.
+   *
+   * @return a list of flow runs
    */
   @Override
   public List<FlowRun> getFlowHistory(String accountId, String appId, String flowId) {
@@ -313,11 +324,12 @@ public class SQLMetricsHandler implements MetricsHandler {
   /**
    * Returns the flow definition.
    *
-   * @param accountId
-   * @param appId
-   * @param flowId
-   * @param versionId
-   * @return
+   * @param accountId  for which the flows belong to.
+   * @param appId  to which the flows belong to.
+   * @param flowId  to which the flows belong to.
+   * @param versionId of the flow for which the definition needs to be retrieved
+   *
+   * @return A String representation of the flow definition
    */
   @Override
   public String getFlowDefinition(String accountId, String appId, String flowId, String versionId) {
