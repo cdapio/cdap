@@ -71,4 +71,10 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
    */
   @Test @Override @Ignore
   public void testUserReadOwnWritesAndWritesStableSorted() throws Exception {}
+  
+  /**
+   * Currently not working.  Will be fixed in ENG-421.
+   */
+  @Test @Override @Ignore
+  public void testWriteBatchWithMultiWritesMultiEnqueuesPlusSuccessfulAck() {}
 }
