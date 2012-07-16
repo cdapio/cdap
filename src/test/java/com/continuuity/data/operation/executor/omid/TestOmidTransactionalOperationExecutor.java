@@ -3,43 +3,50 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.*;
-import com.continuuity.common.conf.CConfiguration;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.table.ReadPointer;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
-
-public class TestOmidTransactionalOperationExecutor {
-
-  @SuppressWarnings("unused")
-  private final Configuration conf = new CConfiguration();
+public abstract class TestOmidTransactionalOperationExecutor {
 
   private OmidTransactionalOperationExecutor executor;
 
-
+  protected abstract OmidTransactionalOperationExecutor getOmidExecutor();
+  
   @Before
   public void initialize() {
-
-    Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
-    executor = injector.getInstance(OmidTransactionalOperationExecutor.class);
+    executor = getOmidExecutor();
   }
 
   @Test

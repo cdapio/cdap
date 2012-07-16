@@ -442,6 +442,16 @@ public abstract class TestOVCTable {
     assertFalse(
         this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(4L), 6L));
 
+    // cas valueOne@5 to valueTwo@5
+
+    assertEquals(Bytes.toString(valueOne),
+        Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(5))));
+    assertTrue(
+        this.table.compareAndSwap(row, COL, valueOne, valueTwo,
+            new MemoryReadPointer(5L), 5L));
+    assertEquals(Bytes.toString(valueTwo),
+        Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(5))));
+
   }
 
   @Test
@@ -497,6 +507,33 @@ public abstract class TestOVCTable {
         new MemoryReadPointer(3L), 3L));
   }
 
+  @Test
+  public void testIncrementCASIncrementWithSameTimestamp() {
+    byte [] row = Bytes.toBytes("testICASIWSTS");
+
+    // increment with same read and write pointer
+    
+    assertEquals(4L, this.table.increment(row, COL, 4L,
+        new MemoryReadPointer(3L), 3L));
+    assertEquals(4L, Bytes.toLong(
+        this.table.get(row, COL, new MemoryReadPointer(3L))));
+    
+    // cas from 4 to 6 @ ts3
+    
+    assertTrue(this.table.compareAndSwap(row, COL, Bytes.toBytes(4L),
+        Bytes.toBytes(6L), new MemoryReadPointer(3L), 3L));
+
+    assertEquals(6L, Bytes.toLong(
+        this.table.get(row, COL, new MemoryReadPointer(3L))));
+    
+    // increment to 7 @ ts3
+
+    assertEquals(7L, this.table.increment(row, COL, 1L,
+        new MemoryReadPointer(3L), 3L));
+    assertEquals(7L, Bytes.toLong(
+        this.table.get(row, COL, new MemoryReadPointer(3L))));
+    
+  }
   @Test
   public void testSameVersionOverwritesExisting() {
 

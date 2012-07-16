@@ -140,6 +140,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(streamName, consumer, config)).isEmpty());
     assertNull(this.executor.execute(new ReadKey(keyAndValue)));
   }
+
   @Test
   public void testStandaloneSimpleDequeue() throws Exception {
 
