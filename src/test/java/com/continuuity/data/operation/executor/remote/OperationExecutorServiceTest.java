@@ -559,9 +559,9 @@ public class OperationExecutorServiceTest {
   public void testEnqueueThenDequeueAndAckWithDifferentGroups()  {
     final byte[] q = "queue://q".getBytes();
 
-    // attempt to see whether the failure in TeamCity is caused by RemoteOpex
-    // or whether the same failure would happen with the actual local opex.
-    OperationExecutor remote = opex;
+    // start by clearing the data fabric. Otherwise we may see spurious
+    // entries from other tests :(
+    remote.execute(new ClearFabric(true, true, true));
 
     // enqueue a bunch of entries, each one twice.
     // why twice? with hash partitioner, the same value will go to the same
@@ -602,10 +602,6 @@ public class OperationExecutorServiceTest {
     DequeueResult res22 = remote.execute(new QueueDequeue(q, cons22, conf2));
 
     // verify that all results are successful
-    Assert.assertNotNull(res11);
-    System.err.println("res11.message: " + res11.getMsg());
-    Assert.assertTrue(res11.isSuccess());
-    Assert.assertFalse(res11.isEmpty());
     Assert.assertTrue(res11.isSuccess() && !res11.isEmpty());
     Assert.assertTrue(res12.isSuccess() && !res12.isEmpty());
     Assert.assertTrue(res21.isSuccess() && !res21.isEmpty());
