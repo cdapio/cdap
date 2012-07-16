@@ -4,10 +4,13 @@ define([
 	'lib/text!../../templates/input-stream.html'
 	], function (Flowlet, Input) {
 
-		Ember.TEMPLATES.flowlet = Em.Handlebars.compile(Flowlet);
-		Ember.TEMPLATES['input-stream'] = Em.Handlebars.compile(Input);
-	
 	return Em.View.create({
+		compile: function () {
+			Ember.TEMPLATES.flowlet = Em.Handlebars.compile(Flowlet);
+			Ember.TEMPLATES['input-stream'] = Em.Handlebars.compile(Input);
+
+			this.append();
+		},
 		templateName: function () {
 			if (!this.get('current')) {
 				return 'input-stream';
@@ -47,16 +50,50 @@ define([
 			var el = $(this.get('element'));
 			el.hide();
 		},
-		payload: null,
-		PayloadView: Ember.TextField.extend({
-			valueBinding: 'App.Views.Flowlet.payload',
-			insertNewline: function() {
-				var value = this.get('value');
-				if (value) {
-					App.Views.Flowlet.inject();
-				}
+		addOneInstance: function () {
+			this.confirm('Add 1 instance to ', +1);
+		},
+		removeOneInstance: function () {
+			this.confirm('Remove 1 instance from ', -1);
+		},
+		doubleInstances: function () {
+
+			var newCount = this.get('current').instances;
+
+			this.confirm('Double instances. Add ' + newCount + ' instance to ', newCount);
+		},
+		fitInstances: function () {
+
+			var newCount = 0;
+
+			if (newCount < 0) {
+				this.confirm('Add ' + newCount + ' instances to ', newCount);
+			} else if (newCount > 0) {
+				this.confirm('Remove ' + newCount + ' instances from ', newCount);
+			} else {
+				window.alert('Instance count already fits load.');
 			}
-		}),
+
+		},
+		promptInstances: function () {
+
+			var value = window.prompt('Please set the number of instances for this flowlet. At least 1.');
+			value = parseInt(value, 10);
+			this.confirm('Add ' + value + ' instances to ', value);
+
+		},
+		confirm: function (message, value) {
+
+			var name = this.get('current').name;
+
+			var c = window.confirm(message + '"' + name + '" flowlet?');
+			if (c) {
+				this.get('current').addInstances(value, function () {
+				
+				});
+			}
+		},
+		payload: null,
 		inject: function () {
 
 			var payload = this.get('payload');
@@ -83,6 +120,6 @@ define([
 
 			});
 		}
-	}).append();
+	});
 
 });

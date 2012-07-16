@@ -4,6 +4,8 @@
 
 define([], function () {
 
+	var COLUMN_WIDTH = 206;
+
 	return Em.ArrayProxy.create({
 		content: [],
 
@@ -67,9 +69,6 @@ define([], function () {
 
 			var self = this;
 
-			if (!run) {
-				$('#run-info').hide();
-			}
 			this.set('run', run);
 
 			App.socket.request('monitor', {
@@ -96,9 +95,9 @@ define([], function () {
 					self.history.pushObject(hist[i]);
 
 					if (run && run === hist[i].runId) {
-						$('#run-info').html('The following diagram represents a run from ' +
+						App.informer.show('The following diagram represents a run from ' +
 								new Date(hist[i].startTime * 1000) + ' to ' + new Date(hist[i].endTime * 1000) +
-								'. It finished with a ' + hist[i].endStatus + ' status.').show();
+								'. It finished with a ' + hist[i].endStatus + ' status.', 'alert-info', true);
 					}
 
 				}
@@ -182,8 +181,9 @@ define([], function () {
 				params: [app, id, -1]
 			}, function (error, response) {
 
-				self.get('current').set('currentState', response.params.status);
-
+				if (response.params) {
+					self.get('current').set('currentState', response.params.status);
+				}
 			});
 		},
 		
@@ -231,6 +231,7 @@ define([], function () {
 					for (var j = 0; j < fs.length; j ++) {
 						fs[j].set('metrics', finish);
 					}
+					flowlet.set('processed', finish);
 
 					$('#stat' + flowlets[i].id).html(finish);
 				}
@@ -326,41 +327,30 @@ define([], function () {
 				
 			}
 
-			function show_detail(el) {
-
-				var id = el.attr('flowlet-id');
-				var x = el.offset().left - 75;
-				var y = el.offset().top - 32;
-
-				App.Controllers.Flow.set('flowlet', self.get_flowlet(id));
-				App.Views.Flowlet.show(x, y);
-
-			}
-
 			var columns = {}, rows = {}, numColumns = 0;
 			var column_map = {};
 
 			function append (id, column, connectTo) {
 
 				var flowlet = self.get_flowlet(id);
-				var elId;
 
-				var el = $('<div id="flowlet' + id +
-					'" flowlet-id="' + id + '" class="window' + ('input-stream' === id ? ' source' : '') + '"><div class="window-title"><strong>' + (flowlet ? flowlet.name : '') +
-					'</strong></div><div class="window-value" id="stat' + id + '">' + ('input-stream' === id ? '' : '0') +
-					'</div></div>').click(function () {
-						show_detail($(this));
-					});
-				
 				if (columns[column] === undefined) {
-					// Create a new column element.
-					columns[column] = $('<div class="column clearfix"></div>').appendTo($('#flowviz'));
+					// Create a new column view.
+					columns[column] = Em.ContainerView.create({
+						classNames: ['column']
+					});
+
+					// Attach it to and expand the visualizer.
+					var viz = App.Views.Flow.get('visualizer');
+					viz.get('childViews').pushObject(columns[column]);
+					$(viz.get('element')).css({width: (++numColumns * COLUMN_WIDTH) + 'px'});
+
 					rows[column] = 0;
-					// Stretch the canvas to fit additional columns.
-					$('#flowviz').css({width: (++numColumns * 184) + 'px'});
 				}
-				// Append the flowlet to the column.
-				columns[column].append(el);
+
+				columns[column].get('childViews').pushObject(App.Views.DagNode.create({
+					current: flowlet
+				}));
 
 				// Associate the column with this flowlet.
 				column_map[id] = {
@@ -372,40 +362,50 @@ define([], function () {
 					return;
 				}
 
-				for (var i = 0; i < conns[id].length; i ++) {
-					elId = "flowlet" + conns[id][i];
-					self.plumber.addEndpoint(elId, self.destspec, {
-						anchor: "RightMiddle",
-						uuid: elId + "RightMiddle"
-					});
-				}
-				if (conns[id].length > 0) {
-					elId = "flowlet" + id;
-					self.plumber.addEndpoint(elId, self.sourcespec, {
-						anchor: "LeftMiddle",
-						uuid: elId + "LeftMiddle"
-					});
-				}
+
+				Ember.run.next(this, function () {
+
+					var elId;
+					for (var i = 0; i < conns[id].length; i ++) {
+						elId = "flowlet" + conns[id][i];
+						self.plumber.addEndpoint(elId, self.destspec, {
+							anchor: "RightMiddle",
+							uuid: elId + "RightMiddle"
+						});
+					}
+					if (conns[id].length > 0) {
+						elId = "flowlet" + id;
+						self.plumber.addEndpoint(elId, self.sourcespec, {
+							anchor: "LeftMiddle",
+							uuid: elId + "LeftMiddle"
+						});
+					}
+
+				});
 	
 			}
 
 			function connect(from, to) {
 
-				var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
+				Ember.run.next(this, function () {
 
-				if (column_map[from].row === column_map[to].row) {
-					connector = [ "Flowchart", { gap: 0, stub: 1 } ];
-				}
+					var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
 
-				var color = '#152C52';
-				self.plumber.connect({
-					paintStyle: { strokeStyle:color, lineWidth:2 },
-					uuids:['flowlet' + from + 'RightMiddle',
-						'flowlet' + to + 'LeftMiddle'],
-					overlays: [
-						[ "Arrow", { location:0.5 }, { foldback:0.7, fillStyle:color, width:14 } ]
-					],
-					connector: connector
+					if (column_map[from].row === column_map[to].row) {
+						connector = [ "Flowchart", { gap: 0, stub: 1 } ];
+					}
+
+					var color = '#152C52';
+					self.plumber.connect({
+						paintStyle: { strokeStyle:color, lineWidth:2 },
+						uuids:['flowlet' + from + 'RightMiddle',
+							'flowlet' + to + 'LeftMiddle'],
+						overlays: [
+							[ "Arrow", { location:0.5 }, { foldback:0.7, fillStyle:color, width:14 } ]
+						],
+						connector: connector
+					});
+
 				});
 
 			}

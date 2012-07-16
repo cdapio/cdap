@@ -83,27 +83,6 @@ struct FARStatus {
   3:list<FlowVerificationStatus> verification,
 }
 
-/**
- * Provides service for managing Flow Archive Resource
- */
-service FARService {
-  /**
-   * Begins uploading of FAR
-   */
-  ResourceIdentifier init(1:DelegationToken token, 2: ResourceInfo info) throws (1:FARServiceException e),
-  /**
-   * Chunk of FAR is uploaded
-   */
-  void chunk(1:DelegationToken token, 2:ResourceIdentifier resource, 3: binary chunk) throws (1: FARServiceException e),
-  /**
-   * Finalizes uploading of FAR
-   */
-  void deploy(1:DelegationToken token, 2:ResourceIdentifier resource) throws (1: FARServiceException e),
-  /**
-   * Status of upload
-   */
-  FARStatus status(1:DelegationToken token, 2:ResourceIdentifier resource) throws (1: FARServiceException e),
-}
 
 /**
  * Following structure identifies and indvidual flow in the system.
@@ -116,6 +95,13 @@ struct FlowIdentifier {
 }
 
 /**
+ * Exception raised when there is any issue in start/stopping/status/pausing of a Flow.
+ */
+exception FlowServiceException {
+  1:string message,
+}
+
+/**
  * Status of a flowlet.
  */
 struct FlowletStatus {
@@ -125,7 +111,7 @@ struct FlowletStatus {
 }
 
 /**
- * Run Identifier associated with flow. 
+ * Run Identifier associated with flow.
  */
 struct RunIdentifier {
  1:string id,
@@ -143,8 +129,8 @@ struct FlowStatus {
 }
 
 /**
- * FlowDescription include FlowIdentifier and few more things needed to start the flow. 
- * It includes parameters or arguments that will be passed around to Flow during start. 
+ * FlowDescription include FlowIdentifier and few more things needed to start the flow.
+ * It includes parameters or arguments that will be passed around to Flow during start.
  */
 struct FlowDescriptor {
   1:FlowIdentifier identifier,
@@ -152,10 +138,39 @@ struct FlowDescriptor {
 }
 
 /**
- * Exception raised when there is any issue in start/stopping/status/pausing of a Flow. 
+ * Provides service for managing Flow Archive Resource
  */
-exception FlowServiceException {
-  1:string message,
+service FARService {
+
+  /**
+   * Begins uploading of FAR
+   */
+  ResourceIdentifier init(1:DelegationToken token, 2: ResourceInfo info) throws (1:FARServiceException e),
+
+  /**
+   * Chunk of FAR is uploaded
+   */
+  void chunk(1:DelegationToken token, 2:ResourceIdentifier resource, 3: binary chunk) throws (1: FARServiceException e),
+
+  /**
+   * Finalizes uploading of FAR
+   */
+  void deploy(1:DelegationToken token, 2:ResourceIdentifier resource) throws (1: FARServiceException e),
+
+  /**
+   * Status of upload
+   */
+  FARStatus status(1:DelegationToken token, 2:ResourceIdentifier resource) throws (1: FARServiceException e),
+
+  /**
+   * Promote a flow an it's resource to cloud.
+   */
+  bool promote(1: DelegationToken token, 2: FlowIdentifier identifier) throws (1: FARServiceException e),
+
+  /**
+   * Disables a Flow
+   */
+  void remove(1: DelegationToken token, 2: FlowIdentifier identifier) throws(1: FARServiceException e),
 }
 
 /**
@@ -178,7 +193,14 @@ service FlowService {
   RunIdentifier stop(1: DelegationToken token,  2: FlowIdentifier identifier) throws(1: FlowServiceException e),
 
   /**
-   * Disables a Flow
+   * Set number of instance of a flowlet.
    */
-  void remove(1: DelegationToken token, 2: FlowIdentifier identifier) throws(1: FlowServiceException e),
+  void setInstances(1: DelegationToken token,
+    2: FlowIdentifier identifier, 3: string flowletId, 4:i16 instances ) throws (1: FlowServiceException e),
+
+  /**
+   * Checks status of a flowlet.
+   */
+  FlowletStatus flowletstatus(1: DelegationToken token, 2: FlowIdentifier identifier, 3: string flowletId)
+    throws (1: FlowServiceException e),
 }

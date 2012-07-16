@@ -416,9 +416,11 @@ FlowService_stop_result.prototype.write = function(output) {
   return;
 };
 
-var FlowService_remove_args = function(args) {
+var FlowService_setInstances_args = function(args) {
   this.token = null;
   this.identifier = null;
+  this.flowletId = null;
+  this.instances = null;
   if (args) {
     if (args.token !== undefined) {
       this.token = args.token;
@@ -426,10 +428,16 @@ var FlowService_remove_args = function(args) {
     if (args.identifier !== undefined) {
       this.identifier = args.identifier;
     }
+    if (args.flowletId !== undefined) {
+      this.flowletId = args.flowletId;
+    }
+    if (args.instances !== undefined) {
+      this.instances = args.instances;
+    }
   }
 };
-FlowService_remove_args.prototype = {};
-FlowService_remove_args.prototype.read = function(input) {
+FlowService_setInstances_args.prototype = {};
+FlowService_setInstances_args.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -458,6 +466,20 @@ FlowService_remove_args.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowletId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.I16) {
+        this.instances = input.readI16();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -467,8 +489,8 @@ FlowService_remove_args.prototype.read = function(input) {
   return;
 };
 
-FlowService_remove_args.prototype.write = function(output) {
-  output.writeStructBegin('FlowService_remove_args');
+FlowService_setInstances_args.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_setInstances_args');
   if (this.token) {
     output.writeFieldBegin('token', Thrift.Type.STRUCT, 1);
     this.token.write(output);
@@ -479,12 +501,22 @@ FlowService_remove_args.prototype.write = function(output) {
     this.identifier.write(output);
     output.writeFieldEnd();
   }
+  if (this.flowletId) {
+    output.writeFieldBegin('flowletId', Thrift.Type.STRING, 3);
+    output.writeString(this.flowletId);
+    output.writeFieldEnd();
+  }
+  if (this.instances) {
+    output.writeFieldBegin('instances', Thrift.Type.I16, 4);
+    output.writeI16(this.instances);
+    output.writeFieldEnd();
+  }
   output.writeFieldStop();
   output.writeStructEnd();
   return;
 };
 
-var FlowService_remove_result = function(args) {
+var FlowService_setInstances_result = function(args) {
   this.e = null;
   if (args) {
     if (args.e !== undefined) {
@@ -492,8 +524,8 @@ var FlowService_remove_result = function(args) {
     }
   }
 };
-FlowService_remove_result.prototype = {};
-FlowService_remove_result.prototype.read = function(input) {
+FlowService_setInstances_result.prototype = {};
+FlowService_setInstances_result.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -526,8 +558,160 @@ FlowService_remove_result.prototype.read = function(input) {
   return;
 };
 
-FlowService_remove_result.prototype.write = function(output) {
-  output.writeStructBegin('FlowService_remove_result');
+FlowService_setInstances_result.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_setInstances_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowService_flowletstatus_args = function(args) {
+  this.token = null;
+  this.identifier = null;
+  this.flowletId = null;
+  if (args) {
+    if (args.token !== undefined) {
+      this.token = args.token;
+    }
+    if (args.identifier !== undefined) {
+      this.identifier = args.identifier;
+    }
+    if (args.flowletId !== undefined) {
+      this.flowletId = args.flowletId;
+    }
+  }
+};
+FlowService_flowletstatus_args.prototype = {};
+FlowService_flowletstatus_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.token = new ttypes.DelegationToken();
+        this.token.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.identifier = new ttypes.FlowIdentifier();
+        this.identifier.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowletId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_flowletstatus_args.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_flowletstatus_args');
+  if (this.token) {
+    output.writeFieldBegin('token', Thrift.Type.STRUCT, 1);
+    this.token.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.identifier) {
+    output.writeFieldBegin('identifier', Thrift.Type.STRUCT, 2);
+    this.identifier.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.flowletId) {
+    output.writeFieldBegin('flowletId', Thrift.Type.STRING, 3);
+    output.writeString(this.flowletId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowService_flowletstatus_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+FlowService_flowletstatus_result.prototype = {};
+FlowService_flowletstatus_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.FlowletStatus();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.FlowServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_flowletstatus_result.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_flowletstatus_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
   if (this.e) {
     output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
     this.e.write(output);
@@ -659,24 +843,26 @@ FlowServiceClient.prototype.recv_stop = function(input,mtype,rseqid) {
   }
   return callback('stop failed: unknown result');
 };
-FlowServiceClient.prototype.remove = function(token, identifier, callback) {
+FlowServiceClient.prototype.setInstances = function(token, identifier, flowletId, instances, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
-  this.send_remove(token, identifier);
+  this.send_setInstances(token, identifier, flowletId, instances);
 };
 
-FlowServiceClient.prototype.send_remove = function(token, identifier) {
+FlowServiceClient.prototype.send_setInstances = function(token, identifier, flowletId, instances) {
   var output = new this.pClass(this.output);
-  output.writeMessageBegin('remove', Thrift.MessageType.CALL, this.seqid);
-  var args = new FlowService_remove_args();
+  output.writeMessageBegin('setInstances', Thrift.MessageType.CALL, this.seqid);
+  var args = new FlowService_setInstances_args();
   args.token = token;
   args.identifier = identifier;
+  args.flowletId = flowletId;
+  args.instances = instances;
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
 };
 
-FlowServiceClient.prototype.recv_remove = function(input,mtype,rseqid) {
+FlowServiceClient.prototype.recv_setInstances = function(input,mtype,rseqid) {
   var callback = this._reqs[rseqid] || function() {};
   delete this._reqs[rseqid];
   if (mtype == Thrift.MessageType.EXCEPTION) {
@@ -685,7 +871,7 @@ FlowServiceClient.prototype.recv_remove = function(input,mtype,rseqid) {
     input.readMessageEnd();
     return callback(x);
   }
-  var result = new FlowService_remove_result();
+  var result = new FlowService_setInstances_result();
   result.read(input);
   input.readMessageEnd();
 
@@ -693,6 +879,45 @@ FlowServiceClient.prototype.recv_remove = function(input,mtype,rseqid) {
     return callback(result.e);
   }
   callback(null)
+};
+FlowServiceClient.prototype.flowletstatus = function(token, identifier, flowletId, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_flowletstatus(token, identifier, flowletId);
+};
+
+FlowServiceClient.prototype.send_flowletstatus = function(token, identifier, flowletId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('flowletstatus', Thrift.MessageType.CALL, this.seqid);
+  var args = new FlowService_flowletstatus_args();
+  args.token = token;
+  args.identifier = identifier;
+  args.flowletId = flowletId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FlowServiceClient.prototype.recv_flowletstatus = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FlowService_flowletstatus_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('flowletstatus failed: unknown result');
 };
 var FlowServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
@@ -754,14 +979,28 @@ FlowServiceProcessor.prototype.process_stop = function(seqid, input, output) {
   })
 }
 
-FlowServiceProcessor.prototype.process_remove = function(seqid, input, output) {
-  var args = new FlowService_remove_args();
+FlowServiceProcessor.prototype.process_setInstances = function(seqid, input, output) {
+  var args = new FlowService_setInstances_args();
   args.read(input);
   input.readMessageEnd();
-  var result = new FlowService_remove_result();
-  this._handler.remove(args.token, args.identifier, function (success) {
+  var result = new FlowService_setInstances_result();
+  this._handler.setInstances(args.token, args.identifier, args.flowletId, args.instances, function (success) {
     result.success = success;
-    output.writeMessageBegin("remove", Thrift.MessageType.REPLY, seqid);
+    output.writeMessageBegin("setInstances", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FlowServiceProcessor.prototype.process_flowletstatus = function(seqid, input, output) {
+  var args = new FlowService_flowletstatus_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FlowService_flowletstatus_result();
+  this._handler.flowletstatus(args.token, args.identifier, args.flowletId, function (success) {
+    result.success = success;
+    output.writeMessageBegin("flowletstatus", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

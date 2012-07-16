@@ -37,16 +37,6 @@ define([
 		},
 		cancel: function () {
 			App.router.set('location', '/');
-		},
-		showError: function (message) {
-			$('#far-upload-alert').removeClass('alert-success')
-				.addClass('alert-error').html('Error: ' + message).show();
-		},
-		showSuccess: function (message) {
-			$('#far-upload-alert').removeClass('alert-error')
-				.addClass('alert-success').html('Success! The FAR was uploaded, and flows deployed.').show();
-
-			// $('#object-list').slideDown('slow');
 		}
 	});
 

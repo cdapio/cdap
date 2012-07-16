@@ -65,7 +65,7 @@ define([], function () {
 		update: function (response) {
 
 			if (response.error) {
-				App.Views.Upload.showError(response.error);
+				App.informer.show(response.error, 'alert-error');
 				$('#far-upload-status').html(this.welcome_message);
 				this.processing = false;
 
@@ -84,13 +84,13 @@ define([], function () {
 						$('#far-upload-status').html(response.status);
 					break;
 					case 5:
-						App.Views.Upload.showSuccess(response.status);
+						App.informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
 						this.processing = false;
 						App.Views.Upload.reset();
 						this.sendFile();
 					break;
 					default:
-						App.Views.Upload.showError(response.message);
+						App.informer.show(response.message, 'alert-error');
 						this.processing = false;
 						App.Views.Upload.reset();
 						this.sendFile();

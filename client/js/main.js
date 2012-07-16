@@ -10,6 +10,8 @@ function(Models, Views, Controllers, Router, Socket){
 			this.router = new Router(Views);
 			this.socket = new Socket(document.location.hostname, function () {
 				
+				// This function is called when the socket is (re)connected.
+
 				if (!App.initialized) {
 					// Connected and ready.
 					App.router.start();
@@ -33,8 +35,9 @@ function(Models, Views, Controllers, Router, Socket){
 						$(this).html('<h3>' + message + '</h3>').show();
 						return this;
 					};
-					App.interstitial.loading = function () {
-						$(this).html('<img src="/img/loading.gif" />').show();
+					App.interstitial.loading = function (message) {
+						$(this).html((message ? '<h3>' + message + '</h3>' : '') +
+							'<img src="/img/loading.gif" />').show();
 						return this;
 					};
 
@@ -49,6 +52,8 @@ function(Models, Views, Controllers, Router, Socket){
 				
 
 			}, function (message, args) {
+
+				// This function is called when the socket experiences an error.
 
 				if (typeof message === "object") {
 					
@@ -69,8 +74,46 @@ function(Models, Views, Controllers, Router, Socket){
 		}
 	});
 	
+	App.informer = {
+		clear: function () {
+			$('#informer').html('');
+		},
+		queue: [],
+		show: function (message, style, persist) {
+
+			var div = $('<div class="alert-wrapper" />').append(
+				$('<div></div>')
+				.addClass('alert').addClass(style).html(message));
+
+			$('#informer').append(div);
+			div.fadeIn();
+
+			if (!persist) {
+
+				this.queue.push(div);
+
+				setTimeout(function () {
+
+					var el = App.informer.queue.shift();
+
+					el.animate({
+						opacity: 0,
+						height: 0
+					}, function () {
+						el.remove();
+					});
+					
+				}, 4000);
+			}
+		}
+	};
+
 	App.Models = Models;
 	App.Views = Views;
 	App.Controllers = Controllers;
+
+	// Some templates depend on specific views.
+	// Compile templates once all views are loaded.
+	App.Views.Flowlet.compile();
 
 });

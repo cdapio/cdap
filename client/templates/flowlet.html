@@ -1,9 +1,26 @@
 
 <i {{action hide on="click"}} class="icon-remove-sign pull-right" /><h4>{{current.name}}
 <span>Flowlet</span></h4>
+<div class="btn-group" style="margin-bottom:6px;">
+	
+	<button disabled="true" class="btn" style="width: 160px;text-align:left;">{{current.instances}} instance{{current.plural}}</button>
+	<button class="btn" {{action "addOneInstance" on="click"}}>+</button>
+	<button class="btn dropdown-toggle" data-toggle="dropdown">
+			<span class="caret"></span>
+		</button>
+		<ul class="dropdown-menu" style="left:54px;width:160px;">
+			<li><a {{action "addOneInstance" on="click"}}>Add 1 Instance</a></li>
+			<li><a {{action "removeOneInstance" on="click"}}>Remove 1 Instance</a></li>
+			<li class="divider"></li>
+			<li><a {{action "doubleInstances" on="click"}}>Double Instances (Add {{current.doubleCount}})</a></li>
+			<li><a {{action "fitInstances" on="click"}}>Fit to Load (Add {{current.fitCount}})</a></li>
+			<li class="divider"></li>
+			<li><a {{action "promptInstances" on="click"}}>Set Arbitrary...</a></li>
+		</ul>
+	</button>
+</div>
 <div class="well" style="border: 1px solid #EDEDED;border-radius:4px;padding:4px 5px;margin-bottom:6px;">
-	<strong>Class</strong>: {{current.classname}}<br />
-	<strong>Instances</strong>: {{current.instances}}
+	<strong>Class</strong><br />{{current.classname}}<br />
 </div>
 <div style="border: 1px solid #EDEDED;border-radius:4px;">
 	<table class="table table-condensed">

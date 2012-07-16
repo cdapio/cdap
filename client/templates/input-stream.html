@@ -4,7 +4,7 @@
 	{{#if App.Controllers.Flow.run}}
 		Cannot inject into an historical flow.
 	{{else}}
-		{{view App.Views.Flowlet.PayloadView id="stream-inject" placeholder="Payload"}}
+		{{view App.Views.Payload id="stream-inject" placeholder="Payload"}}
 		<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
 	{{/if}}
 </div>

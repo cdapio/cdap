@@ -45,66 +45,133 @@ try {
 			done('Could not connect to FlowMonitor.');
 		});
 		
-		conn.on('connect', function (response) {
-			var Manager = thrift.createClient(FlowService, conn);
+		var Manager = thrift.createClient(FlowService, conn);
 
-			console.log(method, params);
+		console.log(method, params);
 
-			if (method in Manager) {
+		var identifier;
 
-				var identifier;
+		switch (method) {
+			case 'start':
+				identifier = new flowservices_types.FlowDescriptor({
+					identifier: new flowservices_types.FlowIdentifier({
+						app: params[0],
+						flow: params[1],
+						version: parseInt(params[2], 10),
+						accountId: 'demo'
+					}),
+					"arguments": []
+				});
+				Manager.start(null, identifier, done);
+				conn.end();
+				
+			break;
+			case 'stop':
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: parseInt(params[2], 10),
+					accountId: 'demo'
+				});
+				Manager.stop(null, identifier, done);
+				conn.end();
+				
+			break;
+			case 'status':
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: parseInt(params[2], 10),
+					accountId: 'demo'
+				});
+				Manager.status(null, identifier, done);
+				conn.end();
+				
+			break;
+			case 'remove':
 
-				switch (method) {
-					case 'start':
-						identifier = new flowservices_types.FlowDescriptor({
-							identifier: new flowservices_types.FlowIdentifier({
-								app: params[0],
-								flow: params[1],
-								version: parseInt(params[2], 10),
-								accountId: 'demo'
-							}),
-							"arguments": []
+				var FAR = thrift.createClient(FARService, conn);
+
+				identifier = new flowservices_types.FlowIdentifier({
+					accountId: 'demo',
+					app: params[0],
+					flow: params[1],
+					version: -1
+				});
+				FAR.remove(null, identifier, done);
+				conn.end();
+
+				break;
+			case 'promote':
+
+				var FAR = thrift.createClient(FARService, conn);
+
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: params[2],
+					accountId: 'demo'
+				});
+
+				FAR.promote(null, identifier, function (error, response) {
+
+					done(error, response);
+
+				});
+
+				break;
+			case 'setInstances':
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: params[2],
+					accountId: 'demo'
+				});
+				var flowlet_id = params[3];
+				var instances = params[4];
+
+				Manager.setInstances(null, identifier, flowlet_id, instances, function (error, response) {
+
+					var interval = setInterval(function () {
+						Manager.flowletstatus(null, identifier, flowlet_id, function (error, status) {
+
+							if (error) {
+								clearInterval(interval);
+								done(error);
+							} else {
+
+								switch (status.name) {
+									case 'RECONFIGURE':
+									case 'ADJUSTING_RESOURCES':
+									case 'LAUNCHING':
+									break;
+									case 'RUNNING':
+										done(null, status);
+										clearInterval(interval);
+										conn.end();
+									break;
+									case 'ASK_FAILED':
+										done('Failed. Could not issue additional instances.', status);
+										clearInterval(interval);
+										conn.end();
+									break;
+								}
+							}
 						});
-						Manager.start(null, identifier, done);
-					break;
-					case 'stop':
-						identifier = new flowservices_types.FlowIdentifier({
-							app: params[0],
-							flow: params[1],
-							version: parseInt(params[2], 10),
-							accountId: 'demo'
-						});
-						Manager.stop(null, identifier, done);
-					break;
-					case 'status':
-						identifier = new flowservices_types.FlowIdentifier({
-							app: params[0],
-							flow: params[1],
-							version: parseInt(params[2], 10),
-							accountId: 'demo'
-						});
-						Manager.status(null, identifier, done);
-					break;
-					case 'remove':
-						identifier = new flowservices_types.FlowIdentifier({
-							accountId: params[0],
-							app: params[1],
-							flow: params[2],
-							version: -1
-						});
-						Manager.remove(null, identifier, done);
-						break;
-					default:
-						Manager[method].apply(Manager, params.concat(done));
+
+					}, 500);
+
+				});
+
+				break;
+			default:
+				if (method in Manager) {
+					Manager[method].apply(Manager, params.concat(done));
+				} else {
+					done('Unknown method for service Manager: ' + method, null);
 				}
-
-			} else {
-				done('Unknown method for service Manager: ' + method, null);
-			}
-
-			conn.end();
-
-		});
+				conn.end();
+		}
 
 	};
 
@@ -251,7 +318,7 @@ try {
 												} // Else: 1 (Registered), 2 (Uploading), 3 (Verifying)
 											}
 										});
-									}, 100);
+									}, 500);
 								}
 							});
 						}

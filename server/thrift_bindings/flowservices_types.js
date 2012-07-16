@@ -707,6 +707,62 @@ FlowIdentifier.prototype.write = function(output) {
   return;
 };
 
+var FlowServiceException = module.exports.FlowServiceException = function(args) {
+  Thrift.TException.call(this, "FlowServiceException")
+  this.name = "FlowServiceException"
+  this.message = null;
+  if (args) {
+    if (args.message !== undefined) {
+      this.message = args.message;
+    }
+  }
+};
+Thrift.inherits(FlowServiceException, Thrift.TException);
+FlowServiceException.prototype.name = 'FlowServiceException';
+FlowServiceException.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.message = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowServiceException.prototype.write = function(output) {
+  output.writeStructBegin('FlowServiceException');
+  if (this.message) {
+    output.writeFieldBegin('message', Thrift.Type.STRING, 1);
+    output.writeString(this.message);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FlowletStatus = module.exports.FlowletStatus = function(args) {
   this.name = null;
   this.code = null;
@@ -1039,62 +1095,6 @@ FlowDescriptor.prototype.write = function(output) {
       }
     }
     output.writeListEnd();
-    output.writeFieldEnd();
-  }
-  output.writeFieldStop();
-  output.writeStructEnd();
-  return;
-};
-
-var FlowServiceException = module.exports.FlowServiceException = function(args) {
-  Thrift.TException.call(this, "FlowServiceException")
-  this.name = "FlowServiceException"
-  this.message = null;
-  if (args) {
-    if (args.message !== undefined) {
-      this.message = args.message;
-    }
-  }
-};
-Thrift.inherits(FlowServiceException, Thrift.TException);
-FlowServiceException.prototype.name = 'FlowServiceException';
-FlowServiceException.prototype.read = function(input) {
-  input.readStructBegin();
-  while (true)
-  {
-    var ret = input.readFieldBegin();
-    var fname = ret.fname;
-    var ftype = ret.ftype;
-    var fid = ret.fid;
-    if (ftype == Thrift.Type.STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-      if (ftype == Thrift.Type.STRING) {
-        this.message = input.readString();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      case 0:
-        input.skip(ftype);
-        break;
-      default:
-        input.skip(ftype);
-    }
-    input.readFieldEnd();
-  }
-  input.readStructEnd();
-  return;
-};
-
-FlowServiceException.prototype.write = function(output) {
-  output.writeStructBegin('FlowServiceException');
-  if (this.message) {
-    output.writeFieldBegin('message', Thrift.Type.STRING, 1);
-    output.writeString(this.message);
     output.writeFieldEnd();
   }
   output.writeFieldStop();

@@ -26,15 +26,29 @@ define([
 			
 			App.router.set('location', href);
 		},
-		showError: function (message) {
-			$('#flow-alert').removeClass('alert-success')
-				.addClass('alert-error').html('Error: ' + message).show();
+		promote: function () {
+
+			var flow = this.current;
+
+			App.socket.request('manager', {
+				method: 'promote',
+				params: [flow.meta.app, flow.meta.name, flow.version]
+			}, function (error, response) {
+
+				if (error) {
+					App.informer.show(error.message, 'alert-error');
+				} else {
+					App.informer.show('Successfully pushed to cloud. Navigate here to view: {{cloud-site-url}}');
+				}
+
+			});
+
 		},
 		"delete": function () {
 			
 			if (App.Controllers.Flow.current.get('currentState') !== 'STOPPED' &&
 				App.Controllers.Flow.current.get('currentState') !== 'DEPLOYED') {
-				App.Views.Flow.showError('Cannot remove: Please stop the flow before removing.');
+				App.informer.show('Cannot remove: Please stop the flow before removing.', 'alert-error');
 			} else {
 				$('#modal-from-dom').modal('show');
 			}
@@ -53,7 +67,7 @@ define([
 				$('#modal-from-dom').modal('hide');
 
 				if (error) {
-					App.Views.Flow.showError(error.message);
+					App.informer.show(error.message, 'alert-error');
 				} else {
 					App.router.set('location', '#/');
 				}

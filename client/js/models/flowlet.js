@@ -4,6 +4,55 @@
 
 define([], function () {
 	return Em.Object.extend({
-		
+		processed: 0,
+		plural: function () {
+			return this.instances === 1 ? '' : 's';
+		}.property('instances'),
+		doubleCount: function () {
+			return this.instances;
+		}.property(),
+		fitCount: function () {
+			return 0;
+		}.property(),
+		addInstances: function (value, done) {
+
+			var instances = this.get('instances') + value;
+			
+			if (instances < 1 || instances > 64) {
+				done('Cannot set instances. Please select an instance count > 1 and <= 64');
+			} else {
+
+				var current = this;
+				var currentFlow = App.Controllers.Flow.get('current');
+
+				var app = currentFlow.meta.app;
+				var flow = currentFlow.meta.name;
+				var version = currentFlow.version;
+
+				var flowlet = current.name;
+
+				App.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.');
+				App.Views.Flowlet.hide();
+
+				App.socket.request('manager', {
+					method: 'setInstances',
+					params: [app, flow, version, flowlet, instances]
+				}, function (error, response) {
+
+					App.interstitial.hide();
+
+					if (error) {
+						App.informer.show(error, 'alert-error');
+						
+					} else {
+						current.set('instances', instances);
+						App.informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
+						
+					}
+
+				});
+
+			}
+		}
 	});
 });
