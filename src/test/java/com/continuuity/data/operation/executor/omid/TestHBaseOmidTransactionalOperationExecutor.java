@@ -8,17 +8,15 @@ import org.junit.Test;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
+public class TestHBaseOmidTransactionalOperationExecutor
+extends TestOmidTransactionalOperationExecutor {
 
   private static Injector injector;
 
   private static OmidTransactionalOperationExecutor executor;
-
-  private static OVCTableHandle handle;
 
   @BeforeClass
   public static void startEmbeddedHBase() {
@@ -28,7 +26,6 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
           new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       executor = (OmidTransactionalOperationExecutor)injector.getInstance(
           OperationExecutor.class);
-      handle = executor.getTableHandle();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -48,16 +45,6 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
     return executor;
   }
 
-  @Override
-  protected OVCTableHandle getTableHandle() {
-    return handle;
-  }
-
-  @Override
-  protected int getNumIterations() {
-    return 100;
-  }
-
   // Test Overrides
 
   /**
@@ -67,8 +54,9 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   public void testClearFabric() throws Exception {}
 
   /**
-   * Currently not working.  Will be fixed in ENG-421.
+   * Currently not working.  Will be fixed in ENG-420.
    */
   @Test @Override @Ignore
-  public void testUserReadOwnWritesAndWritesStableSorted() throws Exception {}
+  public void testDeletesCanBeTransacted() throws Exception {}
+
 }
