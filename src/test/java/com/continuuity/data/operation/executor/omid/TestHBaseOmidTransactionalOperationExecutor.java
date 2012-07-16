@@ -1,4 +1,4 @@
-package com.continuuity.data.table;
+package com.continuuity.data.operation.executor.omid;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -6,13 +6,17 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class TestHBaseOVCTable extends TestOVCTable {
+public class TestHBaseOmidTransactionalOperationExecutor
+extends TestOmidTransactionalOperationExecutor {
 
   private static Injector injector;
+
+  private static OmidTransactionalOperationExecutor executor;
 
   @BeforeClass
   public static void startEmbeddedHBase() {
@@ -20,6 +24,8 @@ public class TestHBaseOVCTable extends TestOVCTable {
       HBaseTestBase.startHBase();
       injector = Guice.createInjector(
           new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      executor = (OmidTransactionalOperationExecutor)injector.getInstance(
+          OperationExecutor.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -35,22 +41,22 @@ public class TestHBaseOVCTable extends TestOVCTable {
   }
 
   @Override
-  protected OVCTableHandle getTableHandle() {
-    return injector.getInstance(OVCTableHandle.class);
+  protected OmidTransactionalOperationExecutor getOmidExecutor() {
+    return executor;
   }
 
-  // Tests that do not work on HBase
+  // Test Overrides
 
   /**
-   * Currently unsupported on HBase.  Support implemented in ENG-422.
+   * Clear currently not enabled for HBase.  Support implemented in ENG-422.
    */
-  @Override @Test @Ignore
-  public void testClearVerySimply() {}
+  @Test @Override @Ignore
+  public void testClearFabric() throws Exception {}
 
   /**
-   * Currently not working.  Will be fixed in ENG-421.
+   * Currently not working.  Will be fixed in ENG-420.
    */
-  @Override @Test @Ignore
-  public void testIncrementCASIncrementWithSameTimestamp() {}
-  
+  @Test @Override @Ignore
+  public void testDeletesCanBeTransacted() throws Exception {}
+
 }
