@@ -593,7 +593,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
           try {
             this.locked.wait();
           } catch (InterruptedException e) {
-            System.err.println("RowLock.lock() interrupted");
+            System.out.println("RowLock.lock() interrupted");
           }
         }
         if (this.locked.compareAndSet(false, true)) {
