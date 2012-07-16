@@ -24,6 +24,9 @@ public class FlowMonitorMain {
     try {
       CConfiguration conf = CConfiguration.create();
 
+      conf.addResource("continuuity-overlord.xml");
+      conf.addResource("continuuity-overlord-site.xml");
+
       if (zookeeper != null) {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper);
       }

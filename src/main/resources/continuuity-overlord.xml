@@ -11,4 +11,10 @@
         <description>Specifies URI for metrics DB</description>
     </property>
 
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost</value>
+        <description>Specifies the zookeeper host:port</description>
+    </property>
+
 </configuration>
