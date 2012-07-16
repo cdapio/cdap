@@ -1,6 +1,7 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.*;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
@@ -81,6 +82,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     this.rmHandler = rmHandler;
     this.cmHandler = cmHandler;
   }
+
   /**
    * Starts up the application manager service.
    */
@@ -361,6 +363,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     public boolean process() {
 
       if(shouldProceed()) {
+
         /**
          * We go through the list of entries in <code>readyToRunQueue</code>, if they are
          * not already in the <code>runningTaskQueue</code> we make the request for them.
@@ -492,9 +495,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
             continue;
           }
           Service.State state = entry.getValue().state();
-          if(state == State.FAILED || state == State.TERMINATED) {
+          if(state == State.FAILED) {
             Log.info("Task running with container {} has been terminated. Releasing the container.",
-              entry.getKey().getId());
+              entry.getKey().toString());
             toRelease.add(entry.getKey());
           }
         }
@@ -520,19 +523,13 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           if(! containerMgrs.containsKey(containerId)) {
             Log.info("Container {} was allocated, but was not assigned any task.", containerId.getId());
             continue;
+          } else {
+            containerMgrs.get(containerId).stopAndWait();
+            containerMgrs.put(containerId, null);
           }
-
-          Log.info("Checking status of task {} running in container {}",
-            containerIdToTask.get(containerId), containerId.getId());
 
           String taskId = containerIdToTask.get(containerId);
           Log.info("Status of container id {}, task id {} is {}", new Object[] { containerId, taskId, exitStatus});
-
-          if(! runningTaskQueue.containsKey(taskId)) {
-            Log.warn("Task id {} was supposedly assigned to container with id {}. " +
-              "Seems like something is wrong. Check logic.", taskId, containerId);
-            continue;
-          }
 
           TaskSpecification specification = runningTaskQueue.get(taskId);
 
@@ -666,7 +663,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * Manages a single task within a container.
    */
   public class TaskHandler extends AbstractScheduledService {
-    private static final int MAX_CHECK_FAILURES = 1000;
+    private static final int MAX_CHECK_FAILURES = 1;
 
     private final Container container;
     private final TaskSpecification specification;
@@ -709,9 +706,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         containerMgr.startContainer(startRequest);
         Log.info("Started task {}", specification.getId());
       } catch (YarnRemoteException e) {
+        e.printStackTrace();
         Log.info("Failed starting container {}. Reason : {}", container.toString(), e.getMessage());
         stop();
       } catch (Throwable e) {
+        e.printStackTrace();
         Log.info("Horrible happened. Reason : {}", e.getMessage());
         stop();
       }
@@ -738,8 +737,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
       try {
         GetContainerStatusResponse resp = containerMgr.getContainerStatus(req);
+
         status = resp.getStatus();
-        Log.info("Container {} status {}.", container.getId().toString(), status.toString());
+        Log.info("Container {} status {}, Diganostics {}.", new Object[] {
+          container.getId().toString(), status.toString(), status.getDiagnostics()});
+
         if (status != null && status.getState() == ContainerState.COMPLETE) {
           stop();
         }
@@ -752,7 +754,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         Log.info("An error was thrown while checking the status of a container. Reason : {}", e.getMessage());
       }
 
-      if(status == null || checkFailures > MAX_CHECK_FAILURES) {
+      if(checkFailures > MAX_CHECK_FAILURES) {
         Log.info("Failed after max retry to get status of container {}", container.toString());
         stop();
       }

@@ -13,6 +13,7 @@ import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
+import org.mortbay.log.Log;
 
 import java.io.IOException;
 import java.util.List;
@@ -237,7 +238,6 @@ public class TaskSpecification {
         LocalResource localResource = Records.newRecord(LocalResource.class);
         Path path = new Path(entry.getValue());
         FileStatus stat = fs.getFileStatus(path);
-
         localResource.setResource(ConverterUtils.getYarnUrlFromPath(path));
         localResource.setType(LocalResourceType.FILE);
         localResource.setSize(stat.getLen());

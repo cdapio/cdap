@@ -25,6 +25,11 @@ public class Constants {
   public static final String CFG_RESOURCE_MANAGER_SERVER_THREADS = "resource.manager.server.threads";
 
   /**
+   * Defaults for resource manager.
+   */
+  public static final String RESOURCE_MANAGER_LOCAL_DIR_DEFAULT = "build/continuuity/flow/manager/local";
+
+  /**
    * Default constants defined for resource manager
    */
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_PORT = "45000";
@@ -65,4 +70,10 @@ public class Constants {
    */
   public static final int DEFAULT_DATA_OPEX_SERVER_PORT = 15165;
   public static final int DEFAULT_DATA_OPEX_SERVER_THREADS = 20;
+
+  /**
+   * Configuration for Cloud FAR Service.
+   */
+  public static final String CFG_CLOUD_RESOURCE_MANAGER_HOST = "cloud.resource.manager.hostname";
+  public static final String CFG_CLOUD_RESOURCE_MANAGER_PORT = "cloud.resource.manager.port";
 }
