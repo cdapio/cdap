@@ -61,12 +61,6 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   // Test Overrides
 
   /**
-   * Clear currently not enabled for HBase.  Support implemented in ENG-422.
-   */
-  @Test @Override @Ignore
-  public void testClearFabric() throws Exception {}
-
-  /**
    * Currently not working.  Will be fixed in ENG-421.
    */
   @Test @Override @Ignore
