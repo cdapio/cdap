@@ -23,10 +23,9 @@ public class FlowMonitorMain {
     OptionsParser.init(this, args, "Flow Monitor", "0.1.0", System.out);
     try {
       CConfiguration conf = CConfiguration.create();
+
       if (zookeeper != null) {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper);
-      } else {
-        conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
       }
 
       Injector injector = Guice.createInjector(new MetricsModules().getSingleNodeModules());

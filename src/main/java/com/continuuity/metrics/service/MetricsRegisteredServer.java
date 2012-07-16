@@ -1,5 +1,6 @@
 package com.continuuity.metrics.service;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
@@ -91,7 +92,7 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
    * @return Pair of args for registering the service and the port service is running on.
    */
   @Override
-  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer> configure(String[] args, Configuration conf) {
+  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer> configure(String[] args, CConfiguration conf) {
     String uri = conf.get("overlord.jdbc.uri", null);
 
     try {

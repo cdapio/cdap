@@ -8,8 +8,9 @@ buildscript {
  * Specify all the dependencies
  */
 dependencies {
+
     /// Internal dependencies.
-    if(multiModule)
+    if(multiModule && ! buildingRelease)
     {
         compile project(":common")
     }
