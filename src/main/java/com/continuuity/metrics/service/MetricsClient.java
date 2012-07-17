@@ -41,7 +41,11 @@ public class MetricsClient implements Closeable {
   }
 
   public MetricsClient(CConfiguration configuration) throws ServiceDiscoveryClientException {
-    String zkEnsemble = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    String zkEnsemble = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    Log.info("Metrics using zookeeper ensemble {}", zkEnsemble);
+    if(zkEnsemble == null) {
+      throw new ServiceDiscoveryClientException("Zookeeper ensemble not set.");
+    }
     serviceDiscoveryClient = new ServiceDiscoveryClient(zkEnsemble);
     client = connect(true);
     if (client == null) {

@@ -29,7 +29,6 @@ public class MetricsModules extends RuntimeModule {
         bind(MetricsServer.class).to(MetricsSingleNodeServer.class);
         bind(MetricsHandler.class).to(SQLMetricsHandler.class);
         bind(StateChangeCallback.class).to(SQLStateChangeSyncer.class);
-        bind(String.class).annotatedWith(Names.named("Flow Monitor JDBC URL")).toInstance("jdbc:hsqldb:mem:fmdb");
       }
     };
   }
@@ -56,7 +55,6 @@ public class MetricsModules extends RuntimeModule {
         bind(MetricsServer.class).to(MetricsRegisteredServer.class);
         bind(MetricsHandler.class).to(SQLMetricsHandler.class);
         bind(StateChangeCallback.class).to(SQLStateChangeSyncer.class);
-        bind(String.class).annotatedWith(Names.named("Flow Monitor JDBC URL")).toInstance("jdbc:hsqldb:file:data/flowmonitordb");
       }
     };
   }

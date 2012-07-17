@@ -101,7 +101,8 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
       return null;
     }
 
-    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    Log.info("Connecting to zookeeper {}", zkEnsemble);
     try {
       executorService = Executors.newCachedThreadPool();
       client = CuratorFrameworkFactory.newClient(zkEnsemble, new RetryUntilElapsed(30000, 2000));
@@ -114,7 +115,7 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
         Constants.DEFAULT_FLOW_MONITOR_SERVER_PORT);
       int port = Integer.valueOf(portProperty);
 
-      String threadCntProperty = conf.get(Constants.CFG_RESOURCE_MANAGER_SERVER_THREADS,
+      String threadCntProperty = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_THREADS,
         Constants.DEFAULT_FLOW_MONITOR_SERVER_THREADS);
       int threads = Integer.valueOf(threadCntProperty);
 

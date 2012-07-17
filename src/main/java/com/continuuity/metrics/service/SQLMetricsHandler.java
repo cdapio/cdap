@@ -145,6 +145,7 @@ public class SQLMetricsHandler implements MetricsHandler {
    */
   @Override
   public List<FlowState> getFlows(String accountId) {
+    Log.info("Retrieving flows...");
     Map<String, Integer> started = Maps.newHashMap();
     Map<String, Integer> stopped = Maps.newHashMap();
     Map<String, Integer> runs = Maps.newHashMap();
@@ -236,6 +237,8 @@ public class SQLMetricsHandler implements MetricsHandler {
 
       filteredResults.add(state);
     }
+
+    Log.info("Number of rows returned {}", filteredResults.size());
     return filteredResults;
   }
 

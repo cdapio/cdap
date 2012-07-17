@@ -25,13 +25,12 @@ public class FlowMonitorMain {
       CConfiguration conf = CConfiguration.create();
 
       conf.addResource("continuuity-overlord.xml");
-      conf.addResource("continuuity-overlord-site.xml");
 
       if (zookeeper != null) {
         conf.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zookeeper);
       }
 
-      Injector injector = Guice.createInjector(new MetricsModules().getSingleNodeModules());
+      Injector injector = Guice.createInjector(new MetricsModules().getDistributedModules());
       MetricsServer service = injector.getInstance(MetricsServer.class);
       service.start(args, conf);
     } catch (Exception e) {
