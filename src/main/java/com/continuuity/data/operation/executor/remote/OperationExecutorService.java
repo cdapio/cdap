@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
+import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
@@ -76,15 +77,14 @@ public class OperationExecutorService extends AbstractRegisteredServer {
   }
 
   @Override
-  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
-  configure(String[] args, CConfiguration conf) {
+  protected RegisteredServerInfo configure(String[] args, CConfiguration conf) {
 
     try {
       // Retrieve the port and the number of threads for the service
       this.port = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
       this.address = conf.get(Constants.CFG_DATA_OPEX_SERVER_ADDRESS,
-          Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
+        Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
       this.threads = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_THREADS,
           Constants.DEFAULT_DATA_OPEX_SERVER_THREADS);
 
@@ -106,15 +106,10 @@ public class OperationExecutorService extends AbstractRegisteredServer {
               .workerThreads(20);
       this.server = new THsHaServer(serverArgs);
 
-      // create the discovery payload with the number of threads
-      ServiceDiscoveryClient.ServicePayload payload =
-          new ServiceDiscoveryClient.ServicePayload();
-      payload.add("threads", Integer.toString(this.threads));
-
       // and done, return the payload
-      return new ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>(
-          payload, this.port);
-
+      RegisteredServerInfo info = new RegisteredServerInfo(address, port);
+      info.addPayload("thread", Integer.toString(this.threads));
+      return info;
     } catch (TTransportException e) {
       Log.error("Failed to create THsHa server for Operation Executor " +
           "Service. Reason : {}", e.getMessage());
