@@ -139,7 +139,7 @@ public class ApplicationMasterSpecification {
     private Configuration configuration;
     private ApplicationAttemptId attemptId;
     private List<TaskSpecification> taskSpecifications = Lists.newArrayList();
-    private int allowedFailures = -1;
+    private int allowedFailures = 10;
     private String hostname = "";
     private int clientPort = 0;
     private String trackingUrl = "";
