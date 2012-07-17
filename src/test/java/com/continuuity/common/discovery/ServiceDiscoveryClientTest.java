@@ -22,16 +22,16 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
       payload.add("A1", "1");
       payload.add("A1", "2");
 
-      client.register("flow-manager", 8080, payload);
-      client.register("flow-manager", 8081, payload);
-      client.register("flow-manager", 8082, payload);
+      client.register("flow-manager", "localhost", 8080, payload);
+      client.register("flow-manager", "localhost",8081, payload);
+      client.register("flow-manager", "localhost",8082, payload);
       int count = client.getProviderCount("flow-manager");
       Assert.assertEquals(3, count);
-      client.register("flow-manager", 8083, payload);
+      client.register("flow-manager", "localhost",8083, payload);
       Assert.assertEquals(4, client.getProviderCount("flow-manager"));
 
       // Same should not increase count, but it does, so we have to be careful.
-      client.register("flow-manager", 8083, payload);
+      client.register("flow-manager", "localhost",8083, payload);
       Assert.assertEquals(5, client.getProviderCount("flow-manager"));
     } finally {
       client.close();
@@ -46,8 +46,8 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
         ServiceDiscoveryClient.ServicePayload payload = new ServiceDiscoveryClient.ServicePayload();
         payload.add("A1", "1");
         payload.add("A2", "2");
-        client.register("flow-manager", 8080, payload);
-        client.register("flow-manager", 8081, payload);
+        client.register("flow-manager", "localhost",8080, payload);
+        client.register("flow-manager", "localhost",8081, payload);
         int count = client.getProviderCount("flow-manager");
         Assert.assertTrue(count == 2);
         try {
