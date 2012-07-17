@@ -155,14 +155,13 @@ public abstract class AbstractRegisteredServer {
         }
       });
 
-      ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
-        serviceArgs = configure(args, conf);
-      if(serviceArgs == null) {
+      RegisteredServerInfo serverArgs = configure(args, conf);
+      if(serverArgs == null) {
         throw new ServerException("configuration of service failed.");
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(server, serviceArgs.getSecond(), serviceArgs.getFirst());
+      client.register(server, serverArgs.getAddress(), serverArgs.getPort(),  serverArgs.getPayload());
 
       serverThread = start();
       if(serverThread == null) {
@@ -246,7 +245,7 @@ public abstract class AbstractRegisteredServer {
    * @param conf Configuration instance passed around.
    * @return Pair of args for registering the service and the port service is running on.
    */
-  protected abstract ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>
+  protected abstract RegisteredServerInfo
     configure(String[] args, CConfiguration conf);
 
 

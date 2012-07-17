@@ -110,7 +110,7 @@ public class ServiceDiscoveryClient implements Closeable {
    * @param payload associated with the service.
    * @throws ServiceDiscoveryClientException
    */
-  public void register(String name, int port, ServicePayload payload)
+  public void register(String name, String address, int port, ServicePayload payload)
       throws ServiceDiscoveryClientException {
     name = Preconditions.checkNotNull(name);
     port = Preconditions.checkNotNull(port);
@@ -124,6 +124,7 @@ public class ServiceDiscoveryClient implements Closeable {
           ServiceInstance.<ServicePayload>builder()
             .payload(payload)
             .name(name)
+            .address(address)
             .port(port)
             .serviceType(ServiceType.DYNAMIC)
             .build();

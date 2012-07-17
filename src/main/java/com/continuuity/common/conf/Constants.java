@@ -23,11 +23,13 @@ public class Constants {
   public static final String CFG_RESOURCE_MANAGER_STORAGE_MODE = "resource.manager.storage.mode";
   public static final String CFG_RESOURCE_MANAGER_SERVER_PORT = "resource.manager.server.port";
   public static final String CFG_RESOURCE_MANAGER_SERVER_THREADS = "resource.manager.server.threads";
+  public static final String CFG_RESOURCE_MANAGER_SERVER_ADDRESS = "resource.manager.server.address";
 
   /**
    * Defaults for resource manager.
    */
   public static final String RESOURCE_MANAGER_LOCAL_DIR_DEFAULT = "build/continuuity/flow/manager/local";
+  public static final String DEFAULT_RESOURCE_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
   /**
    * Default constants defined for resource manager
@@ -40,24 +42,28 @@ public class Constants {
    */
   public static final String CFG_FLOW_MANAGER_SERVER_PORT = "flow.manager.server.port";
   public static final String CFG_FLOW_MANAGER_SERVER_THREADS = "flow.manager.server.threads";
+  public static final String CFG_FLOW_MANAGER_SERVER_ADDRESS = "resource.manager.server.addresss";
 
   /**
    * Default constants defined for flow manager.
    */
   public static final String DEFAULT_FLOW_MANAGER_SERVER_PORT = "45001";
   public static final String DEFAULT_FLOW_MANAGER_SERVER_THREADS = "2";
+  public static final String DEFAULT_FLOW_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
   /**
    * Configuration key names used flow monitor.
    */
   public static final String CFG_FLOW_MONITOR_SERVER_PORT = "flow.monitor.server.port";
   public static final String CFG_FLOW_MONITOR_SERVER_THREADS = "flow.monitor.server.threads";
+  public static final String CFG_FLOW_MONITOR_SERVER_ADDRESS = "flow.monitor.server.address";
 
   /**
    * Default constants defined for flow monitor
    */
   public static final String DEFAULT_FLOW_MONITOR_SERVER_PORT = "45002";
   public static final String DEFAULT_FLOW_MONITOR_SERVER_THREADS = "2";
+  public static final String DEFAULT_FLOW_MONITOR_SERVER_ADDRESS = "0.0.0.0";
 
   /**
    * Configuration key names used by opex service.
