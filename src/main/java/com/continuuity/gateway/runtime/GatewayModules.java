@@ -33,8 +33,12 @@ public class GatewayModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    throw new UnsupportedOperationException(
-        "Distributed mode is not yet implemented");
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(Consumer.class).to(TupleWritingConsumer.class);
+      }
+    };
   }
 
 

@@ -23,8 +23,8 @@ public class Main {
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-        new GatewayModules().getSingleNodeModules(),
-        new DataFabricModules().getSingleNodeModules());
+        new GatewayModules().getDistributedModules(),
+        new DataFabricModules().getDistributedModules());
 
     // Get our fully wired Gateway
     Gateway theGateway = injector.getInstance(Gateway.class);

@@ -68,4 +68,11 @@
         <value>10001</value>
     </property>
 
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost:62982</value>
+        <description>Specifies the zookeeper ensemble for bigflow,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
 </configuration>
