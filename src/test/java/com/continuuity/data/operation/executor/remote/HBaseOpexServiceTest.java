@@ -9,8 +9,6 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
 
@@ -29,11 +27,5 @@ public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
   public static void stopHBase() throws Exception {
     HBaseTestBase.stopHBase();
   }
-
-  @Override @Ignore @Test
-  public void testWriteBatchThenReadAllKeys() throws Exception { }
-
-  @Override @Ignore @Test
-  public void testClearFabric() { }
 
 }
