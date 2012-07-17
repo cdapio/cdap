@@ -52,38 +52,38 @@ public class TOperationExecutorImpl
 
   @Override
   public boolean write(TWrite tWrite) throws TException {
-    Log.debug("Received Write");
+    Log.debug("Received TWrite");
     return this.opex.execute(unwrap(tWrite));
   }
 
   @Override
   public boolean delet(TDelete tDelete) throws TException {
-    Log.debug("Received Delete");
+    Log.debug("Received TDelete");
     return this.opex.execute(unwrap(tDelete));
   }
 
   @Override
   public boolean increment(TIncrement tIncrement) throws TException {
-    Log.debug("Received Increment");
+    Log.debug("Received TIncrement");
     return this.opex.execute(unwrap(tIncrement));
   }
 
   @Override
   public boolean compareAndSwap(TCompareAndSwap tCompareAndSwap)
       throws TException {
-    Log.debug("Received CompareAndSwap");
+    Log.debug("Received TCompareAndSwap");
     return this.opex.execute(unwrap(tCompareAndSwap));
   }
 
   @Override
   public boolean queueEnqueue(TQueueEnqueue tQueueEnqueue) throws TException {
-    Log.debug("Received QueueEnqueue");
+    Log.debug("Received TQueueEnqueue");
     return this.opex.execute(unwrap(tQueueEnqueue));
   }
 
   @Override
   public boolean queueAck(TQueueAck tQueueAck) throws TException {
-    Log.debug("Received QueueAck");
+    Log.debug("Received TQueueAck");
     return this.opex.execute(unwrap(tQueueAck));
   }
 
@@ -131,27 +131,27 @@ public class TOperationExecutorImpl
 
   @Override
   public TOptionalBinary readKey(TReadKey tReadKey) throws TException {
-    Log.debug("Received ReadKey");
+    Log.debug("Received TReadKey");
     return wrapBinary(this.opex.execute(unwrap(tReadKey)));
   }
 
   @Override
   public TOptionalBinaryMap read(TRead tRead) throws TException {
-    Log.debug("Received Read");
+    Log.debug("Received TRead");
     return wrapMap(this.opex.execute(unwrap(tRead)));
   }
 
   @Override
   public TOptionalBinaryList readAllKeys(TReadAllKeys tReadAllKeys)
       throws TException {
-    Log.debug("Received ReadAllKeys");
+    Log.debug("Received TReadAllKeys");
     return wrapList(this.opex.execute(unwrap(tReadAllKeys)));
   }
 
   @Override
   public TOptionalBinaryMap
   readColumnRange(TReadColumnRange tReadColumnRange) throws TException {
-    Log.debug("Received ReadColumnRange");
+    Log.debug("Received TReadColumnRange");
     return wrapMap(this.opex.execute(unwrap(tReadColumnRange)));
   }
 
@@ -159,7 +159,7 @@ public class TOperationExecutorImpl
 
   @Override
   public TDequeueResult dequeue(TQueueDequeue tQueueDequeue) throws TException {
-    Log.debug("Received QueueDequeue");
+    Log.debug("Received TQueueDequeue" + tQueueDequeue.toString());
     return wrap(this.opex.execute(unwrap(tQueueDequeue)));
   }
 
@@ -167,7 +167,7 @@ public class TOperationExecutorImpl
 
   @Override
   public long getGroupId(TGetGroupId tGetGroupId) throws TException {
-    Log.debug("Received GetGroupID");
+    Log.debug("Received TGetGroupID");
     return this.opex.execute(unwrap(tGetGroupId));
   }
 
@@ -176,7 +176,7 @@ public class TOperationExecutorImpl
   @Override
   public TQueueMeta getQueueMeta(TGetQueueMeta tGetQueueMeta)
       throws TException {
-    Log.debug("Received GetQueueMeta");
+    Log.debug("Received TGetQueueMeta");
     return wrap(this.opex.execute(unwrap(tGetQueueMeta)));
   }
 
@@ -184,7 +184,7 @@ public class TOperationExecutorImpl
 
   @Override
   public void clearFabric(TClearFabric tClearFabric) throws TException {
-    Log.debug("Received ClearFabric");
+    Log.debug("Received TClearFabric");
     this.opex.execute(unwrap(tClearFabric));
   }
 }

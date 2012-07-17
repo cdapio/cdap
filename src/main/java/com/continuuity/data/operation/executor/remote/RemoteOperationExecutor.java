@@ -9,10 +9,7 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.remote.stubs.TBatchOperationException;
-import com.continuuity.data.operation.executor.remote.stubs.TBatchOperationResult;
-import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
-import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
+import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -195,7 +192,17 @@ public class RemoteOperationExecutor
   @Override
   public DequeueResult execute(QueueDequeue dequeue) {
     try {
-      return unwrap(client.dequeue(wrap(dequeue)));
+      Log.debug("Received QueueDequeue " + dequeue.toString() + ", queue = " +
+          dequeue.getKey() + ", consumer = " + dequeue.getConsumer().toString()
+          + "config = " + (dequeue.getConfig() == null ? "null" :
+          dequeue.getConfig().toString()));
+
+      TQueueDequeue tDequeue = wrap(dequeue);
+
+      Log.debug("Sending TQueueDequeue: " + tDequeue.toString());
+
+      return unwrap(client.dequeue(tDequeue));
+
     } catch (TException e) {
       String message = "Thrift Call for QueueDequeue failed for queue " +
           new String(dequeue.getKey()) + ": " + e.getMessage();
