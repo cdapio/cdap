@@ -155,6 +155,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws BatchOperationException {
     List<TWriteOperation> tWrites = Lists.newArrayList();
@@ -190,6 +191,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public DequeueResult execute(QueueDequeue dequeue) {
     try {
       Log.debug("Received QueueDequeue " + dequeue.toString() + ", queue = " +
@@ -212,6 +214,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public long execute(QueueAdmin.GetGroupID getGroupId) {
     try {
       return client.getGroupId(wrap(getGroupId));
@@ -223,6 +226,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta) {
     try {
       return unwrap(client.getQueueMeta(wrap(getQueueMeta)));
@@ -234,6 +238,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public void execute(ClearFabric clearFabric) {
     try {
       client.clearFabric(wrap(clearFabric));
@@ -245,6 +250,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public byte[] execute(ReadKey readKey) {
     try {
       return unwrap(client.readKey(wrap(readKey)));
@@ -257,6 +263,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public Map<byte[], byte[]> execute(Read read) {
     try {
       return unwrap(client.read(wrap(read)));
@@ -269,6 +276,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public List<byte[]> execute(ReadAllKeys readKeys) {
     try {
       return unwrap(client.readAllKeys(wrap(readKeys)));
@@ -281,6 +289,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
     try {
       return unwrap(client.readColumnRange(wrap(readColumnRange)));
@@ -293,6 +302,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(Write write) {
     try {
       return client.write(wrap(write));
@@ -304,6 +314,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(Delete delete) {
     try {
       return client.delet(wrap(delete));
@@ -315,6 +326,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(Increment increment) {
     try {
       return client.increment(wrap(increment));
@@ -327,6 +339,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(CompareAndSwap compareAndSwap) {
     try {
       return client.compareAndSwap(wrap(compareAndSwap));
@@ -339,6 +352,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(QueueEnqueue enqueue) {
     try {
       return client.queueEnqueue(wrap(enqueue));
@@ -351,6 +365,7 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  synchronized
   public boolean execute(QueueAck ack) {
     try {
       return client.queueAck(wrap(ack));
