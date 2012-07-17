@@ -52,32 +52,38 @@ public class TOperationExecutorImpl
 
   @Override
   public boolean write(TWrite tWrite) throws TException {
+    Log.debug("Received Write");
     return this.opex.execute(unwrap(tWrite));
   }
 
   @Override
   public boolean delet(TDelete tDelete) throws TException {
+    Log.debug("Received Delete");
     return this.opex.execute(unwrap(tDelete));
   }
 
   @Override
   public boolean increment(TIncrement tIncrement) throws TException {
+    Log.debug("Received Increment");
     return this.opex.execute(unwrap(tIncrement));
   }
 
   @Override
   public boolean compareAndSwap(TCompareAndSwap tCompareAndSwap)
       throws TException {
+    Log.debug("Received CompareAndSwap");
     return this.opex.execute(unwrap(tCompareAndSwap));
   }
 
   @Override
   public boolean queueEnqueue(TQueueEnqueue tQueueEnqueue) throws TException {
+    Log.debug("Received QueueEnqueue");
     return this.opex.execute(unwrap(tQueueEnqueue));
   }
 
   @Override
   public boolean queueAck(TQueueAck tQueueAck) throws TException {
+    Log.debug("Received QueueAck");
     return this.opex.execute(unwrap(tQueueAck));
   }
 
@@ -86,6 +92,7 @@ public class TOperationExecutorImpl
   @Override
   public TBatchOperationResult batch(List<TWriteOperation> batch)
       throws TBatchOperationException, TException {
+    Log.debug("Received Batch");
     List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
     for (TWriteOperation tWriteOp : batch) {
       WriteOperation writeOp;
@@ -124,23 +131,27 @@ public class TOperationExecutorImpl
 
   @Override
   public TOptionalBinary readKey(TReadKey tReadKey) throws TException {
+    Log.debug("Received ReadKey");
     return wrapBinary(this.opex.execute(unwrap(tReadKey)));
   }
 
   @Override
   public TOptionalBinaryMap read(TRead tRead) throws TException {
+    Log.debug("Received Read");
     return wrapMap(this.opex.execute(unwrap(tRead)));
   }
 
   @Override
   public TOptionalBinaryList readAllKeys(TReadAllKeys tReadAllKeys)
       throws TException {
+    Log.debug("Received ReadAllKeys");
     return wrapList(this.opex.execute(unwrap(tReadAllKeys)));
   }
 
   @Override
   public TOptionalBinaryMap
   readColumnRange(TReadColumnRange tReadColumnRange) throws TException {
+    Log.debug("Received ReadColumnRange");
     return wrapMap(this.opex.execute(unwrap(tReadColumnRange)));
   }
 
@@ -148,6 +159,7 @@ public class TOperationExecutorImpl
 
   @Override
   public TDequeueResult dequeue(TQueueDequeue tQueueDequeue) throws TException {
+    Log.debug("Received QueueDequeue");
     return wrap(this.opex.execute(unwrap(tQueueDequeue)));
   }
 
@@ -155,6 +167,7 @@ public class TOperationExecutorImpl
 
   @Override
   public long getGroupId(TGetGroupId tGetGroupId) throws TException {
+    Log.debug("Received GetGroupID");
     return this.opex.execute(unwrap(tGetGroupId));
   }
 
@@ -163,6 +176,7 @@ public class TOperationExecutorImpl
   @Override
   public TQueueMeta getQueueMeta(TGetQueueMeta tGetQueueMeta)
       throws TException {
+    Log.debug("Received GetQueueMeta");
     return wrap(this.opex.execute(unwrap(tGetQueueMeta)));
   }
 
@@ -170,6 +184,7 @@ public class TOperationExecutorImpl
 
   @Override
   public void clearFabric(TClearFabric tClearFabric) throws TException {
+    Log.debug("Received ClearFabric");
     this.opex.execute(unwrap(tClearFabric));
   }
 }

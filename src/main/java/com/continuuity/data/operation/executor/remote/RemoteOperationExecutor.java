@@ -91,14 +91,19 @@ public class RemoteOperationExecutor
     String zookeeper = config.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
     if (zookeeper == null) {
       // no zookeeper, look for the port and use localhost
+      Log.info("Zookeeper Ensemble not configured. Skipping service discovery");
+      Log.info("Trying to read address and port from configuration.");
+      String address = config.get(Constants.CFG_DATA_OPEX_SERVER_PORT,
+          Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
       int port = config.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
-      this.init("localhost", port);
+      this.init(address, port);
       return;
     }
     // attempt to discover the service
     try {
       this.discoveryClient = new ServiceDiscoveryClient(zookeeper);
+      Log.info("Connected to service discovery. ");
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to start service discovery client: " + e.getMessage());
       throw new IOException("Unable to start service dicovery client.", e);
@@ -116,6 +121,7 @@ public class RemoteOperationExecutor
       // found an instance, get its host name and port
       host = instance.getAddress();
       port = instance.getPort();
+      Log.info("Service discovered at " + host + ":" + port);
     } catch (Exception e) {
       Log.error("Unable to discover opex service: " + e.getMessage());
       throw new IOException("Unable to discover opex service.", e);
@@ -134,6 +140,8 @@ public class RemoteOperationExecutor
    * @throws IOException
    */
   private void init(String host, int port) throws IOException {
+    Log.info("Attempting to connect to Operation Executor service at " +
+        host + ":" + port);
     // thrift transport layer
     TTransport transport = new TFramedTransport(new TSocket(host, port));
     try {
@@ -145,6 +153,8 @@ public class RemoteOperationExecutor
     TProtocol protocol = new TBinaryProtocol(transport);
     // and create a thrift client
     client = new TOperationExecutor.Client(protocol);
+    Log.info("Connected to Operation Executor service at " +
+        host + ":" + port);
   }
 
   @Override
