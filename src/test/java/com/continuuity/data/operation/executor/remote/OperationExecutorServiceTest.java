@@ -10,11 +10,10 @@ import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.common.collect.Lists;
-import com.google.inject.Injector;
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import scala.actors.threadpool.Arrays;
 
@@ -30,10 +29,7 @@ public abstract class OperationExecutorServiceTest {
   static CConfiguration config;
   static OperationExecutorService opexService;
 
-  public static void startService(Injector injector) throws Exception {
-
-    // get an instance of data fabric
-    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
+  public static void startService(OperationExecutor opex) throws Exception {
 
     // start an in-memory zookeeper and remember it in a config object
     zookeeper = new InMemoryZookeeper();

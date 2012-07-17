@@ -1,9 +1,12 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -16,7 +19,10 @@ public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
     HBaseTestBase.startHBase();
     Injector injector = Guice.createInjector(
         new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
-    OperationExecutorServiceTest.startService(injector);
+    OperationExecutorServiceTest.startService(
+        injector.getInstance(Key.get(
+            OperationExecutor.class,
+            Names.named("DataFabricOperationExecutor"))));
   }
 
   @AfterClass
