@@ -675,4 +675,44 @@ public abstract class OperationExecutorServiceTest {
     Assert.assertNotNull(metaRemote);
     Assert.assertEquals(metaLocal, metaRemote);
   }
+
+  @Test
+  public void testMultiThreaded() {
+    OpexThread t1 = new OpexThread(1,1000);
+    OpexThread t2 = new OpexThread(2,1000);
+    t1.run();
+    t2.run();
+    try {
+      t1.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      Assert.fail("join with threead 1 was interrupted");
+    }
+    try {
+      t2.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      Assert.fail("join with threead 2 was interrupted");
+    }
+  }
+
+  class OpexThread extends Thread {
+    int times;
+    int id;
+    OpexThread(int id, int times) {
+      this.id = id;
+      this.times = times;
+    }
+    public void run() {
+      for (int i = 0; i < this.times; i++) {
+        byte[] key = (id + "-" + i).getBytes();
+        byte[] value = Integer.toString(i).getBytes();
+        Write write = new Write(key, value);
+        Assert.assertTrue(remote.execute(write));
+        ReadKey readKey = new ReadKey(key);
+        Assert.assertArrayEquals(value, remote.execute(readKey));
+      }
+    }
+  }
+
 }
