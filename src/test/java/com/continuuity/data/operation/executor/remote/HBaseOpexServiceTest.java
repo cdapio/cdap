@@ -15,9 +15,11 @@ public class HBaseOpexServiceTest extends OperationExecutorServiceTest {
   @BeforeClass
   public static void startService() throws Exception {
     HBaseTestBase.startHBase();
-    Injector injector = Guice.createInjector(
-        new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+    DataFabricDistributedModule module =
+        new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+    Injector injector = Guice.createInjector(module);
     OperationExecutorServiceTest.startService(
+        module.getConfiguration(),
         injector.getInstance(Key.get(
             OperationExecutor.class,
             Names.named("DataFabricOperationExecutor"))));

@@ -15,6 +15,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,6 +46,9 @@ public class OperationExecutorService extends AbstractRegisteredServer {
 
   /* the port to run on */
   int port;
+
+  /* the internet address to run on */
+  String address;
 
   /* the number of threads to use for the thrift service */
   int threads;
@@ -79,19 +83,22 @@ public class OperationExecutorService extends AbstractRegisteredServer {
       // Retrieve the port and the number of threads for the service
       this.port = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
+      this.address = conf.get(Constants.CFG_DATA_OPEX_SERVER_ADDRESS,
+          Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
       this.threads = conf.getInt(Constants.CFG_DATA_OPEX_SERVER_THREADS,
           Constants.DEFAULT_DATA_OPEX_SERVER_THREADS);
 
+      InetSocketAddress socketAddr = new InetSocketAddress(address, port);
 
       Log.info("Configuring Operation Executor Service: " + this.threads +
-          " threads on port " + this.port);
+          " threads at " + socketAddr.toString());
 
       // create a new thread pool
       this.executorService = Executors.newCachedThreadPool();
 
       // configure a thrift service
       THsHaServer.Args serverArgs =
-          new THsHaServer.Args(new TNonblockingServerSocket(port))
+          new THsHaServer.Args(new TNonblockingServerSocket(socketAddr))
               .executorService(executorService)
               .processor(new TOperationExecutor.
                   Processor<TOperationExecutor.Iface>(

@@ -28,11 +28,17 @@ public abstract class OperationExecutorServiceTest {
   static CConfiguration config;
   static OperationExecutorService opexService;
 
-  public static void startService(OperationExecutor opex) throws Exception {
+  public static void startService(OperationExecutor opex)
+      throws Exception {
+    startService(CConfiguration.create(), opex);
+  }
+
+  public static void startService(CConfiguration conf, OperationExecutor opex)
+      throws Exception {
 
     // start an in-memory zookeeper and remember it in a config object
     zookeeper = new InMemoryZookeeper();
-    config = CConfiguration.create();
+    config = conf;
     config.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
         zookeeper.getConnectionString());
 
