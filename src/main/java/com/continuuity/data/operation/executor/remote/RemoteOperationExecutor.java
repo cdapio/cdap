@@ -9,9 +9,14 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.remote.stubs.*;
+import com.continuuity.data.operation.executor.remote.stubs.TBatchOperationException;
+import com.continuuity.data.operation.executor.remote.stubs.TBatchOperationResult;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
+import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
@@ -68,7 +73,9 @@ public class RemoteOperationExecutor
    * @param config a configuration containing the zookeeper properties
    * @throws IOException
    */
-  public RemoteOperationExecutor(CConfiguration config) throws IOException {
+  @Inject
+  public RemoteOperationExecutor(
+      @Named("RemoteOperationExecutorConfig")CConfiguration config) throws IOException {
     this.init(config);
   }
 

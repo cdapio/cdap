@@ -3,8 +3,11 @@
  */
 package com.continuuity.data.engine.hbase;
 
-import java.io.IOException;
-
+import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.table.SimpleOVCTableHandle;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -12,11 +15,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.table.SimpleOVCTableHandle;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import java.io.IOException;
 
 public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 

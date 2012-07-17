@@ -11,4 +11,39 @@
         <description>Specifies local file system implementation</description>
     </property>
 
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost:62982</value>
+        <description>Specifies the zookeeper ensemble for bigflow,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>localhost</value>
+        <description>Specifies the zookeeper ensemble for hbase,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>62982</value>
+        <description>Specifies the zookeeper ensemble for hbase,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
+    <property>
+        <name>data.opex.server.port</name>
+        <value>15165</value>
+        <description>The port number for the operation executor
+            service</description>
+    </property>
+
+    <property>
+        <name>data.opex.server.threads</name>
+        <value>25</value>
+        <description>The number of threads for the operation executor
+            service</description>
+    </property>
+
 </configuration>

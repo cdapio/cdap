@@ -9,15 +9,12 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import scala.actors.threadpool.Arrays;
 
@@ -26,22 +23,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class OperationExecutorServiceTest {
+public abstract class OperationExecutorServiceTest {
 
-  static OperationExecutor opex, remote;
+  static OperationExecutor local, remote;
   static InMemoryZookeeper zookeeper;
   static CConfiguration config;
   static OperationExecutorService opexService;
 
-  @BeforeClass
-  public static void startService() throws Exception {
-
-    // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-        new DataFabricModules().getInMemoryModules());
+  public static void startService(Injector injector) throws Exception {
 
     // get an instance of data fabric
-    opex = injector.getInstance(OperationExecutor.class);
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
 
     // start an in-memory zookeeper and remember it in a config object
     zookeeper = new InMemoryZookeeper();
@@ -73,9 +65,12 @@ public class OperationExecutorServiceTest {
     while(watch.getTime() < 10000) {
       if (opexService.ruok()) break;
     }
+    Assert.assertTrue("Operation Executor Service failed to come up within " +
+        "10 seconds.", opexService.ruok());
 
     // now create a remote opex that connects to the service
     remote = new RemoteOperationExecutor(config);
+    local = opex;
   }
 
   @AfterClass
@@ -91,6 +86,13 @@ public class OperationExecutorServiceTest {
     }
   }
 
+  @Before
+  public void clearFabric() {
+    // before every test, clear data fabric.
+    // otherwise it might see spurious entries from other tests :(
+    this.local.execute(new ClearFabric(true, true, true));
+  }
+
   /** Tests Write, Read, ReadKey */
   @Test
   public void testWriteThenRead() throws Exception {
@@ -100,8 +102,6 @@ public class OperationExecutorServiceTest {
     // read back with remote and compare
     ReadKey readKey = new ReadKey("key".getBytes());
     Assert.assertArrayEquals("value".getBytes(), remote.execute(readKey));
-    // read back with actual and compare
-    Assert.assertArrayEquals("value".getBytes(), opex.execute(readKey));
 
     // write one columns with remote
     write = new Write("key1".getBytes(), "col1".getBytes(), "val1".getBytes());
@@ -160,48 +160,44 @@ public class OperationExecutorServiceTest {
   @Test
   public void testDeleteThenRead() throws Exception {
 
+    // this is the key we will use
+    byte[] key = "mykey".getBytes();
+
     // write a key/value
-    Write write = new Write("deleted".getBytes(), "here".getBytes());
+    Write write = new Write(key, "here".getBytes());
     Assert.assertTrue(remote.execute(write));
 
     // delete the row with remote
-    Delete delete = new Delete("deleted".getBytes());
+    Delete delete = new Delete(key);
     Assert.assertTrue(remote.execute(delete));
 
     // read back key with remote and verify null
-    ReadKey readKey = new ReadKey("deleted".getBytes());
+    ReadKey readKey = new ReadKey(key);
     Assert.assertNull(remote.execute(readKey));
 
     // read back row with remote and verify null
-    Read read = new Read("deleted".getBytes());
+    Read read = new Read(key);
     Map<byte[], byte[]> columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(1, columns.size());
-    Assert.assertTrue(columns.keySet().contains(Operation.KV_COL));
     Assert.assertNull(columns.get(Operation.KV_COL));
 
     // read back one column and verify null
-    read = new Read("deleted".getBytes(), "none".getBytes());
+    read = new Read(key, "none".getBytes());
     columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(1, columns.size());
-    Assert.assertTrue(columns.keySet().contains("none".getBytes()));
     Assert.assertNull(columns.get("none".getBytes()));
 
     // read back two columns and verify null
-    read = new Read("deleted".getBytes(),
+    read = new Read(key,
         new byte[][] { "neither".getBytes(), "nor".getBytes() });
     columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(2, columns.size());
-    Assert.assertTrue(columns.keySet().contains("neither".getBytes()));
-    Assert.assertTrue(columns.keySet().contains("nor".getBytes()));
     Assert.assertNull(columns.get("neither".getBytes()));
     Assert.assertNull(columns.get("nor".getBytes()));
 
     // read back column range and verify null
     ReadColumnRange readColumnRange = new ReadColumnRange(
-        "deleted".getBytes(),
+        key,
         "from".getBytes(),
         "to".getBytes());
     columns = remote.execute(readColumnRange);
@@ -212,15 +208,17 @@ public class OperationExecutorServiceTest {
    /** Tests Write, ReadColumnRange, Delete */
   @Test
   public void testWriteThenRangeThenDelete() throws Exception {
+    final byte[] row = "row".getBytes();
+
     // write a bunch of columns with remote
-    Write write = new Write("row".getBytes(),
+    Write write = new Write(row,
         new byte[][] { "a".getBytes(), "b".getBytes(), "c".getBytes() },
         new byte[][] { "1".getBytes(), "2".getBytes(), "3".getBytes() });
     Assert.assertTrue(remote.execute(write));
 
     // read back all columns with remote (from "" ... "")
     ReadColumnRange readColumnRange =
-        new ReadColumnRange("row".getBytes(), new byte[] { }, new byte[] { });
+        new ReadColumnRange(row, null, null);
     Map<byte[], byte[]> columns = remote.execute(readColumnRange);
     // verify it is complete
     Assert.assertNotNull(columns);
@@ -231,7 +229,7 @@ public class OperationExecutorServiceTest {
 
     // read back a sub-range (from aa to bb, should only return b)
     readColumnRange =
-        new ReadColumnRange("row".getBytes(), "aa".getBytes(), "bb".getBytes());
+        new ReadColumnRange(row, "aa".getBytes(), "bb".getBytes());
     columns = remote.execute(readColumnRange);
     Assert.assertNotNull(columns);
     Assert.assertEquals(1, columns.size());
@@ -241,7 +239,7 @@ public class OperationExecutorServiceTest {
 
     // read back all columns after aa, should return b and c
     readColumnRange =
-        new ReadColumnRange("row".getBytes(), "aa".getBytes(), null);
+        new ReadColumnRange(row, "aa".getBytes(), null);
     columns = remote.execute(readColumnRange);
     Assert.assertNotNull(columns);
     Assert.assertEquals(2, columns.size());
@@ -251,7 +249,7 @@ public class OperationExecutorServiceTest {
 
     // read back all columns before bb, should return a and b
     readColumnRange =
-        new ReadColumnRange("row".getBytes(), null, "bb".getBytes());
+        new ReadColumnRange(row, null, "bb".getBytes());
     columns = remote.execute(readColumnRange);
     Assert.assertNotNull(columns);
     Assert.assertEquals(2, columns.size());
@@ -261,19 +259,19 @@ public class OperationExecutorServiceTest {
 
     // read back a disjoint column range, verify it is empty by not null
     readColumnRange =
-        new ReadColumnRange("row".getBytes(), "d".getBytes(), "e".getBytes());
+        new ReadColumnRange(row, "d".getBytes(), "e".getBytes());
     columns = remote.execute(readColumnRange);
     Assert.assertNotNull(columns);
     Assert.assertEquals(0, columns.size());
 
     // delete two of the columns with remote
-    Delete delete = new Delete("row".getBytes(),
+    Delete delete = new Delete(row,
         new byte[][] { "a".getBytes(), "c".getBytes() });
     Assert.assertTrue(remote.execute(delete));
 
     // read back the column range again with remote
     readColumnRange = // reads everything
-        new ReadColumnRange("row".getBytes(), "".getBytes(), null);
+        new ReadColumnRange(row, "".getBytes(), null);
     columns = remote.execute(readColumnRange);
     Assert.assertNotNull(columns);
     // verify the two are gone
@@ -322,8 +320,6 @@ public class OperationExecutorServiceTest {
     // a map with an entry for x, but with a null value
     columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(1, columns.size());
-    Assert.assertTrue(columns.containsKey("x".getBytes()));
     Assert.assertNull(columns.get("x".getBytes()));
 
     // compareAndSwap
@@ -334,18 +330,13 @@ public class OperationExecutorServiceTest {
     // verify the row is still not there
     columns = remote.execute(read);
     Assert.assertNotNull(columns);
-    Assert.assertEquals(1, columns.size());
-    Assert.assertTrue(columns.containsKey("x".getBytes()));
     Assert.assertNull(columns.get("x".getBytes()));
   }
 
   /** clear the tables, then write a batch of keys, then readAllKeys */
   @Test
   public void testWriteBatchThenReadAllKeys() throws Exception  {
-    // clear the fabric
-    ClearFabric clearFabric = new ClearFabric(true, false, false);
-    remote.execute(clearFabric);
-    // list all keys, verify it is empty
+    // list all keys, verify it is empty (@Before clears the data fabric)
     ReadAllKeys readAllKeys = new ReadAllKeys(0, 1);
     List<byte[]> keys = remote.execute(readAllKeys);
     Assert.assertNotNull(keys);
@@ -399,9 +390,6 @@ public class OperationExecutorServiceTest {
   /** test batch, one that succeeds and one that fails */
   @Test
   public void testBatchSuccessAndFailure() throws Exception {
-    // clear the fabric
-    ClearFabric clearFabric = new ClearFabric(true, true, true);
-    remote.execute(clearFabric);
 
     // write a row for deletion within the batch, and one compareAndSwap
     Write write = new Write("b".getBytes(), "0".getBytes());
@@ -500,7 +488,7 @@ public class OperationExecutorServiceTest {
     Assert.assertTrue(remote.execute(new QueueEnqueue(s, x)));
 
     // clear everything
-    opex.execute(new ClearFabric(true, true, true));
+    remote.execute(new ClearFabric(true, true, true));
 
     // verify that all is gone
     Assert.assertNull(remote.execute(new ReadKey(a)));
@@ -518,7 +506,7 @@ public class OperationExecutorServiceTest {
     Assert.assertTrue(remote.execute(new QueueEnqueue(s, x)));
 
     // clear only the tables
-    opex.execute(new ClearFabric(true, false, false));
+    remote.execute(new ClearFabric(true, false, false));
 
     // verify that the tables are gone, but queues and streams are there
     Assert.assertNull(remote.execute(new ReadKey(a)));
@@ -531,7 +519,7 @@ public class OperationExecutorServiceTest {
     Assert.assertTrue(remote.execute(new Write(a, x)));
 
     // clear only the queues
-    opex.execute(new ClearFabric(false, true, false));
+    remote.execute(new ClearFabric(false, true, false));
 
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x, remote.execute(new ReadKey(a)));
@@ -544,7 +532,7 @@ public class OperationExecutorServiceTest {
     Assert.assertTrue(remote.execute(new QueueEnqueue(q, x)));
 
     // clear only the streams
-    opex.execute(new ClearFabric(false, false, true));
+    remote.execute(new ClearFabric(false, false, true));
 
     // verify that the streams are gone, but tables and queues are there
     Assert.assertArrayEquals(x, remote.execute(new ReadKey(a)));
@@ -557,11 +545,7 @@ public class OperationExecutorServiceTest {
   /** tests enqueue, getGroupId and dequeue with ack for different groups */
   @Test
   public void testEnqueueThenDequeueAndAckWithDifferentGroups()  {
-    final byte[] q = "queue://q".getBytes();
-
-    // start by clearing the data fabric. Otherwise we may see spurious
-    // entries from other tests :(
-    remote.execute(new ClearFabric(true, true, true));
+    final byte[] q = "queue://q1".getBytes();
 
     // enqueue a bunch of entries, each one twice.
     // why twice? with hash partitioner, the same value will go to the same
@@ -569,14 +553,16 @@ public class OperationExecutorServiceTest {
     // insert enough to be sure that even with hash partitioning, none of the
     // consumers will run out of entries to dequeue
     Random rand = new Random(42);
-    for (int i = 0; i < 100; i++) {
-      QueueEnqueue enqueue = new
-          QueueEnqueue(q, ("" + rand.nextInt(1000)).getBytes());
-      System.err.println("Enqueue: " + new String(enqueue.getData())
-          + ": hash % 2 = " + Bytes.hashCode(enqueue.getData())
-          + " % 2 = " + Bytes.hashCode(enqueue.getData()) % 2);
+    int prev = 0, i = 0;
+    while (i < 100) {
+      int next = rand.nextInt(1000);
+      if (next == prev) continue;
+      byte[] value = Integer.toString(next).getBytes();
+      QueueEnqueue enqueue = new QueueEnqueue(q, value);
       Assert.assertTrue(remote.execute(enqueue));
       Assert.assertTrue(remote.execute(enqueue));
+      prev = next;
+      i++;
     }
     // get two groupids
     long id1 = remote.execute(new QueueAdmin.GetGroupID(q));
@@ -609,7 +595,7 @@ public class OperationExecutorServiceTest {
 
     // verify that the values from group 1 are different (hash partitioner)
     Assert.assertFalse(Arrays.equals(res11.getValue(), res12.getValue()));
-    // and that the two values for group 2 are equal (random paritioner)
+    // and that the two values for group 2 are equal (random partitioner)
     Assert.assertArrayEquals(res21.getValue(), res22.getValue());
 
     // verify that group1 (multi-entry config) can dequeue more elements
@@ -662,7 +648,7 @@ public class OperationExecutorServiceTest {
 
     // get queue meta with remote and opex, verify they are equal
     QueueAdmin.GetQueueMeta getQueueMeta = new QueueAdmin.GetQueueMeta(q);
-    QueueAdmin.QueueMeta metaLocal = opex.execute(getQueueMeta);
+    QueueAdmin.QueueMeta metaLocal = local.execute(getQueueMeta);
     QueueAdmin.QueueMeta metaRemote = remote.execute(getQueueMeta);
     Assert.assertNotNull(metaLocal);
     Assert.assertNotNull(metaRemote);
