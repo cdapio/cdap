@@ -2,6 +2,7 @@ package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.options.Option;
 import com.continuuity.common.options.OptionsParser;
 import com.continuuity.metrics.service.MetricsServer;
 import com.google.inject.Guice;
