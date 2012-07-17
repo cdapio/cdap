@@ -17,4 +17,9 @@
         <description>Specifies the zookeeper host:port</description>
     </property>
 
+    <property>
+        <name>flow.monitor.server.address</name>
+        <value>0.0.0.0</value>
+    </property>
+
 </configuration>

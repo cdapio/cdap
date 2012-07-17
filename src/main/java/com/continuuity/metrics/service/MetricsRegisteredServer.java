@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
+import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.FlowMonitor;
 import com.continuuity.observer.StateChangeCallback;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -90,7 +92,7 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
    * @return Pair of args for registering the service and the port service is running on.
    */
   @Override
-  protected ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer> configure(String[] args, CConfiguration conf) {
+  protected RegisteredServerInfo configure(String[] args, CConfiguration conf) {
     String uri = conf.get("overlord.jdbc.uri", null);
 
     try {
@@ -119,18 +121,22 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
         Constants.DEFAULT_FLOW_MONITOR_SERVER_THREADS);
       int threads = Integer.valueOf(threadCntProperty);
 
+      String serverAddress = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_ADDRESS,
+        Constants.DEFAULT_FLOW_MONITOR_SERVER_ADDRESS);
+
+      InetSocketAddress sockAddr = new InetSocketAddress(serverAddress, port);
       MetricsImpl serviceImpl = new MetricsImpl(handler);
       THsHaServer.Args serverArgs =
         new THsHaServer
-          .Args(new TNonblockingServerSocket(port))
+          .Args(new TNonblockingServerSocket(sockAddr))
           .executorService(executorService)
           .processor(new FlowMonitor.Processor(serviceImpl))
           .workerThreads(threads);
       server = new THsHaServer(serverArgs);
-      ServiceDiscoveryClient.ServicePayload payload =
-        new ServiceDiscoveryClient.ServicePayload();
-      payload.add("threads", threadCntProperty);
-      return new ImmutablePair<ServiceDiscoveryClient.ServicePayload, Integer>(payload, port);
+
+      RegisteredServerInfo info = new RegisteredServerInfo(serverAddress, port);
+      info.addPayload("thread", threadCntProperty);
+      return info;
     } catch (IOException e) {
       Log.error("Failed to create FARService server. Reason : {}", e.getMessage());
       stop();
