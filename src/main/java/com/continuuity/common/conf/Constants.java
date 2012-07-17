@@ -42,7 +42,7 @@ public class Constants {
    */
   public static final String CFG_FLOW_MANAGER_SERVER_PORT = "flow.manager.server.port";
   public static final String CFG_FLOW_MANAGER_SERVER_THREADS = "flow.manager.server.threads";
-  public static final String CFG_FLOW_MANAGER_SERVER_ADDRESS = "resource.manager.server.addresss";
+  public static final String CFG_FLOW_MANAGER_SERVER_ADDRESS = "flow.manager.server.address";
 
   /**
    * Default constants defined for flow manager.
