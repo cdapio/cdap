@@ -46,5 +46,5 @@ public class TestHBaseOVCTable extends TestOVCTable {
    */
   @Override @Test @Ignore
   public void testIncrementCASIncrementWithSameTimestamp() {}
-  
+
 }

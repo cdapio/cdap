@@ -1,16 +1,17 @@
 package com.continuuity.data.operation.executor.omid;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
@@ -27,7 +28,8 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
       injector = Guice.createInjector(
           new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       executor = (OmidTransactionalOperationExecutor)injector.getInstance(
-          OperationExecutor.class);
+          Key.get(OperationExecutor.class,
+              Names.named("DataFabricOperationExecutor")));
       handle = executor.getTableHandle();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -65,7 +67,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
    */
   @Test @Override @Ignore
   public void testUserReadOwnWritesAndWritesStableSorted() throws Exception {}
-  
+
   /**
    * Currently not working.  Will be fixed in ENG-421.
    */

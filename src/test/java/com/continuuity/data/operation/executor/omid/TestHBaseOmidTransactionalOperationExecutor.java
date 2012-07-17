@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -25,7 +27,8 @@ extends TestOmidTransactionalOperationExecutor {
       injector = Guice.createInjector(
           new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
       executor = (OmidTransactionalOperationExecutor)injector.getInstance(
-          OperationExecutor.class);
+          Key.get(OperationExecutor.class,
+              Names.named("DataFabricOperationExecutor")));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

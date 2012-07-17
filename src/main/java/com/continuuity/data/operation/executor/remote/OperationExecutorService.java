@@ -7,6 +7,8 @@ import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -62,7 +64,9 @@ public class OperationExecutorService extends AbstractRegisteredServer {
    * name for this service is "opex-service".
    * @param opex the operation executor to use.
    */
-  public OperationExecutorService(OperationExecutor opex) {
+  @Inject
+  public OperationExecutorService(
+      @Named("DataFabricOperationExecutor")OperationExecutor opex) {
     super.setServerName(SERVICE_NAME);
     this.opex = opex;
   }
