@@ -37,6 +37,11 @@ dependencies {
     testCompile group: 'hsqldb', name: 'hsqldb', version: '1.8.0.10'
 }
 
+/**
+ * Exclude any config xml from jar task
+ */
+jar.exclude '*.xml'
+
 artifacts {
   archives apiJavadocJar
   archives apiJar
