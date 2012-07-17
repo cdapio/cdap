@@ -42,12 +42,6 @@ public class TestHBaseOVCTable extends TestOVCTable {
   // Tests that do not work on HBase
 
   /**
-   * Currently unsupported on HBase.  Support implemented in ENG-422.
-   */
-  @Override @Test @Ignore
-  public void testClearVerySimply() {}
-
-  /**
    * Currently not working.  Will be fixed in ENG-421.
    */
   @Override @Test @Ignore

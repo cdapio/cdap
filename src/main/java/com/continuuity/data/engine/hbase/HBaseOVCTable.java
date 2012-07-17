@@ -8,9 +8,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
@@ -403,6 +405,19 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public void clear() {
+    try {
+      HBaseAdmin hba = new HBaseAdmin(conf);
+      HTableDescriptor htd = hba.getTableDescriptor(tableName);
+      hba.disableTable(tableName);
+      hba.deleteTable(tableName);
+      hba.createTable(htd);
+    } catch(IOException ioe) {
+      this.exceptionHandler.handle(ioe);
+    }
+  }
+
+  @Override
   public Scanner scan(byte[] startRow, byte[] stopRow,
       ReadPointer readPointer) {
     // TODO Auto-generated method stub
@@ -452,12 +467,4 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       throw new RuntimeException(e);
     }
   }
-
-  @Override
-  public void clear() {
-    // TODO Auto-generated method stub
-
-  }
-
-
 }
