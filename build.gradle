@@ -62,21 +62,6 @@ thrift {
 */
 
 /**
- * Create Release TAR ball
+ * Exclude any config xml from jar
  */
-task dist(type: Tar, dependsOn: jar) {
-    group = 'Continuuity'
-    description = 'Generates distribution tar file.'
-    from('bin') {
-        into('overlord/bin')
-    }
-
-    into('overlord/conf') {
-        from sourceSets.main.output.resourcesDir
-    }
-
-    into('overlord/libs') {
-        from configurations.compile
-        from jar.outputs.files
-    }
-}
+jar.exclude '*.xml'

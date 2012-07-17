@@ -2,13 +2,13 @@ package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.options.Option;
 import com.continuuity.common.options.OptionsParser;
 import com.continuuity.metrics.service.MetricsServer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Flow Monitor command line
@@ -21,9 +21,9 @@ public class FlowMonitorMain {
 
   public void doMain(String args[]) {
     OptionsParser.init(this, args, "Flow Monitor", "0.1.0", System.out);
+
     try {
       CConfiguration conf = CConfiguration.create();
-
       conf.addResource("continuuity-overlord.xml");
 
       if (zookeeper != null) {
