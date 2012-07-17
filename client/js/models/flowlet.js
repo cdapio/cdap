@@ -9,15 +9,15 @@ define([], function () {
 			return this.instances === 1 ? '' : 's';
 		}.property('instances'),
 		doubleCount: function () {
-			return this.instances;
-		}.property(),
+			return 'Add ' + this.instances;
+		}.property().cacheable(false),
 		fitCount: function () {
-			return 0;
-		}.property(),
+			return 'No Change';
+		}.property().cacheable(false),
 		addInstances: function (value, done) {
 
 			var instances = this.get('instances') + value;
-			
+
 			if (instances < 1 || instances > 64) {
 				done('Cannot set instances. Please select an instance count > 1 and <= 64');
 			} else {
