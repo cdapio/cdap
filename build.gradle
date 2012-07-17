@@ -36,6 +36,8 @@ dependencies {
     }
     else
     {
+        compile group: 'com.continuuity', name: 'data-fabric', version: "${continuuityVersion}"
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${continuuityVersion}", changing: true
         compile group: 'com.continuuity', name: 'flow', version: "${continuuityVersion}"
         compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${continuuityVersion}", changing: true
     }
