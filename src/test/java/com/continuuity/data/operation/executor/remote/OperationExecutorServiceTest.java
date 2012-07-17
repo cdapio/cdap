@@ -14,6 +14,7 @@ import org.apache.commons.lang.time.StopWatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
 
 import java.nio.ByteBuffer;
@@ -676,20 +677,30 @@ public abstract class OperationExecutorServiceTest {
     Assert.assertEquals(metaLocal, metaRemote);
   }
 
+  /*
+   * Test that the remot eopex is thread safe:
+   * Run many threads that perform reads and writes concurrently.
+   * If the opex is not thread-safe, some of them will corrupt each other's
+   * network communication.
+   */
   @Test
   public void testMultiThreaded() {
-    int numThreads = 10;
-    int numWritesPerThread = 500;
+    int numThreads = 5;
+    int numWritesPerThread = 50;
 
-    Thread[] threads = new Thread[numThreads];
+    OpexThread[] threads = new OpexThread[numThreads];
+
     for (int i = 0; i < numThreads; i++) {
       OpexThread ti = new OpexThread(i, numWritesPerThread);
-      ti.run();
+      Log.debug("Starting thread " + i);
+      ti.start();
+      Log.debug("Thread " + i + " is running");
       threads[i] = ti;
     }
     for (int i = 0; i < numThreads; i++) {
       try {
         threads[i].join();
+        Assert.assertEquals(numWritesPerThread, threads[i].count);
       } catch (InterruptedException e) {
         e.printStackTrace();
         Assert.fail("join with thread " + i + " was interrupted");
@@ -700,18 +711,26 @@ public abstract class OperationExecutorServiceTest {
   class OpexThread extends Thread {
     int times;
     int id;
+    int count = 0;
     OpexThread(int id, int times) {
       this.id = id;
       this.times = times;
     }
     public void run() {
-      for (int i = 0; i < this.times; i++) {
-        byte[] key = (id + "-" + i).getBytes();
-        byte[] value = Integer.toString(i).getBytes();
-        Write write = new Write(key, value);
-        Assert.assertTrue(remote.execute(write));
-        ReadKey readKey = new ReadKey(key);
-        Assert.assertArrayEquals(value, remote.execute(readKey));
+      try {
+        for (int i = 0; i < this.times; i++) {
+          byte[] key = (id + "-" + i).getBytes();
+          byte[] value = Integer.toString(i).getBytes();
+          Log.debug("Thread " + id + " writing #" + i);
+          Write write = new Write(key, value);
+          Assert.assertTrue(remote.execute(write));
+          Log.debug("Thread " + id + " reading #" + i);
+          ReadKey readKey = new ReadKey(key);
+          Assert.assertArrayEquals(value, remote.execute(readKey));
+          count++;
+        }
+      } catch (Exception e) {
+        Assert.fail("Exception in thread " + id + ": " + e.getMessage());
       }
     }
   }
