@@ -678,21 +678,22 @@ public abstract class OperationExecutorServiceTest {
 
   @Test
   public void testMultiThreaded() {
-    OpexThread t1 = new OpexThread(1,1000);
-    OpexThread t2 = new OpexThread(2,1000);
-    t1.run();
-    t2.run();
-    try {
-      t1.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      Assert.fail("join with threead 1 was interrupted");
+    int numThreads = 10;
+    int numWritesPerThread = 500;
+
+    Thread[] threads = new Thread[numThreads];
+    for (int i = 0; i < numThreads; i++) {
+      OpexThread ti = new OpexThread(i, numWritesPerThread);
+      ti.run();
+      threads[i] = ti;
     }
-    try {
-      t2.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-      Assert.fail("join with threead 2 was interrupted");
+    for (int i = 0; i < numThreads; i++) {
+      try {
+        threads[i].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        Assert.fail("join with thread " + i + " was interrupted");
+      }
     }
   }
 
