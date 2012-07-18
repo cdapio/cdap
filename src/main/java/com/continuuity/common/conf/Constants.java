@@ -66,20 +66,6 @@ public class Constants {
   public static final String DEFAULT_FLOW_MONITOR_SERVER_ADDRESS = "0.0.0.0";
 
   /**
-   * Configuration key names used by opex service.
-   */
-  public static final String CFG_DATA_OPEX_SERVER_PORT = "data.opex.server.port";
-  public static final String CFG_DATA_OPEX_SERVER_ADDRESS = "data.opex.server.address";
-  public static final String CFG_DATA_OPEX_SERVER_THREADS = "data.opex.server.threads";
-
-  /**
-   * Default constants defined for opex service
-   */
-  public static final int    DEFAULT_DATA_OPEX_SERVER_PORT = 15165;
-  public static final String DEFAULT_DATA_OPEX_SERVER_ADDRESS = "0.0.0.0";
-  public static final int    DEFAULT_DATA_OPEX_SERVER_THREADS = 20;
-
-  /**
    * Configuration for Cloud FAR Service.
    */
   public static final String CFG_RESOURCE_MANAGER_CLOUD_HOST = "resource.manager.cloud.hostname";
