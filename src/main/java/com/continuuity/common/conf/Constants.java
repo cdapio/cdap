@@ -28,7 +28,7 @@ public class Constants {
   /**
    * Defaults for resource manager.
    */
-  public static final String RESOURCE_MANAGER_LOCAL_DIR_DEFAULT = "build/continuuity/flow/manager/local";
+  public static final String DEFAULT_RESOURCE_MANAGER_LOCAL_DIR = "build/continuuity/flow/manager/local";
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
   /**
@@ -82,6 +82,6 @@ public class Constants {
   /**
    * Configuration for Cloud FAR Service.
    */
-  public static final String CFG_CLOUD_RESOURCE_MANAGER_HOST = "cloud.resource.manager.hostname";
-  public static final String CFG_CLOUD_RESOURCE_MANAGER_PORT = "cloud.resource.manager.port";
+  public static final String CFG_CLOUD_RESOURCE_MANAGER_HOST = "resource.manager.cloud.hostname";
+  public static final String CFG_CLOUD_RESOURCE_MANAGER_PORT = "resource.manager.cloud.port";
 }

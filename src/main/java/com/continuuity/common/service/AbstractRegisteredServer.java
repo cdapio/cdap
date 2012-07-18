@@ -12,6 +12,8 @@ import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * This abstract class makes it easy to build a registered server.
@@ -219,6 +221,26 @@ public abstract class AbstractRegisteredServer {
       Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
     }
     stop();
+  }
+
+  /**
+   * Returns the <code>InetAddress</code> on which the server can be started.
+   *
+   * <p> A preferredAddress specifies the address to used for create InetAddress, if it's not present then
+   * localhost is returned.</p>
+   *
+   * @param preferredAddress address that is preferred to start the server on.
+   * @return an instance of {@link InetAddress}
+   * @throws UnknownHostException
+   */
+  protected final InetAddress getServerInetAddress(String preferredAddress) throws UnknownHostException {
+    InetAddress listenAddress = null;
+    if(preferredAddress == null) {
+      listenAddress = InetAddress.getLocalHost();
+    } else {
+      listenAddress = InetAddress.getByName(preferredAddress);
+    }
+    return listenAddress;
   }
 
   /**
