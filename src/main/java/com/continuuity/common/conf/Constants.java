@@ -82,6 +82,8 @@ public class Constants {
   /**
    * Configuration for Cloud FAR Service.
    */
-  public static final String CFG_CLOUD_RESOURCE_MANAGER_HOST = "resource.manager.cloud.hostname";
-  public static final String CFG_CLOUD_RESOURCE_MANAGER_PORT = "resource.manager.cloud.port";
+  public static final String CFG_RESOURCE_MANAGER_CLOUD_HOST = "resource.manager.cloud.hostname";
+  public static final String CFG_RESOURCE_MANAGER_CLOUD_PORT = "resource.manager.cloud.port";
+  public static final String DEFAULT_RESOURCE_MANAGER_CLOUD_HOST = "localhost";
+  public static final String DEFAULT_RESOURCE_MANAGER_CLOUD_PORT = DEFAULT_RESOURCE_MANAGER_SERVER_PORT;
 }
