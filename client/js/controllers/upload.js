@@ -24,41 +24,51 @@ define([], function () {
 		sendFile: function () {
 
 			var file = this.fileQueue.shift();
-
 			if (file === undefined) {
 				return;
 			}
 
-			var reader = new FileReader();
+			var xhr = new XMLHttpRequest();
+			var uploadProg = xhr.upload || xhr;
 
-			reader.onload = function (evt) {
+			uploadProg.addEventListener('progress', function (e) {
 
-				$('#far-upload-status').html('Loaded file.');
+				if (e.type === 'progress') {
+					var pct = Math.round((e.loaded / e.total) * 100);
+					$('#far-upload-status').html(pct + '% Uploaded...');
+				}
 
-				var xhr = new XMLHttpRequest();
-				var uploadProg = xhr.upload || xhr;
+			});
 
-				uploadProg.addEventListener('progress', function (e) {
+			// Safari does not support nor require FileReader to upload.
+			
+			if ($.browser.safari &&
+				/chrome/.test(navigator.userAgent.toLowerCase())) {
 
-					if (e.type === 'progress') {
-						var pct = Math.round((e.loaded / e.total) * 100);
-						$('#far-upload-status').html(pct + '% Uploaded...');
-					}
+				var reader = new FileReader();
 
-				});
+				reader.onload = function (evt) {
 
+					$('#far-upload-status').html('Loaded file.');
+
+					xhr.open('POST', '/upload/' + file.name, true);
+					xhr.setRequestHeader("Content-type", "application/octet-stream");
+					xhr.send(evt.target.result);
+
+					$('#far-upload-status').html('Uploading...');
+
+					this.processing = true;
+
+				};
+
+				$('#far-upload-status').html('Reading ' + file.name + '...');
+				reader.readAsArrayBuffer(file);
+
+			} else {
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
-				xhr.send(evt.target.result);
-
-				$('#far-upload-status').html('Uploading...');
-
-				this.processing = true;
-
-			};
-
-			$('#far-upload-status').html('Reading ' + file.name + '...');
-			reader.readAsArrayBuffer(file);
+				xhr.send(file);
+			}
 
 		},
 

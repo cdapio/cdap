@@ -30,7 +30,7 @@ define([
 
 			var flow = this.current;
 
-			App.socket.request('manager', {
+			App.socket.request('far', {
 				method: 'promote',
 				params: [flow.meta.app, flow.meta.name, flow.version]
 			}, function (error, response) {
@@ -59,7 +59,7 @@ define([
 			var id = control.attr('flow-id');
 			var app = control.attr('flow-app');
 
-			App.socket.request('manager', {
+			App.socket.request('far', {
 				method: 'remove',
 				params: ['demo', app, id]
 			}, function (error, response) {
