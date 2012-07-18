@@ -58,6 +58,17 @@ public class InMemoryZookeeper implements Closeable {
   }
 
   /**
+   * Constructor to start the Zookeeper on default port and ZK temporary directory path.
+   *
+   * @param temporaryDir under which all data gets stored.
+   * @throws InterruptedException
+   * @throws IOException
+   */
+  public InMemoryZookeeper(File temporaryDir) throws InterruptedException, IOException {
+    this(new InstanceSpecification(temporaryDir, 2181, -1, -1, true, -1));
+  }
+
+  /**
    * Constructor with instance specification.
    * @param specification
    * @throws Exception
