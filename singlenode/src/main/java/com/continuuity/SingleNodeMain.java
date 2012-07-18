@@ -139,10 +139,9 @@ public class SingleNodeMain {
    * @throws IOException
    */
   private void startZookeeper() throws InterruptedException, IOException {
-    zookeeper =
-      new InMemoryZookeeper(
-        Integer.parseInt(myConfiguration.get("zookeeper.port")),
-        new File(myConfiguration.get("zookeeper.datadir")) );
+    // Create temporary directory where zookeeper data files will be stored.
+    File temporaryDir = File.createTempFile("zookeeper-", Long.toString(System.nanoTime()));
+    zookeeper = new InMemoryZookeeper(temporaryDir);
 
     // Set the connection string about where ZK server started on */
     myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,

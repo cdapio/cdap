@@ -136,6 +136,7 @@ task release (type:  Tar, dependsOn: jar)  {
       into("${project.name}-${project.version}/libs") {
         from project(":data-fabric").artifacts
         from project(":flow").artifacts
+        from project(":common").artifacts
       }
     }
 }
