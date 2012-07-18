@@ -1,6 +1,7 @@
 package com.continuuity.data.operation;
 
 import com.continuuity.api.data.Operation;
+import com.google.common.base.Objects;
 
 /**
  * Administrative operation for clearing the data fabric with options for only
@@ -57,4 +58,13 @@ public class ClearFabric implements Operation {
   public boolean shouldClearStreams() {
     return this.clearStreams;
   }
+
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("clearData", Boolean.toString(clearData))
+        .add("clearQueues", Boolean.toString(clearQueues))
+        .add("clearStreams", Boolean.toString(clearStreams))
+        .toString();
+  }
 }
+

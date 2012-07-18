@@ -1,6 +1,8 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.ReadOperation;
+import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Marks and retrieves the next entry in the queue for the specified consumer,
@@ -30,5 +32,13 @@ public class QueueDequeue implements ReadOperation {
 
   public QueueConfig getConfig() {
     return this.config;
+  }
+
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("queueName", Bytes.toString(this.queueName))
+        .add("consumer", Objects.toStringHelper(this.consumer))
+        .add("config", this.config.toString())
+        .toString();
   }
 }

@@ -1,15 +1,17 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
+
 /**
  * Read all keys and rows.
- * 
+ *
  * Supports both key-value and columnar operations.
  */
 public class ReadAllKeys implements ReadOperation {
 
   /** The number of keys to offset by */
   private final int offset;
-  
+
   /** The maximum number of keys to return */
   private final int limit;
 
@@ -32,4 +34,10 @@ public class ReadAllKeys implements ReadOperation {
     return this.limit;
   }
 
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("offset", Integer.toString(offset))
+        .add("limit", Integer.toString(limit))
+        .toString();
+  }
 }

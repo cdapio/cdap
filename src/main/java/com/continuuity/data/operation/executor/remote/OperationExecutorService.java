@@ -1,11 +1,8 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.google.inject.Inject;
@@ -42,9 +39,6 @@ public class OperationExecutorService extends AbstractRegisteredServer {
   private static final Logger Log =
       LoggerFactory.getLogger(OperationExecutorService.class);
 
-  /** the name of this service in the service discovery */
-  public static final String SERVICE_NAME = "opex-service";
-
   /* the port to run on */
   int port;
 
@@ -72,7 +66,7 @@ public class OperationExecutorService extends AbstractRegisteredServer {
   @Inject
   public OperationExecutorService(
       @Named("DataFabricOperationExecutor")OperationExecutor opex) {
-    super.setServerName(SERVICE_NAME);
+    super.setServerName(Constants.OPERATION_EXECUTOR_SERVICE_NAME);
     this.opex = opex;
   }
 

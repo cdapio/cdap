@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
+
 import java.util.Map;
 
 /**
@@ -55,4 +57,21 @@ public class Read implements ReadOperation {
   public byte [][] getColumns() {
     return this.columns;
   }
+
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    char sep = '[';
+    for (byte[] column : this.columns) {
+      builder.append(sep);
+      builder.append(new String(column));
+      sep = ',';
+    }
+    builder.append(']');
+    String columnsStr = builder.toString();
+    return Objects.toStringHelper(this)
+        .add("key", new String(this.key))
+        .add("columns", columnsStr)
+        .toString();
+  }
+
 }

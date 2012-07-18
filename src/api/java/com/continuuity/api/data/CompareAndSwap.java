@@ -1,15 +1,19 @@
 package com.continuuity.api.data;
 
 
+import com.google.common.base.Objects;
+
+import java.util.Arrays;
+
 /**
  * Atomic compare-and-swap operation.
- * 
+ *
  * Performs an atomic compare-and-swap of the value of a key or column.  An
  * expected value and a new value are specified, and if the current value is
  * equal to the expected value, it is atomically replaced with the new value,
  * and the operation is successful.  If the current value was not equal to the
  * expected value, no change is made and the operation fails.
- * 
+ *
  * Supports key-value and columnar operations.
  */
 public class CompareAndSwap implements ConditionalWriteOperation {
@@ -30,7 +34,7 @@ public class CompareAndSwap implements ConditionalWriteOperation {
    * Compares-and-swaps the value of the specified key by atomically comparing
    * if the current value is the specified expected value and if so, replacing
    * it with the specified new value.
-   * 
+   *
    * @param key
    * @param expectedValue
    * @param newValue
@@ -44,7 +48,7 @@ public class CompareAndSwap implements ConditionalWriteOperation {
    * Compares-and-swaps the value of the specified column in the specified row
    * by atomically comparing if the current value is the specified expected
    * value and if so, replacing it with the specified new value.
-   * 
+   *
    * @param row
    * @param column
    * @param expectedValue
@@ -79,4 +83,15 @@ public class CompareAndSwap implements ConditionalWriteOperation {
   public int getPriority() {
     return 1;
   }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("key", new String(this.key))
+        .add("column", new String(this.column))
+        .add("expected", Arrays.toString(this.expectedValue))
+        .add("newValue", Arrays.toString(this.newValue))
+        .toString();
+  }
+
 }

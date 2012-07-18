@@ -53,4 +53,18 @@
             service</description>
     </property>
 
+    <property>
+        <name>data.opex.client.count</name>
+        <value>5</value>
+        <description>The number of pooled instanced of the operation
+            executor client</description>
+    </property>
+
+    <property>
+        <name>data.opex.client.provider</name>
+        <value>pool</value>
+        <description>The provider strategy for operation executor clients.
+        Valid values are "pool" and "thread-local". </description>
+    </property>
+
 </configuration>

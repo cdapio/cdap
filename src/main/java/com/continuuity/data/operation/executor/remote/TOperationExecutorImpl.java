@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,8 +55,11 @@ public class TOperationExecutorImpl
 
   @Override
   public boolean write(TWrite tWrite) throws TException {
-    Log.debug("Received TWrite");
-    return this.opex.execute(unwrap(tWrite));
+    Log.debug("Received TWrite: " + tWrite);
+    Write write = unwrap(tWrite);
+    boolean success = this.opex.execute(write);
+    Log.debug("Write result: " + success);
+    return success;
   }
 
   @Override
@@ -131,8 +137,12 @@ public class TOperationExecutorImpl
 
   @Override
   public TOptionalBinary readKey(TReadKey tReadKey) throws TException {
-    Log.debug("Received TReadKey");
-    return wrapBinary(this.opex.execute(unwrap(tReadKey)));
+    Log.debug("Received TReadKey: " + tReadKey);
+    ReadKey readKey = unwrap(tReadKey);
+    byte[] result = this.opex.execute(readKey);
+    Log.debug("ReadKey result: "
+        + (result == null ? "<null>" : Arrays.toString(result)));
+    return wrapBinary(result);
   }
 
   @Override

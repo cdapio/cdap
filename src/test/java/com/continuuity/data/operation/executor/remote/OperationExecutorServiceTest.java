@@ -2,7 +2,6 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.ClearFabric;
@@ -28,11 +27,6 @@ public abstract class OperationExecutorServiceTest {
   static InMemoryZookeeper zookeeper;
   static CConfiguration config;
   static OperationExecutorService opexService;
-
-  public static void startService(OperationExecutor opex)
-      throws Exception {
-    startService(CConfiguration.create(), opex);
-  }
 
   public static void startService(CConfiguration conf, OperationExecutor opex)
       throws Exception {
@@ -86,13 +80,6 @@ public abstract class OperationExecutorServiceTest {
     if (zookeeper != null) {
       zookeeper.close();
     }
-  }
-
-  // @Before
-  public void clearFabric() {
-    // before every test, clear data fabric.
-    // otherwise it might see spurious entries from other tests :(
-    this.local.execute(new ClearFabric(true, true, true));
   }
 
   /** Tests Write, Read, ReadKey */

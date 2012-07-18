@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
+
 /**
  * Read a range of columns in a row.
  *
@@ -81,4 +83,16 @@ public class ReadColumnRange implements ReadOperation {
   public int getLimit() {
     return this.limit;
   }
+
+  public String toString() {
+    return Objects.toStringHelper(this).
+        add("key", new String(this.key)).
+        add("start", this.startColumn == null
+            ? "null" : new String(this.startColumn)).
+        add("stop", this.stopColumn == null
+            ? "null" : new String(this.stopColumn)).
+        add("limit", Integer.toString(this.limit)).
+        toString();
+  }
+
 }
