@@ -39,6 +39,19 @@ io.sockets.on('connection', function (socket) {
 		});
 	});
 
+	socket.on('far', function (request) {
+		console.log('FAR Request', request);
+		Env.api.far(request.method, request.params, function (error, response) {
+			
+			socket.emit('exec', error, {
+				method: request.method,
+				params: typeof response === "string" ? JSON.parse(response) : response,
+				id: request.id
+			});
+			
+		});
+	});
+
 	socket.on('gateway', function (request) {
 		console.log('Gateway Request');
 		Env.api.gateway(request.method, request.params, function (error, response) {

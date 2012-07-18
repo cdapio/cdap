@@ -88,38 +88,6 @@ try {
 				conn.end();
 				
 			break;
-			case 'remove':
-
-				var FAR = thrift.createClient(FARService, conn);
-
-				identifier = new flowservices_types.FlowIdentifier({
-					accountId: 'demo',
-					app: params[0],
-					flow: params[1],
-					version: -1
-				});
-				FAR.remove(null, identifier, done);
-				conn.end();
-
-				break;
-			case 'promote':
-
-				var FAR = thrift.createClient(FARService, conn);
-
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: params[2],
-					accountId: 'demo'
-				});
-
-				FAR.promote(null, identifier, function (error, response) {
-
-					done(error, response);
-
-				});
-
-				break;
 			case 'setInstances':
 				identifier = new flowservices_types.FlowIdentifier({
 					app: params[0],
@@ -172,6 +140,61 @@ try {
 				}
 				conn.end();
 		}
+
+	};
+
+	this.far = function (method, params, done) {
+
+		var identifier;
+		var auth_token = new flowservices_types.DelegationToken({ token: null });
+
+		var conn = thrift.createConnection(
+			this.config.upload.host,
+			this.config.upload.port, {
+			transport: ttransport.TFramedTransport,
+			protocol: tprotocol.TBinaryProtocol
+		});
+
+		conn.on('error', function (error) {
+			console.log('FARService: ', error);
+			done('Could not connect to FARService');
+		});
+
+		conn.on('connect', function (error) {
+			console.log(arguments);
+		});
+		
+		var FAR = thrift.createClient(FARService, conn);
+
+		switch (method) {
+
+			case 'remove':
+
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: -1,
+					accountId: 'demo'
+				});
+				FAR.remove(auth_token, identifier, done);
+				break;
+
+			case 'promote':
+
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: params[2],
+					accountId: 'demo'
+				});
+				FAR.promote(auth_token, identifier, function () {
+					done(arguments);
+				});
+				break;
+
+			}
+
+			conn.end();
 
 	};
 
