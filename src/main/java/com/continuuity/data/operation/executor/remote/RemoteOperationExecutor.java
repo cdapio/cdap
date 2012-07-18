@@ -46,8 +46,10 @@ public class RemoteOperationExecutor
     String provider = config.get(Constants.CFG_DATA_OPEX_CLIENT_PROVIDER,
         Constants.DEFAULT_DATA_OPEX_CLIENT_PROVIDER);
     if ("pool".equals(provider)) {
+      Log.info("Using pooled operation service client provider");
       this.clientProvider = new PooledClientProvider(config);
     } else if ("thread-local".equals(provider)) {
+      Log.info("Using thread-local operation service client provider");
       this.clientProvider = new ThreadLocalClientProvider(config);
     } else {
       Log.error("Unknown Operation Service Client Provider '"

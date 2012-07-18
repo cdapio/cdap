@@ -62,7 +62,8 @@
 
     <property>
         <name>data.opex.client.provider</name>
-        <value>pool</value>
+        <!-- value>pool</value -->
+        <value>thread-local</value>
         <description>The provider strategy for operation executor clients.
         Valid values are "pool" and "thread-local". </description>
     </property>

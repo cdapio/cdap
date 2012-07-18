@@ -34,6 +34,8 @@ public class PooledClientProvider extends AbstractClientProvider {
     for (int i = 0; i < numClients; i++) {
       this.clients.add(this.newClient());
     }
+    Log.info("Successfully created " + numClients + " operation executor " +
+        "clients.");
   }
 
   @Override
