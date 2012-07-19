@@ -91,7 +91,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     Log.info("Starting the flow runner.");
     resourceMgr = rmHandler.connect();
 
-    /** Register the application master with the resource manager. */
+    // Register the application master with the resource manager.
     RegisterApplicationMasterResponse registration = null;
     try {
       RegisterApplicationMasterRequest request = Records.newRecord(RegisterApplicationMasterRequest.class);
@@ -112,7 +112,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     Log.debug("Minimum Cluster Resource {}.", minClusterResource);
     Log.debug("Maximum Cluster Resource {}.", maxClusterResource);
 
-    /** Gets all container group parameters*/
+    // Gets all container group parameters
     List<TaskSpecification> tasks = specification.getAllContainerGroups();
 
     if(tasks.size() < 1) {
@@ -120,7 +120,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       stop();
     }
 
-    /** Iterate through all container groups, initialize and start them. */
+    // Initial list of tasks provided.
     tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
   }
 
@@ -461,7 +461,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
             /** Create a container handler and assign a task specification to it. */
             TaskSpecification specification = matchingSpec.get();
-            TaskHandler ch = new TaskHandler(container, specification);
+            TaskHandler ch =
+              new TaskHandler(cmHandler, minClusterResource, maxClusterResource, container, specification);
             ch.start();
 
             /** Add the container to container manager. */
@@ -656,114 +657,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           releaseContainerTab.put(status.getContainerId(), true);
         }
       }
-    }
-  }
-
-  /**
-   * Manages a single task within a container.
-   */
-  public class TaskHandler extends AbstractScheduledService {
-    private static final int MAX_CHECK_FAILURES = 1;
-
-    private final Container container;
-    private final TaskSpecification specification;
-    private final ContainerLaunchContextFactory containerLaunchContextFactory;
-    private ContainerManager containerMgr;
-    private ContainerStatus status;
-    private int checkFailures = 0;
-
-    public TaskHandler(Container container, TaskSpecification specification) {
-      this.container = container;
-      this.specification = specification;
-      this.containerLaunchContextFactory = new ContainerLaunchContextFactory(
-        minClusterResource, maxClusterResource
-      );
-    }
-
-    @Override
-    public void startUp() {
-
-      /** Connect to container manager. */
-      containerMgr = cmHandler.connect(container);
-
-      if(containerMgr == null) {
-        Log.warn("Failed connecting to container manager for container {}", container.toString());
-        stop();
-        return;
-      }
-
-      Log.info("Assigning a task with specification {}", specification.toString());
-      ContainerLaunchContext launchContext = containerLaunchContextFactory.create(specification);
-      launchContext.setContainerId(container.getId());
-
-      StartContainerRequest startRequest = Records.newRecord(StartContainerRequest.class);
-      startRequest.setContainerLaunchContext(launchContext);
-
-      Log.info("Starting task {} in container {}.", specification.getId(), container);
-      Log.info("Task {} run start request : {}", specification.getId(), startRequest.toString());
-
-      try {
-        containerMgr.startContainer(startRequest);
-        Log.info("Started task {}", specification.getId());
-      } catch (YarnRemoteException e) {
-        e.printStackTrace();
-        Log.info("Failed starting container {}. Reason : {}", container.toString(), e.getMessage());
-        stop();
-      } catch (Throwable e) {
-        e.printStackTrace();
-        Log.info("Horrible happened. Reason : {}", e.getMessage());
-        stop();
-      }
-    }
-
-    @Override
-    public void shutDown() {
-      Log.info("Stopping task {} running in container {}", specification.getId(), container);
-      StopContainerRequest req = Records.newRecord(StopContainerRequest.class);
-      req.setContainerId(container.getId());
-      try {
-        containerMgr.stopContainer(req);
-      } catch (YarnRemoteException e) {
-        Log.warn("Exception thrown stopping container: " + container, e);
-      }
-    }
-
-    @Override
-    protected void runOneIteration() throws Exception {
-      Log.info("Checking status of task {}, Container {}", specification.getId(), container.getId().toString());
-
-      GetContainerStatusRequest req = Records.newRecord(GetContainerStatusRequest.class);
-      req.setContainerId(container.getId());
-
-      try {
-        GetContainerStatusResponse resp = containerMgr.getContainerStatus(req);
-
-        status = resp.getStatus();
-        Log.info("Container {} status {}, Diganostics {}.", new Object[] {
-          container.getId().toString(), status.toString(), status.getDiagnostics()});
-
-        if (status != null && status.getState() == ContainerState.COMPLETE) {
-          stop();
-        }
-      } catch (YarnRemoteException e) {
-        Log.info("There was problem receiving the status of container {}. Reason : {}",
-          container.toString(), e.getMessage());
-        checkFailures++;
-
-      } catch (Throwable e) {
-        Log.info("An error was thrown while checking the status of a container. Reason : {}", e.getMessage());
-      }
-
-      if(checkFailures > MAX_CHECK_FAILURES) {
-        Log.info("Failed after max retry to get status of container {}", container.toString());
-        stop();
-      }
-
-    }
-
-    @Override
-    protected Scheduler scheduler() {
-      return Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS);
     }
   }
 }

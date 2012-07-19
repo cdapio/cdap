@@ -97,6 +97,8 @@ public abstract class AbstractRegisteredServer {
    */
   public final void start(String[] args, CConfiguration conf) throws ServerException {
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    Log.info("AbstractRegisteredServer using ensemble {}", zkEnsemble);
+
     Preconditions.checkNotNull(zkEnsemble);
 
     try {
@@ -267,8 +269,7 @@ public abstract class AbstractRegisteredServer {
    * @param conf Configuration instance passed around.
    * @return Pair of args for registering the service and the port service is running on.
    */
-  protected abstract RegisteredServerInfo
-    configure(String[] args, CConfiguration conf);
+  protected abstract RegisteredServerInfo configure(String[] args, CConfiguration conf);
 
 
 }
