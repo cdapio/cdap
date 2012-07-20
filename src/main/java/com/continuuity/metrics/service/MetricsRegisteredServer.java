@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -115,7 +116,7 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
 
       String portProperty = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_PORT,
         Constants.DEFAULT_FLOW_MONITOR_SERVER_PORT);
-      int port = Integer.valueOf(portProperty);
+      int listenPort = Integer.valueOf(portProperty);
 
       String threadCntProperty = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_THREADS,
         Constants.DEFAULT_FLOW_MONITOR_SERVER_THREADS);
@@ -124,17 +125,20 @@ public class MetricsRegisteredServer extends AbstractRegisteredServer implements
       String serverAddress = conf.get(Constants.CFG_FLOW_MONITOR_SERVER_ADDRESS,
         Constants.DEFAULT_FLOW_MONITOR_SERVER_ADDRESS);
 
-      InetSocketAddress sockAddr = new InetSocketAddress(serverAddress, port);
+      // Create an inet address based on preferred address (if provided) else uses localhost.
+      InetAddress listenAddress = getServerInetAddress(conf.get(Constants.CFG_FLOW_MONITOR_SERVER_ADDRESS));
+      Log.info("Metric Collector Server starting on {}:{}", listenAddress.getHostAddress(), listenPort);
+
       MetricsImpl serviceImpl = new MetricsImpl(handler);
       THsHaServer.Args serverArgs =
         new THsHaServer
-          .Args(new TNonblockingServerSocket(sockAddr))
+          .Args(new TNonblockingServerSocket(new InetSocketAddress(listenAddress, listenPort)))
           .executorService(executorService)
           .processor(new FlowMonitor.Processor(serviceImpl))
           .workerThreads(threads);
       server = new THsHaServer(serverArgs);
 
-      RegisteredServerInfo info = new RegisteredServerInfo(serverAddress, port);
+      RegisteredServerInfo info = new RegisteredServerInfo(listenAddress.getHostAddress(), listenPort);
       info.addPayload("thread", threadCntProperty);
       return info;
     } catch (IOException e) {
