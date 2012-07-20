@@ -1,3 +1,4 @@
+
 package com.continuuity.common.service.distributed;
 
 import com.google.common.base.Objects;
@@ -7,21 +8,23 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.yarn.api.records.*;
-import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
+import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
+import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
-import org.mortbay.log.Log;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 /**
- * The task specification has two parts to it, namely Resource specification and Execution specification.
+ * The task specification has two parts to it, namely Resource specification and
+ * Execution specification.
  */
 public class TaskSpecification {
+
   private String user;
   private int memory;
   private int priority;
@@ -34,12 +37,18 @@ public class TaskSpecification {
 
   /**
    * Returns the task id associated
-   * @return
+   *
+   * @return The ID of the associated task.
    */
   public String getId() {
     return id;
   }
 
+  /**
+   * Set the id of the task
+   *
+   * @param id The id of the task
+   */
   private void setId(String id) {
     this.id = id;
   }
@@ -77,7 +86,7 @@ public class TaskSpecification {
    * Resource need for this container, it using the min and max bounds of the cluster to determine that.
    *
    * @param clusterMin min resource available in cluster
-   * @param clusterMax max resource availabel in cluster
+   * @param clusterMax max resource available in cluster
    * @return Resource to be used by this container.
    */
   public Resource getContainerResource(Resource clusterMin, Resource clusterMax) {

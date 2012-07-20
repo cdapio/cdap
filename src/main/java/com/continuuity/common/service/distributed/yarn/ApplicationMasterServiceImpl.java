@@ -1,21 +1,23 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.*;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.yarn.api.AMRMProtocol;
-import org.apache.hadoop.yarn.api.ContainerManager;
 import org.apache.hadoop.yarn.api.protocolrecords.*;
 import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.exceptions.YarnRemoteException;
 import org.apache.hadoop.yarn.util.Records;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
@@ -92,7 +94,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     resourceMgr = rmHandler.connect();
 
     // Register the application master with the resource manager.
-    RegisterApplicationMasterResponse registration = null;
+    RegisterApplicationMasterResponse registration;
+
     try {
       RegisterApplicationMasterRequest request = Records.newRecord(RegisterApplicationMasterRequest.class);
       request.setApplicationAttemptId(specification.getApplicationAttemptId());
@@ -186,7 +189,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   /**
    * Schedules {@link #runOneIteration()} runs to happen every 1 second.
    *
-   * @return instance of {@link Scheduler}
+   * @return An instance of
+   * {@link com.google.common.util.concurrent.AbstractScheduledService.Scheduler}
    */
   @Override
   protected Scheduler scheduler() {
@@ -236,9 +240,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   /**
    * Makes a request to allocate a container.
    *
-   * @param requestId
-   * @param requests
-   * @return
+   * @param requestId The id of the request
+   * @param requests  A List of ResourceRequests
+   * @return The Application Master reponse
    */
   private AMResponse allocate(int requestId, List<ResourceRequest> requests, List<ContainerId> releases) {
     AllocateRequest req = Records.newRecord(AllocateRequest.class);
@@ -347,11 +351,32 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       }
     }
 
-    public synchronized void addTaskSpecification(TaskSpecification specification) {
+    /**
+     * Add a Task Specification.
+     *
+     * <strong>This method is currently not implemented</strong>
+     *
+     * @param spec The specification to add.
+     * @throws NotImplementedException
+     */
+    public synchronized void addTaskSpecification(TaskSpecification spec)
+      throws NotImplementedException {
 
+      throw new NotImplementedException();
     }
 
-    public synchronized void removeTaskSpecification(TaskSpecification specification) {
+    /**
+     * Remove a Task Specification.
+     *
+     * <strong>This method is not currently implemented</strong>
+     *
+     * @param spec The specification to remove.
+     * @throws NotImplementedException
+     */
+    public synchronized void removeTaskSpecification(TaskSpecification spec)
+      throws NotImplementedException {
+
+      throw new NotImplementedException();
 
     }
 
@@ -608,7 +633,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           ContainerId containerId = container.getKey();
 
           /** The container is not released yet. So, check if there is task running within it. */
-          if(releaseContainerTab.get(containerId) == false) {
+          if (!releaseContainerTab.get(containerId)) {
             foundNoContainersToBeReleased = false;
             if(containerMgrs.containsKey(containerId) && containerMgrs.get(containerId) != null) {
               Log.info("Attempting to stop container {}", containerId);
