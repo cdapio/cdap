@@ -130,6 +130,10 @@ public class TaskHandler extends AbstractScheduledService {
   @Override
   public void shutDown() {
     Log.info("Stopping task {} running in container {}", specification.getId(), container);
+
+    // Stopping the executor avoiding the call to run iteration.
+    executor().shutdownNow();
+
     StopContainerRequest req = Records.newRecord(StopContainerRequest.class);
     req.setContainerId(container.getId());
     try {

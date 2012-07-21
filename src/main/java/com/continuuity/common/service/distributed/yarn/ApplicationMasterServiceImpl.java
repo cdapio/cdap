@@ -162,6 +162,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   protected void shutDown() {
     Log.info("Shutting down the application service.");
 
+    // We don't want more iterations to be happening when we are planning to stop.
+    this.executor().shutdownNow();
+
     /** Iterate through all the groups and request them to be stopped. */
     int totalFailures = tasksHandler.getFailures();
 
