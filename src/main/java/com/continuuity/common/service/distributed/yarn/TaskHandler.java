@@ -161,8 +161,8 @@ public class TaskHandler extends AbstractScheduledService {
         stop();
       }
     } catch (YarnRemoteException e) {
-      Log.info("There was problem receiving the status of container {}. Reason : {}",
-        container.toString(), e.getMessage());
+      Log.info("There was problem receiving the status of container {}. Container might be shutting down.",
+        container.toString());
       checkFailures++;
 
     } catch (Throwable e) {

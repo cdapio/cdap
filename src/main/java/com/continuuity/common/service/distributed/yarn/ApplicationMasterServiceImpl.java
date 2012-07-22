@@ -1,7 +1,6 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.*;
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
@@ -9,7 +8,6 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.yarn.api.AMRMProtocol;
-import org.apache.hadoop.yarn.api.ContainerManager;
 import org.apache.hadoop.yarn.api.protocolrecords.*;
 import org.apache.hadoop.yarn.api.records.*;
 import org.apache.hadoop.yarn.exceptions.YarnRemoteException;
@@ -113,7 +111,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     Log.debug("Maximum Cluster Resource {}.", maxClusterResource);
 
     // Gets all container group parameters
-    List<TaskSpecification> tasks = specification.getAllContainerGroups();
+    List<TaskSpecification> tasks = specification.getTaskSpecifications();
 
     if(tasks.size() < 1) {
       Log.info("No containers have been configured to be started. Stopping now");
@@ -122,6 +120,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     // Initial list of tasks provided.
     tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
+    Log.info("Application Master service started.");
   }
 
   /**
@@ -134,19 +133,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    */
   @Override
   protected void runOneIteration() throws Exception {
-
-    /** Iterate and collection total number of failures across all the container groups. */
-    int totalFailures = tasksHandler.getFailures();
-
-    /**
-     * If total failures across all container groups crosses the threshold for application, then we force
-     * fail the application master service.
-     */
-    if(totalFailures > specification.getAllowedFailures() && specification.getAllowedFailures() != -1) {
-      stop();
-      return;
-    }
-
     /**
      * Iterate through all container groups.
      */
@@ -162,8 +148,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   protected void shutDown() {
     Log.info("Shutting down the application service.");
 
-    // We don't want more iterations to be happening when we are planning to stop.
-    this.executor().shutdownNow();
+    // Ask the tasks handler to shutdown.
+    tasksHandler.stop();
 
     /** Iterate through all the groups and request them to be stopped. */
     int totalFailures = tasksHandler.getFailures();
@@ -222,8 +208,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * @param specification of the task to be added for execution.
    */
   @Override
-  public void addTask(TaskSpecification specification) {
-    tasksHandler.removeTaskSpecification(specification);
+  public void addTask(List<TaskSpecification> specification) {
+    tasksHandler.addTaskSpecification(specification);
   }
 
   /**
@@ -232,8 +218,18 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * @param specification of the task to be removed.
    */
   @Override
-  public void removeTask(TaskSpecification specification) {
+  public void removeTask(List<TaskSpecification> specification) {
     tasksHandler.removeTaskSpecification(specification);
+  }
+
+  /**
+   * Number of tasks to be yet allocated containers to run.
+   *
+   * @return number of tasks that are still waiting to be allocated container.
+   */
+  @Override
+  public int getPendingTasks() {
+    return tasksHandler.getPendingTasks();
   }
 
   /**
@@ -350,11 +346,26 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       }
     }
 
-    public synchronized void addTaskSpecification(TaskSpecification specification) {
-
+    /**
+     * Returns number of pending tasks - tasks that waiting for container to be allocated.
+     *
+     * @return number of tasks waiting for container to be allocated.
+     */
+    public int getPendingTasks() {
+      return readyToRunQueue.size();
     }
 
-    public synchronized void removeTaskSpecification(TaskSpecification specification) {
+    /**
+     * Adds task specification to readyToRunQueue.
+     * @param specifications
+     */
+    public synchronized void addTaskSpecification(List<TaskSpecification> specifications) {
+      for(TaskSpecification addTaskSpecification : specifications) {
+        readyToRunQueue.put(addTaskSpecification.getId(), addTaskSpecification);
+      }
+    }
+
+    public synchronized void removeTaskSpecification(List<TaskSpecification> specifications) {
 
     }
 
@@ -364,7 +375,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * @return true to keep going; false otherwise.
      */
     public boolean process() {
-
       if(shouldProceed()) {
 
         /**
@@ -593,6 +603,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
        * Till all the containers are released or we hit a timeout we don't exit this loop
        */
       StopWatch releaseTimer = new StopWatch();
+      releaseTimer.start();
+
       boolean keepRunning = true;
 
       Log.info("Application Master service has been requested to be stopped.");
@@ -614,11 +626,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           if(releaseContainerTab.get(containerId) == false) {
             foundNoContainersToBeReleased = false;
             if(containerMgrs.containsKey(containerId) && containerMgrs.get(containerId) != null) {
-              Log.info("Attempting to stop container {}", containerId);
+              Log.trace("Attempting to stop container {}", containerId);
               /** Stop the container. */
               containerMgrs.get(containerId).stopAndWait();
             }
-            Log.info("Adding the container {} to be released.", containerId);
+            Log.trace("Adding the container {} to be released.", containerId);
             /** Add the container to be released. */
             toRelease.add(containerId);
           }

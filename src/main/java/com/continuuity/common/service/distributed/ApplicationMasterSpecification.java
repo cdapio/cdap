@@ -81,11 +81,11 @@ public class ApplicationMasterSpecification {
    * Returns the parameters that will be used to launch the child containers for
    * this application.
    */
-  public List<TaskSpecification> getAllContainerGroups() {
+  public List<TaskSpecification> getTaskSpecifications() {
     return taskSpecifications;
   }
 
-  private void setAllContainerGroups(List<TaskSpecification> taskSpecifications) {
+  private void setTaskSpecifications(List<TaskSpecification> taskSpecifications) {
     this.taskSpecifications = taskSpecifications;
   }
 
@@ -182,7 +182,7 @@ public class ApplicationMasterSpecification {
     public ApplicationMasterSpecification create() {
       ApplicationMasterSpecification amp = new ApplicationMasterSpecification(configuration);
       amp.setApplicationAttemptId(attemptId);
-      amp.setAllContainerGroups(taskSpecifications);
+      amp.setTaskSpecifications(taskSpecifications);
       amp.setAllowedFailures(allowedFailures);
       amp.setHostname(hostname);
       amp.setClientPort(clientPort);
