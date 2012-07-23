@@ -63,5 +63,4 @@ public class JSONSerializerTest {
     Assert.assertTrue(h.equals(m));
   }
 
-
 }

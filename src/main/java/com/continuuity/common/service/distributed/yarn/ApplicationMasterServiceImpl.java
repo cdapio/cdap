@@ -233,6 +233,16 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   }
 
   /**
+   * Returns number of tasks that are pending release.
+   *
+   * @return number of tasks that are still pending release.
+   */
+  @Override
+  public int getPendingReleases() {
+    return tasksHandler.getPendingReleases();
+  }
+
+  /**
    * Makes a request to allocate a container.
    *
    * @param requestId
@@ -682,6 +692,15 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           releaseContainerTab.put(status.getContainerId(), true);
         }
       }
+    }
+
+    /**
+     * Number of tasks to be released.
+     *
+     * @return number of tasks to be released.
+     */
+    public int getPendingReleases() {
+      return toRelease.size();
     }
   }
 }

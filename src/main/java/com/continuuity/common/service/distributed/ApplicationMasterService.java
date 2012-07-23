@@ -47,4 +47,11 @@ public interface ApplicationMasterService extends Service {
    * @return number of tasks that are still waiting to be allocated container.
    */
   int getPendingTasks();
+
+  /**
+   * Returns number of tasks that are pending release.
+   *
+   * @return number of tasks that are still pending release.
+   */
+  int getPendingReleases();
 }
