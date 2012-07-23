@@ -7,6 +7,8 @@ import org.apache.hadoop.yarn.api.AMRMProtocol;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.Resource;
 
+import java.util.List;
+
 /**
  *
  */
@@ -30,12 +32,19 @@ public interface ApplicationMasterService extends Service {
    *
    * @param specification specification of the task to be added for execution.
    */
-  void addTask(TaskSpecification specification);
+  void addTask(List<TaskSpecification> specification);
 
   /**
    * Removes a task from run
    *
    * @param specification of the task to be removed.
    */
-  void removeTask(TaskSpecification specification);
+  void removeTask(List<TaskSpecification> specification);
+
+  /**
+   * Number of tasks to be yet allocated containers to run.
+   *
+   * @return number of tasks that are still waiting to be allocated container.
+   */
+  int getPendingTasks();
 }

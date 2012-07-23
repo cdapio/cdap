@@ -29,13 +29,27 @@ public class Constants {
    * Defaults for resource manager.
    */
   public static final String DEFAULT_RESOURCE_MANAGER_LOCAL_DIR = "build/continuuity/flow/manager/local";
+  public static final String DEFAULT_RESOURCE_MANAGER_REMOTE_DIR = "build/continuuity/flow/manager/remote";
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_ADDRESS = "0.0.0.0";
+
+  /**
+   * Constants used by resource manager.
+   */
+  public static final String JAR_EXTENSION=".jar";
+  public static final String STANDARD_FAR_FLOWS_CONFIG_FILE = "flows.json";
+  public static final String MANIFEST_FILE_PATH = "META-INF/MANIFEST.MF";
+  public static final int RESOURCE_MANAGER_VERSION_FIND_ATTEMPTS = 10;
 
   /**
    * Default constants defined for resource manager
    */
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_PORT = "45000";
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = "2";
+
+  /**
+   * Constants used by Tuple serializer
+   */
+  public static final int MAX_SERDE_BUFFER = 1024 * 1024;
 
   /**
    * Configuration key names used by flow manager

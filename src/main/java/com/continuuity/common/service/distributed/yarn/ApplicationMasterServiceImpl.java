@@ -109,14 +109,14 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       return;
     }
 
-    minClusterResource = registration.getMaximumResourceCapability();
+    minClusterResource = registration.getMinimumResourceCapability();
     maxClusterResource = registration.getMaximumResourceCapability();
 
     Log.debug("Minimum Cluster Resource {}.", minClusterResource);
     Log.debug("Maximum Cluster Resource {}.", maxClusterResource);
 
     // Gets all container group parameters
-    List<TaskSpecification> tasks = specification.getAllContainerGroups();
+    List<TaskSpecification> tasks = specification.getTaskSpecifications();
 
     if(tasks.size() < 1) {
       Log.info("No containers have been configured to be started. Stopping now");
@@ -125,6 +125,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     // Initial list of tasks provided.
     tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
+    Log.info("Application Master service started.");
   }
 
   /**
@@ -137,19 +138,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    */
   @Override
   protected void runOneIteration() throws Exception {
-
-    /** Iterate and collection total number of failures across all the container groups. */
-    int totalFailures = tasksHandler.getFailures();
-
-    /**
-     * If total failures across all container groups crosses the threshold for application, then we force
-     * fail the application master service.
-     */
-    if(totalFailures > specification.getAllowedFailures() && specification.getAllowedFailures() != -1) {
-      stop();
-      return;
-    }
-
     /**
      * Iterate through all container groups.
      */
@@ -164,6 +152,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
   @Override
   protected void shutDown() {
     Log.info("Shutting down the application service.");
+
+    // Ask the tasks handler to shutdown.
+    tasksHandler.stop();
 
     /** Iterate through all the groups and request them to be stopped. */
     int totalFailures = tasksHandler.getFailures();
@@ -223,8 +214,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * @param specification of the task to be added for execution.
    */
   @Override
-  public void addTask(TaskSpecification specification) {
-    tasksHandler.removeTaskSpecification(specification);
+  public void addTask(List<TaskSpecification> specification) {
+    tasksHandler.addTaskSpecification(specification);
   }
 
   /**
@@ -233,8 +224,18 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    * @param specification of the task to be removed.
    */
   @Override
-  public void removeTask(TaskSpecification specification) {
+  public void removeTask(List<TaskSpecification> specification) {
     tasksHandler.removeTaskSpecification(specification);
+  }
+
+  /**
+   * Number of tasks to be yet allocated containers to run.
+   *
+   * @return number of tasks that are still waiting to be allocated container.
+   */
+  @Override
+  public int getPendingTasks() {
+    return tasksHandler.getPendingTasks();
   }
 
   /**
@@ -352,32 +353,37 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     }
 
     /**
-     * Add a Task Specification.
+     * Returns number of pending tasks - tasks that waiting for container to be allocated.
      *
-     * <strong>This method is currently not implemented</strong>
-     *
-     * @param spec The specification to add.
-     * @throws NotImplementedException
+     * @return number of tasks waiting for container to be allocated.
      */
-    public synchronized void addTaskSpecification(TaskSpecification spec)
-      throws NotImplementedException {
-
-      throw new NotImplementedException();
+    public int getPendingTasks() {
+      return readyToRunQueue.size();
     }
 
     /**
-     * Remove a Task Specification.
+     * Adds task specification to readyToRunQueue.
      *
-     * <strong>This method is not currently implemented</strong>
-     *
-     * @param spec The specification to remove.
-     * @throws NotImplementedException
+     * @param specifications of tasks of be added.
      */
-    public synchronized void removeTaskSpecification(TaskSpecification spec)
-      throws NotImplementedException {
+    public synchronized void addTaskSpecification(List<TaskSpecification> specifications) {
+      for(TaskSpecification addTaskSpecification : specifications) {
+        readyToRunQueue.put(addTaskSpecification.getId(), addTaskSpecification);
+      }
+    }
 
-      throw new NotImplementedException();
-
+    /**
+     * Puts the containers in toRelease list for them to released next iterations.
+     *
+     * @param specifications of tasks to be removed.
+     */
+    public synchronized void removeTaskSpecification(List<TaskSpecification> specifications) {
+      for(TaskSpecification removeTaskSpecification : specifications) {
+        if(taskToContainerId.containsKey(removeTaskSpecification.getId())) {
+          ContainerId removeContainerId = taskToContainerId.get(removeTaskSpecification.getId());
+          toRelease.add(removeContainerId);
+        }
+      }
     }
 
     /**
@@ -393,7 +399,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          * We go through the list of entries in <code>readyToRunQueue</code>, if they are
          * not already in the <code>runningTaskQueue</code> we make the request for them.
          * NOTE: When ever we make a request to YARN they would be the whole request as
-         * YARN to override the previous request.
+         * YARN would override the previous request.
          */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
 
@@ -480,7 +486,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
            * If we have found a specification that matches the container allocated, start it and add that
            * the list of running containers after starting it.
            */
-
           if(matchingSpec.isPresent()) {
             Log.info("Matching container found. Assigning task to it.");
 
@@ -615,6 +620,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
        * Till all the containers are released or we hit a timeout we don't exit this loop
        */
       StopWatch releaseTimer = new StopWatch();
+      releaseTimer.start();
+
       boolean keepRunning = true;
 
       Log.info("Application Master service has been requested to be stopped.");
@@ -636,11 +643,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           if (!releaseContainerTab.get(containerId)) {
             foundNoContainersToBeReleased = false;
             if(containerMgrs.containsKey(containerId) && containerMgrs.get(containerId) != null) {
-              Log.info("Attempting to stop container {}", containerId);
+              Log.trace("Attempting to stop container {}", containerId);
               /** Stop the container. */
               containerMgrs.get(containerId).stopAndWait();
             }
-            Log.info("Adding the container {} to be released.", containerId);
+            Log.trace("Adding the container {} to be released.", containerId);
             /** Add the container to be released. */
             toRelease.add(containerId);
           }

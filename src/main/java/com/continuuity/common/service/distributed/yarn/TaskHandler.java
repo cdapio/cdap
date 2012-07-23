@@ -130,6 +130,10 @@ public class TaskHandler extends AbstractScheduledService {
   @Override
   public void shutDown() {
     Log.info("Stopping task {} running in container {}", specification.getId(), container);
+
+    // Stopping the executor avoiding the call to run iteration.
+    executor().shutdownNow();
+
     StopContainerRequest req = Records.newRecord(StopContainerRequest.class);
     req.setContainerId(container.getId());
     try {
@@ -157,8 +161,8 @@ public class TaskHandler extends AbstractScheduledService {
         stop();
       }
     } catch (YarnRemoteException e) {
-      Log.info("There was problem receiving the status of container {}. Reason : {}",
-        container.toString(), e.getMessage());
+      Log.info("There was problem receiving the status of container {}. Container might be shutting down.",
+        container.toString());
       checkFailures++;
 
     } catch (Throwable e) {

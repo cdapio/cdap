@@ -2,6 +2,7 @@
 package com.continuuity.common.service.distributed;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +33,7 @@ public class TaskSpecification {
   private Map<String, String> env;
   private List<String> commands;
   private Map<String, LocalResource> namedLocalResources;
+  private Map<String, String> meta;
   private String id;
 
 
@@ -160,6 +162,23 @@ public class TaskSpecification {
     this.namedLocalResources = namedLocalResources;
   }
 
+  /**
+   * Returns meta value associated with the key.
+   *
+   * @param key for which the value is to be retrieved.
+   * @return value if present; else null.
+   */
+  public String getMeta(String key) {
+    if(meta.containsKey(key)) {
+      return meta.get(key);
+    }
+    return null;
+  }
+
+  private void setMeta(Map<String, String> meta) {
+    this.meta = meta;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -184,6 +203,7 @@ public class TaskSpecification {
     private List<String> commands = Lists.newArrayList();
     private Map<String, String> namedResources = Maps.newHashMap();
     private final Configuration configuration;
+    private final Map<String, String> meta = Maps.newHashMap();
     private String id;
 
     public Builder(Configuration configuration) {
@@ -221,12 +241,20 @@ public class TaskSpecification {
     }
 
     public Builder addCommand(String command) {
+      Preconditions.checkNotNull(command);
       commands.add(command);
       return this;
     }
 
     public Builder addNamedResource(String name, String resource) {
+      Preconditions.checkNotNull(name);
+      Preconditions.checkNotNull(resource);
       namedResources.put(name, resource);
+      return this;
+    }
+
+    public Builder addMeta(String key, String value) {
+      meta.put(key, value);
       return this;
     }
 
@@ -239,6 +267,7 @@ public class TaskSpecification {
       cgp.setEnvironment(env);
       cgp.setCommands(commands);
       cgp.setId(id);
+      cgp.setMeta(meta);
 
       Map<String, LocalResource> localResourceMap = Maps.newHashMap();
       FileSystem fs = FileSystem.get(configuration);
