@@ -148,14 +148,18 @@ define([], function () {
 					params: [app, id, -1]
 				}, function (error, response) {
 
-					self.set('currentRun', response.params.runId.id);
+					if (response.params) {
 
-					self.get('current').set('currentState', response.params.status);
-					self.get('current').set('version', response.params.version);
+						self.set('currentRun', response.params.runId.id);
 
-					self.updateStats(self.get('run'));
+						self.get('current').set('currentState', response.params.status);
+						self.get('current').set('version', response.params.version);
 
-					App.interstitial.hide();
+						self.updateStats(self.get('run'));
+
+						App.interstitial.hide();
+					
+					}
 
 					self.interval = setInterval(function () {
 						self.refresh();
