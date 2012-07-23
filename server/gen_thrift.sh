@@ -7,5 +7,10 @@ curl -s "https://raw.github.com/continuuity/overlord/master/src/main/thrift/flow
 
 # Generate the new bindings
 echo "Generating thrift bindings"
+
+# Clean up any existing bindings
+rm -rf ./thrift_bindings/
+mkdir thrift_bindings
+
 thrift --gen js:node -out thrift_bindings flowmonitor.thrift
 thrift --gen js:node -out thrift_bindings flowservices.thrift
