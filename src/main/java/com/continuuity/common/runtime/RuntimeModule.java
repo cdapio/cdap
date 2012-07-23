@@ -1,3 +1,6 @@
+/*
+ * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ */
 package com.continuuity.common.runtime;
 
 import com.google.inject.Module;
