@@ -37,6 +37,8 @@ define([], function () {
 				'stopping': 'label label-warning',
 				'starting': 'label label-warning',
 				'running': 'label label-success',
+				'adjusting': 'label label-info',
+				'draining': 'label label-info',
 				'failed': 'label label-warning'
 			}[this.currentState.toLowerCase()];
 		}.property('currentState'),
@@ -47,6 +49,8 @@ define([], function () {
 				'starting': 'btn btn-warning',
 				'stopped': 'btn btn-danger',
 				'running': 'btn btn-success',
+				'adjusting': 'btn btn-info',
+				'draining': 'btn btn-info',
 				'failed': 'btn btn-warning'
 			}[this.currentState.toLowerCase()];
 		}.property('currentState'),
@@ -57,6 +61,8 @@ define([], function () {
 				'stopping': '...',
 				'starting': '...',
 				'running': 'Stop',
+				'adjusting': '...',
+				'draining': '...',
 				'failed': 'Start'
 			}[this.currentState.toLowerCase()];
 		}.property('currentState')
