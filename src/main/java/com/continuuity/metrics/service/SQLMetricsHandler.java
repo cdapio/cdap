@@ -337,7 +337,7 @@ public class SQLMetricsHandler implements MetricsHandler {
   @Override
   public String getFlowDefinition(String accountId, String appId, String flowId, String versionId) {
     String sql = "SELECT payload FROM flow_state WHERE account = ? AND application = ? " +
-      "AND flow = ? AND state = 1 ORDER by timestamp DESC limit 1";
+      "AND flow = ? AND ( state = 1 OR state = 9) ORDER by timestamp DESC limit 1";
 
     String definition = null;
     try {
