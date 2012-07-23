@@ -98,7 +98,10 @@ try {
 				var flowlet_id = params[3];
 				var instances = params[4];
 
-				Manager.setInstances(null, identifier, flowlet_id, instances, function (error, response) {
+				Manager.setInstances(null, identifier, flowlet_id, instances, done);
+
+				/*
+					function (error, response) {
 
 					var interval = setInterval(function () {
 						Manager.flowletstatus(null, identifier, flowlet_id, function (error, status) {
@@ -130,6 +133,7 @@ try {
 					}, 500);
 
 				});
+				*/
 
 				break;
 			default:

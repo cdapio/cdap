@@ -1,8 +1,8 @@
 
 <i {{action hide on="click"}} class="icon-remove-sign pull-right" /><h4>{{current.name}}
 <span>Flowlet</span></h4>
+{{#if modifiable}}
 <div class="btn-group" style="margin-bottom:6px;">
-	
 	<button disabled="true" class="btn" style="width: 160px;text-align:left;">{{current.instances}} instance{{current.plural}}</button>
 	<button class="btn" {{action "addOneInstance" on="click"}}>+</button>
 	<button class="btn dropdown-toggle" data-toggle="dropdown">
@@ -19,6 +19,7 @@
 		</ul>
 	</button>
 </div>
+{{/if}}
 <div class="well" style="border: 1px solid #EDEDED;border-radius:4px;padding:4px 5px;margin-bottom:6px;">
 	<strong>Class</strong><br />{{current.classname}}<br />
 </div>

@@ -21,8 +21,17 @@ define([
 			}
 		}.property('current'),
 		currentBinding: 'App.Controllers.Flow.flowlet',
+		currentFlowBinding: 'App.Controllers.Flow.current',
 		classNames: 'flowletviz',
 		location: [],
+		modifiable: function () {
+
+			if (this.currentFlow.currentState === 'RUNNING') {
+				return true;
+			}
+			return false;
+
+		}.property('currentFlow.currentState'),
 		show: function (x, y) {
 
 			this.location = [x, y];

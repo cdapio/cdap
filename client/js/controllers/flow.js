@@ -183,6 +183,9 @@ define([], function () {
 
 				if (response.params) {
 					self.get('current').set('currentState', response.params.status);
+					if (response.params.status === 'RUNNING') {
+						App.interstitial.hide();
+					}
 				}
 			});
 		},

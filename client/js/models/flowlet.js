@@ -39,11 +39,9 @@ define([], function () {
 					params: [app, flow, version, flowlet, instances]
 				}, function (error, response) {
 
-					App.interstitial.hide();
-
 					if (error) {
 						App.informer.show(error, 'alert-error');
-						
+						App.interstitial.hide();
 					} else {
 						current.set('instances', instances);
 						App.informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
