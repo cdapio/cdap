@@ -81,13 +81,10 @@ case "$1" in
       check_and_set_classpath_for_dev_environment $APP_HOME
 
       # Setup classpaths.
-      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
+      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/:$EXTRA_CLASSPATH
 
       # sets the JAVA variable.
       set_java
-
-      # Setup classpaths.
-      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/
 
       rotate_log $loggc
       check_before_start
