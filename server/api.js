@@ -173,7 +173,7 @@ try {
 				identifier = new flowservices_types.FlowIdentifier({
 					app: params[0],
 					flow: params[1],
-					version: -1,
+					version: params[2],
 					accountId: 'demo'
 				});
 				FAR.remove(auth_token, identifier, done);
@@ -187,9 +187,8 @@ try {
 					version: params[2],
 					accountId: 'demo'
 				});
-				FAR.promote(auth_token, identifier, function () {
-					done(arguments);
-				});
+				FAR.promote(auth_token, identifier, done);
+
 				break;
 
 			}

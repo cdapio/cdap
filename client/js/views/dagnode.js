@@ -7,11 +7,23 @@ define([
 			template: Em.Handlebars.compile(Template),
 			classNames: ['window'],
 			elementId: function () {
-				return 'flowlet' + this.get('current').name;
+				var current;
+				if ((current = this.get('current'))) {
+					return 'flowlet' + current.name;
+				}
+				else {
+					return 'unknown';
+				}
 			}.property(),
 			className: function () {
-				var id = this.get('current').name;
-				return ('input-stream' === id ? ' source' : '');
+				var current;
+				if ((current = this.get('current'))) {
+					var id = this.get('current').name;
+					return ('input-stream' === id ? ' source' : '');
+				}
+				else {
+					return 'unknown';
+				}
 			}.property(),
 			click: function (event) {
 

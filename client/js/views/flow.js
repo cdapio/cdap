@@ -29,16 +29,16 @@ define([
 		promote: function () {
 
 			var flow = this.current;
-
+			
 			App.socket.request('far', {
 				method: 'promote',
 				params: [flow.meta.app, flow.meta.name, flow.version]
 			}, function (error, response) {
 
 				if (error) {
-					App.informer.show(error.message, 'alert-error');
+					App.informer.show(error, 'alert-error');
 				} else {
-					App.informer.show('Successfully pushed to cloud. Navigate here to view: {{cloud-site-url}}');
+					App.informer.show('Successfully pushed to cloud.');
 				}
 
 			});
@@ -55,13 +55,11 @@ define([
 		},
 		confirmed: function (event) {
 
-			var control = $(event.target);
-			var id = control.attr('flow-id');
-			var app = control.attr('flow-app');
-
+			var flow = this.current;
+			
 			App.socket.request('far', {
 				method: 'remove',
-				params: ['demo', app, id]
+				params: [flow.meta.app, flow.meta.name, flow.version]
 			}, function (error, response) {
 
 				$('#modal-from-dom').modal('hide');
