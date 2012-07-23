@@ -104,7 +104,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       return;
     }
 
-    minClusterResource = registration.getMaximumResourceCapability();
+    minClusterResource = registration.getMinimumResourceCapability();
     maxClusterResource = registration.getMaximumResourceCapability();
 
     Log.debug("Minimum Cluster Resource {}.", minClusterResource);
@@ -357,7 +357,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
     /**
      * Adds task specification to readyToRunQueue.
-     * @param specifications
+     *
+     * @param specifications of tasks of be added.
      */
     public synchronized void addTaskSpecification(List<TaskSpecification> specifications) {
       for(TaskSpecification addTaskSpecification : specifications) {
@@ -365,8 +366,18 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       }
     }
 
+    /**
+     * Puts the containers in toRelease list for them to released next iterations.
+     *
+     * @param specifications of tasks to be removed.
+     */
     public synchronized void removeTaskSpecification(List<TaskSpecification> specifications) {
-
+      for(TaskSpecification removeTaskSpecification : specifications) {
+        if(taskToContainerId.containsKey(removeTaskSpecification.getId())) {
+          ContainerId removeContainerId = taskToContainerId.get(removeTaskSpecification.getId());
+          toRelease.add(removeContainerId);
+        }
+      }
     }
 
     /**
@@ -381,7 +392,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          * We go through the list of entries in <code>readyToRunQueue</code>, if they are
          * not already in the <code>runningTaskQueue</code> we make the request for them.
          * NOTE: When ever we make a request to YARN they would be the whole request as
-         * YARN to override the previous request.
+         * YARN would override the previous request.
          */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
 
@@ -468,7 +479,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
            * If we have found a specification that matches the container allocated, start it and add that
            * the list of running containers after starting it.
            */
-
           if(matchingSpec.isPresent()) {
             Log.info("Matching container found. Assigning task to it.");
 
