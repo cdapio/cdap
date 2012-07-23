@@ -5,14 +5,22 @@
 define(['models', 'views', 'controllers', 'router', 'socket'],
 function(Models, Views, Controllers, Router, Socket){
 	
+	console.log('Application loaded.');
+
 	var App = window.App = Ember.Application.create({
 		ready: function () {
+
+			console.log('Application ready.');
+
 			this.router = new Router(Views);
 			this.socket = new Socket(document.location.hostname, function () {
 				
 				// This function is called when the socket is (re)connected.
 
 				if (!App.initialized) {
+
+					console.log('Application connected.');
+
 					// Connected and ready.
 					App.router.start();
 					
@@ -42,7 +50,8 @@ function(Models, Views, Controllers, Router, Socket){
 					};
 
 					App.initialized = true;
-					
+					console.log('Application initialized.');
+
 				} else {
 
 					// Reconnected.
@@ -111,6 +120,8 @@ function(Models, Views, Controllers, Router, Socket){
 	App.Models = Models;
 	App.Views = Views;
 	App.Controllers = Controllers;
+
+	console.log('Models, Views, Controllers loaded and assigned.');
 
 	// Some templates depend on specific views.
 	// Compile templates once all views are loaded.
