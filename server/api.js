@@ -33,6 +33,8 @@ try {
 
 		params = params || [];
 
+		var auth_token = new flowservices_types.DelegationToken({ token: null });
+
 		var conn = thrift.createConnection(
 			this.config.manager.host,
 			this.config.manager.port, {
@@ -62,7 +64,7 @@ try {
 					}),
 					"arguments": []
 				});
-				Manager.start(null, identifier, done);
+				Manager.start(auth_token, identifier, done);
 				conn.end();
 				
 			break;
@@ -73,7 +75,7 @@ try {
 					version: parseInt(params[2], 10),
 					accountId: 'demo'
 				});
-				Manager.stop(null, identifier, done);
+				Manager.stop(auth_token, identifier, done);
 				conn.end();
 				
 			break;
@@ -84,7 +86,7 @@ try {
 					version: parseInt(params[2], 10),
 					accountId: 'demo'
 				});
-				Manager.status(null, identifier, done);
+				Manager.status(auth_token, identifier, done);
 				conn.end();
 				
 			break;
@@ -98,7 +100,7 @@ try {
 				var flowlet_id = params[3];
 				var instances = params[4];
 
-				Manager.setInstances(null, identifier, flowlet_id, instances, done);
+				Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
 
 				/*
 					function (error, response) {
