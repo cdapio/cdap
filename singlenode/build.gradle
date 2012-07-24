@@ -242,11 +242,18 @@ project.parent.subprojects.each { p ->
     }         
 }
 
-task release (overwrite: true, type: Tar, dependsOn: distZip) {
+task release (overwrite: true, type: Tar, dependsOn: distZip) << {
     // overwrite global release task as a wrapper around distZip since singleNode has specific packaging requirements
     
     // set release.ArchiveName so it can be used downstream by distro task
     release.archiveName = distZip.archiveName
+}
+
+task upload_release (overwrite: true) << {
+    //no action for singlenode
+}
+task distro (overwrite: true) << {
+    //no action for singlenode
 }
 
 
