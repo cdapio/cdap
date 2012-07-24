@@ -176,7 +176,7 @@ task upload_release (dependsOn: release) << {
 }
 
 // archive uploaded distribution zip and rotate symlink to always point to the latest
-task distro_release (dependsOn: upload_release) {
+task distro (dependsOn: upload_release) {
     group = 'Distribution'
     description = 'creates/archives distribution zip to configured target server'
     doLast {
