@@ -527,23 +527,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         }
 
         /**
-         * Check the container managers and find if there are Tasks that have been terminated
-         * or have failed. If there are any, then we request the container running that task
-         * to be terminated.
-         */
-        for(Map.Entry<ContainerId, TaskHandler> entry : containerMgrs.entrySet()) {
-          if(entry.getValue() == null) {
-            continue;
-          }
-          Service.State state = entry.getValue().state();
-          if(state == State.FAILED) {
-            Log.info("Task running with container {} has been terminated. Releasing the container.",
-              entry.getKey().toString());
-            toRelease.add(entry.getKey());
-          }
-        }
-
-        /**
          * Now, we get the status of all the containers, if there are some failed container, then, we start them
          * again.
          */
@@ -565,6 +548,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
             Log.info("Container {} was allocated, but was not assigned any task.", containerId.getId());
             continue;
           } else {
+            Log.info("Waiting for container {} to stop as it has either failed or completed.", containerId.getId());
             containerMgrs.get(containerId).stopAndWait();
             containerMgrs.put(containerId, null);
           }

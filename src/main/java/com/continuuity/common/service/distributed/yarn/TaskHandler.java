@@ -61,7 +61,7 @@ public class TaskHandler extends AbstractScheduledService {
    * Maximum number of times the check for status of container can be sustained before declaring
    * it as a failed task.
    */
-  private static final int MAX_CHECK_FAILURES = 1;
+  private static final int MAX_CHECK_FAILURES = 100;
 
   /**
    * Counts the number of check failures.
@@ -131,9 +131,6 @@ public class TaskHandler extends AbstractScheduledService {
   public void shutDown() {
     Log.info("Stopping task {} running in container {}", specification.getId(), container);
 
-    // Stopping the executor avoiding the call to run iteration.
-    executor().shutdownNow();
-
     StopContainerRequest req = Records.newRecord(StopContainerRequest.class);
     req.setContainerId(container.getId());
     try {
@@ -158,6 +155,7 @@ public class TaskHandler extends AbstractScheduledService {
         container.getId().toString(), status.toString(), status.getDiagnostics()});
 
       if (status != null && status.getState() == ContainerState.COMPLETE) {
+        Log.info("Container {} has completed. Stopping the container.", container.getId());
         stop();
       }
     } catch (YarnRemoteException e) {
