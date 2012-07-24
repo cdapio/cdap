@@ -14,3 +14,6 @@ mkdir thrift_bindings
 
 thrift --gen js:node -out thrift_bindings flowmonitor.thrift
 thrift --gen js:node -out thrift_bindings flowservices.thrift
+
+rm flowmonitor.thrift
+rm flowservices.thrift
