@@ -275,7 +275,7 @@ public class TaskSpecification {
         LocalResource localResource = Records.newRecord(LocalResource.class);
         Path path = new Path(entry.getValue());
         FileStatus stat = fs.getFileStatus(path);
-        localResource.setResource(ConverterUtils.getYarnUrlFromPath(path));
+        localResource.setResource(ConverterUtils.getYarnUrlFromPath(fs.makeQualified(path)));
         localResource.setType(LocalResourceType.FILE);
         localResource.setSize(stat.getLen());
         localResource.setTimestamp(stat.getModificationTime());

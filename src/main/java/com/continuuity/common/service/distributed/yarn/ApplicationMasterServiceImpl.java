@@ -618,7 +618,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
       boolean keepRunning = true;
 
-      Log.info("Application Master service has been requested to be stopped.");
+      Log.info("Tasks handler has been requested to be stopped.");
 
       while(keepRunning) {
 
