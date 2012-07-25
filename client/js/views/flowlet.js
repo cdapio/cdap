@@ -35,6 +35,12 @@ define([
 			return false;
 
 		}.property('currentFlow.currentState'),
+		reducable: function () {
+			if (this.current.instances > 1) {
+				return true;
+			}
+			return false;
+		}.property('current.instances'),
 		show: function (x, y) {
 
 			this.location = [x, y];

@@ -26,7 +26,11 @@ define([], function () {
 
 		});
 
-		socket.on('connect', connected);
+		socket.on('connect', function () {
+
+		});
+		socket.on('env', connected);
+
 		socket.on('error', function () {
 			error('Error', arguments);
 		});

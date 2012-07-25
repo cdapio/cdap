@@ -13,8 +13,17 @@ function(Models, Views, Controllers, Router, Socket){
 			console.log('Application ready.');
 
 			this.router = new Router(Views);
-			this.socket = new Socket(document.location.hostname, function () {
+			this.socket = new Socket(document.location.hostname, function (env) {
 				
+				console.log('Environment set to "' + env + '"');
+
+				var productName = 'CLOUD';
+				if (env === 'development') {
+					productName = 'DEVELOPER';
+				}
+
+				$('#product-edition').html(productName + ' EDITION');
+
 				// This function is called when the socket is (re)connected.
 
 				if (!App.initialized) {

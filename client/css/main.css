@@ -142,7 +142,12 @@ td a {
 	padding-top: 52px;
 }
 .product {
-	width:200px;
+	line-height: 10px;
+	font-size: 11px;
+	text-align: right;
+	padding-left: 85px;
+	color: #9baeca;
+
 	height:10px;
 	background-image: url(../img/product-header.png);
 	margin: 15px 12px 0px 0px;

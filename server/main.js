@@ -26,6 +26,8 @@ io.sockets.on('connection', function (socket) {
 
 	sockets[id] = socket;
 
+	socket.emit('env', process.env.NODE_ENV || 'development');
+
 	socket.on('manager', function (request) {
 		console.log('Manager Request', request);
 		Env.api.manager(request.method, request.params, function (error, response) {

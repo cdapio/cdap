@@ -10,7 +10,9 @@
 		</button>
 		<ul class="dropdown-menu" style="left:54px;width:160px;">
 			<li><a {{action "addOneInstance" on="click"}}>Add 1 Instance</a></li>
+			{{#if reducable}}
 			<li><a {{action "removeOneInstance" on="click"}}>Remove 1 Instance</a></li>
+			{{/if}}
 			<li class="divider"></li>
 			<li><a {{action "doubleInstances" on="click"}}>Double Instances ({{current.doubleCount}})</a></li>
 			<li><a {{action "fitInstances" on="click"}}>Fit to Load ({{current.fitCount}})</a></li>
