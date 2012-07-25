@@ -105,4 +105,31 @@ task deploy(dependsOn: ['build', 'upload']) {
 	}
 }
 
+/**
+ * Create Release TAR ball - overwrite global task
+ * 
+ */
+task release (type:  Tar, overwrite: true, dependsOn: build )  {
+    group = 'Continuuity'
+    description = 'Generates distribution tar file.'
+
+    /** Set the compression to gzip */
+    compression = Compression.GZIP
+
+    release.baseName = "web_cloud_app"
+
+    from('build/client') {
+        into("${release.baseName}-${project.version}/web-app/client")
+    }
+
+    from('build/server') {
+        into("${release.baseName}-${project.version}/web-app/server")
+    }
+
+    from('conf') {
+        into("${release.baseName}-${project.version}/conf")
+    }
+
+}
+
 
