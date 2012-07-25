@@ -141,6 +141,7 @@ public class SingleNodeMain {
   private void startZookeeper() throws InterruptedException, IOException {
     // Create temporary directory where zookeeper data files will be stored.
     File temporaryDir = File.createTempFile("zookeeper-", Long.toString(System.nanoTime()));
+    temporaryDir.mkdirs();
     zookeeper = new InMemoryZookeeper(temporaryDir);
 
     // Set the connection string about where ZK server started on */
