@@ -29,6 +29,7 @@ clover.license
 /overlord
 /web-cloud-app
 /examples
+/singlenode
 
 # Ignore Node stuff
 npm*
