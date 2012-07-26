@@ -13,19 +13,14 @@ buildscript {
  */
 dependencies {
 
-    // for singlenode - simulate standalone project
-    multiModule = 0
-
     /// Internal dependencies.
-    if(multiModule)
+    if(multiModule && ! buildingRelease)
     {
         compile project(":common")
         compile project(":gateway")
-        compile project(":flow")
-        compile project(":data-fabric")
         compile project(":overlord")
-        runtime group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
-        runtime group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        compile fileTree(dir: '../flow/build/libs', excludes:['**/*source*', '**/*javadoc**'])
+        compile fileTree(dir: '../data-fabric/build/libs', excludes:['**/*source*', '**/*javadoc**'])
     }
     else
     {
@@ -255,7 +250,6 @@ task upload_release (overwrite: true) << {
 task distro (overwrite: true) << {
     //no action for singlenode
 }
-
 
 /*------------- experimental --------------*/
 
