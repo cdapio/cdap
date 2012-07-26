@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <property>
+        <name>fs.file.impl</name>
+        <value>org.apache.hadoop.fs.LocalFileSystem</value>
+        <description>Specifies local file system implementation</description>
+    </property>
+
+    <property>
+        <name>resource.manager.storage.mode</name>
+        <value>local</value>
+        <description>Specifies the flow resource manager storage mode</description>
+    </property>
+
+    <property>
+        <name>resource.manager.server.port</name>
+        <value>45000</value>
+        <description>Specifies the port on which Flow resource Manager will run.</description>
+    </property>
+
+    <property>
+        <name>resource.manager.server.threads</name>
+        <value>10</value>
+        <description>Specifies number of threads to be started for serving requests on flow resource manager</description>
+    </property>
+
+    <property>
+        <name>resource.manager.remote.dir</name>
+        <value>data/flow/manager/remote</value>
+        <description>Specifies the base directory for storing resources</description>
+    </property>
+
+    <property>
+        <name>resource.manager.local.dir</name>
+        <value>data/flow/manager/local</value>
+        <description>Specifies the base directory for storing resources</description>
+    </property>
+
+    <property>
+        <name>zookeeper.port</name>
+        <value>2181</value>
+        <description>Specifies the zookeeper port</description>
+    </property>
+
+    <property>
+        <name>zookeeper.datadir</name>
+        <value>data/zookeeper</value>
+        <description>Specifies the zookeeper data directory</description>
+    </property>
+
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost:2181</value>
+        <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>data.dir</name>
+        <value>/tmp/continuuity</value>
+    </property>
+
+
+</configuration>
