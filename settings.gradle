@@ -26,14 +26,3 @@ for (g in gitRepos) {
         // This is expected when imported from the continuuity plugin.
     }
 }
-
-
-/// Adds subprojects included in the master repository.
-try {
-    settings.include('singlenode')
-}
-catch (MissingPropertyException e)
-{
-    // This is expected when imported from the continuuity plugin.
-}
-
