@@ -1,0 +1,294 @@
+apply plugin: 'continuuity'
+
+apply plugin: 'application'
+mainClassName = 'com.continuuity.SingleNodeMain'
+
+
+buildscript {
+  apply from: 'continuuity.gradle'
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+
+    // for singlenode - simulate standalone project
+    multiModule = 0
+
+    /// Internal dependencies.
+    if(multiModule)
+    {
+        compile project(":common")
+        compile project(":gateway")
+        compile project(":flow")
+        compile project(":data-fabric")
+        compile project(":overlord")
+        runtime group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        runtime group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+    }
+    else
+    {
+        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+    }
+}
+
+/**
+ * Exclude any config xml from singlenode jar
+ */
+jar.exclude '*.xml'
+
+task javadoc(type: Javadoc, overwrite: true) {
+    group = 'Documentation' 
+    description = 'Aggregates API javadocs across all projects.'
+    source project.parent.subprojects.collect { project ->
+        project.sourceSets.api.allJava
+    }
+    destinationDir = new File(buildDir, 'javadoc')
+    // Might need a classpath
+    classpath = files(project.parent.subprojects.collect { project ->
+        project.sourceSets.main.compileClasspath
+    })
+}
+
+/**
+ * Stage the final /conf directory 
+ * 
+ * dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode.  these tasks will copy continuuity-[name].xml from src/main/resources to /conf
+*/
+project.parent.subprojects.each { p ->
+    if (p.file('src/main/resources').isDirectory()) {
+        //println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
+        if (p != project) { //exclude self (singlenode)
+            //println "staging conf for ${p.name}"
+            task "genstageConf${p.name}" (type: Copy) {
+                group 'Deployment'
+                description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
+                from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
+                include "continuuity-${p.name}.xml"
+                into "${buildDir}/conf"
+                //rename { "continuuity-${p.name}.xml" }
+            }
+        }
+    } else {
+        //println "skipping conf for ${p.name} - no resources dir"
+    }
+}
+
+// stage the singlenode conf dir
+task stageConfSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies src/main/resources to \$buildDir/conf for singlenode"
+    //println "staging conf for singlenode"
+    from "${sourceSets.main.output.resourcesDir}"
+    include 'continuuity-webapp.xml'
+    include 'logback.xml'
+    into "${buildDir}/conf"
+    //fix path for web=app
+    doLast {
+        def webConfFile = file "${buildDir}/conf/continuuity-webapp.xml"
+        webConfFile.text = webConfFile.text.replaceFirst('../web-cloud-app/build/server/main.js','web-app/server/main.js')
+    }
+}
+
+stageConfSingleNode.dependsOn {
+    tasks.findAll { task -> task.name.startsWith('genstageConf') }
+}
+
+// include staging conf dir (incl token-replaced files) in distZip
+applicationDistribution.from("$buildDir/conf") {
+    into "conf"
+}
+
+
+/**
+ * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
+ *
+ * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
+ */
+startScripts {
+    applicationName = "bigFlow"
+    doLast {
+        def scriptFile = file "${outputDir}/${applicationName}"
+        scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
+        scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=$1:\\$APP_HOME/conf/')
+        //for windows .bat - yes, apparently backslash must be triple-escaped
+        def scriptFileWin = file "${outputDir}/${applicationName}.bat"
+        scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=$1;%APP_HOME%\\\\conf\\\\')
+    }
+    ext.jvmOpts = "-Xmx1024m" 
+    inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
+    doLast { 
+        def optsEnvVar = "DEFAULT_JVM_OPTS" 
+        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}", "$optsEnvVar=${'"'}$jvmOpts${'"'}") 
+        windowsScript.text = windowsScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts") 
+    }
+}
+
+/**
+ * Configure distZip task
+ */
+tasks.distZip {
+    baseName = "bigflow"
+    appendix = "developer-edition"
+    version = "1.0.1"
+    classifier = "alpha"
+}
+
+build.dependsOn ':web-cloud-app:build', ':flow:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
+run.dependsOn build
+installApp.dependsOn build, javadoc, stageConfSingleNode
+distZip.dependsOn build, javadoc, stageConfSingleNode
+
+//exclude any .gitignores (used as placeholders for empty dirs: logs, data
+applicationDistribution.exclude(".gitignore")
+
+// include api javadoc   
+applicationDistribution.from("$buildDir/javadoc") {
+    into "docs/api"
+}
+
+// include examples from example project
+//   the "exclude */*.jar" is to exclude any local-gradle-compiled jars we have in our work area.
+//   any "*/lib/*.jar" should still be included
+task copyExamples (type: Copy) {
+    def examplesdir = file ("$buildDir/examples")
+    from project(':examples').projectDir
+    into examplesdir 
+    exclude "README.md"
+    exclude "build/"
+    exclude ".gitignore"
+    exclude "**/*.gradle"
+    exclude "**/classes/"
+    exclude "*/*.jar"
+    exclude "TwitterScanner/"
+}
+applicationDistribution.from(copyExamples) {
+    into "examples"
+}
+
+task createApiJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix ""
+    version ""
+    classifier ""
+    from project(':flow').sourceSets.api.output
+    from project(':data-fabric').sourceSets.api.output
+}
+
+task createApiSourceJar(type: Jar) {
+    baseName "continuuity-api"
+    appendix "source"
+    version ""
+    classifier ""
+    from project(':flow').sourceSets.api.allSource
+    from project(':data-fabric').sourceSets.api.allSource
+}
+
+task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
+    baseName "continuuity-api"
+    appendix "javadoc"
+    version ""
+    classifier ""
+    from javadoc.destinationDir
+}
+
+
+applicationDistribution.from(createApiJar) {
+}
+applicationDistribution.from(createApiSourceJar) {
+}
+applicationDistribution.from(createApiJavadocJar) {
+}
+
+// include :web-cloud-app/build/client directly
+applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
+    into "web-app/client"
+}
+
+//include :web-cloud-app/build/server directly
+applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
+    into "web-app/server"
+}
+
+/**
+ * Collect bin scripts from gateway project and replace @classpath@ token - done within distZip task
+ */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+// dynamically generate "stageConf-[project]" tasks
+project.parent.subprojects.each { p ->
+    // skip the common bin scripts which are for distributed mode
+    if (p.name != "common") {
+        if (p.file('bin').isDirectory()) {
+            //println "configuring bin for ${p.name}"
+            applicationDistribution.from(project(":${p.name}").file('bin')) {
+                into "bin"
+                exclude 'node'
+                exclude 'far-server'
+                exclude 'run-java'
+                exclude 'flow-config.sh'
+                exclude 'flow-client'
+                def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+                cp += ":\$APP_HOME/conf/"
+                filter(ReplaceTokens, tokens: [classpath: cp])
+            }
+        } 
+    }         
+}
+
+task release (overwrite: true, type: Tar, dependsOn: distZip) << {
+    // overwrite global release task as a wrapper around distZip since singleNode has specific packaging requirements
+    
+    // set release.ArchiveName so it can be used downstream by distro task
+    release.archiveName = distZip.archiveName
+}
+
+task upload_release (overwrite: true) << {
+    //no action for singlenode
+}
+task distro (overwrite: true) << {
+    //no action for singlenode
+}
+
+
+/*------------- experimental --------------*/
+
+/*
+// introduces a build -> distZip dependency therefore a circular dependency
+artifacts {
+    archives(distZip.archivePath) {
+        builtBy distZip
+    }
+}
+ 
+
+task deploystart << {
+    ant.sshexec(host: 'staging.continuuity.com',
+    username: 'deploy',
+    keyfile: "$System.env.HOME/.ssh/deploy_key",
+    trust: 'true',
+    verbose: 'true',
+    failonerror: 'true',
+    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
+    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
+    command: "sh -c \"cd singleNode ; unzip bigFlow-singlenode.zip ; cd bigFlow-singlenode/bin ; nohup ./bigFlow > /dev/null 2>&1 &\"")
+
+}
+
+task deployclean << {
+    ant.sshexec(host: 'staging.continuuity.com',
+    username: 'deploy',
+    keyfile: "$System.env.HOME/.ssh/deploy_key",
+    trust: 'true',
+    verbose: 'true',
+    failonerror: 'true',
+    command: "cd singleNode && rm ${distZip.archiveName}")
+
+}
+*/
