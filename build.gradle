@@ -32,45 +32,55 @@ dependencies {
     }
 }
 
+if(! multiModule) {
+   //throw new InvalidUserDataException("Invalid invocation: SingleNode is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
+}
+
 /**
  * Exclude any config xml from singlenode jar
  */
 jar.exclude '*.xml'
 
-task javadoc(type: Javadoc, overwrite: true) {
-    group = 'Documentation' 
-    description = 'Aggregates API javadocs across all projects.'
-    source project.parent.subprojects.collect { project ->
-        project.sourceSets.api.allJava
+    task javadoc(type: Javadoc, overwrite: true) {
+    if (multiModule) {
+	group = 'Documentation' 
+	description = 'Aggregates API javadocs across all projects.'
+	source project.parent.subprojects.collect { project ->
+	    project.sourceSets.api.allJava
+	}
+	destinationDir = new File(buildDir, 'javadoc')
+	// Might need a classpath
+	classpath = files(project.parent.subprojects.collect { project ->
+	    project.sourceSets.main.compileClasspath
+	})
     }
-    destinationDir = new File(buildDir, 'javadoc')
-    // Might need a classpath
-    classpath = files(project.parent.subprojects.collect { project ->
-        project.sourceSets.main.compileClasspath
-    })
 }
+
 
 /**
  * Stage the final /conf directory 
  * 
  * dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode.  these tasks will copy continuuity-[name].xml from src/main/resources to /conf
 */
-project.parent.subprojects.each { p ->
-    if (p.file('src/main/resources').isDirectory()) {
-        //println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
-        if (p != project) { //exclude self (singlenode)
-            //println "staging conf for ${p.name}"
-            task "genstageConf${p.name}" (type: Copy) {
-                group 'Deployment'
-                description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
-                from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
-                include "continuuity-${p.name}.xml"
-                into "${buildDir}/conf"
-                //rename { "continuuity-${p.name}.xml" }
-            }
-        }
-    } else {
-        //println "skipping conf for ${p.name} - no resources dir"
+
+if (multiModule) {
+    project.parent.subprojects.each { p ->
+	if (p.file('src/main/resources').isDirectory()) {
+	    //println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
+	    if (p != project) { //exclude self (singlenode)
+		//println "staging conf for ${p.name}"
+		task "genstageConf${p.name}" (type: Copy) {
+		    group 'Deployment'
+		    description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
+		    from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
+		    include "continuuity-${p.name}.xml"
+		    into "${buildDir}/conf"
+		    //rename { "continuuity-${p.name}.xml" }
+		}
+	    }
+	} else {
+	    //println "skipping conf for ${p.name} - no resources dir"
+	}
     }
 }
 
@@ -98,7 +108,6 @@ stageConfSingleNode.dependsOn {
 applicationDistribution.from("$buildDir/conf") {
     into "conf"
 }
-
 
 /**
  * Hack the start script  - set application name, remain in $APP_HOME and add $APP_HOME/conf/ to classpath
@@ -134,11 +143,12 @@ tasks.distZip {
     classifier = "alpha"
 }
 
-build.dependsOn ':web-cloud-app:build', ':flow:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
-run.dependsOn build
-installApp.dependsOn build, javadoc, stageConfSingleNode
-distZip.dependsOn build, javadoc, stageConfSingleNode
-
+if (multiModule) {
+    build.dependsOn ':web-cloud-app:build', ':flow:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
+    run.dependsOn build
+    installApp.dependsOn build, javadoc, stageConfSingleNode
+    distZip.dependsOn build, javadoc, stageConfSingleNode
+}
 //exclude any .gitignores (used as placeholders for empty dirs: logs, data
 applicationDistribution.exclude(".gitignore")
 
@@ -150,93 +160,98 @@ applicationDistribution.from("$buildDir/javadoc") {
 // include examples from example project
 //   the "exclude */*.jar" is to exclude any local-gradle-compiled jars we have in our work area.
 //   any "*/lib/*.jar" should still be included
-task copyExamples (type: Copy) {
-    def examplesdir = file ("$buildDir/examples")
-    from project(':examples').projectDir
-    into examplesdir 
-    exclude "README.md"
-    exclude "build/"
-    exclude ".gitignore"
-    exclude "**/*.gradle"
-    exclude "**/classes/"
-    exclude "*/*.jar"
-    exclude "TwitterScanner/"
-}
-applicationDistribution.from(copyExamples) {
-    into "examples"
-}
-
-task createApiJar(type: Jar) {
-    baseName "continuuity-api"
-    appendix ""
-    version ""
-    classifier ""
-    from project(':flow').sourceSets.api.output
-    from project(':data-fabric').sourceSets.api.output
+if (multiModule) {
+    task copyExamples (type: Copy) {
+	def examplesdir = file ("$buildDir/examples")
+	from project(':examples').projectDir
+	into examplesdir 
+	exclude "README.md"
+	exclude "build/"
+	exclude ".gitignore"
+	exclude "**/*.gradle"
+	exclude "**/classes/"
+	exclude "*/*.jar"
+	exclude "TwitterScanner/"
+    }
+    applicationDistribution.from(copyExamples) {
+        into "examples"
+    }
 }
 
-task createApiSourceJar(type: Jar) {
-    baseName "continuuity-api"
-    appendix "source"
-    version ""
-    classifier ""
-    from project(':flow').sourceSets.api.allSource
-    from project(':data-fabric').sourceSets.api.allSource
-}
+if (multiModule) {
+    task createApiJar(type: Jar) {
+	baseName "continuuity-api"
+	appendix ""
+	version ""
+	classifier ""
+	from project(':flow').sourceSets.api.output
+	from project(':data-fabric').sourceSets.api.output
+    }
 
-task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
-    baseName "continuuity-api"
-    appendix "javadoc"
-    version ""
-    classifier ""
-    from javadoc.destinationDir
-}
+    task createApiSourceJar(type: Jar) {
+	baseName "continuuity-api"
+	appendix "source"
+	version ""
+	classifier ""
+	from project(':flow').sourceSets.api.allSource
+	from project(':data-fabric').sourceSets.api.allSource
+    }
+
+    task createApiJavadocJar(type: Jar, dependsOn: javadoc) {
+	baseName "continuuity-api"
+	appendix "javadoc"
+	version ""
+	classifier ""
+	from javadoc.destinationDir
+    }
 
 
-applicationDistribution.from(createApiJar) {
-}
-applicationDistribution.from(createApiSourceJar) {
-}
-applicationDistribution.from(createApiJavadocJar) {
-}
+    applicationDistribution.from(createApiJar) {
+    }
+    applicationDistribution.from(createApiSourceJar) {
+    }
+    applicationDistribution.from(createApiJavadocJar) {
+    }
 
-// include :web-cloud-app/build/client directly
-applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
-    into "web-app/client"
-}
+    // include :web-cloud-app/build/client directly
+    applicationDistribution.from(project(':web-cloud-app').file('build/client')) {
+	into "web-app/client"
+    }
 
-//include :web-cloud-app/build/server directly
-applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
-    into "web-app/server"
-}
+    //include :web-cloud-app/build/server directly
+    applicationDistribution.from(project(':web-cloud-app').file('build/server')) {
+	into "web-app/server"
+    }
 
+}
 /**
  * Collect bin scripts from gateway project and replace @classpath@ token - done within distZip task
  */
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-// dynamically generate "stageConf-[project]" tasks
-project.parent.subprojects.each { p ->
-    // skip the common bin scripts which are for distributed mode
-    if (p.name != "common") {
-        if (p.file('bin').isDirectory()) {
-            //println "configuring bin for ${p.name}"
-            applicationDistribution.from(project(":${p.name}").file('bin')) {
-                into "bin"
-                exclude 'node'
-                exclude 'far-server'
-                exclude 'run-java'
-                exclude 'flow-config.sh'
-                exclude 'flow-client'
-                def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-                cp += ":\$APP_HOME/conf/"
-                filter(ReplaceTokens, tokens: [classpath: cp])
-            }
-        } 
-    }         
+if (multiModule) {
+    // dynamically generate "stageConf-[project]" tasks
+    project.parent.subprojects.each { p ->
+	// skip the common bin scripts which are for distributed mode
+	if (p.name != "common") {
+	    if (p.file('bin').isDirectory()) {
+		//println "configuring bin for ${p.name}"
+		applicationDistribution.from(project(":${p.name}").file('bin')) {
+		    into "bin"
+		    exclude 'node'
+		    exclude 'far-server'
+		    exclude 'run-java'
+		    exclude 'flow-config.sh'
+		    exclude 'flow-client'
+		    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+		    cp += ":\$APP_HOME/conf/"
+		    filter(ReplaceTokens, tokens: [classpath: cp])
+		}
+	    } 
+	}         
+    }
 }
-
 task release (overwrite: true, type: Tar, dependsOn: distZip) << {
     // overwrite global release task as a wrapper around distZip since singleNode has specific packaging requirements
     
@@ -286,3 +301,4 @@ task deployclean << {
 
 }
 */
+
