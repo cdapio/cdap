@@ -13,6 +13,7 @@ gitRepos << new GitRepo(name: "flow");
 gitRepos << new GitRepo(name: "overlord");
 gitRepos << new GitRepo(name: "web-cloud-app");
 gitRepos << new GitRepo(name: "examples");
+gitRepos << new GitRepo(name: "singlenode");
 
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
