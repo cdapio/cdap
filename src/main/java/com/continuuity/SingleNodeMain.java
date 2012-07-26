@@ -113,9 +113,9 @@ public class SingleNodeMain {
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
 
-//    System.out.println(" Starting Monitoring Webapp");
-//    theWebApp = new WebCloudAppService();
-//    theWebApp.start(null, myConfiguration);
+    System.out.println(" Starting Monitoring Webapp");
+    theWebApp = new WebCloudAppService();
+    theWebApp.start(null, myConfiguration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
     System.out.println(" Bigflow started successfully. Connect to UI @ http://"
