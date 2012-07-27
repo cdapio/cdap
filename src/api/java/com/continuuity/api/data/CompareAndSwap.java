@@ -1,5 +1,8 @@
-package com.continuuity.api.data;
+/*
+ * Copyright (c) 2012, Continuuity Inc. All rights reserved.
+ */
 
+package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
 
