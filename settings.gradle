@@ -26,3 +26,5 @@ for (g in gitRepos) {
         // This is expected when imported from the continuuity plugin.
     }
 }
+
+project(':singlenode').buildFileName = 'package.gradle'
