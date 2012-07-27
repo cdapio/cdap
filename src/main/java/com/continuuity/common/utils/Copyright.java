@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2012, Continuuity Inc. All rights reserved.
+ */
+
 package com.continuuity.common.utils;
 
 import org.apache.commons.lang.StringUtils;
