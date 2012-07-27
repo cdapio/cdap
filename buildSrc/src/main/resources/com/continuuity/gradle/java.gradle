@@ -55,6 +55,7 @@ task apiJar(type: Jar) {
 task apiJavadoc(type: Javadoc, dependsOn:apiJar) {
   source sourceSets.api.allJava
   destinationDir = reporting.file("${buildDir}/api-docs")
+  classpath = sourceSets.api.compileClasspath
 }
 
 task apiJavadocJar(type: Jar, dependsOn:apiJavadoc) {
