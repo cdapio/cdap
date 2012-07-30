@@ -20,11 +20,14 @@ dependencies {
     }
     else
     {
-        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+
     }
 }
 
