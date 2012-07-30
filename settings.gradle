@@ -28,3 +28,13 @@ for (g in gitRepos) {
 }
 
 project(':singlenode').buildFileName = 'package.gradle'
+
+/// Adds subprojects included in the master repository.
+try {
+    settings.include('distributions')
+}
+catch (MissingPropertyException e)
+{
+    // This is expected when imported from the continuuity plugin.
+}
+

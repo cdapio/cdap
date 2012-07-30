@@ -1,0 +1,192 @@
+apply plugin: 'continuuity'
+
+buildscript {
+  apply from: 'continuuity.gradle'
+}
+
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+
+    // Internal dependencies.
+//    if(multiModule && ! buildingRelease)
+//    {
+//        compile project(":common")
+//        compile project(":gateway")
+//        compile project(":overlord")
+//        compile fileTree(dir: '../flow/build/libs', excludes:['**/*source*', '**/*javadoc**'])
+//        compile fileTree(dir: '../data-fabric/build/libs', excludes:['**/*source*', '**/*javadoc**'])
+//    }
+//    else
+//    {
+        //runtime group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        //runtime group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+        //runtime group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        //runtime group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
+        //runtime group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+//    }
+}
+
+evaluationDependsOn(':singlenode')
+
+if(! multiModule) {
+   throw new InvalidUserDataException("Invalid invocation: This is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
+}
+
+
+task javadoc(type: Javadoc, overwrite: true) {
+    group = 'Documentation' 
+    description = 'Aggregates API javadocs across all projects.'
+    source project.parent.subprojects.collect { project ->
+	project.sourceSets.api.allJava
+    }
+    destinationDir = new File(buildDir, 'javadoc') 
+    // Might need a classpath
+    classpath = files(project.parent.subprojects.collect { project ->
+	project.sourceSets.main.compileClasspath
+    })
+}
+
+
+task singlenode_stage_conf (type: Copy) {
+    from project(':singlenode').tasks.getByName('stageConfSingleNode').outputs
+    into "${buildDir}/singlenode/conf" 
+}
+
+task singlenode_stage_lib (type: Copy) {
+    from project(':singlenode').configurations.getByName('compile')
+    //from project(':singlenode').configurations.getByName('runtime')
+    from project(':singlenode').tasks.getByName('jar').outputs
+    into "${buildDir}/singlenode/lib"
+}
+
+task singlenode_stage_bin (type: Copy) {
+    from project(':singlenode').tasks.getByName('startScripts').outputs
+    into "${buildDir}/singlenode/bin" 
+}
+
+task singlenode_stage_docs_api (type: Copy) {
+    from javadoc.outputs 
+    into "${buildDir}/singlenode/docs/api"
+}
+
+task singlenode_stage_examples (type: Copy) {
+    from project(':singlenode').tasks.getByName('copyExamples').outputs 
+    into "${buildDir}/singlenode/examples" 
+}
+
+task singlenode_stage_root (type: Copy) {
+    from project(':singlenode').tasks.getByName('createApiJar').outputs
+    from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
+    from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+    from project(':singlenode').files('src/dist')
+    into "${buildDir}/singlenode"
+}
+
+
+// these should be build tasks in webapp
+task singlenode_stage_web_client (type: Copy) {
+    from project(':web-cloud-app').file('build/client')
+    into "${buildDir}/singlenode/web-app/client" 
+}
+
+task singlenode_stage_web_server (type: Copy) {
+    from project(':web-cloud-app').file('build/server')
+    into "${buildDir}/singlenode/web-app/server" 
+}
+
+
+task singlenode_dist << {
+    println "zipping up (not yet)"
+}
+    
+singlenode_dist.dependsOn {
+    tasks.findAll { task -> task.name.startsWith('singlenode_stage_') }
+}
+
+//tasks.findAll { task -> task.name.startsWith('singlenode_stage_') }.each {
+//    it.dependsOn clean
+//}
+
+
+
+/**
+ * Cloud distribution
+ */
+
+task cloud_stage_lib (type: Copy) {
+
+    from project.parent.subprojects.collect { project ->
+        project.configurations.getByName('compile')
+    }
+    into "${buildDir}/cloud/lib"
+
+}
+
+task cloud_stage_bin (type: Copy) {
+
+    from project.parent.subprojects.collect { project ->
+        project.file('bin')
+    }
+    into "${buildDir}/cloud/bin"
+    exclude 'node'
+}
+
+task cloud_stage_conf (type: Copy) {
+
+    from project.parent.subprojects.collect { project ->
+        // include xml conf
+        project.sourceSets.main.output.resourcesDir
+    }
+    into "${buildDir}/cloud/conf"
+}
+
+task cloud_stage_envconf (type: Copy) {
+
+    from project.parent.subprojects.collect { project ->
+        // include [service]-env.sh
+        project.file('conf')
+
+    }
+    into "${buildDir}/cloud/conf"
+}
+
+// these should be build tasks in webapp
+task cloud_stage_web_client (type: Copy) {
+    from project(':web-cloud-app').file('build/client')
+    into "${buildDir}/cloud/web-app/client"
+}
+
+task cloud_stage_web_server (type: Copy) {
+    from project(':web-cloud-app').file('build/server')
+    into "${buildDir}/cloud/web-app/server"
+}
+
+
+task cloud_dist (type: Tar) {
+    group = 'Continuuity'
+    description = 'Generates the distribution tar file for the cloud'
+
+    // set compression method
+    compression = Compression.GZIP
+
+    baseName = "continuuity"
+    appendix = "cloud"
+    version = "1.0.1"
+    //classifier = "alpha"
+
+    from "${buildDir}/cloud"
+    into "continuuity"
+}
+cloud_dist.dependsOn {
+    tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
+}
+
+
+task build (overwrite: true) {
+    doLast {
+        println "overwriting :distributions:build as No-Op task for CI build"
+    }
+}
