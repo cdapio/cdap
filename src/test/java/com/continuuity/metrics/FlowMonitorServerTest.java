@@ -45,13 +45,17 @@ public class FlowMonitorServerTest {
     zkEnsemble = zookeeper.getConnectionString();
     Log.info("Connection string {}", zkEnsemble);
 
-    populateData();
-
     Injector injector = Guice.createInjector(new MetricsModules().getInMemoryModules());
     server = injector.getInstance(MetricsServer.class);
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
     server.start(null, configuration);
+
+    Connection connection = DriverManager.getConnection("jdbc:hsqldb:file:data/metricsdb", "sa", "");
+    String sql = "DELETE FROM flow_metrics;";
+    PreparedStatement stmt = connection.prepareStatement(sql);
+    stmt.execute();
+    populateData();
   }
 
   @AfterClass
@@ -83,7 +87,7 @@ public class FlowMonitorServerTest {
 
     Thread.sleep(1000);
 
-    Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:fmdb", "sa", "");
+    Connection connection = DriverManager.getConnection("jdbc:hsqldb:file:data/metricsdb", "sa", "");
     String sql = "SELECT COUNT(*)  FROM flow_metrics;";
     PreparedStatement stmt = connection.prepareStatement(sql);
     ResultSet rs = stmt.executeQuery();
@@ -142,7 +146,7 @@ public class FlowMonitorServerTest {
   private static void populateData() throws Exception {
     //myConnection = DriverManager.getConnection("jdbc:hsqldb:file:/tmp/data/flowmonitordb", "sa", "");
 
-    myConnection = DriverManager.getConnection("jdbc:hsqldb:mem:fmdb", "sa", "");
+    myConnection = DriverManager.getConnection("jdbc:hsqldb:file:data/metricsdb", "sa", "");
     clearFlowStateTable();
     addPointToFlowStateTable(1, "demo", "ABC", null, "targetting", "", StateChangeType.DEPLOYED);
     addPointToFlowStateTable(2, "demo", "XYZ", null, "targetting", "", StateChangeType.DEPLOYED);
