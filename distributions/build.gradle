@@ -116,12 +116,12 @@ singlenode_dist.dependsOn {
  * Cloud distribution
  */
 
-task cloud_stage_lib (type: Copy) {
+task cloud_stage_libs (type: Copy) {
 
     from project.parent.subprojects.collect { project ->
         project.configurations.getByName('compile')
     }
-    into "${buildDir}/cloud/lib"
+    into "${buildDir}/cloud/libs"
 
 }
 
@@ -134,6 +134,7 @@ task cloud_stage_bin (type: Copy) {
     exclude 'node'
 }
 
+/*
 task cloud_stage_conf (type: Copy) {
 
     from project.parent.subprojects.collect { project ->
@@ -142,6 +143,7 @@ task cloud_stage_conf (type: Copy) {
     }
     into "${buildDir}/cloud/conf"
 }
+*/
 
 task cloud_stage_envconf (type: Copy) {
 
@@ -164,6 +166,14 @@ task cloud_stage_web_server (type: Copy) {
     into "${buildDir}/cloud/web-app/server"
 }
 
+task cloud_stage_log {
+    //create/include empty log directory 
+    ext.logDir = new File("${buildDir}/cloud/logs")
+    doLast {
+        ext.logDir.mkdirs()
+    }
+}
+
 
 task cloud_dist (type: Tar) {
     group = 'Continuuity'
@@ -178,7 +188,7 @@ task cloud_dist (type: Tar) {
     //classifier = "alpha"
 
     from "${buildDir}/cloud"
-    into "continuuity"
+    into "${baseName}-${appendix}-${version}"
 }
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
@@ -190,3 +200,45 @@ task build (overwrite: true) {
         println "overwriting :distributions:build as No-Op task for CI build"
     }
 }
+
+
+// scp distribution zip to destination staging.continuuity.com
+task upload_cloud_dist (dependsOn: cloud_dist) << {
+
+    // first make sure destination 'incoming' dir exists
+    ant.sshexec(host: 'staging.continuuity.com',
+    username: 'deploy',
+    keyfile: "$System.env.HOME/.ssh/deploy_key",
+    trust: 'true',
+    verbose: 'true',
+    failonerror: 'true',
+    command: "mkdir -p distributions/${cloud_dist.baseName}/incoming")
+
+    println "uploading ${cloud_dist.archiveName} to staging.continuuity.com using key $System.env.HOME/.ssh/deploy_key"
+    ant.scp(file: cloud_dist.archivePath, toDir: "deploy@staging.continuuity.com:~/distributions/${cloud_dist.baseName}/incoming", keyfile: "$System.env.HOME/.ssh/deploy_key")
+}
+
+// archive uploaded distribution zip and rotate symlink to always point to the latest
+task cloud_distro (dependsOn: upload_cloud_dist) {
+    group = 'Distribution'
+    description = 'creates/archives distribution zip to configured target server'
+    doLast {
+        //move uploaded zip to /YYYY/mm/dd/, and symlink to it (replacing any previous symlinks)
+        ext.archive_cmd = 'cd distributions && YEAR=`date +%Y` && MONTH=`date +%m` && DAY=`date +%d`' + " && mkdir -p ${cloud_dist.baseName}" + '/$YEAR/$MONTH/$DAY'
+        ext.archive_cmd += ' && mv --backup --suffix=$(date +-%H:%M:%S)' + " ${cloud_dist.baseName}/incoming/" + "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/$YEAR/$MONTH/$DAY/.'
+        ext.archive_cmd += ' && ln -s $YEAR/$MONTH/$DAY/' + "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/latest.zip.new'
+        ext.archive_cmd += " && mv -Tf ${cloud_dist.baseName}/latest.zip.new ${cloud_dist.baseName}/${cloud_dist.archiveName}"
+
+        println ext.archive_cmd
+
+        ant.sshexec(host: 'staging.continuuity.com',
+        username: 'deploy',
+        keyfile: "$System.env.HOME/.ssh/deploy_key",
+        trust: 'true',
+        verbose: 'true',
+        failonerror: 'true',
+        command: ext.archive_cmd)
+    }
+}
+
+
