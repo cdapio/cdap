@@ -9,13 +9,14 @@
 NAME=`basename $0`
 
 if [[ "X$NAME" == "Xsvc" ]]; then
-  echo "Create a soft link to this script as start-<component>-<service>"
-  echo "E.g. ln -s start-flow-far bin/start"
+  echo "Create a soft link to this script as start-<component>"
+  echo "E.g. ln -s start-far bin/start"
   exit 1
 fi
 
-APP=`echo $NAME | awk -F"-" ' { print $2 } '`; export APP
-SERVICE=`echo $NAME | awk -F"-" ' { print $3 }'`; export SERVICE
+#APP=`echo $NAME | awk -F"-" ' { print $2 } '`; export APP
+APP=`echo $NAME | cut -d'-' -f2-`; export APP
+#SERVICE=`echo $NAME | awk -F"-" ' { print $3 }'`; export SERVICE
 
 if [ ! -n "$CONTINUUITY_HOME" ]; then
   echo "CONTINUUITY_HOME is not set. Please set it."
@@ -36,21 +37,25 @@ source $COMMON_BIN/common.sh
 source $COMMON_BIN/common-env.sh
 
 # Set the app home.
-APP_HOME="$CONTINUUITY_HOME"/"$APP"
+#APP_HOME="$CONTINUUITY_HOME"/"$APP"
+#APP_HOME="$CONTINUUITY_HOME"
 
 # Load app specific configuration.
-SERVICE_ENVIRONMENT_FILE="$APP_HOME"/conf/"$SERVICE"-env.sh
+#SERVICE_ENVIRONMENT_FILE="$APP_HOME"/conf/"$SERVICE"-env.sh
+SERVICE_ENVIRONMENT_FILE="$CONTINUUITY_HOME"/conf/"$APP"-env.sh
 if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
  . "$SERVICE_ENVIRONMENT_FILE"
 fi
 
 # Set Log location
-export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
+#export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
+export LOG_PREFIX=$APP-$IDENT_STRING-$HOSTNAME
 export LOGFILE=$LOG_PREFIX.log
 loglog="${LOG_DIR}/${LOGFILE}"
 
 # Set PID location
-pid=$PID_DIR/$SERVICE-${IDENT_STRING}.pid
+#pid=$PID_DIR/$SERVICE-${IDENT_STRING}.pid
+pid=$PID_DIR/$APP-${IDENT_STRING}.pid
 loggc=$LOG_DIR/$LOG_PREFIX.gc
 
 # Set Niceness
@@ -67,8 +72,10 @@ case "$1" in
       rotate_log $loglog
       check_before_start
 
-      echo "`date` Starting $SERVICE service component $APP on `hostname`"
-      echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
+      #echo "`date` Starting $SERVICE service component $APP on `hostname`"
+      echo "`date` Starting $APP service on `hostname`"
+      #echo "`date` Starting $SERVICE service component $APP on `hostname`" >> $loglog
+      echo "`date` Starting $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
       nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >$loglog 2>&1 &
@@ -78,10 +85,11 @@ case "$1" in
       # This app is configured as a JAVA app (default)
 
       # Check and set classpath if in development environment. 
-      check_and_set_classpath_for_dev_environment $APP_HOME
+      check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
 
       # Setup classpaths.
-      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/:$EXTRA_CLASSPATH
+      #CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/:$EXTRA_CLASSPATH
+      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$CONTINUUITY_HOME/conf/:$EXTRA_CLASSPATH
 
       # sets the JAVA variable.
       set_java
@@ -89,8 +97,10 @@ case "$1" in
       rotate_log $loggc
       check_before_start
 
-      echo "`date` Starting Java $SERVICE service component $APP on `hostname`"
-      echo "`date` Starting Java $SERVICE service component $APP on `hostname`" >> $loglog
+      #echo "`date` Starting Java $SERVICE service component $APP on `hostname`"
+      echo "`date` Starting Java $APP service on `hostname`"
+      #echo "`date` Starting Java $SERVICE service component $APP on `hostname`" >> $loglog
+      echo "`date` Starting Java $APP service on `hostname`" >> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
       nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
