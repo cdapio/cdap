@@ -6,7 +6,8 @@ check_before_start()
   fi
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "$APP $SERVICE running as process `cat $pid`. Stop it first."
+      #echo "$APP $SERVICE running as process `cat $pid`. Stop it first."
+      echo "$APP running as process `cat $pid`. Stop it first."
       exit 1
     fi
   fi
@@ -89,7 +90,8 @@ check_and_set_classpath_for_dev_environment ()
   fi
 }
 
-export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
+#export LOG_PREFIX=$SERVICE-$IDENT_STRING-$HOSTNAME
+export LOG_PREFIX=$APP-$IDENT_STRING-$HOSTNAME
 export LOGFILE=$LOG_PREFIX.log
 loglog="${LOG_DIR}/${LOGFILE}"
 
