@@ -20,7 +20,6 @@ public class Constants {
    */
   public static final String CFG_RESOURCE_MANAGER_REMOTE_DIR = "resource.manager.remote.dir";
   public static final String CFG_RESOURCE_MANAGER_LOCAL_DIR = "resource.manager.local.dir";
-  public static final String CFG_RESOURCE_MANAGER_STORAGE_MODE = "resource.manager.storage.mode";
   public static final String CFG_RESOURCE_MANAGER_SERVER_PORT = "resource.manager.server.port";
   public static final String CFG_RESOURCE_MANAGER_SERVER_THREADS = "resource.manager.server.threads";
   public static final String CFG_RESOURCE_MANAGER_SERVER_ADDRESS = "resource.manager.server.address";

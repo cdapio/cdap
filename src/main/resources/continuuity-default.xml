@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+    Copyright (c) to Continuuity Inc. All rights reserved.
+-->
+<configuration>
+
+    <!--
+        Zookeeper configuration.
+    -->
+    <property>
+        <name>zookeeper.quorum</name>
+        <value>localhost:2181</value>
+        <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <!--
+        Resource manager configurations.
+    -->
+    <property>
+        <name>resource.manager.server.port</name>
+        <value>45000</value>
+        <description>Specifies the port on which Flow resource Manager will run.</description>
+    </property>
+
+    <property>
+        <name>resource.manager.server.threads</name>
+        <value>10</value>
+        <description>Specifies number of threads to be started for serving requests on flow resource manager</description>
+    </property>
+
+    <property>
+        <name>resource.manager.remote.dir</name>
+        <value>data/resource/manager/remote</value>
+        <description>Specifies the base directory for storing resources</description>
+    </property>
+
+    <property>
+        <name>resource.manager.local.dir</name>
+        <value>data/resource/manager/local</value>
+        <description>Specifies the base directory for storing resources</description>
+    </property>
+
+    <property>
+        <name>resource.manager.server.address</name>
+        <value>localhost</value>
+        <description>Specifies the address to which the resource managerment service should bind to.</description>
+    </property>
+
+    <property>
+        <name>resource.manager.cloud.hostname</name>
+        <value>localhost</value>
+        <description>Specifies the resource manager hostname in cloud.</description>
+    </property>
+
+    <property>
+        <name>resource.manager.cloud.port</name>
+        <value>45000</value>
+        <description>Specifies the resource manager port in cloud.</description>
+    </property>
+
+
+    <!--
+        Flow Manager configuration.
+    -->
+    <property>
+        <name>flow.manager.server.address</name>
+        <value>localhost</value>
+        <description>Specifies the address to which the flow manager service should bind to.</description>
+    </property>
+
+    <property>
+        <name>flow.manager.server.port</name>
+        <value>45001</value>
+        <description>Specifies the port on which Flow resource Manager will run.</description>
+    </property>
+
+    <property>
+        <name>flow.manager.server.threads</name>
+        <value>10</value>
+        <description>Specifies number of threads to be started for serving requests on flow resource manager</description>
+    </property>
+
+    <!--
+        Gateway configuration
+    -->
+    <property>
+        <name>gateway.hostname</name>
+        <value>localhost</value>
+        <description>Specifies the hostname on which the Gateway will listen</description>
+    </property>
+
+    <property>
+        <name>gateway.port</name>
+        <value>9999</value>
+        <description>Specifies the port on which the Gateway will listen</description>
+    </property>
+
+    <property>
+        <name>gateway.connectors</name>
+        <value>collector.rest,collector.flume,accessor.rest</value>
+        <description>Specifies the list of Collectors we will use</description>
+    </property>
+
+    <!-- Todd: I'm really unhappy that we have to use so much XML to describe
+         the Collectors, but that's 'cos we are using the Hadoop config object -->
+    <property>
+        <name>accessor.rest.class</name>
+        <value>com.continuuity.gateway.accessor.RestAccessor</value>
+        <description>Specifies the class for the REST accessor</description>
+    </property>
+
+    <property>
+        <name>accessor.rest.port</name>
+        <value>10002</value>
+    </property>
+
+    <property>
+        <name>accessor.rest.middle</name>
+        <value>/rest-data/</value>
+    </property>
+
+    <property>
+        <name>collector.rest.class</name>
+        <value>com.continuuity.gateway.collector.RestCollector</value>
+        <description>Specifies the class for the REST collector</description>
+    </property>
+
+    <property>
+        <name>collector.rest.port</name>
+        <value>10000</value>
+    </property>
+
+    <property>
+        <name>collector.rest.middle</name>
+        <value>/rest-stream/</value>
+    </property>
+
+    <property>
+        <name>collector.flume.class</name>
+        <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
+        <description>Specifies the class for the Flume collector</description>
+    </property>
+
+    <property>
+        <name>collector.flume.port</name>
+        <value>10001</value>
+    </property>
+
+    <!--
+        Data Fabric configuration
+    -->
+    <property>
+        <name>data.local.jdbc</name>
+        <value>jdbc:hsqldb:file:data/fabricdb</value>
+        <description>Specifies local file system implementation</description>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>localhost</value>
+        <description>Specifies the zookeeper ensemble for hbase,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
+    <property>
+        <name>hbase.zookeeper.property.clientPort</name>
+        <value>62982</value>
+        <description>Specifies the zookeeper ensemble for hbase,
+            as a comma-separated list of host:port,...</description>
+    </property>
+
+    <property>
+        <name>data.opex.server.port</name>
+        <value>15165</value>
+        <description>The port number for the operation executor
+            service</description>
+    </property>
+
+    <property>
+        <name>data.opex.server.address</name>
+        <value>0.0.0.0</value>
+        <description>The inet address for the operation executor
+            service</description>
+    </property>
+
+    <property>
+        <name>data.opex.server.threads</name>
+        <value>25</value>
+        <description>The number of threads for the operation executor
+            service</description>
+    </property>
+
+    <property>
+        <name>data.opex.client.count</name>
+        <value>5</value>
+        <description>The number of pooled instanced of the operation
+            executor client</description>
+    </property>
+
+    <property>
+        <name>data.opex.client.provider</name>
+        <!-- value>pool</value -->
+        <value>thread-local</value>
+        <description>The provider strategy for operation executor clients.
+            Valid values are "pool" and "thread-local". </description>
+    </property>
+
+    <!--
+        Overlord configuration
+    -->
+    <property>
+        <name>overlord.jdbc.uri</name>
+        <value>jdbc:hsqldb:file:data/metricsdb</value>
+        <description>Specifies URI for metrics DB</description>
+    </property>
+
+    <property>
+        <name>flow.monitor.server.address</name>
+        <value>localhost</value>
+    </property>
+
+
+</configuration>

@@ -7,14 +7,12 @@ import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryNTimes;
-import com.netflix.curator.x.discovery.ServiceDiscovery;
-import com.netflix.curator.x.discovery.ServiceDiscoveryBuilder;
-import com.netflix.curator.x.discovery.ServiceInstance;
-import com.netflix.curator.x.discovery.ServiceType;
+import com.netflix.curator.x.discovery.*;
 import com.netflix.curator.x.discovery.details.InstanceProvider;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.*;
 
 /**
@@ -172,6 +170,37 @@ public class ServiceDiscoveryClient implements Closeable {
       throw new ServiceDiscoveryClientException(e);
     }
     return count;
+  }
+
+  /**
+   * Handy utility for retrieving an instance.
+   *
+   * @param strategy for selecting a provider.
+   * @return service instance object.
+   * @throws ServiceDiscoveryClientException
+   */
+  public synchronized ServiceInstance<ServicePayload>
+    getInstance(String serviceName, ProviderStrategy<ServicePayload> strategy)
+      throws ServiceDiscoveryClientException{
+
+    try {
+      // get the providers that have already registered.
+      ServiceProvider provider = getServiceProvider(serviceName);
+
+      // If there are no instances available, then return null.
+      if(provider.getInstances().size() < 1) {
+        return null;
+      }
+
+      // Applying the strategy provided, get one instance to connect to.
+      ServiceInstance<ServicePayload> instance = strategy.getInstance(provider);
+
+      // Get an instance based on the strategy for choosing.
+      instance = strategy.getInstance(provider);
+      return instance;
+    } catch (Exception e) {
+      throw new ServiceDiscoveryClientException(e.getMessage());
+    }
   }
 
   /**

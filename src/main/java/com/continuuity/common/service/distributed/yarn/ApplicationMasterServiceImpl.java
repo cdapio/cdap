@@ -548,7 +548,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
             Log.info("Container {} was allocated, but was not assigned any task.", containerId.getId());
             continue;
           } else {
-            Log.info("Waiting for container {} to stop as it has either failed or completed.", containerId.getId());
+            Log.info("Waiting for container '{}' to stop as it has either failed or completed.", containerId);
             containerMgrs.get(containerId).stopAndWait();
             containerMgrs.put(containerId, null);
           }

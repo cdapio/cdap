@@ -24,29 +24,17 @@ public class CConfiguration extends Configuration {
       LoggerFactory.getLogger(CConfiguration.class);
 
   /**
-   * Adds Continuuity related configuration files to the Configuration object.
-   *
-   * @param conf  The configuration object to add the resources to.
-   * @return Configuration object.
-   */
-  public static CConfiguration addResources(CConfiguration conf) {
-
-    // Clear any default properties
-    conf.clear();
-    return conf;
-  }
-
-  /**
    * Creates an instance of configuration.
    *
    * @return an instance of CConfiguration.
    */
   public static CConfiguration create() {
-
     // Create a new configuration instance, but do NOT initialize with
     // the Hadoop default properties.
     CConfiguration conf = new CConfiguration();
-    return addResources(conf);
+    conf.addResource("continuuity-default.xml");
+    conf.addResource("continuuity-site.xml");
+    return conf;
   }
 
 } // end of CConfiguration class
