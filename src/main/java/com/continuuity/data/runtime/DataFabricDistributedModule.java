@@ -46,7 +46,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     // this expects the zookeeper quorum for continuuity and for hbase
     // - zookeeper.quorum host:port,...
     // - hbase.zookeeper.quorum host:port,...
-    conf.addResource("continuuity-data-fabric.xml");
     return conf;
   }
 
