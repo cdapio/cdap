@@ -622,7 +622,6 @@ public class StreamClient {
   public static void main(String[] args) {
     // create a config and load the gateway properties
     CConfiguration config = CConfiguration.create();
-    config.addResource("continuuity-gateway.xml");
     // create an event client and run it with the given arguments
     StreamClient instance = new StreamClient();
     String value = instance.execute(args, config);

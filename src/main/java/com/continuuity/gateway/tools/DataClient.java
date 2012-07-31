@@ -613,7 +613,6 @@ public class DataClient {
   public static void main(String[] args) {
     // create a config and load the gateway properties
     CConfiguration config = CConfiguration.create();
-    config.addResource("continuuity-gateway.xml");
     // create a data client and run it with the given arguments
     DataClient instance = new DataClient();
     String value = instance.execute(args, config);

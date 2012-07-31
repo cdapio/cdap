@@ -280,7 +280,6 @@ public class FlumeClient {
   public static void main(String[] args) {
     // create a config and load the gateway properties
     CConfiguration config = CConfiguration.create();
-    config.addResource("continuuity-gateway.xml");
     // create an event client and run it with the given arguments
     FlumeClient instance = new FlumeClient();
     String value = instance.execute(args, config);
