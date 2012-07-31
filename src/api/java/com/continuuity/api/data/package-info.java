@@ -118,7 +118,7 @@
  * {@link com.continuuity.api.data.ReadColumnRange} is used to read a range of
  * columns within a single columnar row.
  * 
- * {@link com.continuuity.api.data.ReadAllkeys} is used to scan the list of all
+ * {@link com.continuuity.api.data.ReadAllKeys} is used to scan the list of all
  * keys and rows.
  * 
  * <b>Write Operations</b>
