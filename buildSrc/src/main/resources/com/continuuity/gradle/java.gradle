@@ -96,7 +96,9 @@ build.dependsOn classpathGenerator
  *
  * This should result in projects building in "standalone" mode, pulling in dependent jars from artifactory
  */
-if (gradle.startParameter.getTaskNames().contains('release') || gradle.startParameter.getTaskNames().contains('singlenode_dist')) {
+if (gradle.startParameter.getTaskNames().contains('release') 
+    || gradle.startParameter.getTaskNames().contains('singlenode_dist') 
+    || gradle.startParameter.getTaskNames().contains('cloud_dist')) {
     getProject().extensions.getExtraProperties().set("buildingRelease", true);
 } 
 
