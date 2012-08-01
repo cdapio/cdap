@@ -56,8 +56,8 @@ task singlenode_stage_conf (type: Copy) {
 }
 
 task singlenode_stage_lib (type: Copy) {
-    from project(':singlenode').configurations.getByName('compile')
-    //from project(':singlenode').configurations.getByName('runtime')
+    //from project(':singlenode').configurations.getByName('compile')
+    from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
     into "${buildDir}/singlenode/lib"
 }
@@ -116,12 +116,12 @@ singlenode_dist.dependsOn {
  * Cloud distribution
  */
 
-task cloud_stage_libs (type: Copy) {
+task cloud_stage_lib (type: Copy) {
 
-    from project.parent.subprojects.collect { project ->
-        project.configurations.getByName('compile')
-    }
-    into "${buildDir}/cloud/libs"
+    // assuming dependencies are same as singlenode.  cant aggregate across
+    // subprojects because it results in multiple versions of same jar
+    from project(':singlenode').configurations.getByName('runtime')
+    into "${buildDir}/cloud/lib"
 
 }
 
@@ -134,16 +134,6 @@ task cloud_stage_bin (type: Copy) {
     exclude 'node'
 }
 
-/*
-task cloud_stage_conf (type: Copy) {
-
-    from project.parent.subprojects.collect { project ->
-        // include xml conf
-        project.sourceSets.main.output.resourcesDir
-    }
-    into "${buildDir}/cloud/conf"
-}
-*/
 
 task cloud_stage_envconf (type: Copy) {
 
@@ -152,6 +142,7 @@ task cloud_stage_envconf (type: Copy) {
         project.file('conf')
 
     }
+    include "*-env.sh"
     into "${buildDir}/cloud/conf"
 }
 
