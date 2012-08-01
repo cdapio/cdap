@@ -93,10 +93,10 @@ startScripts {
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
-        scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=$1:\\$APP_HOME/conf/')
+        scriptFile.text = scriptFile.text.replaceFirst('CLASSPATH=(.*)', 'CLASSPATH=\\$APP_HOME/lib/*:\\$APP_HOME/conf/')
         //for windows .bat - yes, apparently backslash must be triple-escaped
         def scriptFileWin = file "${outputDir}/${applicationName}.bat"
-        scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=$1;%APP_HOME%\\\\conf\\\\')
+        scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=%APP_HOME%\\\\conf\\\\;%APP_HOME%\\\\lib\\\\*')
     }
     ext.jvmOpts = "-Xmx1024m" 
     inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
