@@ -6,12 +6,22 @@
 <configuration>
 
     <!--
-        Zookeeper configuration.
+        Common configuration across all components.
     -->
     <property>
         <name>zookeeper.quorum</name>
         <value>localhost:2181</value>
         <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>thrift.max.read.buffer</name>
+        <value>1048576</value>
+        <description>
+            Specifies the max read buffer size used by
+            thrift server. Value should be set to something greater
+            than max frame that is sent on RPC channel.
+        </description>
     </property>
 
     <!--

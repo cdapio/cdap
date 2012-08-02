@@ -9,11 +9,15 @@ public class Constants {
    * Common across components.
    */
   public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
+  // ENG-443 setting for avoiding OOME when telnetd to server port.
+  public static final String CFG_MAX_READ_BUFFER = "thrift.max.read.buffer";
 
   /**
    * Default constants for common
    */
   public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
+  // ENG-443 1 MB max read buffer size.
+  public static final int DEFAULT_MAX_READ_BUFFER = 1048576;
 
   /**
    * Configuration key names used by resource manager.
