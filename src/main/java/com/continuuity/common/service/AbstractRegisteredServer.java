@@ -246,6 +246,20 @@ public abstract class AbstractRegisteredServer {
   }
 
   /**
+   * Returns the max read buffer size for thrift server.
+   *
+   * @return max read buffer size.
+   */
+  public long getMaxReadBuffer(CConfiguration configuration) {
+    String maxReadBufferStr = configuration.get(Constants.CFG_MAX_READ_BUFFER);
+    if(maxReadBufferStr == null || maxReadBufferStr.isEmpty()) {
+      return Constants.DEFAULT_MAX_READ_BUFFER;
+    }
+    long maxReadBuffer = Long.getLong(maxReadBufferStr);
+    return maxReadBuffer;
+  }
+
+  /**
    * Extending class should implement this API. Should do everything to start a service in the Thread.
    * @return Thread instance that will be managed by the service.
    */
