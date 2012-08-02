@@ -88,8 +88,7 @@ case "$1" in
       check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
 
       # Setup classpaths.
-      #CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$APP_HOME/libs/*:$APP_HOME/conf/:$EXTRA_CLASSPATH
-      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/libs/*:$CONTINUUITY_HOME/conf/:$EXTRA_CLASSPATH
+      CLASSPATH=$CLASSPATH:$CONTINUUITY_HOME/lib/*:$CONTINUUITY_HOME/conf/:$EXTRA_CLASSPATH
 
       # sets the JAVA variable.
       set_java
