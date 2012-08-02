@@ -255,7 +255,7 @@ public abstract class AbstractRegisteredServer {
     if(maxReadBufferStr == null || maxReadBufferStr.isEmpty()) {
       return Constants.DEFAULT_MAX_READ_BUFFER;
     }
-    long maxReadBuffer = Long.getLong(maxReadBufferStr);
+    long maxReadBuffer = Integer.valueOf(maxReadBufferStr);
     return maxReadBuffer;
   }
 
