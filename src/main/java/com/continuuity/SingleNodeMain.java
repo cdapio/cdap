@@ -83,7 +83,10 @@ public class SingleNodeMain {
    */
   private CConfiguration myConfiguration;
 
-
+  /**
+   * Creates a zookeeper data directory for single node.
+   */
+  private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
 
   /**
    * Bootstrap is where we initialize all the services that make up the
@@ -140,10 +143,8 @@ public class SingleNodeMain {
    */
   private void startZookeeper() throws InterruptedException, IOException {
     // Create temporary directory where zookeeper data files will be stored.
-    File temporaryDir = File.createTempFile("zookeeper-", Long.toString(System.nanoTime()));
-    temporaryDir.delete();
+    File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
     temporaryDir.mkdir();
-    temporaryDir.deleteOnExit();
 
     zookeeper = new InMemoryZookeeper(temporaryDir);
 
@@ -158,19 +159,8 @@ public class SingleNodeMain {
    * directory, and loads all of the properties into those files.
    */
   private void loadConfiguration() {
-
     // Create our config object
     myConfiguration = CConfiguration.create();
-
-    // Clear all of the hadoop settings
-    myConfiguration.clear();
-
-    // TODO: Make this generic and scan for files before adding them
-    myConfiguration.addResource("continuuity-flow.xml");
-    myConfiguration.addResource("continuuity-gateway.xml");
-    myConfiguration.addResource("continuuity-webapp.xml");
-    myConfiguration.addResource("continuuity-overlord.xml");
-
   } // end of loadConfiguration
 
 
