@@ -30,6 +30,7 @@ clover.license
 /web-cloud-app
 /examples
 /singlenode
+/data
 
 # Ignore Node stuff
 npm*
