@@ -98,6 +98,8 @@ build.dependsOn classpathGenerator
  */
 if (gradle.startParameter.getTaskNames().contains('release') 
     || gradle.startParameter.getTaskNames().contains('singlenode_dist') 
+    || gradle.startParameter.getTaskNames().contains(':distributions:upload_cloud_dist')
+    || gradle.startParameter.getTaskNames().contains(':upload_cloud_dist')
     || gradle.startParameter.getTaskNames().contains('cloud_dist')) {
     getProject().extensions.getExtraProperties().set("buildingRelease", true);
 } 
