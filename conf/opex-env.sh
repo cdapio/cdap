@@ -7,7 +7,7 @@ MAIN_CLASS=com.continuuity.data.runtime.OpexServiceMain
 MAIN_CLASS_ARGS="start"
 
 # Add Hadoop HDFS classpath
-#EXTRA_CLASSPATH="$YARN_HOME/etc/hadoop/*"
+EXTRA_CLASSPATH="$HBASE_HOME/conf/"
 
 JAVA_HEAPMAX=-Xmx512m
 
