@@ -98,6 +98,12 @@ public class OperationExecutorService extends AbstractRegisteredServer {
                   Processor<TOperationExecutor.Iface>(
                       new TOperationExecutorImpl(this.opex)))
               .workerThreads(20);
+
+      // ENG-443 - Set the max read buffer size. This is important as this will
+      // prevent the server from throwing OOME if telnetd to the port
+      // it's running on.
+      serverArgs.maxReadBufferBytes = getMaxReadBuffer(conf);
+
       this.server = new THsHaServer(serverArgs);
 
       // and done, return the payload
