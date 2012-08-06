@@ -230,5 +230,15 @@
         <value>localhost</value>
     </property>
 
+    <!--
+        Web UI configuration
+    -->
+
+    <property>
+        <name>webapp.main</name>
+        <value>web-app/server/main.js</value>
+        <description>Specifies location of the webapp's main.js file</description>
+    </property>
+
 
 </configuration>
