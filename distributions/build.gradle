@@ -87,12 +87,12 @@ task singlenode_stage_root (type: Copy) {
 
 
 // these should be build tasks in webapp
-task singlenode_stage_web_client (type: Copy) {
+task singlenode_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
     from project(':web-cloud-app').file('build/client')
     into "${buildDir}/singlenode/web-app/client" 
 }
 
-task singlenode_stage_web_server (type: Copy) {
+task singlenode_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
     from project(':web-cloud-app').file('build/server')
     into "${buildDir}/singlenode/web-app/server" 
 }
