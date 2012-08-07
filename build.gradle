@@ -102,7 +102,7 @@ task jslibs(type:Copy) {
     into 'build/client/js/lib'
 }
 
-task css(type: Exec, dependsOn: 'js', description: 'Process and minify LESS -> CSS') {
+task css(type: Exec, dependsOn: 'jsraw', description: 'Process and minify LESS -> CSS') {
 	"mkdir ./build/client/css".execute()
 	commandLine = ['cp', '-r', './client/css', './build/client/']
 }
