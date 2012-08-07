@@ -185,8 +185,7 @@ task cloud_dist (type: Tar) {
     baseName = "continuuity"
     appendix = "cloud"
     version = "1.0.2"
-    println "teamcity build number: ${teamcityBuildNumber}"
-    //classifier = "alpha"
+    classifier = teamcityBuildNumber
 
     from "${buildDir}/cloud"
     into "${baseName}-${appendix}-${version}"
