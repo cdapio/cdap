@@ -29,7 +29,7 @@ define([
 		location: [],
 		modifiable: function () {
 
-			if (this.currentFlow.currentState === 'RUNNING') {
+			if (this.currentFlow && this.currentFlow.currentState === 'RUNNING') {
 				return true;
 			}
 			return false;
