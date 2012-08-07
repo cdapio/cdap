@@ -59,7 +59,7 @@
 
     <property>
         <name>resource.manager.cloud.hostname</name>
-        <value>localhost</value>
+        <value>50.97.203.197</value>
         <description>Specifies the resource manager hostname in cloud.</description>
     </property>
 
