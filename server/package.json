@@ -5,6 +5,7 @@
 	"dependencies": {
 		"express": "2.5.9",
 		"socket.io": "0.9.6",
-		"thrift": "0.7.0"
+		"thrift": "0.7.0",
+		"xml2js": "0.1.14"
 	}
 }

@@ -4,21 +4,62 @@
 
 (function () {
 
-	this.configure = function (app, express, io) {
+	this.configure = function (app, express, io, done) {
 		console.log('Configuring for ' + (process.env.NODE_ENV || 'development'));
+
+		if (process.env.NODE_ENV === 'development') {
+			this.PORT = 9999;
+		} else {
+			this.PORT = 80;
+		}
 
 		app.get('/', function (req, res) {
 			res.sendfile(__dirname + '/index.html');
 		});
-
-		if (process.env.API_SIM) {
-			this.api = require('./api_simulator');
-		} else {
-			this.api = require('./api');
-		}
-
 		app.use(express['static'](__dirname + '/../client/'));
 
+		var api = this.api = require('./api');
+		var fs = require('fs'),
+			xml2js = require('xml2js');
+		var parser = new xml2js.Parser();
+
+		fs.readFile((process.env.CONTINUUITY_HOME || '.') + '/continuuity-site.xml',
+			function (err, result) {
+
+				if (err) {
+					console.log('COULD NOT OPEN CONFIG (' + (process.env.CONTINUUITY_HOME || '.') +
+						'/continuuity-site.xml)');
+
+					done(false);
+
+				} else {
+					parser.parseString(result, function (err, result) {
+
+						var config = {};
+
+						for (var item in result) {
+							item = result[item];
+							config[item.name] = item.value;
+						}
+
+						// Upload
+						config['resource.manager.cloud.port'] = 45000;
+						// Manager
+						config['flow.manager.server.port'] = 45001;
+						// Monitor
+						config['flow.monitor.server.port'] = 45002;
+						// Gateway
+						config['gateway.port'] = 1000;
+
+						api.configure(config);
+						done(true);
+
+					});
+				}
+
+			});
+
+		/*
 		if (process.env.NODE_ENV === 'production') {
 
 			this.USERNAME = 'cntnty';
@@ -56,6 +97,7 @@
 			});
 
 		}
+		*/
 
 		io.configure('production', function(){
 			io.enable('browser client minification');

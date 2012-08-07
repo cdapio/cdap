@@ -11,8 +11,6 @@ if (Env.USERNAME) {
 var io = require('socket.io').listen(app);
 app.use(express.bodyParser());
 
-Env.configure(app, express, io);
-
 var id = "default";
 var sockets = {};
 
@@ -83,4 +81,12 @@ app.on('error', function () {
 	process.exit(1);
 });
 
-app.listen(Env.PORT);
+Env.configure(app, express, io, function (success) {
+
+	if (success) {
+		app.listen(Env.PORT);
+		console.log('Listening on port ' + Env.PORT);
+	} else {
+		process.exit(1);
+	}
+});

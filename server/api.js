@@ -36,8 +36,8 @@ try {
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 
 		var conn = thrift.createConnection(
-			this.config.manager.host,
-			this.config.manager.port, {
+			this.config['flow.manager.server.address'],
+			this.config['flow.manager.server.port'], {
 			transport: ttransport.TFramedTransport,
 			protocol: tprotocol.TBinaryProtocol
 		});
@@ -48,9 +48,6 @@ try {
 		});
 		
 		var Manager = thrift.createClient(FlowService, conn);
-
-		console.log(method, params);
-
 		var identifier;
 
 		switch (method) {
@@ -155,8 +152,8 @@ try {
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 
 		var conn = thrift.createConnection(
-			this.config.upload.host,
-			this.config.upload.port, {
+			this.config['resource.manager.cloud.address'],
+			this.config['resource.manager.cloud.port'], {
 			transport: ttransport.TFramedTransport,
 			protocol: tprotocol.TBinaryProtocol
 		});
@@ -208,8 +205,8 @@ try {
 		params = params || [];
 
 		var conn = thrift.createConnection(
-			this.config.monitor.host,
-			this.config.monitor.port, {
+			this.config['flow.monitor.server.address'],
+			this.config['flow.monitor.server.port'], {
 			transport: ttransport.TFramedTransport,
 			protocol: tprotocol.TBinaryProtocol
 		});
@@ -237,8 +234,8 @@ try {
 
 		var post_data = params.payload || "";
 		var post_options = {
-		host: this.config.gateway.host,
-		port: this.config.gateway.port,
+		host: this.config['gateway.hostname'],
+		port: this.config['gateway.port'],
 		path: this.config.gateway.baseUri + params.name + (params.stream ? '/' + params.stream : ''),
 		method: 'POST',
 		headers: {
@@ -291,8 +288,8 @@ try {
 			res.end();
 
 			var conn = thrift.createConnection(
-				self.config.upload.host,
-				self.config.upload.port, {
+				self.config['resource.manager.cloud.address'],
+				self.config['resource.manager.cloud.port'], {
 				transport: ttransport.TFramedTransport,
 				protocol: tprotocol.TBinaryProtocol
 			});
