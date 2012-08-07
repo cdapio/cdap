@@ -15,6 +15,7 @@ function(Models, Views, Controllers, Router, Socket){
 			this.router = new Router(Views);
 			this.socket = new Socket(document.location.hostname, function (env) {
 				
+				window.ENV.isCloud = (env !== 'development');
 				console.log('Environment set to "' + env + '"');
 
 				var productName = 'CLOUD';
