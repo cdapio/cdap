@@ -103,7 +103,7 @@ task singlenode_dist (type: Zip) {
 
     baseName = "bigflow"
     appendix = "developer-edition"
-    version = "1.0.1"
+    version = "1.0.2"
     classifier = "alpha"
 
     from "${buildDir}/singlenode"
@@ -184,7 +184,8 @@ task cloud_dist (type: Tar) {
 
     baseName = "continuuity"
     appendix = "cloud"
-    version = "1.0.1"
+    version = "1.0.2"
+    println "teamcity build number: ${teamcityBuildNumber}"
     //classifier = "alpha"
 
     from "${buildDir}/cloud"
