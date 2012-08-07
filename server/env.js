@@ -39,6 +39,7 @@
 					parser.parseString(result, function (err, result) {
 
 						var config = {};
+						result = result.property;
 
 						for (var item in result) {
 							item = result[item];

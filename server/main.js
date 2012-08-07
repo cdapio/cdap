@@ -89,7 +89,9 @@ Env.configure(app, express, io, function (success) {
 
 	if (success) {
 		app.listen(Env.PORT);
-		console.log('Listening on port ' + Env.PORT);
+		console.log('Listening on port ' + Env.PORT + '. Services:');
+		console.log(Env.api.config);
+		
 	} else {
 		process.exit(1);
 	}
