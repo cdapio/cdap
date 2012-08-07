@@ -32,9 +32,11 @@ dependencies {
 evaluationDependsOn(':singlenode')
 
 if(! multiModule) {
-   throw new InvalidUserDataException("Invalid invocation: This is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
+    throw new InvalidUserDataException("Invalid invocation: This is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
 }
-
+if(! project.hasProperty('releaseVersion')) {
+    throw new InvalidUserDataException("Could not find releaseVersion property.  It should be specified in :distributions/gradle.properties")
+} 
 
 task javadoc(type: Javadoc, overwrite: true) {
     group = 'Documentation' 
@@ -103,7 +105,7 @@ task singlenode_dist (type: Zip) {
 
     baseName = "bigflow"
     appendix = "developer-edition"
-    version = "1.0.2"
+    version = releaseVersion
     classifier = "alpha"
 
     from "${buildDir}/singlenode"
@@ -184,11 +186,16 @@ task cloud_dist (type: Tar) {
 
     baseName = "continuuity"
     appendix = "cloud"
-    version = "1.0.2"
-    classifier = teamcityBuildNumber
+    version = releaseVersion
+    if( project.hasProperty('teamcityBuildNumber')) {
+        classifier = teamcityBuildNumber
+        into "${baseName}-${appendix}-${version}-${classifier}"
+    } else {
+        classifier = ""
+        into "${baseName}-${appendix}-${version}"
+    }
 
     from "${buildDir}/cloud"
-    into "${baseName}-${appendix}-${version}"
 }
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
