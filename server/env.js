@@ -26,7 +26,7 @@
 			xml2js = require('xml2js');
 		var parser = new xml2js.Parser();
 
-		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/continuuity-site.xml',
+		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/conf/continuuity-site.xml',
 			function (err, result) {
 
 				if (err) {
