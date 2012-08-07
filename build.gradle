@@ -1,18 +1,60 @@
+// Pull the JS plugin from a Maven Repo
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.eriwen:gradle-js-plugin:1.0.3'
+    }
+}
+// Invoke the plugin
+apply plugin: 'js'
+
 defaultTasks 'build'
+
+//define source for JSHint
+javascript.source {
+    prod {
+        js {
+            srcDir "server" 
+            srcDir "client/js"
+            srcDir "client/js/models"
+            srcDir "client/js/views"
+            srcDir "client/js/controllers"
+            include "*.js"
+        }
+    }
+}
+
+// this writes it's output to dest file only. does not fail build
+task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
+    source = javascript.source.prod.js.files
+    dest = file("${buildDir}/jshint.out")
+}
+
+// check jshint output file and if non-zero length, then fail build 
+task syntax(dependsOn: ['clean', 'jshintjs']) {
+    doLast {
+        ext.jshintlog = file("${buildDir}/jshint.out")
+        if( ext.jshintlog.length() != 0 ) {
+            println ext.jshintlog.text
+            throw new GradleScriptException("JSHint reported Syntax Errors: check build/jshint.out", null)
+        }
+    }
+}
+
 
 task cleanbuild(type: Exec, description: 'Remove all files from ./build/') {
 	commandLine = ['rm', '-rf', './build']
 }
 
-task syntax(type: Exec, description: 'runs jshint on all non-test and lib JS files') {
+// task to run syntax checking with node and jshint options.  requires "node" executable in path.
+// CI Build runs 'syntax' task instead
+task syntax_node(type: Exec, description: 'runs jshint on all non-test and lib JS files') {
 	
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
 
-/*for (p in project.getProperties()) {
-	println("***** " + p);
-} */
-	
 	commandLine = ["./tools/jshint/bin/hint", 
 		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/",
 		"./server/", "--config", 'jshint.json']
