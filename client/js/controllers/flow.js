@@ -287,21 +287,26 @@ define([], function () {
 			var flowlets = App.Controllers.Flow.content;
 			var self = this;
 
-			
+			var flowSource;
+			if (this.current.flowStreams.length) {
+				flowSource = this.current.flowStreams[0];
+				flowSource.isSource = true;
+			}
+
 			// Adapt connection format
 
-			var flowSource = null;
+			var hasSource = false;
 
 			var cx = App.Controllers.Flow.current.connections;
 			var conns = {};
 			for (var i = 0; i < cx.length; i ++) {
 				if (!cx[i].from.flowlet) {
-					flowSource = 'input-stream';
+					hasSource = true;
 				}
 				if (!conns[cx[i].to.flowlet]) {
 					conns[cx[i].to.flowlet] = [];
 				}
-				conns[cx[i].to.flowlet].push(cx[i].from.flowlet || 'input-stream');
+				conns[cx[i].to.flowlet].push(cx[i].from.flowlet || flowSource.name);
 			}
 			for (var j = 0; j < flowlets.length; j++) {
 				if (!conns[flowlets[j].name]) {
@@ -441,13 +446,14 @@ define([], function () {
 				}
 			}
 
-			if (flowSource === 'input-stream') {
+			if (hasSource) {
 
-				append('input-stream', 0); // Attach the Input Stream
+				this.pushObject(flowSource);
+				append(flowSource.name, 0); // Attach the Input Stream
 
 			}
 
-			bind_to(flowSource);
+			bind_to(hasSource ? flowSource.name : null);
 
 		}
 	});

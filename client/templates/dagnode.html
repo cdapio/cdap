@@ -1,3 +1,5 @@
 <div class="window-title">{{view.current.name}}</div>
+{{#unless view.current.isSource}}
 <div class="window-value">{{view.current.processed}}</div>
 <div class="window-instances">{{view.current.instances}} INSTANCE{{view.current.plural}}</div>
+{{/unless}}

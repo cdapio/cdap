@@ -337,11 +337,17 @@ ol {
 	text-transform: uppercase;
 }
 .window.source {
-	background-image: url(../img/stream-icon.png) !important;
+	background-color: #B7D1B7;
+	background-image: none !important;
 	border: 1px solid #FFF;
 	padding: 0;
 	width: 120px;
 	height: 60px;
+}
+.window.source .window-title {
+	text-shadow: 0px 1px #eee;
+	font-weight: bold;
+	padding: 20px 0px;
 }
 
 ._jsPlumb_connector { z-index:1; }

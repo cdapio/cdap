@@ -17,7 +17,7 @@ define([
 		templateName: function () {
 			if (!this.get('current')) {
 				return 'input-stream';
-			} else if (this.get('current').id === 'input-stream') {
+			} else if (this.get('current').isSource) {
 				return 'input-stream';
 			} else {
 				return 'flowlet';
@@ -133,7 +133,8 @@ define([
 			}, function (error, response) {
 
 				if (error) {
-					App.Views.Flow.showError('There was a problem connecting to the gateway.');
+					App.Views.Flowlet.hide();
+					App.informer.show('There was a problem connecting to the gateway.', 'alert-error');
 				}
 
 			});

@@ -56,7 +56,11 @@ io.sockets.on('connection', function (socket) {
 		console.log('Gateway Request');
 		Env.api.gateway(request.method, request.params, function (error, response) {
 			
-			socket.emit('exec', error, response);
+			socket.emit('exec', error, {
+				method: request.method,
+				params: typeof response === "string" ? JSON.parse(response) : response,
+				id: request.id
+			});
 
 		});
 	});

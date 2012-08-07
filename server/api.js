@@ -236,7 +236,7 @@ try {
 		var post_options = {
 		host: this.config['gateway.hostname'],
 		port: this.config['gateway.port'],
-		path: this.config.gateway.baseUri + params.name + (params.stream ? '/' + params.stream : ''),
+		path: '/rest-stream/' + params.name + (params.stream ? '/' + params.stream : ''),
 		method: 'POST',
 		headers: {
 			'com.continuuity.token': 'TOKEN',
@@ -256,7 +256,7 @@ try {
 		});
 
 		post_req.on('error', function (e) {
-			done('Error connecting to gateway');
+			done(e);
 		});
 
 		post_req.write(post_data);

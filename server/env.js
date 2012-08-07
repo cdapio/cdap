@@ -5,7 +5,10 @@
 (function () {
 
 	this.configure = function (app, express, io, done) {
-		console.log('Configuring for ' + (process.env.NODE_ENV || 'development'));
+
+		process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
+		console.log('Configuring for ' + process.env.NODE_ENV);
 
 		if (process.env.NODE_ENV === 'development') {
 			this.PORT = 9999;
@@ -23,7 +26,7 @@
 			xml2js = require('xml2js');
 		var parser = new xml2js.Parser();
 
-		fs.readFile((process.env.CONTINUUITY_HOME || '.') + '/continuuity-site.xml',
+		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/continuuity-site.xml',
 			function (err, result) {
 
 				if (err) {
@@ -49,7 +52,7 @@
 						// Monitor
 						config['flow.monitor.server.port'] = 45002;
 						// Gateway
-						config['gateway.port'] = 1000;
+						config['gateway.port'] = 10000;
 
 						api.configure(config);
 						done(true);

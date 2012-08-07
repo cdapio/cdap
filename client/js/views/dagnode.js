@@ -15,11 +15,11 @@ define([
 					return 'unknown';
 				}
 			}.property(),
+			classNameBindings: ['className'],
 			className: function () {
 				var current;
 				if ((current = this.get('current'))) {
-					var id = this.get('current').name;
-					return ('input-stream' === id ? ' source' : '');
+					return (current.isSource ? ' source' : '');
 				}
 				else {
 					return 'unknown';
