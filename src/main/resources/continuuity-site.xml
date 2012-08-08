@@ -13,12 +13,6 @@
         <description>Specifies the address to which the resource managerment service should bind to.</description>
     </property>
 
-    <property>
-        <name>resource.manager.cloud.hostname</name>
-        <value>127.0.0.1</value>
-        <description>Specifies the resource manager hostname in cloud.</description>
-    </property>
-
     <!--
         Flow Manager configuration.
     -->
