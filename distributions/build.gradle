@@ -189,14 +189,12 @@ task cloud_dist (type: Tar) {
     version = releaseVersion
     if( project.hasProperty('teamcityBuildNumber')) {
         classifier = teamcityBuildNumber
-        into "${baseName}-${appendix}-${version}-${classifier}"
     } else {
         classifier = ""
-        into "${baseName}-${appendix}-${version}"
     }
 
     from "${buildDir}/cloud"
-
+    into "${baseName}-${appendix}-${version}"
 }
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
