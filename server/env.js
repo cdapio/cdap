@@ -26,12 +26,12 @@
 			xml2js = require('xml2js');
 		var parser = new xml2js.Parser();
 
-		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/conf/continuuity-site.xml',
+		fs.readFile((process.env.CONTINUUITY_HOME || '.') + '/conf/continuuity-site.xml',
 			function (err, result) {
 
 				if (err) {
 					console.log('COULD NOT OPEN CONFIG (' + (process.env.CONTINUUITY_HOME || '.') +
-						'/continuuity-site.xml)');
+						'/conf/continuuity-site.xml)');
 
 					done(false);
 
