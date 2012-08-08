@@ -37,8 +37,11 @@ public class WebCloudAppService implements Server {
   public void start(String[] args, CConfiguration conf) throws ServerException {
 
     // Create a new ProcessBuilder
+    String webappMain = conf.get("webapp.main");
+    logger.debug("Web app main class is " + webappMain);
     ProcessBuilder builder =
-      new ProcessBuilder("node", conf.get("webapp.main"));
+      new ProcessBuilder("node", webappMain);
+
 
     // Re-direct all our stderr to stdout
     builder.redirectErrorStream(true);
@@ -46,7 +49,7 @@ public class WebCloudAppService implements Server {
     try {
 
       // Now try to launch the app
-      logger.info("Launching BigFlow Monitoring Web Application");
+      logger.info("Launching BigFlow User Interface Web Application");
       webAppProcess = builder.start();
 
       // Keep running..
@@ -65,7 +68,7 @@ public class WebCloudAppService implements Server {
             // And print it to our logger output
             String line;
             while ((line = br.readLine()) != null) {
-              logger.debug(line);
+              logger.debug("[User Interface output] " + line);
             }
           } catch (IOException ie) {
             logger.error(ie.getMessage());

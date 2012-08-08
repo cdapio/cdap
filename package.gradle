@@ -39,6 +39,7 @@ task stageConfSingleNode (type: Copy) {
     //println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
     include 'logback.xml'
+    include 'continuuity-site.xml'
     into "${buildDir}/conf"
 }
 
