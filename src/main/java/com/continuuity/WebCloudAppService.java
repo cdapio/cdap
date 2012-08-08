@@ -54,18 +54,33 @@ public class WebCloudAppService implements Server {
 
       // Keep running..
       final Process localProcess = webAppProcess;
+      final InputStream is = localProcess.getInputStream();
+      final InputStreamReader isr = new InputStreamReader(is);
+      final BufferedReader br = new BufferedReader(isr);
+
+      // read output until we see "Listening on port..."
+      boolean successful = false;
+      String line;
+      while ((line = br.readLine()) != null) {
+        logger.debug("[User Interface output] " + line);
+        if (line.startsWith("Listening on port ")) {
+          successful = true;
+          break;
+        }
+      }
+      if (successful) {
+        logger.info("User interface started successfully.");
+      } else {
+        String message = "User interface terminated unexpectedly.";
+        logger.error(message);
+        throw new ServerException(message);
+      }
+
+      // start a thread to read and log the remaining output from UI
       new Thread() {
         @Override
         public void run() {
-
           try {
-
-            // Read our output
-            InputStream is = localProcess.getInputStream();
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-
-            // And print it to our logger output
             String line;
             while ((line = br.readLine()) != null) {
               logger.debug("[User Interface output] " + line);
