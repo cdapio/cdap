@@ -196,6 +196,7 @@ task cloud_dist (type: Tar) {
     }
 
     from "${buildDir}/cloud"
+
 }
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
@@ -232,7 +233,8 @@ task upload_cloud_dist (dependsOn: cloud_dist) {
         ext.archive_cmd += ' && mv --backup --suffix=$(date +-%H:%M:%S)' + " ${cloud_dist.baseName}/incoming/"
         ext.archive_cmd += "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/$YEAR/$MONTH/$DAY/.'
         ext.archive_cmd += ' && ln -s $YEAR/$MONTH/$DAY/' + "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/latest.zip.new'
-        ext.archive_cmd += " && mv -Tf ${cloud_dist.baseName}/latest.zip.new ${cloud_dist.baseName}/${cloud_dist.archiveName}"
+        ext.archive_cmd += " && mv -Tf ${cloud_dist.baseName}/latest.zip.new"
+        ext.archive_cmd += " ${cloud_dist.baseName}/${cloud_dist.baseName}-${cloud_dist.appendix}-${cloud_dist.version}.${cloud_dist.extension}"
         println ext.archive_cmd
 
         // sshexec the archiving cmd
