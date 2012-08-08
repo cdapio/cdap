@@ -21,3 +21,6 @@ build/
 .gradle/
 .stickyStorage
 .build/
+
+# data files
+data/
