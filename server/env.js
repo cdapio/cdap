@@ -14,6 +14,9 @@
 			this.PORT = 9999;
 		} else {
 			this.PORT = 80;
+
+			this.USERNAME = 'continuuity';
+			this.PASSWORD = 'realwh00p';
 		}
 
 		app.get('/', function (req, res) {
