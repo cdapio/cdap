@@ -337,8 +337,7 @@ ol {
 	text-transform: uppercase;
 }
 .window.source {
-	background-color: #B7D1B7;
-	background-image: none !important;
+	background-image: url(../img/stream-source-bg.png) !important;
 	border: 1px solid #FFF;
 	padding: 0;
 	width: 120px;
