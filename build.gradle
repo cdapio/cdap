@@ -15,7 +15,7 @@ buildscript {
 // The versions of our dependencies
 def avroVersion = '1.6.2'
 def continuuityVersion = '0.1.0-SNAPSHOT'
-def flumeVersion = '1.1.0-cdh4.0.0+'
+def flumeVersion = '1.2+'
 
 
 tasks.withType(Compile) { 
