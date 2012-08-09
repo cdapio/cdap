@@ -152,8 +152,8 @@ try {
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 
 		var conn = thrift.createConnection(
-			this.config['resource.manager.cloud.address'],
-			this.config['resource.manager.cloud.port'], {
+			this.config['resource.manager.server.address'],
+			this.config['resource.manager.server.port'], {
 			transport: ttransport.TFramedTransport,
 			protocol: tprotocol.TBinaryProtocol
 		});
@@ -288,8 +288,8 @@ try {
 			res.end();
 
 			var conn = thrift.createConnection(
-				self.config['resource.manager.cloud.address'],
-				self.config['resource.manager.cloud.port'], {
+				self.config['resource.manager.server.address'],
+				self.config['resource.manager.server.port'], {
 				transport: ttransport.TFramedTransport,
 				protocol: tprotocol.TBinaryProtocol
 			});

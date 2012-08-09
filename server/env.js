@@ -47,7 +47,7 @@
 						}
 
 						// Upload
-						config['resource.manager.cloud.port'] = 45000;
+						config['resource.manager.server.port'] = 45000;
 						// Manager
 						config['flow.manager.server.port'] = 45001;
 						// Monitor
