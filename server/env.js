@@ -6,8 +6,6 @@
 
 	this.configure = function (app, express, io, done) {
 
-		process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-
 		console.log('Configuring for ' + process.env.NODE_ENV);
 
 		if (process.env.NODE_ENV === 'development') {

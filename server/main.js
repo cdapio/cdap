@@ -1,9 +1,15 @@
 
 var Env = require('./env'), express = require('express'), app;
 
-if (Env.USERNAME) {
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
+if (process.env.NODE_ENV !== 'development') {
 	app = express.createServer(express.basicAuth(function (u, p) {
-		return Env.USERNAME === u && Env.PASSWORD === p;
+		if (Env.USERNAME) {
+			return Env.USERNAME === u && Env.PASSWORD === p;
+		} else {
+			return true;
+		}
 	}));
 } else {
 	app = express.createServer();
