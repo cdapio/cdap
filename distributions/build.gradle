@@ -64,9 +64,26 @@ task singlenode_stage_lib (type: Copy) {
     into "${buildDir}/singlenode/lib"
 }
 
+import org.apache.tools.ant.filters.ReplaceTokens
+
 task singlenode_stage_bin (type: Copy) {
+    // include generated startscripts
     from project(':singlenode').tasks.getByName('startScripts').outputs
+    // include project bin directories
+    from project.parent.subprojects.collect { project ->
+        project.file('bin')
+    }
     into "${buildDir}/singlenode/bin" 
+    exclude 'node'
+    exclude 'far-server'
+    exclude 'run-java'
+    exclude 'flow-config.sh'
+    exclude 'flow-client'
+    exclude 'service'
+    exclude 'common*'
+    def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+    cp += ":\$APP_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
 }
 
 task singlenode_stage_docs_api (type: Copy) {
@@ -143,6 +160,9 @@ task cloud_stage_bin (type: Copy) {
     }
     into "${buildDir}/cloud/bin"
     exclude 'node'
+    def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
+    filter(ReplaceTokens, tokens: [classpath: cp])
+
 }
 
 
@@ -245,5 +265,4 @@ task upload_cloud_dist (dependsOn: cloud_dist) {
         command: ext.archive_cmd)
     }
 }
-
 
