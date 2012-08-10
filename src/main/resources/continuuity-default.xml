@@ -59,7 +59,7 @@
 
     <property>
         <name>resource.manager.cloud.hostname</name>
-        <value>localhost</value>
+        <value>50.97.203.197</value>
         <description>Specifies the resource manager hostname in cloud.</description>
     </property>
 
@@ -228,6 +228,16 @@
     <property>
         <name>flow.monitor.server.address</name>
         <value>localhost</value>
+    </property>
+
+    <!--
+        Web UI configuration
+    -->
+
+    <property>
+        <name>webapp.main</name>
+        <value>web-app/server/main.js</value>
+        <description>Specifies location of the webapp's main.js file</description>
     </property>
 
 

@@ -63,9 +63,7 @@ if [ "$NICENESS" = "" ]; then
  export NICENESS=0
 fi
 
-case "$1" in
-  start)
-    
+start() {
     if [ $MAIN_CMD ]; then
       # This app is configured as a NON-JAVA app
 
@@ -79,7 +77,7 @@ case "$1" in
       echo "`ulimit -a`" >> $loglog 2>&1
 
       nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >$loglog 2>&1 &
- 
+
       echo $! >$pid
     elif [ $MAIN_CLASS ]; then
       # This app is configured as a JAVA app (default)
@@ -105,15 +103,13 @@ case "$1" in
       nice -n $NICENESS "$JAVA" "$OPTS" -cp $CLASSPATH "$JAVA_HEAPMAX" $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >$loglog 2>&1 &
       echo $! >$pid
 
-    else 
+    else
       echo "Error: Neither MAIN_CLASS or MAIN_CMD are set.  Please set one in $SERVICE_ENVIRONMENT_FILE"
       exit -1
-    fi  
-    sleep 1
-  ;;
-  
-  stop)
+    fi
+}
 
+stop() {
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -136,20 +132,42 @@ case "$1" in
     else
       echo nothing to stop because no pid file $pid
     fi
+}
+
+restart() {
+    stop
+    start
+}
+
+rh_status() {
+    echo "checking status"
+    # call sourced status function
+    status -p $pid 
+}
+
+case "$1" in
+  start)
+    $1  
+  ;;
+  
+  stop)
+    $1
+  ;;
+
+  restart)
+    $1
   ;;
 
   status)
-
-    echo "checking status"
-    status -p $pid $MAIN_CMD
+   rh_status 
   ;;
 
   *)
-    echo "Usage: $0 {start|stop|status}"
+    echo "Usage: $0 {start|stop|restart|status}"
     exit 1
   ;;
 
 
 esac
- 
+exit $? 
 
