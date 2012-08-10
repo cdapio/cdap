@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
+import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics.stubs.*;
 import com.google.common.base.Preconditions;
@@ -53,8 +54,8 @@ public class MetricsClient implements Closeable {
   }
 
   private ImmutablePair<String, Integer> getServiceEndpoint() {
-    ProviderStrategy<ServiceDiscoveryClient.ServicePayload> strategy =
-      new RandomStrategy<ServiceDiscoveryClient.ServicePayload>();
+    ProviderStrategy<ServicePayload> strategy =
+      new RandomStrategy<ServicePayload>();
     ServiceDiscoveryClient.ServiceProvider provider = null;
     try {
       provider = serviceDiscoveryClient.getServiceProvider("flow-monitor");
@@ -69,7 +70,7 @@ public class MetricsClient implements Closeable {
       return null;
     }
 
-    ServiceInstance<ServiceDiscoveryClient.ServicePayload> instance = null;
+    ServiceInstance<ServicePayload> instance = null;
     try {
       instance = strategy.getInstance(provider);
       if (instance != null) {
