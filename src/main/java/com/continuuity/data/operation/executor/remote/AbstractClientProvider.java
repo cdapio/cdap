@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
+import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
@@ -30,7 +31,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
   ServiceDiscoveryClient discoveryClient;
 
   // the strategy we will use to choose from multiple discovered instances
-  ProviderStrategy<ServiceDiscoveryClient.ServicePayload> strategy;
+  ProviderStrategy<ServicePayload> strategy;
 
   protected AbstractClientProvider(CConfiguration configuration) {
     this.configuration = configuration;
@@ -61,7 +62,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       Log.error("Unable to start service discovery client: " + e.getMessage());
       throw new IOException("Unable to start service discovery client.", e);
     }
-    this.strategy = new RandomStrategy<ServiceDiscoveryClient.ServicePayload>();
+    this.strategy = new RandomStrategy<ServicePayload>();
   }
 
   protected OperationExecutorClient newClient() throws IOException {
@@ -83,7 +84,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
         ServiceDiscoveryClient.ServiceProvider provider =
             this.discoveryClient.getServiceProvider(
                 Constants.OPERATION_EXECUTOR_SERVICE_NAME);
-        ServiceInstance<ServiceDiscoveryClient.ServicePayload>
+        ServiceInstance<ServicePayload>
             instance = strategy.getInstance(provider);
         // found an instance, get its host name and port
         address = instance.getAddress();
