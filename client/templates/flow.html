@@ -1,17 +1,3 @@
-<div id="modal-from-dom" class="modal hide fade">
-	<div class="modal-header">
-	<a {{action "canceled" on="click"}} class="close">&times;</a>
-	<h2>Remove Flow</h2>
-	</div>
-	<div class="modal-body">
-	<p>You are about to remove a flow, which is irreversible. You can upload this flow again if you'd like. Do you want to proceed?</p>
-	</div>
-	<div class="modal-footer">
-	<button {{action "canceled" on="click"}} class="btn">Cancel</a>
-	<button {{action "confirmed" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} class="btn btn-danger">Okay</a>
-	</div>
-</div>
-
 <div id="sub-header">
 	{{#unless run}}
 	<div id="action-buttons" class="btn-group pull-right" style="width:300px;">

@@ -124,8 +124,13 @@ td a {
 #footer a, #footer span {
 	color: #777;
 }
+#navi {
+	width: 156px;
+	float: left;
+}
 #content {
 	position: relative;
+	margin-left: 170px;
 }
 #interstitial {
 	display: none;
@@ -202,7 +207,7 @@ td a {
 	padding: 0px;
 	overflow: auto;
 	overflow-y: hidden;
-	background-color: #f9f9f9;
+	background-color: #fcfcfc;
 }
 .flowletviz {
 	position: absolute;

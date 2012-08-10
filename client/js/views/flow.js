@@ -50,7 +50,10 @@ define([
 				App.Controllers.Flow.current.get('currentState') !== 'DEPLOYED') {
 				App.informer.show('Cannot remove: Please stop the flow before removing.', 'alert-error');
 			} else {
-				$('#modal-from-dom').modal('show');
+				App.Views.Modal.show(
+					"Delete Flow",
+					"You are about to remove a flow, which is irreversible. You can upload this flow again if you'd like. Do you want to proceed?",
+					$.proxy(this.confirmed, this));
 			}
 		},
 		confirmed: function (event) {
@@ -62,8 +65,6 @@ define([
 				params: [flow.meta.app, flow.meta.name, flow.version]
 			}, function (error, response) {
 
-				$('#modal-from-dom').modal('hide');
-
 				if (error) {
 					App.informer.show(error.message, 'alert-error');
 				} else {
@@ -71,9 +72,6 @@ define([
 				}
 
 			});
-		},
-		canceled: function () {
-			$('#modal-from-dom').modal('hide');
 		}
 	});
 

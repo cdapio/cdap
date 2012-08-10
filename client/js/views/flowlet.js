@@ -96,20 +96,25 @@ define([
 		promptInstances: function () {
 
 			var value = window.prompt('Please set the number of instances for this flowlet. At least 1.');
-			value = parseInt(value, 10);
-			this.confirm('Add ' + value + ' instances to ', value);
-
+			if (value) {
+				value = parseInt(value, 10);
+				this.confirm('Add ' + value + ' instances to ', value);
+			}
 		},
 		confirm: function (message, value) {
 
-			var name = this.get('current').name;
+			var current = this.get('current');
+			var name = current.name;
 
-			var c = window.confirm(message + '"' + name + '" flowlet?');
-			if (c) {
-				this.get('current').addInstances(value, function () {
-				
+			App.Views.Modal.show(
+				"Flowlet Instances",
+				message + '"' + name + '" flowlet?',
+				function () {
+					current.addInstances(value, function () {
+					
+					});
 				});
-			}
+
 		},
 		payload: null,
 		inject: function () {
