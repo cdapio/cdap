@@ -70,6 +70,7 @@ a strong {
 .breadcrumb {
 	padding: 4px 8px;
 	margin: 0;
+	margin-bottom: 12px;
 }
 #action-buttons {
 	margin-top: 8px;
@@ -150,12 +151,18 @@ td a {
 	line-height: 10px;
 	font-size: 11px;
 	text-align: right;
-	padding-left: 85px;
+	width: 172px;
 	color: #9baeca;
 
 	height:10px;
-	background-image: url(../img/product-header.png);
 	margin: 15px 12px 0px 0px;
+	background-position: top right;
+}
+.product.developer {
+	background-image: url(../img/developer-product-header.png);
+}
+.product.cloud {
+	background-image: url(../img/cloud-product-header.png);
 }
 .widget {
 	border-radius: 5px;
@@ -259,7 +266,9 @@ td a {
 	border-radius: 4px;
 }
 #informer {
-	padding: 12px 0px 0px;
+	padding: 0px 0px 0px;
+	position: absolute;
+	width: 100%;
 }
 .alert-wrapper {
 	overflow: hidden;
@@ -269,7 +278,8 @@ td a {
 
 }
 #sub-header .alert {
-	margin: 0px 0px 12px;
+	padding: 4px 12px;
+	margin: 0;
 }
 #object-list {
 	margin: 0 auto 12px;

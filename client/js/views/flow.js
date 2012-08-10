@@ -30,6 +30,8 @@ define([
 
 			var flow = this.current;
 			
+			App.interstitial.loading('Pushing to Cloud...');
+
 			App.socket.request('far', {
 				method: 'promote',
 				params: [flow.meta.app, flow.meta.name, flow.version]
@@ -40,6 +42,7 @@ define([
 				} else {
 					App.informer.show('Successfully pushed to cloud.');
 				}
+				App.interstitial.hide();
 
 			});
 

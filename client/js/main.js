@@ -18,12 +18,12 @@ function(Models, Views, Controllers, Router, Socket){
 				window.ENV.isCloud = (env !== 'development');
 				console.log('Environment set to "' + env + '"');
 
-				var productName = 'CLOUD';
+				var productName = 'cloud';
 				if (env === 'development') {
-					productName = 'DEVELOPER';
+					productName = 'developer';
 				}
 
-				$('#product-edition').html(productName + ' EDITION');
+				$('#product-edition').addClass(productName);
 
 				// This function is called when the socket is (re)connected.
 
@@ -99,6 +99,12 @@ function(Models, Views, Controllers, Router, Socket){
 		},
 		queue: [],
 		show: function (message, style, persist) {
+
+			var wrapper = $('#informer');
+			var children = wrapper.children();
+			for (var i = 0; i < children.length; i ++) {
+				$(children[i]).remove();
+			}
 
 			var div = $('<div class="alert-wrapper" />').append(
 				$('<div></div>')
