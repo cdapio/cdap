@@ -1,13 +1,12 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.*;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The implementation of a thrift service for operation execution.
@@ -55,42 +55,69 @@ public class TOperationExecutorImpl
 
   @Override
   public boolean write(TWrite tWrite) throws TException {
-    Log.debug("Received TWrite: " + tWrite);
+    if (Log.isDebugEnabled())
+      Log.debug("Received TWrite: " + tWrite);
     Write write = unwrap(tWrite);
     boolean success = this.opex.execute(write);
-    Log.debug("Write result: " + success);
+    if (Log.isDebugEnabled())
+      Log.debug("Write result: " + success);
     return success;
   }
 
   @Override
   public boolean delet(TDelete tDelete) throws TException {
-    Log.debug("Received TDelete");
-    return this.opex.execute(unwrap(tDelete));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TDelete: " + tDelete);
+    Delete delete = unwrap(tDelete);
+    boolean success = this.opex.execute(delete);
+    if (Log.isDebugEnabled())
+      Log.debug("Delete result: " + success);
+    return success;
   }
 
   @Override
   public boolean increment(TIncrement tIncrement) throws TException {
-    Log.debug("Received TIncrement");
-    return this.opex.execute(unwrap(tIncrement));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TIncrement: " + tIncrement);
+    Increment increment = unwrap(tIncrement);
+    boolean success = this.opex.execute(increment);
+    if (Log.isDebugEnabled())
+      Log.debug("Increment result: " + success);
+    return success;
   }
 
   @Override
   public boolean compareAndSwap(TCompareAndSwap tCompareAndSwap)
       throws TException {
-    Log.debug("Received TCompareAndSwap");
-    return this.opex.execute(unwrap(tCompareAndSwap));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TCompareAndSwap: " + tCompareAndSwap);
+    CompareAndSwap compareAndSwap = unwrap(tCompareAndSwap);
+    boolean success = this.opex.execute(compareAndSwap);
+    if (Log.isDebugEnabled())
+      Log.debug("CompareAndSwap result: " + success);
+    return success;
   }
 
   @Override
   public boolean queueEnqueue(TQueueEnqueue tQueueEnqueue) throws TException {
-    Log.debug("Received TQueueEnqueue");
-    return this.opex.execute(unwrap(tQueueEnqueue));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TQueueEnqueue: " + tQueueEnqueue);
+    QueueEnqueue queueEnqueue = unwrap(tQueueEnqueue);
+    boolean success = this.opex.execute(queueEnqueue);
+    if (Log.isDebugEnabled())
+      Log.debug("QueueEnqueue result: " + success);
+    return success;
   }
 
   @Override
   public boolean queueAck(TQueueAck tQueueAck) throws TException {
-    Log.debug("Received TQueueAck");
-    return this.opex.execute(unwrap(tQueueAck));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TQueueAck: " + tQueueAck);
+    QueueAck queueAck = unwrap(tQueueAck);
+    boolean success = this.opex.execute(queueAck);
+    if (Log.isDebugEnabled())
+      Log.debug("QueueAck result: " + success);
+    return success;
   }
 
   // batch write, return a structure and never null, and is thus safe
@@ -98,7 +125,8 @@ public class TOperationExecutorImpl
   @Override
   public TBatchOperationResult batch(List<TWriteOperation> batch)
       throws TBatchOperationException, TException {
-    Log.debug("Received Batch");
+    if (Log.isDebugEnabled())
+      Log.debug("Received Batch");
     List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
     for (TWriteOperation tWriteOp : batch) {
       WriteOperation writeOp;
@@ -120,6 +148,8 @@ public class TOperationExecutorImpl
             + tWriteOp.toString() + " in batch. Skipping.");
         continue;
       }
+      if (Log.isDebugEnabled())
+        Log.debug("Operation in batch: " + writeOp);
       writes.add(writeOp);
     }
     BatchOperationResult result;
@@ -128,6 +158,8 @@ public class TOperationExecutorImpl
     } catch (BatchOperationException e) {
       throw new TBatchOperationException(e.getMessage());
     }
+    if (Log.isDebugEnabled())
+      Log.debug("Batch result: " + result);
     return new TBatchOperationResult(result.isSuccess(), result.getMessage());
   }
 
@@ -137,48 +169,78 @@ public class TOperationExecutorImpl
 
   @Override
   public TOptionalBinary readKey(TReadKey tReadKey) throws TException {
-    Log.debug("Received TReadKey: " + tReadKey);
+    if (Log.isDebugEnabled())
+      Log.debug("Received TReadKey: " + tReadKey);
     ReadKey readKey = unwrap(tReadKey);
     byte[] result = this.opex.execute(readKey);
-    Log.debug("ReadKey result: "
+    if (Log.isDebugEnabled())
+      Log.debug("ReadKey result: "
         + (result == null ? "<null>" : Arrays.toString(result)));
     return wrapBinary(result);
   }
 
   @Override
   public TOptionalBinaryMap read(TRead tRead) throws TException {
-    Log.debug("Received TRead");
-    return wrapMap(this.opex.execute(unwrap(tRead)));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TRead: " + tRead);
+    Read read = unwrap(tRead);
+    Map<byte[], byte[]> result = this.opex.execute(read);
+    TOptionalBinaryMap tResult = wrapMap(result);
+    if (Log.isDebugEnabled())
+      Log.debug("Read result: " + tResult);
+    return tResult;
   }
 
   @Override
   public TOptionalBinaryList readAllKeys(TReadAllKeys tReadAllKeys)
       throws TException {
-    Log.debug("Received TReadAllKeys");
-    return wrapList(this.opex.execute(unwrap(tReadAllKeys)));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TReadAllKeys: " + tReadAllKeys);
+    ReadAllKeys readAllKeys = unwrap(tReadAllKeys);
+    List<byte[]> result = this.opex.execute(readAllKeys);
+    TOptionalBinaryList tResult = wrapList(result);
+    if (Log.isDebugEnabled())
+      Log.debug("ReadAllKeys result: " + tResult);
+    return tResult;
   }
 
   @Override
   public TOptionalBinaryMap
   readColumnRange(TReadColumnRange tReadColumnRange) throws TException {
-    Log.debug("Received TReadColumnRange");
-    return wrapMap(this.opex.execute(unwrap(tReadColumnRange)));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TReadColumnRange: " + tReadColumnRange);
+    ReadColumnRange readColumnRange = unwrap(tReadColumnRange);
+    Map<byte[], byte[]> result = this.opex.execute(readColumnRange);
+    TOptionalBinaryMap tResult = wrapMap(result);
+    if (Log.isDebugEnabled())
+      Log.debug("ReadColumnRange result: " + tResult);
+    return tResult;
   }
 
   // dequeue always return a structure, which does not need extra wrapping
 
   @Override
   public TDequeueResult dequeue(TQueueDequeue tQueueDequeue) throws TException {
-    Log.debug("Received TQueueDequeue" + tQueueDequeue.toString());
-    return wrap(this.opex.execute(unwrap(tQueueDequeue)));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TQueueDequeue" + tQueueDequeue.toString());
+    QueueDequeue queueDequeue = unwrap(tQueueDequeue);
+    DequeueResult result = this.opex.execute(queueDequeue);
+    if (Log.isDebugEnabled())
+      Log.debug("QueueDequeue result: " + result);
+    return wrap(result);
   }
 
   // getGroupId always returns a long and cannot be null
 
   @Override
   public long getGroupId(TGetGroupId tGetGroupId) throws TException {
-    Log.debug("Received TGetGroupID");
-    return this.opex.execute(unwrap(tGetGroupId));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TGetGroupID: " + tGetGroupId);
+    QueueAdmin.GetGroupID getGroupID = unwrap(tGetGroupId);
+    long groupId = this.opex.execute(getGroupID);
+    if (Log.isDebugEnabled())
+      Log.debug("GetGroupID result: " + groupId);
+    return groupId;
   }
 
   // getQueueMeta can return null, if the queue does not exist
@@ -186,15 +248,25 @@ public class TOperationExecutorImpl
   @Override
   public TQueueMeta getQueueMeta(TGetQueueMeta tGetQueueMeta)
       throws TException {
-    Log.debug("Received TGetQueueMeta");
-    return wrap(this.opex.execute(unwrap(tGetQueueMeta)));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TGetQueueMeta: " + tGetQueueMeta);
+    QueueAdmin.GetQueueMeta getQueueMeta = unwrap(tGetQueueMeta);
+    QueueAdmin.QueueMeta queueMeta = this.opex.execute(getQueueMeta);
+    if (Log.isDebugEnabled())
+      Log.debug("GetQueueMeta result: " +
+          (queueMeta == null ? "<null>" : queueMeta.toString()));
+    return wrap(queueMeta);
   }
 
   // clearFabric is safe as it returns nothing
 
   @Override
   public void clearFabric(TClearFabric tClearFabric) throws TException {
-    Log.debug("Received TClearFabric");
-    this.opex.execute(unwrap(tClearFabric));
+    if (Log.isDebugEnabled())
+      Log.debug("Received TClearFabric: " + tClearFabric);
+    ClearFabric clearFabric = unwrap(tClearFabric);
+    this.opex.execute(clearFabric);
+    if (Log.isDebugEnabled())
+      Log.debug("ClearFabric completed.");
   }
 }

@@ -30,13 +30,14 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws BatchOperationException {
-    Log.debug("Received Batch of " + writes.size() + "WriteOperations: ");
+    if (Log.isDebugEnabled())
+      Log.debug("Received Batch of " + writes.size() + "WriteOperations: ");
     List<TWriteOperation> tWrites = Lists.newArrayList();
     for (WriteOperation writeOp : writes) {
-      Log.debug("  WriteOperation: " + writeOp.toString());
+      if (Log.isDebugEnabled())
+        Log.debug("  WriteOperation: " + writeOp.toString());
       TWriteOperation tWriteOp = new TWriteOperation();
       if (writeOp instanceof Write)
         tWriteOp.setWrite(wrap((Write)writeOp));
@@ -58,9 +59,11 @@ public class OperationExecutorClient
       tWrites.add(tWriteOp);
     }
     try {
-      Log.debug("Sending Batch: " + Arrays.toString(writes.toArray()));
+      if (Log.isDebugEnabled())
+        Log.debug("Sending Batch: " + Arrays.toString(writes.toArray()));
       TBatchOperationResult result = client.batch(tWrites);
-      Log.debug("Result of Batch: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of Batch: " + result);
       return new BatchOperationResult(result.isSuccess(), result.getMessage());
     } catch (TBatchOperationException e) {
       throw new BatchOperationException(e.getMessage(), e);
@@ -70,14 +73,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public DequeueResult execute(QueueDequeue dequeue) {
     try {
-      Log.debug("Received " + dequeue);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + dequeue);
       TQueueDequeue tDequeue = wrap(dequeue);
-      Log.debug("Sending " + tDequeue);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tDequeue);
       TDequeueResult tDequeueResult = client.dequeue(tDequeue);
-      Log.debug("Result of TDequeue: " + tDequeueResult);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TDequeue: " + tDequeueResult);
       return unwrap(tDequeueResult);
     } catch (TException e) {
       String message = "Thrift Call for QueueDequeue failed for queue " +
@@ -88,14 +93,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public long execute(QueueAdmin.GetGroupID getGroupId) {
     try {
-      Log.debug("Received " + getGroupId);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + getGroupId);
       TGetGroupId tGetGroupId = wrap(getGroupId);
-      Log.debug("Sending " + tGetGroupId);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tGetGroupId);
       long result = client.getGroupId(tGetGroupId);
-      Log.debug("Result of TGetGroupId: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TGetGroupId: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for GetGroupId failed for queue " +
@@ -105,14 +112,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta) {
     try {
-      Log.debug("Received " + getQueueMeta);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + getQueueMeta);
       TGetQueueMeta tGetQueueMeta = wrap(getQueueMeta);
-      Log.debug("Sending " + tGetQueueMeta);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tGetQueueMeta);
       TQueueMeta tQueueMeta = client.getQueueMeta(tGetQueueMeta);
-      Log.debug("Result of TGetQueueMeta: " + tQueueMeta);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TGetQueueMeta: " + tQueueMeta);
       return unwrap(tQueueMeta);
     } catch (TException e) {
       Log.error("Thrift Call for GetQueueMeta failed for queue " +
@@ -122,12 +131,13 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public void execute(ClearFabric clearFabric) {
     try {
-      Log.debug("Received " + clearFabric);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + clearFabric);
       TClearFabric tClearFabric = wrap(clearFabric);
-      Log.debug("Sending " + tClearFabric);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tClearFabric);
       client.clearFabric(tClearFabric);
     } catch (TException e) {
       Log.error("Thrift Call for ClearFabric failed with message: " +
@@ -137,14 +147,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  // synchronized
   public byte[] execute(ReadKey readKey) {
     try {
-      Log.debug("Received " + readKey);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + readKey);
       TReadKey tReadKey = wrap(readKey);
-      Log.debug("Sending " + tReadKey);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tReadKey);
       TOptionalBinary result = client.readKey(tReadKey);
-      Log.debug("Result of TReadKey: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TReadKey: " + result);
       return unwrap(result);
     } catch (TException e) {
       Log.error("Thrift Call for ReadKey for key '" +
@@ -155,14 +167,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public Map<byte[], byte[]> execute(Read read) {
     try {
-      Log.debug("Received " + read);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + read);
       TRead tRead = wrap(read);
-      Log.debug("Sending " + tRead);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tRead);
       TOptionalBinaryMap result = client.read(tRead);
-      Log.debug("Result of TRead: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TRead: " + result);
       return unwrap(result);
     } catch (TException e) {
       Log.error("Thrift Call for Read for key '" +
@@ -173,14 +187,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public List<byte[]> execute(ReadAllKeys readKeys) {
     try {
-      Log.debug("Received " + readKeys);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + readKeys);
       TReadAllKeys tReadAllKeys = wrap(readKeys);
-      Log.debug("Sending " + tReadAllKeys);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tReadAllKeys);
       TOptionalBinaryList result = client.readAllKeys(tReadAllKeys);
-      Log.debug("Result of TReadAllKeys: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TReadAllKeys: " + result);
       return unwrap(result);
     } catch (TException e) {
       Log.error("Thrift Call for ReadAllKeys(" + readKeys.getOffset() + ", " +
@@ -191,14 +207,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
     try {
-      Log.debug("Received " + readColumnRange);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + readColumnRange);
       TReadColumnRange tReadColumnRange = wrap(readColumnRange);
-      Log.debug("Sending " + tReadColumnRange);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tReadColumnRange);
       TOptionalBinaryMap result = client.readColumnRange(tReadColumnRange);
-      Log.debug("Result of TReadColumnRange: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TReadColumnRange: " + result);
       return unwrap(result);
     } catch (TException e) {
       Log.error("Thrift Call for ReadColumnRange for key '" +
@@ -209,14 +227,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  // synchronized
   public boolean execute(Write write) {
     try {
-      Log.debug("Received " + write);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + write);
       TWrite tWrite = wrap(write);
-      Log.debug("Sending " + tWrite);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tWrite);
       boolean result = client.write(tWrite);
-      Log.debug("Result of TWrite: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TWrite: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for Write for key '" + new String(write.getKey()) +
@@ -226,14 +246,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public boolean execute(Delete delete) {
     try {
-      Log.debug("Received " + delete);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + delete);
       TDelete tDelete = wrap(delete);
-      Log.debug("Sending " + tDelete);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tDelete);
       boolean result = client.delet(tDelete);
-      Log.debug("Result of TDelete: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TDelete: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for Delete for key '" + new String(delete.getKey())
@@ -243,14 +265,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public boolean execute(Increment increment) {
     try {
-      Log.debug("Received " + increment);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + increment);
       TIncrement tIncrement = wrap(increment);
-      Log.debug("Sending " + tIncrement);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tIncrement);
       boolean result = client.increment(tIncrement);
-      Log.debug("Result of TIncrement: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TIncrement: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for Increment for key '" +
@@ -261,14 +285,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public boolean execute(CompareAndSwap compareAndSwap) {
     try {
-      Log.debug("Received " + compareAndSwap);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + compareAndSwap);
       TCompareAndSwap tCompareAndSwap = wrap(compareAndSwap);
-      Log.debug("Sending " + tCompareAndSwap);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tCompareAndSwap);
       boolean result = client.compareAndSwap(tCompareAndSwap);
-      Log.debug("Result of TCompareAndSwap: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TCompareAndSwap: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for CompareAndSwap for key '" +
@@ -279,14 +305,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public boolean execute(QueueEnqueue enqueue) {
     try {
-      Log.debug("Received " + enqueue);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + enqueue);
       TQueueEnqueue tQueueEnqueue = wrap(enqueue);
-      Log.debug("Sending " + tQueueEnqueue);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tQueueEnqueue);
       boolean result = client.queueEnqueue(tQueueEnqueue);
-      Log.debug("Result of TQueueEnqueue: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TQueueEnqueue: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for QueueEnqueue for queue '" +
@@ -297,14 +325,16 @@ public class OperationExecutorClient
   }
 
   @Override
-  synchronized
   public boolean execute(QueueAck ack) {
     try {
-      Log.debug("Received " + ack);
+      if (Log.isDebugEnabled())
+        Log.debug("Received " + ack);
       TQueueAck tQueueAck = wrap(ack);
-      Log.debug("Sending " + tQueueAck);
+      if (Log.isDebugEnabled())
+        Log.debug("Sending " + tQueueAck);
       boolean result = client.queueAck(tQueueAck);
-      Log.debug("Result of TQueueAck: " + result);
+      if (Log.isDebugEnabled())
+        Log.debug("Result of TQueueAck: " + result);
       return result;
     } catch (TException e) {
       Log.error("Thrift Call for QueueAck for queue '" +

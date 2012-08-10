@@ -11,8 +11,7 @@
  * 
  * Read operations are performed one-at-a-time and inline within a flowlet
  * via the {@link com.continuuity.api.data.ReadOperationExecutor}.  The result
- * of the operation is returned from the executor or is available via
- * {@link com.continuuity.api.data.ReadOperation#getResult()}.
+ * of the operation is returned from the executor.
  * 
  * For example, a flowlet might receive a tuple containing the userid of a given
  * user and we want to read the e-mail address for this user from the data
