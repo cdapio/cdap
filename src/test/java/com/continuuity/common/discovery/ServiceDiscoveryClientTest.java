@@ -17,8 +17,7 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
   public void testRegistration() throws Exception {
     ServiceDiscoveryClient client = new ServiceDiscoveryClient(server.getConnectionString());
     try {
-      ServiceDiscoveryClient.ServicePayload payload =
-        new ServiceDiscoveryClient.ServicePayload();
+      ServicePayload payload = new ServicePayload();
       payload.add("A1", "1");
       payload.add("A1", "2");
 
@@ -43,7 +42,7 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
       ServiceDiscoveryClient client = null;
       try {
         client = new ServiceDiscoveryClient(server.getConnectionString());
-        ServiceDiscoveryClient.ServicePayload payload = new ServiceDiscoveryClient.ServicePayload();
+        ServicePayload payload = new ServicePayload();
         payload.add("A1", "1");
         payload.add("A2", "2");
         client.register("flow-manager", "localhost",8080, payload);
@@ -55,13 +54,13 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-        ProviderStrategy<ServiceDiscoveryClient.ServicePayload> strategy =
-          new RandomStrategy<ServiceDiscoveryClient.ServicePayload>();
+        ProviderStrategy<ServicePayload> strategy =
+          new RandomStrategy<ServicePayload>();
         ServiceDiscoveryClient.ServiceProvider provider = client.getServiceProvider("flow-manager");
         int[] stats = new int[] { 0, 0};
         int trials = 10000;
         for(int i = 0; i < trials; ++i) {
-          ServiceInstance<ServiceDiscoveryClient.ServicePayload> instance = strategy.getInstance(provider);
+          ServiceInstance<ServicePayload> instance = strategy.getInstance(provider);
           int k = instance.getPort() - 8080;
           stats[k]++;
         }

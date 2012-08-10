@@ -1,12 +1,13 @@
 package com.continuuity.common.service;
 
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
+import com.continuuity.common.discovery.ServicePayload;
 
 /**
  * Class representing the server info for a registered server.
  */
 public class RegisteredServerInfo {
-  private ServiceDiscoveryClient.ServicePayload payload = new ServiceDiscoveryClient.ServicePayload();
+  private ServicePayload payload = new ServicePayload();
   private int port;
   private String address;
 
@@ -27,7 +28,7 @@ public class RegisteredServerInfo {
     payload.add(key, value);
   }
 
-  public ServiceDiscoveryClient.ServicePayload getPayload() {
+  public ServicePayload getPayload() {
     return payload;
   }
 

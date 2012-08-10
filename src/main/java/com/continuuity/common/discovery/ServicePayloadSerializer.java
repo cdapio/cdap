@@ -8,9 +8,9 @@ import com.netflix.curator.x.discovery.details.InstanceSerializer;
  * ServicePayload serializer.
  */
 public class ServicePayloadSerializer implements
-  InstanceSerializer<ServiceDiscoveryClient.ServicePayload> {
+  InstanceSerializer<ServicePayload> {
   /**
-   * Instance of gson that is used to serialize the {@link ServiceDiscoveryClient.ServicePayload}
+   * Instance of gson that is used to serialize the {@link ServicePayload}
    */
   private final Gson gson;
   {
@@ -25,7 +25,7 @@ public class ServicePayloadSerializer implements
    * @throws Exception any errors
    */
   @Override
-  public byte[] serialize(ServiceInstance<ServiceDiscoveryClient.ServicePayload> instance) throws Exception {
+  public byte[] serialize(ServiceInstance<ServicePayload> instance) throws Exception {
     return gson.toJson(instance).getBytes();
   }
 
@@ -38,9 +38,7 @@ public class ServicePayloadSerializer implements
    */
   @Override
   @SuppressWarnings("unchecked")
-  public ServiceInstance<ServiceDiscoveryClient.ServicePayload> deserialize(byte[] bytes) throws Exception {
-    ServiceInstance<ServiceDiscoveryClient.ServicePayload> payload;
-    payload = gson.fromJson(new String(bytes), ServiceInstance.class);
-    return payload;
+  public ServiceInstance<ServicePayload> deserialize(byte[] bytes) throws Exception {
+    return gson.fromJson(new String(bytes), ServiceInstance.class);
   }
 }

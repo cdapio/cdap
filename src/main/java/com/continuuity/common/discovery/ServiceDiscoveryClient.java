@@ -24,38 +24,12 @@ public class ServiceDiscoveryClient implements Closeable {
   private final String connectionString;
   private final List<Closeable> closeables;
   private static ServiceDiscovery<ServicePayload> discovery = null;
-  private static final String SERVICE_PATH = "/continuuity/system/services";
+  public static final String SERVICE_PATH = "/continuuity/system/services";
   private static final int sessionTimeout = 10*1000;
   private static final int connectionTimeout = 5*1000;
   private static final int numberOfRetry = 5;
   private static final int timeBetweenRetries = 10;
   private static boolean started = false;
-
-  /**
-   * Defines the payload that is placed for every service.
-   */
-  public static class ServicePayload {
-    private Map<String, String> values = Maps.newHashMap();
-
-    /**
-     * Default constructor
-     */
-    public ServicePayload() {}
-
-    /**
-     * Adds a key and value as service payload.
-     *
-     * @param key to be stored.
-     * @param value to be associated with key.
-     */
-    public void add(String key, String value) {
-      values.put(key, value);
-    }
-
-    public String get(String key) {
-      return values.get(key);
-    }
-  }
 
   /**
    * Constructs a service registration using an connection string.
@@ -97,6 +71,15 @@ public class ServiceDiscoveryClient implements Closeable {
       throw new ServiceDiscoveryClientException(e);
     }
     started = true;
+  }
+
+  /**
+   * Returns the instance of ServiceDiscovery object.
+   *
+   * @return instance of service discovery.
+   */
+  public ServiceDiscovery<ServicePayload> getServiceDiscovery() {
+    return discovery;
   }
 
   /**

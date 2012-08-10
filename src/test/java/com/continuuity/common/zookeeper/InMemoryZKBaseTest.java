@@ -16,6 +16,11 @@ public class InMemoryZKBaseTest {
   @Before
   public void setupServer() throws Exception {
     server = new InMemoryZookeeper();
+    System.out.println("Server started on " + server.getConnectionString());
+  }
+
+  public String getEnsemble() {
+    return server.getConnectionString();
   }
 
   @After
