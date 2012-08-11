@@ -185,7 +185,7 @@ define([], function () {
 				params: [app, id, -1]
 			}, function (error, response) {
 
-				if (response.params) {
+				if (response.params && self.get('current')) {
 					self.get('current').set('currentState', response.params.status);
 					if (response.params.status === 'RUNNING') {
 						App.interstitial.hide();

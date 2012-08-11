@@ -101,10 +101,10 @@ a strong {
 #header {
 	margin: 0px auto 12px;
 	max-width: 1280px;
-	min-width: 480px;
+	min-width: 800px;
 }
 #wrapper {
-	min-width: 480px;
+	min-width: 800px;
 	padding: 12px 20px;
 	margin: 0 auto 16px;
 	max-width: 1240px;

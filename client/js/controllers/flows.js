@@ -65,6 +65,21 @@ define([], function () {
 
 						if (content[j].applicationId === flows[i].applicationId &&
 							content[j].flowId === flows[i].flowId) {
+
+							// Avoid flickering state when starting.
+							if (content[j].currentState === 'STARTING' &&
+								flows[i].currentState === 'STOPPED' ||
+								content[j].currentState === 'STARTING' &&
+								flows[i].currentState === 'UNDEPLOYED') {
+								continue;
+							}
+
+							// Avoid flickering state when stopping.
+							if (content[j].currentState === 'STOPPING' &&
+								flows[i].currentState === 'RUNNING') {
+								continue;
+							}
+
 							content[j].set('lastStarted', flows[i].lastStarted);
 							content[j].set('lastStopped', flows[i].lastStopped);
 							content[j].set('currentState', flows[i].currentState);
