@@ -6,7 +6,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
-import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.LoggerFactory;
@@ -174,7 +173,6 @@ public abstract class AbstractRegisteredServer {
 
       serverThread.setName(getServerName() + "-Thread");
       serverThread.start();
-      cmdPortServer.serve();
 
       // We wait till we either find that the service has started or reaches timeout.
       StopWatch watch = new StopWatch();
@@ -191,6 +189,8 @@ public abstract class AbstractRegisteredServer {
       if(!running) {
         throw new ServerException("Service not started even after waiting for " + START_WAIT_TIME + "ms.");
       }
+      cmdPortServer.serve();
+
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
       stop(true);
