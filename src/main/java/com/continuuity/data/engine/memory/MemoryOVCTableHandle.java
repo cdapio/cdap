@@ -12,4 +12,9 @@ public class MemoryOVCTableHandle extends SimpleOVCTableHandle {
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
     return new MemoryOVCTable(tableName);
   }
+
+  @Override
+  public String getName() {
+    return "memory";
+  }
 }

@@ -3,26 +3,9 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import com.continuuity.data.operation.ClearFabric;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.Undelete;
 import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.BatchOperationResult;
@@ -31,22 +14,19 @@ import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueFinaliz
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
-import com.continuuity.data.operation.ttqueue.EnqueueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.operation.ttqueue.TTQueue;
-import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.*;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -58,6 +38,10 @@ import com.google.inject.Singleton;
 public class OmidTransactionalOperationExecutor
 implements TransactionalOperationExecutor {
 
+  public String getName() {
+    return "omid(" + tableHandle.getName() + ")";
+  }
+
   /**
    * The Transaction Oracle used by this executor instance.
    */
@@ -65,7 +49,7 @@ implements TransactionalOperationExecutor {
   TransactionOracle oracle;
 
   /**
-   * The {@link OVCTable} handle used to get references to tables.
+   * The {@link OVCTableHandle} handle used to get references to tables.
    */
   @Inject
   OVCTableHandle tableHandle;

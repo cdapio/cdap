@@ -10,10 +10,8 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
@@ -723,50 +721,4 @@ public abstract class OperationExecutorServiceTest {
       }
     }
   }
-
-
-  public long performNIncrements(OperationExecutor opex, int numWrites) {
-    System.err.println("Performing " + numWrites + " increments with opex: " + opex.getClass().getName());
-    final byte[] key = { 'k', 'e', 'y' };
-    final byte[] value = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    Write write = new Write(key, value);
-    Assert.assertTrue(opex.execute(write));
-    Increment increment = new Increment(key, 1);
-    long before = System.currentTimeMillis();
-    for (int i = 0; i < numWrites; i++) {
-      Assert.assertTrue(opex.execute(increment));
-    }
-    long after = System.currentTimeMillis();
-    ReadKey read = new ReadKey(key);
-    byte[] bytes = opex.execute(read);
-    Assert.assertNotNull(bytes);
-    Assert.assertEquals(8, bytes.length);
-    Assert.assertEquals(numWrites, Bytes.toLong(bytes));
-    return after - before;
-  }
-
-  public long performNWrites(OperationExecutor opex, int numWrites) {
-    System.err.println("Performing " + numWrites + " writes with opex: " + opex);
-    final byte[] key = { 'k', 'e', 'y' };
-    final byte[] value = { 0 };
-    Write write = new Write(key, value);
-    long before = System.currentTimeMillis();
-    for (int i = 0; i < numWrites; i++) {
-      value[0] = (byte)(i%0x000000ff);
-      Assert.assertTrue(opex.execute(write));
-    }
-    long after = System.currentTimeMillis();
-    return after - before;
-  }
-
-  @Test @Ignore
-  public void testOverhead() {
-    int numWrites = 1000000;
-    performNIncrements(local, numWrites);
-    long millisLocal = performNIncrements(local, numWrites);
-    System.err.println("Millis with local opex:  " + millisLocal);
-    long millisRemote = performNIncrements(remote, numWrites);
-    System.err.println("Millis with remote opex: " + millisRemote);
-  }
-
 }

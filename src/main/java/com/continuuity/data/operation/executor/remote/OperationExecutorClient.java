@@ -343,4 +343,9 @@ public class OperationExecutorClient
       return false; // TODO execute() must be able to return an error
     }
   }
+
+  @Override
+  public String getName() {
+    return "remote-client";
+  }
 }

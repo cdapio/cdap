@@ -177,4 +177,9 @@ public class SimpleOperationExecutor implements OperationExecutor {
     // TODO Auto-generated method stub
 
   }
+
+  @Override
+  public String getName() {
+    return "simple";
+  }
 }

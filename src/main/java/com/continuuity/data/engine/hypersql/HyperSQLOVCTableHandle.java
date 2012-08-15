@@ -3,17 +3,16 @@
  */
 package com.continuuity.data.engine.hypersql;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
 
 public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
 
@@ -38,5 +37,10 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
         new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
     table.initializeTable();
     return table;
+  }
+
+  @Override
+  public String getName() {
+    return "hSQL";
   }
 }

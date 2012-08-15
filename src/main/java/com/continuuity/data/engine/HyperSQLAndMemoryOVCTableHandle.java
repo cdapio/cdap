@@ -1,10 +1,5 @@
 package com.continuuity.data.engine;
 
-import java.sql.SQLException;
-import java.util.Properties;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OVCTableHandle;
@@ -12,6 +7,10 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * A hybrid {@link OVCTableHandle} that primarily uses HyperSQL tables, except
@@ -37,4 +36,8 @@ public class HyperSQLAndMemoryOVCTableHandle extends HyperSQLOVCTableHandle {
     return super.createNewTable(tableName);
   }
 
+  @Override
+  public String getName() {
+    return "hSQL+memory";
+  }
 }

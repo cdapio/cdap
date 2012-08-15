@@ -59,6 +59,11 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     return new HTable(this.conf, tableName);
   }
 
+  @Override
+  public String getName() {
+    return "hbase";
+  }
+
   public static class HBaseIOExceptionHandler implements IOExceptionHandler {
     @Override
     public void handle(IOException e) {

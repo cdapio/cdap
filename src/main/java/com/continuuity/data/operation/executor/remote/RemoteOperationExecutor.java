@@ -211,4 +211,9 @@ public class RemoteOperationExecutor
       this.clientProvider.returnClient(myClient);
     }
   }
+
+  @Override
+  public String getName() {
+    return "remote";
+  }
 }

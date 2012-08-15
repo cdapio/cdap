@@ -7,6 +7,8 @@ import com.continuuity.data.operation.ttqueue.TTQueueTable;
  */
 public interface OVCTableHandle {
 
+  public String getName();
+
   public OrderedVersionedColumnarTable getTable(byte [] tableName);
 
   public TTQueueTable getQueueTable(byte [] queueTableName);

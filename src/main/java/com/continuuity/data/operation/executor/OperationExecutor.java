@@ -13,4 +13,6 @@ import com.continuuity.api.data.ReadOperationExecutor;
 public interface OperationExecutor
   extends ReadOperationExecutor, WriteOperationExecutor, BatchOperationExecutor,
           InternalOperationExecutor {
+
+  public String getName();
 }
