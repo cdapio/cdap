@@ -174,7 +174,8 @@ project.parent.subprojects.each { p ->
 		exclude 'run-java'
 		exclude 'flow-config.sh'
 		exclude 'flow-client'
-		def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+		exclude 'dfbench'
+            def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
 		cp += ":\$APP_HOME/conf/"
 		filter(ReplaceTokens, tokens: [classpath: cp])
 	    }
