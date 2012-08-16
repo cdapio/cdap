@@ -80,6 +80,7 @@ task singlenode_stage_bin (type: Copy) {
     exclude 'flow-config.sh'
     exclude 'flow-client'
     exclude 'service'
+    exclude 'dfbench'
     exclude 'common*'
     def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
     cp += ":\$APP_HOME/conf/"
