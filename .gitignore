@@ -17,5 +17,5 @@ build/
 #intlj stuff
 *.iml
 .idea/
-data/
+/data/
 
