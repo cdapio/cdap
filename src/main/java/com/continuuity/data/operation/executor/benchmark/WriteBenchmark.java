@@ -8,21 +8,33 @@ import java.util.Arrays;
 
 public class WriteBenchmark extends Benchmark {
 
-  int numWrites = 10000;
+  int numOps = 10000;
   int numThreads = 10;
 
-  void performNWrites(OperationExecutor opex, String name, int threadId, int numWrites) {
+  void performNWrites(OperationExecutor opex,
+                      String name, int threadId, int numOps) {
+
     final byte[] key = ("key" + threadId).getBytes();
-    System.out.println(name + " " + threadId +
-        ": Performing " + numWrites + " writes to key " +
-        new String(key) + " with opex: " + opex.getName());
     final byte[] value = { 0 };
     Write write = new Write(key, value);
-    for (int i = 0; i < numWrites; i++) {
+
+    System.out.println(name + " " + threadId +
+        ": Performing " + numOps + " writes to key " +
+        new String(key) + " with opex: " + opex.getName());
+
+    long start = System.currentTimeMillis();
+
+    for (int i = 0; i < numOps; i++) {
       value[0] = (byte)(i%0x000000ff);
       if (!opex.execute(write))
         System.err.println(name + " " + threadId + ": Write " + i + " Failed.");
     }
+
+    long end = System.currentTimeMillis();
+    long time = end - start;
+    System.out.println(name + " " + threadId + ": Done with " + numOps + " " +
+        "writes after " + time + " ms (" + ((float) numOps * 1000 / time) +
+        "/sec)");
   }
 
   @Override
@@ -32,8 +44,8 @@ public class WriteBenchmark extends Benchmark {
     for (int i = 0; i < args.length; i++) {
       if ("--ops".equals(args[i])) {
         if (i + 1 < args.length) {
-          numWrites = Integer.valueOf(args[++i]);
-          if (numWrites < 1)
+          numOps = Integer.valueOf(args[++i]);
+          if (numOps < 1)
             throw new BenchmarkException(
                 "--ops must be a positive number" + ".");
         } else throw new BenchmarkException(
@@ -55,7 +67,7 @@ public class WriteBenchmark extends Benchmark {
 
   @Override
   public void warmup(OperationExecutor opex) {
-    performNWrites(opex, "warmup", 0, numWrites);
+    performNWrites(opex, "warmup", 0, numOps);
   }
 
   @Override
@@ -78,11 +90,12 @@ public class WriteBenchmark extends Benchmark {
     }
 
     @Override
-    public Runnable getAgent(final OperationExecutor opex, final int instanceInGroup) {
+    public Runnable getAgent(final OperationExecutor opex,
+                             final int instanceInGroup) {
       return new Runnable() {
         @Override
         public void run() {
-          performNWrites(opex, getName(), instanceInGroup, numWrites);
+          performNWrites(opex, getName(), instanceInGroup, numOps);
         }
       };
     }

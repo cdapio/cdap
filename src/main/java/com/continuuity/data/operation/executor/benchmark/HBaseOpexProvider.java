@@ -31,16 +31,15 @@ public class HBaseOpexProvider extends OpexProvider {
         remaining.add(args[i]);
       }
     }
-    if (zkQuorum == null)
-      throw new BenchmarkException("--zk must be provided. ");
-
     return remaining.toArray(new String[remaining.size()]);
   }
 
   @Override
   public OperationExecutor create() {
     Configuration hbaseConf = HBaseConfiguration.create();
-    hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
+    if (zkQuorum != null)
+      hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
+    hbaseConf.set("hbase.defaults.for.version.skip", "true");
     Module module = new DataFabricDistributedModule(hbaseConf);
     Injector injector = Guice.createInjector(module);
     return injector.getInstance(Key.get(OperationExecutor.class,

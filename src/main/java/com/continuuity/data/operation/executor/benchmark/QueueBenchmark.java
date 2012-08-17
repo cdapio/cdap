@@ -63,7 +63,7 @@ public class QueueBenchmark extends Benchmark {
 
   @Override
   public void warmup(OperationExecutor opex) {
-    performNEnqueues(opex, "Warmup", 0, Math.max(numEvents / 4, 1000));
+    performNEnqueues(opex, "Warmup", 0, Math.max(numEvents / 4, 200));
   }
 
   @Override
@@ -128,30 +128,47 @@ public class QueueBenchmark extends Benchmark {
 
   void performNEnqueues(OperationExecutor opex,
                         String name, int threadId, int numOps) {
+
     final byte[] q = ("queue.benchmark").getBytes();
+    final byte[] value = { 0 };
+    QueueEnqueue enqueue = new QueueEnqueue(q, value);
+
     System.out.println(name + " " + threadId +
         ": Performing " + numOps + " enqueues to queue " +
         new String(q) + " with opex: " + opex.getName());
-    final byte[] value = { 0 };
-    QueueEnqueue enqueue = new QueueEnqueue(q, value);
+
+    long start = System.currentTimeMillis();
+
     for (int i = 0; i < numOps; i++) {
       if (!opex.execute(enqueue))
         System.err.println(name + " " + threadId + ": Enqueue Failed. ");
     }
+
+    long end = System.currentTimeMillis();
+    long time = end - start;
+    System.out.println(name + " " + threadId + ": Done with " + numOps + " " +
+        "enqueues after " + time + " ms (" + ((float)numOps * 1000 / time) +
+        "/sec)");
   }
 
   void performNDequeues(OperationExecutor opex,
                         String name, int threadId, int numOps) {
-    LinkedList<QueueAck> pendingAcks = new LinkedList<QueueAck>();
+
     final byte[] q = ("queue.benchmark").getBytes();
-    System.out.println(name + " " + threadId + ": Performing " + numOps +
-        " dequeues and acks (delayed by " + numPendingAcks + ") to queue " +
-        new String(q) + " with opex: " + opex.getName());
     QueueConsumer consumer = new QueueConsumer(threadId, 1, numConsumers);
     QueueConfig config = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), numPendingAcks == 0);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
+    LinkedList<QueueAck> pendingAcks = new LinkedList<QueueAck>();
+
+    System.out.println(name + " " + threadId + ": Performing " + numOps +
+        " dequeues and acks (delayed by " + numPendingAcks + ") to queue " +
+        new String(q) + " with opex: " + opex.getName());
+
+    long start = System.currentTimeMillis();
+
     for (int i = 0; i < numOps; i++) {
+
       // first dequeue
       DequeueResult result = opex.execute(dequeue);
       if (!result.isSuccess()) {
@@ -159,6 +176,7 @@ public class QueueBenchmark extends Benchmark {
             ": Dequeue Failed - " + result.getMsg());
         continue;
       }
+
       // now check whether there is a pending ack that is due for execution
       QueueAck ack = new QueueAck(q, result.getEntryPointer(), consumer);
       QueueAck ackToExecute = null;
@@ -169,17 +187,25 @@ public class QueueBenchmark extends Benchmark {
         if (pendingAcks.size() > numPendingAcks)
           ackToExecute = pendingAcks.removeFirst();
       }
+
       if (ackToExecute != null) {
         if (!opex.execute(ackToExecute))
           System.err.println(name + " " + threadId + ": Ack Failed. ");
       }
     }
+
     // all dequeues are done, finish by executing all pending acks
     while (!pendingAcks.isEmpty()) {
       QueueAck ack = pendingAcks.removeFirst();
       if (!opex.execute(ack))
         System.err.println(name + " " + threadId + ": Ack Failed. ");
     }
+
+    long end = System.currentTimeMillis();
+    long time = end - start;
+    System.out.println(name + " " + threadId + ": Done with " + numOps + " " +
+        "dequeues after " + time + " ms (" + ((float)numOps * 1000 / time) +
+        "/sec)");
   }
 
   public static void main(String[] args) {

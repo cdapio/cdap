@@ -27,9 +27,6 @@ public class RemoteOpexProvider extends OpexProvider {
         remaining.add(args[i]);
       }
     }
-    if (zkQuorum == null)
-      throw new BenchmarkException("--zk must be provided. ");
-
     return remaining.toArray(new String[remaining.size()]);
   }
 
@@ -37,7 +34,8 @@ public class RemoteOpexProvider extends OpexProvider {
   OperationExecutor create() {
     DataFabricDistributedModule module = (DataFabricDistributedModule)
         (new DataFabricModules().getDistributedModules());
-    module.getConfiguration().set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkQuorum);
+    if (zkQuorum != null)
+      module.getConfiguration().set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkQuorum);
     Injector injector = Guice.createInjector(module);
     return injector.getInstance(OperationExecutor.class);
 
