@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+    
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="com.continuuity.flow"
+            name="Continuuity Flow">
+      </category>
+      <wizard
+            category="com.continuuity.flow"
+            class="com.continuuity.flow.devtools.eclipse.ui.NewProjectWizard"
+            id="com.continuuity.flow.ui.NewProjectWizard"
+            name="Continuuity Flow Project"
+            project="true">
+      </wizard>
+   </extension>
+   
+</plugin>
