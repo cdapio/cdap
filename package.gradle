@@ -32,50 +32,15 @@ task javadoc(type: Javadoc, overwrite: true) {
     })
 }
 
-
-/**
- * Stage the final /conf directory 
- * 
- * dynamically generate "stageConf-[project]" tasks for subprojects other than singlenode.  these tasks will copy continuuity-[name].xml from src/main/resources to /conf
-*/
-
-project.parent.subprojects.each { p ->
-    if (p.file('src/main/resources').isDirectory()) {
-	//println "    resourceDir: ${p.sourceSets.main.output.resourcesDir}"
-	if (p != project) { //exclude self (singlenode)
-	    //println "staging conf for ${p.name}"
-	    task "genstageConf${p.name}" (type: Copy) {
-		group 'Deployment'
-		description "Copies src/main/resources to \$buildDir/conf for ${p.name}"
-		from "${project(":${p.name}").sourceSets.main.output.resourcesDir}"
-		include "continuuity-${p.name}.xml"
-		into "${buildDir}/conf"
-		//rename { "continuuity-${p.name}.xml" }
-	    }
-	}
-    } else {
-	//println "skipping conf for ${p.name} - no resources dir"
-    }
-}
-
 // stage the singlenode conf dir
 task stageConfSingleNode (type: Copy) {
     group 'Deployment'
     description "Copies src/main/resources to \$buildDir/conf for singlenode"
     //println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
-    include 'continuuity-webapp.xml'
     include 'logback.xml'
+    include 'continuuity-site.xml'
     into "${buildDir}/conf"
-    //fix path for web=app
-    doLast {
-        def webConfFile = file "${buildDir}/conf/continuuity-webapp.xml"
-        webConfFile.text = webConfFile.text.replaceFirst('../web-cloud-app/build/server/main.js','web-app/server/main.js')
-    }
-}
-
-stageConfSingleNode.dependsOn {
-    tasks.findAll { task -> task.name.startsWith('genstageConf') }
 }
 
 // include staging conf dir (incl token-replaced files) in distZip
@@ -209,7 +174,8 @@ project.parent.subprojects.each { p ->
 		exclude 'run-java'
 		exclude 'flow-config.sh'
 		exclude 'flow-client'
-		def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+		exclude 'dfbench'
+            def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
 		cp += ":\$APP_HOME/conf/"
 		filter(ReplaceTokens, tokens: [classpath: cp])
 	    }

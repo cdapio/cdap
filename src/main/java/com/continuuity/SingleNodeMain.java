@@ -116,7 +116,7 @@ public class SingleNodeMain {
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
 
-    System.out.println(" Starting Monitoring Webapp");
+    System.out.println(" Starting User Interface");
     theWebApp = new WebCloudAppService();
     theWebApp.start(null, myConfiguration);
 
