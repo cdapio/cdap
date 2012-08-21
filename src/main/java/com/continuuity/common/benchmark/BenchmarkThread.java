@@ -4,10 +4,13 @@ public class BenchmarkThread extends Thread {
 
   int agentId;
   AgentGroup agentGroup;
+  BenchmarkMetric globalMetrics;
 
-  public BenchmarkThread(AgentGroup group, int agentId) {
+  public BenchmarkThread(AgentGroup group, int agentId,
+                         BenchmarkMetric groupMetrics) {
     this.agentGroup = group;
     this.agentId = agentId;
+    this.globalMetrics = groupMetrics;
   }
 
   public void run() {
@@ -28,7 +31,7 @@ public class BenchmarkThread extends Thread {
     int runsInRound = 0;
     int runs = 0;
 
-    for (; runs < totalRuns; ++runs) {
+    for (; (totalRuns <= 0) || (runs < totalRuns); ++runs) {
       // run one iteration
       long thisTime = System.currentTimeMillis();
       try {
@@ -39,6 +42,8 @@ public class BenchmarkThread extends Thread {
         e.printStackTrace();
         break;
       }
+      globalMetrics.increment("runs", 1L);
+
       // if necessary, sleep to throttle runs per second
       long currentTime = System.currentTimeMillis();
       accumulatedTime += currentTime - thisTime;

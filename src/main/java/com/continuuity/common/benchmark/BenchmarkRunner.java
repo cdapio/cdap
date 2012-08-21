@@ -69,20 +69,26 @@ public class BenchmarkRunner {
 
     // 3. get agent groups and create a thread for each agent
     AgentGroup[] groups = benchmark.getAgentGroups();
+    BenchmarkMetric[] groupMetrics = new BenchmarkMetric[groups.length];
     LinkedList<BenchmarkThread> threadList = new LinkedList<BenchmarkThread>();
-    for (AgentGroup group : groups) {
+    for (int j = 0; j < groups.length; j++) {
+      AgentGroup group = groups[j];
       System.out.println("Running " + group.getNumAgents() + " " +
           group.getName() + " agents (" + group.getTotalRuns() + " runs, " +
           group.getSecondsToRun() + " seconds time limit, max " +
           group.getRunsPerSecond() + " per second).");
+      groupMetrics[j] = new BenchmarkMetric();
       for (int i = 1; i <= group.getNumAgents(); ++i) {
-        threadList.add(new BenchmarkThread(group, i));
+        threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
       }
     }
     BenchmarkThread[] threads =
         threadList.toArray(new BenchmarkThread[threadList.size()]);
+    ReportThread reporter = new ReportThread(groups, groupMetrics);
+    reporter.start();
 
     // 4. start all threads
+
     for (BenchmarkThread thread : threads) {
       thread.start();
     }
@@ -100,10 +106,15 @@ public class BenchmarkRunner {
       }
     }
 
-    return true;
-  }
+    // 6. Stop report thread
+    reporter.interrupt();
+    try {
+      reporter.join();
+    } catch (InterruptedException e) {
+      error("InterruptedException caught in Thread.join(). Ignoring.");
+    }
 
-  void report() {
+    return true;
   }
 
   void shutdown() throws BenchmarkException {
@@ -121,9 +132,6 @@ public class BenchmarkRunner {
 
       // run it
       if (ok) ok = runner.run();
-
-      // output metrics
-      if (ok) runner.report();
 
     } catch (Exception e) {
       error(e.getMessage());

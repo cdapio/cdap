@@ -6,7 +6,7 @@ public abstract class SimpleBenchmark extends Benchmark {
 
   public class SimpleConfig {
     public boolean verbose = false;
-    int numRuns = 1;
+    int numRuns = 0;
     int numAgents = 1;
     int numSeconds = 0;
     int numRunsPerSecond = 0;
