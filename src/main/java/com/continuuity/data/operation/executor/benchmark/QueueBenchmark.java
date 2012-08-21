@@ -13,6 +13,8 @@ public class QueueBenchmark extends Benchmark {
   int numProducers = 4;
   int numConsumers = 5;
   int numPendingAcks = 0;
+  int reportInterval = 0;
+  String queueName = "queue://benchmark";
 
   @Override
   public String[] configure(String[] args) throws BenchmarkException {
@@ -54,6 +56,18 @@ public class QueueBenchmark extends Benchmark {
                 "--ack must be an unsigned number.");
         } else throw new BenchmarkException(
             "--ack must have an argument. ");
+      }
+      else if ("--queue".equals(args[i])) {
+        if (i + 1 < args.length)
+          queueName = args[++i];
+        else throw new BenchmarkException(
+            "--queue must have an argument. ");
+      }
+      else if ("--interval".equals(args[i])) {
+        if (i + 1 < args.length)
+          queueName = args[++i];
+        else throw new BenchmarkException(
+            "--queue must have an argument. ");
       }
       else
         remaining.add(args[i]);
@@ -129,13 +143,13 @@ public class QueueBenchmark extends Benchmark {
   void performNEnqueues(OperationExecutor opex,
                         String name, int threadId, int numOps) {
 
-    final byte[] q = ("queue.benchmark").getBytes();
+    final byte[] q = (queueName).getBytes();
     final byte[] value = { 0 };
     QueueEnqueue enqueue = new QueueEnqueue(q, value);
 
     System.out.println(name + " " + threadId +
         ": Performing " + numOps + " enqueues to queue " +
-        new String(q) + " with opex: " + opex.getName());
+        queueName + " with opex: " + opex.getName());
 
     long start = System.currentTimeMillis();
 
@@ -154,7 +168,7 @@ public class QueueBenchmark extends Benchmark {
   void performNDequeues(OperationExecutor opex,
                         String name, int threadId, int numOps) {
 
-    final byte[] q = ("queue.benchmark").getBytes();
+    final byte[] q = (queueName).getBytes();
     QueueConsumer consumer = new QueueConsumer(threadId, 1, numConsumers);
     QueueConfig config = new QueueConfig(
         new QueuePartitioner.RandomPartitioner(), numPendingAcks == 0);
@@ -163,7 +177,7 @@ public class QueueBenchmark extends Benchmark {
 
     System.out.println(name + " " + threadId + ": Performing " + numOps +
         " dequeues and acks (delayed by " + numPendingAcks + ") to queue " +
-        new String(q) + " with opex: " + opex.getName());
+        queueName + " with opex: " + opex.getName());
 
     long start = System.currentTimeMillis();
 
