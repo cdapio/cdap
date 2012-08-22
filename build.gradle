@@ -1,0 +1,24 @@
+apply plugin: 'continuuity'
+
+buildscript {
+    apply from: 'continuuity.gradle'
+}
+
+dependencies {
+
+    /// Internal dependencies.
+    if(multiModule && ! buildingRelease)
+    {
+        compile project(":common")
+        compile project(":data-fabric")
+        compile project(":data-fabric").sourceSets.api.output
+        compile project(":gateway")
+    }
+    else
+    {
+        compile group: 'com.continuuity', name: 'common', version: "${continuuityVersion}"
+        compile group: 'com.continuuity', name: 'data-fabric', version: "${continuuityVersion}"
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${continuuityVersion}", changing: true
+        compile group: 'com.continuuity', name: 'gateway', version: "${continuuityVersion}"
+    }
+}

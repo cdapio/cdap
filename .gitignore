@@ -21,3 +21,7 @@ target/
 # Ignore JOE files
 *~
 .DS_Store
+
+# Ignore build, data
+build/
+/data/
