@@ -74,7 +74,7 @@ public class BenchmarkRunner {
           Integer.toString(group.getTotalRuns()) : "unlimited") + " runs, " +
           (group.getSecondsToRun() > 0 ? Integer.toString(group
               .getSecondsToRun()) + " seconds" : "no") + " time limit, " +
-          (group.getRunsPerSecond() >= 0 ? "max " + Integer.toString(group
+          (group.getRunsPerSecond() > 0 ? "max " + Integer.toString(group
               .getRunsPerSecond()) : "unlimited") + " runs per second).");
       groupMetrics[j] = new BenchmarkMetric();
       for (int i = 1; i <= group.getNumAgents(); ++i) {

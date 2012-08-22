@@ -1,7 +1,8 @@
 package com.continuuity.common.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.ImmutablePair;
+
+import java.util.Map;
 
 public class ReportThread extends Thread {
 
@@ -45,6 +46,8 @@ public class ReportThread extends Thread {
     long start = System.currentTimeMillis();
     boolean interrupt = false;
     StringBuilder builder = new StringBuilder();
+    Map<String, Long> previousMetrics = null;
+    long previousMillis = 0;
     // wake up every minute to report the metrics
     for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
       long wakeup = start + (seconds * 1000);
@@ -61,19 +64,34 @@ public class ReportThread extends Thread {
         builder.append("Group " );
         builder.append(groups[i].getName());
         String sep = ": ";
-        for (ImmutablePair<String, Long> metric : groupMetrics[i].list()) {
+        int numThreads = groups[i].getNumAgents();
+        Map<String, Long> metrics = groupMetrics[i].list();
+        for (Map.Entry<String, Long> kv : metrics.entrySet()) {
+          String key = kv.getKey();
+          long value = kv.getValue();
           builder.append(sep); sep = ", ";
-          builder.append(metric.getSecond());
-          builder.append(' ');
-          builder.append(metric.getFirst());
-          builder.append(" (");
           builder.append(String.format(
-              "%1.1f/sec, %1.1f/sec/thread)",
-              metric.getSecond() * 1000.0 / millis,
-              metric.getSecond() * 1000.0 / millis / groups[i].getNumAgents()
+              "%d %s (%1.1f/sec, %1.1f/sec/thread)",
+              value, key,
+              value * 1000.0 / millis,
+              value * 1000.0 / millis / numThreads
           ));
+          if (previousMetrics != null) {
+            Long previousValue = previousMetrics.get(key);
+            if (previousValue == null) previousValue = 0L;
+            long valueSince = value - previousValue;
+            long millisSince = millis - previousMillis;
+            builder.append(String.format(
+                ", %d since last (%1.1f/sec, %1.1f/sec/thread)",
+                valueSince,
+                valueSince * 1000.0 / millisSince,
+                valueSince * 1000.0 / millisSince / numThreads
+            ));
+          }
         }
         System.out.println(builder.toString());
+        previousMetrics = metrics;
+        previousMillis = millis;
       }
     }
   }
