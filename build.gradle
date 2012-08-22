@@ -23,4 +23,7 @@ dependencies {
         compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${continuuityVersion}", changing: true
         compile group: 'com.continuuity', name: 'gateway', version: "${continuuityVersion}"
     }
+
+    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+    testCompile('org.apache.hbase:hbase:0.94.1.continuuity:tests') { exclude module: 'junit' }
 }
