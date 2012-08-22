@@ -14,6 +14,7 @@ gitRepos << new GitRepo(name: "overlord");
 gitRepos << new GitRepo(name: "web-cloud-app");
 gitRepos << new GitRepo(name: "examples");
 gitRepos << new GitRepo(name: "singlenode");
+gitRepos << new GitRepo(name: "performance");
 
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
