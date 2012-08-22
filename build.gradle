@@ -4,6 +4,8 @@ buildscript {
     apply from: 'continuuity.gradle'
 }
 
+def continuuityVersion = '0.1.0-SNAPSHOT'
+
 dependencies {
 
     /// Internal dependencies.
