@@ -22,13 +22,7 @@ public class BenchmarkRunner {
   boolean parseOptions(String[] args) throws BenchmarkException {
     // 1. parse command line for --bench, copy everything else into config
     for (int i = 0; i < args.length; i++) {
-      if ("--bench".equals(args[i])) {
-        if (i + 1 < args.length) {
-          benchName = args[++i];
-        } else {
-          throw new BenchmarkException("--bench must have an argument.");
-        }
-      } else if ("--help".equals(args[i])) {
+      if ("--help".equals(args[i])) {
         usage();
         return false;
       }
@@ -37,6 +31,8 @@ public class BenchmarkRunner {
           String key = args[i].substring(2);
           String value = args[++i];
           config.set(key, value);
+          if ("bench".equals(key))
+            benchName = value;
         } else {
           throw new BenchmarkException("--<key> must have an argument.");
         }
@@ -74,9 +70,12 @@ public class BenchmarkRunner {
     for (int j = 0; j < groups.length; j++) {
       AgentGroup group = groups[j];
       System.out.println("Running " + group.getNumAgents() + " " +
-          group.getName() + " agents (" + group.getTotalRuns() + " runs, " +
-          group.getSecondsToRun() + " seconds time limit, max " +
-          group.getRunsPerSecond() + " per second).");
+          group.getName() + " agents (" + (group.getTotalRuns() > 0 ?
+          Integer.toString(group.getTotalRuns()) : "unlimited") + " runs, " +
+          (group.getSecondsToRun() > 0 ? Integer.toString(group
+              .getSecondsToRun()) + " seconds" : "no") + " time limit, " +
+          (group.getRunsPerSecond() >= 0 ? "max " + Integer.toString(group
+              .getRunsPerSecond()) : "unlimited") + " runs per second).");
       groupMetrics[j] = new BenchmarkMetric();
       for (int i = 1; i <= group.getNumAgents(); ++i) {
         threadList.add(new BenchmarkThread(group, i, groupMetrics[j]));
@@ -84,16 +83,17 @@ public class BenchmarkRunner {
     }
     BenchmarkThread[] threads =
         threadList.toArray(new BenchmarkThread[threadList.size()]);
-    ReportThread reporter = new ReportThread(groups, groupMetrics);
+
+    // 4. start a reporter thread
+    ReportThread reporter = new ReportThread(groups, groupMetrics, config);
     reporter.start();
 
-    // 4. start all threads
-
+    // 5. start all threads
     for (BenchmarkThread thread : threads) {
       thread.start();
     }
 
-    // 5. wait for all threads to finish
+    // 6. wait for all threads to finish
     while (!threadList.isEmpty()) {
       BenchmarkThread thread = threadList.removeFirst();
       try {
@@ -106,7 +106,7 @@ public class BenchmarkRunner {
       }
     }
 
-    // 6. Stop report thread
+    // 7. Stop reporter thread
     reporter.interrupt();
     try {
       reporter.join();
