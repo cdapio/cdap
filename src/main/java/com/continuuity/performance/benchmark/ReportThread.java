@@ -51,8 +51,9 @@ public class ReportThread extends Thread {
     // wake up every minute to report the metrics
     for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
       long wakeup = start + (seconds * 1000);
+      long currentTime = System.currentTimeMillis();
       try {
-        Thread.sleep(wakeup - System.currentTimeMillis());
+        if (wakeup > currentTime) Thread.sleep(wakeup - currentTime);
       } catch (InterruptedException e) {
         interrupt = true;
       }

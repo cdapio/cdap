@@ -34,7 +34,9 @@ public class LoadGenerator extends SimpleBenchmark {
 
   @Override
   public void configure(CConfiguration config) throws BenchmarkException {
+
     super.configure(config);
+
     baseUrl = config.get("base");
     hostname = config.get("gateway");
     destination = config.get("stream");

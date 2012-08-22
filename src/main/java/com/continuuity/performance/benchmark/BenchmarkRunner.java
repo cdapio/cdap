@@ -69,11 +69,17 @@ public class BenchmarkRunner {
     LinkedList<BenchmarkThread> threadList = new LinkedList<BenchmarkThread>();
     for (int j = 0; j < groups.length; j++) {
       AgentGroup group = groups[j];
-      System.out.println("Running " + group.getNumAgents() + " " +
-          group.getName() + " agents (" + (group.getTotalRuns() > 0 ?
-          Integer.toString(group.getTotalRuns()) : "unlimited") + " runs, " +
-          (group.getSecondsToRun() > 0 ? Integer.toString(group
-              .getSecondsToRun()) + " seconds" : "no") + " time limit, " +
+      int numAgents = group.getNumAgents();
+      if (numAgents < 1) {
+        throw new BenchmarkException("Number of agents for group " + group
+            .getName() + " must be at leat one but is " + numAgents + ".");
+      }
+      int runsPerAgent = group.getTotalRuns() / numAgents;
+      System.out.println(
+          "Running " + numAgents + " " + group.getName() + " agents (" +
+          (runsPerAgent > 0 ? Integer.toString(runsPerAgent) : "unlimited") +
+          " runs per agent, " + (group.getSecondsToRun() > 0 ? Integer.toString
+          (group.getSecondsToRun()) + " seconds" : "no") + " time limit, " +
           (group.getRunsPerSecond() > 0 ? "max " + Integer.toString(group
               .getRunsPerSecond()) : "unlimited") + " runs per second).");
       groupMetrics[j] = new BenchmarkMetric();
@@ -131,7 +137,7 @@ public class BenchmarkRunner {
       boolean ok = runner.parseOptions(args);
 
       // run it
-      if (ok) ok = runner.run();
+      if (ok) runner.run();
 
     } catch (Exception e) {
       error(e.getMessage());

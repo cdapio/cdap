@@ -16,7 +16,7 @@ public class BenchmarkThread extends Thread {
   public void run() {
     Agent agent = agentGroup.newAgent();
     int numAgents = agentGroup.getNumAgents();
-    int totalRuns = agentGroup.getTotalRuns();
+    int totalRuns = agentGroup.getTotalRuns() / numAgents;
     int timeToRun = agentGroup.getSecondsToRun();
     int runsPerSecond = agentGroup.getRunsPerSecond();
 

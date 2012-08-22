@@ -6,10 +6,10 @@ public abstract class SimpleBenchmark extends Benchmark {
 
   public class SimpleConfig {
     public boolean verbose = false;
-    int numRuns = 0;
-    int numAgents = 1;
-    int numSeconds = 0;
-    int numRunsPerSecond = 0;
+    public int numRuns = 0;
+    public int numAgents = 1;
+    public int numSeconds = 0;
+    public int numRunsPerSecond = 0;
 
     public void configure(CConfiguration config) {
       verbose = config.getBoolean("verbose", verbose);
