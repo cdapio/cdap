@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class LoadGenerator extends SimpleBenchmark {
@@ -31,6 +32,21 @@ public class LoadGenerator extends SimpleBenchmark {
   String [] wordList = shortList;
 
   Random seedRandom = new Random();
+
+  @Override
+  public Map<String, String> usage() {
+    Map<String, String> usage = super.usage();
+    usage.put("--base <url>", "The base URL of the gateway stream interface.");
+    usage.put("--gateway <hostname>", "The hostname of the gateway. The rest " +
+        "of the gateway URL will be constructed from the local default " +
+        "configuration. Default is localhost.");
+    usage.put("--stream <name>", "The name of the stream to send events to.");
+    usage.put("--words <filename>", "To specify a file containing a " +
+        "vocabulary for generating the random text, one word per line. ");
+    usage.put("--length <num>", "To specify a length limit for the generated " +
+        "random text. Default is 100 words.");
+    return usage;
+  }
 
   @Override
   public void configure(CConfiguration config) throws BenchmarkException {

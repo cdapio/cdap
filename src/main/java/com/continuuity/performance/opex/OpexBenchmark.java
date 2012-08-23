@@ -5,10 +5,25 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
 
+import java.util.Map;
+
 public abstract class OpexBenchmark extends SimpleBenchmark {
 
   OpexProvider opexProvider;
   OperationExecutor opex;
+
+  @Override
+  public Map<String, String> usage() {
+    Map<String, String> usage = super.usage();
+    usage.put("--opex <name>", "To specify the operation executor to use. " +
+        "Valid short values are 'memory', 'remote' and 'hbase'. " +
+        "Alternatively, specify the name of a class that implements " +
+        "OpexProvider, and its create() method will be used to obtain the " +
+        "opex.");
+    usage.put("--zk", "For some opex providers, specifies the zookeeper " +
+        "quorum to use.");
+    return usage;
+  }
 
   @Override
   public void configure(CConfiguration config) throws BenchmarkException {
@@ -43,6 +58,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
       this.opexProvider.configure(config);
     }
   }
+
+
 
   @Override
   public void initialize() throws BenchmarkException {

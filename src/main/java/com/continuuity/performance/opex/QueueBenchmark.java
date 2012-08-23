@@ -6,10 +6,7 @@ import com.continuuity.performance.benchmark.*;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class QueueBenchmark extends OpexBenchmark {
 
@@ -23,6 +20,21 @@ public class QueueBenchmark extends OpexBenchmark {
   int numPendingAcks = 0;
   ArrayList<LinkedList<QueueAck>> pendingAcks;
 
+  @Override
+  public Map<String, String> usage() {
+    Map<String, String> usage = super.usage();
+    usage.put("--producers <num>",
+        "Number of producer agents to run. Each producer will enqueue " +
+            "runs/producers times. Default is 1.");
+    usage.put("--consumers <num>",
+        "Number of consumer agents to run. Each consumer will dequeue " +
+            "runs/producers times. Default is 1.");
+    usage.put("--ack <num>", "Number of runs to delay the ack for each " +
+        "dequeue. Default is 0 (ack immediately).");
+    usage.put("--queue <name>", "Name of the queue to enqueue/dequeue. " +
+        "Default is 'queue://benchmark'.");
+    return usage;
+  }
 
   @Override
   public void configure(CConfiguration config) throws BenchmarkException {
@@ -166,7 +178,7 @@ public class QueueBenchmark extends OpexBenchmark {
 
   public static void main(String[] args) {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
-    args1[args.length] = "--benchmark";
+    args1[args.length] = "--bench";
     args1[args.length + 1] = QueueBenchmark.class.getName();
     BenchmarkRunner.main(args1);
   }

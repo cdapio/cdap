@@ -3,6 +3,8 @@ package com.continuuity.performance.benchmark;
 import com.continuuity.common.conf.CConfiguration;
 
 import java.io.PrintStream;
+import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class Benchmark {
 
@@ -18,6 +20,16 @@ public abstract class Benchmark {
    */
   public void configure(CConfiguration config) throws BenchmarkException {
     // by default do nothing
+  }
+
+  /**
+   * This method is used to inform the command line about the expected
+   * options for configure()
+   * @return A map of option name to a description of the option.
+   */
+  public Map<String, String> usage() {
+    // by default do configuration options
+    return new TreeMap<String, String>();
   }
 
   /**

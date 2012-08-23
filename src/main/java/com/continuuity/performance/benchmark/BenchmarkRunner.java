@@ -3,6 +3,7 @@ package com.continuuity.performance.benchmark;
 import com.continuuity.common.conf.CConfiguration;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 public class BenchmarkRunner {
 
@@ -14,17 +15,33 @@ public class BenchmarkRunner {
     System.err.println("Error: " + message);
   }
 
-  static void usage() {
-    System.out.println("Usage: BenchmarkRunner --bench <name> [ --<key> " +
-        "<value> ... ]");
+  void usage() {
+    System.out.println("Usage: BenchmarkRunner --bench <name> [ --report " +
+        "<seconds> ] [ --<key> <value> ... ]");
+    if (benchmark != null) {
+      Map<String, String> usage = benchmark.usage();
+      if (usage != null && !usage.isEmpty()) {
+        System.out.println("Specific options for benchmark " + benchName +
+            ":");
+        for (String option : usage.keySet()) {
+          System.out.println(
+              String.format("  %-20s %s", option, usage.get(option)));
+        }
+      }
+    } else {
+      System.out.print("Use --help --bench <name> for benchmark specific " +
+          "options.");
+    }
   }
 
   boolean parseOptions(String[] args) throws BenchmarkException {
+    boolean help = false;
+
     // 1. parse command line for --bench, copy everything else into config
     for (int i = 0; i < args.length; i++) {
       if ("--help".equals(args[i])) {
-        usage();
-        return false;
+        help = true;
+        continue;
       }
       else if (args[i].startsWith("--")) {
         if (i + 1 < args.length) {
@@ -41,7 +58,12 @@ public class BenchmarkRunner {
 
     // 2. instantiate benchmark and configure it
     if (benchName == null) {
-      throw new BenchmarkException("--bench must be specified.");
+      if (help) {
+        usage();
+        return false;
+      } else {
+        throw new BenchmarkException("--bench must be specified.");
+      }
     }
     if (!benchName.startsWith("com.continuuity")) {
       benchName = this.getClass().getPackage().getName() + "." + benchName;
@@ -49,8 +71,12 @@ public class BenchmarkRunner {
     try {
       benchmark = (Benchmark)Class.forName(benchName).newInstance();
     } catch (Exception e) {
-      throw new BenchmarkException("Unable to intsantiate benchmark '" +
+      throw new BenchmarkException("Unable to instantiate benchmark '" +
           benchName + "': " + e.getMessage(), e);
+    }
+    if (help) {
+      usage();
+      return false;
     }
     benchmark.configure(config);
     return true;
