@@ -1,5 +1,6 @@
 package com.continuuity.common.service.distributed;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -45,6 +46,16 @@ public class ApplicationMasterSpecification {
    * Client port set for application master.
    */
   private int clientPort;
+
+  /**
+   * Hook that gets called when the flow is stopping.
+   */
+  private Function<Void, Void> onShutDownHook;
+
+  /**
+   * Hook that gets invoked when the flow is started.
+   */
+  private Function<Void, Void> onStartupHook;
 
   /**
    * tracking url set for this application master.
@@ -135,6 +146,33 @@ public class ApplicationMasterSpecification {
     this.trackingUrl = trackingUrl;
   }
 
+  /**
+   * Returns the shutdown hook invoked when the flow is being shutdown.
+   *
+   * @return an instance of shutdown hook if set else null.
+   */
+  public Function<Void, Void> getOnShutdownHook() {
+    return onShutDownHook;
+  }
+
+  private void setOnShutDownHook(Function<Void, Void> onShutDownHook) {
+    this.onShutDownHook = onShutDownHook;
+  }
+
+  /**
+   * Returns the start up hook that is invoked after the app master has
+   * completely started.
+   *
+   * @return an instance of startup hook if set else null.
+   */
+  public Function<Void, Void> getOnStartupHook() {
+    return onStartupHook;
+  }
+
+  private void setOnStartupHook(Function<Void, Void> onStartupHook) {
+    this.onStartupHook = onStartupHook;
+  }
+
   public static class Builder {
     private Configuration configuration;
     private ApplicationAttemptId attemptId;
@@ -143,6 +181,8 @@ public class ApplicationMasterSpecification {
     private String hostname = "";
     private int clientPort = 0;
     private String trackingUrl = "";
+    private Function<Void, Void> onShutdownHook = null;
+    private Function<Void, Void> onStartupHook = null;
 
     public Builder() {
       Map<String, String> env = System.getenv();
@@ -169,6 +209,16 @@ public class ApplicationMasterSpecification {
       return this;
     }
 
+    public Builder setShutdownHook(Function<Void, Void> onShutdownHook) {
+      this.onShutdownHook = onShutdownHook;
+      return this;
+    }
+
+    public Builder setStartupHook(Function<Void, Void> onStartupHook) {
+      this.onStartupHook = onStartupHook;
+      return this;
+    }
+
     public Builder setClientPort(int clientPort) {
       this.clientPort = clientPort;
       return this;
@@ -188,6 +238,8 @@ public class ApplicationMasterSpecification {
       amp.setClientPort(clientPort);
       amp.setTrackingUrl(trackingUrl);
       amp.setConfiguration(configuration);
+      amp.setOnShutDownHook(onShutdownHook);
+      amp.setOnStartupHook(onStartupHook);
       return amp;
     }
   }

@@ -49,6 +49,7 @@ public class Constants {
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_PORT = "45000";
   public static final String DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = "2";
 
+
   /**
    * Constants used by Tuple serializer
    */
@@ -89,4 +90,22 @@ public class Constants {
   public static final String CFG_RESOURCE_MANAGER_CLOUD_PORT = "resource.manager.cloud.port";
   public static final String DEFAULT_RESOURCE_MANAGER_CLOUD_HOST = "localhost";
   public static final String DEFAULT_RESOURCE_MANAGER_CLOUD_PORT = DEFAULT_RESOURCE_MANAGER_SERVER_PORT;
+
+  /**
+   * Configuration for Metrics collection server
+   */
+  public static final String CFG_METRICS_COLLECTOR_SERVER_ADDRESS = "overlord.metrics.server.address";
+  public static final String CFG_METRICS_COLLECTOR_SERVER_PORT = "overlord.metrics.server.port";
+  public static final String CFG_OPENTSDB_SERVER_ADDRESS = "opentsdb.server.address";
+  public static final String CFG_OPENTSDB_SERVER_PORT = "opentsdb.server.port";
+  public static final String CFG_METRICS_COLLECTOR_FORWARD_FLOW_TO_OPENTSDB = "overlord.metrics.server.forwardto.opentsdb";
+
+  /**
+   * Defaults for metrics collection server
+   */
+  public static final String DEFAULT_METRICS_COLLECTOR_SERVER_ADDRESS = "0.0.0.0";
+  public static final int DEFAULT_METRICS_COLLECTOR_SERVER_PORT = 45003;
+  public static final String DEFAULT_OPENTSDB_SERVER_ADDRESS = "localhost";
+  public static final int DEFAULT_OPENTSDB_SERVER_PORT = 4242;
+  public static final boolean DEFAULT_METRICS_COLLECTOR_FORWARD_FLOW_TO_OPENTSDB = false;
 }

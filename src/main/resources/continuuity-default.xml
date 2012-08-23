@@ -231,9 +231,44 @@
     </property>
 
     <!--
+        Metrics collection configuration.
+    -->
+    <property>
+        <name>overlord.metrics.server.address</name>
+        <value>0.0.0.0</value>
+        <description>Specifies the server address port for metrics
+            collection server.</description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.server.port</name>
+        <value>45003</value>
+        <description>Specifies the port on which metrics collection
+            server will run on.</description>
+    </property>
+
+    <property>
+        <name>opentsdb.server.address</name>
+        <value>localhost</value>
+        <description>Specifies the open TSDB server address.</description>
+    </property>
+
+    <property>
+        <name>opentsdb.server.port</name>
+        <value>4242</value>
+        <description>Specifies the port on which opentsdb will run.</description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.server.forwardto.opentsdb</name>
+        <value>true</value>
+        <description>Specifies whether the flow metrics are to be
+            forwarded to opentsdb</description>
+    </property>
+
+    <!--
         Web UI configuration
     -->
-
     <property>
         <name>webapp.main</name>
         <value>web-app/server/main.js</value>

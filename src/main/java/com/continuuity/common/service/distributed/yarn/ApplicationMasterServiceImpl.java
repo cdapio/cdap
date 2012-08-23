@@ -1,6 +1,7 @@
 package com.continuuity.common.service.distributed.yarn;
 
 import com.continuuity.common.service.distributed.*;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -8,7 +9,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.Service;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.yarn.api.AMRMProtocol;
 import org.apache.hadoop.yarn.api.protocolrecords.*;
@@ -17,7 +17,6 @@ import org.apache.hadoop.yarn.exceptions.YarnRemoteException;
 import org.apache.hadoop.yarn.util.Records;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
@@ -142,6 +141,10 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * Iterate through all container groups.
      */
     if(! tasksHandler.process()) {
+      Function<Void, Void> hook = specification.getOnShutdownHook();
+      if(hook != null) {
+        hook.apply(null);
+      }
       stop();
     }
   }
