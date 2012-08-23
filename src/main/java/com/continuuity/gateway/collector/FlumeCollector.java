@@ -40,15 +40,6 @@ public abstract class FlumeCollector extends Collector {
     if (this.flumeAdapter == null) {
       this.flumeAdapter = new FlumeAdapter(this);
     }
-    // tell the adapter about the consumer
-    this.flumeAdapter.setConsumer(consumer);
-  }
-
-  @Override
-  public Consumer getConsumer() {
-    // we consume through the adapter
-    if (this.flumeAdapter == null) return null;
-    return this.flumeAdapter.getConsumer();
   }
 
   @Override

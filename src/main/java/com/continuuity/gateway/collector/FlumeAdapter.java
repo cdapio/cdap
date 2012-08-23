@@ -8,7 +8,7 @@ import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.Consumer;
+import com.continuuity.metrics2.api.CMetrics;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
@@ -37,20 +37,15 @@ class FlumeAdapter implements AvroSourceProtocol {
   private static final Logger LOG = LoggerFactory
       .getLogger(FlumeAdapter.class);
 
-  private Consumer consumer;
+  /**
+   * The collector that created this handler. It has collector name and consumer
+   */
   private Collector collector;
 
-  ///CLOVER OFF
-
   /**
-   * prevent using default constructor, to ensure the collector is always set
+   * The metrics object of the rest accessor
    */
-  private FlumeAdapter() {
-    LOG.error("Attempt to call default constructor.");
-    throw new UnsupportedOperationException(
-        "Attempt to call default constructor for FlumeAdapter.");
-  }
-  ///CLOVER ON
+  private CMetrics metrics;
 
   /**
    * Constructor ensures that the collector is always set
@@ -60,24 +55,7 @@ class FlumeAdapter implements AvroSourceProtocol {
 
   public FlumeAdapter(Collector collector) {
     this.collector = collector;
-  }
-
-  /**
-   * Set the consumer for the output events
-   *
-   * @param consumer the consumer
-   */
-  public void setConsumer(Consumer consumer) {
-    this.consumer = consumer;
-  }
-
-  /**
-   * Get the consumer for the output events
-   *
-   * @return the consumer
-   */
-  public Consumer getConsumer() {
-    return this.consumer;
+    this.metrics = collector.getMetricsClient();
   }
 
   /**
@@ -92,12 +70,16 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each single event */
   public final Status append(AvroFlumeEvent event) {
+    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
+    metrics.counter(this.getClass(), Constants.METRIC_ENQUEUE_REQUESTS, 1);
     LOG.debug("Received event: " + event);
     try {
-      this.consumer.consumeEvent(convertFlume2Event(event));
+      this.collector.getConsumer().consumeEvent(convertFlume2Event(event));
+      metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
       return Status.OK;
     } catch (Exception e) {
       LOG.warn("Error consuming single event: " + e.getMessage());
+      metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
       return Status.FAILED;
     }
   }
@@ -105,12 +87,16 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each batch of events */
   public final Status appendBatch(List<AvroFlumeEvent> events) {
+    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
+    metrics.counter(this.getClass(), Constants.METRIC_BATCH_REQUESTS, 1);
     LOG.debug("Received batch: " + events);
     try {
-      this.consumer.consumeEvents(convertFlume2Event(events));
+      this.collector.getConsumer().consumeEvents(convertFlume2Event(events));
+      metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
       return Status.OK;
     } catch (Exception e) {
       LOG.warn("Error consuming batch of events: " + e.getMessage());
+      metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
       return Status.FAILED;
     }
   }

@@ -8,6 +8,7 @@ import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
+import com.continuuity.metrics2.api.CMetrics;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -43,6 +44,12 @@ public class RestHandler extends NettyRestHandler {
    * The collector that created this handler. It has collector name and consumer
    */
   private RestCollector collector;
+
+  /**
+   * The metrics object of the rest accessor
+   */
+  private CMetrics metrics;
+
   /**
    * All the paths have to be of the form
    * http://host:port&lt;pathPrefix>&lt;stream>
@@ -66,6 +73,7 @@ public class RestHandler extends NettyRestHandler {
    */
   RestHandler(RestCollector collector) {
     this.collector = collector;
+    this.metrics = collector.getMetricsClient();
     this.pathPrefix = collector.getHttpConfig().getPathPrefix()
         + collector.getHttpConfig().getPathMiddle();
   }
@@ -100,11 +108,13 @@ public class RestHandler extends NettyRestHandler {
     HttpRequest request = (HttpRequest) message.getMessage();
 
     LOG.debug("Request received");
+    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
 
     // we only support POST
     HttpMethod method = request.getMethod();
     if (method != HttpMethod.POST && method != HttpMethod.GET ) {
       LOG.debug("Received a " + method + " request, which is not supported");
+      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       respondNotAllowed(message.getChannel(), allowedMethods);
       return;
     }
@@ -130,6 +140,7 @@ public class RestHandler extends NettyRestHandler {
 
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
+      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       LOG.debug("Received an unsupported " + method +
           " request '" + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
@@ -138,6 +149,7 @@ public class RestHandler extends NettyRestHandler {
 
     if ((operation == ENQUEUE || operation == META) &&
         parameters != null && !parameters.isEmpty()) {
+      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       LOG.debug(
           "Received a request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
@@ -167,6 +179,7 @@ public class RestHandler extends NettyRestHandler {
       }
     }
     if (destination == null) {
+      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       LOG.debug("Received a request with invalid path " + path);
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
@@ -174,6 +187,7 @@ public class RestHandler extends NettyRestHandler {
 
     switch(operation) {
       case ENQUEUE: {
+        metrics.counter(this.getClass(), Constants.METRIC_ENQUEUE_REQUESTS, 1);
         // build a new event from the request
         EventBuilder builder = new EventBuilder();
         // set some built-in headers
@@ -206,17 +220,20 @@ public class RestHandler extends NettyRestHandler {
           this.collector.getConsumer().consumeEvent(event);
         } catch (Exception e) {
           LOG.error("Error consuming single event: " + e.getMessage());
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
         // all good - respond success
+        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
         respondSuccess(message.getChannel(), request);
         break;
       }
       case META: {
         LOG.debug("Received a request for stream meta data," +
             " which is not implemented yet.");
+        metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
         return;
       }
@@ -225,6 +242,9 @@ public class RestHandler extends NettyRestHandler {
       // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
       //    an HTTP header
       case NEWID: {
+        metrics.counter(this.getClass(),
+            Constants.METRIC_CONSUMER_ID_REQUESTS, 1);
+
         String queueURI = FlowStream.buildStreamURI(destination).toString();
         QueueAdmin.GetGroupID op =
             new QueueAdmin.GetGroupID(queueURI.getBytes());
@@ -232,11 +252,14 @@ public class RestHandler extends NettyRestHandler {
         byte[] responseBody = Long.toString(id).getBytes();
         Map<String, String> headers = Maps.newHashMap();
         headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
+
+        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
         respondSuccess(message.getChannel(), request,
             HttpResponseStatus.CREATED, headers, responseBody);
         break;
       }
       case DEQUEUE: {
+        metrics.counter(this.getClass(), Constants.METRIC_DEQUEUE_REQUESTS, 1);
         // there must be a header with the consumer id in the request
         String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
         Long id = null;
@@ -251,6 +274,7 @@ public class RestHandler extends NettyRestHandler {
                 + Constants.HEADER_STREAM_CONSUMER + ": " + e.getMessage());
         } }
         if (null == id) {
+          metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
           respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
           return;
         }
@@ -272,6 +296,7 @@ public class RestHandler extends NettyRestHandler {
           return;
         }
         if (result.isEmpty()) {
+          metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
           respondSuccess(message.getChannel(), request,
               HttpResponseStatus.NO_CONTENT);
           return;
@@ -287,6 +312,7 @@ public class RestHandler extends NettyRestHandler {
         } catch (Exception e) {
           LOG.error("Exception when deserializing data from stream "
               + queueURI + " into an event: " + e.getMessage());
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
@@ -295,6 +321,7 @@ public class RestHandler extends NettyRestHandler {
         QueueAck ack = new QueueAck(
             queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
         if (!this.collector.getExecutor().execute(ack)) {
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           LOG.error("Ack failed to for queue " + queueURI + ", consumer "
               + queueConsumer + " and pointer " + result.getEntryPointer());
           respondError(message.getChannel(),
@@ -309,12 +336,14 @@ public class RestHandler extends NettyRestHandler {
             prefixedHeaders.put(destination + "." + header.getKey(),
                 header.getValue());
         // now the headers and body are ready to be sent back
+        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
         respondSuccess(message.getChannel(), request,
             HttpResponseStatus.OK, prefixedHeaders, body);
         break;
       }
       default: {
         // this should not happen because we checked above -> internal error
+        metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
         respondError(message.getChannel(),
             HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
@@ -324,6 +353,7 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
+    metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
     LOG.error("Exception caught for collector '" +
         this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();

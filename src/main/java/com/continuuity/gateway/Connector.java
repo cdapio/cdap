@@ -1,6 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.metrics2.collector.MetricType;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type
@@ -31,6 +33,18 @@ public abstract class Connector {
    * This is our configuration
    */
   protected CConfiguration myConfiguration;
+
+  /**
+   * This will be used to collect connector metrics
+   */
+  protected CMetrics metrics = new CMetrics(MetricType.System);
+
+  /**
+   * Retrieve the metrics client of the connector
+   */
+  public CMetrics getMetricsClient() {
+    return this.metrics;
+  }
 
   /**
    * Configure this connector
