@@ -77,7 +77,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       new ContainerManagerConnectionHandlerImpl(specification.getConfiguration()));
   }
 
-  public ApplicationMasterServiceImpl(ApplicationMasterSpecification specification, ResourceManagerConnectionHandler<AMRMProtocol> rmHandler,
+  public ApplicationMasterServiceImpl(ApplicationMasterSpecification specification,
+                                      ResourceManagerConnectionHandler<AMRMProtocol> rmHandler,
                                       ContainerManagerConnectionHandler cmHandler) {
     this.specification = specification;
     this.rmHandler = rmHandler;
@@ -141,13 +142,10 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      * Iterate through all container groups.
      */
     if(! tasksHandler.process()) {
-      Function<Void, Void> hook = specification.getOnShutdownHook();
-      if(hook != null) {
-        hook.apply(null);
-      }
       stop();
     }
   }
+
 
   /**
    * Shuts down the Application service.
@@ -159,16 +157,14 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     // Ask the tasks handler to shutdown.
     tasksHandler.stop();
 
-    /** Iterate through all the groups and request them to be stopped. */
+    // Iterate through all the groups and request them to be stopped.
     int totalFailures = tasksHandler.getFailures();
 
-    /** Let resource manager know that you are done. */
+    // Let resource manager know that you are done.
     FinishApplicationMasterRequest request = Records.newRecord(FinishApplicationMasterRequest.class);
     request.setAppAttemptId(getApplicationAttemptId());
 
     if(state() == State.FAILED) {
-      request.setFinishApplicationStatus(FinalApplicationStatus.FAILED);
-    } else if(totalFailures > specification.getAllowedFailures()) {
       request.setFinishApplicationStatus(FinalApplicationStatus.FAILED);
     } else {
       request.setFinishApplicationStatus(FinalApplicationStatus.SUCCEEDED);
@@ -177,6 +173,12 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       resourceMgr.finishApplicationMaster(request);
     } catch (YarnRemoteException e) {
       Log.warn("Failed while shutting down application manager service. Reason : {}", e.getMessage());
+    }
+
+    // After we have stopped the stop hook is invoked.
+    Function<Void, Void> hook = specification.getOnShutdownHook();
+    if(hook != null) {
+      hook.apply(null);
     }
   }
 
