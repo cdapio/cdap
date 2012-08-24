@@ -2,6 +2,7 @@ package com.continuuity.metrics;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.metrics.service.MetricsClient;
 import com.continuuity.metrics.service.MetricsServer;
@@ -30,6 +31,7 @@ public class FlowMonitorServerTest {
   private static String zkEnsemble;
   private static Connection myConnection;
   private static MetricsServer server;
+  private static int serverPort;
 
   static {
     try {
@@ -49,6 +51,8 @@ public class FlowMonitorServerTest {
     server = injector.getInstance(MetricsServer.class);
     CConfiguration configuration = CConfiguration.create();
     configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE, zkEnsemble);
+    serverPort = PortDetector.findFreePort();
+    configuration.setInt(Constants.CFG_FLOW_MONITOR_SERVER_PORT, serverPort);
     server.start(null, configuration);
 
     Connection connection = DriverManager.getConnection("jdbc:hsqldb:file:data/metricsdb", "sa", "");
@@ -70,7 +74,7 @@ public class FlowMonitorServerTest {
   public void testFlowMonitorServer() throws Exception {
     Thread.sleep(5000);
 
-    MetricsClient client = new MetricsClient("localhost", 45002);
+    MetricsClient client = new MetricsClient("localhost", serverPort);
 
     FlowMetric metric = new FlowMetric();
     metric.setAccountId("accountid");
@@ -128,7 +132,7 @@ public class FlowMonitorServerTest {
   public void testGetFlowsAPI() throws Exception {
     Thread.sleep(5000);
 
-    MetricsClient client = new MetricsClient("localhost", 45002);
+    MetricsClient client = new MetricsClient("localhost", serverPort);
     List<FlowState> states = client.getFlows("demo");
     Assert.assertNotNull(states);
     client.close();
@@ -136,7 +140,7 @@ public class FlowMonitorServerTest {
 
   @Test
   public void testGetFlowHistory() throws Exception {
-    MetricsClient client = new MetricsClient("localhost", 45002);
+    MetricsClient client = new MetricsClient("localhost", serverPort);
     List<FlowRun> states = client.getFlowHistory("demo", "XYZ", "targetting");
     Assert.assertNotNull(states);
     client.close();
