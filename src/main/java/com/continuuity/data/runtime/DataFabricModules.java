@@ -7,6 +7,7 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.engine.memory.MemoryColumnarTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -24,10 +25,20 @@ import com.google.inject.Singleton;
  */
 public class DataFabricModules extends RuntimeModule {
 
+  public Module getNoopModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(OperationExecutor.class).
+            to(NoOperationExecutor.class).in(Singleton.class);
+      }
+    };
+  }
+
   @Override
   public Module getInMemoryModules() {
 
-    return new AbstractModule() {
+      return new AbstractModule() {
       @Override
       protected void configure() {
         bind(TimestampOracle.class).
