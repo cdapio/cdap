@@ -77,7 +77,6 @@ final class OpenTSDBProcessor implements MetricsProcessor {
           e.getAccountId(), e.getApplicationId(), e.getFlowId(), e.getFlowletId(),
           e.getRunId(), e.getInstanceId(), tags
           );
-        System.out.println("Successfully processed metric " + command);
         session.write(new MetricResponse(MetricResponse.Status.SUCCESS));
       } catch (BuilderException e) {
         session.write(new MetricResponse(MetricResponse.Status.INVALID));

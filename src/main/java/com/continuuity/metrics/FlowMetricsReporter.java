@@ -224,7 +224,6 @@ public class FlowMetricsReporter extends AbstractPollingReporter
   @Override
   public void processHistogram(MetricName name, Histogram histogram,
                                String context) throws Exception {
-    throw new NotImplementedException();
   }
 
   /**
@@ -239,7 +238,6 @@ public class FlowMetricsReporter extends AbstractPollingReporter
   @Override
   public void processTimer(MetricName name, Timer timer, String context)
     throws Exception {
-    throw new NotImplementedException();
   }
 
   /**
@@ -255,6 +253,5 @@ public class FlowMetricsReporter extends AbstractPollingReporter
   @Override
   public void processGauge(MetricName name, Gauge<?> gauge, String context)
     throws Exception {
-    throw new NotImplementedException();
   }
 }
