@@ -76,6 +76,7 @@ public class BenchmarkRunner {
     }
     if (help) {
       usage();
+      benchmark = null;
       return false;
     }
     benchmark.configure(config);

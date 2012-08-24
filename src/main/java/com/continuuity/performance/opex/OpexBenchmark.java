@@ -42,6 +42,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
       this.opexProvider = new HBaseOpexProvider();
     } else if ("remote".equals(opexName)) {
       this.opexProvider = new RemoteOpexProvider();
+    } else if ("noop".equals(opexName)) {
+      this.opexProvider = new NoOpexProvider();
     } else {
       // consider opexName the class name of an opex provider
       // if it is not a fully qualified class name, add package to it

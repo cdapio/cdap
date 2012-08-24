@@ -57,6 +57,10 @@ public class QueueBenchmark extends OpexBenchmark {
     }
   }
 
+  LinkedList<QueueAck> getPending(int agentId) {
+    return pendingAcks.get(agentId - 1);
+  }
+
   void doEnqueue(int iteration) throws BenchmarkException {
 
     byte[] value = Bytes.toBytes(iteration);
@@ -86,7 +90,7 @@ public class QueueBenchmark extends OpexBenchmark {
 
     // now check whether there is a pending ack that is due for execution
     QueueAck ackToExecute = null;
-    LinkedList<QueueAck> pending = pendingAcks.get(consumerId);
+    LinkedList<QueueAck> pending = getPending(consumerId);
     pending.addLast(ack);
     if (pending.size() > numPendingAcks)
       ackToExecute = pending.getFirst();

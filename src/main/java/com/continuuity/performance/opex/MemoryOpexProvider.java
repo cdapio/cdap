@@ -7,6 +7,7 @@ import com.google.inject.Injector;
 
 public class MemoryOpexProvider extends OpexProvider {
 
+  @Override
   OperationExecutor create() {
     Injector injector = Guice.createInjector (
         new DataFabricModules().getInMemoryModules());

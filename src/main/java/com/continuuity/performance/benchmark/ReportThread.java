@@ -2,6 +2,7 @@ package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ReportThread extends Thread {
@@ -46,8 +47,11 @@ public class ReportThread extends Thread {
     long start = System.currentTimeMillis();
     boolean interrupt = false;
     StringBuilder builder = new StringBuilder();
-    Map<String, Long> previousMetrics = null;
-    long previousMillis = 0;
+    ArrayList<Map<String, Long>> previousMetrics =
+        new ArrayList<Map<String, Long>>(groups.length);
+    for (int i = 0; i < groups.length; i++)
+      previousMetrics.add(null);
+    long[] previousMillis = new long[groups.length];
     // wake up every minute to report the metrics
     for (int seconds = reportInterval; !interrupt; seconds += reportInterval) {
       long wakeup = start + (seconds * 1000);
@@ -67,6 +71,7 @@ public class ReportThread extends Thread {
         String sep = ": ";
         int numThreads = groups[i].getNumAgents();
         Map<String, Long> metrics = groupMetrics[i].list();
+        Map<String, Long> prev = previousMetrics.get(i);
         for (Map.Entry<String, Long> kv : metrics.entrySet()) {
           String key = kv.getKey();
           long value = kv.getValue();
@@ -77,11 +82,11 @@ public class ReportThread extends Thread {
               value * 1000.0 / millis,
               value * 1000.0 / millis / numThreads
           ));
-          if (previousMetrics != null) {
-            Long previousValue = previousMetrics.get(key);
+          if (!interrupt && prev != null) {
+            Long previousValue = prev.get(key);
             if (previousValue == null) previousValue = 0L;
             long valueSince = value - previousValue;
-            long millisSince = millis - previousMillis;
+            long millisSince = millis - previousMillis[i];
             builder.append(String.format(
                 ", %d since last (%1.1f/sec, %1.1f/sec/thread)",
                 valueSince,
@@ -91,8 +96,8 @@ public class ReportThread extends Thread {
           }
         }
         System.out.println(builder.toString());
-        previousMetrics = metrics;
-        previousMillis = millis;
+        previousMetrics.set(i, metrics);
+        previousMillis[i] = millis;
       }
     }
   }
