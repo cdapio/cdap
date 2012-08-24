@@ -107,7 +107,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
 
     // if there idle sessions available then we take from it
     // else we proceed further to create a session to be used.
-    if(session.isConnected()) {
+    if(session != null && session.isConnected()) {
       return session;
     }
 
