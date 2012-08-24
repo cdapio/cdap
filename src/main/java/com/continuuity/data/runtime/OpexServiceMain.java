@@ -1,11 +1,14 @@
 package com.continuuity.data.runtime;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
+import com.continuuity.metrics2.collector.OverlordMetricsReporter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 public class OpexServiceMain {
 
@@ -52,11 +55,16 @@ public class OpexServiceMain {
         injector.getInstance(OperationExecutorService.class);
 
     if (START == command) {
+
+      // enable metrics collection
+      CConfiguration configuration = module.getConfiguration();
+      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, configuration);
+
       Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
       // start it. start is blocking, hence main won't terminate
       try {
-        opexService.start(new String[] { }, module.getConfiguration());
+        opexService.start(new String[] { }, configuration);
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
         return;
