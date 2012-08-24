@@ -120,8 +120,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
     connectFuture.awaitUninterruptibly();
 
     try {
-      session = connectFuture.getSession();
-      return session;
+      return connectFuture.getSession();
     } catch (RuntimeIoException e) {
       Log.warn("Failing to connect to opentsdb server. Reason : {}",
                e.getMessage());
@@ -142,7 +141,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
    * @throws IOException
    */
   public WriteFuture send(String request) throws IOException {
-    IoSession session = connect();
+    session = connect();
     if(session == null) {
       int attempts = RETRY_ATTEMPTS;
       while(attempts > 0) {
