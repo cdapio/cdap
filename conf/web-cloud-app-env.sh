@@ -1,7 +1,7 @@
 # Set environment variables here.
 
 # Main cmd is the non-java command to run.  
-MAIN_CMD=/opt/node
+MAIN_CMD=node
 
 export NODE_ENV=production
 
