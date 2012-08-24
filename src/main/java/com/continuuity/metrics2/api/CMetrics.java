@@ -232,7 +232,7 @@ public class CMetrics {
    * @return String representation of the scope.
    */
   private String getScope(Class<?> klass) {
-    return klass.getPackage() == null ? "" : klass.getPackage().getName();
+    return klass.getCanonicalName();
   }
 
 }
