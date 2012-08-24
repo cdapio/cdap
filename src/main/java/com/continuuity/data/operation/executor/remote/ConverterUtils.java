@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
@@ -548,5 +549,10 @@ public class ConverterUtils {
       }
       return new DequeueResult(status, tDequeueResult.getMessage());
     }
+  }
+
+  /** unwrap a batch result */
+  BatchOperationResult unwrap(TBatchOperationResult tResult) {
+    return new BatchOperationResult(tResult.isSuccess(), tResult.getMessage());
   }
 }

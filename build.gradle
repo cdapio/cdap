@@ -21,10 +21,13 @@ dependencies {
     if(multiModule)
     {
         compile project(":common")
+        compile project(":overlord")
     }
     else
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'overlord',
+                version: '0.1.0-SNAPSHOT'
     }
     // Self dependencies.
     compile sourceSets.api.output
