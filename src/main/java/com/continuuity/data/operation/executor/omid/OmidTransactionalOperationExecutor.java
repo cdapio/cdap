@@ -22,6 +22,8 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
+import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.metrics2.collector.MetricType;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -66,12 +68,31 @@ implements TransactionalOperationExecutor {
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
 
+  // Metrics
+
+  private CMetrics cmetric = new CMetrics(MetricType.System);
+  
+  private static final String METRIC_PREFIX = "omid-opex-";
+  
+  private void requestMetric(String requestType) {
+    cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
+  }
+  
+  private long begin() { return System.currentTimeMillis(); }
+  private void end(String requestType, long beginning) {
+    cmetric.histogram(METRIC_PREFIX + requestType + "-latency",
+        System.currentTimeMillis() - beginning);
+  }
+  
   // Single reads
 
   @Override
   public byte[] execute(ReadKey read) {
     initialize();
+    requestMetric("ReadKey");
+    long begin = begin();
     byte [] result = read(read, this.oracle.getReadPointer());
+    end("ReadKey", begin);
     return result;
   }
 
@@ -82,25 +103,34 @@ implements TransactionalOperationExecutor {
   @Override
   public List<byte[]> execute(ReadAllKeys readKeys) {
     initialize();
+    requestMetric("ReadAllKeys");
+    long begin = begin();
     List<byte[]> result = this.randomTable.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
+    end("ReadKey", begin);
     return result;
   }
 
   @Override
   public Map<byte[], byte[]> execute(Read read) {
     initialize();
+    requestMetric("Read");
+    long begin = begin();
     Map<byte[],byte[]> result = this.randomTable.get(read.getKey(),
         read.getColumns(), this.oracle.getReadPointer());
+    end("Read", begin);
     return result;
   }
 
   @Override
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
     initialize();
+    requestMetric("ReadColumnRange");
+    long begin = begin();
     Map<byte[],byte[]> result = this.randomTable.get(readColumnRange.getKey(),
         readColumnRange.getStartColumn(), readColumnRange.getStopColumn(),
         this.oracle.getReadPointer());
+    end("ReadColumnRange", begin);
     return result;
   }
 
@@ -109,9 +139,12 @@ implements TransactionalOperationExecutor {
   @Override
   public void execute(ClearFabric clearFabric) {
     initialize();
+    requestMetric("ClearFabric");
+    long begin = begin();
     if (clearFabric.shouldClearData()) this.randomTable.clear();
     if (clearFabric.shouldClearQueues()) this.queueTable.clear();
     if (clearFabric.shouldClearStreams()) this.streamTable.clear();
+    end("ClearFabric", begin);
   }
 
   // Write batches
@@ -120,7 +153,12 @@ implements TransactionalOperationExecutor {
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws OmidTransactionException {
     initialize();
-    return execute(writes, startTransaction());
+    requestMetric("WriteOperationBatch");
+    long begin = begin();
+    cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
+    BatchOperationResult result = execute(writes, startTransaction());
+    end("WriteOperationBatch", begin);
+    return result;
   }
 
   private boolean executeAsBatch(WriteOperation write)
@@ -147,6 +185,7 @@ implements TransactionalOperationExecutor {
       WriteTransactionResult writeTxReturn = dispatchWrite(write, pointer);
       if (!writeTxReturn.success) {
         // Write operation failed
+        cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
         abortTransaction(pointer, deletes, invalidates);
         return new BatchOperationResult(false,
             "A write operation failed, transaction aborted");
@@ -166,6 +205,7 @@ implements TransactionalOperationExecutor {
     // All operations completed successfully, commit transaction
     if (!commitTransaction(pointer, rows)) {
       // Commit failed, abort
+      cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
       abortTransaction(pointer, deletes, invalidates);
       return new BatchOperationResult(false,
           "Commit of transaction failed, transaction aborted");
@@ -180,6 +220,8 @@ implements TransactionalOperationExecutor {
     }
 
     // Transaction was successfully committed
+    cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions",
+        1);
     return new BatchOperationResult(true);
   }
 
@@ -238,8 +280,11 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(Write write,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
+    requestMetric("Write");
+    long begin = begin();
     this.randomTable.put(write.getKey(), write.getColumns(),
         pointer.getSecond(), write.getValues());
+    end("Write", begin);
     return new WriteTransactionResult(true,
         new Delete(write.getKey(), write.getColumns()));
   }
@@ -247,8 +292,11 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(Delete delete,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
+    requestMetric("Delete");
+    long begin = begin();
     this.randomTable.deleteAll(delete.getKey(), delete.getColumns(),
         pointer.getSecond());
+    end("Delete", begin);
     return new WriteTransactionResult(true,
         new Undelete(delete.getKey(), delete.getColumns()));
   }
@@ -256,20 +304,27 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(Increment increment,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
+    requestMetric("Increment");
+    long begin = begin();
+    @SuppressWarnings("unused")
     Map<byte[],Long> map = this.randomTable.increment(increment.getKey(),
         increment.getColumns(), increment.getAmounts(),
         pointer.getFirst(), pointer.getSecond());
     List<Delete> deletes = new ArrayList<Delete>(1);
     deletes.add(new Delete(increment.getKey(), increment.getColumns()));
+    end("Increment", begin);
     return new WriteTransactionResult(true, deletes);
   }
 
   WriteTransactionResult write(CompareAndSwap write,
       ImmutablePair<ReadPointer,Long> pointer) {
     initialize();
+    requestMetric("CompareAndSwap");
+    long begin = begin();
     boolean casReturn = this.randomTable.compareAndSwap(write.getKey(),
         write.getColumn(), write.getExpectedValue(), write.getNewValue(),
         pointer.getFirst(), pointer.getSecond());
+    end("CompareAndSwap", begin);
     return new WriteTransactionResult(casReturn,
         new Delete(write.getKey(), write.getColumn()));
   }
@@ -287,8 +342,11 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(QueueEnqueue enqueue,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
+    requestMetric("QueueEnqueue");
+    long begin = begin();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(
         enqueue.getKey(), enqueue.getData(), pointer.getSecond());
+    end("QueueEnqueue", begin);
     return new WriteTransactionResult(true,
         new QueueUnenqueue(enqueue.getKey(), result.getEntryPointer()));
   }
@@ -296,8 +354,11 @@ implements TransactionalOperationExecutor {
   WriteTransactionResult write(QueueAck ack,
       ImmutablePair<ReadPointer, Long> pointer) {
     initialize();
+    requestMetric("QueueAck");
+    long begin = begin();
     boolean result = getQueueTable(ack.getKey()).ack(ack.getKey(),
         ack.getEntryPointer(), ack.getConsumer());
+    end("QueueAck", begin);
     if (!result) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(false);
@@ -309,6 +370,8 @@ implements TransactionalOperationExecutor {
   @Override
   public DequeueResult execute(QueueDequeue dequeue) {
     initialize();
+    requestMetric("QueueDequeue");
+    long begin = begin();
     int retries = 0;
     long start = System.currentTimeMillis();
     TTQueueTable queueTable = getQueueTable(dequeue.getKey());
@@ -326,9 +389,11 @@ implements TransactionalOperationExecutor {
         }
         continue;
       }
+      end("QueueDequeue", begin);
       return result;
     }
     long end = System.currentTimeMillis();
+    end("QueueDequeue", begin);
     return new DequeueResult(DequeueStatus.FAILURE,
         "Maximum retries (retried " + retries + " times over " + (end-start) +
         " millis");
@@ -337,25 +402,33 @@ implements TransactionalOperationExecutor {
   @Override
   public long execute(GetGroupID getGroupId) {
     initialize();
+    requestMetric("GetGroupID");
+    long begin = begin();
     TTQueueTable table = getQueueTable(getGroupId.getQueueName());
     long groupid = table.getGroupID(getGroupId.getQueueName());
+    end("GetGroupID", begin);
     return groupid;
   }
 
   @Override
   public QueueMeta execute(GetQueueMeta getQueueMeta) {
     initialize();
+    requestMetric("GetQueueMeta");
+    long begin = begin();
     TTQueueTable table = getQueueTable(getQueueMeta.getQueueName());
     QueueMeta queueMeta = table.getQueueMeta(getQueueMeta.getQueueName());
+    end("GetQueueMeta", begin);
     return queueMeta;
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {
+    requestMetric("StartTransaction");
     return this.oracle.getNewPointer();
   }
 
   boolean commitTransaction(ImmutablePair<ReadPointer, Long> pointer,
       RowSet rows) throws OmidTransactionException {
+    requestMetric("CommitTransaction");
     return this.oracle.commit(pointer.getSecond(), rows);
   }
 
@@ -374,6 +447,7 @@ implements TransactionalOperationExecutor {
       List<Delete> deletes, List<QueueInvalidate> invalidates)
           throws OmidTransactionException {
     // Perform queue invalidates
+    cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
     for (QueueInvalidate invalidate : invalidates) {
       invalidate.execute(getQueueTable(invalidate.queueName), pointer);
     }
