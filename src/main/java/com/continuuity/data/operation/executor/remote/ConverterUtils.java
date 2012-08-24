@@ -551,8 +551,15 @@ public class ConverterUtils {
     }
   }
 
+  /** wrap a batch result */
+  TBatchOperationResult wrap(BatchOperationResult result) {
+    return new TBatchOperationResult(result.isSuccess(),
+        result.getMessage());
+  }
+
   /** unwrap a batch result */
   BatchOperationResult unwrap(TBatchOperationResult tResult) {
-    return new BatchOperationResult(tResult.isSuccess(), tResult.getMessage());
+    return new BatchOperationResult(tResult.isSuccess(),
+        tResult.getMessage());
   }
 }

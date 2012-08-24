@@ -29,6 +29,12 @@ public class OperationExecutorClient
 
   CMetrics metrics;
 
+  /** helper method to create a metrics helper */
+  MetricsHelper newHelper(String meter, String histogram) {
+    return new MetricsHelper(this.metrics, this.getClass(),
+        Constants.METRIC_REQUESTS, meter, histogram);
+  }
+
   public OperationExecutorClient(TOperationExecutor.Client client) {
     this.client = client;
     this.metrics = new CMetrics(MetricType.System);
@@ -38,8 +44,9 @@ public class OperationExecutorClient
   public BatchOperationResult execute(List<WriteOperation> writes)
       throws BatchOperationException {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_BATCH_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_BATCH_REQUESTS,
+        Constants.METRIC_BATCH_LATENCY);
 
     if (Log.isDebugEnabled())
       Log.debug("Received Batch of " + writes.size() + "WriteOperations: ");
@@ -79,20 +86,24 @@ public class OperationExecutorClient
 
       BatchOperationResult result = unwrap(tResult);
 
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_BATCH_LATENCY);
+      helper.finish(result.isSuccess());
       return result;
 
     } catch (Exception e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
-      throw new BatchOperationException(e.getMessage(), e);
+
+      String message = "Thrift Call for Batch failed: " + e.getMessage();
+      Log.error(message);
+      helper.failure();
+      throw new BatchOperationException(message, e);
     }
   }
 
   @Override
   public DequeueResult execute(QueueDequeue dequeue) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_DEQUEUE_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_DEQUEUE_REQUESTS,
+        Constants.METRIC_DEQUEUE_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -109,14 +120,15 @@ public class OperationExecutorClient
         Log.debug("Result of TDequeue: " + tDequeueResult);
 
       DequeueResult dequeueResult = unwrap(tDequeueResult);
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_DEQUEUE_LATENCY);
+      helper.finish(dequeueResult.isSuccess());
       return dequeueResult;
 
     } catch (TException e) {
+
       String message = "Thrift Call for QueueDequeue failed for queue " +
           new String(dequeue.getKey()) + ": " + e.getMessage();
       Log.error(message);
-      helper.finish(Constants.METRIC_FAILURE, null);
+      helper.failure();
       return new DequeueResult(DequeueResult.DequeueStatus.FAILURE, message);
     }
   }
@@ -124,8 +136,9 @@ public class OperationExecutorClient
   @Override
   public long execute(QueueAdmin.GetGroupID getGroupId) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_GETGROUPID_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_GETGROUPID_REQUESTS,
+        Constants.METRIC_GETGROUPID_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -141,12 +154,12 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Result of TGetGroupId: " + result);
 
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_GETGROUPID_LATENCY);
+      helper.success();
       return result;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for GetGroupId failed for queue " +
           new String(getGroupId.getQueueName()) + ": " + e.getMessage());
       return 0; // TODO execute() must be able to return an error
@@ -156,8 +169,9 @@ public class OperationExecutorClient
   @Override
   public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_GETQUEUEMETA_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_GETQUEUEMETA_REQUESTS,
+        Constants.METRIC_GETQUEUEMETA_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -174,12 +188,12 @@ public class OperationExecutorClient
         Log.debug("Result of TGetQueueMeta: " + tQueueMeta);
 
       QueueAdmin.QueueMeta queueMeta = unwrap(tQueueMeta);
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_GETQUEUEMETA_LATENCY);
+
+      helper.success();
       return queueMeta;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+      helper.failure();
       Log.error("Thrift Call for GetQueueMeta failed for queue " +
           new String(getQueueMeta.getQueueName()) + ": " + e.getMessage());
       return null; // TODO execute() must be able to return an error
@@ -189,8 +203,9 @@ public class OperationExecutorClient
   @Override
   public void execute(ClearFabric clearFabric) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_CLEARFABRIC_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_CLEARFABRIC_REQUESTS,
+        Constants.METRIC_CLEARFABRIC_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -202,12 +217,11 @@ public class OperationExecutorClient
         Log.debug("Sending " + tClearFabric);
 
       client.clearFabric(tClearFabric);
-
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_CLEARFABRIC_LATENCY);
+      helper.success();
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for ClearFabric failed with message: " +
           e.getMessage());
       // TODO execute() must be able to return an error
@@ -217,8 +231,9 @@ public class OperationExecutorClient
   @Override
   public byte[] execute(ReadKey readKey) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_READKEY_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_READKEY_REQUESTS,
+        Constants.METRIC_READKEY_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -235,11 +250,12 @@ public class OperationExecutorClient
         Log.debug("Result of TReadKey: " + tResult);
 
       byte[] result = unwrap(tResult);
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_READKEY_LATENCY);
+      helper.success();
       return result;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for ReadKey for key '" +
           new String(readKey.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -250,8 +266,9 @@ public class OperationExecutorClient
   @Override
   public Map<byte[], byte[]> execute(Read read) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_READ_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_READ_REQUESTS,
+        Constants.METRIC_READ_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -268,11 +285,12 @@ public class OperationExecutorClient
         Log.debug("Result of TRead: " + tResult);
 
       Map<byte[], byte[]> result = unwrap(tResult);
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_READ_LATENCY);
+      helper.success();
       return result;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for Read for key '" +
           new String(read.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -283,8 +301,9 @@ public class OperationExecutorClient
   @Override
   public List<byte[]> execute(ReadAllKeys readKeys) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_READALLKEYS_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_READALLKEYS_REQUESTS,
+        Constants.METRIC_READALLKEYS_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -301,12 +320,12 @@ public class OperationExecutorClient
         Log.debug("Result of TReadAllKeys: " + tResult);
 
       List<byte[]> result = unwrap(tResult);
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_READALLKEYS_LATENCY);
+      helper.success();
       return result;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for ReadAllKeys(" + readKeys.getOffset() + ", " +
           readKeys.getLimit() + ") failed with message: " + e.getMessage());
       return new ArrayList<byte[]>(0);
@@ -317,8 +336,9 @@ public class OperationExecutorClient
   @Override
   public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_READCOLUMNRANGE_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_READCOLUMNRANGE_REQUESTS,
+        Constants.METRIC_READCOLUMNRANGE_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -335,12 +355,12 @@ public class OperationExecutorClient
         Log.debug("Result of TReadColumnRange: " + tResult);
 
       Map<byte[], byte[]> result = unwrap(tResult);
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_READCOLUMNRANGE_LATENCY);
+      helper.success();
       return result;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for ReadColumnRange for key '" +
           new String(readColumnRange.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -351,8 +371,9 @@ public class OperationExecutorClient
   @Override
   public boolean execute(Write write) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_WRITE_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_WRITE_REQUESTS,
+        Constants.METRIC_WRITE_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -363,27 +384,30 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tWrite);
 
-      boolean result = client.write(tWrite);
+      boolean success = client.write(tWrite);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TWrite: " + result);
+        Log.debug("Result of TWrite: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_WRITE_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
       Log.error("Thrift Call for Write for key '" + new String(write.getKey()) +
           "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      helper.failure();
+      return false;
+      // TODO execute() must be able to return an error
     }
   }
 
   @Override
   public boolean execute(Delete delete) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_DELETE_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_DELETE_REQUESTS,
+        Constants.METRIC_DELETE_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -394,16 +418,17 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tDelete);
 
-      boolean result = client.delet(tDelete);
+      boolean success = client.delet(tDelete);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TDelete: " + result);
+        Log.debug("Result of TDelete: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_DELETE_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for Delete for key '" + new String(delete.getKey())
           + "' failed with message: " + e.getMessage());
       return false; // TODO execute() must be able to return an error
@@ -413,8 +438,9 @@ public class OperationExecutorClient
   @Override
   public boolean execute(Increment increment) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_INCREMENT_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_INCREMENT_REQUESTS,
+        Constants.METRIC_INCREMENT_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -425,17 +451,17 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tIncrement);
 
-      boolean result = client.increment(tIncrement);
+      boolean success = client.increment(tIncrement);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TIncrement: " + result);
+        Log.debug("Result of TIncrement: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_INCREMENT_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for Increment for key '" +
           new String(increment.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -446,8 +472,9 @@ public class OperationExecutorClient
   @Override
   public boolean execute(CompareAndSwap compareAndSwap) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_COMPAREANDSWAP_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_COMPAREANDSWAP_REQUESTS,
+        Constants.METRIC_COMPAREANDSWAP_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -458,17 +485,17 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tCompareAndSwap);
 
-      boolean result = client.compareAndSwap(tCompareAndSwap);
+      boolean success = client.compareAndSwap(tCompareAndSwap);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TCompareAndSwap: " + result);
+        Log.debug("Result of TCompareAndSwap: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_COMPAREANDSWAP_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for CompareAndSwap for key '" +
           new String(compareAndSwap.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -479,8 +506,9 @@ public class OperationExecutorClient
   @Override
   public boolean execute(QueueEnqueue enqueue) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_ENQUEUE_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_ENQUEUE_REQUESTS,
+        Constants.METRIC_ENQUEUE_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -491,17 +519,17 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tQueueEnqueue);
 
-      boolean result = client.queueEnqueue(tQueueEnqueue);
+      boolean success = client.queueEnqueue(tQueueEnqueue);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TQueueEnqueue: " + result);
+        Log.debug("Result of TQueueEnqueue: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS,
-          Constants.METRIC_ENQUEUE_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for QueueEnqueue for queue '" +
           new String(enqueue.getKey()) +
           "' failed with message: " + e.getMessage());
@@ -512,8 +540,9 @@ public class OperationExecutorClient
   @Override
   public boolean execute(QueueAck ack) {
 
-    MetricsHelper helper = new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, Constants.METRIC_ACK_REQUESTS);
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_ACK_REQUESTS,
+        Constants.METRIC_ACK_LATENCY);
 
     try {
       if (Log.isDebugEnabled())
@@ -524,16 +553,17 @@ public class OperationExecutorClient
       if (Log.isDebugEnabled())
         Log.debug("Sending " + tQueueAck);
 
-      boolean result = client.queueAck(tQueueAck);
+      boolean success = client.queueAck(tQueueAck);
 
       if (Log.isDebugEnabled())
-        Log.debug("Result of TQueueAck: " + result);
+        Log.debug("Result of TQueueAck: " + success);
 
-      helper.finish(Constants.METRIC_SUCCESS, Constants.METRIC_ACK_LATENCY);
-      return result;
+      helper.finish(success);
+      return success;
 
     } catch (TException e) {
-      helper.finish(Constants.METRIC_FAILURE, null);
+
+      helper.failure();
       Log.error("Thrift Call for QueueAck for queue '" +
           new String(ack.getKey()) +
           "' failed with message: " + e.getMessage());
