@@ -1,30 +1,44 @@
 package com.continuuity.data.operation.executor.remote;
 
 public class Constants {
-  /**
-   * Configuration key names used by opex service.
-   */
-  public static final String CFG_DATA_OPEX_SERVER_PORT = "data.opex.server.port";
-  public static final String CFG_DATA_OPEX_SERVER_ADDRESS = "data.opex.server.address";
-  public static final String CFG_DATA_OPEX_SERVER_THREADS = "data.opex.server.threads";
+  // Configuration key names and defaults used by opex service.
 
-  /**
-   * property names for opex client
-   */
-  public static final String CFG_DATA_OPEX_CLIENT_COUNT = "data.opex.client.count";
+  /** for the port of the opex server */
+  public static final String CFG_DATA_OPEX_SERVER_PORT
+      = "data.opex.server.port";
+
+  /** for the address (hostname) of the opex server */
+  public static final String CFG_DATA_OPEX_SERVER_ADDRESS
+      = "data.opex.server.address";
+
+  /** the number of handler threads in the opex service */
+  public static final String CFG_DATA_OPEX_SERVER_THREADS
+      = "data.opex.server.threads";
+
+  /** default opex service port */
+  public static final int    DEFAULT_DATA_OPEX_SERVER_PORT
+      = 15165;
+
+  /** default opex service address */
+  public static final String DEFAULT_DATA_OPEX_SERVER_ADDRESS
+      = "0.0.0.0";
+
+  /** default number of handler threads in opex service */
+  public static final int    DEFAULT_DATA_OPEX_SERVER_THREADS
+      = 20;
+
+  // Configuration key names and defaults used by opex client.
+
+  /** to specify the opex client provider strategy. */
   public static final String CFG_DATA_OPEX_CLIENT_PROVIDER = "data.opex.client.provider";
 
-  /**
-   * Default constants defined for opex service
-   */
-  public static final int    DEFAULT_DATA_OPEX_SERVER_PORT = 15165;
-  public static final String DEFAULT_DATA_OPEX_SERVER_ADDRESS = "0.0.0.0";
-  public static final int    DEFAULT_DATA_OPEX_SERVER_THREADS = 20;
+  /** to specify the number of threads for client provider "pool" */
+  public static final String CFG_DATA_OPEX_CLIENT_COUNT = "data.opex.client.count";
 
-  /**
-   * Defaults for opex client
-   */
+  /** default number of pooled opex clients */
   public static final int    DEFAULT_DATA_OPEX_CLIENT_COUNT = 5;
+
+  /** default opex client provider strategy */
   public static final String DEFAULT_DATA_OPEX_CLIENT_PROVIDER = "pool";
 
   /** the name of this service in the service discovery */
@@ -34,7 +48,8 @@ public class Constants {
   public static final String CFG_ZOOKEEPER_ENSEMBLE =
       com.continuuity.common.conf.Constants.CFG_ZOOKEEPER_ENSEMBLE;
 
-  // metrics names
+  // Metrics names used by opex service and opex client
+
   public static final String METRIC_SUCCESS = "success";
   public static final String METRIC_FAILURE = "failure";
   public static final String METRIC_REQUESTS = "requests";
