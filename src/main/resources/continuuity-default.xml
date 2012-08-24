@@ -261,7 +261,7 @@
 
     <property>
         <name>overlord.metrics.server.forwardto.opentsdb</name>
-        <value>true</value>
+        <value>false</value>
         <description>Specifies whether the flow metrics are to be
             forwarded to opentsdb</description>
     </property>
