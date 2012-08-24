@@ -28,8 +28,8 @@ public class BenchmarkThread extends Thread {
 
     // for throttling
     long roundStart = System.currentTimeMillis();
-    int runsInRound = 0;
-    int runs = 0;
+    long runsInRound = 0;
+    long runs = 0;
 
     for (; (totalRuns <= 0) || (runs < totalRuns); ++runs) {
       // run one iteration

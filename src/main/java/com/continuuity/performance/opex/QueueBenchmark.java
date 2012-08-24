@@ -61,7 +61,7 @@ public class QueueBenchmark extends OpexBenchmark {
     return pendingAcks.get(agentId - 1);
   }
 
-  void doEnqueue(int iteration) throws BenchmarkException {
+  void doEnqueue(long iteration) throws BenchmarkException {
 
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = new QueueEnqueue(queueBytes, value);
@@ -148,7 +148,7 @@ public class QueueBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(int iteration, int agentId, int numAgents)
+              public void runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 doEnqueue(iteration);
               }
@@ -169,7 +169,7 @@ public class QueueBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(int iteration, int agentId, int numAgents)
+              public void runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 doDequeue(agentId);
               }

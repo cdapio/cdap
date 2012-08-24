@@ -79,7 +79,7 @@ public class LoadGenerator extends SimpleBenchmark {
     if (file != null) {
       try {
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line = null;
+        String line;
         List<String> words = Lists.newArrayList();
         while ((line = reader.readLine()) != null) {
           words.add(line);
@@ -111,7 +111,7 @@ public class LoadGenerator extends SimpleBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(int iteration, int agentId, int numAgents)
+              public void runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
 
                 // create a string of random words and length

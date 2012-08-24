@@ -36,7 +36,7 @@ public class SleepBenchmark extends SimpleBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(int iteration, int agentId, int numAgents)
+              public void runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 try {
                   if (isVerbose()) {

@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class WriteBenchmark extends OpexBenchmark {
 
-  void doOneWrite(int iteration, int agentId)
+  void doOneWrite(long iteration, int agentId)
       throws BenchmarkException {
 
     final byte[] key = ("key" + agentId).getBytes();
@@ -46,7 +46,7 @@ public class WriteBenchmark extends OpexBenchmark {
           public Agent newAgent() {
             return new Agent() {
               @Override
-              public void runOnce(int iteration, int agentId, int numAgents)
+              public void runOnce(long iteration, int agentId, int numAgents)
                   throws BenchmarkException {
                 doOneWrite(iteration, agentId);
               }
