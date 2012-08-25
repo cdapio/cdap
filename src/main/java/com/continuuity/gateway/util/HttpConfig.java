@@ -26,6 +26,10 @@ public class HttpConfig {
    */
   public static String DefaultName = "http";
   /**
+   * a default server host name
+   */
+  public static final String DefaultHost = "localhost";
+  /**
    * a default port for HTTP
    */
   public static final int DefaultPort = 8080;
@@ -49,11 +53,19 @@ public class HttpConfig {
    * default is no secure transport
    */
   public static boolean DefaultSsl = false;
+  /**
+   * default number of worker threads
+   */
+  public static int DefaultThreads = 20;
 
   /**
    * this is the name of the connector, needed to find the properties
    */
   private String name = DefaultName;
+  /**
+   * this is the hostname of the service
+   */
+  private String host = DefaultHost;
   /**
    * this is the port of the service
    */
@@ -73,11 +85,15 @@ public class HttpConfig {
   /**
    * whether we should accept chunked requests
    */
-  private boolean chunk = true;
+  private boolean chunk = DefaultChunking;
   /**
    * whether secure socket transport is on
    */
-  private boolean ssl = false;
+  private boolean ssl = DefaultSsl;
+  /**
+   * number of worker threads in the http server
+   */
+  private int threads = DefaultThreads;
 
   /**
    * private because this would create a config without a name
@@ -110,6 +126,16 @@ public class HttpConfig {
    */
   public int getPort() {
     return this.port;
+  }
+
+  /**
+   * Return the host name. This is mainly useful for clients trying to
+   * figure out the address of the service.
+   *
+   * @return the host name
+   */
+  public String getHost() {
+    return this.host;
   }
 
   /**
@@ -155,6 +181,15 @@ public class HttpConfig {
    */
   public int getMaxContentSize() {
     return this.maxContentSize;
+  }
+
+  /**
+   * Return the number of worker threads configured for the server
+   *
+   * @return the number of server threads
+   */
+  public int getThreads() {
+    return this.threads;
   }
 
   /**
@@ -211,8 +246,12 @@ public class HttpConfig {
     // if no defaults were given, create an empty config (it has defaults)
     if (defaults == null) defaults = new HttpConfig();
     HttpConfig config = new HttpConfig(name);
+    config.host = configuration.get(Constants.CONFIG_HOSTNAME,
+        defaults.getHost());
     config.port = configuration.getInt(Constants.buildConnectorPropertyName(
         name, Constants.CONFIG_PORT), defaults.getPort());
+    config.threads = configuration.getInt(Constants.buildConnectorPropertyName(
+        name, Constants.CONFIG_THREADS), defaults.getThreads());
     config.chunk = configuration.getBoolean(
         Constants.buildConnectorPropertyName(
             name, Constants.CONFIG_CHUNKING), defaults.isChunking());

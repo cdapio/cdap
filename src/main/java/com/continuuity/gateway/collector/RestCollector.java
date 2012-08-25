@@ -46,9 +46,10 @@ public class RestCollector extends Collector
   /**
    * this will provide defaults for the HTTP service, such as port and paths
    */
-  private static final HttpConfig defaultConfig = new HttpConfig("rest")
-      .setPort(8765)
-      .setPathMiddle("/stream/");
+  private static final HttpConfig defaultConfig =
+      new HttpConfig("collector.rest")
+          .setPort(10000)
+          .setPathMiddle("/rest-stream/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
@@ -92,7 +93,8 @@ public class RestCollector extends Collector
       ServerBootstrap bootstrap = new ServerBootstrap(
           new NioServerSocketChannelFactory(
               Executors.newCachedThreadPool(),
-              Executors.newCachedThreadPool()));
+              Executors.newCachedThreadPool(),
+              this.httpConfig.getThreads()));
       // and use a pipeline factory that uses this to cnfigure itself and to
       // create a request handler for each client request.
       bootstrap.setPipelineFactory(
@@ -105,8 +107,9 @@ public class RestCollector extends Collector
           + "' at " + this.httpConfig.getBaseUrl() + ".");
       throw e;
     }
-    LOG.info("Collector '" + this.getName() + "' started at "
-        + this.httpConfig.getBaseUrl() + ".");
+    LOG.info("Connector " + this.getName() + " now running" +
+        " at " + this.httpConfig.getBaseUrl() +
+        " with " + this.httpConfig.getThreads() + " threads.");
   }
 
   @Override

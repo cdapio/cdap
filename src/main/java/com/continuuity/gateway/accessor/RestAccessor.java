@@ -29,9 +29,10 @@ public class RestAccessor
   /**
    * this will provide defaults for the HTTP service, such as port and paths
    */
-  private static final HttpConfig defaultHttpConfig = new HttpConfig("rest")
-      .setPort(8080)
-      .setPathMiddle("/table/");
+  private static final HttpConfig defaultHttpConfig =
+      new HttpConfig("accessor.rest")
+          .setPort(10002)
+          .setPathMiddle("/rest-data/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
@@ -75,7 +76,8 @@ public class RestAccessor
       ServerBootstrap bootstrap = new ServerBootstrap(
           new NioServerSocketChannelFactory(
               Executors.newCachedThreadPool(),
-              Executors.newCachedThreadPool()));
+              Executors.newCachedThreadPool(),
+              this.httpConfig.getThreads()));
       // and use a pipeline factory that uses this to cnfigure itself
       // and to create a request handler for each client request.
       bootstrap.setPipelineFactory(
@@ -88,8 +90,9 @@ public class RestAccessor
           + "' at " + this.httpConfig.getBaseUrl() + ".");
       throw e;
     }
-    LOG.info("Accessor '" + this.getName() + "' started at "
-        + this.httpConfig.getBaseUrl() + ".");
+    LOG.info("Connector " + this.getName() + " now running" +
+        " at " + this.httpConfig.getBaseUrl() +
+        " with " + this.httpConfig.getThreads() + " threads.");
   }
 
   @Override

@@ -48,22 +48,33 @@ public class Constants {
       = GATEWAY_PREFIX + "connectors";
 
   /**
+   * Hostname of the gateway service
+   */
+  public static final String CONFIG_HOSTNAME
+      = GATEWAY_PREFIX + "hostname";
+
+  /**
    * The string used to identify configuration information
    */
   public static final String CONFIG_CONFIG = "config";
 
   /**
-   * Class name of a named collector
+   * Class name of a named connector
    */
   public static final String CONFIG_CLASSNAME = "class";
 
   /**
-   * Port number of a collector
+   * Port number of a connector
    */
   public static final String CONFIG_PORT = "port";
 
   /**
-   * Whether an HTTP collector supports chunked requests
+   * Number of worker threads for a connector
+   */
+  public static final String CONFIG_THREADS = "threads";
+
+  /**
+   * Whether an HTTP connector supports chunked requests
    */
   public static final String CONFIG_CHUNKING = "chunk";
 
@@ -73,7 +84,7 @@ public class Constants {
   public static final String CONFIG_MAX_SIZE = "maxsize";
 
   /**
-   * Whether an HTTP collector supports SSL
+   * Whether an HTTP connector supports SSL
    */
   public static final String CONFIG_SSL = "ssl";
 
