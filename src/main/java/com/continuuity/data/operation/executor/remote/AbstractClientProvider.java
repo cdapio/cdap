@@ -73,7 +73,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
-      address = configuration.get(Constants.CFG_DATA_OPEX_SERVER_PORT,
+      address = configuration.get(Constants.CFG_DATA_OPEX_SERVER_ADDRESS,
           Constants.DEFAULT_DATA_OPEX_SERVER_ADDRESS);
       port = configuration.getInt(Constants.CFG_DATA_OPEX_SERVER_PORT,
           Constants.DEFAULT_DATA_OPEX_SERVER_PORT);
@@ -96,8 +96,10 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       Log.info("Service discovered at " + address + ":" + port);
     }
     // now we have an address and port, try to connect a client
+    int timeout = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT,
+        Constants.DEFAULT_DATA_OPEX_CLIENT_TIMEOUT);
     Log.info("Attempting to connect to Operation Executor service at " +
-        address + ":" + port);
+        address + ":" + port + " with timeout " + timeout + " ms.");
     // thrift transport layer
     TTransport transport = new TFramedTransport(new TSocket(address, port));
     try {

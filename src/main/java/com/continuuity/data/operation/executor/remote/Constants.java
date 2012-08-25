@@ -30,19 +30,34 @@ public class Constants {
   // Configuration key names and defaults used by opex client.
 
   /** to specify the opex client provider strategy. */
-  public static final String CFG_DATA_OPEX_CLIENT_PROVIDER = "data.opex.client.provider";
+  public static final String CFG_DATA_OPEX_CLIENT_TIMEOUT
+      = "data.opex.client.timeout";
+
+  /** to specify the opex client provider strategy. */
+  public static final String CFG_DATA_OPEX_CLIENT_PROVIDER
+      = "data.opex.client.provider";
 
   /** to specify the number of threads for client provider "pool" */
-  public static final String CFG_DATA_OPEX_CLIENT_COUNT = "data.opex.client.count";
+  public static final String CFG_DATA_OPEX_CLIENT_COUNT
+      = "data.opex.client.count";
+
+  /** to specify the opex client socket timeout in milli seconds */
+  public static final int DEFAULT_DATA_OPEX_CLIENT_TIMEOUT
+      = 30 * 1000;
 
   /** default number of pooled opex clients */
-  public static final int    DEFAULT_DATA_OPEX_CLIENT_COUNT = 5;
+  public static final int    DEFAULT_DATA_OPEX_CLIENT_COUNT
+      = 5;
 
   /** default opex client provider strategy */
-  public static final String DEFAULT_DATA_OPEX_CLIENT_PROVIDER = "pool";
+  public static final String DEFAULT_DATA_OPEX_CLIENT_PROVIDER
+      = "pool";
+
+  // Configuration key names and constants used by opex service and client.
 
   /** the name of this service in the service discovery */
-  public static final String OPERATION_EXECUTOR_SERVICE_NAME = "opex-service";
+  public static final String OPERATION_EXECUTOR_SERVICE_NAME
+      = "opex-service";
 
   /** for convenience of having it in this packagae */
   public static final String CFG_ZOOKEEPER_ENSEMBLE =
