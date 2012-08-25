@@ -56,7 +56,7 @@ public class HttpConfig {
   /**
    * default number of worker threads
    */
-  public static int DefaultThreads = 20;
+  public static int DefaultThreads = Constants.DEFAULT_THREADS;
 
   /**
    * this is the name of the connector, needed to find the properties

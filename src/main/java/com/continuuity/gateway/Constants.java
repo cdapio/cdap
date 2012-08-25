@@ -54,11 +54,6 @@ public class Constants {
       = GATEWAY_PREFIX + "hostname";
 
   /**
-   * The string used to identify configuration information
-   */
-  public static final String CONFIG_CONFIG = "config";
-
-  /**
    * Class name of a named connector
    */
   public static final String CONFIG_CLASSNAME = "class";
@@ -119,6 +114,13 @@ public class Constants {
   public static boolean isContinuuityHeader(String header) {
     return header.startsWith(CONTINUUITY_PREFIX);
   }
+
+  // Defaults for various configurations
+
+  /**
+   * Default number of worker threads for a connector
+   */
+  public static final int DEFAULT_THREADS = 20;
 
   // Constants for metrics collection
 
