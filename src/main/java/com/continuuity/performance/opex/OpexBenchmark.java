@@ -57,8 +57,8 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
             "Cannot instantiate opex provider '" + opexName + "': " +
                 e.getMessage());
       }
-      this.opexProvider.configure(config);
     }
+    this.opexProvider.configure(config);
   }
 
 
