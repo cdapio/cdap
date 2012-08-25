@@ -101,7 +101,8 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
     Log.info("Attempting to connect to Operation Executor service at " +
         address + ":" + port + " with timeout " + timeout + " ms.");
     // thrift transport layer
-    TTransport transport = new TFramedTransport(new TSocket(address, port));
+    TTransport transport =
+        new TFramedTransport(new TSocket(address, port, timeout));
     try {
       transport.open();
     } catch (TTransportException e) {
