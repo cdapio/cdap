@@ -167,6 +167,11 @@
         <value>10001</value>
     </property>
 
+    <property>
+        <name>collector.flume.threads</name>
+        <value>20</value>
+    </property>
+
     <!--
         Data Fabric configuration
     -->
