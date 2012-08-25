@@ -126,6 +126,11 @@
     </property>
 
     <property>
+        <name>accessor.rest.threads</name>
+        <value>20</value>
+    </property>
+
+    <property>
         <name>accessor.rest.middle</name>
         <value>/rest-data/</value>
     </property>
@@ -139,6 +144,11 @@
     <property>
         <name>collector.rest.port</name>
         <value>10000</value>
+    </property>
+
+    <property>
+        <name>collector.rest.threads</name>
+        <value>20</value>
     </property>
 
     <property>
