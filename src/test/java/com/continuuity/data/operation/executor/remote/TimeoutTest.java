@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.SocketException;
@@ -20,7 +21,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @BeforeClass
   public static void startService() throws Exception {
     CConfiguration config = CConfiguration.create();
-    config.setInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, 1000);
+    config.setInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, 500);
     OperationExecutorServiceTest.startService(config,
         new NoOperationExecutor() {
           @Override
@@ -30,7 +31,7 @@ public class TimeoutTest extends OpexServiceTestBase {
           @Override
           public boolean execute(Write write) {
             try {
-              Thread.sleep(3000);
+              Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
@@ -40,7 +41,7 @@ public class TimeoutTest extends OpexServiceTestBase {
           public BatchOperationResult execute(List<WriteOperation> batch)
               throws BatchOperationException {
             try {
-              Thread.sleep(3000);
+              Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
@@ -53,7 +54,7 @@ public class TimeoutTest extends OpexServiceTestBase {
    * This tests that the thrift client times out and returns an error or
    * non-success in some other way.
    */
-  @Test(expected = BatchOperationException.class)
+  @Test(expected = BatchOperationException.class) @Ignore
   public void testThriftTimeout() throws BatchOperationException {
     Write write = new Write("x".getBytes(), "1".getBytes());
     Assert.assertFalse(remote.execute(write));
