@@ -118,4 +118,23 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
         address + ":" + port);
     return newClient;
   }
+
+  public <T> T call(Opexable<T> opexable) {
+    OperationExecutorClient client = this.getClient();
+    try {
+      return opexable.call(client);
+    } finally {
+      this.returnClient(client);
+    }
+  }
+
+  public <T, E extends Exception> T call(Opexeptionable<T, E> opexable)
+      throws E {
+    OperationExecutorClient client = this.getClient();
+    try {
+      return opexable.call(client);
+    } finally {
+      this.returnClient(client);
+    }
+  }
 }

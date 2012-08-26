@@ -39,4 +39,9 @@ public interface OpexClientProvider {
    */
   void returnClient(OperationExecutorClient client);
 
+  public <T> T call(Opexable<T> opexable);
+
+  public <T, E extends Exception> T call(Opexeptionable<T, E> opexable)
+      throws E;
+
 }

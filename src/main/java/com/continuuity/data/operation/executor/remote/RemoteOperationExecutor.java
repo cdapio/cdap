@@ -61,155 +61,172 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public BatchOperationResult execute(List<WriteOperation> writes)
+  public BatchOperationResult execute(final List<WriteOperation> writes)
       throws BatchOperationException {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(writes);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+    return this.clientProvider.call(
+        new Opexeptionable<BatchOperationResult, BatchOperationException>() {
+          @Override
+          public BatchOperationResult call(OperationExecutorClient client)
+              throws BatchOperationException {
+            return client.execute(writes);
+          }
+        });
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public DequeueResult execute(final QueueDequeue dequeue) {
+    return this.clientProvider.call(
+        new Opexable<DequeueResult>() {
+          @Override
+          public DequeueResult call(OperationExecutorClient client) {
+            return client.execute(dequeue);
+          }
+        });
   }
 
   @Override
-  public long execute(QueueAdmin.GetGroupID operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public long execute(final QueueAdmin.GetGroupID getGroupID) {
+    return this.clientProvider.call(
+        new Opexable<Long>() {
+          @Override
+          public Long call(OperationExecutorClient client) {
+            return client.execute(getGroupID);
+          }
+        });
   }
 
   @Override
-  public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public QueueAdmin.QueueMeta execute(final QueueAdmin.GetQueueMeta getQM) {
+    return this.clientProvider.call(
+        new Opexable<QueueAdmin.QueueMeta>() {
+          @Override
+          public QueueAdmin.QueueMeta call(OperationExecutorClient client) {
+            return client.execute(getQM);
+          }
+        });
   }
 
   @Override
-  public void execute(ClearFabric operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public void execute(final ClearFabric clearFabric) {
+    this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            client.execute(clearFabric);
+            return true;
+          }
+        });
   }
 
   @Override
-  public byte[] execute(ReadKey operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public byte[] execute(final ReadKey readKey) {
+    return this.clientProvider.call(
+        new Opexable<byte[]>() {
+          @Override
+          public byte[] call(OperationExecutorClient client) {
+            return client.execute(readKey);
+          }
+        });
   }
 
   @Override
-  public Map<byte[], byte[]> execute(Read operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public Map<byte[], byte[]> execute(final Read read) {
+    return this.clientProvider.call(
+        new Opexable<Map<byte[],byte[]>>() {
+          @Override
+          public Map<byte[],byte[]> call(OperationExecutorClient client) {
+            return client.execute(read);
+          }
+        });
   }
 
   @Override
-  public List<byte[]> execute(ReadAllKeys operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public List<byte[]> execute(final ReadAllKeys readAllKeys) {
+    return this.clientProvider.call(
+        new Opexable<List<byte[]>>() {
+          @Override
+          public List<byte[]> call(OperationExecutorClient client) {
+            return client.execute(readAllKeys);
+          }
+        });
   }
 
   @Override
-  public Map<byte[], byte[]> execute(ReadColumnRange operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public Map<byte[], byte[]> execute(final ReadColumnRange readColumnRange) {
+    return this.clientProvider.call(
+        new Opexable<Map<byte[],byte[]>>() {
+          @Override
+          public Map<byte[],byte[]> call(OperationExecutorClient client) {
+            return client.execute(readColumnRange);
+          }
+        });
   }
 
   @Override
-  public boolean execute(Write operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final Write write) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(write);
+          }
+        });
   }
 
 
   @Override
-  public boolean execute(Delete operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final Delete delete) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(delete);
+          }
+        });
   }
 
   @Override
-  public boolean execute(Increment operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final Increment increment) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(increment);
+          }
+        });
   }
 
   @Override
-  public boolean execute(CompareAndSwap operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final CompareAndSwap compareAndSwap) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(compareAndSwap);
+          }
+        });
   }
 
   @Override
-  public boolean execute(QueueEnqueue operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final QueueEnqueue enqueue) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(enqueue);
+          }
+        });
   }
 
   @Override
-  public boolean execute(QueueAck operation) {
-    OperationExecutorClient myClient = this.clientProvider.getClient();
-    try {
-      return myClient.execute(operation);
-    } finally {
-      this.clientProvider.returnClient(myClient);
-    }
+  public boolean execute(final QueueAck ack) {
+    return this.clientProvider.call(
+        new Opexable<Boolean>() {
+          @Override
+          public Boolean call(OperationExecutorClient client) {
+            return client.execute(ack);
+          }
+        });
   }
 
   @Override
