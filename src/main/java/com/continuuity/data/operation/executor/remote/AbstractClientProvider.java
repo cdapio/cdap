@@ -4,12 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.discovery.ServicePayload;
-import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
@@ -38,6 +35,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
   }
 
   public void initialize() throws IOException {
+    // initialize the service discovery client
     this.initDiscovery();
   }
 
@@ -109,32 +107,12 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       Log.error("Unable to connect to opex service: " + e.getMessage());
       throw new IOException("Unable to connect to opex service", e);
     }
-    // thrift protocol layer, we use binary because so does the service
-    TProtocol protocol = new TBinaryProtocol(transport);
     // and create a thrift client
-    OperationExecutorClient newClient = new OperationExecutorClient(
-        new TOperationExecutor.Client(protocol));
+    OperationExecutorClient newClient = new OperationExecutorClient(transport);
+
     Log.info("Connected to Operation Executor service at " +
         address + ":" + port);
     return newClient;
   }
 
-  public <T> T call(Opexable<T> opexable) {
-    OperationExecutorClient client = this.getClient();
-    try {
-      return opexable.call(client);
-    } finally {
-      this.returnClient(client);
-    }
-  }
-
-  public <T, E extends Exception> T call(Opexeptionable<T, E> opexable)
-      throws E {
-    OperationExecutorClient client = this.getClient();
-    try {
-      return opexable.call(client);
-    } finally {
-      this.returnClient(client);
-    }
-  }
 }

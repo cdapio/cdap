@@ -4,30 +4,41 @@ import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.metrics2.api.CMetrics;
 import com.continuuity.metrics2.collector.MetricType;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class OperationExecutorClient
-    extends ConverterUtils implements OperationExecutor {
+/**
+ * This class is a wrapper around the thrift opex client, it takes
+ * Operations, converts them into thrift objects, calls the thrift
+ * client, and converts the results back to data fabric classes.
+ * This class also instruments the thrift calls with metrics.
+ */
+public class OperationExecutorClient extends ConverterUtils {
 
   private static final Logger Log =
       LoggerFactory.getLogger(OperationExecutorClient.class);
 
+  /** The thrift transport layer. We need this when we close the connection */
+  TTransport transport;
+
+  /** The actual thrift client */
   TOperationExecutor.Client client;
 
-  CMetrics metrics;
+  /** The metrics collection client */
+  CMetrics metrics = new CMetrics(MetricType.System);
 
   /** helper method to create a metrics helper */
   MetricsHelper newHelper(String meter, String histogram) {
@@ -35,14 +46,27 @@ public class OperationExecutorClient
         Constants.METRIC_REQUESTS, meter, histogram);
   }
 
-  public OperationExecutorClient(TOperationExecutor.Client client) {
-    this.client = client;
-    this.metrics = new CMetrics(MetricType.System);
+  /**
+   * Constructor from an existing, connected thrift transport
+   *
+   * @param transport the thrift transport layer. It must already be comnnected
+   */
+  public OperationExecutorClient(TTransport transport) {
+    this.transport = transport;
+    // thrift protocol layer, we use binary because so does the service
+    TProtocol protocol = new TBinaryProtocol(transport);
+    // and create a thrift client
+    this.client = new TOperationExecutor.Client(protocol);
   }
 
-  @Override
+  /** close this client. may be called multiple times */
+  public void close() {
+    if (this.transport.isOpen())
+      this.transport.close();
+  }
+
   public BatchOperationResult execute(List<WriteOperation> writes)
-      throws BatchOperationException {
+      throws BatchOperationException, TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_BATCH_REQUESTS,
@@ -89,17 +113,16 @@ public class OperationExecutorClient
       helper.finish(result.isSuccess());
       return result;
 
-    } catch (Exception e) {
-
-      String message = "Thrift Call for Batch failed: " + e.getMessage();
-      Log.error(message);
+    } catch (TBatchOperationException e) {
       helper.failure();
-      throw new BatchOperationException(message, e);
+      throw new BatchOperationException(e.getMessage(), e.getCause());
+    } catch (TException te) {
+      helper.failure();
+      throw te;
     }
   }
 
-  @Override
-  public DequeueResult execute(QueueDequeue dequeue) {
+  public DequeueResult execute(QueueDequeue dequeue) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_DEQUEUE_REQUESTS,
@@ -123,18 +146,13 @@ public class OperationExecutorClient
       helper.finish(dequeueResult.isSuccess());
       return dequeueResult;
 
-    } catch (TException e) {
-
-      String message = "Thrift Call for QueueDequeue failed for queue " +
-          new String(dequeue.getKey()) + ": " + e.getMessage();
-      Log.error(message);
+    } catch (TException te) {
       helper.failure();
-      return new DequeueResult(DequeueResult.DequeueStatus.FAILURE, message);
+      throw te;
     }
   }
 
-  @Override
-  public long execute(QueueAdmin.GetGroupID getGroupId) {
+  public long execute(QueueAdmin.GetGroupID getGroupId) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_GETGROUPID_REQUESTS,
@@ -157,17 +175,14 @@ public class OperationExecutorClient
       helper.success();
       return result;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for GetGroupId failed for queue " +
-          new String(getGroupId.getQueueName()) + ": " + e.getMessage());
-      return 0; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta) {
+  public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta)
+      throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_GETQUEUEMETA_REQUESTS,
@@ -192,16 +207,13 @@ public class OperationExecutorClient
       helper.success();
       return queueMeta;
 
-    } catch (TException e) {
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for GetQueueMeta failed for queue " +
-          new String(getQueueMeta.getQueueName()) + ": " + e.getMessage());
-      return null; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public void execute(ClearFabric clearFabric) {
+  public void execute(ClearFabric clearFabric) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_CLEARFABRIC_REQUESTS,
@@ -219,17 +231,13 @@ public class OperationExecutorClient
       client.clearFabric(tClearFabric);
       helper.success();
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for ClearFabric failed with message: " +
-          e.getMessage());
-      // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public byte[] execute(ReadKey readKey) {
+  public byte[] execute(ReadKey readKey) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READKEY_REQUESTS,
@@ -253,18 +261,13 @@ public class OperationExecutorClient
       helper.success();
       return result;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for ReadKey for key '" +
-          new String(readKey.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return null; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public Map<byte[], byte[]> execute(Read read) {
+  public Map<byte[], byte[]> execute(Read read) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READ_REQUESTS,
@@ -288,18 +291,13 @@ public class OperationExecutorClient
       helper.success();
       return result;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for Read for key '" +
-          new String(read.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return null; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public List<byte[]> execute(ReadAllKeys readKeys) {
+  public List<byte[]> execute(ReadAllKeys readKeys) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READALLKEYS_REQUESTS,
@@ -323,18 +321,14 @@ public class OperationExecutorClient
       helper.success();
       return result;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for ReadAllKeys(" + readKeys.getOffset() + ", " +
-          readKeys.getLimit() + ") failed with message: " + e.getMessage());
-      return new ArrayList<byte[]>(0);
-      // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
+  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange)
+      throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READCOLUMNRANGE_REQUESTS,
@@ -358,18 +352,13 @@ public class OperationExecutorClient
       helper.success();
       return result;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for ReadColumnRange for key '" +
-          new String(readColumnRange.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return null; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(Write write) {
+  public boolean execute(Write write) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_WRITE_REQUESTS,
@@ -392,18 +381,13 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
-      Log.error("Thrift Call for Write for key '" + new String(write.getKey()) +
-          "' failed with message: " + e.getMessage());
+    } catch (TException te) {
       helper.failure();
-      return false;
-      // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(Delete delete) {
+  public boolean execute(Delete delete) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_DELETE_REQUESTS,
@@ -426,17 +410,13 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for Delete for key '" + new String(delete.getKey())
-          + "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(Increment increment) {
+  public boolean execute(Increment increment) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_INCREMENT_REQUESTS,
@@ -459,18 +439,13 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for Increment for key '" +
-          new String(increment.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(CompareAndSwap compareAndSwap) {
+  public boolean execute(CompareAndSwap compareAndSwap) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_COMPAREANDSWAP_REQUESTS,
@@ -493,18 +468,13 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for CompareAndSwap for key '" +
-          new String(compareAndSwap.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(QueueEnqueue enqueue) {
+  public boolean execute(QueueEnqueue enqueue) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_ENQUEUE_REQUESTS,
@@ -527,18 +497,13 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for QueueEnqueue for queue '" +
-          new String(enqueue.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
-  public boolean execute(QueueAck ack) {
+  public boolean execute(QueueAck ack) throws TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_ACK_REQUESTS,
@@ -561,17 +526,12 @@ public class OperationExecutorClient
       helper.finish(success);
       return success;
 
-    } catch (TException e) {
-
+    } catch (TException te) {
       helper.failure();
-      Log.error("Thrift Call for QueueAck for queue '" +
-          new String(ack.getKey()) +
-          "' failed with message: " + e.getMessage());
-      return false; // TODO execute() must be able to return an error
+      throw te;
     }
   }
 
-  @Override
   public String getName() {
     return "remote-client";
   }

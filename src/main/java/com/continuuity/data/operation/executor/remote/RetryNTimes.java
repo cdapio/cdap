@@ -1,0 +1,45 @@
+package com.continuuity.data.operation.executor.remote;
+
+/**
+ * A retry strategy that makes N attempts and then gives up. This does
+ * not do anything before the re-attempt - extend this class to add a
+ * sleep or similar.
+ */
+public class RetryNTimes extends RetryStrategy {
+
+  int attempts = 0;
+  int limit;
+
+  /**
+   * Constructor
+   * @param maxAttempts the number of attempts after which to stop
+   */
+  protected RetryNTimes(int maxAttempts) {
+    limit = maxAttempts;
+  }
+
+  @Override
+  boolean failOnce() {
+    ++attempts;
+    return attempts < limit;
+  }
+
+  public static class Provider implements RetryStrategyProvider {
+
+    int nTimes;
+
+    public Provider(int nTimes) {
+      this.nTimes = nTimes;
+    }
+
+    @Override
+    public RetryStrategy newRetryStrategy() {
+      return new RetryNTimes(nTimes);
+    }
+
+    @Override
+    public String toString() {
+      return nTimes + " attempts without delay";
+    }
+  }
+}

@@ -41,6 +41,10 @@ public class Constants {
   public static final String CFG_DATA_OPEX_CLIENT_COUNT
       = "data.opex.client.count";
 
+  /** to specify the number of times to retry a failed thrift call */
+  public static final String CFG_DATA_OPEX_CLIENT_ATTEMPTS
+      = "data.opex.client.attempts";
+
   /** to specify the opex client socket timeout in milli seconds */
   public static final int DEFAULT_DATA_OPEX_CLIENT_TIMEOUT
       = 30 * 1000;
@@ -52,6 +56,11 @@ public class Constants {
   /** default opex client provider strategy */
   public static final String DEFAULT_DATA_OPEX_CLIENT_PROVIDER
       = "pool";
+
+  /** by default make two attempts: if the first one failed, try one more
+   * time to allow reconnecting to a different server */
+  public static final int DEFAULT_DATA_OPEX_CLIENT_ATTEMPTS
+      = 2;
 
   // Configuration key names and constants used by opex service and client.
 

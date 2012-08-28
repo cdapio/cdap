@@ -39,9 +39,14 @@ public interface OpexClientProvider {
    */
   void returnClient(OperationExecutorClient client);
 
-  public <T> T call(Opexable<T> opexable);
-
-  public <T, E extends Exception> T call(Opexeptionable<T, E> opexable)
-      throws E;
+  /**
+   * Discard an opex client from the provider's pool. This is called
+   * after a client becomes disfunctional, for instance, due to a socket
+   * exception. The provider must make sure to close the client, and it
+   * must remove the client from its arsenal and be prepared to create
+   * a new client subsequently.
+   * @param client The client to discard
+   */
+  void discardClient(OperationExecutorClient client);
 
 }

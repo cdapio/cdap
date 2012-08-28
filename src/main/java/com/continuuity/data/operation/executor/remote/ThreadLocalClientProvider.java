@@ -36,4 +36,10 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
   public void returnClient(OperationExecutorClient client) {
     // nothing to do
   }
+
+  @Override
+  public void discardClient(OperationExecutorClient client) {
+    client.close();
+    clients.remove();
+  }
 }
