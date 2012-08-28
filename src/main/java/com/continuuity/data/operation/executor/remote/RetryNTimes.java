@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.common.conf.CConfiguration;
+
 /**
  * A retry strategy that makes N attempts and then gives up. This does
  * not do anything before the re-attempt - extend this class to add a
@@ -28,8 +30,13 @@ public class RetryNTimes extends RetryStrategy {
 
     int nTimes;
 
-    public Provider(int nTimes) {
-      this.nTimes = nTimes;
+    public Provider() {
+      this.nTimes = Constants.DEFAULT_DATA_OPEX_CLIENT_ATTEMPTS;
+    }
+
+    @Override
+    public void configure(CConfiguration config) {
+      nTimes = config.getInt(Constants.CFG_DATA_OPEX_CLIENT_ATTEMPTS, nTimes);
     }
 
     @Override

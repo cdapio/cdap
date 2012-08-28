@@ -29,8 +29,9 @@ import java.util.concurrent.BlockingQueue;
  * next use.
  *
  * @param <T> the type of the elements
+ * @param <E> the type of exception thrown by create()
  */
-public abstract class ElasticPool<T> {
+public abstract class ElasticPool<T, E extends Exception> {
 
   private static final Logger Log =
       LoggerFactory.getLogger(ElasticPool.class);
@@ -41,7 +42,7 @@ public abstract class ElasticPool<T> {
    * not exceeded.
    * @return a new element
    */
-  protected abstract T create();
+  protected abstract T create() throws E;
 
   /**
    * A method to destroy an element. This gets called every time an element
@@ -90,7 +91,7 @@ public abstract class ElasticPool<T> {
    *
    * @return an element
    */
-  public T obtain() {
+  public T obtain() throws E {
     T element = getOrCreate();
     while (true) {
       if (element != null) return element;
@@ -116,6 +117,7 @@ public abstract class ElasticPool<T> {
    */
   public void release(T element) {
     synchronized (this) {
+      this.recycle(element);
       this.elements.add(element);
       this.notify();
     }
@@ -142,27 +144,23 @@ public abstract class ElasticPool<T> {
    * @return An elememt or null if an element is neither available nor can
    * one be created.
    */
-  private T getOrCreate() {
+  private T getOrCreate() throws E {
     T client = elements.poll();
     if (client != null) {
       // a client was available, all good
       return client;
     }
-    if (size >= limit) {
-      // we cannot create more clients -> block until one gets available
-      return null;
-    }
     // no client available but we have not reached the max number of clients:
     // create a new client but synchronize to make sure to avoid race with
     // other threads.
-    synchronized (elements) {
+    synchronized (this) {
       // verify that nobody has created a client in the meantime
       if (size >= limit) {
         // max clients was reached since we first checked -> block and wait
         return null;
       }
-      client = create();
-      size++;
+      client = this.create();
+      this.size++;
       return client;
     }
   }

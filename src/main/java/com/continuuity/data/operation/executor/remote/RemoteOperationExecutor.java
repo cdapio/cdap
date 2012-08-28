@@ -47,31 +47,39 @@ public class RemoteOperationExecutor
   @Inject
   public RemoteOperationExecutor(
       @Named("RemoteOperationExecutorConfig")CConfiguration config)
-      throws IOException {
+      throws TException {
 
     // initialize the retry logic
-    int numAttempts = config.getInt(
-        Constants.CFG_DATA_OPEX_CLIENT_ATTEMPTS,
-        Constants.DEFAULT_DATA_OPEX_CLIENT_ATTEMPTS);
-    this.retryStrategyProvider = new RetryNTimes.Provider(numAttempts);
+    String retryStrat = config.get(
+        Constants.CFG_DATA_OPEX_CLIENT_RETRY_STRATEGY,
+        Constants.DEFAULT_DATA_OPEX_CLIENT_RETRY_STRATEGY);
+    if ("backoff".equals(retryStrat)) {
+      this.retryStrategyProvider = new RetryWithBackoff.Provider();
+    } else if ("n-times".equals(retryStrat)) {
+      this.retryStrategyProvider = new RetryNTimes.Provider();
+    } else {
+      String message = "Unknown Retry Strategy '" + retryStrat + "'.";
+      Log.error(message);
+      throw new TException(message);
+    }
+    this.retryStrategyProvider.configure(config);
     Log.info("Retry strategy is " + this.retryStrategyProvider);
 
     // configure the client provider
     String provider = config.get(Constants.CFG_DATA_OPEX_CLIENT_PROVIDER,
         Constants.DEFAULT_DATA_OPEX_CLIENT_PROVIDER);
     if ("pool".equals(provider)) {
-      Log.info("Using pooled operation service client provider");
       this.clientProvider = new PooledClientProvider(config);
     } else if ("thread-local".equals(provider)) {
-      Log.info("Using thread-local operation service client provider");
       this.clientProvider = new ThreadLocalClientProvider(config);
     } else {
-      Log.error("Unknown Operation Service Client Provider '"
-          + provider + "'.");
-      throw new IOException("Unknown  Operation Service Client Provider '"
-          + provider + "'.");
+      String message = "Unknown Operation Service Client Provider '"
+          + provider + "'.";
+      Log.error(message);
+      throw new TException(message);
     }
     this.clientProvider.initialize();
+    Log.info("Opex client provider is " + this.clientProvider);
   }
 
   /**
@@ -84,7 +92,7 @@ public class RemoteOperationExecutor
    */
   abstract static class Opexeptionable <T, E extends Exception> {
 
-    /** the name of the operation */
+    /* the name of the operation */
     String operation;
 
     /** constructor with name of operation */
@@ -145,8 +153,11 @@ public class RemoteOperationExecutor
       throws E {
     RetryStrategy retryStrategy = retryStrategyProvider.newRetryStrategy();
     while (true) {
-      OperationExecutorClient client = this.clientProvider.getClient();
+      OperationExecutorClient client = null;
       try {
+        // this will throw a TException if it cannot get a client
+        client = this.clientProvider.getClient();
+
         // note that this can throw exceptions other than TException
         // hence the finally clause at the end
         return operation.call(client);
@@ -157,8 +168,10 @@ public class RemoteOperationExecutor
             operation.getName() + " : " + te.getMessage());
 
         // a thrift error occurred, the thrift client may be in a bad state
-        this.clientProvider.discardClient(client);
-        client = null;
+        if (client != null) {
+          this.clientProvider.discardClient(client);
+          client = null;
+        }
 
         // determine whether we should retry
         boolean retry = retryStrategy.failOnce();
@@ -167,6 +180,8 @@ public class RemoteOperationExecutor
           // note that this can throw an exception of type E
           return operation.error(te);
         } else {
+          // call retry strategy before retrying
+          retryStrategy.beforeRetry();
           Log.info("Retrying " + operation.getName() + " after Thrift error.");
         }
 

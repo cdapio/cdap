@@ -7,6 +7,7 @@ import com.continuuity.common.discovery.ServicePayload;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
@@ -34,7 +35,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
     this.configuration = configuration;
   }
 
-  public void initialize() throws IOException {
+  public void initialize() throws TException {
     // initialize the service discovery client
     this.initDiscovery();
   }
@@ -44,7 +45,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
    * every time we need to create a new client
    * @throws IOException
    */
-  public void initDiscovery() throws IOException {
+  public void initDiscovery() throws TException {
     // try to find the zookeeper ensemble in the config
     String zookeeper = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
     if (zookeeper == null) {
@@ -58,12 +59,12 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       Log.info("Connected to service discovery. ");
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to start service discovery client: " + e.getMessage());
-      throw new IOException("Unable to start service discovery client.", e);
+      throw new TException("Unable to start service discovery client.", e);
     }
     this.strategy = new RandomStrategy<ServicePayload>();
   }
 
-  protected OperationExecutorClient newClient() throws IOException {
+  protected OperationExecutorClient newClient() throws TException {
     String address;
     int port;
 
@@ -89,7 +90,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
         port = instance.getPort();
       } catch (Exception e) {
         Log.error("Unable to discover opex service: " + e.getMessage());
-        throw new IOException("Unable to discover opex service.", e);
+        throw new TException("Unable to discover opex service.", e);
       }
       Log.info("Service discovered at " + address + ":" + port);
     }
@@ -105,7 +106,7 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       transport.open();
     } catch (TTransportException e) {
       Log.error("Unable to connect to opex service: " + e.getMessage());
-      throw new IOException("Unable to connect to opex service", e);
+      throw e;
     }
     // and create a thrift client
     OperationExecutorClient newClient = new OperationExecutorClient(transport);

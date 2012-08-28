@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.executor.remote;
 
-import java.io.IOException;
+import org.apache.thrift.TException;
 
 /**
  * This interface is used to provide opex service clients to
@@ -24,14 +24,14 @@ public interface OpexClientProvider {
    * that opex service is up and running and getClient() can
    * create new clients when necessary.
    */
-  void initialize() throws IOException;
+  void initialize() throws TException;
 
   /**
    * Retrieve an opex client for exclusive use by the current thread. The
    * opex must be returned to the provider after use.
    * @return an opex client, connected and fully functional
    */
-  OperationExecutorClient getClient();
+  OperationExecutorClient getClient() throws TException;
 
   /**
    * Release an opex client back to the provider's pool.

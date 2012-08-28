@@ -26,6 +26,7 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
       } catch (Exception e) {
         Log.error("Unable to create new opex client for thread: "
             + e.getMessage());
+        // TODO we need
         return null;
       }
     }
@@ -41,5 +42,10 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
   public void discardClient(OperationExecutorClient client) {
     client.close();
     clients.remove();
+  }
+
+  @Override
+  public String toString() {
+    return "Thread-local";
   }
 }

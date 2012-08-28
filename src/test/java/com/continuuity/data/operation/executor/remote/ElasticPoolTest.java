@@ -15,7 +15,7 @@ public class ElasticPoolTest {
     }
   }
 
-  class DummyPool extends ElasticPool<Dummy> {
+  class DummyPool extends ElasticPool<Dummy, RuntimeException> {
 
     public DummyPool(int sizeLimit) {
       super(sizeLimit);

@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.common.conf.CConfiguration;
+
 public interface RetryStrategyProvider {
 
   /**
@@ -7,5 +9,11 @@ public interface RetryStrategyProvider {
    * @return a retry strategy
    */
   RetryStrategy newRetryStrategy();
+
+  /**
+   * configure the strategy
+   * @param config the configuration
+   */
+  void configure(CConfiguration config);
 
 }

@@ -1,10 +1,9 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 public class PooledClientProvider extends AbstractClientProvider {
 
@@ -12,22 +11,15 @@ public class PooledClientProvider extends AbstractClientProvider {
       LoggerFactory.getLogger(PooledClientProvider.class);
 
   // we will use this as a pool of opex clients
-  class OpexClientPool extends ElasticPool<OperationExecutorClient> {
-
+  class OpexClientPool extends ElasticPool<OperationExecutorClient, TException>
+  {
     OpexClientPool(int sizeLimit) {
       super(sizeLimit);
     }
 
     @Override
-    protected OperationExecutorClient create() {
-      try {
-        return newClient();
-      } catch (IOException e) {
-        String message =
-            "Unable to create new opex client for thread: " + e.getMessage();
-        Log.error(message);
-        throw new RuntimeException(message, e);
-      }
+    protected OperationExecutorClient create() throws TException {
+      return newClient();
     }
 
     @Override
@@ -47,7 +39,7 @@ public class PooledClientProvider extends AbstractClientProvider {
   }
 
   @Override
-  public void initialize() throws IOException {
+  public void initialize() throws TException {
     // initialize the super class (needed for service discovery)
     super.initialize();
 
@@ -64,7 +56,7 @@ public class PooledClientProvider extends AbstractClientProvider {
   }
 
   @Override
-  public OperationExecutorClient getClient() {
+  public OperationExecutorClient getClient() throws TException {
     return clients.obtain();
   }
 
@@ -78,4 +70,8 @@ public class PooledClientProvider extends AbstractClientProvider {
     clients.discard(client);
   }
 
+  @Override
+  public String toString() {
+    return "Elastic pool of size " + this.maxClients;
+  }
 }

@@ -22,6 +22,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   public static void startService() throws Exception {
     CConfiguration config = CConfiguration.create();
     config.setInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, 500);
+    config.set(Constants.CFG_DATA_OPEX_CLIENT_RETRY_STRATEGY, "n-times");
     config.setInt(Constants.CFG_DATA_OPEX_CLIENT_ATTEMPTS, 3);
     OperationExecutorServiceTest.startService(config,
         new NoOperationExecutor() {

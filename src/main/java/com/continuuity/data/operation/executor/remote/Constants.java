@@ -42,8 +42,24 @@ public class Constants {
       = "data.opex.client.count";
 
   /** to specify the number of times to retry a failed thrift call */
+  public static final String CFG_DATA_OPEX_CLIENT_RETRY_STRATEGY
+      = "data.opex.client.retry.strategy";
+
+  /** to specify the number of times to retry a failed thrift call */
   public static final String CFG_DATA_OPEX_CLIENT_ATTEMPTS
-      = "data.opex.client.attempts";
+      = "data.opex.client.retry.attempts";
+
+  /** to specify the initial sleep time for retry strategy backoff */
+  public static final String CFG_DATA_OPEX_CLIENT_BACKOFF_INIITIAL
+      = "data.opex.client.retry.backoff.initial";
+
+  /** to specify the backoff factor for retry strategy backoff */
+  public static final String CFG_DATA_OPEX_CLIENT_BACKOFF_FACTOR
+      = "data.opex.client.retry.backoff.factor";
+
+  /** to specify the sleep time limit for retry strategy backoff */
+  public static final String CFG_DATA_OPEX_CLIENT_BACKOFF_LIMIT
+      = "data.opex.client.retry.backoff.limit";
 
   /** to specify the opex client socket timeout in milli seconds */
   public static final int DEFAULT_DATA_OPEX_CLIENT_TIMEOUT
@@ -57,10 +73,25 @@ public class Constants {
   public static final String DEFAULT_DATA_OPEX_CLIENT_PROVIDER
       = "pool";
 
-  /** by default make two attempts: if the first one failed, try one more
-   * time to allow reconnecting to a different server */
+  /** retry strategy for thrift clients, e.g. backoff, or n-times */
+  public static final String DEFAULT_DATA_OPEX_CLIENT_RETRY_STRATEGY
+      = "backoff";
+
+  /** default number of attempts for strategy n-times */
   public static final int DEFAULT_DATA_OPEX_CLIENT_ATTEMPTS
       = 2;
+
+  /** default initial sleep is 100ms */
+  public static final int DEFAULT_DATA_OPEX_CLIENT_BACKOFF_INIITIAL
+      = 100;
+
+  /** default backoff factor is 4 */
+  public static final int DEFAULT_DATA_OPEX_CLIENT_BACKOFF_FACTOR
+      = 4;
+
+  /** default sleep limit is 30 sec */
+  public static final int DEFAULT_DATA_OPEX_CLIENT_BACKOFF_LIMIT
+      = 30 * 1000;
 
   // Configuration key names and constants used by opex service and client.
 
