@@ -4,7 +4,6 @@ import com.continuuity.api.data.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.flow.definition.impl.FlowStream;
@@ -16,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 
 public class TupleWritingConsumer extends Consumer {
@@ -44,9 +43,7 @@ public class TupleWritingConsumer extends Consumer {
 
   @Override
   protected void single(Event event) throws Exception {
-    List<Event> events = new LinkedList<Event>();
-    events.add(event);
-    this.batch(events);
+    this.batch(Collections.singletonList(event));
   }
 
   @Override
@@ -79,12 +76,13 @@ public class TupleWritingConsumer extends Consumer {
       LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
 
     }
-    BatchOperationResult result = this.executor.execute(operations);
-    if (!result.isSuccess()) {
-      Exception e = new Exception(
-          "Failed to enqueue event(s). " + result.getMessage());
+    try {
+      this.executor.execute(operations);
+    } catch (Exception e) {
+      Exception e1 = new Exception(
+          "Failed to enqueue event(s): " + e.getMessage(), e);
       LOG.error(e.getMessage(), e);
-      throw e;
+      throw e1;
     }
   }
 

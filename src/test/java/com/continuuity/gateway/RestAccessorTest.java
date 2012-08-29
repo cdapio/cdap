@@ -1,5 +1,7 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
@@ -512,7 +514,6 @@ public class RestAccessorTest {
     QueueDequeue dequeue =
         new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
-    Assert.assertFalse(result.isFailure());
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into an event (tuple)
     TupleSerializer serializer = new TupleSerializer(false);
@@ -524,7 +525,7 @@ public class RestAccessorTest {
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
         QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
-    Assert.assertTrue(this.collector.getExecutor().execute(ack));
+    this.collector.getExecutor().execute(ack);
   }
 
   void sendAndVerify(String baseUrl, String stream, int n) throws Exception {
@@ -532,11 +533,11 @@ public class RestAccessorTest {
     verifyEvent(stream, n);
   }
 
-  void sendTuple(String queueUri, int n) {
+  void sendTuple(String queueUri, int n) throws OperationException {
     Tuple tuple = new TupleBuilder().set("number", n).create();
     byte[] bytes = new TupleSerializer(false).serialize(tuple);
     QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), bytes);
-    Assert.assertTrue(this.executor.execute(enqueue));
+    this.executor.execute(enqueue);
   }
 
   void verifyTuple(String queueUri, int n) throws Exception {
@@ -549,7 +550,6 @@ public class RestAccessorTest {
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
-    Assert.assertFalse(result.isFailure());
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into a tuple
     TupleSerializer serializer = new TupleSerializer(false);
@@ -565,12 +565,14 @@ public class RestAccessorTest {
 
   void verifyKeyGone(String key) throws Exception {
     ReadKey read = new ReadKey(key.getBytes());
-    Assert.assertNull(this.executor.execute(read));
+    Assert.assertTrue(this.executor.execute(read).isEmpty());
   }
 
   void verifyKeyValue(String key, String value) throws Exception {
     ReadKey read = new ReadKey(key.getBytes());
-    Assert.assertArrayEquals(value.getBytes(), this.executor.execute(read));
+    OperationResult<byte[]> result = this.executor.execute(read);
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertArrayEquals(value.getBytes(), result.getValue());
   }
 
   void verifyQueueGone(String queueUri) throws Exception {
@@ -583,7 +585,6 @@ public class RestAccessorTest {
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
-    Assert.assertFalse(result.isFailure());
     Assert.assertTrue(result.isEmpty());
   }
 

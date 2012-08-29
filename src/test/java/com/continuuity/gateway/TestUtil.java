@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
@@ -310,7 +311,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      Assert.assertTrue(executor.execute(operations).isSuccess());
+      executor.execute(operations);
     }
   }
 
@@ -355,7 +356,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      Assert.assertTrue(executor.execute(operations).isSuccess());
+      executor.execute(operations);
     }
   }
 
@@ -376,7 +377,7 @@ public class TestUtil {
     Write write = new Write(key, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
-    Assert.assertTrue(executor.execute(operations).isSuccess());
+    executor.execute(operations);
 
     // make a get URL
     String getUrl = baseUri +
@@ -459,11 +460,11 @@ public class TestUtil {
 
     // read the key/value back from the data fabric
     ReadKey read = new ReadKey(key);
-    byte[] bytes = executor.execute(read);
-    Assert.assertNotNull(bytes);
+    OperationResult<byte[]> result = executor.execute(read);
 
     // verify the read value is the same as the original value
-    Assert.assertArrayEquals(value, bytes);
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertArrayEquals(value, result.getValue());
   }
 
   /**

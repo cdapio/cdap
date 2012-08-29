@@ -248,7 +248,16 @@ public class RestHandler extends NettyRestHandler {
         String queueURI = FlowStream.buildStreamURI(destination).toString();
         QueueAdmin.GetGroupID op =
             new QueueAdmin.GetGroupID(queueURI.getBytes());
-        long id = this.collector.getExecutor().execute(op);
+        long id;
+        try {
+          id = this.collector.getExecutor().execute(op);
+        } catch (Exception e) {
+          LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          break;
+        }
         byte[] responseBody = Long.toString(id).getBytes();
         Map<String, String> headers = Maps.newHashMap();
         headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
@@ -287,10 +296,12 @@ public class RestHandler extends NettyRestHandler {
             new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
         QueueDequeue dequeue = new QueueDequeue(
             queueURI.getBytes(), queueConsumer, queueConfig);
-        DequeueResult result = this.collector.getExecutor().execute(dequeue);
-        if (result.isFailure()) {
+        DequeueResult result;
+        try {
+          result = this.collector.getExecutor().execute(dequeue);
+        } catch (Exception e) {
           LOG.error("Error dequeueing from stream " + queueURI +
-              " with consumer " + queueConsumer + ": " + result.getMsg());
+              " with consumer " + queueConsumer + ": " + e.getMessage(), e);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
@@ -320,10 +331,13 @@ public class RestHandler extends NettyRestHandler {
         // ack the entry so that the next request can see the next entry
         QueueAck ack = new QueueAck(
             queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
-        if (!this.collector.getExecutor().execute(ack)) {
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+        try {
+          this.collector.getExecutor().execute(ack);
+        } catch (Exception e) {
           LOG.error("Ack failed to for queue " + queueURI + ", consumer "
-              + queueConsumer + " and pointer " + result.getEntryPointer());
+              + queueConsumer + " and pointer " + result.getEntryPointer() +
+              ": " + e.getMessage(), e);
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;

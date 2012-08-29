@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * TODO: Prolly should look to wrap this in some sort of Daemon framework
  */
-public class Main1 {
+public class Main {
 
   /**
    * Our main method

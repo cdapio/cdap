@@ -1,11 +1,11 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.accessor.RestAccessor;
@@ -63,8 +63,7 @@ public class DataClientTest {
           kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
-    BatchOperationResult result = executor.execute(operations);
-    Assert.assertTrue(result.isSuccess());
+    executor.execute(operations);
 
     // configure a gateway
     port = PortDetector.findFreePort();
@@ -194,12 +193,12 @@ public class DataClientTest {
   }
 
   @Test
-  public void testValueAsCounter() {
+  public void testValueAsCounter() throws OperationException {
     Assert.assertEquals("OK.", new DataClient().execute(new String[] {
         "write", "--key", "mycount", "--counter", "--value", "41" },
         configuration));
     Increment increment = new Increment("mycount".getBytes(), 1);
-    Assert.assertTrue(this.executor.execute(increment));
+    this.executor.execute(increment);
     Assert.assertEquals("42", new DataClient().execute(new String[] {
         "read", "--key", "mycount", "--counter" }, configuration));
   }

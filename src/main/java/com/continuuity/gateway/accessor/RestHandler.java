@@ -1,9 +1,6 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
@@ -238,24 +235,23 @@ public class RestHandler extends NettyRestHandler {
       case READ : {
         metrics.counter(this.getClass(), Constants.METRIC_READ_REQUESTS, 1);
         // Get the value from the data fabric
-        byte[] value;
+        OperationResult<byte[]> result;
         try {
           ReadKey read = new ReadKey(keyBinary);
-          value = this.accessor.getExecutor().execute(read);
+          result = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          LOG.error("Error reading value for key '" +
-             key + "': " + e.getMessage() + ".", e);
+          LOG.error("Error during ReadKey: " + e.getMessage(), e);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
-        if (value == null) {
+        if (result.isEmpty()) {
           metrics.counter(this.getClass(), Constants.METRIC_NOT_FOUND, 1);
           respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
         } else {
           metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-          respondSuccess(message.getChannel(), request, value);
+          respondSuccess(message.getChannel(), request, result.getValue());
         }
         break;
       }
@@ -298,10 +294,10 @@ public class RestHandler extends NettyRestHandler {
             return;
           }
         }
-        List<byte[]> keys;
+        OperationResult<List<byte[]>> result;
         try {
           ReadAllKeys read = new ReadAllKeys(start, limit);
-          keys = this.accessor.getExecutor().execute(read);
+          result = this.accessor.getExecutor().execute(read);
         } catch (Exception e) {
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           LOG.error("Error listing keys: " + e.getMessage() + ".", e);
@@ -309,17 +305,12 @@ public class RestHandler extends NettyRestHandler {
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
-        if (keys == null) {
-          // something went wrong, internal error
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
-        }
         StringBuilder builder = new StringBuilder();
-        for (byte[] keyBytes : keys) {
-          builder.append(Util.encode(keyBytes, enc));
-          builder.append('\n');
+        if (!result.isEmpty()) {
+          for (byte[] keyBytes : result.getValue()) {
+            builder.append(Util.encode(keyBytes, enc));
+            builder.append('\n');
+          }
         }
         // for hex or url, send it back as ASCII, otherwise use encoding
         byte[] responseBody = builder.toString().getBytes(
@@ -328,25 +319,40 @@ public class RestHandler extends NettyRestHandler {
         respondSuccess(message.getChannel(), request, responseBody);
         break;
       }
+
       case DELETE : {
         metrics.counter(this.getClass(), Constants.METRIC_DELETE_REQUESTS, 1);
         // first perform a Read to determine whether the key exists
-        ReadKey read = new ReadKey(keyBinary);
-        byte[] value = this.accessor.getExecutor().execute(read);
-        if (value == null) {
-          // key does not exist -> Not Found
-          metrics.counter(this.getClass(), Constants.METRIC_NOT_FOUND, 1);
-          respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-          return;
+        try {
+          ReadKey read = new ReadKey(keyBinary);
+          OperationResult<byte[]> result =
+              this.accessor.getExecutor().execute(read);
+          if (result.isEmpty()) {
+            // key does not exist -> Not Found
+            metrics.counter(this.getClass(), Constants.METRIC_NOT_FOUND, 1);
+            respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+            return;
+          }
+        } catch (Exception e) {
+          // something went wrong, internal error
+          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          LOG.error("Error during ReadKey: " + e.getMessage(), e);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          break;
         }
-        Delete delete = new Delete(keyBinary);
-        if (this.accessor.getExecutor().execute(delete)) {
+
+        // now that we know the key exists, delete it
+        try {
+          Delete delete = new Delete(keyBinary);
+          this.accessor.getExecutor().execute(delete);
           // deleted successfully
           metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
           respondSuccess(message.getChannel(), request);
-        } else {
+        } catch (Exception e) {
           // something went wrong, internal error
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          LOG.error("Error during Delete: " + e.getMessage(), e);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
@@ -367,13 +373,15 @@ public class RestHandler extends NettyRestHandler {
         content.readBytes(bytes);
         // create a write and attempt to execute it
         Write write = new Write(keyBinary, bytes);
-        if (this.accessor.getExecutor().execute(write)) {
+        try {
+          this.accessor.getExecutor().execute(write);
           // written successfully
           metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
           respondSuccess(message.getChannel(), request);
-        } else {
+        } catch (Exception e) {
           // something went wrong, internal error
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          LOG.error("Error during Write: " + e.getMessage(), e);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
