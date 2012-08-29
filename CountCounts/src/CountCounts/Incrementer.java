@@ -6,6 +6,8 @@ import com.continuuity.api.flow.flowlet.builders.*;
 
 public class Incrementer extends AbstractComputeFlowlet
 {
+  static byte[] keyTotal = "countSink".getBytes();
+
   @Override
   public void configure(StreamsConfigurator configurator) {
     TupleSchema in = new TupleSchemaBuilder().
@@ -27,7 +29,14 @@ public class Incrementer extends AbstractComputeFlowlet
       System.out.println(this.getClass().getSimpleName() + ": Emitting " +
           "Increment for " + key);
 
+    // emit an increment for the number of words in this document
     Increment increment = new Increment(key.getBytes(), 1);
     outputCollector.emit(increment);
+
+    if (Common.count) {
+      // emit an increment for the total number of documents counted
+      increment = new Increment(keyTotal, 1);
+      outputCollector.emit(increment);
+    }
   }
 }

@@ -1,11 +1,14 @@
 package CountCounts;
 
+import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
 import java.util.HashMap;
 
 public class StreamSource extends AbstractComputeFlowlet {
+
+  static byte[] keyTotal = "countSource".getBytes();
 
   @Override
   public void configure(StreamsConfigurator configurator) {
@@ -33,5 +36,11 @@ public class StreamSource extends AbstractComputeFlowlet {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
 
     outputCollector.emit(output);
+
+    if (Common.count) {
+      // emit an increment for the total number of documents ingested
+      Increment increment = new Increment(keyTotal, 1);
+      outputCollector.emit(increment);
+    }
   }
 }
