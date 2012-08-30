@@ -2,18 +2,17 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.*;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This is an implementation of OperationExecutor that does nothing but
+ * return empty results. It is useful for testing and performance benchmarks.
+ */
 public class NoOperationExecutor implements OperationExecutor {
-
-  private static final byte[] keyA = { 'a' };
-  private static final byte[] valueOne = { 1 };
 
   @Override
   public String getName() {
@@ -21,85 +20,86 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public BatchOperationResult execute(List<WriteOperation> writes) throws BatchOperationException {
-    return new BatchOperationResult(true);
+  public void execute(List<WriteOperation> writes) {
+    // do nothing
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue) {
-    return new DequeueResult(
-        DequeueResult.DequeueStatus.SUCCESS,
-        new QueueEntryPointer(dequeue.getKey(), 1, 1),
-        valueOne);
+  public OperationResult<DequeueResult> execute(QueueDequeue dequeue) {
+    // pretend the queue is empty
+    return new OperationResult<DequeueResult>(StatusCode.QUEUE_EMPTY);
   }
 
   @Override
-  public long execute(QueueAdmin.GetGroupID getGroupId) {
-    return 0;
+  public OperationResult<Long> execute(QueueAdmin.GetGroupID getGroupId) {
+    return new OperationResult<Long>(0);
   }
 
   @Override
-  public QueueAdmin.QueueMeta execute(QueueAdmin.GetQueueMeta getQueueMeta) {
-    return new QueueAdmin.QueueMeta();
+  public OperationResult<QueueAdmin.QueueMeta>
+  execute(QueueAdmin.GetQueueMeta getQueueMeta) {
+    // pretend the queue does not exist
+    return new OperationResult<QueueAdmin.QueueMeta>(
+        StatusCode.QUEUE_NOT_FOUND);
   }
 
   @Override
   public void execute(ClearFabric clearFabric) {
+    // do nothing
   }
 
   @Override
-  public byte[] execute(ReadKey read) {
-    return valueOne;
+  public OperationResult<byte[]> execute(ReadKey read) {
+    // return empty result, key not found
+    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public Map<byte[], byte[]> execute(Read read) {
-    Map<byte[], byte[]> map = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    map.put(keyA, valueOne);
-    return map;
+  public OperationResult<Map<byte[], byte[]>> execute(Read read) {
+    // return empty result, key not found
+    return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public List<byte[]> execute(ReadAllKeys readKeys) {
-    List<byte[]> list = Lists.newLinkedList();
-    list.add(keyA);
-    return list;
+  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys) {
+    return new OperationResult<List<byte[]>>(StatusCode.KEY_NOT_FOUND);
+
   }
 
   @Override
-  public Map<byte[], byte[]> execute(ReadColumnRange readColumnRange) {
-    Map<byte[], byte[]> map = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    map.put(keyA, valueOne);
-    return map;
+  public OperationResult<Map<byte[], byte[]>>
+  execute(ReadColumnRange readColumnRange) {
+    // pretend the key does not exists
+    return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public boolean execute(Write write) {
-    return true;
+  public void execute(Write write) {
+    // do nothing
   }
 
   @Override
-  public boolean execute(Delete delete) {
-    return true;
+  public void execute(Delete delete) {
+    // do nothing
   }
 
   @Override
-  public boolean execute(Increment inc) {
-    return true;
+  public void execute(Increment inc) {
+    // do nothing
   }
 
   @Override
-  public boolean execute(CompareAndSwap cas) {
-    return true;
+  public void execute(CompareAndSwap cas) {
+    // do nothing
   }
 
   @Override
-  public boolean execute(QueueEnqueue enqueue) {
-    return true;
+  public void execute(QueueEnqueue enqueue) {
+    // do nothing
   }
 
   @Override
-  public boolean execute(QueueAck ack) {
-    return true;
+  public void execute(QueueAck ack) {
+    // do nothing
   }
 }
