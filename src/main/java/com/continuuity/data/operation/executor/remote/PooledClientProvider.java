@@ -1,12 +1,9 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 public class PooledClientProvider extends AbstractClientProvider {
 
@@ -14,42 +11,67 @@ public class PooledClientProvider extends AbstractClientProvider {
       LoggerFactory.getLogger(PooledClientProvider.class);
 
   // we will use this as a pool of opex clients
-  BlockingQueue<OperationExecutorClient> clients;
+  class OpexClientPool extends ElasticPool<OperationExecutorClient, TException>
+  {
+    OpexClientPool(int sizeLimit) {
+      super(sizeLimit);
+    }
+
+    @Override
+    protected OperationExecutorClient create() throws TException {
+      return newClient();
+    }
+
+    @Override
+    protected void destroy(OperationExecutorClient client) {
+      client.close();
+    }
+  }
+
+  // we will use this as a pool of opex clients
+  OpexClientPool clients;
+
+  // the limit for the number of active clients
+  int maxClients;
 
   public PooledClientProvider(CConfiguration conf) {
     super(conf);
   }
 
   @Override
-  public void initialize() throws IOException {
+  public void initialize() throws TException {
     // initialize the super class (needed for service discovery)
     super.initialize();
 
     // create a (empty) pool of opex clients
-    int numClients = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_COUNT,
+    maxClients = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_COUNT,
         Constants.DEFAULT_DATA_OPEX_CLIENT_COUNT);
-    this.clients = new ArrayBlockingQueue<OperationExecutorClient>(numClients);
-
-    // create n clients and add them to the pool
-    for (int i = 0; i < numClients; i++) {
-      this.clients.add(this.newClient());
+    if (maxClients < 1) {
+      Log.warn("Configuration of " + Constants.CFG_DATA_OPEX_CLIENT_COUNT +
+          " is invalid: value is " + maxClients + " but must be at least 1. " +
+          "Using 1 as a fallback. ");
+      maxClients = 1;
     }
-    Log.info("Successfully created " + numClients + " operation executor " +
-        "clients.");
+    this.clients = new OpexClientPool(maxClients);
   }
 
   @Override
-  public OperationExecutorClient getClient() {
-    try {
-      return this.clients.take();
-    } catch (InterruptedException e) {
-      Log.error("take() was interrupted. Don't know what to do. Bailing out.");
-      throw new RuntimeException("take() interrupted. better bail out.");
-    }
+  public OperationExecutorClient getClient() throws TException {
+    return clients.obtain();
   }
 
   @Override
   public void returnClient(OperationExecutorClient client) {
-    this.clients.add(client);
+    clients.release(client);
+  }
+
+  @Override
+  public void discardClient(OperationExecutorClient client) {
+    clients.discard(client);
+  }
+
+  @Override
+  public String toString() {
+    return "Elastic pool of size " + this.maxClients;
   }
 }
