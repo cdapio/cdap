@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -239,8 +240,8 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
-      ReadPointer readPointer) {
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(byte[] row, byte[] column,
+                                                                     ReadPointer readPointer) {
     try {
       Get get = new Get(row);
       get.addColumn(this.family, column);

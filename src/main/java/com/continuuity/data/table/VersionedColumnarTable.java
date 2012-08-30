@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 
 import java.util.Map;
@@ -97,7 +98,8 @@ public interface VersionedColumnarTable {
    * @param readPointer
    * @return map of columns to values
    */
-  public Map<byte [], byte []> get(byte [] row, ReadPointer readPointer);
+  public OperationResult<Map<byte [], byte []>>
+  get(byte [] row, ReadPointer readPointer);
 
   /**
    * Reads the latest version of the specified column in the specified row,
@@ -109,19 +111,23 @@ public interface VersionedColumnarTable {
    * @return value of the latest visible column in the specified row, or null if
    *         none exists
    */
-  public byte [] get(byte [] row, byte [] column, ReadPointer readPointer);
+  public OperationResult<byte[]> get(byte [] row, byte [] column,
+                                     ReadPointer readPointer);
 
   /**
    * Reads the latest version of the specified column in the specified row,
    * utilizing the specified read pointer to enforce visibility constraints,
    * and returns both the value as well as the version this value exists at.
+   *
+   *
    * @param row
    * @param column
    * @param readPointer
    * @return value and version of the latest visible column in the specified
    *         row, or null if none exists
    */
-  public ImmutablePair<byte[],Long> getWithVersion(byte [] row, byte [] column,
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(
+      byte[] row, byte[] column,
       ReadPointer readPointer);
 
   /**
@@ -134,8 +140,9 @@ public interface VersionedColumnarTable {
    * @param readPointer
    * @return map of columns to values, never null
    */
-  public Map<byte [], byte []> get(byte [] row, byte [] startColumn,
-      byte [] stopColumn, ReadPointer readPointer);
+  public OperationResult<Map<byte [], byte []>> get(
+      byte [] row, byte[] startColumn, byte[] stopColumn,
+      ReadPointer readPointer);
 
   /**
    * Reads the latest versions of the specified columns in the specified row,
@@ -145,7 +152,8 @@ public interface VersionedColumnarTable {
    * @param readPointer
    * @return map of columns to values, never null
    */
-  public Map<byte [], byte []> get(byte [] row, byte [][] columns,
+  public OperationResult<Map<byte[], byte[]>> get(
+      byte [] row, byte[][] columns,
       ReadPointer readPointer);
 
   /**
@@ -160,8 +168,11 @@ public interface VersionedColumnarTable {
    * @param writeVersion
    * @return value of counter after this increment is performed
    */
-  public long increment(byte [] row, byte [] column, long amount,
-      ReadPointer readPointer, long writeVersion);
+  public long increment(
+      byte [] row, byte[] column, long amount,
+      ReadPointer readPointer, long writeVersion)
+    throws OperationException;
+
 
   /**
    * Increments (atomically) the specified row and columns by the specified
@@ -175,8 +186,10 @@ public interface VersionedColumnarTable {
    * @param writeVersion
    * @return values of counters after the increments are performed, never null
    */
-  public Map<byte[],Long> increment(byte [] row, byte [][] columns, long [] amounts,
-      ReadPointer readPointer, long writeVersion);
+  public Map<byte[],Long> increment(
+      byte [] row, byte[][] columns, long[] amounts,
+      ReadPointer readPointer, long writeVersion)
+    throws OperationException;
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column

@@ -1,6 +1,7 @@
 package com.continuuity.data.engine.hypersql;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
@@ -333,8 +334,8 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public ImmutablePair<byte[], Long> getWithVersion(byte[] row, byte[] column,
-      ReadPointer readPointer) {
+  public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(byte[] row, byte[] column,
+                                                                     ReadPointer readPointer) {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement(
