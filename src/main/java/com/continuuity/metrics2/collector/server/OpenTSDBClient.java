@@ -81,14 +81,16 @@ final class OpenTSDBClient extends IoHandlerAdapter {
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
       @Override
       public void run() {
-        session.close(true).addListener(new IoFutureListener<CloseFuture>() {
-          @Override
-          public void operationComplete(CloseFuture future) {
-            if(future.isClosed()) {
-              Log.debug("Successfully close session.");
+        if(session != null) {
+          session.close(true).addListener(new IoFutureListener<CloseFuture>() {
+            @Override
+            public void operationComplete(CloseFuture future) {
+              if(future.isClosed()) {
+                Log.debug("Successfully close session.");
+              }
             }
-          }
-        });
+          });
+        }
         if(connector != null) {
           connector.dispose();
         }
