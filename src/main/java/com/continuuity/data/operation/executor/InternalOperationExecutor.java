@@ -13,7 +13,7 @@ public interface InternalOperationExecutor {
 
   // TTQueues
 
-  public OperationResult<DequeueResult> execute(QueueDequeue dequeue)
+  public DequeueResult execute(QueueDequeue dequeue)
       throws OperationException;
 
   public OperationResult<Long> execute(GetGroupID getGroupId)
