@@ -24,6 +24,15 @@
         </description>
     </property>
 
+    <property>
+        <name>state.storage.connection.url</name>
+        <value>jdbc:hsqldb:file:data/flow-state-management?user=sa</value>
+        <description>
+            Specifies the JDBC connection url for connecting to local or
+            remote storage for storing flow state, runs and active flows.
+        </description>
+    </property>
+
     <!--
         Resource manager configurations.
     -->
