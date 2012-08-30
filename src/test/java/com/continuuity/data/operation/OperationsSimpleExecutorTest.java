@@ -3,33 +3,24 @@
  */
 package com.continuuity.data.operation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.simple.SimpleOperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ColumnarTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.*;
 
 /**
  * Simple test of operations stuff.
@@ -44,7 +35,8 @@ public class OperationsSimpleExecutorTest {
 
   @BeforeClass
   public static void initializeClass() {
-    injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
+    injector = Guice.createInjector(
+        new DataFabricModules().getInMemoryModules());
   }
   
   @Before
@@ -67,16 +59,18 @@ public class OperationsSimpleExecutorTest {
     writes.add(new Write(keys[0], values[0]));
     writes.add(new Write(keys[1], values[1]));
 
-    assertTrue(this.executor.execute(writes).isSuccess());
+    this.executor.execute(writes);
 
     ReadKey [] reads = new ReadKey [] {
         new ReadKey(keys[0]), new ReadKey(keys[1]) };
 
-    byte [] value = this.executor.execute(reads[0]);
-    assertEquals(new String(values[0]), new String(value));
+    OperationResult<byte[]> result = this.executor.execute(reads[0]);
+    assertFalse(result.isEmpty());
+    assertArrayEquals(values[0], result.getValue());
 
-    value = this.executor.execute(reads[1]);
-    assertEquals(new String(values[1]), new String(value));
+    result = this.executor.execute(reads[1]);
+    assertFalse(result.isEmpty());
+    assertArrayEquals(values[1], result.getValue());
   }
 
   @Test
@@ -92,62 +86,85 @@ public class OperationsSimpleExecutorTest {
     this.executor.execute(new Write(key, valueOne));
 
     // CAS to Two
-    assertTrue(this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo)));
+    this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo));
 
     // Read normally, get valueTwo
-    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new ReadKey(key))));
+    OperationResult<byte[]> result = this.executor.execute(new ReadKey(key));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueTwo, result.getValue());
 
     // Bad CAS from One to Two
-    assertFalse(this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo)));
+    try {
+      this.executor.execute(new CompareAndSwap(key, valueOne, valueTwo));
+      fail("Compare and swap succeeded unexpectedly.");
+    } catch (OperationException e) { }
 
     // CAS(key, valueTwo, valueTwo)
-    assertTrue(this.executor.execute(new CompareAndSwap(key, valueTwo, valueTwo)));
+    this.executor.execute(new CompareAndSwap(key, valueTwo, valueTwo));
 
     // Read normally, get valueTwo
-    assertTrue(Bytes.equals(valueTwo, this.executor.execute(new ReadKey(key))));
+    result = this.executor.execute(new ReadKey(key));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueTwo, result.getValue());
 
     // CAS(key, valueTwo, valueThree)
-    assertTrue(this.executor.execute(new CompareAndSwap(key, valueTwo, valueThree)));
+    this.executor.execute(new CompareAndSwap(key, valueTwo, valueThree));
 
     // Read normally, get valueThree
-    assertTrue(Bytes.equals(valueThree, this.executor.execute(new ReadKey(key))));
+    result = this.executor.execute(new ReadKey(key));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueThree, result.getValue());
 
     // Bad CAS from null to two
-    assertFalse(this.executor.execute(new CompareAndSwap(key, null, valueTwo)));
+    try {
+      this.executor.execute(new CompareAndSwap(key, null, valueTwo));
+      fail("Compare and swap succeeded unexpectedly.");
+    } catch (OperationException e) { }
 
     // Read normally, get valueThree
-    assertTrue(Bytes.equals(valueThree, this.executor.execute(new ReadKey(key))));
+    result = this.executor.execute(new ReadKey(key));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueThree, result.getValue());
 
     // CAS from three to null
-    assertTrue(this.executor.execute(new CompareAndSwap(key, valueThree, null)));
+    this.executor.execute(new CompareAndSwap(key, valueThree, null));
 
     // Read, should not exist
-    assertNull(this.executor.execute(new ReadKey(key)));
+    result = this.executor.execute(new ReadKey(key));
+    assertTrue(result.isEmpty());
+    assertNull(result.getValue());
 
     // CAS from null to one
-    assertTrue(this.executor.execute(new CompareAndSwap(key, null, valueOne)));
+    this.executor.execute(new CompareAndSwap(key, null, valueOne));
 
     // Read normally, get valueOne
-    assertTrue(Bytes.equals(valueOne, this.executor.execute(new ReadKey(key))));
+    result = this.executor.execute(new ReadKey(key));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueOne, result.getValue());
 
     byte [] valueChainKey = Bytes.toBytes("chainkey");
     byte [][] valueChain = generateRandomByteArrays(20, 20);
 
     // CompareAndSwap the first one, expecting null
-    assertTrue(this.executor.execute(
-        new CompareAndSwap(valueChainKey, null, valueChain[0])));
+    this.executor.execute(
+        new CompareAndSwap(valueChainKey, null, valueChain[0]));
 
     // CAS down the chain
     for (int i=1; i<valueChain.length; i++) {
-      assertTrue(this.executor.execute(
-          new CompareAndSwap(valueChainKey, valueChain[i-1], valueChain[i])));
-      assertFalse(this.executor.execute(
-          new CompareAndSwap(valueChainKey, valueChain[i-1], valueChain[i])));
+      this.executor.execute(
+          new CompareAndSwap(valueChainKey, valueChain[i-1], valueChain[i]));
+      try {
+        this.executor.execute(
+          new CompareAndSwap(valueChainKey, valueChain[i-1], valueChain[i]));
+        fail("CompareAndSwap succeeded unexpectedly.");
+      } catch (OperationException e) { // expected
+      }
     }
 
     // Verify the current value is the last in the chain
-    assertTrue(Bytes.equals(valueChain[valueChain.length-1],
-        this.executor.execute(new ReadKey(valueChainKey))));
+    result = this.executor.execute(new ReadKey(valueChainKey));
+    assertFalse(result.isEmpty());
+    assertArrayEquals(valueChain[valueChain.length-1], result.getValue());
   }
 
   private long bytesToCounter(byte [] bytes) {
@@ -168,7 +185,8 @@ public class OperationsSimpleExecutorTest {
 
     // iterate all keys, only first half should have value of 1, others 0
     for (int i=0; i<keys.length; i++) {
-      long count = bytesToCounter(this.executor.execute(new ReadKey(keys[i])));
+      long count = bytesToCounter(
+          this.executor.execute(new ReadKey(keys[i])).getValue());
       if (i < keys.length/2) {
         assertEquals(1L, count);
       } else {
@@ -181,9 +199,9 @@ public class OperationsSimpleExecutorTest {
       this.executor.execute(new Increment(keys[i], -1));
     }
 
-    for (int i=0; i<keys.length; i++) {
-      assertEquals(0L,
-          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
+    for (byte[] key : keys) {
+      assertEquals(0L, bytesToCounter(
+          this.executor.execute(new ReadKey(key)).getValue()));
     }
 
     // increment each by their value of i
@@ -193,8 +211,8 @@ public class OperationsSimpleExecutorTest {
 
     // read them back backwards, expecting their amount to = their position
     for (int i=keys.length-1; i>=0; i--) {
-      assertEquals(i,
-          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
+      assertEquals(i, bytesToCounter(
+          this.executor.execute(new ReadKey(keys[i])).getValue()));
     }
 
     // increment each by the total number minus their position
@@ -204,99 +222,10 @@ public class OperationsSimpleExecutorTest {
     }
 
     // read them back, all should have the same value of keys.length
-    for (int i=0; i<keys.length; i++) {
-      assertEquals((long)keys.length,
-          bytesToCounter(this.executor.execute(new ReadKey(keys[i]))));
+    for (byte[] key : keys) {
+      assertEquals((long) keys.length, bytesToCounter(
+          this.executor.execute(new ReadKey(key)).getValue()));
     }
-
-  }
-
-  @Test @Ignore
-  public void testIncrementChain() throws Exception {
-
-    // Currently we do not support increment chaining
-    
-//    byte [] rawCounterKey = Bytes.toBytes("raw");
-//    final byte [] stepCounterKey = Bytes.toBytes("step");
-//
-    // make a generator that increments every 10 increments
-//    OperationGenerator<Long> generator = new OperationGenerator<Long>() {
-//      @Override
-//      public WriteOperation generateWriteOperation(Long amount) {
-//        if (amount % 10 == 0) return new Increment(stepCounterKey, 10);
-//        return null;
-//      }
-//    };
-//
-//    // increment 9 times, step counter should not exist
-//    for (int i=0; i<9; i++) {
-//      Increment increment = new Increment(rawCounterKey, 1);
-//      increment.setPostIncrementOperationGenerator(generator);
-//      assertTrue(this.executor.execute(increment));
-//      assertEquals(new Long(i+1), increment.getResult());
-//    }
-//
-//    // raw should be 9, step should be 0
-//    assertEquals(9L, this.executor.execute(new ReadCounter(rawCounterKey)));
-//    assertEquals(0L, this.executor.execute(new ReadCounter(stepCounterKey)));
-//
-//    // one more and raw should be 10, step should be 1
-//    Increment increment = new Increment(rawCounterKey, 1);
-//    increment.setPostIncrementOperationGenerator(generator);
-//    assertTrue(this.executor.execute(increment));
-//    assertEquals(10L, this.executor.execute(new ReadCounter(rawCounterKey)));
-//    assertEquals(10L, this.executor.execute(new ReadCounter(stepCounterKey)));
-//
-//    // 15 more increments
-//    for (int i=0; i<15; i++) {
-//      increment = new Increment(rawCounterKey, 1);
-//      increment.setPostIncrementOperationGenerator(generator);
-//      assertTrue(this.executor.execute(increment));
-//      assertEquals(new Long(i+11), increment.getResult());
-//    }
-//    // raw should be 25, step should be 20
-//    assertEquals(25L, this.executor.execute(new ReadCounter(rawCounterKey)));
-//    assertEquals(20L, this.executor.execute(new ReadCounter(stepCounterKey)));
-  }
-
-  @Test @Ignore
-  public void testReadModifyWrite() throws Exception {
-
-    // Currently we do not support RMW
-//    
-//    byte [] key = Bytes.toBytes("keyrmw");
-//    byte [] value = Bytes.toBytes(0L);
-//
-//    // write the first value (0)
-//    assertTrue(this.executor.execute(new Write(key, value)));
-//
-//    // create two modifiers.  an incrementer and decrementer.
-//    Modifier<byte[]> incrementer = new Modifier<byte[]>() {
-//      @Override
-//      public byte [] modify(byte [] bytes) {
-//        return Bytes.toBytes(Bytes.toLong(bytes)+1);
-//      }
-//    };
-//    Modifier<byte[]> decrementer = new Modifier<byte[]>() {
-//      @Override
-//      public byte [] modify(byte [] bytes) {
-//        return Bytes.toBytes(Bytes.toLong(bytes)-1);
-//      }
-//    };
-//
-//    // increment 10 times
-//    for (int i=0; i<10; i++)
-//      assertTrue(this.executor.execute(new ReadModifyWrite(key, incrementer)));
-//
-//    // verify value is 10L
-//    assertEquals(10L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
-//
-//    // decrement 12 times
-//    for (int i=0; i<12; i++)
-//      assertTrue(this.executor.execute(new ReadModifyWrite(key, decrementer)));
-//
-//    // verify value is -2L
-//    assertEquals(-2L, Bytes.toLong(this.executor.execute(new ReadKey(key))));
 
   }
 
@@ -329,7 +258,7 @@ public class OperationsSimpleExecutorTest {
     writes.add(new Write(keys[1], values[1]));
 
     // Runner : Execute writes through the SimpleMemoryOperationExecutor
-    assertTrue(memoryOperationExecutor.execute(writes).isSuccess());
+    memoryOperationExecutor.execute(writes);
     System.out.println("Wrote two key-values");
 
     // Client Developer : Make two read operations
@@ -337,11 +266,13 @@ public class OperationsSimpleExecutorTest {
         new ReadKey(keys[0]), new ReadKey(keys[1]) };
 
     // Runner : Execute reads through the SimpleMemoryOperationExecutor
-    byte [] value = memoryOperationExecutor.execute(reads[0]);
-    assertEquals(new String(values[0]), new String(value));
+    OperationResult<byte[]> result = memoryOperationExecutor.execute(reads[0]);
+    assertFalse(result.isEmpty());
+    assertArrayEquals(values[0], result.getValue());
     System.out.println("Read first key-value");
-    value = memoryOperationExecutor.execute(reads[1]);
-    assertEquals(new String(values[1]), new String(value));
+    result = memoryOperationExecutor.execute(reads[1]);
+    assertFalse(result.isEmpty());
+    assertArrayEquals(values[1], result.getValue());
     System.out.println("Read second key-value");
 
     assertTrue("PURPOSEFUL FAULT INJECTION!!!", true);

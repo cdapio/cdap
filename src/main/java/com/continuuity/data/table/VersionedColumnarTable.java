@@ -201,5 +201,5 @@ public interface VersionedColumnarTable {
   /**
    * Clears this table, completely wiping all data irrecoverably.
    */
-  public void clear();
+  public void clear() throws OperationException;
 }

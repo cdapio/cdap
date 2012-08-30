@@ -57,11 +57,11 @@ public class OperationResult<ReturnType> {
     return this.message;
   }
 
-  int getStatus() {
+  public int getStatus() {
     return this.statusCode;
   }
 
-  ReturnType getReturnValue() {
+  public ReturnType getValue() {
     return this.value;
   }
 
