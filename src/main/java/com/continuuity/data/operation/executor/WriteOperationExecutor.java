@@ -1,57 +1,50 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Write;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 
 public interface WriteOperationExecutor {
 
-  // Key-Values
-
   /**
    * Performs a {@link Write} operation.
-   * @param write
-   * @return true if success, false if failure
+   * @param write the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(Write write);
+  public void execute(Write write) throws OperationException;
 
   /**
    * Performs a {@link Delete} operation.
-   * @param delete
-   * @return true if success, false if failure
+   * @param delete the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(Delete delete);
+  public void execute(Delete delete) throws OperationException;
 
   /**
    * Performs an {@link Increment} operation.
-   * @param inc
-   * @return true if success, false if failure
+   * @param inc the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(Increment inc);
+  public void execute(Increment inc) throws OperationException;
 
   /**
    * Performs a {@link CompareAndSwap} operation.
-   * @param cas
-   * @return true if success, false if failure
+   * @param cas the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(CompareAndSwap cas);
+  public void execute(CompareAndSwap cas) throws OperationException;
   
-  // TTQueues
-
   /**
    * Performs a {@link QueueEnqueue} operation.
-   * @param enqueue
-   * @return true if success, false if failure
+   * @param enqueue the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(QueueEnqueue enqueue);
+  public void execute(QueueEnqueue enqueue) throws OperationException;
 
   /**
    * Performs a {@link QueueAck} operation.
-   * @param ack
-   * @return true if success, false if failure
+   * @param ack the operation
+   * @throws OperationException if execution failed
    */
-  public boolean execute(QueueAck ack);
+  public void execute(QueueAck ack) throws OperationException;
 }

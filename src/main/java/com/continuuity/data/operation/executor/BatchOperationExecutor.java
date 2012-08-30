@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.WriteOperation;
 
 import java.util.List;
@@ -20,15 +21,13 @@ public interface BatchOperationExecutor {
    * is to perform the specified writes synchronously and in sequence.
    *
    * If an error is reached, execution of subsequent operations is skipped and
-   * false is returned.  If all operations are performed successfully, returns
-   * true.
+   * an exception is thrown.
    *
    * @see TransactionalOperationExecutor#execute
    *
    * @param writes list of write operations to execute as a batch
-   * @return result of batch operation (success/failure, msg, etc)
-   * @throws BatchOperationException 
+   * @throws OperationException if anything goes wrong
    */
-  public BatchOperationResult execute(List<WriteOperation> writes)
-      throws BatchOperationException;
+  public void execute(List<WriteOperation> writes)
+      throws OperationException;
 }
