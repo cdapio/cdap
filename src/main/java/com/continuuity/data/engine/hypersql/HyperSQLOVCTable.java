@@ -1,5 +1,6 @@
 package com.continuuity.data.engine.hypersql;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
@@ -232,9 +233,9 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column,
-      byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
-      long writeVersion) {
+  public void compareAndSwap(byte[] row, byte[] column,
+                             byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
+                             long writeVersion) throws OperationException {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement(

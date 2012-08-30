@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -342,9 +343,9 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column,
-      byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
-      long writeVersion) {
+  public void compareAndSwap(byte[] row, byte[] column,
+                             byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
+                             long writeVersion) throws OperationException {
     Row r = new Row(row);
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
     try {

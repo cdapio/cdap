@@ -6,6 +6,8 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 
 public interface WriteOperationExecutor {
 
+  // TODO document expected error codes
+
   /**
    * Performs a {@link Write} operation.
    * @param write the operation

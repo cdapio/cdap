@@ -1,9 +1,11 @@
 package com.continuuity.data.operation.executor;
 
-public class TransactionException extends BatchOperationException {
+import com.continuuity.api.data.OperationException;
+
+public class TransactionException extends OperationException {
   private static final long serialVersionUID = 6326789949414855631L;
 
-  public TransactionException(String msg) {
-    super(msg);
+  public TransactionException(int statusCode, String msg) {
+    super(statusCode, msg);
   }
 }

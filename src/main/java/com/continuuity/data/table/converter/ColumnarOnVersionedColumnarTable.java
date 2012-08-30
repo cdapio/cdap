@@ -70,8 +70,12 @@ public class ColumnarOnVersionedColumnarTable implements ColumnarTable {
   public boolean compareAndSwap(byte[] row, byte[] column,
       byte[] expectedValue, byte[] newValue) {
     long now = this.oracle.getTimestamp();
-    return this.table.compareAndSwap(row, column, expectedValue, newValue,
-        new SimpleReadPointer(now), now);
+    try {
+      return this.table.compareAndSwap(row, column, expectedValue, newValue,
+          new SimpleReadPointer(now), now);
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
 }

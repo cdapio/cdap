@@ -1,5 +1,8 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+
 import java.util.Map;
 
 public interface ColumnarTable {
@@ -12,7 +15,7 @@ public interface ColumnarTable {
 
   public Map<byte[], byte[]> get(byte[] row);
 
-  public byte [] get(byte [] row, byte [] column);
+  public OperationResult<byte[]> get(byte [] row, byte [] column);
 
   public Map<byte[],byte[]> get(byte [] row, byte [] startColumn,
       byte [] stopColumn);
@@ -23,7 +26,7 @@ public interface ColumnarTable {
   
   // Conditional Operations
   
-  public boolean compareAndSwap(byte [] row, byte [] column,
-      byte [] expectedValue, byte [] newValue);
+  public void compareAndSwap(byte [] row, byte [] column,
+      byte [] expectedValue, byte [] newValue) throws OperationException;
 
 }

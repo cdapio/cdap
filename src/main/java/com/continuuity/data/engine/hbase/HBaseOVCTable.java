@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -383,9 +384,9 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column,
-      byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
-      long writeVersion) {
+  public void compareAndSwap(byte[] row, byte[] column,
+                             byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
+                             long writeVersion) throws OperationException {
     try {
       if (newValue == null) {
         Delete delete = new Delete(row);

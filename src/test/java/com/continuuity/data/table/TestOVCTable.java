@@ -330,19 +330,31 @@ public abstract class TestOVCTable {
 
     this.table.put(row, COL, 1L, valueOne);
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
-    assertFalse(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, RP_MAX)));
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(2L))));
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueTwo, valueOne, RP_MAX, 2L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueTwo, valueOne, RP_MAX, 2L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
   }
 
@@ -357,26 +369,50 @@ public abstract class TestOVCTable {
     assertNull(this.table.get(row, COL, RP_MAX));
 
     // compare and swap from null to valueOne
-    assertFalse(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 2L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 3L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
-    assertFalse(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 4L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, RP_MAX, 4L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, RP_MAX)));
 
-    assertFalse(
-        this.table.compareAndSwap(row, COL, null, valueTwo, RP_MAX, 5L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, null, valueTwo, RP_MAX, 5L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueTwo, null, RP_MAX, 5L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueTwo, null, RP_MAX, 5L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     byte [] val = this.table.get(row, COL, RP_MAX);
     assertNull("expected null but was " + Bytes.toString(val), val);
@@ -394,13 +430,21 @@ public abstract class TestOVCTable {
 
     // compare and swap null to valueOne, max to v2
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // null to valueTwo, read v1 write v3
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, null, valueTwo, new MemoryReadPointer(1L), 3L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, null, valueTwo, new MemoryReadPointer(1L), 3L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // read @ 3 gives value two
 
@@ -414,13 +458,21 @@ public abstract class TestOVCTable {
 
     // cas valueOne @ ts2 to valueTwo @ ts4
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(2L), 4L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(2L), 4L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // cas valueTwo @ ts3 to valueOne @ ts5
 
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(3L), 5L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(3L), 5L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // read @ 5 gives value one
 
@@ -434,21 +486,33 @@ public abstract class TestOVCTable {
 
     // cas valueTwo @ ts5 to valueOne @ ts6 FAIL
 
-    assertFalse(
-        this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(5L), 6L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, valueTwo, valueOne, new MemoryReadPointer(5L), 6L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // cas valueOne @ ts4 to valueTwo @ ts6 FAIL
 
-    assertFalse(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(4L), 6L));
+    try {
+      assertFalse(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo, new MemoryReadPointer(4L), 6L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // cas valueOne@5 to valueTwo@5
 
     assertEquals(Bytes.toString(valueOne),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(5))));
-    assertTrue(
-        this.table.compareAndSwap(row, COL, valueOne, valueTwo,
-            new MemoryReadPointer(5L), 5L));
+    try {
+      assertTrue(
+          this.table.compareAndSwap(row, COL, valueOne, valueTwo,
+              new MemoryReadPointer(5L), 5L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     assertEquals(Bytes.toString(valueTwo),
         Bytes.toString(this.table.get(row, COL, new MemoryReadPointer(5))));
 
@@ -519,9 +583,13 @@ public abstract class TestOVCTable {
         this.table.get(row, COL, new MemoryReadPointer(3L))));
     
     // cas from 4 to 6 @ ts3
-    
-    assertTrue(this.table.compareAndSwap(row, COL, Bytes.toBytes(4L),
-        Bytes.toBytes(6L), new MemoryReadPointer(3L), 3L));
+
+    try {
+      assertTrue(this.table.compareAndSwap(row, COL, Bytes.toBytes(4L),
+          Bytes.toBytes(6L), new MemoryReadPointer(3L), 3L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     assertEquals(6L, Bytes.toLong(
         this.table.get(row, COL, new MemoryReadPointer(3L))));
@@ -573,8 +641,12 @@ public abstract class TestOVCTable {
     assertEquals(6L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
 
     // CompareAndSwap 6 to 15 @ ts = 11
-    assertTrue(this.table.compareAndSwap(row, COL, Bytes.toBytes(6L),
-        Bytes.toBytes(15L), new MemoryReadPointer(11L), 12L));
+    try {
+      assertTrue(this.table.compareAndSwap(row, COL, Bytes.toBytes(6L),
+          Bytes.toBytes(15L), new MemoryReadPointer(11L), 12L));
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
 
     // Increment + 1 @ ts = 12
     assertEquals(16L, this.table.increment(row, COL, 1L,

@@ -1,5 +1,6 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 
 import java.util.Map;
@@ -182,18 +183,20 @@ public interface VersionedColumnarTable {
    * by looking for the specified expected value and if found, replacing with
    * the specified new value.  Utilizes the specified read pointer to enforce
    * visibility constraints on the read, utilizes the specified write version
-   * to perform
+   * to perform the swap.
+   *
    * @param row
    * @param column
    * @param expectedValue
    * @param newValue
    * @param readPointer
    * @param writeVersion
-   * @return true if atomic CAS was successful, false if not
+   * @throws OperationException if anything goes wrong.
    */
-  public boolean compareAndSwap(byte [] row, byte [] column,
-      byte [] expectedValue, byte [] newValue, ReadPointer readPointer,
-      long writeVersion);
+  public void compareAndSwap(byte[] row, byte[] column,
+                             byte[] expectedValue, byte[] newValue,
+                             ReadPointer readPointer, long writeVersion)
+      throws OperationException;
 
   /**
    * Clears this table, completely wiping all data irrecoverably.

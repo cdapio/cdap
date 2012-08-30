@@ -20,7 +20,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(List<WriteOperation> writes) {
+  public void execute(List<WriteOperation> writes) throws OperationException {
     // do nothing
   }
 
@@ -89,7 +89,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(CompareAndSwap cas) {
+  public void execute(CompareAndSwap cas) throws OperationException {
     // do nothing
   }
 

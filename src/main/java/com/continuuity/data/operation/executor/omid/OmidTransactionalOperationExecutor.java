@@ -87,13 +87,18 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public byte[] execute(ReadKey read) {
+  public OperationResult<byte[]> execute(ReadKey read) {
     initialize();
     requestMetric("ReadKey");
     long begin = begin();
     byte [] result = read(read, this.oracle.getReadPointer());
     end("ReadKey", begin);
-    return result;
+    if (result != null) {
+      return new OperationResult<byte[]>(result);
+    } else {
+      // TODO this should distinguish between key vs column not found
+      return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
+    }
   }
 
   byte [] read(ReadKey read, ReadPointer pointer) {
@@ -321,9 +326,13 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("CompareAndSwap");
     long begin = begin();
-    boolean casReturn = this.randomTable.compareAndSwap(write.getKey(),
-        write.getColumn(), write.getExpectedValue(), write.getNewValue(),
-        pointer.getFirst(), pointer.getSecond());
+    try {
+      boolean casReturn = this.randomTable.compareAndSwap(write.getKey(),
+          write.getColumn(), write.getExpectedValue(), write.getNewValue(),
+          pointer.getFirst(), pointer.getSecond());
+    } catch (OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     end("CompareAndSwap", begin);
     return new WriteTransactionResult(casReturn,
         new Delete(write.getKey(), write.getColumn()));

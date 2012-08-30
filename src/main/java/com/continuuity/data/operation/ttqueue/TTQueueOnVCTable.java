@@ -219,15 +219,19 @@ public class TTQueueOnVCTable implements TTQueue {
                 ExecutionMode.SINGLE_ENTRY : ExecutionMode.MULTI_ENTRY);
 
         // Atomically insert group state
-        if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
-            groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-          // CAS was successful, we created the group, add us to list, exit loop
-          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
-              dirty.getSecond(), groupState.getBytes());
-          break;
-        } else {
-          // CAS was not successful, someone else created group, loop
-          continue;
+        try {
+          if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
+              groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
+            // CAS was successful, we created the group, add us to list, exit loop
+            this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+                dirty.getSecond(), groupState.getBytes());
+            break;
+          } else {
+            // CAS was not successful, someone else created group, loop
+            continue;
+          }
+        } catch (com.continuuity.api.data.OperationException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
       } else {
@@ -256,17 +260,21 @@ public class TTQueueOnVCTable implements TTQueue {
         // Group has no outstanding entries, attempt atomic reconfig
         groupState = new GroupState(consumer.getGroupSize(),
             groupState.getHead(), ExecutionMode.fromQueueConfig(config));
-        if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
-            groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-          // Group config update success, update state, break from loop
-          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
-              dirty.getSecond(), groupState.getBytes());
-          log("Group config updated successfully!");
-          break;
-        } else {
-          // Update of group meta failed, someone else conflicted, loop
-          log("Group config atomic update failed, retry group validate");
-          continue;
+        try {
+          if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
+              groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
+            // Group config update success, update state, break from loop
+            this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+                dirty.getSecond(), groupState.getBytes());
+            log("Group config updated successfully!");
+            break;
+          } else {
+            // Update of group meta failed, someone else conflicted, loop
+            log("Group config atomic update failed, retry group validate");
+            continue;
+          }
+        } catch (com.continuuity.api.data.OperationException e) {
+          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
       }
     }
@@ -323,15 +331,19 @@ public class TTQueueOnVCTable implements TTQueue {
           // The head is invalid, attempt to move head down
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
-          if (this.table.compareAndSwap(groupRow, GROUP_STATE,
-              groupState.getBytes(), newGroupState.getBytes(),
-              dirty.getFirst(), dirty.getSecond())) {
-            // Successfully moved group head, move on
-            groupState = newGroupState;
-          } else {
-            // Group head update failed, someone else has changed it, move on
-            groupState = GroupState.fromBytes(this.table.get(
-                groupRow, GROUP_STATE, dirty.getFirst()));
+          try {
+            if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+                groupState.getBytes(), newGroupState.getBytes(),
+                dirty.getFirst(), dirty.getSecond())) {
+              // Successfully moved group head, move on
+              groupState = newGroupState;
+            } else {
+              // Group head update failed, someone else has changed it, move on
+              groupState = GroupState.fromBytes(this.table.get(
+                  groupRow, GROUP_STATE, dirty.getFirst()));
+            }
+          } catch (com.continuuity.api.data.OperationException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -351,15 +363,19 @@ public class TTQueueOnVCTable implements TTQueue {
           // The head is an end-ofshard, attempt to move head down
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
-          if (this.table.compareAndSwap(groupRow, GROUP_STATE,
-              groupState.getBytes(), newGroupState.getBytes(),
-              dirty.getFirst(), dirty.getSecond())) {
-            // Successfully moved group head, move on
-            groupState = newGroupState;
-          } else {
-            // Group head update failed, someone else has changed it, move on
-            groupState = GroupState.fromBytes(this.table.get(
-                groupRow, GROUP_STATE, dirty.getFirst()));
+          try {
+            if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+                groupState.getBytes(), newGroupState.getBytes(),
+                dirty.getFirst(), dirty.getSecond())) {
+              // Successfully moved group head, move on
+              groupState = newGroupState;
+            } else {
+              // Group head update failed, someone else has changed it, move on
+              groupState = GroupState.fromBytes(this.table.get(
+                  groupRow, GROUP_STATE, dirty.getFirst()));
+            }
+          } catch (com.continuuity.api.data.OperationException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -395,15 +411,19 @@ public class TTQueueOnVCTable implements TTQueue {
             // The head is acked for this group, attempt to move head down
             GroupState newGroupState = new GroupState(groupState.getGroupSize(),
                 nextEntryPointer, groupState.getMode());
-            if (this.table.compareAndSwap(groupRow, GROUP_STATE,
-                groupState.getBytes(), newGroupState.getBytes(),
-                dirty.getFirst(), dirty.getSecond())) {
-              // Successfully moved group head, move on
-              groupState = newGroupState;
-            } else {
-              // Group head update failed, someone else has changed it, move on
-              groupState = GroupState.fromBytes(this.table.get(
-                  groupRow, GROUP_STATE, dirty.getFirst()));
+            try {
+              if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+                  groupState.getBytes(), newGroupState.getBytes(),
+                  dirty.getFirst(), dirty.getSecond())) {
+                // Successfully moved group head, move on
+                groupState = newGroupState;
+              } else {
+                // Group head update failed, someone else has changed it, move on
+                groupState = GroupState.fromBytes(this.table.get(
+                    groupRow, GROUP_STATE, dirty.getFirst()));
+              }
+            } catch (com.continuuity.api.data.OperationException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
           }
           // This entry is acked, move to the next entry and loop
@@ -423,21 +443,25 @@ public class TTQueueOnVCTable implements TTQueue {
             EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
                 EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
             // Attempt to update with updated timestamp
-            if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-                entryGroupMetaData, newEntryGroupMeta.getBytes(),
-                dirty.getFirst(), dirty.getSecond())) {
-              // Successfully updated timestamp, still own it, return this
-              this.dequeueReturns.incrementAndGet();
-              return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
-                  this.table.get(shardRow,
-                      makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
-                      dirty.getFirst()));
-            } else {
-              // Failed to update group meta, someone else must own it now,
-              // move to next entry in shard
-              entryPointer = new EntryPointer(
-                  entryPointer.getEntryId() + 1, entryPointer.getShardId());
-              continue;
+            try {
+              if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+                  entryGroupMetaData, newEntryGroupMeta.getBytes(),
+                  dirty.getFirst(), dirty.getSecond())) {
+                // Successfully updated timestamp, still own it, return this
+                this.dequeueReturns.incrementAndGet();
+                return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
+                    this.table.get(shardRow,
+                        makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
+                        dirty.getFirst()));
+              } else {
+                // Failed to update group meta, someone else must own it now,
+                // move to next entry in shard
+                entryPointer = new EntryPointer(
+                    entryPointer.getEntryId() + 1, entryPointer.getShardId());
+                continue;
+              }
+            } catch (com.continuuity.api.data.OperationException e) {
+              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
           }
 
@@ -474,19 +498,23 @@ public class TTQueueOnVCTable implements TTQueue {
       // Atomically update group meta to point to this consumer and return!
       EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
           EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
-      if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-          entryGroupMetaData, newEntryGroupMeta.getBytes(),
-          dirty.getFirst(), dirty.getSecond())) {
-        // We own it!  Return it.
-        this.dequeueReturns.incrementAndGet();
-        if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
-        return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
-      } else {
-        // Someone else has grabbed it, on to the next one
-        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
-        entryPointer = new EntryPointer(
-            entryPointer.getEntryId() + 1, entryPointer.getShardId());
-        continue;
+      try {
+        if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+            entryGroupMetaData, newEntryGroupMeta.getBytes(),
+            dirty.getFirst(), dirty.getSecond())) {
+          // We own it!  Return it.
+          this.dequeueReturns.incrementAndGet();
+          if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
+          return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
+        } else {
+          // Someone else has grabbed it, on to the next one
+          if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
+          entryPointer = new EntryPointer(
+              entryPointer.getEntryId() + 1, entryPointer.getShardId());
+          continue;
+        }
+      } catch (com.continuuity.api.data.OperationException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
     }
 
@@ -519,8 +547,12 @@ public class TTQueueOnVCTable implements TTQueue {
     // (ack passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
-        newValue, dirty.getFirst(), dirty.getSecond());
+    try {
+      return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
+          newValue, dirty.getFirst(), dirty.getSecond());
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
   @Override
@@ -544,8 +576,12 @@ public class TTQueueOnVCTable implements TTQueue {
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    boolean finalized = this.table.compareAndSwap(shardRow, groupColumn,
-        existingValue, newValue, dirty.getFirst(), dirty.getSecond());
+    try {
+      boolean finalized = this.table.compareAndSwap(shardRow, groupColumn,
+          existingValue, newValue, dirty.getFirst(), dirty.getSecond());
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     if (finalized) {
       // We successfully finalized our ack.  Perform evict-on-ack if possible.
       if (totalNumGroups == 1 ||
@@ -599,8 +635,12 @@ public class TTQueueOnVCTable implements TTQueue {
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
-    return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
-        newValue, dirty.getFirst(), dirty.getSecond());
+    try {
+      return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
+          newValue, dirty.getFirst(), dirty.getSecond());
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
   // Public accessors

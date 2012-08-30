@@ -38,8 +38,12 @@ public class VersionedKVOnVersionedColumnarTable implements VersionedKVTable {
   @Override
   public boolean compareAndSwap(byte[] key, byte[] expectedValue,
       byte[] newValue, ReadPointer readPointer, long writeVersion) {
-    return this.table.compareAndSwap(key, COLUMN, expectedValue, newValue,
-        readPointer, writeVersion);
+    try {
+      return this.table.compareAndSwap(key, COLUMN, expectedValue, newValue,
+          readPointer, writeVersion);
+    } catch (com.continuuity.api.data.OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
   }
 
 }
