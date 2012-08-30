@@ -27,8 +27,7 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
           throws SQLException {
     this.hyperSqlJDBCString = hyperSqlJDBCString;
     this.hyperSqlProperties = hyperSqlProperties;
-    this.connection = DriverManager.getConnection(this.hyperSqlJDBCString,
-        this.hyperSqlProperties);
+    this.connection = DriverManager.getConnection(this.hyperSqlJDBCString);
   }
 
   @Override

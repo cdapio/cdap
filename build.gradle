@@ -35,8 +35,6 @@ dependencies {
     compile('org.apache.hbase:hbase:0.94.1.continuuity') { exclude module: 'junit' }
     testCompile('org.apache.hbase:hbase:0.94.1.continuuity:tests') { exclude module: 'junit' }
     testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
-    compile group: 'hsqldb', name: 'hsqldb', version: '1.8.0.10'
-    testCompile group: 'hsqldb', name: 'hsqldb', version: '1.8.0.10'
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
 }
 
