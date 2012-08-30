@@ -186,7 +186,7 @@
     -->
     <property>
         <name>data.local.jdbc</name>
-        <value>jdbc:hsqldb:file:data/fabricdb</value>
+        <value>jdbc:hsqldb:file:data/fabricdb?user=sa</value>
         <description>Specifies local file system implementation</description>
     </property>
 
