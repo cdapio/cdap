@@ -161,7 +161,7 @@ implements TransactionalOperationExecutor {
 
   @Override
   public void execute(List<WriteOperation> writes)
-      throws OmidTransactionException {
+      throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
     long begin = begin();
@@ -171,13 +171,13 @@ implements TransactionalOperationExecutor {
   }
 
   private void executeAsBatch(WriteOperation write)
-      throws OmidTransactionException {
+      throws OperationException {
     execute(Collections.singletonList(write));
   }
 
   void execute(List<WriteOperation> writes,
                ImmutablePair<ReadPointer,Long> pointer)
-          throws OmidTransactionException {
+      throws OperationException {
 
     if (writes.isEmpty()) return;
 
@@ -275,7 +275,7 @@ implements TransactionalOperationExecutor {
    * Actually perform the various write operations.
    */
   private WriteTransactionResult dispatchWrite(
-      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) {
+      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     if (write instanceof Write) {
       return write((Write)write, pointer);
     } else if (write instanceof Delete) {
@@ -360,7 +360,7 @@ implements TransactionalOperationExecutor {
    * They are rolled back with an invalidate.
    */
   WriteTransactionResult write(QueueEnqueue enqueue,
-      ImmutablePair<ReadPointer, Long> pointer) {
+      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
@@ -378,16 +378,14 @@ implements TransactionalOperationExecutor {
     requestMetric("QueueAck");
     long begin = begin();
     try {
-      boolean result = getQueueTable(ack.getKey()).ack(ack.getKey(),
+      getQueueTable(ack.getKey()).ack(ack.getKey(),
           ack.getEntryPointer(), ack.getConsumer());
     } catch (OperationException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    end("QueueAck", begin);
-    if (!result) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(StatusCode.ILLEGAL_ACK,
           "Attempt to ack a dequeue of a different consumer");
+    } finally {
+      end("QueueAck", begin);
     }
     return new WriteTransactionResult(
         new QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
@@ -427,7 +425,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Long> execute(GetGroupID getGroupId) {
+  public OperationResult<Long> execute(GetGroupID getGroupId)
+      throws OperationException {
     initialize();
     requestMetric("GetGroupID");
     long begin = begin();
@@ -490,32 +489,32 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void execute(Write write) throws OmidTransactionException {
+  public void execute(Write write) throws OperationException {
     executeAsBatch(write);
   }
 
   @Override
-  public void execute(Delete delete) throws OmidTransactionException {
+  public void execute(Delete delete) throws OperationException {
     executeAsBatch(delete);
   }
 
   @Override
-  public void execute(Increment inc) throws OmidTransactionException {
+  public void execute(Increment inc) throws OperationException {
     executeAsBatch(inc);
   }
 
   @Override
-  public void execute(CompareAndSwap cas) throws OmidTransactionException {
+  public void execute(CompareAndSwap cas) throws OperationException {
     executeAsBatch(cas);
   }
 
   @Override
-  public void execute(QueueAck ack) throws OmidTransactionException {
+  public void execute(QueueAck ack) throws OperationException {
     executeAsBatch(ack);
   }
 
   @Override
-  public void execute(QueueEnqueue enqueue) throws OmidTransactionException {
+  public void execute(QueueEnqueue enqueue) throws OperationException {
     executeAsBatch(enqueue);
   }
 

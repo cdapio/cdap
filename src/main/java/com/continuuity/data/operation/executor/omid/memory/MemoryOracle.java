@@ -1,18 +1,15 @@
 package com.continuuity.data.operation.executor.omid.memory;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Inject;
+
+import java.util.*;
 
 public class MemoryOracle implements TransactionOracle {
 
@@ -81,7 +78,8 @@ public class MemoryOracle implements TransactionOracle {
     initialize();
 
     if (!this.inProgress.contains(txid))
-      throw new OmidTransactionException("Transaction not in progress");
+      throw new OmidTransactionException(StatusCode.ILLEGAL_COMMIT,
+          "Transaction not in progress");
     // see if there are any conflicting rows between txid and now
     long now = this.timeOracle.getTimestamp();
     NavigableMap<Long,RowSet> rowsToCheck =
@@ -103,7 +101,8 @@ public class MemoryOracle implements TransactionOracle {
     initialize();
 
     if (!this.inProgress.contains(txid))
-      throw new OmidTransactionException("Transaction not in progress");
+      throw new OmidTransactionException(StatusCode.ILLEGAL_ABORT,
+          "Transaction not in progress");
     moveReadPointer(txid);
   }
 

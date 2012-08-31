@@ -1,6 +1,8 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 
 import java.util.List;
 
@@ -18,11 +20,12 @@ public interface TransactionalOperationExecutor extends OperationExecutor {
    * In this case, the operations should be re-generated rather than just
    * re-submitted as retriable operations will already have been retried.
    *
+   *
    * @param writes write operations to be performed in a transaction
    * @throws TransactionException
    */
   @Override
   public void execute(List<WriteOperation> writes)
-      throws TransactionException;
+      throws OperationException;
 
 }

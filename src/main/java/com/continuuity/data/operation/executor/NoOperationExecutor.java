@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.ttqueue.*;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(List<WriteOperation> writes) throws OperationException {
+  public void execute(List<WriteOperation> writes) throws OmidTransactionException {
     // do nothing
   }
 

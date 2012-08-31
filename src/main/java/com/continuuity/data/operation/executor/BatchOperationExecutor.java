@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public interface BatchOperationExecutor {
    * If an error is reached, execution of subsequent operations is skipped and
    * an exception is thrown.
    *
-   * @see TransactionalOperationExecutor#execute
+   * @see BatchOperationExecutor#execute
    *
    * @param writes list of write operations to execute as a batch
    * @throws OperationException if anything goes wrong

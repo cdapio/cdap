@@ -6,6 +6,7 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.ttqueue.*;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -196,7 +197,7 @@ public class RemoteOperationExecutor
 
   @Override
   public BatchOperationResult execute(final List<WriteOperation> writes)
-      throws BatchOperationException {
+      throws OmidTransactionException {
     return this.execute(
         new Opexeptionable<BatchOperationResult,
             BatchOperationException>("Batch") {

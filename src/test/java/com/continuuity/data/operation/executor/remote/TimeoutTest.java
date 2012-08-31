@@ -7,13 +7,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.google.common.collect.Lists;
-import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.net.SocketTimeoutException;
 import java.util.List;
 
 public class TimeoutTest extends OpexServiceTestBase {
@@ -41,7 +40,7 @@ public class TimeoutTest extends OpexServiceTestBase {
           }
           @Override
           public BatchOperationResult execute(List<WriteOperation> batch)
-              throws BatchOperationException {
+              throws OmidTransactionException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -79,18 +78,8 @@ public class TimeoutTest extends OpexServiceTestBase {
     batch.add(write);
     try {
       remote.execute(batch);
-    } catch (BatchOperationException e) {
-      // exception should have a message
-      Assert.assertNotNull(e.getMessage());
-      // cause of exception should be thrift transport exception
-      Assert.assertEquals(
-          TTransportException.class,
-          e.getCause().getClass());
-      // cause of cause should be SocketException
-      Assert.assertEquals(
-          SocketTimeoutException.class,
-          e.getCause().getCause().getClass());
-      throw e;
+    } catch (OmidTransactionException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
   }
 

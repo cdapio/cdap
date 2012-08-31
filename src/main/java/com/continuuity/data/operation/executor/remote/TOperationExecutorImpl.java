@@ -2,7 +2,6 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.executor.BatchOperationException;
 import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
@@ -225,8 +224,8 @@ public class TOperationExecutorImpl
 
     try {
       result = this.opex.execute(writes);
-    } catch (BatchOperationException e) {
-      throw new TBatchOperationException(e.getMessage());
+    } catch (com.continuuity.data.operation.executor.omid.OmidTransactionException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
 
     if (Log.isDebugEnabled())

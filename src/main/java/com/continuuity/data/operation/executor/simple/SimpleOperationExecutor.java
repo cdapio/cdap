@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.simple;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
+import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ColumnarTable;
@@ -28,7 +29,7 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
   // Batch of Writes
 
   @Override
-  public void execute(List<WriteOperation> writes) throws OperationException {
+  public void execute(List<WriteOperation> writes) throws OmidTransactionException {
     for (WriteOperation write : writes) {
       if (write instanceof Write)
         execute((Write)write);
