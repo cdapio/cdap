@@ -40,7 +40,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   @Override
   public EnqueueResult enqueue(byte [] queueName, byte [] data,
-      long writeVersion) {
+      long writeVersion) throws OperationException {
     return getQueue(queueName).enqueue(data, writeVersion);
   }
 
@@ -52,7 +52,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   @Override
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer) {
+      QueueConfig config, ReadPointer readPointer) throws OperationException {
     return getQueue(queueName).dequeue(consumer, config, readPointer);
   }
 
@@ -63,15 +63,15 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public boolean finalize(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups) {
-    return getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups);
+  public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
+                       QueueConsumer consumer, int totalNumGroups) throws OperationException {
+    getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups);
   }
 
   @Override
-  public boolean unack(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer) {
-    return getQueue(queueName).unack(entryPointer, consumer);
+  public void unack(byte[] queueName, QueueEntryPointer entryPointer,
+                    QueueConsumer consumer) throws OperationException {
+    getQueue(queueName).unack(entryPointer, consumer);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public long getGroupID(byte[] queueName) {
+  public long getGroupID(byte[] queueName) throws OperationException {
     return getQueue(queueName).getGroupID();
   }
 
@@ -101,7 +101,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public void clear() {
+  public void clear() throws OperationException {
     table.clear();
   }
 }

@@ -18,7 +18,7 @@ public interface TTQueueTable {
    * @return return code, and if success, the unique entryId of the queue entry
    */
   public EnqueueResult enqueue(byte [] queueName, byte [] data,
-      long writeVersion);
+      long writeVersion) throws OperationException;
 
   /**
    * Invalidates an entry that was enqueued into the queue.  This is used only
@@ -42,7 +42,7 @@ public interface TTQueueTable {
    * @return dequeue result object
    */
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
-      QueueConfig config, ReadPointer readPointer);
+      QueueConfig config, ReadPointer readPointer) throws OperationException;
 
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
@@ -58,6 +58,7 @@ public interface TTQueueTable {
 
   /**
    * Finalizes an ack.
+   *
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
@@ -65,18 +66,19 @@ public interface TTQueueTable {
    *                       or -1 to disable
    * @return true if successful, false if not
    */
-  public boolean finalize(byte [] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups);
+  public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
+                       QueueConsumer consumer, int totalNumGroups) throws OperationException;
 
   /**
    * Unacknowledges a previously acknowledge ack.
+   *
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
    * @return true if successful, false if not
    */
-  boolean unack(byte [] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer);
+  void unack(byte[] queueName, QueueEntryPointer entryPointer,
+             QueueConsumer consumer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for the specified queue.
@@ -87,7 +89,7 @@ public interface TTQueueTable {
    * @param queueName
    * @return a unique group id for the specified queue
    */
-  public long getGroupID(byte [] queueName);
+  public long getGroupID(byte [] queueName) throws OperationException;
 
   /**
    * Gets the meta information for the specified queue.  This includes all meta
@@ -100,7 +102,7 @@ public interface TTQueueTable {
   /**
    * Clears this queue table, completely wiping all queues.
    */
-  public void clear();
+  public void clear() throws OperationException;
 
   // Old debugging methods
 

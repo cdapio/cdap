@@ -27,7 +27,7 @@ public class NoOperationExecutor implements OperationExecutor {
   @Override
   public DequeueResult execute(QueueDequeue dequeue) {
     // pretend the queue is empty
-    return new OperationResult<DequeueResult>(StatusCode.QUEUE_EMPTY);
+    return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
   }
 
   @Override
