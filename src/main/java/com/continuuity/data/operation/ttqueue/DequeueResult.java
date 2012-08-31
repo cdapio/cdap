@@ -15,7 +15,7 @@ public class DequeueResult {
     this(status, null, null);
   }
 
-  private DequeueResult(final DequeueStatus status,
+  public DequeueResult(final DequeueStatus status,
       final QueueEntryPointer pointer, final byte [] value) {
     this.status = status;
     this.pointer = pointer;

@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
@@ -23,7 +24,8 @@ public interface TTQueue {
    * @param writeVersion
    * @return return code, and if success, the unique entryId of the queue entry
    */
-  public EnqueueResult enqueue(byte [] data, long writeVersion);
+  public EnqueueResult enqueue(byte [] data, long writeVersion)
+      throws OperationException;
 
   /**
    * Invalidates an entry that was enqueued into the queue.  This is used only
@@ -44,35 +46,39 @@ public interface TTQueue {
    * @return dequeue result object
    */
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
-      ReadPointer readPointer);
+      ReadPointer readPointer) throws OperationException;
 
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
+   *
    * @param entryPointer
    * @param consumer
    * @return true if successful, false if not
    */
-  public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer);
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+      throws OperationException;
 
   /**
    * Finalizes an ack.
+   *
    * @param entryPointer
    * @param consumer
    * @param totalNumGroups total number of groups to use when doing evict-on-ack
    *                       or -1 to disable
    * @return true if successful, false if not
    */
-  public boolean finalize(QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups);
+  public void finalize(QueueEntryPointer entryPointer,
+                       QueueConsumer consumer, int totalNumGroups) throws OperationException;
 
   /**
    * Unacknowledges a previously acknowledge ack.
+   *
    * @param entryPointer
    * @param consumer
    * @return true if successful, false if not
    */
-  boolean unack(QueueEntryPointer entryPointer, QueueConsumer consumer);
+  void unack(QueueEntryPointer entryPointer, QueueConsumer consumer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.
@@ -82,7 +88,7 @@ public interface TTQueue {
    * 
    * @return a unique group id for this queue
    */
-  public long getGroupID();
+  public long getGroupID() throws OperationException;
   
   /**
    * Gets the meta information for this queue.  This includes all meta

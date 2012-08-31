@@ -1,27 +1,24 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
+import com.continuuity.data.operation.ttqueue.internal.*;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
-import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
-import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
-import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
-import com.continuuity.data.operation.ttqueue.internal.GroupState;
-import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a single {@link TTQueue} on a single
@@ -74,10 +71,6 @@ public class TTQueueOnVCTable implements TTQueue {
    * table, and utilizing the specified time oracle to generate stamps for
    * dirty reads and writes.  Utilizes specified Configuration to determine
    * shard maximums.
-   * @param table
-   * @param queueName
-   * @param timeOracle
-   * @param conf
    */
   public TTQueueOnVCTable(final VersionedColumnarTable table,
       final byte [] queueName, final TimestampOracle timeOracle,
@@ -96,28 +89,39 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) {
-    log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
+      throws OperationException {
+    if (TRACE)
+      log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
         cleanWriteVersion + ")");
+
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
+
     // Get our unique entry id
-    long entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER),
-        GLOBAL_ENTRYID_COUNTER, 1, dirty.getFirst(), dirty.getSecond());
-    log("New enqueue got entry id " + entryId);
+    long entryId;
+    try {
+      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER),
+          GLOBAL_ENTRYID_COUNTER, 1, dirty.getFirst(), dirty.getSecond());
+    } catch (OperationException e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
+          "of global entry id failed with status code " + e.getStatus() +
+          ": " + e.getMessage(), e);
+    }
+    if (TRACE) log("New enqueue got entry id " + entryId);
 
     // Get exclusive lock on shard determination
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
     while (getCounter(entryWritePointerRow, GLOBAL_ENTRYID_WRITEPOINTER_COUNTER,
         dirty.getFirst()) != (entryId - 1)) {
       // Wait
-      log("Waiting for exclusive lock on shard determination");
+      if (TRACE) log("Waiting for exclusive lock on shard determination");
       quickWait();
     }
-    log("Exclusive lock acquired for entry id " + entryId);
+    if (TRACE) log("Exclusive lock acquired for entry id " + entryId);
 
     // We have an exclusive lock, determine updated shard state
-    ShardMeta shardMeta = null;
+    ShardMeta shardMeta;
     boolean movedShards = false;
     byte [] shardMetaRow = makeRow(GLOBAL_SHARDS_HEADER);
     if (entryId == 1) {
@@ -127,7 +131,7 @@ public class TTQueueOnVCTable implements TTQueue {
     } else {
       // Not first, read existing and determine which shard we should be in
       shardMeta = ShardMeta.fromBytes(this.table.get(shardMetaRow,
-          GLOBAL_SHARD_META, dirty.getFirst()));
+          GLOBAL_SHARD_META, dirty.getFirst()).getValue());
       log("Found existing global shard meta: " + shardMeta.toString());
       // Check if we need to move to next shard (pass max bytes or max entries)
       if ((shardMeta.getShardBytes() + data.length > this.maxBytesPerShard &&
@@ -136,7 +140,7 @@ public class TTQueueOnVCTable implements TTQueue {
         // Move to next shard
         movedShards = true;
         shardMeta = new ShardMeta(shardMeta.getShardId() + 1, data.length, 1);
-        log("Moving to next shard");
+        if (TRACE) log("Moving to next shard");
       } else {
         // Update current shard sizing
         shardMeta = new ShardMeta(shardMeta.getShardId(),
@@ -192,26 +196,26 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
-      ReadPointer readPointer) {
+      ReadPointer readPointer) throws OperationException {
 
     if (TRACE)
-      log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() + "] (" +
-          consumer + ", " + config + ", " + readPointer + ")");
+      log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
+          "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
 
     // Loop until we have properly upserted and verified group information
-    GroupState groupState = null;
+    GroupState groupState;
     byte [] groupListRow = makeRow(GLOBAL_GROUPS_HEADER, -1);
     byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, consumer.getGroupId());
     while (true) { // TODO: Should probably put a max retry on here
 
       // Do a dirty read of the global group information
-      byte [] existingValue = this.table.get(groupRow, GROUP_STATE,
-          dirty.getFirst());
+      OperationResult<byte[]> existingValue =
+          this.table.get(groupRow, GROUP_STATE, dirty.getFirst());
 
-      if (existingValue == null || existingValue.length == 0) {
+      if (existingValue.isEmpty() || existingValue.getValue().length == 0) {
         // Group information did not exist, create blank initial group state
         log("Group information DNE, creating initial group state");
         groupState = new GroupState(consumer.getGroupSize(),
@@ -220,23 +224,23 @@ public class TTQueueOnVCTable implements TTQueue {
 
         // Atomically insert group state
         try {
-          if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
-              groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-            // CAS was successful, we created the group, add us to list, exit loop
-            this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
-                dirty.getSecond(), groupState.getBytes());
-            break;
-          } else {
-            // CAS was not successful, someone else created group, loop
-            continue;
-          }
-        } catch (com.continuuity.api.data.OperationException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+          this.table.compareAndSwap(groupRow, GROUP_STATE,
+              existingValue.getValue(), groupState.getBytes(),
+              dirty.getFirst(), dirty.getSecond());
 
+          // CAS was successful, we created the group, add us to list,
+          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+              dirty.getSecond(), groupState.getBytes());
+          break;
+
+        } catch (OperationException e) {
+          // CAS was not successful, someone else created group, loop
+          if (TRACE)
+            log("Group config atomic update failed, retry group validate");
+        }
       } else {
         // Group information already existed, verify group state
-        groupState = GroupState.fromBytes(existingValue);
+        groupState = GroupState.fromBytes(existingValue.getValue());
         if (TRACE) log("Group state already existed: " + groupState);
 
         // Check group size and execution mode
@@ -252,7 +256,7 @@ public class TTQueueOnVCTable implements TTQueue {
           // Group has pending entries but reconfig was attempted, fail
           if (TRACE)
             log("Attempted to change group config but entries pending");
-          return new DequeueResult(DequeueStatus.FAILURE,
+          throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
               "Attempted to change group configuration but group has pending " +
                   "entries not acked");
         }
@@ -261,20 +265,20 @@ public class TTQueueOnVCTable implements TTQueue {
         groupState = new GroupState(consumer.getGroupSize(),
             groupState.getHead(), ExecutionMode.fromQueueConfig(config));
         try {
-          if (this.table.compareAndSwap(groupRow, GROUP_STATE, existingValue,
-              groupState.getBytes(), dirty.getFirst(), dirty.getSecond())) {
-            // Group config update success, update state, break from loop
-            this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
-                dirty.getSecond(), groupState.getBytes());
-            log("Group config updated successfully!");
-            break;
-          } else {
-            // Update of group meta failed, someone else conflicted, loop
+          this.table.compareAndSwap(groupRow, GROUP_STATE,
+              existingValue.getValue(), groupState.getBytes(),
+              dirty.getFirst(), dirty.getSecond());
+
+          // Group config update success, update state, break from loop
+          this.table.put(groupListRow, Bytes.toBytes(consumer.getGroupId()),
+              dirty.getSecond(), groupState.getBytes());
+          if (TRACE) log("Group config updated successfully!");
+          break;
+
+        } catch (OperationException e) {
+          // Update of group meta failed, someone else conflicted, loop
+          if (TRACE)
             log("Group config atomic update failed, retry group validate");
-            continue;
-          }
-        } catch (com.continuuity.api.data.OperationException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
       }
     }
@@ -282,8 +286,8 @@ public class TTQueueOnVCTable implements TTQueue {
 
     // Begin iterating entries starting from group head, loop until entry found
     // or queue is empty
-    EntryMeta entryMeta = null;
-    EntryGroupMeta entryGroupMeta = null;
+    EntryMeta entryMeta;
+    EntryGroupMeta entryGroupMeta;
     EntryPointer entryPointer = groupState.getHead();
     while (entryPointer != null) { // TODO: Should probably put a max retry
 
@@ -296,10 +300,10 @@ public class TTQueueOnVCTable implements TTQueue {
           ENTRY_META);
 
       // Do a dirty read of the entry meta data
-      ImmutablePair<byte[],Long> entryMetaDataAndStamp =
-          this.table.getWithVersion(shardRow, entryMetaColumn,
-              dirty.getFirst());
-      if (entryMetaDataAndStamp == null) {
+      OperationResult<ImmutablePair<byte[],Long>> metaResult =
+          this.table.getWithVersion(
+              shardRow, entryMetaColumn, dirty.getFirst());
+      if (metaResult.isEmpty()) {
         // This entry doesn't exist, queue is empty for this consumer
         log("Queue is empty, nothing found at " + entryPointer + " using " +
             "read pointer " + dirty.getFirst());
@@ -307,6 +311,7 @@ public class TTQueueOnVCTable implements TTQueue {
       }
 
       // Entry exists, check if it should actually be visible
+      ImmutablePair<byte[],Long> entryMetaDataAndStamp = metaResult.getValue();
       if (!readPointer.isVisible(entryMetaDataAndStamp.getSecond())) {
         // This is currently being enqueued in an uncommitted transaction,
         // wait and loop back without changing entry pointer
@@ -332,18 +337,16 @@ public class TTQueueOnVCTable implements TTQueue {
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
           try {
-            if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+            this.table.compareAndSwap(groupRow, GROUP_STATE,
                 groupState.getBytes(), newGroupState.getBytes(),
-                dirty.getFirst(), dirty.getSecond())) {
+                dirty.getFirst(), dirty.getSecond());
               // Successfully moved group head, move on
               groupState = newGroupState;
-            } else {
-              // Group head update failed, someone else has changed it, move on
-              groupState = GroupState.fromBytes(this.table.get(
-                  groupRow, GROUP_STATE, dirty.getFirst()));
-            }
           } catch (com.continuuity.api.data.OperationException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            // Group head update failed, someone else has changed it, move on
+            groupState = GroupState.fromBytes(
+                this.table.get(groupRow, GROUP_STATE, dirty.getFirst()).
+                    getValue());
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -355,27 +358,25 @@ public class TTQueueOnVCTable implements TTQueue {
       if (entryMeta.isEndOfShard()) {
         // Entry is an indicator that this is the end of the shard, move
         // to the next shardId with the same entryId, check head update
-        if (TRACE) log("Found endOfShard marker to jump from " + entryPointer.getShardId()
-            + " to " + (entryPointer.getShardId() + 1));
         EntryPointer nextEntryPointer = new EntryPointer(
             entryPointer.getEntryId(), entryPointer.getShardId() + 1);
+        if (TRACE) log("Found endOfShard marker to jump from " + entryPointer.
+            getShardId() + " to " + nextEntryPointer.getShardId());
         if (entryPointer.equals(groupState.getHead())) {
           // The head is an end-ofshard, attempt to move head down
           GroupState newGroupState = new GroupState(groupState.getGroupSize(),
               nextEntryPointer, groupState.getMode());
           try {
-            if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+            this.table.compareAndSwap(groupRow, GROUP_STATE,
                 groupState.getBytes(), newGroupState.getBytes(),
-                dirty.getFirst(), dirty.getSecond())) {
-              // Successfully moved group head, move on
-              groupState = newGroupState;
-            } else {
-              // Group head update failed, someone else has changed it, move on
-              groupState = GroupState.fromBytes(this.table.get(
-                  groupRow, GROUP_STATE, dirty.getFirst()));
-            }
-          } catch (com.continuuity.api.data.OperationException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                dirty.getFirst(), dirty.getSecond());
+            // Successfully moved group head, move on
+            groupState = newGroupState;
+          } catch (OperationException e) {
+            // Group head update failed, someone else has changed it, move on
+            groupState = GroupState.fromBytes(
+                this.table.get(groupRow, GROUP_STATE, dirty.getFirst()).
+                    getValue());
           }
         }
         // This entry is invalid, move to the next entry and loop
@@ -389,41 +390,47 @@ public class TTQueueOnVCTable implements TTQueue {
       // Do a dirty read of the entry group meta data
       byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
           ENTRY_GROUP_META, consumer.getGroupId());
-      byte[] entryGroupMetaData = this.table.get(shardRow, entryGroupMetaColumn,
-          dirty.getFirst());
-      if (entryGroupMetaData == null || entryGroupMetaData.length == 0) {
+      OperationResult<byte[]> entryGroupMetaData =
+          this.table.get(shardRow, entryGroupMetaColumn, dirty.getFirst());
+
+      if (entryGroupMetaData.isEmpty() ||
+          entryGroupMetaData.getValue().length == 0) {
         // Group has not processed this entry yet, consider available for now
-        if (TRACE) log("Group has not processed entry at id " + entryPointer.getEntryId());
+        if (TRACE) log("Group has not processed entry at id "
+            + entryPointer.getEntryId());
         entryGroupMetaData = null;
+
       } else {
-        entryGroupMeta = EntryGroupMeta.fromBytes(entryGroupMetaData);
-        if (TRACE) log("Group has already seen entry at id " + entryPointer.getEntryId() +
-            ", groupMeta = " + entryGroupMeta.toString());
+        entryGroupMeta = EntryGroupMeta.
+            fromBytes(entryGroupMetaData.getValue());
+        if (TRACE) log("Group has already seen entry at id "
+            + entryPointer.getEntryId() + ", groupMeta = "
+            + entryGroupMeta.toString());
 
         // Check if group has already acked/semi-acked this entry
         if (entryGroupMeta.isAckedOrSemiAcked()) {
+
           if (TRACE) log("Entry is acked/semi-acked");
           // Group has acked this, check head, move to next entry in shard
           EntryPointer nextEntryPointer = new EntryPointer(
               entryPointer.getEntryId() + 1, entryPointer.getShardId());
+
           if (entryPointer.equals(groupState.getHead()) &&
               safeToMoveHead(entryGroupMeta)) {
             // The head is acked for this group, attempt to move head down
             GroupState newGroupState = new GroupState(groupState.getGroupSize(),
                 nextEntryPointer, groupState.getMode());
             try {
-              if (this.table.compareAndSwap(groupRow, GROUP_STATE,
+              this.table.compareAndSwap(groupRow, GROUP_STATE,
                   groupState.getBytes(), newGroupState.getBytes(),
-                  dirty.getFirst(), dirty.getSecond())) {
-                // Successfully moved group head, move on
-                groupState = newGroupState;
-              } else {
-                // Group head update failed, someone else has changed it, move on
-                groupState = GroupState.fromBytes(this.table.get(
-                    groupRow, GROUP_STATE, dirty.getFirst()));
-              }
-            } catch (com.continuuity.api.data.OperationException e) {
-              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                  dirty.getFirst(), dirty.getSecond());
+              // Successfully moved group head, move on
+              groupState = newGroupState;
+
+            } catch (OperationException e) {
+              // Group head update failed, someone else has changed it, move on
+              groupState = GroupState.fromBytes(this.table.get(
+                    groupRow, GROUP_STATE, dirty.getFirst()).getValue());
             }
           }
           // This entry is acked, move to the next entry and loop
@@ -444,31 +451,29 @@ public class TTQueueOnVCTable implements TTQueue {
                 EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
             // Attempt to update with updated timestamp
             try {
-              if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-                  entryGroupMetaData, newEntryGroupMeta.getBytes(),
-                  dirty.getFirst(), dirty.getSecond())) {
-                // Successfully updated timestamp, still own it, return this
-                this.dequeueReturns.incrementAndGet();
-                return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
-                    this.table.get(shardRow,
-                        makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
-                        dirty.getFirst()));
-              } else {
-                // Failed to update group meta, someone else must own it now,
-                // move to next entry in shard
-                entryPointer = new EntryPointer(
-                    entryPointer.getEntryId() + 1, entryPointer.getShardId());
-                continue;
-              }
+              this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+                  entryGroupMetaData.getValue(), newEntryGroupMeta.getBytes(),
+                  dirty.getFirst(), dirty.getSecond());
+              // Successfully updated timestamp, still own it, return this
+              this.dequeueReturns.incrementAndGet();
+              return new DequeueResult(DequeueStatus.SUCCESS, entryPointer,
+                  this.table.get(shardRow,
+                      makeColumn(entryPointer.getEntryId(), ENTRY_DATA),
+                      dirty.getFirst()).getValue());
             } catch (com.continuuity.api.data.OperationException e) {
-              e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+              // Failed to update group meta, someone else must own it now,
+              // move to next entry in shard
+              entryPointer = new EntryPointer(
+                  entryPointer.getEntryId() + 1, entryPointer.getShardId());
+              continue;
             }
           }
 
           if (entryGroupMeta.isDequeued() &&
               entryGroupMeta.getTimestamp() +
                 this.maxAgeBeforeExpirationInMillis >= now()) {
-            log("Entry is dequeued but not expired! (entryGroupMetaTS=" +
+            if (TRACE)
+              log("Entry is dequeued but not expired! (entryGroupMetaTS=" +
                 entryGroupMeta.getTimestamp() + ", maxAge=" +
                 this.maxAgeBeforeExpirationInMillis + ", now=" + now());
             // Entry is dequeued and not expired, move to next entry in shard
@@ -483,11 +488,13 @@ public class TTQueueOnVCTable implements TTQueue {
       if (TRACE) log("Fell through, entry is available!");
 
       // Get the data and check the partitioner
-      byte [] data = this.table.get(shardRow,
+      OperationResult<byte[]> data = this.table.get(shardRow,
           makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
-      assert(data != null);
+      assert(!data.isEmpty());
+
       if (!config.getPartitioner().shouldEmit(consumer,
-          entryPointer.getEntryId(), data)) {
+          entryPointer.getEntryId(), data.getValue())) {
+
         // Partitioner says skip, flag as available, move to next entry in shard
         if (TRACE) log("Partitioner rejected this entry, skip");
         entryPointer = new EntryPointer(
@@ -499,158 +506,164 @@ public class TTQueueOnVCTable implements TTQueue {
       EntryGroupMeta newEntryGroupMeta = new EntryGroupMeta(
           EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
       try {
-        if (this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-            entryGroupMetaData, newEntryGroupMeta.getBytes(),
-            dirty.getFirst(), dirty.getSecond())) {
-          // We own it!  Return it.
-          this.dequeueReturns.incrementAndGet();
-          if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
-          return new DequeueResult(DequeueStatus.SUCCESS, entryPointer, data);
-        } else {
-          // Someone else has grabbed it, on to the next one
-          if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
-          entryPointer = new EntryPointer(
-              entryPointer.getEntryId() + 1, entryPointer.getShardId());
-          continue;
-        }
+        this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
+            entryGroupMetaData.getValue(), newEntryGroupMeta.getBytes(),
+            dirty.getFirst(), dirty.getSecond());
+
+        // We own it!  Return it.
+        this.dequeueReturns.incrementAndGet();
+        if (TRACE) log("Returning " + entryPointer + " with data " + newEntryGroupMeta);
+
+        return new DequeueResult(DequeueStatus.SUCCESS,
+            entryPointer, data.getValue());
       } catch (com.continuuity.api.data.OperationException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        // Someone else has grabbed it, on to the next one
+        if (TRACE) log("\t !!! Got a collision trying to own " + entryPointer);
+        entryPointer = new EntryPointer(
+            entryPointer.getEntryId() + 1, entryPointer.getShardId());
+        // continue and loop on
       }
     }
 
     // If you exit this loop, something is wrong.  Fail.
-    throw new RuntimeException("Somehow broke from loop, bug in TTQueue");
-    //    return new DequeueResult(DequeueStatus.FAILURE,
-    //        "Somehow broke from loop, bug in TTQueue");
+    throw new OperationException(StatusCode.INTERNAL_ERROR,
+        "Somehow broke from loop, bug in TTQueue");
   }
 
   @Override
-  public boolean ack(QueueEntryPointer entryPointer, QueueConsumer consumer) {
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+      throws OperationException {
+
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
     byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
-    byte [] existingValue = this.table.get(shardRow, groupColumn,
-        dirty.getFirst());
-    if (existingValue == null || existingValue.length == 0) return false;
-    EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
+    OperationResult<byte[]> existingValue =
+        this.table.get(shardRow, groupColumn, dirty.getFirst());
+    if (existingValue.isEmpty() || existingValue.getValue().length == 0)
+      throw new OperationException(StatusCode.ILLEGAL_ACK,
+          "No existing group meta data was found.");
+
+    EntryGroupMeta groupMeta =
+        EntryGroupMeta.fromBytes(existingValue.getValue());
 
     // Check if instance id matches
-    if (groupMeta.getInstanceId() != consumer.getInstanceId()) return false;
+    if (groupMeta.getInstanceId() != consumer.getInstanceId())
+      throw new OperationException(StatusCode.ILLEGAL_ACK,
+          "Attempt to ack an entry of a different consumer instance.");
 
     // Instance ids match, check if in an invalid state for ack'ing
-    if (groupMeta.isAvailable() || groupMeta.isAckedOrSemiAcked()) return false;
+    if (groupMeta.isAvailable() || groupMeta.isAckedOrSemiAcked())
+      throw new OperationException(StatusCode.ILLEGAL_ACK,
+          "Attempt to ack an entry that is not in ack'able state.");
 
     // It is in the right state, attempt atomic semi_ack
     // (ack passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.SEMI_ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    try {
-      return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
-          newValue, dirty.getFirst(), dirty.getSecond());
-    } catch (com.continuuity.api.data.OperationException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
+    this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
+        newValue, dirty.getFirst(), dirty.getSecond());
   }
 
   @Override
-  public boolean finalize(QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups) {
+  public void finalize(QueueEntryPointer entryPointer,
+                       QueueConsumer consumer, int totalNumGroups)
+      throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
     byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
-    byte [] existingValue = this.table.get(shardRow, groupColumn,
-        dirty.getFirst());
-    if (existingValue == null || existingValue.length == 0) return false;
-    EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
+
+    OperationResult<byte[]> existingValue =
+        this.table.get(shardRow, groupColumn, dirty.getFirst());
+    if (existingValue.isEmpty() || existingValue.getValue().length == 0)
+      throw new OperationException(StatusCode.ILLEGAL_FINALIZE,
+          "No existing group meta data was found.");
+
+    EntryGroupMeta groupMeta =
+        EntryGroupMeta.fromBytes(existingValue.getValue());
 
     // Should be in semiAcked state
-    if (groupMeta != null && !groupMeta.isSemiAcked()) return false;
+    if (!groupMeta.isSemiAcked())
+      throw new OperationException(StatusCode.ILLEGAL_FINALIZE,
+          "Attempt to finalize an entry that is not in semi-acked state.");
 
     // It is in the right state, attempt atomic semi_ack to ack
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.ACKED,
         now(), consumer.getInstanceId()).getBytes();
-    try {
-      boolean finalized = this.table.compareAndSwap(shardRow, groupColumn,
-          existingValue, newValue, dirty.getFirst(), dirty.getSecond());
-    } catch (com.continuuity.api.data.OperationException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    this.table.compareAndSwap(shardRow, groupColumn, existingValue.
+        getValue(), newValue, dirty.getFirst(), dirty.getSecond());
+
+    // We successfully finalized our ack.  Perform evict-on-ack if possible.
+    if (totalNumGroups == 1 ||
+        (totalNumGroups > 0 && allOtherGroupsFinalized(entryPointer,
+            totalNumGroups, consumer.getGroupId(), dirty))) {
+      // Evict!
+      byte [] entryMetaColumn =
+          makeColumn(entryPointer.getEntryId(), ENTRY_META);
+      this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
+          new EntryMeta(EntryState.EVICTED).getBytes());
     }
-    if (finalized) {
-      // We successfully finalized our ack.  Perform evict-on-ack if possible.
-      if (totalNumGroups == 1 ||
-          (totalNumGroups > 0 && allOtherGroupsFinalized(entryPointer,
-              totalNumGroups, consumer.getGroupId(), dirty))) {
-        // Evict!
-        byte [] entryMetaColumn = makeColumn(entryPointer.getEntryId(),
-            ENTRY_META);
-        this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
-            new EntryMeta(EntryState.EVICTED).getBytes());
-      }
-    }
-    return finalized;
   }
 
   private boolean allOtherGroupsFinalized(QueueEntryPointer entryPointer,
       int totalNumGroups, long curGroup,
       ImmutablePair<ReadPointer,Long> dirtyPointer) {
+
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
+
     for (long groupId = 1; groupId <= totalNumGroups ; groupId++) {
       if (groupId == curGroup) continue;
+
       byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
           ENTRY_GROUP_META, groupId);
-      byte [] existingValue = this.table.get(shardRow, groupColumn,
-          dirtyPointer.getFirst());
-      if (existingValue == null || existingValue.length == 0) return false;
-      EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
-      if (!groupMeta.isAcked()) return false;
+      OperationResult<byte[]> existingValue =
+          this.table.get(shardRow, groupColumn, dirtyPointer.getFirst());
+
+      if (existingValue.isEmpty() || existingValue.getValue().length == 0)
+        return false;
+      EntryGroupMeta groupMeta =
+          EntryGroupMeta.fromBytes(existingValue.getValue());
+      if (!groupMeta.isAcked())
+        return false;
     }
     return true;
   }
 
   @Override
-  public boolean unack(QueueEntryPointer entryPointer,
-      QueueConsumer consumer) {
+  public void unack(QueueEntryPointer entryPointer,
+                    QueueConsumer consumer) throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
     byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
         ENTRY_GROUP_META, consumer.getGroupId());
-    byte [] existingValue = this.table.get(shardRow, groupColumn,
-        dirty.getFirst());
-    if (existingValue == null || existingValue.length == 0) return false;
-    EntryGroupMeta groupMeta = EntryGroupMeta.fromBytes(existingValue);
 
+    OperationResult<byte[]> existingValue =
+        this.table.get(shardRow, groupColumn, dirty.getFirst());
+    if (existingValue.isEmpty() || existingValue.getValue().length == 0)
+      throw new OperationException(StatusCode.ILLEGAL_UNACK,
+          "No existing group meta data was found.");
+
+    EntryGroupMeta groupMeta =
+        EntryGroupMeta.fromBytes(existingValue.getValue());
     // Should be in semiAcked state
-    if (groupMeta != null && !groupMeta.isSemiAcked()) return false;
+    if (!groupMeta.isSemiAcked())
+      throw new OperationException(StatusCode.ILLEGAL_UNACK,
+          "Attempt to finalize an entry that is not in semi-acked state.");
 
     // It is in the right state, attempt atomic semi_ack to dequeued
     // (finalize passed if this CAS works, fails if this CAS fails)
     byte [] newValue = new EntryGroupMeta(EntryGroupState.DEQUEUED,
         now(), consumer.getInstanceId()).getBytes();
-    try {
-      return this.table.compareAndSwap(shardRow, groupColumn, existingValue,
-          newValue, dirty.getFirst(), dirty.getSecond());
-    } catch (com.continuuity.api.data.OperationException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-  }
-
-  // Public accessors
-
-  VersionedColumnarTable getTable() {
-    return this.table;
-  }
-
-  byte [] getQueueName() {
-    return this.queueName;
+    this.table.compareAndSwap(shardRow, groupColumn, existingValue.getValue(),
+        newValue, dirty.getFirst(), dirty.getSecond());
   }
 
   // Private helpers
@@ -665,8 +678,6 @@ public class TTQueueOnVCTable implements TTQueue {
   /**
    * Checks if the specified group has any currently pending entries (entries
    * that have been dequeued but not acked).
-   * @param groupState
-   * @param readPointer
    * @return true if there are pending entries, false if no pending entries
    */
   private boolean groupHasPendingEntries(GroupState groupState, long groupId,
@@ -680,25 +691,23 @@ public class TTQueueOnVCTable implements TTQueue {
       byte [] entryMetaColumn = makeColumn(curEntry.getEntryId(), ENTRY_META);
 
       // Do a dirty read of the entry meta data
-      ImmutablePair<byte[],Long> entryMetaDataAndStamp =
+      OperationResult<ImmutablePair<byte[], Long>> entryMetaDataAndStamp =
           this.table.getWithVersion(shardRow, entryMetaColumn, readPointer);
-      if (entryMetaDataAndStamp == null) {
+      if (entryMetaDataAndStamp.isEmpty())
         // Entry does not exist, if we haven't found a pending entry by now
         // then we are good (no pending entries, return false)
         return false;
-      }
-      
+
       // Entry exists, check if it should actually be visible
-      if (!readPointer.isVisible(entryMetaDataAndStamp.getSecond())) {
+      if (!readPointer.isVisible(entryMetaDataAndStamp.getValue().getSecond()))
         // We have reached a point of an actively being written queue entry
         // No consumers will have ever gotten past here so if we make it here
         // then we are good (no pending entries, return false)
         return false;
-      }
 
       // Queue entry exists and is visible, check the global state of it
       EntryMeta entryMeta = EntryMeta.fromBytes(
-          entryMetaDataAndStamp.getFirst());
+          entryMetaDataAndStamp.getValue().getFirst());
       
       if (entryMeta.isEndOfShard()) {
         // Move to same entry in next shard
@@ -716,19 +725,22 @@ public class TTQueueOnVCTable implements TTQueue {
       
       byte [] entryGroupMetaColumn = makeColumn(curEntry.getEntryId(),
           ENTRY_GROUP_META, groupId);
-      byte[] entryGroupMetaData = this.table.get(shardRow, entryGroupMetaColumn,
-          readPointer);
-      if (entryGroupMetaData == null || entryGroupMetaData.length == 0) {
+      OperationResult<byte[]> entryGroupMetaData =
+          this.table.get(shardRow, entryGroupMetaColumn, readPointer);
+      if (entryGroupMetaData.isEmpty() ||
+          entryGroupMetaData.getValue().length == 0) {
+
         // Group has not processed this entry yet, consider available for now
         // There can currently be gaps in entries without group data in the case
         // of using a hash partitioner.
         // TODO: Optimize this (ENG-416)
         curEntry = new EntryPointer(curEntry.getEntryId() + 1,
             curEntry.getShardId());
-        continue;
+        // continue to loop
+
       } else {
         EntryGroupMeta entryGroupMeta =
-            EntryGroupMeta.fromBytes(entryGroupMetaData);
+            EntryGroupMeta.fromBytes(entryGroupMetaData.getValue());
         // If we have an entry that is in a dequeued state, pending entry!
         if (entryGroupMeta.isDequeued()) {
           if (TRACE)
@@ -739,7 +751,7 @@ public class TTQueueOnVCTable implements TTQueue {
         // Otherwise, it's either available or acked, both are okay, move entry
         curEntry = new EntryPointer(curEntry.getEntryId() + 1,
             curEntry.getShardId());
-        continue;
+        // continue loop on
       }
     }
     // If we reach here, something has gone wrong
@@ -781,9 +793,9 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   private long getCounter(byte[] row, byte[] column, ReadPointer readPointer) {
-    byte [] value = this.table.get(row, column, readPointer);
-    if (value == null || value.length == 0) return 0;
-    return Bytes.toLong(value);
+    OperationResult<byte[]> value = this.table.get(row, column, readPointer);
+    if (value.isEmpty() || value.getValue().length == 0) return 0;
+    return Bytes.toLong(value.getValue());
   }
 
   private void quickWait() {
@@ -806,46 +818,45 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public long getGroupID() {
+  public long getGroupID() throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Get our unique entry id
-    long groupId = this.table.increment(makeRow(GLOBAL_GROUPS_HEADER),
+    return this.table.increment(makeRow(GLOBAL_GROUPS_HEADER),
         GROUP_ID_GEN, 1, dirty.getFirst(), dirty.getSecond());
-    return groupId;
   }
 
   @Override
   public QueueMeta getQueueMeta() {
 
     // Get global queue state information
-
     QueueMeta meta = new QueueMeta();
     
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
-    long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
-        GLOBAL_ENTRYID_COUNTER, dirty.getFirst()));
-    meta.globalHeadPointer = nextEntryId;
+    meta.globalHeadPointer = // the next entry id
+        Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
+            GLOBAL_ENTRYID_COUNTER, dirty.getFirst()).getValue());
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
-    long curEntryLock = getCounter(entryWritePointerRow,
-        GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, dirty.getFirst());
-    meta.currentWritePointer = curEntryLock;
+    meta.currentWritePointer = // the current entty lock
+        getCounter(entryWritePointerRow,
+            GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, dirty.getFirst());
 
     // Get group state information
     byte [] groupListRow = makeRow(GLOBAL_GROUPS_HEADER, -1);
     
     // Do a dirty read of the global group information
-    Map<byte[],byte[]> groups = this.table.get(groupListRow, dirty.getFirst());
-    if (groups == null || groups.isEmpty()) {
+    OperationResult<Map<byte[], byte[]>> groups =
+        this.table.get(groupListRow, dirty.getFirst());
+    if (groups.isEmpty() || groups.getValue().isEmpty()) {
       meta.groups = null;
       return meta;
     }
     
-    meta.groups = new GroupState[groups.size()];
+    meta.groups = new GroupState[groups.getValue().size()];
     int i=0;
-    for (Map.Entry<byte[],byte[]> entry : groups.entrySet()) {
-      meta.groups[i] = GroupState.fromBytes(entry.getValue());
+    for (Map.Entry<byte[],byte[]> entry : groups.getValue().entrySet()) {
+      meta.groups[i++] = GroupState.fromBytes(entry.getValue());
     }
     return meta;
   }
@@ -853,41 +864,42 @@ public class TTQueueOnVCTable implements TTQueue {
   public String getInfo(int groupId) {
 
     StringBuilder sb = new StringBuilder();
-    sb.append("TTQueueONVCTable (" + Bytes.toString(this.queueName) + ")\n");
-    sb.append("DequeueReturns = " + this.dequeueReturns.get() + "\n");
+    sb.append("TTQueueONVCTable (").append(Bytes.toString(this.queueName))
+        .append(")\n").append("DequeueReturns = ")
+        .append(this.dequeueReturns.get()).append("\n");
 
     // Get global queue state information
 
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     long nextEntryId = Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
-        GLOBAL_ENTRYID_COUNTER, dirty.getFirst()));
-    sb.append("Next available entryId: " + nextEntryId + "\n");
+        GLOBAL_ENTRYID_COUNTER, dirty.getFirst()).getValue());
+    sb.append("Next available entryId: ").append(nextEntryId).append("\n");
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
     long curEntryLock = getCounter(entryWritePointerRow,
         GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, dirty.getFirst());
-    sb.append("Currently locked entryId: " + curEntryLock + "\n");
+    sb.append("Currently locked entryId: ").append(curEntryLock).append("\n");
 
     byte [] shardMetaRow = makeRow(GLOBAL_SHARDS_HEADER);
     ShardMeta shardMeta = ShardMeta.fromBytes(this.table.get(shardMetaRow,
-        GLOBAL_SHARD_META, dirty.getFirst()));
-    sb.append("Shard meta: " + shardMeta.toString() + "\n");
+        GLOBAL_SHARD_META, dirty.getFirst()).getValue());
+    sb.append("Shard meta: ").append(shardMeta.toString()).append("\n");
 
 
     // Get group state information
-    sb.append("\nGroup State Info (groupid= " + groupId + ")\n");
+    sb.append("\nGroup State Info (groupid= ").append(groupId).append(")\n");
 
     byte [] groupRow = makeRow(GLOBAL_GROUPS_HEADER, groupId);
     // Do a dirty read of the global group information
-    byte [] existingValue = this.table.get(groupRow, GROUP_STATE,
-        dirty.getFirst());
+    OperationResult<byte[]> existingValue =
+        this.table.get(groupRow, GROUP_STATE, dirty.getFirst());
 
-    if (existingValue == null || existingValue.length == 0) {
+    if (existingValue.isEmpty() || existingValue.getValue().length == 0) {
       sb.append("No group info exists!\n");
     } else {
       // Group information already existed, verify group state
-      GroupState groupState = GroupState.fromBytes(existingValue);
-      sb.append(groupState.toString() + "\n");
+      GroupState groupState = GroupState.fromBytes(existingValue.getValue());
+      sb.append(groupState.toString()).append("\n");
     }
 
     return sb.toString();
@@ -904,10 +916,10 @@ public class TTQueueOnVCTable implements TTQueue {
       byte [] entryMetaColumn = makeColumn(curEntry, ENTRY_META);
 
       // Do a dirty read of the entry meta data
-      ImmutablePair<byte[],Long> entryMetaDataAndStamp =
+      OperationResult<ImmutablePair<byte[], Long>> entryMetaDataAndStamp =
           this.table.getWithVersion(shardRow, entryMetaColumn, rp);
 
-      if (entryMetaDataAndStamp == null) {
+      if (entryMetaDataAndStamp.isEmpty()) {
         if (entryId == curEntry) {
           return "Iterated all the way to specified entry but that did not " +
               "exist (entry " + curEntry + " in shard " + curShard + ")";
@@ -919,12 +931,12 @@ public class TTQueueOnVCTable implements TTQueue {
       }
 
       EntryMeta entryMeta =
-          EntryMeta.fromBytes(entryMetaDataAndStamp.getFirst());
+          EntryMeta.fromBytes(entryMetaDataAndStamp.getValue().getFirst());
 
       if (curEntry == entryId) {
         return "Found entry at " + entryId + " in shard " + curShard + " (" +
             entryMeta.toString() + ") with timestamp = " +
-            entryMetaDataAndStamp.getSecond();
+            entryMetaDataAndStamp.getValue().getSecond();
       }
 
       if (entryMeta.isInvalid() || entryMeta.isValid()) {

@@ -350,11 +350,11 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   @Override
   public long increment(byte[] row, byte[] column, long amount,
       ReadPointer readPointer, long writeVersion) {
+    Increment increment = new Increment(row);
+    increment.addColumn(this.family, column, amount);
+    increment.setTimeRange(0, getMaxStamp(readPointer));
+    increment.setWriteVersion(writeVersion);
     try {
-      Increment increment = new Increment(row);
-      increment.addColumn(this.family, column, amount);
-      increment.setTimeRange(0, getMaxStamp(readPointer));
-      increment.setWriteVersion(writeVersion);
       Result result = this.readTable.increment(increment);
       if (result.isEmpty()) return 0L;
       return Bytes.toLong(result.value());

@@ -40,7 +40,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   new ConcurrentSkipListMap<Row,
       NavigableMap<Column, NavigableMap<Version, Value>>>();
 
-  private final ConcurrentHashMap<Row, RowLock> locks = new ConcurrentHashMap<Row, RowLock>();
+  private final ConcurrentHashMap<Row, RowLock> locks =
+      new ConcurrentHashMap<Row, RowLock>();
 
   public MemoryOVCTable(final byte [] tableName) {
     this.name = tableName;
@@ -60,7 +61,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   public void put(byte[] row, byte[][] columns, long version, byte[][] values) {
     assert (columns.length == values.length);
     Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
+        p = getAndLockRow(r);
     for (int i = 0; i < columns.length; i++) {
       NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(),
           columns[i]);
@@ -107,7 +109,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   private void performDelete(byte [] row, byte [][] columns, long version,
       Version.Type type) {
     Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
+        p = getAndLockRow(r);
     for (byte [] column : columns) {
       NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
       columnMap.put(new Version(version, type), Value.delete());
@@ -356,33 +359,57 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public long increment(byte[] row, byte[] column, long amount,
-      ReadPointer readPointer, long writeVersion) {
+      ReadPointer readPointer, long writeVersion) throws OperationException {
     return increment(row, new byte [][] { column }, new long [] { amount },
         readPointer, writeVersion).get(column);
   }
 
   @Override
   public Map<byte[], Long> increment(byte[] row, byte[][] columns,
-      long[] amounts, ReadPointer readPointer, long writeVersion) {
+      long[] amounts, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
+
     Row r = new Row(row);
-    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-    Map<byte[],Long> newAmounts =
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
+        p = getAndLockRow(r);
+
+    long[] newAmounts = new long[amounts.length];
+    Map<byte[],Long> newAmountsMap =
         new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-    for (int i=0; i<columns.length; i++) {
-      byte [] column = columns[i];
-      long amount = amounts[i];
-      NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
-      long existingAmount = 0L;
-      ImmutablePair<Long, byte[]> latest =
-          filteredLatest(columnMap, readPointer);
-      if (latest != null) existingAmount = Bytes.toLong(latest.getSecond());
-      long newAmount = existingAmount + amount;
-      columnMap.put(new Version(writeVersion),
-          new Value(Bytes.toBytes(newAmount)));
-      newAmounts.put(column, newAmount);
+
+    try {
+      // first determine new values for all columns. This can thrown an
+      // exception if an existing value is not sizeof(long).
+      for (int i=0; i<columns.length; i++) {
+        byte [] column = columns[i];
+        long amount = amounts[i];
+        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        long existingAmount = 0L;
+        ImmutablePair<Long, byte[]> latest =
+            filteredLatest(versions, readPointer);
+        if (latest != null) {
+          try {
+            existingAmount = Bytes.toLong(latest.getSecond());
+          } catch(IllegalArgumentException e) {
+            throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
+                e.getMessage(), e);
+          }
+        }
+        long newAmount = existingAmount + amount;
+        newAmounts[i] = newAmount;
+      }
+      // now we know all values are legal, we can apply all increments
+      for (int i=0; i<columns.length; i++) {
+        byte [] column = columns[i];
+        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        versions.put(new Version(writeVersion),
+            new Value(Bytes.toBytes(newAmounts[i])));
+        newAmountsMap.put(column, newAmounts[i]);
+      }
+      return newAmountsMap;
+    } finally {
+      unlockRow(r);
     }
-    unlockRow(r);
-    return newAmounts;
   }
 
   @Override

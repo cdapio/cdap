@@ -377,8 +377,12 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("QueueAck");
     long begin = begin();
-    boolean result = getQueueTable(ack.getKey()).ack(ack.getKey(),
-        ack.getEntryPointer(), ack.getConsumer());
+    try {
+      boolean result = getQueueTable(ack.getKey()).ack(ack.getKey(),
+          ack.getEntryPointer(), ack.getConsumer());
+    } catch (OperationException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
     end("QueueAck", begin);
     if (!result) {
       // Ack failed, roll back transaction

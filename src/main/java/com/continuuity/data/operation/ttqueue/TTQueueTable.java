@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 
@@ -46,13 +47,14 @@ public interface TTQueueTable {
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
+   *
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
    * @return true if successful, false if not
    */
-  public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer);
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
+                  QueueConsumer consumer) throws OperationException;
 
   /**
    * Finalizes an ack.

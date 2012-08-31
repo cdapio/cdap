@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
@@ -56,9 +57,9 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public boolean ack(byte [] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer) {
-    return getQueue(queueName).ack(entryPointer, consumer);
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
+                  QueueConsumer consumer) throws OperationException {
+    getQueue(queueName).ack(entryPointer, consumer);
   }
 
   @Override
