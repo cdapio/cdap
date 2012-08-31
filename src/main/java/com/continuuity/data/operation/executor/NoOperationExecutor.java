@@ -21,7 +21,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(List<WriteOperation> writes) throws OmidTransactionException {
+  public void execute(List<WriteOperation> writes) throws OperationException {
     // do nothing
   }
 
@@ -85,7 +85,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(Increment inc) {
+  public void execute(Increment inc) throws OperationException {
     // do nothing
   }
 

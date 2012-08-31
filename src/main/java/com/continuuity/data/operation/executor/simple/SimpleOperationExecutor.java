@@ -3,7 +3,6 @@ package com.continuuity.data.operation.executor.simple;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ColumnarTable;
@@ -29,7 +28,7 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
   // Batch of Writes
 
   @Override
-  public void execute(List<WriteOperation> writes) throws OmidTransactionException {
+  public void execute(List<WriteOperation> writes) throws OperationException {
     for (WriteOperation write : writes) {
       if (write instanceof Write)
         execute((Write)write);
@@ -67,7 +66,7 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
 
   // Value Returning Read-Modify-Writes
   @Override
-  public void execute(Increment inc) {
+  public void execute(Increment inc) throws OperationException {
     this.randomTable.increment(
         inc.getKey(), inc.getColumns()[0], inc.getAmounts()[0]);
   }

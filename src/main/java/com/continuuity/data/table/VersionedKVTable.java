@@ -1,18 +1,21 @@
 package com.continuuity.data.table;
 
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+
 public interface VersionedKVTable {
 
   public void put(byte[] key, byte[] value, long version);
 
-  public byte[] get(byte[] key, ReadPointer readPointer);
+  public OperationResult<byte[]> get(byte[] key, ReadPointer readPointer);
 
   public void delete(byte[] key, long version);
 
   public long increment(byte[] key, long amount, ReadPointer readPointer,
-      long writeVersion);
+      long writeVersion) throws OperationException;
 
-  public boolean compareAndSwap(byte[] key, byte[] expectedValue,
-      byte[] newValue, ReadPointer readPointer, long writeVersion);
+  public void compareAndSwap(byte[] key, byte[] expectedValue,
+                             byte[] newValue, ReadPointer readPointer, long writeVersion) throws OperationException;
 
 }

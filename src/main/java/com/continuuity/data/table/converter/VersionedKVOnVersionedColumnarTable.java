@@ -1,5 +1,7 @@
 package com.continuuity.data.table.converter;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data.table.VersionedKVTable;
@@ -20,7 +22,7 @@ public class VersionedKVOnVersionedColumnarTable implements VersionedKVTable {
   }
 
   @Override
-  public byte[] get(byte[] key, ReadPointer readPointer) {
+  public OperationResult<byte[]> get(byte[] key, ReadPointer readPointer) {
     return this.table.get(key, COLUMN, readPointer);
   }
 
@@ -31,19 +33,17 @@ public class VersionedKVOnVersionedColumnarTable implements VersionedKVTable {
 
   @Override
   public long increment(byte[] key, long amount, ReadPointer readPointer,
-      long writeVersion) {
+      long writeVersion) throws OperationException {
     return this.table.increment(key, COLUMN, amount, readPointer, writeVersion);
   }
 
   @Override
-  public boolean compareAndSwap(byte[] key, byte[] expectedValue,
-      byte[] newValue, ReadPointer readPointer, long writeVersion) {
-    try {
-      return this.table.compareAndSwap(key, COLUMN, expectedValue, newValue,
-          readPointer, writeVersion);
-    } catch (com.continuuity.api.data.OperationException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
+  public void compareAndSwap(byte[] key,
+                             byte[] expectedValue, byte[] newValue,
+                             ReadPointer readPointer, long writeVersion)
+      throws OperationException {
+    this.table.compareAndSwap(key, COLUMN, expectedValue, newValue,
+        readPointer, writeVersion);
   }
 
 }

@@ -13,16 +13,16 @@ public interface ColumnarTable {
   
   public void delete(byte [] row, byte [] column);
 
-  public Map<byte[], byte[]> get(byte[] row);
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row);
 
   public OperationResult<byte[]> get(byte [] row, byte [] column);
 
-  public Map<byte[],byte[]> get(byte [] row, byte [] startColumn,
-      byte [] stopColumn);
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[] startColumn,
+                                                  byte[] stopColumn);
 
-  public Map<byte[],byte[]> get(byte [] row, byte [][] columns);
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns);
   
-  public long increment(byte [] row, byte [] column, long amount);
+  public long increment(byte [] row, byte [] column, long amount) throws OperationException;
   
   // Conditional Operations
   

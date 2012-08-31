@@ -1,5 +1,8 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+
 /**
  * An unordered, non-versioned, simple key-value table.
  */
@@ -7,13 +10,13 @@ public interface KVTable {
 
   public void put(byte [] key, byte [] value);
 
-  public byte [] get(byte [] key);
+  public OperationResult<byte[]> get(byte[] key);
   
   public void delete(byte [] key);
   
-  public long increment(byte [] key, long amount);
+  public long increment(byte [] key, long amount) throws OperationException;
   
-  public boolean compareAndSwap(byte [] key, byte [] expectedValue,
-      byte [] newValue);
+  public void compareAndSwap(byte[] key, byte[] expectedValue,
+                             byte[] newValue) throws OperationException;
 
 }
