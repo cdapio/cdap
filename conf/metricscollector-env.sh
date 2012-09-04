@@ -1,3 +1,4 @@
+#!/bin/sh
 # Set environment variables here.
 
 # Main class to be invoked.
