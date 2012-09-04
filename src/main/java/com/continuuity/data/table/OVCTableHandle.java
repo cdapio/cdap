@@ -1,5 +1,6 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 
 /**
@@ -9,10 +10,10 @@ public interface OVCTableHandle {
 
   public String getName();
 
-  public OrderedVersionedColumnarTable getTable(byte [] tableName);
+  public OrderedVersionedColumnarTable getTable(byte [] tableName) throws OperationException;
 
-  public TTQueueTable getQueueTable(byte [] queueTableName);
+  public TTQueueTable getQueueTable(byte [] queueTableName) throws OperationException;
 
-  public TTQueueTable getStreamTable(byte [] streamTableName);
+  public TTQueueTable getStreamTable(byte [] streamTableName) throws OperationException;
 
 }

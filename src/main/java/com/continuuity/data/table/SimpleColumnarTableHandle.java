@@ -1,16 +1,15 @@
 package com.continuuity.data.table;
 
-import java.util.concurrent.ConcurrentSkipListMap;
-
 import com.continuuity.api.data.OperationException;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnVCTable;
 import com.google.inject.Inject;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public abstract class SimpleColumnarTableHandle implements ColumnarTableHandle {
   
@@ -25,12 +24,12 @@ public abstract class SimpleColumnarTableHandle implements ColumnarTableHandle {
   @Inject
   private TimestampOracle timeOracle;
   
-  private Object queueTableLock = new Object();
+  private final Object queueTableLock = new Object();
   private VersionedColumnarTable queueTable = null;
   private CConfiguration conf = new CConfiguration();
   
   @Override
-  public ColumnarTable getTable(byte[] tableName) {
+  public ColumnarTable getTable(byte[] tableName) throws OperationException {
     ColumnarTable table = this.tables.get(tableName);
     if (table != null) return table;
     table = createNewTable(tableName, timeOracle);

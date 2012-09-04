@@ -17,17 +17,19 @@ public class VersionedKVOnVersionedColumnarTable implements VersionedKVTable {
   }
 
   @Override
-  public void put(byte[] key, byte[] value, long version) {
+  public void put(byte[] key, byte[] value, long version)
+      throws OperationException {
     this.table.put(key, COLUMN, version, value);
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] key, ReadPointer readPointer) {
+  public OperationResult<byte[]> get(byte[] key, ReadPointer readPointer)
+      throws OperationException {
     return this.table.get(key, COLUMN, readPointer);
   }
 
   @Override
-  public void delete(byte[] key, long version) {
+  public void delete(byte[] key, long version) throws OperationException {
     this.table.delete(key, COLUMN, version);
   }
 

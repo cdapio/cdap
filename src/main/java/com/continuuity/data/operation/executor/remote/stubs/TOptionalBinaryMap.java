@@ -31,6 +31,8 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinaryMap");
 
   private static final org.apache.thrift.protocol.TField THE_MAP_FIELD_DESC = new org.apache.thrift.protocol.TField("theMap", org.apache.thrift.protocol.TType.MAP, (short)1);
+  private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -39,10 +41,14 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   }
 
   public Map<ByteBuffer,TOptionalBinary> theMap; // optional
+  public int status; // optional
+  public String message; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    THE_MAP((short)1, "theMap");
+    THE_MAP((short)1, "theMap"),
+    STATUS((short)2, "status"),
+    MESSAGE((short)3, "message");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -59,6 +65,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       switch(fieldId) {
         case 1: // THE_MAP
           return THE_MAP;
+        case 2: // STATUS
+          return STATUS;
+        case 3: // MESSAGE
+          return MESSAGE;
         default:
           return null;
       }
@@ -99,7 +109,9 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.THE_MAP};
+  private static final int __STATUS_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.THE_MAP,_Fields.STATUS,_Fields.MESSAGE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -107,6 +119,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true), 
             new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinary.class))));
+    tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOptionalBinaryMap.class, metaDataMap);
   }
@@ -118,6 +134,8 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
    * Performs a deep copy on <i>other</i>.
    */
   public TOptionalBinaryMap(TOptionalBinaryMap other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetTheMap()) {
       Map<ByteBuffer,TOptionalBinary> __this__theMap = new HashMap<ByteBuffer,TOptionalBinary>();
       for (Map.Entry<ByteBuffer, TOptionalBinary> other_element : other.theMap.entrySet()) {
@@ -134,6 +152,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       }
       this.theMap = __this__theMap;
     }
+    this.status = other.status;
+    if (other.isSetMessage()) {
+      this.message = other.message;
+    }
   }
 
   public TOptionalBinaryMap deepCopy() {
@@ -143,6 +165,9 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
   @Override
   public void clear() {
     this.theMap = null;
+    setStatusIsSet(false);
+    this.status = 0;
+    this.message = null;
   }
 
   public int getTheMapSize() {
@@ -180,6 +205,53 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     }
   }
 
+  public int getStatus() {
+    return this.status;
+  }
+
+  public TOptionalBinaryMap setStatus(int status) {
+    this.status = status;
+    setStatusIsSet(true);
+    return this;
+  }
+
+  public void unsetStatus() {
+    __isset_bit_vector.clear(__STATUS_ISSET_ID);
+  }
+
+  /** Returns true if field status is set (has been assigned a value) and false otherwise */
+  public boolean isSetStatus() {
+    return __isset_bit_vector.get(__STATUS_ISSET_ID);
+  }
+
+  public void setStatusIsSet(boolean value) {
+    __isset_bit_vector.set(__STATUS_ISSET_ID, value);
+  }
+
+  public String getMessage() {
+    return this.message;
+  }
+
+  public TOptionalBinaryMap setMessage(String message) {
+    this.message = message;
+    return this;
+  }
+
+  public void unsetMessage() {
+    this.message = null;
+  }
+
+  /** Returns true if field message is set (has been assigned a value) and false otherwise */
+  public boolean isSetMessage() {
+    return this.message != null;
+  }
+
+  public void setMessageIsSet(boolean value) {
+    if (!value) {
+      this.message = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case THE_MAP:
@@ -190,6 +262,22 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       }
       break;
 
+    case STATUS:
+      if (value == null) {
+        unsetStatus();
+      } else {
+        setStatus((Integer)value);
+      }
+      break;
+
+    case MESSAGE:
+      if (value == null) {
+        unsetMessage();
+      } else {
+        setMessage((String)value);
+      }
+      break;
+
     }
   }
 
@@ -197,6 +285,12 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     switch (field) {
     case THE_MAP:
       return getTheMap();
+
+    case STATUS:
+      return Integer.valueOf(getStatus());
+
+    case MESSAGE:
+      return getMessage();
 
     }
     throw new IllegalStateException();
@@ -211,6 +305,10 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     switch (field) {
     case THE_MAP:
       return isSetTheMap();
+    case STATUS:
+      return isSetStatus();
+    case MESSAGE:
+      return isSetMessage();
     }
     throw new IllegalStateException();
   }
@@ -237,6 +335,24 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
         return false;
     }
 
+    boolean this_present_status = true && this.isSetStatus();
+    boolean that_present_status = true && that.isSetStatus();
+    if (this_present_status || that_present_status) {
+      if (!(this_present_status && that_present_status))
+        return false;
+      if (this.status != that.status)
+        return false;
+    }
+
+    boolean this_present_message = true && this.isSetMessage();
+    boolean that_present_message = true && that.isSetMessage();
+    if (this_present_message || that_present_message) {
+      if (!(this_present_message && that_present_message))
+        return false;
+      if (!this.message.equals(that.message))
+        return false;
+    }
+
     return true;
   }
 
@@ -259,6 +375,26 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
     }
     if (isSetTheMap()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.theMap, typedOther.theMap);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetStatus()).compareTo(typedOther.isSetStatus());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetStatus()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.status, typedOther.status);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMessage()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -292,6 +428,22 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       }
       first = false;
     }
+    if (isSetStatus()) {
+      if (!first) sb.append(", ");
+      sb.append("status:");
+      sb.append(this.status);
+      first = false;
+    }
+    if (isSetMessage()) {
+      if (!first) sb.append(", ");
+      sb.append("message:");
+      if (this.message == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.message);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -310,6 +462,8 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -341,8 +495,8 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
                 struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map64.size);
                 for (int _i65 = 0; _i65 < _map64.size; ++_i65)
                 {
-                  ByteBuffer _key66; // required
-                  TOptionalBinary _val67; // optional
+                  ByteBuffer _key66; // optional
+                  TOptionalBinary _val67; // required
                   _key66 = iprot.readBinary();
                   _val67 = new TOptionalBinary();
                   _val67.read(iprot);
@@ -351,6 +505,22 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
                 iprot.readMapEnd();
               }
               struct.setTheMapIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 2: // STATUS
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.status = iprot.readI32();
+              struct.setStatusIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // MESSAGE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.message = iprot.readString();
+              struct.setMessageIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -385,6 +555,18 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           oprot.writeFieldEnd();
         }
       }
+      if (struct.isSetStatus()) {
+        oprot.writeFieldBegin(STATUS_FIELD_DESC);
+        oprot.writeI32(struct.status);
+        oprot.writeFieldEnd();
+      }
+      if (struct.message != null) {
+        if (struct.isSetMessage()) {
+          oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
+          oprot.writeString(struct.message);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -406,7 +588,13 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
       if (struct.isSetTheMap()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetStatus()) {
+        optionals.set(1);
+      }
+      if (struct.isSetMessage()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetTheMap()) {
         {
           oprot.writeI32(struct.theMap.size());
@@ -417,20 +605,26 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           }
         }
       }
+      if (struct.isSetStatus()) {
+        oprot.writeI32(struct.status);
+      }
+      if (struct.isSetMessage()) {
+        oprot.writeString(struct.message);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TOptionalBinaryMap struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         {
           org.apache.thrift.protocol.TMap _map70 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
           struct.theMap = new HashMap<ByteBuffer,TOptionalBinary>(2*_map70.size);
           for (int _i71 = 0; _i71 < _map70.size; ++_i71)
           {
-            ByteBuffer _key72; // required
-            TOptionalBinary _val73; // optional
+            ByteBuffer _key72; // optional
+            TOptionalBinary _val73; // required
             _key72 = iprot.readBinary();
             _val73 = new TOptionalBinary();
             _val73.read(iprot);
@@ -438,6 +632,14 @@ public class TOptionalBinaryMap implements org.apache.thrift.TBase<TOptionalBina
           }
         }
         struct.setTheMapIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.status = iprot.readI32();
+        struct.setStatusIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.message = iprot.readString();
+        struct.setMessageIsSet(true);
       }
     }
   }

@@ -22,41 +22,47 @@ public class ColumnarOnVersionedColumnarTable implements ColumnarTable {
   }
 
   @Override
-  public void put(byte[] row, byte[] column, byte[] value) {
+  public void put(byte[] row, byte[] column, byte[] value)
+      throws OperationException {
     this.table.put(row, column, this.oracle.getTimestamp(), value);
   }
 
   @Override
-  public void put(byte[] row, byte[][] columns, byte[][] values) {
+  public void put(byte[] row, byte[][] columns, byte[][] values)
+      throws OperationException {
     this.table.put(row, columns, this.oracle.getTimestamp(), values);
   }
 
   @Override
-  public void delete(byte[] row, byte[] column) {
+  public void delete(byte[] row, byte[] column) throws OperationException {
     this.table.delete(row, column, this.oracle.getTimestamp());
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> get(byte[] row) {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row)
+      throws OperationException {
     return this.table.get(row,
         new SimpleReadPointer(this.oracle.getTimestamp()));
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] row, byte[] column) {
+  public OperationResult<byte[]> get(byte[] row, byte[] column)
+      throws OperationException {
     return this.table.get(row, column,
         new SimpleReadPointer(this.oracle.getTimestamp()));
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn) {
+  get(byte[] row, byte[] startColumn, byte[] stopColumn)
+      throws OperationException {
     return this.table.get(row, startColumn, stopColumn,
         new SimpleReadPointer(this.oracle.getTimestamp()));
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) {
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns)
+      throws OperationException {
     return this.table.get(row, columns,
         new SimpleReadPointer(this.oracle.getTimestamp()));
   }

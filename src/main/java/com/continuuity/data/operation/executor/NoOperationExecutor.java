@@ -3,7 +3,6 @@ package com.continuuity.data.operation.executor;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.ttqueue.*;
 
 import java.util.List;
@@ -32,8 +31,8 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<Long> execute(QueueAdmin.GetGroupID getGroupId) {
-    return new OperationResult<Long>(0);
+  public long execute(QueueAdmin.GetGroupID getGroupId) {
+    return 0L;
   }
 
   @Override
@@ -50,7 +49,7 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<byte[]> execute(ReadKey read) {
+  public OperationResult<byte[]> execute(ReadKey read) throws OperationException {
     // return empty result, key not found
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
@@ -75,12 +74,12 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(Write write) {
+  public void execute(Write write) throws OperationException {
     // do nothing
   }
 
   @Override
-  public void execute(Delete delete) {
+  public void execute(Delete delete) throws OperationException {
     // do nothing
   }
 

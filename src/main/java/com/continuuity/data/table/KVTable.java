@@ -8,11 +8,11 @@ import com.continuuity.api.data.OperationResult;
  */
 public interface KVTable {
 
-  public void put(byte [] key, byte [] value);
+  public void put(byte [] key, byte [] value) throws OperationException;
 
-  public OperationResult<byte[]> get(byte[] key);
+  public OperationResult<byte[]> get(byte[] key) throws OperationException;
   
-  public void delete(byte [] key);
+  public void delete(byte [] key) throws OperationException;
   
   public long increment(byte [] key, long amount) throws OperationException;
   

@@ -3,6 +3,7 @@
  */
 package com.continuuity.data.engine.hypersql;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
@@ -32,7 +33,8 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
+  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+      throws OperationException {
     HyperSQLOVCTable table =
         new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
     table.initializeTable();

@@ -16,17 +16,17 @@ public class KVTableOnColumnarTable implements KVTable {
   }
   
   @Override
-  public void put(byte[] key, byte[] value) {
+  public void put(byte[] key, byte[] value) throws OperationException {
     columnarTable.put(key, COLUMN, value);
   }
 
   @Override
-  public OperationResult<byte[]> get(byte[] key) {
+  public OperationResult<byte[]> get(byte[] key) throws OperationException {
     return columnarTable.get(key, COLUMN);
   }
 
   @Override
-  public void delete(byte[] key) {
+  public void delete(byte[] key) throws OperationException {
     columnarTable.delete(key, COLUMN);
   }
 

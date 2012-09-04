@@ -1,5 +1,6 @@
 package com.continuuity.data.engine;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.hypersql.HyperSQLOVCTableHandle;
 import com.continuuity.data.engine.memory.MemoryOVCTable;
 import com.continuuity.data.table.OVCTableHandle;
@@ -28,7 +29,8 @@ public class HyperSQLAndMemoryOVCTableHandle extends HyperSQLOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
+  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+      throws OperationException {
     // If this is the queue table, use a memory table, otherwise hypersql
     if (Bytes.equals(tableName, SimpleOVCTableHandle.queueOVCTable)) {
       return new MemoryOVCTable(tableName);

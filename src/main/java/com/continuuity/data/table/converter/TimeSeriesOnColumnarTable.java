@@ -1,5 +1,6 @@
 package com.continuuity.data.table.converter;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.TimeSeriesTable;
@@ -17,17 +18,20 @@ public class TimeSeriesOnColumnarTable implements TimeSeriesTable {
   }
   
   @Override
-  public void addPoint(byte[] key, long time, byte[] value) {
+  public void addPoint(byte[] key, long time, byte[] value)
+      throws OperationException {
     table.put(key, Bytes.toBytes(reverse(time)), value);
   }
 
   @Override
-  public OperationResult<byte[]> getPoint(byte[] key, long time) {
+  public OperationResult<byte[]> getPoint(byte[] key, long time)
+      throws OperationException {
     return table.get(key, Bytes.toBytes(reverse(time)));
   }
 
   @Override
-  public Map<Long, byte[]> getPoints(byte[] key, long startTime, long endTime) {
+  public Map<Long, byte[]> getPoints(byte[] key, long startTime, long endTime)
+      throws OperationException {
     OperationResult<Map<byte[], byte[]>> columns =
         table.get(key, Bytes.toBytes(reverse(endTime)),
             Bytes.toBytes(reverse(startTime)));

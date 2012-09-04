@@ -17,4 +17,5 @@ public class StatusCode extends com.continuuity.api.data.StatusCode {
   public static final int INTERNAL_ERROR = 5000;
   public static final int SQL_ERROR = 5001;
   public static final int HBASE_ERROR = 5002;
+  public static final int THRIFT_ERROR = 5003;
 }

@@ -3,6 +3,7 @@
  */
 package com.continuuity.data.engine.hbase;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
@@ -36,7 +37,8 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) {
+  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
+      throws OperationException {
     HBaseOVCTable table = null;
     try {
       createTable(tableName);

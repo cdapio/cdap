@@ -96,7 +96,8 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(ReadKey read) {
+  public OperationResult<byte[]> execute(ReadKey read)
+      throws OperationException {
     initialize();
     requestMetric("ReadKey");
     long begin = begin();
@@ -105,12 +106,14 @@ implements TransactionalOperationExecutor {
     return result;
   }
 
-  OperationResult<byte[]> read(ReadKey read, ReadPointer pointer) {
+  OperationResult<byte[]> read(ReadKey read, ReadPointer pointer)
+      throws OperationException {
     return this.randomTable.get(read.getKey(), Operation.KV_COL, pointer);
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys) {
+  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+      throws OperationException {
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
@@ -121,7 +124,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(Read read) {
+  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+      throws OperationException {
     initialize();
     requestMetric("Read");
     long begin = begin();
@@ -133,7 +137,7 @@ implements TransactionalOperationExecutor {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) {
+  execute(ReadColumnRange readColumnRange) throws OperationException {
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
@@ -294,7 +298,7 @@ implements TransactionalOperationExecutor {
   }
 
   WriteTransactionResult write(Write write,
-      ImmutablePair<ReadPointer,Long> pointer) {
+      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("Write");
     long begin = begin();
@@ -306,7 +310,7 @@ implements TransactionalOperationExecutor {
   }
 
   WriteTransactionResult write(Delete delete,
-      ImmutablePair<ReadPointer, Long> pointer) {
+      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
     initialize();
     requestMetric("Delete");
     long begin = begin();
@@ -318,7 +322,7 @@ implements TransactionalOperationExecutor {
   }
 
   WriteTransactionResult write(Increment increment,
-      ImmutablePair<ReadPointer,Long> pointer) {
+      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("Increment");
     long begin = begin();
@@ -336,7 +340,7 @@ implements TransactionalOperationExecutor {
   }
 
   WriteTransactionResult write(CompareAndSwap write,
-      ImmutablePair<ReadPointer,Long> pointer) {
+      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("CompareAndSwap");
     long begin = begin();
@@ -373,7 +377,7 @@ implements TransactionalOperationExecutor {
 
   WriteTransactionResult write(QueueAck ack,
       @SuppressWarnings("unused")
-      ImmutablePair<ReadPointer, Long> pointer) {
+      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
     initialize();
     requestMetric("QueueAck");
     long begin = begin();
@@ -425,7 +429,7 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Long> execute(GetGroupID getGroupId)
+  public long execute(GetGroupID getGroupId)
       throws OperationException {
     initialize();
     requestMetric("GetGroupID");
@@ -433,11 +437,12 @@ implements TransactionalOperationExecutor {
     TTQueueTable table = getQueueTable(getGroupId.getQueueName());
     long groupid = table.getGroupID(getGroupId.getQueueName());
     end("GetGroupID", begin);
-    return new OperationResult<Long>(groupid);
+    return groupid;
   }
 
   @Override
-  public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta) {
+  public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta)
+      throws OperationException {
     initialize();
     requestMetric("GetQueueMeta");
     long begin = begin();
@@ -460,7 +465,7 @@ implements TransactionalOperationExecutor {
 
   private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
       List<Delete> deletes, List<QueueInvalidate> invalidates)
-          throws OmidTransactionException {
+      throws OperationException {
     // Perform queue invalidates
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
     for (QueueInvalidate invalidate : invalidates) {
@@ -532,7 +537,7 @@ implements TransactionalOperationExecutor {
    * it can be used. This currently entails creating real objects for all
    * our table handlers.
    */
-  private synchronized void initialize() {
+  private synchronized void initialize() throws OperationException {
 
     if (this.randomTable == null) {
 

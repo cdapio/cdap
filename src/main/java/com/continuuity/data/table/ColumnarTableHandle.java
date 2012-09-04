@@ -1,5 +1,6 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 
 /**
@@ -7,7 +8,7 @@ import com.continuuity.data.operation.ttqueue.TTQueueTable;
  */
 public interface ColumnarTableHandle {
 
-  public ColumnarTable getTable(byte [] tableName);
+  public ColumnarTable getTable(byte [] tableName) throws OperationException;
 
   public TTQueueTable getQueueTable(byte [] queueName);
 

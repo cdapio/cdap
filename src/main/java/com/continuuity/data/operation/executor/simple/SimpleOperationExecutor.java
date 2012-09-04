@@ -18,7 +18,8 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
   final ColumnarTable orderedTable;
   final TTQueueTable queueTable;
 
-  public SimpleOperationExecutor(ColumnarTableHandle tableHandle) {
+  public SimpleOperationExecutor(ColumnarTableHandle tableHandle)
+      throws OperationException {
     this.tableHandle = tableHandle;
     this.randomTable = tableHandle.getTable(Bytes.toBytes("random"));
     this.orderedTable = tableHandle.getTable(Bytes.toBytes("ordered"));
@@ -48,12 +49,12 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
   // Single Writes
 
   @Override
-  public void execute(Write write) {
+  public void execute(Write write) throws OperationException {
     this.randomTable.put(write.getKey(), write.getColumns(), write.getValues());
   }
 
   @Override
-  public void execute(Delete delete) {
+  public void execute(Delete delete) throws OperationException {
     this.randomTable.delete(delete.getKey(), delete.getColumns()[0]);
   }
 
@@ -73,7 +74,8 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
 
   // Simple Reads
   @Override
-  public OperationResult<byte[]> execute(ReadKey read) {
+  public OperationResult<byte[]> execute(ReadKey read)
+      throws OperationException {
     return this.randomTable.get(read.getKey(), Operation.KV_COL);
   }
 

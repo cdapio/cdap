@@ -16,7 +16,7 @@ public interface InternalOperationExecutor {
   public DequeueResult execute(QueueDequeue dequeue)
       throws OperationException;
 
-  public OperationResult<Long> execute(GetGroupID getGroupId)
+  public long execute(GetGroupID getGroupId)
       throws OperationException;
 
   public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta)

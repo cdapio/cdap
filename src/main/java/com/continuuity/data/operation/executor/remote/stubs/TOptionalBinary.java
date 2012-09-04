@@ -31,6 +31,8 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinary");
 
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -39,10 +41,14 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
   }
 
   public ByteBuffer value; // optional
+  public int status; // optional
+  public String message; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    VALUE((short)1, "value");
+    VALUE((short)1, "value"),
+    STATUS((short)2, "status"),
+    MESSAGE((short)3, "message");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -59,6 +65,10 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
       switch(fieldId) {
         case 1: // VALUE
           return VALUE;
+        case 2: // STATUS
+          return STATUS;
+        case 3: // MESSAGE
+          return MESSAGE;
         default:
           return null;
       }
@@ -99,12 +109,18 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.VALUE};
+  private static final int __STATUS_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.VALUE,_Fields.STATUS,_Fields.MESSAGE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOptionalBinary.class, metaDataMap);
   }
@@ -116,9 +132,15 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
    * Performs a deep copy on <i>other</i>.
    */
   public TOptionalBinary(TOptionalBinary other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetValue()) {
       this.value = org.apache.thrift.TBaseHelper.copyBinary(other.value);
 ;
+    }
+    this.status = other.status;
+    if (other.isSetMessage()) {
+      this.message = other.message;
     }
   }
 
@@ -129,6 +151,9 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
   @Override
   public void clear() {
     this.value = null;
+    setStatusIsSet(false);
+    this.status = 0;
+    this.message = null;
   }
 
   public byte[] getValue() {
@@ -165,6 +190,53 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     }
   }
 
+  public int getStatus() {
+    return this.status;
+  }
+
+  public TOptionalBinary setStatus(int status) {
+    this.status = status;
+    setStatusIsSet(true);
+    return this;
+  }
+
+  public void unsetStatus() {
+    __isset_bit_vector.clear(__STATUS_ISSET_ID);
+  }
+
+  /** Returns true if field status is set (has been assigned a value) and false otherwise */
+  public boolean isSetStatus() {
+    return __isset_bit_vector.get(__STATUS_ISSET_ID);
+  }
+
+  public void setStatusIsSet(boolean value) {
+    __isset_bit_vector.set(__STATUS_ISSET_ID, value);
+  }
+
+  public String getMessage() {
+    return this.message;
+  }
+
+  public TOptionalBinary setMessage(String message) {
+    this.message = message;
+    return this;
+  }
+
+  public void unsetMessage() {
+    this.message = null;
+  }
+
+  /** Returns true if field message is set (has been assigned a value) and false otherwise */
+  public boolean isSetMessage() {
+    return this.message != null;
+  }
+
+  public void setMessageIsSet(boolean value) {
+    if (!value) {
+      this.message = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case VALUE:
@@ -175,6 +247,22 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
       }
       break;
 
+    case STATUS:
+      if (value == null) {
+        unsetStatus();
+      } else {
+        setStatus((Integer)value);
+      }
+      break;
+
+    case MESSAGE:
+      if (value == null) {
+        unsetMessage();
+      } else {
+        setMessage((String)value);
+      }
+      break;
+
     }
   }
 
@@ -182,6 +270,12 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     switch (field) {
     case VALUE:
       return getValue();
+
+    case STATUS:
+      return Integer.valueOf(getStatus());
+
+    case MESSAGE:
+      return getMessage();
 
     }
     throw new IllegalStateException();
@@ -196,6 +290,10 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     switch (field) {
     case VALUE:
       return isSetValue();
+    case STATUS:
+      return isSetStatus();
+    case MESSAGE:
+      return isSetMessage();
     }
     throw new IllegalStateException();
   }
@@ -222,6 +320,24 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
         return false;
     }
 
+    boolean this_present_status = true && this.isSetStatus();
+    boolean that_present_status = true && that.isSetStatus();
+    if (this_present_status || that_present_status) {
+      if (!(this_present_status && that_present_status))
+        return false;
+      if (this.status != that.status)
+        return false;
+    }
+
+    boolean this_present_message = true && this.isSetMessage();
+    boolean that_present_message = true && that.isSetMessage();
+    if (this_present_message || that_present_message) {
+      if (!(this_present_message && that_present_message))
+        return false;
+      if (!this.message.equals(that.message))
+        return false;
+    }
+
     return true;
   }
 
@@ -244,6 +360,26 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
     }
     if (isSetValue()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.value, typedOther.value);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetStatus()).compareTo(typedOther.isSetStatus());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetStatus()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.status, typedOther.status);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMessage()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -277,6 +413,22 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
       }
       first = false;
     }
+    if (isSetStatus()) {
+      if (!first) sb.append(", ");
+      sb.append("status:");
+      sb.append(this.status);
+      first = false;
+    }
+    if (isSetMessage()) {
+      if (!first) sb.append(", ");
+      sb.append("message:");
+      if (this.message == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.message);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -295,6 +447,8 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -327,6 +481,22 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 2: // STATUS
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.status = iprot.readI32();
+              struct.setStatusIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // MESSAGE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.message = iprot.readString();
+              struct.setMessageIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -346,6 +516,18 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
         if (struct.isSetValue()) {
           oprot.writeFieldBegin(VALUE_FIELD_DESC);
           oprot.writeBinary(struct.value);
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.isSetStatus()) {
+        oprot.writeFieldBegin(STATUS_FIELD_DESC);
+        oprot.writeI32(struct.status);
+        oprot.writeFieldEnd();
+      }
+      if (struct.message != null) {
+        if (struct.isSetMessage()) {
+          oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
+          oprot.writeString(struct.message);
           oprot.writeFieldEnd();
         }
       }
@@ -370,19 +552,39 @@ public class TOptionalBinary implements org.apache.thrift.TBase<TOptionalBinary,
       if (struct.isSetValue()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetStatus()) {
+        optionals.set(1);
+      }
+      if (struct.isSetMessage()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetValue()) {
         oprot.writeBinary(struct.value);
+      }
+      if (struct.isSetStatus()) {
+        oprot.writeI32(struct.status);
+      }
+      if (struct.isSetMessage()) {
+        oprot.writeString(struct.message);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TOptionalBinary struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.value = iprot.readBinary();
         struct.setValueIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.status = iprot.readI32();
+        struct.setStatusIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.message = iprot.readString();
+        struct.setMessageIsSet(true);
       }
     }
   }

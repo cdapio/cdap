@@ -27,28 +27,25 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBinaryList, TOptionalBinaryList._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOptionalBinaryList");
+public class TOperationException extends Exception implements org.apache.thrift.TBase<TOperationException, TOperationException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TOperationException");
 
-  private static final org.apache.thrift.protocol.TField THE_LIST_FIELD_DESC = new org.apache.thrift.protocol.TField("theList", org.apache.thrift.protocol.TType.LIST, (short)1);
-  private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)2);
-  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)1);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new TOptionalBinaryListStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new TOptionalBinaryListTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new TOperationExceptionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new TOperationExceptionTupleSchemeFactory());
   }
 
-  public List<ByteBuffer> theList; // optional
-  public int status; // optional
-  public String message; // optional
+  public int status; // required
+  public String message; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    THE_LIST((short)1, "theList"),
-    STATUS((short)2, "status"),
-    MESSAGE((short)3, "message");
+    STATUS((short)1, "status"),
+    MESSAGE((short)2, "message");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,11 +60,9 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // THE_LIST
-          return THE_LIST;
-        case 2: // STATUS
+        case 1: // STATUS
           return STATUS;
-        case 3: // MESSAGE
+        case 2: // MESSAGE
           return MESSAGE;
         default:
           return null;
@@ -111,101 +106,58 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
   // isset id assignments
   private static final int __STATUS_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
-  private _Fields optionals[] = {_Fields.THE_LIST,_Fields.STATUS,_Fields.MESSAGE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.THE_LIST, new org.apache.thrift.meta_data.FieldMetaData("theList", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING            , true))));
-    tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.STATUS, new org.apache.thrift.meta_data.FieldMetaData("status", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOptionalBinaryList.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TOperationException.class, metaDataMap);
   }
 
-  public TOptionalBinaryList() {
+  public TOperationException() {
+  }
+
+  public TOperationException(
+    int status,
+    String message)
+  {
+    this();
+    this.status = status;
+    setStatusIsSet(true);
+    this.message = message;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public TOptionalBinaryList(TOptionalBinaryList other) {
+  public TOperationException(TOperationException other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetTheList()) {
-      List<ByteBuffer> __this__theList = new ArrayList<ByteBuffer>();
-      for (ByteBuffer other_element : other.theList) {
-        ByteBuffer temp_binary_element = org.apache.thrift.TBaseHelper.copyBinary(other_element);
-;
-        __this__theList.add(temp_binary_element);
-      }
-      this.theList = __this__theList;
-    }
     this.status = other.status;
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  public TOptionalBinaryList deepCopy() {
-    return new TOptionalBinaryList(this);
+  public TOperationException deepCopy() {
+    return new TOperationException(this);
   }
 
   @Override
   public void clear() {
-    this.theList = null;
     setStatusIsSet(false);
     this.status = 0;
     this.message = null;
-  }
-
-  public int getTheListSize() {
-    return (this.theList == null) ? 0 : this.theList.size();
-  }
-
-  public java.util.Iterator<ByteBuffer> getTheListIterator() {
-    return (this.theList == null) ? null : this.theList.iterator();
-  }
-
-  public void addToTheList(ByteBuffer elem) {
-    if (this.theList == null) {
-      this.theList = new ArrayList<ByteBuffer>();
-    }
-    this.theList.add(elem);
-  }
-
-  public List<ByteBuffer> getTheList() {
-    return this.theList;
-  }
-
-  public TOptionalBinaryList setTheList(List<ByteBuffer> theList) {
-    this.theList = theList;
-    return this;
-  }
-
-  public void unsetTheList() {
-    this.theList = null;
-  }
-
-  /** Returns true if field theList is set (has been assigned a value) and false otherwise */
-  public boolean isSetTheList() {
-    return this.theList != null;
-  }
-
-  public void setTheListIsSet(boolean value) {
-    if (!value) {
-      this.theList = null;
-    }
   }
 
   public int getStatus() {
     return this.status;
   }
 
-  public TOptionalBinaryList setStatus(int status) {
+  public TOperationException setStatus(int status) {
     this.status = status;
     setStatusIsSet(true);
     return this;
@@ -228,7 +180,7 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     return this.message;
   }
 
-  public TOptionalBinaryList setMessage(String message) {
+  public TOperationException setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -250,14 +202,6 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case THE_LIST:
-      if (value == null) {
-        unsetTheList();
-      } else {
-        setTheList((List<ByteBuffer>)value);
-      }
-      break;
-
     case STATUS:
       if (value == null) {
         unsetStatus();
@@ -279,9 +223,6 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case THE_LIST:
-      return getTheList();
-
     case STATUS:
       return Integer.valueOf(getStatus());
 
@@ -299,8 +240,6 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     }
 
     switch (field) {
-    case THE_LIST:
-      return isSetTheList();
     case STATUS:
       return isSetStatus();
     case MESSAGE:
@@ -313,26 +252,17 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof TOptionalBinaryList)
-      return this.equals((TOptionalBinaryList)that);
+    if (that instanceof TOperationException)
+      return this.equals((TOperationException)that);
     return false;
   }
 
-  public boolean equals(TOptionalBinaryList that) {
+  public boolean equals(TOperationException that) {
     if (that == null)
       return false;
 
-    boolean this_present_theList = true && this.isSetTheList();
-    boolean that_present_theList = true && that.isSetTheList();
-    if (this_present_theList || that_present_theList) {
-      if (!(this_present_theList && that_present_theList))
-        return false;
-      if (!this.theList.equals(that.theList))
-        return false;
-    }
-
-    boolean this_present_status = true && this.isSetStatus();
-    boolean that_present_status = true && that.isSetStatus();
+    boolean this_present_status = true;
+    boolean that_present_status = true;
     if (this_present_status || that_present_status) {
       if (!(this_present_status && that_present_status))
         return false;
@@ -357,24 +287,14 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     return 0;
   }
 
-  public int compareTo(TOptionalBinaryList other) {
+  public int compareTo(TOperationException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    TOptionalBinaryList typedOther = (TOptionalBinaryList)other;
+    TOperationException typedOther = (TOperationException)other;
 
-    lastComparison = Boolean.valueOf(isSetTheList()).compareTo(typedOther.isSetTheList());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetTheList()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.theList, typedOther.theList);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     lastComparison = Boolean.valueOf(isSetStatus()).compareTo(typedOther.isSetStatus());
     if (lastComparison != 0) {
       return lastComparison;
@@ -412,40 +332,27 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("TOptionalBinaryList(");
+    StringBuilder sb = new StringBuilder("TOperationException(");
     boolean first = true;
 
-    if (isSetTheList()) {
-      sb.append("theList:");
-      if (this.theList == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.theList);
-      }
-      first = false;
+    sb.append("status:");
+    sb.append(this.status);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("message:");
+    if (this.message == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.message);
     }
-    if (isSetStatus()) {
-      if (!first) sb.append(", ");
-      sb.append("status:");
-      sb.append(this.status);
-      first = false;
-    }
-    if (isSetMessage()) {
-      if (!first) sb.append(", ");
-      sb.append("message:");
-      if (this.message == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.message);
-      }
-      first = false;
-    }
+    first = false;
     sb.append(")");
     return sb.toString();
   }
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
+    // alas, we cannot check 'status' because it's a primitive and you chose the non-beans generator.
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -466,15 +373,15 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
     }
   }
 
-  private static class TOptionalBinaryListStandardSchemeFactory implements SchemeFactory {
-    public TOptionalBinaryListStandardScheme getScheme() {
-      return new TOptionalBinaryListStandardScheme();
+  private static class TOperationExceptionStandardSchemeFactory implements SchemeFactory {
+    public TOperationExceptionStandardScheme getScheme() {
+      return new TOperationExceptionStandardScheme();
     }
   }
 
-  private static class TOptionalBinaryListStandardScheme extends StandardScheme<TOptionalBinaryList> {
+  private static class TOperationExceptionStandardScheme extends StandardScheme<TOperationException> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, TOptionalBinaryList struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, TOperationException struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -484,25 +391,7 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
           break;
         }
         switch (schemeField.id) {
-          case 1: // THE_LIST
-            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-              {
-                org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
-                struct.theList = new ArrayList<ByteBuffer>(_list56.size);
-                for (int _i57 = 0; _i57 < _list56.size; ++_i57)
-                {
-                  ByteBuffer _elem58; // required
-                  _elem58 = iprot.readBinary();
-                  struct.theList.add(_elem58);
-                }
-                iprot.readListEnd();
-              }
-              struct.setTheListIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 2: // STATUS
+          case 1: // STATUS
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.status = iprot.readI32();
               struct.setStatusIsSet(true);
@@ -510,7 +399,7 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // MESSAGE
+          case 2: // MESSAGE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.message = iprot.readString();
               struct.setMessageIsSet(true);
@@ -526,38 +415,23 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
       iprot.readStructEnd();
 
       // check for required fields of primitive type, which can't be checked in the validate method
+      if (!struct.isSetStatus()) {
+        throw new org.apache.thrift.protocol.TProtocolException("Required field 'status' was not found in serialized data! Struct: " + toString());
+      }
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, TOptionalBinaryList struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, TOperationException struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (struct.theList != null) {
-        if (struct.isSetTheList()) {
-          oprot.writeFieldBegin(THE_LIST_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.theList.size()));
-            for (ByteBuffer _iter59 : struct.theList)
-            {
-              oprot.writeBinary(_iter59);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
-      }
-      if (struct.isSetStatus()) {
-        oprot.writeFieldBegin(STATUS_FIELD_DESC);
-        oprot.writeI32(struct.status);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(STATUS_FIELD_DESC);
+      oprot.writeI32(struct.status);
+      oprot.writeFieldEnd();
       if (struct.message != null) {
-        if (struct.isSetMessage()) {
-          oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
-          oprot.writeString(struct.message);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
+        oprot.writeString(struct.message);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -565,67 +439,35 @@ public class TOptionalBinaryList implements org.apache.thrift.TBase<TOptionalBin
 
   }
 
-  private static class TOptionalBinaryListTupleSchemeFactory implements SchemeFactory {
-    public TOptionalBinaryListTupleScheme getScheme() {
-      return new TOptionalBinaryListTupleScheme();
+  private static class TOperationExceptionTupleSchemeFactory implements SchemeFactory {
+    public TOperationExceptionTupleScheme getScheme() {
+      return new TOperationExceptionTupleScheme();
     }
   }
 
-  private static class TOptionalBinaryListTupleScheme extends TupleScheme<TOptionalBinaryList> {
+  private static class TOperationExceptionTupleScheme extends TupleScheme<TOperationException> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, TOptionalBinaryList struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, TOperationException struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
+      oprot.writeI32(struct.status);
       BitSet optionals = new BitSet();
-      if (struct.isSetTheList()) {
+      if (struct.isSetMessage()) {
         optionals.set(0);
       }
-      if (struct.isSetStatus()) {
-        optionals.set(1);
-      }
-      if (struct.isSetMessage()) {
-        optionals.set(2);
-      }
-      oprot.writeBitSet(optionals, 3);
-      if (struct.isSetTheList()) {
-        {
-          oprot.writeI32(struct.theList.size());
-          for (ByteBuffer _iter60 : struct.theList)
-          {
-            oprot.writeBinary(_iter60);
-          }
-        }
-      }
-      if (struct.isSetStatus()) {
-        oprot.writeI32(struct.status);
-      }
+      oprot.writeBitSet(optionals, 1);
       if (struct.isSetMessage()) {
         oprot.writeString(struct.message);
       }
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, TOptionalBinaryList struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, TOperationException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      struct.status = iprot.readI32();
+      struct.setStatusIsSet(true);
+      BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
-        {
-          org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.theList = new ArrayList<ByteBuffer>(_list61.size);
-          for (int _i62 = 0; _i62 < _list61.size; ++_i62)
-          {
-            ByteBuffer _elem63; // required
-            _elem63 = iprot.readBinary();
-            struct.theList.add(_elem63);
-          }
-        }
-        struct.setTheListIsSet(true);
-      }
-      if (incoming.get(1)) {
-        struct.status = iprot.readI32();
-        struct.setStatusIsSet(true);
-      }
-      if (incoming.get(2)) {
         struct.message = iprot.readString();
         struct.setMessageIsSet(true);
       }

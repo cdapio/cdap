@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -29,7 +30,7 @@ public abstract class QueueInvalidate {
   }
   
   public abstract void execute(TTQueueTable queueTable,
-      ImmutablePair<ReadPointer,Long> txPointer);
+      ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
 
   public static class QueueUnenqueue extends QueueInvalidate {
     public QueueUnenqueue(final byte[] queueName,
@@ -38,7 +39,7 @@ public abstract class QueueInvalidate {
     }
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) {
+        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
       queueTable.invalidate(queueName, entryPointer, txPointer.getSecond());
     }
   }
@@ -54,7 +55,7 @@ public abstract class QueueInvalidate {
     }
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) {
+        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
       queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups);
     }
   }
@@ -68,7 +69,7 @@ public abstract class QueueInvalidate {
     }
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) {
+        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
       queueTable.unack(queueName, entryPointer, consumer);
     }
   }

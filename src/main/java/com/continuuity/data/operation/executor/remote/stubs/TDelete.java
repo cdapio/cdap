@@ -437,7 +437,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
                 struct.columns = new ArrayList<ByteBuffer>(_list24.size);
                 for (int _i25 = 0; _i25 < _list24.size; ++_i25)
                 {
-                  ByteBuffer _elem26; // optional
+                  ByteBuffer _elem26; // required
                   _elem26 = iprot.readBinary();
                   struct.columns.add(_elem26);
                 }
@@ -533,7 +533,7 @@ public class TDelete implements org.apache.thrift.TBase<TDelete, TDelete._Fields
           struct.columns = new ArrayList<ByteBuffer>(_list29.size);
           for (int _i30 = 0; _i30 < _list29.size; ++_i30)
           {
-            ByteBuffer _elem31; // optional
+            ByteBuffer _elem31; // required
             _elem31 = iprot.readBinary();
             struct.columns.add(_elem31);
           }

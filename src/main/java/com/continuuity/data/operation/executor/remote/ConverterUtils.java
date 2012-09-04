@@ -1,8 +1,17 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.executor.BatchOperationResult;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
@@ -56,15 +65,32 @@ public class ConverterUtils {
   }
 
   /** wrap a byte array into an optional binary */
-  TOptionalBinary wrapBinary(byte[] value) {
+  TOptionalBinary wrapBinary(OperationResult<byte[]> result) {
     TOptionalBinary binary = new TOptionalBinary();
-    if (value != null)
-      binary.setValue(value);
+    if (result.isEmpty()) {
+      binary.setStatus(result.getStatus());
+      binary.setMessage(result.getMessage());
+    } else {
+      binary.setValue(result.getValue());
+    }
+    return binary;
+  }
+  /** wrap a byte array into an optional binary */
+  TOptionalBinary wrapBinary(byte[] bytes) {
+    TOptionalBinary binary = new TOptionalBinary();
+    if (bytes != null) {
+      binary.setValue(bytes);
+    }
     return binary;
   }
   /** unwrap a byte array from an optional binary */
-  byte[] unwrap(TOptionalBinary binary) {
-    return binary.getValue();
+  OperationResult<byte[]> unwrap(TOptionalBinary binary) {
+    if (binary.isSetValue()) {
+      return new OperationResult<byte[]>(binary.getValue());
+    } else {
+      return new OperationResult<byte[]>(binary.getStatus(),
+          binary.getMessage());
+    }
   }
 
   /** wrap an array of byte arrays into a list of byte buffers */
@@ -98,15 +124,24 @@ public class ConverterUtils {
   }
 
   /** wrap a map of byte arrays into an optional map of byte buffers */
-  TOptionalBinaryList wrapList(List<byte[]> list) {
+  TOptionalBinaryList wrapList(OperationResult<List<byte[]>> result) {
     TOptionalBinaryList opt = new TOptionalBinaryList();
-    if (list != null)
-      opt.setTheList(wrap(list));
+    if (result.isEmpty()) {
+      opt.setStatus(result.getStatus());
+      opt.setMessage(result.getMessage());
+    } else {
+      opt.setTheList(wrap(result.getValue()));
+    }
     return opt;
   }
   /** unwrap an optional map of byte buffers */
-  List<byte[]> unwrap(TOptionalBinaryList opt) {
-    return unwrapList(opt.getTheList());
+  OperationResult<List<byte[]>> unwrap(TOptionalBinaryList opt) {
+    if (opt.isSetTheList()) {
+      return new OperationResult<List<byte[]>>(unwrapList(opt.getTheList()));
+    } else {
+      return new OperationResult<List<byte[]>>(opt.getStatus(),
+          opt.getMessage());
+    }
   }
 
   /** wrap a map of byte arrays into a map of byte buffers */
@@ -120,24 +155,31 @@ public class ConverterUtils {
   }
   /** unwrap a map of byte arrays from a map of byte buffers */
   Map<byte[], byte[]> unwrap(Map<ByteBuffer, TOptionalBinary> map) {
-    if (map == null)
-      return null;
     Map<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for(Map.Entry<ByteBuffer, TOptionalBinary> entry : map.entrySet())
-      result.put(unwrap(entry.getKey()), unwrap(entry.getValue()));
+      result.put(unwrap(entry.getKey()), unwrap(entry.getValue()).getValue());
     return result;
   }
 
   /** wrap a map of byte arrays into an optional map of byte buffers */
-  TOptionalBinaryMap wrapMap(Map<byte[], byte[]> map) {
+  TOptionalBinaryMap wrapMap(OperationResult<Map<byte[], byte[]>> result) {
     TOptionalBinaryMap opt = new TOptionalBinaryMap();
-    if (map != null)
-      opt.setTheMap(wrap(map));
+    if (result.isEmpty()) {
+      opt.setStatus(result.getStatus());
+      opt.setMessage(result.getMessage());
+    } else {
+      opt.setTheMap(wrap(result.getValue()));
+    }
     return opt;
   }
   /** unwrap an optional map of byte buffers */
-  Map<byte[], byte[]> unwrap(TOptionalBinaryMap opt) {
-    return unwrap(opt.getTheMap());
+  OperationResult<Map<byte[], byte[]>> unwrap(TOptionalBinaryMap opt) {
+    if (opt.isSetTheMap()) {
+      return new OperationResult<Map<byte[], byte[]>>(unwrap(opt.getTheMap()));
+    } else {
+      return new OperationResult<Map<byte[], byte[]>>(
+          opt.getStatus(), opt.getMessage());
+    }
   }
 
   /** wrap a ClearFabric operation */
@@ -479,35 +521,40 @@ public class ConverterUtils {
    * wrap a queue meta.
    * The first field of TQueueMeta indicates whether this represents null
    */
-  TQueueMeta wrap(QueueAdmin.QueueMeta meta) {
-    if (meta == null)
-      return new TQueueMeta(true, 0L, 0L, null);
-    return new TQueueMeta(
-        false,
-        meta.getGlobalHeadPointer(),
-        meta.getCurrentWritePointer(),
-        wrap(meta.getGroups()));
+  TQueueMeta wrap(OperationResult<QueueAdmin.QueueMeta> meta) {
+    if (meta.isEmpty()) {
+      return new TQueueMeta(true).
+          setStatus(meta.getStatus()).
+          setMessage(meta.getMessage());
+    } else {
+      return new TQueueMeta(false).
+          setGlobalHeadPointer(meta.getValue().getGlobalHeadPointer()).
+          setCurrentWritePointer(meta.getValue().getCurrentWritePointer()).
+          setGroups(wrap(meta.getValue().getGroups()));
+    }
   }
   /** wrap a queue meta */
-  QueueAdmin.QueueMeta unwrap(TQueueMeta tQueueMeta) {
-    if (tQueueMeta.isNulled())
-      return null;
-    return new QueueAdmin.QueueMeta(
-        tQueueMeta.getGlobalHeadPointer(),
-        tQueueMeta.getCurrentWritePointer(),
-        unwrap(tQueueMeta.getGroups()));
+  OperationResult<QueueAdmin.QueueMeta> unwrap(TQueueMeta tQueueMeta) {
+    if (tQueueMeta.isEmpty()) {
+      return new OperationResult<QueueAdmin.QueueMeta>(
+          tQueueMeta.getStatus(), tQueueMeta.getMessage());
+    } else {
+      return new OperationResult<QueueAdmin.QueueMeta>(
+          new QueueAdmin.QueueMeta(
+              tQueueMeta.getGlobalHeadPointer(),
+              tQueueMeta.getCurrentWritePointer(),
+              unwrap(tQueueMeta.getGroups())));
+    }
   }
 
   /**
    * wrap a dequeue result.
    * If the status is unknown, return failure status and appropriate message.
    */
-  TDequeueResult wrap(DequeueResult result) {
+  TDequeueResult wrap(DequeueResult result) throws TOperationException {
     TDequeueStatus status;
     if (DequeueResult.DequeueStatus.EMPTY.equals(result.getStatus()))
       status = TDequeueStatus.EMPTY;
-    else if (DequeueResult.DequeueStatus.FAILURE.equals(result.getStatus()))
-      status = TDequeueStatus.FAILURE;
     else if (DequeueResult.DequeueStatus.RETRY.equals(result.getStatus()))
       status = TDequeueStatus.RETRY;
     else if (DequeueResult.DequeueStatus.SUCCESS.equals(result.getStatus()))
@@ -516,18 +563,18 @@ public class ConverterUtils {
       String message = "Internal Error: Received an unknown dequeue status of "
           + result.getStatus() + ".";
       Log.error(message);
-      return new TDequeueResult(TDequeueStatus.FAILURE, null, null, message);
+      throw new TOperationException(StatusCode.INTERNAL_ERROR, message);
     }
     return new TDequeueResult(status,
         wrap(result.getEntryPointer()),
-        wrap(result.getValue()),
-        result.getMsg());
+        wrap(result.getValue()));
   }
   /**
    * unwrap a dequeue result
    * If the status is unknown, return failure status and appropriate message.
    */
-  DequeueResult unwrap(TDequeueResult tDequeueResult) {
+  DequeueResult unwrap(TDequeueResult tDequeueResult)
+      throws OperationException {
     if (tDequeueResult.getStatus().equals(TDequeueStatus.SUCCESS)) {
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
           unwrap(tDequeueResult.getPointer()),
@@ -537,29 +584,31 @@ public class ConverterUtils {
       TDequeueStatus tStatus = tDequeueResult.getStatus();
       if (TDequeueStatus.EMPTY.equals(tStatus))
         status = DequeueResult.DequeueStatus.EMPTY;
-      else if (TDequeueStatus.FAILURE.equals(tStatus))
-        status = DequeueResult.DequeueStatus.FAILURE;
       else if (TDequeueStatus.RETRY.equals(tStatus))
         status = DequeueResult.DequeueStatus.RETRY;
       else {
         String message =
             "Internal Error: Received an unknown dequeue status of " + tStatus;
         Log.error(message);
-        return new DequeueResult(DequeueResult.DequeueStatus.FAILURE, message);
+        throw new OperationException(StatusCode.INTERNAL_ERROR, message);
       }
-      return new DequeueResult(status, tDequeueResult.getMessage());
+      return new DequeueResult(status);
     }
   }
 
-  /** wrap a batch result */
-  TBatchOperationResult wrap(BatchOperationResult result) {
-    return new TBatchOperationResult(result.isSuccess(),
-        result.getMessage());
+  /**
+   * wrap an operation exception
+   * TODO can we preserve the cause and the stack trace?
+   */
+  TOperationException wrap(OperationException e) {
+    return new TOperationException(e.getStatus(), e.getMessage());
   }
 
-  /** unwrap a batch result */
-  BatchOperationResult unwrap(TBatchOperationResult tResult) {
-    return new BatchOperationResult(tResult.isSuccess(),
-        tResult.getMessage());
+  /**
+   * unwrap an operation exception
+   * TODO can we preserve the cause and the stack trace?
+   */
+  OperationException unwrap(TOperationException te) {
+    return new OperationException(te.getStatus(), te.getMessage());
   }
 }

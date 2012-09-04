@@ -1,5 +1,6 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
@@ -37,7 +38,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   private CConfiguration conf = new CConfiguration();
 
   @Override
-  public OrderedVersionedColumnarTable getTable(byte[] tableName) {
+  public OrderedVersionedColumnarTable getTable(byte[] tableName)
+      throws OperationException {
     OrderedVersionedColumnarTable table = this.tables.get(tableName);
 
     if (table != null) return table;
@@ -49,12 +51,12 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     return existing != null ? existing : table;
   }
 
-  public static final byte [] queueOVCTable = Bytes.toBytes("__queueOVCTable");
-
-  public static final byte [] streamOVCTable = Bytes.toBytes("__streamOVCTable");
+  public static final byte[] queueOVCTable = Bytes.toBytes("__queueOVCTable");
+  public static final byte[] streamOVCTable = Bytes.toBytes("__streamOVCTable");
   
   @Override
-  public TTQueueTable getQueueTable(byte[] queueTableName) {
+  public TTQueueTable getQueueTable(byte[] queueTableName)
+      throws OperationException {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     OrderedVersionedColumnarTable table = getTable(queueOVCTable);
@@ -66,7 +68,8 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   }
   
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName) {
+  public TTQueueTable getStreamTable(byte[] streamTableName)
+      throws OperationException {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     OrderedVersionedColumnarTable table = getTable(streamOVCTable);
@@ -78,6 +81,6 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   }
 
   public abstract OrderedVersionedColumnarTable createNewTable(
-      byte [] tableName);
+      byte [] tableName) throws OperationException;
 
 }

@@ -534,7 +534,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
                 struct.columns = new ArrayList<ByteBuffer>(_list32.size);
                 for (int _i33 = 0; _i33 < _list32.size; ++_i33)
                 {
-                  ByteBuffer _elem34; // optional
+                  ByteBuffer _elem34; // required
                   _elem34 = iprot.readBinary();
                   struct.columns.add(_elem34);
                 }
@@ -552,7 +552,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
                 struct.amounts = new ArrayList<Long>(_list35.size);
                 for (int _i36 = 0; _i36 < _list35.size; ++_i36)
                 {
-                  long _elem37; // optional
+                  long _elem37; // required
                   _elem37 = iprot.readI64();
                   struct.amounts.add(_elem37);
                 }
@@ -672,7 +672,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
           struct.columns = new ArrayList<ByteBuffer>(_list42.size);
           for (int _i43 = 0; _i43 < _list42.size; ++_i43)
           {
-            ByteBuffer _elem44; // optional
+            ByteBuffer _elem44; // required
             _elem44 = iprot.readBinary();
             struct.columns.add(_elem44);
           }
@@ -685,7 +685,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
           struct.amounts = new ArrayList<Long>(_list45.size);
           for (int _i46 = 0; _i46 < _list45.size; ++_i46)
           {
-            long _elem47; // optional
+            long _elem47; // required
             _elem47 = iprot.readI64();
             struct.amounts.add(_elem47);
           }

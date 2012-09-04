@@ -94,7 +94,6 @@ struct TQueueDequeue {
 enum TDequeueStatus {
   SUCCESS,
   EMPTY,
-  FAILURE,
   RETRY,
 }
 
@@ -103,7 +102,6 @@ struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
   3: binary value,
-  4: string message,
 }
 
 struct TGetGroupId {
@@ -130,10 +128,12 @@ struct TGroupState {
 
 // we add a virtual field "nulled" to indicate a null object
 struct TQueueMeta {
-  1: bool nulled,
-  2: i64 globalHeadPointer,
-  3: i64 currentWritePointer,
-  4: list<TGroupState> groups,
+  1: bool empty,
+  2: optional i64 globalHeadPointer,
+  3: optional i64 currentWritePointer,
+  4: optional list<TGroupState> groups,
+  5: optional i32 status,
+  6: optional string message,
 }
 
 // using an undocumented Thrift feature: union,
@@ -156,50 +156,52 @@ struct TClearFabric {
   3: bool clearStreams,
 }
 
-struct TBatchOperationResult {
-  1: bool success,
-  2: string message,
-}
-
 struct TOptionalBinary {
   1: optional binary value,
+  2: optional i32 status,
+  3: optional string message,
 }
 
 struct TOptionalBinaryList {
   1: optional list<binary> theList,
+  2: optional i32 status,
+  3: optional string message,
 }
 
 struct TOptionalBinaryMap {
   1: optional map<binary,TOptionalBinary> theMap,
+  2: optional i32 status,
+  3: optional string message,
 }
 
-exception TBatchOperationException {
-  1: string message,
+exception TOperationException {
+  1: required i32 status,
+  2: string message,
 }
 
 service TOperationExecutor {
 
   // write op ex
-  bool write(1: TWrite write),
-  bool delet(1: TDelete delet),
-  bool increment(1: TIncrement increment),
-  bool compareAndSwap(1: TCompareAndSwap compareAndSwap),
-  bool queueEnqueue(1: TQueueEnqueue queueEnqueue),
-  bool queueAck(1: TQueueAck queueAck),
-
-  // read op ex
-  TOptionalBinary readKey(1: TReadKey readKey),
-  TOptionalBinaryMap read(1: TRead read),
-  TOptionalBinaryList readAllKeys(1: TReadAllKeys readAllKeys),
-  TOptionalBinaryMap readColumnRange(1: TReadColumnRange readColumnRange),
+  void write(1: TWrite write) throws (1: TOperationException ex),
+  void delet(1: TDelete delet) throws (1: TOperationException ex),
+  void increment(1: TIncrement increment) throws (1: TOperationException ex),
+  void compareAndSwap(1: TCompareAndSwap compareAndSwap) throws (1: TOperationException ex),
+  void queueEnqueue(1: TQueueEnqueue queueEnqueue) throws (1: TOperationException ex),
+  void queueAck(1: TQueueAck queueAck) throws (1: TOperationException ex),
 
   // batch op ex
-  TBatchOperationResult batch(1: TWriteBatch batch) throws (1: TBatchOperationException ex),
+  void batch(1: TWriteBatch batch) throws (1: TOperationException ex),
+
+  // read op ex
+  TOptionalBinary readKey(1: TReadKey readKey) throws (1: TOperationException ex),
+  TOptionalBinaryMap read(1: TRead read) throws (1: TOperationException ex),
+  TOptionalBinaryList readAllKeys(1: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
+  TOptionalBinaryMap readColumnRange(1: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
 
   // internal op ex
-  TDequeueResult dequeue(1: TQueueDequeue dequeue),
-  i64 getGroupId(1: TGetGroupId getGroupId),
-  TQueueMeta getQueueMeta(1: TGetQueueMeta getQueueMeta),
-  void clearFabric(1: TClearFabric clearFabric),
+  TDequeueResult dequeue(1: TQueueDequeue dequeue) throws (1: TOperationException ex),
+  i64 getGroupId(1: TGetGroupId getGroupId) throws (1: TOperationException ex),
+  TQueueMeta getQueueMeta(1: TGetQueueMeta getQueueMeta) throws (1: TOperationException ex),
+  void clearFabric(1: TClearFabric clearFabric) throws (1: TOperationException ex),
 
 }

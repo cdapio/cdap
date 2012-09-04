@@ -31,35 +31,35 @@ public class TOperationExecutor {
 
   public interface Iface {
 
-    public boolean write(TWrite write) throws org.apache.thrift.TException;
+    public void write(TWrite write) throws TOperationException, org.apache.thrift.TException;
 
-    public boolean delet(TDelete delet) throws org.apache.thrift.TException;
+    public void delet(TDelete delet) throws TOperationException, org.apache.thrift.TException;
 
-    public boolean increment(TIncrement increment) throws org.apache.thrift.TException;
+    public void increment(TIncrement increment) throws TOperationException, org.apache.thrift.TException;
 
-    public boolean compareAndSwap(TCompareAndSwap compareAndSwap) throws org.apache.thrift.TException;
+    public void compareAndSwap(TCompareAndSwap compareAndSwap) throws TOperationException, org.apache.thrift.TException;
 
-    public boolean queueEnqueue(TQueueEnqueue queueEnqueue) throws org.apache.thrift.TException;
+    public void queueEnqueue(TQueueEnqueue queueEnqueue) throws TOperationException, org.apache.thrift.TException;
 
-    public boolean queueAck(TQueueAck queueAck) throws org.apache.thrift.TException;
+    public void queueAck(TQueueAck queueAck) throws TOperationException, org.apache.thrift.TException;
 
-    public TOptionalBinary readKey(TReadKey readKey) throws org.apache.thrift.TException;
+    public void batch(List<TWriteOperation> batch) throws TOperationException, org.apache.thrift.TException;
 
-    public TOptionalBinaryMap read(TRead read) throws org.apache.thrift.TException;
+    public TOptionalBinary readKey(TReadKey readKey) throws TOperationException, org.apache.thrift.TException;
 
-    public TOptionalBinaryList readAllKeys(TReadAllKeys readAllKeys) throws org.apache.thrift.TException;
+    public TOptionalBinaryMap read(TRead read) throws TOperationException, org.apache.thrift.TException;
 
-    public TOptionalBinaryMap readColumnRange(TReadColumnRange readColumnRange) throws org.apache.thrift.TException;
+    public TOptionalBinaryList readAllKeys(TReadAllKeys readAllKeys) throws TOperationException, org.apache.thrift.TException;
 
-    public TBatchOperationResult batch(List<TWriteOperation> batch) throws TBatchOperationException, org.apache.thrift.TException;
+    public TOptionalBinaryMap readColumnRange(TReadColumnRange readColumnRange) throws TOperationException, org.apache.thrift.TException;
 
-    public TDequeueResult dequeue(TQueueDequeue dequeue) throws org.apache.thrift.TException;
+    public TDequeueResult dequeue(TQueueDequeue dequeue) throws TOperationException, org.apache.thrift.TException;
 
-    public long getGroupId(TGetGroupId getGroupId) throws org.apache.thrift.TException;
+    public long getGroupId(TGetGroupId getGroupId) throws TOperationException, org.apache.thrift.TException;
 
-    public TQueueMeta getQueueMeta(TGetQueueMeta getQueueMeta) throws org.apache.thrift.TException;
+    public TQueueMeta getQueueMeta(TGetQueueMeta getQueueMeta) throws TOperationException, org.apache.thrift.TException;
 
-    public void clearFabric(TClearFabric clearFabric) throws org.apache.thrift.TException;
+    public void clearFabric(TClearFabric clearFabric) throws TOperationException, org.apache.thrift.TException;
 
   }
 
@@ -77,6 +77,8 @@ public class TOperationExecutor {
 
     public void queueAck(TQueueAck queueAck, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.queueAck_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void batch(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.batch_call> resultHandler) throws org.apache.thrift.TException;
+
     public void readKey(TReadKey readKey, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.readKey_call> resultHandler) throws org.apache.thrift.TException;
 
     public void read(TRead read, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.read_call> resultHandler) throws org.apache.thrift.TException;
@@ -84,8 +86,6 @@ public class TOperationExecutor {
     public void readAllKeys(TReadAllKeys readAllKeys, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.readAllKeys_call> resultHandler) throws org.apache.thrift.TException;
 
     public void readColumnRange(TReadColumnRange readColumnRange, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.readColumnRange_call> resultHandler) throws org.apache.thrift.TException;
-
-    public void batch(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.batch_call> resultHandler) throws org.apache.thrift.TException;
 
     public void dequeue(TQueueDequeue dequeue, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.dequeue_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -117,10 +117,10 @@ public class TOperationExecutor {
       super(iprot, oprot);
     }
 
-    public boolean write(TWrite write) throws org.apache.thrift.TException
+    public void write(TWrite write) throws TOperationException, org.apache.thrift.TException
     {
       send_write(write);
-      return recv_write();
+      recv_write();
     }
 
     public void send_write(TWrite write) throws org.apache.thrift.TException
@@ -130,20 +130,20 @@ public class TOperationExecutor {
       sendBase("write", args);
     }
 
-    public boolean recv_write() throws org.apache.thrift.TException
+    public void recv_write() throws TOperationException, org.apache.thrift.TException
     {
       write_result result = new write_result();
       receiveBase(result, "write");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "write failed: unknown result");
+      return;
     }
 
-    public boolean delet(TDelete delet) throws org.apache.thrift.TException
+    public void delet(TDelete delet) throws TOperationException, org.apache.thrift.TException
     {
       send_delet(delet);
-      return recv_delet();
+      recv_delet();
     }
 
     public void send_delet(TDelete delet) throws org.apache.thrift.TException
@@ -153,20 +153,20 @@ public class TOperationExecutor {
       sendBase("delet", args);
     }
 
-    public boolean recv_delet() throws org.apache.thrift.TException
+    public void recv_delet() throws TOperationException, org.apache.thrift.TException
     {
       delet_result result = new delet_result();
       receiveBase(result, "delet");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "delet failed: unknown result");
+      return;
     }
 
-    public boolean increment(TIncrement increment) throws org.apache.thrift.TException
+    public void increment(TIncrement increment) throws TOperationException, org.apache.thrift.TException
     {
       send_increment(increment);
-      return recv_increment();
+      recv_increment();
     }
 
     public void send_increment(TIncrement increment) throws org.apache.thrift.TException
@@ -176,20 +176,20 @@ public class TOperationExecutor {
       sendBase("increment", args);
     }
 
-    public boolean recv_increment() throws org.apache.thrift.TException
+    public void recv_increment() throws TOperationException, org.apache.thrift.TException
     {
       increment_result result = new increment_result();
       receiveBase(result, "increment");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "increment failed: unknown result");
+      return;
     }
 
-    public boolean compareAndSwap(TCompareAndSwap compareAndSwap) throws org.apache.thrift.TException
+    public void compareAndSwap(TCompareAndSwap compareAndSwap) throws TOperationException, org.apache.thrift.TException
     {
       send_compareAndSwap(compareAndSwap);
-      return recv_compareAndSwap();
+      recv_compareAndSwap();
     }
 
     public void send_compareAndSwap(TCompareAndSwap compareAndSwap) throws org.apache.thrift.TException
@@ -199,20 +199,20 @@ public class TOperationExecutor {
       sendBase("compareAndSwap", args);
     }
 
-    public boolean recv_compareAndSwap() throws org.apache.thrift.TException
+    public void recv_compareAndSwap() throws TOperationException, org.apache.thrift.TException
     {
       compareAndSwap_result result = new compareAndSwap_result();
       receiveBase(result, "compareAndSwap");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "compareAndSwap failed: unknown result");
+      return;
     }
 
-    public boolean queueEnqueue(TQueueEnqueue queueEnqueue) throws org.apache.thrift.TException
+    public void queueEnqueue(TQueueEnqueue queueEnqueue) throws TOperationException, org.apache.thrift.TException
     {
       send_queueEnqueue(queueEnqueue);
-      return recv_queueEnqueue();
+      recv_queueEnqueue();
     }
 
     public void send_queueEnqueue(TQueueEnqueue queueEnqueue) throws org.apache.thrift.TException
@@ -222,20 +222,20 @@ public class TOperationExecutor {
       sendBase("queueEnqueue", args);
     }
 
-    public boolean recv_queueEnqueue() throws org.apache.thrift.TException
+    public void recv_queueEnqueue() throws TOperationException, org.apache.thrift.TException
     {
       queueEnqueue_result result = new queueEnqueue_result();
       receiveBase(result, "queueEnqueue");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "queueEnqueue failed: unknown result");
+      return;
     }
 
-    public boolean queueAck(TQueueAck queueAck) throws org.apache.thrift.TException
+    public void queueAck(TQueueAck queueAck) throws TOperationException, org.apache.thrift.TException
     {
       send_queueAck(queueAck);
-      return recv_queueAck();
+      recv_queueAck();
     }
 
     public void send_queueAck(TQueueAck queueAck) throws org.apache.thrift.TException
@@ -245,17 +245,40 @@ public class TOperationExecutor {
       sendBase("queueAck", args);
     }
 
-    public boolean recv_queueAck() throws org.apache.thrift.TException
+    public void recv_queueAck() throws TOperationException, org.apache.thrift.TException
     {
       queueAck_result result = new queueAck_result();
       receiveBase(result, "queueAck");
-      if (result.isSetSuccess()) {
-        return result.success;
+      if (result.ex != null) {
+        throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "queueAck failed: unknown result");
+      return;
     }
 
-    public TOptionalBinary readKey(TReadKey readKey) throws org.apache.thrift.TException
+    public void batch(List<TWriteOperation> batch) throws TOperationException, org.apache.thrift.TException
+    {
+      send_batch(batch);
+      recv_batch();
+    }
+
+    public void send_batch(List<TWriteOperation> batch) throws org.apache.thrift.TException
+    {
+      batch_args args = new batch_args();
+      args.setBatch(batch);
+      sendBase("batch", args);
+    }
+
+    public void recv_batch() throws TOperationException, org.apache.thrift.TException
+    {
+      batch_result result = new batch_result();
+      receiveBase(result, "batch");
+      if (result.ex != null) {
+        throw result.ex;
+      }
+      return;
+    }
+
+    public TOptionalBinary readKey(TReadKey readKey) throws TOperationException, org.apache.thrift.TException
     {
       send_readKey(readKey);
       return recv_readKey();
@@ -268,17 +291,20 @@ public class TOperationExecutor {
       sendBase("readKey", args);
     }
 
-    public TOptionalBinary recv_readKey() throws org.apache.thrift.TException
+    public TOptionalBinary recv_readKey() throws TOperationException, org.apache.thrift.TException
     {
       readKey_result result = new readKey_result();
       receiveBase(result, "readKey");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "readKey failed: unknown result");
     }
 
-    public TOptionalBinaryMap read(TRead read) throws org.apache.thrift.TException
+    public TOptionalBinaryMap read(TRead read) throws TOperationException, org.apache.thrift.TException
     {
       send_read(read);
       return recv_read();
@@ -291,17 +317,20 @@ public class TOperationExecutor {
       sendBase("read", args);
     }
 
-    public TOptionalBinaryMap recv_read() throws org.apache.thrift.TException
+    public TOptionalBinaryMap recv_read() throws TOperationException, org.apache.thrift.TException
     {
       read_result result = new read_result();
       receiveBase(result, "read");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "read failed: unknown result");
     }
 
-    public TOptionalBinaryList readAllKeys(TReadAllKeys readAllKeys) throws org.apache.thrift.TException
+    public TOptionalBinaryList readAllKeys(TReadAllKeys readAllKeys) throws TOperationException, org.apache.thrift.TException
     {
       send_readAllKeys(readAllKeys);
       return recv_readAllKeys();
@@ -314,17 +343,20 @@ public class TOperationExecutor {
       sendBase("readAllKeys", args);
     }
 
-    public TOptionalBinaryList recv_readAllKeys() throws org.apache.thrift.TException
+    public TOptionalBinaryList recv_readAllKeys() throws TOperationException, org.apache.thrift.TException
     {
       readAllKeys_result result = new readAllKeys_result();
       receiveBase(result, "readAllKeys");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "readAllKeys failed: unknown result");
     }
 
-    public TOptionalBinaryMap readColumnRange(TReadColumnRange readColumnRange) throws org.apache.thrift.TException
+    public TOptionalBinaryMap readColumnRange(TReadColumnRange readColumnRange) throws TOperationException, org.apache.thrift.TException
     {
       send_readColumnRange(readColumnRange);
       return recv_readColumnRange();
@@ -337,43 +369,20 @@ public class TOperationExecutor {
       sendBase("readColumnRange", args);
     }
 
-    public TOptionalBinaryMap recv_readColumnRange() throws org.apache.thrift.TException
+    public TOptionalBinaryMap recv_readColumnRange() throws TOperationException, org.apache.thrift.TException
     {
       readColumnRange_result result = new readColumnRange_result();
       receiveBase(result, "readColumnRange");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "readColumnRange failed: unknown result");
-    }
-
-    public TBatchOperationResult batch(List<TWriteOperation> batch) throws TBatchOperationException, org.apache.thrift.TException
-    {
-      send_batch(batch);
-      return recv_batch();
-    }
-
-    public void send_batch(List<TWriteOperation> batch) throws org.apache.thrift.TException
-    {
-      batch_args args = new batch_args();
-      args.setBatch(batch);
-      sendBase("batch", args);
-    }
-
-    public TBatchOperationResult recv_batch() throws TBatchOperationException, org.apache.thrift.TException
-    {
-      batch_result result = new batch_result();
-      receiveBase(result, "batch");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
       if (result.ex != null) {
         throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "batch failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "readColumnRange failed: unknown result");
     }
 
-    public TDequeueResult dequeue(TQueueDequeue dequeue) throws org.apache.thrift.TException
+    public TDequeueResult dequeue(TQueueDequeue dequeue) throws TOperationException, org.apache.thrift.TException
     {
       send_dequeue(dequeue);
       return recv_dequeue();
@@ -386,17 +395,20 @@ public class TOperationExecutor {
       sendBase("dequeue", args);
     }
 
-    public TDequeueResult recv_dequeue() throws org.apache.thrift.TException
+    public TDequeueResult recv_dequeue() throws TOperationException, org.apache.thrift.TException
     {
       dequeue_result result = new dequeue_result();
       receiveBase(result, "dequeue");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "dequeue failed: unknown result");
     }
 
-    public long getGroupId(TGetGroupId getGroupId) throws org.apache.thrift.TException
+    public long getGroupId(TGetGroupId getGroupId) throws TOperationException, org.apache.thrift.TException
     {
       send_getGroupId(getGroupId);
       return recv_getGroupId();
@@ -409,17 +421,20 @@ public class TOperationExecutor {
       sendBase("getGroupId", args);
     }
 
-    public long recv_getGroupId() throws org.apache.thrift.TException
+    public long recv_getGroupId() throws TOperationException, org.apache.thrift.TException
     {
       getGroupId_result result = new getGroupId_result();
       receiveBase(result, "getGroupId");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getGroupId failed: unknown result");
     }
 
-    public TQueueMeta getQueueMeta(TGetQueueMeta getQueueMeta) throws org.apache.thrift.TException
+    public TQueueMeta getQueueMeta(TGetQueueMeta getQueueMeta) throws TOperationException, org.apache.thrift.TException
     {
       send_getQueueMeta(getQueueMeta);
       return recv_getQueueMeta();
@@ -432,17 +447,20 @@ public class TOperationExecutor {
       sendBase("getQueueMeta", args);
     }
 
-    public TQueueMeta recv_getQueueMeta() throws org.apache.thrift.TException
+    public TQueueMeta recv_getQueueMeta() throws TOperationException, org.apache.thrift.TException
     {
       getQueueMeta_result result = new getQueueMeta_result();
       receiveBase(result, "getQueueMeta");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.ex != null) {
+        throw result.ex;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueueMeta failed: unknown result");
     }
 
-    public void clearFabric(TClearFabric clearFabric) throws org.apache.thrift.TException
+    public void clearFabric(TClearFabric clearFabric) throws TOperationException, org.apache.thrift.TException
     {
       send_clearFabric(clearFabric);
       recv_clearFabric();
@@ -455,10 +473,13 @@ public class TOperationExecutor {
       sendBase("clearFabric", args);
     }
 
-    public void recv_clearFabric() throws org.apache.thrift.TException
+    public void recv_clearFabric() throws TOperationException, org.apache.thrift.TException
     {
       clearFabric_result result = new clearFabric_result();
       receiveBase(result, "clearFabric");
+      if (result.ex != null) {
+        throw result.ex;
+      }
       return;
     }
 
@@ -502,13 +523,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_write();
+        (new Client(prot)).recv_write();
       }
     }
 
@@ -534,13 +555,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_delet();
+        (new Client(prot)).recv_delet();
       }
     }
 
@@ -566,13 +587,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_increment();
+        (new Client(prot)).recv_increment();
       }
     }
 
@@ -598,13 +619,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_compareAndSwap();
+        (new Client(prot)).recv_compareAndSwap();
       }
     }
 
@@ -630,13 +651,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_queueEnqueue();
+        (new Client(prot)).recv_queueEnqueue();
       }
     }
 
@@ -662,13 +683,45 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_queueAck();
+        (new Client(prot)).recv_queueAck();
+      }
+    }
+
+    public void batch(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<batch_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      batch_call method_call = new batch_call(batch, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class batch_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private List<TWriteOperation> batch;
+      public batch_call(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<batch_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.batch = batch;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("batch", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        batch_args args = new batch_args();
+        args.setBatch(batch);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_batch();
       }
     }
 
@@ -694,7 +747,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TOptionalBinary getResult() throws org.apache.thrift.TException {
+      public TOptionalBinary getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -726,7 +779,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TOptionalBinaryMap getResult() throws org.apache.thrift.TException {
+      public TOptionalBinaryMap getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -758,7 +811,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TOptionalBinaryList getResult() throws org.apache.thrift.TException {
+      public TOptionalBinaryList getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -790,45 +843,13 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TOptionalBinaryMap getResult() throws org.apache.thrift.TException {
+      public TOptionalBinaryMap getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         return (new Client(prot)).recv_readColumnRange();
-      }
-    }
-
-    public void batch(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<batch_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      batch_call method_call = new batch_call(batch, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class batch_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private List<TWriteOperation> batch;
-      public batch_call(List<TWriteOperation> batch, org.apache.thrift.async.AsyncMethodCallback<batch_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.batch = batch;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("batch", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        batch_args args = new batch_args();
-        args.setBatch(batch);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public TBatchOperationResult getResult() throws TBatchOperationException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_batch();
       }
     }
 
@@ -854,7 +875,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TDequeueResult getResult() throws org.apache.thrift.TException {
+      public TDequeueResult getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -886,7 +907,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public long getResult() throws org.apache.thrift.TException {
+      public long getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -918,7 +939,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public TQueueMeta getResult() throws org.apache.thrift.TException {
+      public TQueueMeta getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -950,7 +971,7 @@ public class TOperationExecutor {
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws org.apache.thrift.TException {
+      public void getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -979,11 +1000,11 @@ public class TOperationExecutor {
       processMap.put("compareAndSwap", new compareAndSwap());
       processMap.put("queueEnqueue", new queueEnqueue());
       processMap.put("queueAck", new queueAck());
+      processMap.put("batch", new batch());
       processMap.put("readKey", new readKey());
       processMap.put("read", new read());
       processMap.put("readAllKeys", new readAllKeys());
       processMap.put("readColumnRange", new readColumnRange());
-      processMap.put("batch", new batch());
       processMap.put("dequeue", new dequeue());
       processMap.put("getGroupId", new getGroupId());
       processMap.put("getQueueMeta", new getQueueMeta());
@@ -1002,8 +1023,11 @@ public class TOperationExecutor {
 
       protected write_result getResult(I iface, write_args args) throws org.apache.thrift.TException {
         write_result result = new write_result();
-        result.success = iface.write(args.write);
-        result.setSuccessIsSet(true);
+        try {
+          iface.write(args.write);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1019,8 +1043,11 @@ public class TOperationExecutor {
 
       protected delet_result getResult(I iface, delet_args args) throws org.apache.thrift.TException {
         delet_result result = new delet_result();
-        result.success = iface.delet(args.delet);
-        result.setSuccessIsSet(true);
+        try {
+          iface.delet(args.delet);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1036,8 +1063,11 @@ public class TOperationExecutor {
 
       protected increment_result getResult(I iface, increment_args args) throws org.apache.thrift.TException {
         increment_result result = new increment_result();
-        result.success = iface.increment(args.increment);
-        result.setSuccessIsSet(true);
+        try {
+          iface.increment(args.increment);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1053,8 +1083,11 @@ public class TOperationExecutor {
 
       protected compareAndSwap_result getResult(I iface, compareAndSwap_args args) throws org.apache.thrift.TException {
         compareAndSwap_result result = new compareAndSwap_result();
-        result.success = iface.compareAndSwap(args.compareAndSwap);
-        result.setSuccessIsSet(true);
+        try {
+          iface.compareAndSwap(args.compareAndSwap);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1070,8 +1103,11 @@ public class TOperationExecutor {
 
       protected queueEnqueue_result getResult(I iface, queueEnqueue_args args) throws org.apache.thrift.TException {
         queueEnqueue_result result = new queueEnqueue_result();
-        result.success = iface.queueEnqueue(args.queueEnqueue);
-        result.setSuccessIsSet(true);
+        try {
+          iface.queueEnqueue(args.queueEnqueue);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1087,72 +1123,11 @@ public class TOperationExecutor {
 
       protected queueAck_result getResult(I iface, queueAck_args args) throws org.apache.thrift.TException {
         queueAck_result result = new queueAck_result();
-        result.success = iface.queueAck(args.queueAck);
-        result.setSuccessIsSet(true);
-        return result;
-      }
-    }
-
-    private static class readKey<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readKey_args> {
-      public readKey() {
-        super("readKey");
-      }
-
-      protected readKey_args getEmptyArgsInstance() {
-        return new readKey_args();
-      }
-
-      protected readKey_result getResult(I iface, readKey_args args) throws org.apache.thrift.TException {
-        readKey_result result = new readKey_result();
-        result.success = iface.readKey(args.readKey);
-        return result;
-      }
-    }
-
-    private static class read<I extends Iface> extends org.apache.thrift.ProcessFunction<I, read_args> {
-      public read() {
-        super("read");
-      }
-
-      protected read_args getEmptyArgsInstance() {
-        return new read_args();
-      }
-
-      protected read_result getResult(I iface, read_args args) throws org.apache.thrift.TException {
-        read_result result = new read_result();
-        result.success = iface.read(args.read);
-        return result;
-      }
-    }
-
-    private static class readAllKeys<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readAllKeys_args> {
-      public readAllKeys() {
-        super("readAllKeys");
-      }
-
-      protected readAllKeys_args getEmptyArgsInstance() {
-        return new readAllKeys_args();
-      }
-
-      protected readAllKeys_result getResult(I iface, readAllKeys_args args) throws org.apache.thrift.TException {
-        readAllKeys_result result = new readAllKeys_result();
-        result.success = iface.readAllKeys(args.readAllKeys);
-        return result;
-      }
-    }
-
-    private static class readColumnRange<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readColumnRange_args> {
-      public readColumnRange() {
-        super("readColumnRange");
-      }
-
-      protected readColumnRange_args getEmptyArgsInstance() {
-        return new readColumnRange_args();
-      }
-
-      protected readColumnRange_result getResult(I iface, readColumnRange_args args) throws org.apache.thrift.TException {
-        readColumnRange_result result = new readColumnRange_result();
-        result.success = iface.readColumnRange(args.readColumnRange);
+        try {
+          iface.queueAck(args.queueAck);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1169,8 +1144,88 @@ public class TOperationExecutor {
       protected batch_result getResult(I iface, batch_args args) throws org.apache.thrift.TException {
         batch_result result = new batch_result();
         try {
-          result.success = iface.batch(args.batch);
-        } catch (TBatchOperationException ex) {
+          iface.batch(args.batch);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
+        return result;
+      }
+    }
+
+    private static class readKey<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readKey_args> {
+      public readKey() {
+        super("readKey");
+      }
+
+      protected readKey_args getEmptyArgsInstance() {
+        return new readKey_args();
+      }
+
+      protected readKey_result getResult(I iface, readKey_args args) throws org.apache.thrift.TException {
+        readKey_result result = new readKey_result();
+        try {
+          result.success = iface.readKey(args.readKey);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
+        return result;
+      }
+    }
+
+    private static class read<I extends Iface> extends org.apache.thrift.ProcessFunction<I, read_args> {
+      public read() {
+        super("read");
+      }
+
+      protected read_args getEmptyArgsInstance() {
+        return new read_args();
+      }
+
+      protected read_result getResult(I iface, read_args args) throws org.apache.thrift.TException {
+        read_result result = new read_result();
+        try {
+          result.success = iface.read(args.read);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
+        return result;
+      }
+    }
+
+    private static class readAllKeys<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readAllKeys_args> {
+      public readAllKeys() {
+        super("readAllKeys");
+      }
+
+      protected readAllKeys_args getEmptyArgsInstance() {
+        return new readAllKeys_args();
+      }
+
+      protected readAllKeys_result getResult(I iface, readAllKeys_args args) throws org.apache.thrift.TException {
+        readAllKeys_result result = new readAllKeys_result();
+        try {
+          result.success = iface.readAllKeys(args.readAllKeys);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
+        return result;
+      }
+    }
+
+    private static class readColumnRange<I extends Iface> extends org.apache.thrift.ProcessFunction<I, readColumnRange_args> {
+      public readColumnRange() {
+        super("readColumnRange");
+      }
+
+      protected readColumnRange_args getEmptyArgsInstance() {
+        return new readColumnRange_args();
+      }
+
+      protected readColumnRange_result getResult(I iface, readColumnRange_args args) throws org.apache.thrift.TException {
+        readColumnRange_result result = new readColumnRange_result();
+        try {
+          result.success = iface.readColumnRange(args.readColumnRange);
+        } catch (TOperationException ex) {
           result.ex = ex;
         }
         return result;
@@ -1188,7 +1243,11 @@ public class TOperationExecutor {
 
       protected dequeue_result getResult(I iface, dequeue_args args) throws org.apache.thrift.TException {
         dequeue_result result = new dequeue_result();
-        result.success = iface.dequeue(args.dequeue);
+        try {
+          result.success = iface.dequeue(args.dequeue);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1204,8 +1263,12 @@ public class TOperationExecutor {
 
       protected getGroupId_result getResult(I iface, getGroupId_args args) throws org.apache.thrift.TException {
         getGroupId_result result = new getGroupId_result();
-        result.success = iface.getGroupId(args.getGroupId);
-        result.setSuccessIsSet(true);
+        try {
+          result.success = iface.getGroupId(args.getGroupId);
+          result.setSuccessIsSet(true);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1221,7 +1284,11 @@ public class TOperationExecutor {
 
       protected getQueueMeta_result getResult(I iface, getQueueMeta_args args) throws org.apache.thrift.TException {
         getQueueMeta_result result = new getQueueMeta_result();
-        result.success = iface.getQueueMeta(args.getQueueMeta);
+        try {
+          result.success = iface.getQueueMeta(args.getQueueMeta);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1237,7 +1304,11 @@ public class TOperationExecutor {
 
       protected clearFabric_result getResult(I iface, clearFabric_args args) throws org.apache.thrift.TException {
         clearFabric_result result = new clearFabric_result();
-        iface.clearFabric(args.clearFabric);
+        try {
+          iface.clearFabric(args.clearFabric);
+        } catch (TOperationException ex) {
+          result.ex = ex;
+        }
         return result;
       }
     }
@@ -1602,7 +1673,7 @@ public class TOperationExecutor {
   public static class write_result implements org.apache.thrift.TBase<write_result, write_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("write_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1610,11 +1681,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new write_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1629,8 +1700,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -1671,13 +1742,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(write_result.class, metaDataMap);
     }
@@ -1686,20 +1755,19 @@ public class TOperationExecutor {
     }
 
     public write_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public write_result(write_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public write_result deepCopy() {
@@ -1708,40 +1776,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public write_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public write_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -1750,8 +1818,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -1764,8 +1832,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -1783,12 +1851,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -1808,12 +1876,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       write_result typedOther = (write_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1838,8 +1906,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("write_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -1883,10 +1955,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -1906,9 +1979,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1927,12 +2002,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, write_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -1941,8 +2016,9 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -2307,7 +2383,7 @@ public class TOperationExecutor {
   public static class delet_result implements org.apache.thrift.TBase<delet_result, delet_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("delet_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -2315,11 +2391,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new delet_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2334,8 +2410,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -2376,13 +2452,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(delet_result.class, metaDataMap);
     }
@@ -2391,20 +2465,19 @@ public class TOperationExecutor {
     }
 
     public delet_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public delet_result(delet_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public delet_result deepCopy() {
@@ -2413,40 +2486,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public delet_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public delet_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -2455,8 +2528,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -2469,8 +2542,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -2488,12 +2561,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -2513,12 +2586,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       delet_result typedOther = (delet_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2543,8 +2616,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("delet_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -2588,10 +2665,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -2611,9 +2689,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -2632,12 +2712,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, delet_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -2646,8 +2726,9 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -3012,7 +3093,7 @@ public class TOperationExecutor {
   public static class increment_result implements org.apache.thrift.TBase<increment_result, increment_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("increment_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -3020,11 +3101,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new increment_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3039,8 +3120,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -3081,13 +3162,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(increment_result.class, metaDataMap);
     }
@@ -3096,20 +3175,19 @@ public class TOperationExecutor {
     }
 
     public increment_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public increment_result(increment_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public increment_result deepCopy() {
@@ -3118,40 +3196,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public increment_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public increment_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -3160,8 +3238,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -3174,8 +3252,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -3193,12 +3271,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -3218,12 +3296,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       increment_result typedOther = (increment_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3248,8 +3326,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("increment_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -3293,10 +3375,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -3316,9 +3399,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -3337,12 +3422,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, increment_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -3351,8 +3436,9 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -3717,7 +3803,7 @@ public class TOperationExecutor {
   public static class compareAndSwap_result implements org.apache.thrift.TBase<compareAndSwap_result, compareAndSwap_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("compareAndSwap_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -3725,11 +3811,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new compareAndSwap_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3744,8 +3830,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -3786,13 +3872,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(compareAndSwap_result.class, metaDataMap);
     }
@@ -3801,20 +3885,19 @@ public class TOperationExecutor {
     }
 
     public compareAndSwap_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public compareAndSwap_result(compareAndSwap_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public compareAndSwap_result deepCopy() {
@@ -3823,40 +3906,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public compareAndSwap_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public compareAndSwap_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -3865,8 +3948,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -3879,8 +3962,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -3898,12 +3981,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -3923,12 +4006,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       compareAndSwap_result typedOther = (compareAndSwap_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3953,8 +4036,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("compareAndSwap_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -3998,10 +4085,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -4021,9 +4109,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -4042,12 +4132,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, compareAndSwap_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -4056,8 +4146,9 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -4422,7 +4513,7 @@ public class TOperationExecutor {
   public static class queueEnqueue_result implements org.apache.thrift.TBase<queueEnqueue_result, queueEnqueue_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("queueEnqueue_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -4430,11 +4521,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new queueEnqueue_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -4449,8 +4540,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -4491,13 +4582,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(queueEnqueue_result.class, metaDataMap);
     }
@@ -4506,20 +4595,19 @@ public class TOperationExecutor {
     }
 
     public queueEnqueue_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public queueEnqueue_result(queueEnqueue_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public queueEnqueue_result deepCopy() {
@@ -4528,40 +4616,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public queueEnqueue_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public queueEnqueue_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -4570,8 +4658,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -4584,8 +4672,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -4603,12 +4691,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -4628,12 +4716,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       queueEnqueue_result typedOther = (queueEnqueue_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4658,8 +4746,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("queueEnqueue_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -4703,10 +4795,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -4726,9 +4819,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -4747,12 +4842,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, queueEnqueue_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -4761,8 +4856,9 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -5127,7 +5223,7 @@ public class TOperationExecutor {
   public static class queueAck_result implements org.apache.thrift.TBase<queueAck_result, queueAck_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("queueAck_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -5135,11 +5231,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new queueAck_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -5154,8 +5250,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -5196,13 +5292,11 @@ public class TOperationExecutor {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(queueAck_result.class, metaDataMap);
     }
@@ -5211,20 +5305,19 @@ public class TOperationExecutor {
     }
 
     public queueAck_result(
-      boolean success)
+      TOperationException ex)
     {
       this();
-      this.success = success;
-      setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public queueAck_result(queueAck_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public queueAck_result deepCopy() {
@@ -5233,40 +5326,40 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.ex = null;
     }
 
-    public boolean isSuccess() {
-      return this.success;
+    public TOperationException getEx() {
+      return this.ex;
     }
 
-    public queueAck_result setSuccess(boolean success) {
-      this.success = success;
-      setSuccessIsSet(true);
+    public queueAck_result setEx(TOperationException ex) {
+      this.ex = ex;
       return this;
     }
 
-    public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    public void unsetEx() {
+      this.ex = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
     }
 
-    public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
+      case EX:
         if (value == null) {
-          unsetSuccess();
+          unsetEx();
         } else {
-          setSuccess((Boolean)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -5275,8 +5368,8 @@ public class TOperationExecutor {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -5289,8 +5382,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -5308,12 +5401,12 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
           return false;
-        if (this.success != that.success)
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -5333,12 +5426,12 @@ public class TOperationExecutor {
       int lastComparison = 0;
       queueAck_result typedOther = (queueAck_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -5363,8 +5456,12 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("queueAck_result(");
       boolean first = true;
 
-      sb.append("success:");
-      sb.append(this.success);
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -5408,10 +5505,11 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -5431,9 +5529,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -5452,12 +5552,12 @@ public class TOperationExecutor {
       public void write(org.apache.thrift.protocol.TProtocol prot, queueAck_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
+        if (struct.isSetEx()) {
           optionals.set(0);
         }
         oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
@@ -5466,8 +5566,766 @@ public class TOperationExecutor {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class batch_args implements org.apache.thrift.TBase<batch_args, batch_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("batch_args");
+
+    private static final org.apache.thrift.protocol.TField BATCH_FIELD_DESC = new org.apache.thrift.protocol.TField("batch", org.apache.thrift.protocol.TType.LIST, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new batch_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new batch_argsTupleSchemeFactory());
+    }
+
+    public List<TWriteOperation> batch; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      BATCH((short)1, "batch");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // BATCH
+            return BATCH;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.BATCH, new org.apache.thrift.meta_data.FieldMetaData("batch", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST          , "TWriteBatch")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(batch_args.class, metaDataMap);
+    }
+
+    public batch_args() {
+    }
+
+    public batch_args(
+      List<TWriteOperation> batch)
+    {
+      this();
+      this.batch = batch;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public batch_args(batch_args other) {
+      if (other.isSetBatch()) {
+        this.batch = other.batch;
+      }
+    }
+
+    public batch_args deepCopy() {
+      return new batch_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.batch = null;
+    }
+
+    public int getBatchSize() {
+      return (this.batch == null) ? 0 : this.batch.size();
+    }
+
+    public java.util.Iterator<TWriteOperation> getBatchIterator() {
+      return (this.batch == null) ? null : this.batch.iterator();
+    }
+
+    public void addToBatch(TWriteOperation elem) {
+      if (this.batch == null) {
+        this.batch = new ArrayList<TWriteOperation>();
+      }
+      this.batch.add(elem);
+    }
+
+    public List<TWriteOperation> getBatch() {
+      return this.batch;
+    }
+
+    public batch_args setBatch(List<TWriteOperation> batch) {
+      this.batch = batch;
+      return this;
+    }
+
+    public void unsetBatch() {
+      this.batch = null;
+    }
+
+    /** Returns true if field batch is set (has been assigned a value) and false otherwise */
+    public boolean isSetBatch() {
+      return this.batch != null;
+    }
+
+    public void setBatchIsSet(boolean value) {
+      if (!value) {
+        this.batch = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case BATCH:
+        if (value == null) {
+          unsetBatch();
+        } else {
+          setBatch((List<TWriteOperation>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case BATCH:
+        return getBatch();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case BATCH:
+        return isSetBatch();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof batch_args)
+        return this.equals((batch_args)that);
+      return false;
+    }
+
+    public boolean equals(batch_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_batch = true && this.isSetBatch();
+      boolean that_present_batch = true && that.isSetBatch();
+      if (this_present_batch || that_present_batch) {
+        if (!(this_present_batch && that_present_batch))
+          return false;
+        if (!this.batch.equals(that.batch))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(batch_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      batch_args typedOther = (batch_args)other;
+
+      lastComparison = Boolean.valueOf(isSetBatch()).compareTo(typedOther.isSetBatch());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetBatch()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.batch, typedOther.batch);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("batch_args(");
+      boolean first = true;
+
+      sb.append("batch:");
+      if (this.batch == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.batch);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class batch_argsStandardSchemeFactory implements SchemeFactory {
+      public batch_argsStandardScheme getScheme() {
+        return new batch_argsStandardScheme();
+      }
+    }
+
+    private static class batch_argsStandardScheme extends StandardScheme<batch_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, batch_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // BATCH
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
+                  struct.batch = new ArrayList<TWriteOperation>(_list74.size);
+                  for (int _i75 = 0; _i75 < _list74.size; ++_i75)
+                  {
+                    TWriteOperation _elem76; // required
+                    _elem76 = new TWriteOperation();
+                    _elem76.read(iprot);
+                    struct.batch.add(_elem76);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setBatchIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, batch_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.batch != null) {
+          oprot.writeFieldBegin(BATCH_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.batch.size()));
+            for (TWriteOperation _iter77 : struct.batch)
+            {
+              _iter77.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class batch_argsTupleSchemeFactory implements SchemeFactory {
+      public batch_argsTupleScheme getScheme() {
+        return new batch_argsTupleScheme();
+      }
+    }
+
+    private static class batch_argsTupleScheme extends TupleScheme<batch_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, batch_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetBatch()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetBatch()) {
+          {
+            oprot.writeI32(struct.batch.size());
+            for (TWriteOperation _iter78 : struct.batch)
+            {
+              _iter78.write(oprot);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, batch_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list79 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.batch = new ArrayList<TWriteOperation>(_list79.size);
+            for (int _i80 = 0; _i80 < _list79.size; ++_i80)
+            {
+              TWriteOperation _elem81; // required
+              _elem81 = new TWriteOperation();
+              _elem81.read(iprot);
+              struct.batch.add(_elem81);
+            }
+          }
+          struct.setBatchIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class batch_result implements org.apache.thrift.TBase<batch_result, batch_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("batch_result");
+
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new batch_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new batch_resultTupleSchemeFactory());
+    }
+
+    public TOperationException ex; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      EX((short)1, "ex");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // EX
+            return EX;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(batch_result.class, metaDataMap);
+    }
+
+    public batch_result() {
+    }
+
+    public batch_result(
+      TOperationException ex)
+    {
+      this();
+      this.ex = ex;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public batch_result(batch_result other) {
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
+    }
+
+    public batch_result deepCopy() {
+      return new batch_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.ex = null;
+    }
+
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public batch_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case EX:
+        return getEx();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case EX:
+        return isSetEx();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof batch_result)
+        return this.equals((batch_result)that);
+      return false;
+    }
+
+    public boolean equals(batch_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(batch_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      batch_result typedOther = (batch_result)other;
+
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("batch_result(");
+      boolean first = true;
+
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class batch_resultStandardSchemeFactory implements SchemeFactory {
+      public batch_resultStandardScheme getScheme() {
+        return new batch_resultStandardScheme();
+      }
+    }
+
+    private static class batch_resultStandardScheme extends StandardScheme<batch_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, batch_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, batch_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class batch_resultTupleSchemeFactory implements SchemeFactory {
+      public batch_resultTupleScheme getScheme() {
+        return new batch_resultTupleScheme();
+      }
+    }
+
+    private static class batch_resultTupleScheme extends TupleScheme<batch_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, batch_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetEx()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, batch_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -5833,6 +6691,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("readKey_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -5841,10 +6700,12 @@ public class TOperationExecutor {
     }
 
     public TOptionalBinary success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -5861,6 +6722,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -5906,6 +6769,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinary.class)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(readKey_result.class, metaDataMap);
     }
@@ -5914,10 +6779,12 @@ public class TOperationExecutor {
     }
 
     public readKey_result(
-      TOptionalBinary success)
+      TOptionalBinary success,
+      TOperationException ex)
     {
       this();
       this.success = success;
+      this.ex = ex;
     }
 
     /**
@@ -5926,6 +6793,9 @@ public class TOperationExecutor {
     public readKey_result(readKey_result other) {
       if (other.isSetSuccess()) {
         this.success = new TOptionalBinary(other.success);
+      }
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
       }
     }
 
@@ -5936,6 +6806,7 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.success = null;
+      this.ex = null;
     }
 
     public TOptionalBinary getSuccess() {
@@ -5962,6 +6833,30 @@ public class TOperationExecutor {
       }
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public readKey_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -5972,6 +6867,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -5979,6 +6882,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -5993,6 +6899,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -6016,6 +6924,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -6045,6 +6962,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -6070,6 +6997,14 @@ public class TOperationExecutor {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
       }
       first = false;
       sb.append(")");
@@ -6123,6 +7058,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -6141,6 +7085,11 @@ public class TOperationExecutor {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -6164,20 +7113,31 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, readKey_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new TOptionalBinary();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -6543,6 +7503,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("read_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -6551,10 +7512,12 @@ public class TOperationExecutor {
     }
 
     public TOptionalBinaryMap success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -6571,6 +7534,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -6616,6 +7581,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinaryMap.class)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(read_result.class, metaDataMap);
     }
@@ -6624,10 +7591,12 @@ public class TOperationExecutor {
     }
 
     public read_result(
-      TOptionalBinaryMap success)
+      TOptionalBinaryMap success,
+      TOperationException ex)
     {
       this();
       this.success = success;
+      this.ex = ex;
     }
 
     /**
@@ -6636,6 +7605,9 @@ public class TOperationExecutor {
     public read_result(read_result other) {
       if (other.isSetSuccess()) {
         this.success = new TOptionalBinaryMap(other.success);
+      }
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
       }
     }
 
@@ -6646,6 +7618,7 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.success = null;
+      this.ex = null;
     }
 
     public TOptionalBinaryMap getSuccess() {
@@ -6672,6 +7645,30 @@ public class TOperationExecutor {
       }
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public read_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -6682,6 +7679,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -6689,6 +7694,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -6703,6 +7711,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -6726,6 +7736,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -6755,6 +7774,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -6780,6 +7809,14 @@ public class TOperationExecutor {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
       }
       first = false;
       sb.append(")");
@@ -6833,6 +7870,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -6851,6 +7897,11 @@ public class TOperationExecutor {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -6874,20 +7925,31 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, read_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new TOptionalBinaryMap();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -7253,6 +8315,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("readAllKeys_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -7261,10 +8324,12 @@ public class TOperationExecutor {
     }
 
     public TOptionalBinaryList success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -7281,6 +8346,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -7326,6 +8393,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinaryList.class)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(readAllKeys_result.class, metaDataMap);
     }
@@ -7334,10 +8403,12 @@ public class TOperationExecutor {
     }
 
     public readAllKeys_result(
-      TOptionalBinaryList success)
+      TOptionalBinaryList success,
+      TOperationException ex)
     {
       this();
       this.success = success;
+      this.ex = ex;
     }
 
     /**
@@ -7346,6 +8417,9 @@ public class TOperationExecutor {
     public readAllKeys_result(readAllKeys_result other) {
       if (other.isSetSuccess()) {
         this.success = new TOptionalBinaryList(other.success);
+      }
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
       }
     }
 
@@ -7356,6 +8430,7 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.success = null;
+      this.ex = null;
     }
 
     public TOptionalBinaryList getSuccess() {
@@ -7382,6 +8457,30 @@ public class TOperationExecutor {
       }
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public readAllKeys_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -7392,6 +8491,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -7399,6 +8506,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -7413,6 +8523,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -7436,6 +8548,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -7465,6 +8586,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -7490,6 +8621,14 @@ public class TOperationExecutor {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
       }
       first = false;
       sb.append(")");
@@ -7543,6 +8682,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -7561,6 +8709,11 @@ public class TOperationExecutor {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -7584,20 +8737,31 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, readAllKeys_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new TOptionalBinaryList();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -7963,6 +9127,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("readColumnRange_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -7971,765 +9136,7 @@ public class TOperationExecutor {
     }
 
     public TOptionalBinaryMap success; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinaryMap.class)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(readColumnRange_result.class, metaDataMap);
-    }
-
-    public readColumnRange_result() {
-    }
-
-    public readColumnRange_result(
-      TOptionalBinaryMap success)
-    {
-      this();
-      this.success = success;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public readColumnRange_result(readColumnRange_result other) {
-      if (other.isSetSuccess()) {
-        this.success = new TOptionalBinaryMap(other.success);
-      }
-    }
-
-    public readColumnRange_result deepCopy() {
-      return new readColumnRange_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.success = null;
-    }
-
-    public TOptionalBinaryMap getSuccess() {
-      return this.success;
-    }
-
-    public readColumnRange_result setSuccess(TOptionalBinaryMap success) {
-      this.success = success;
-      return this;
-    }
-
-    public void unsetSuccess() {
-      this.success = null;
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return this.success != null;
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      if (!value) {
-        this.success = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((TOptionalBinaryMap)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case SUCCESS:
-        return getSuccess();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof readColumnRange_result)
-        return this.equals((readColumnRange_result)that);
-      return false;
-    }
-
-    public boolean equals(readColumnRange_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_success = true && this.isSetSuccess();
-      boolean that_present_success = true && that.isSetSuccess();
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!this.success.equals(that.success))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(readColumnRange_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      readColumnRange_result typedOther = (readColumnRange_result)other;
-
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("readColumnRange_result(");
-      boolean first = true;
-
-      sb.append("success:");
-      if (this.success == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.success);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class readColumnRange_resultStandardSchemeFactory implements SchemeFactory {
-      public readColumnRange_resultStandardScheme getScheme() {
-        return new readColumnRange_resultStandardScheme();
-      }
-    }
-
-    private static class readColumnRange_resultStandardScheme extends StandardScheme<readColumnRange_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, readColumnRange_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new TOptionalBinaryMap();
-                struct.success.read(iprot);
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, readColumnRange_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.success != null) {
-          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          struct.success.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class readColumnRange_resultTupleSchemeFactory implements SchemeFactory {
-      public readColumnRange_resultTupleScheme getScheme() {
-        return new readColumnRange_resultTupleScheme();
-      }
-    }
-
-    private static class readColumnRange_resultTupleScheme extends TupleScheme<readColumnRange_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, readColumnRange_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetSuccess()) {
-          struct.success.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, readColumnRange_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.success = new TOptionalBinaryMap();
-          struct.success.read(iprot);
-          struct.setSuccessIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class batch_args implements org.apache.thrift.TBase<batch_args, batch_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("batch_args");
-
-    private static final org.apache.thrift.protocol.TField BATCH_FIELD_DESC = new org.apache.thrift.protocol.TField("batch", org.apache.thrift.protocol.TType.LIST, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new batch_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new batch_argsTupleSchemeFactory());
-    }
-
-    public List<TWriteOperation> batch; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      BATCH((short)1, "batch");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // BATCH
-            return BATCH;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.BATCH, new org.apache.thrift.meta_data.FieldMetaData("batch", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST          , "TWriteBatch")));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(batch_args.class, metaDataMap);
-    }
-
-    public batch_args() {
-    }
-
-    public batch_args(
-      List<TWriteOperation> batch)
-    {
-      this();
-      this.batch = batch;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public batch_args(batch_args other) {
-      if (other.isSetBatch()) {
-        this.batch = other.batch;
-      }
-    }
-
-    public batch_args deepCopy() {
-      return new batch_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.batch = null;
-    }
-
-    public int getBatchSize() {
-      return (this.batch == null) ? 0 : this.batch.size();
-    }
-
-    public java.util.Iterator<TWriteOperation> getBatchIterator() {
-      return (this.batch == null) ? null : this.batch.iterator();
-    }
-
-    public void addToBatch(TWriteOperation elem) {
-      if (this.batch == null) {
-        this.batch = new ArrayList<TWriteOperation>();
-      }
-      this.batch.add(elem);
-    }
-
-    public List<TWriteOperation> getBatch() {
-      return this.batch;
-    }
-
-    public batch_args setBatch(List<TWriteOperation> batch) {
-      this.batch = batch;
-      return this;
-    }
-
-    public void unsetBatch() {
-      this.batch = null;
-    }
-
-    /** Returns true if field batch is set (has been assigned a value) and false otherwise */
-    public boolean isSetBatch() {
-      return this.batch != null;
-    }
-
-    public void setBatchIsSet(boolean value) {
-      if (!value) {
-        this.batch = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case BATCH:
-        if (value == null) {
-          unsetBatch();
-        } else {
-          setBatch((List<TWriteOperation>)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case BATCH:
-        return getBatch();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case BATCH:
-        return isSetBatch();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof batch_args)
-        return this.equals((batch_args)that);
-      return false;
-    }
-
-    public boolean equals(batch_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_batch = true && this.isSetBatch();
-      boolean that_present_batch = true && that.isSetBatch();
-      if (this_present_batch || that_present_batch) {
-        if (!(this_present_batch && that_present_batch))
-          return false;
-        if (!this.batch.equals(that.batch))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(batch_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      batch_args typedOther = (batch_args)other;
-
-      lastComparison = Boolean.valueOf(isSetBatch()).compareTo(typedOther.isSetBatch());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetBatch()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.batch, typedOther.batch);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("batch_args(");
-      boolean first = true;
-
-      sb.append("batch:");
-      if (this.batch == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.batch);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class batch_argsStandardSchemeFactory implements SchemeFactory {
-      public batch_argsStandardScheme getScheme() {
-        return new batch_argsStandardScheme();
-      }
-    }
-
-    private static class batch_argsStandardScheme extends StandardScheme<batch_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, batch_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // BATCH
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-                {
-                  org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
-                  struct.batch = new ArrayList<TWriteOperation>(_list74.size);
-                  for (int _i75 = 0; _i75 < _list74.size; ++_i75)
-                  {
-                    TWriteOperation _elem76; // optional
-                    _elem76 = new TWriteOperation();
-                    _elem76.read(iprot);
-                    struct.batch.add(_elem76);
-                  }
-                  iprot.readListEnd();
-                }
-                struct.setBatchIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, batch_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.batch != null) {
-          oprot.writeFieldBegin(BATCH_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.batch.size()));
-            for (TWriteOperation _iter77 : struct.batch)
-            {
-              _iter77.write(oprot);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class batch_argsTupleSchemeFactory implements SchemeFactory {
-      public batch_argsTupleScheme getScheme() {
-        return new batch_argsTupleScheme();
-      }
-    }
-
-    private static class batch_argsTupleScheme extends TupleScheme<batch_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, batch_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetBatch()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetBatch()) {
-          {
-            oprot.writeI32(struct.batch.size());
-            for (TWriteOperation _iter78 : struct.batch)
-            {
-              _iter78.write(oprot);
-            }
-          }
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, batch_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          {
-            org.apache.thrift.protocol.TList _list79 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.batch = new ArrayList<TWriteOperation>(_list79.size);
-            for (int _i80 = 0; _i80 < _list79.size; ++_i80)
-            {
-              TWriteOperation _elem81; // optional
-              _elem81 = new TWriteOperation();
-              _elem81.read(iprot);
-              struct.batch.add(_elem81);
-            }
-          }
-          struct.setBatchIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class batch_result implements org.apache.thrift.TBase<batch_result, batch_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("batch_result");
-
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
-    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new batch_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new batch_resultTupleSchemeFactory());
-    }
-
-    public TBatchOperationResult success; // required
-    public TBatchOperationException ex; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -8797,19 +9204,19 @@ public class TOperationExecutor {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TBatchOperationResult.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOptionalBinaryMap.class)));
       tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(batch_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(readColumnRange_result.class, metaDataMap);
     }
 
-    public batch_result() {
+    public readColumnRange_result() {
     }
 
-    public batch_result(
-      TBatchOperationResult success,
-      TBatchOperationException ex)
+    public readColumnRange_result(
+      TOptionalBinaryMap success,
+      TOperationException ex)
     {
       this();
       this.success = success;
@@ -8819,17 +9226,17 @@ public class TOperationExecutor {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public batch_result(batch_result other) {
+    public readColumnRange_result(readColumnRange_result other) {
       if (other.isSetSuccess()) {
-        this.success = new TBatchOperationResult(other.success);
+        this.success = new TOptionalBinaryMap(other.success);
       }
       if (other.isSetEx()) {
-        this.ex = new TBatchOperationException(other.ex);
+        this.ex = new TOperationException(other.ex);
       }
     }
 
-    public batch_result deepCopy() {
-      return new batch_result(this);
+    public readColumnRange_result deepCopy() {
+      return new readColumnRange_result(this);
     }
 
     @Override
@@ -8838,11 +9245,11 @@ public class TOperationExecutor {
       this.ex = null;
     }
 
-    public TBatchOperationResult getSuccess() {
+    public TOptionalBinaryMap getSuccess() {
       return this.success;
     }
 
-    public batch_result setSuccess(TBatchOperationResult success) {
+    public readColumnRange_result setSuccess(TOptionalBinaryMap success) {
       this.success = success;
       return this;
     }
@@ -8862,11 +9269,11 @@ public class TOperationExecutor {
       }
     }
 
-    public TBatchOperationException getEx() {
+    public TOperationException getEx() {
       return this.ex;
     }
 
-    public batch_result setEx(TBatchOperationException ex) {
+    public readColumnRange_result setEx(TOperationException ex) {
       this.ex = ex;
       return this;
     }
@@ -8892,7 +9299,7 @@ public class TOperationExecutor {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((TBatchOperationResult)value);
+          setSuccess((TOptionalBinaryMap)value);
         }
         break;
 
@@ -8900,7 +9307,7 @@ public class TOperationExecutor {
         if (value == null) {
           unsetEx();
         } else {
-          setEx((TBatchOperationException)value);
+          setEx((TOperationException)value);
         }
         break;
 
@@ -8938,12 +9345,12 @@ public class TOperationExecutor {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof batch_result)
-        return this.equals((batch_result)that);
+      if (that instanceof readColumnRange_result)
+        return this.equals((readColumnRange_result)that);
       return false;
     }
 
-    public boolean equals(batch_result that) {
+    public boolean equals(readColumnRange_result that) {
       if (that == null)
         return false;
 
@@ -8973,13 +9380,13 @@ public class TOperationExecutor {
       return 0;
     }
 
-    public int compareTo(batch_result other) {
+    public int compareTo(readColumnRange_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      batch_result typedOther = (batch_result)other;
+      readColumnRange_result typedOther = (readColumnRange_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -9018,7 +9425,7 @@ public class TOperationExecutor {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("batch_result(");
+      StringBuilder sb = new StringBuilder("readColumnRange_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -9060,15 +9467,15 @@ public class TOperationExecutor {
       }
     }
 
-    private static class batch_resultStandardSchemeFactory implements SchemeFactory {
-      public batch_resultStandardScheme getScheme() {
-        return new batch_resultStandardScheme();
+    private static class readColumnRange_resultStandardSchemeFactory implements SchemeFactory {
+      public readColumnRange_resultStandardScheme getScheme() {
+        return new readColumnRange_resultStandardScheme();
       }
     }
 
-    private static class batch_resultStandardScheme extends StandardScheme<batch_result> {
+    private static class readColumnRange_resultStandardScheme extends StandardScheme<readColumnRange_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, batch_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, readColumnRange_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -9080,7 +9487,7 @@ public class TOperationExecutor {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new TBatchOperationResult();
+                struct.success = new TOptionalBinaryMap();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -9089,7 +9496,7 @@ public class TOperationExecutor {
               break;
             case 1: // EX
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.ex = new TBatchOperationException();
+                struct.ex = new TOperationException();
                 struct.ex.read(iprot);
                 struct.setExIsSet(true);
               } else { 
@@ -9107,7 +9514,7 @@ public class TOperationExecutor {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, batch_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, readColumnRange_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -9127,16 +9534,16 @@ public class TOperationExecutor {
 
     }
 
-    private static class batch_resultTupleSchemeFactory implements SchemeFactory {
-      public batch_resultTupleScheme getScheme() {
-        return new batch_resultTupleScheme();
+    private static class readColumnRange_resultTupleSchemeFactory implements SchemeFactory {
+      public readColumnRange_resultTupleScheme getScheme() {
+        return new readColumnRange_resultTupleScheme();
       }
     }
 
-    private static class batch_resultTupleScheme extends TupleScheme<batch_result> {
+    private static class readColumnRange_resultTupleScheme extends TupleScheme<readColumnRange_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, batch_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, readColumnRange_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -9155,16 +9562,16 @@ public class TOperationExecutor {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, batch_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, readColumnRange_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new TBatchOperationResult();
+          struct.success = new TOptionalBinaryMap();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.ex = new TBatchOperationException();
+          struct.ex = new TOperationException();
           struct.ex.read(iprot);
           struct.setExIsSet(true);
         }
@@ -9532,6 +9939,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("dequeue_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -9540,10 +9948,12 @@ public class TOperationExecutor {
     }
 
     public TDequeueResult success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -9560,6 +9970,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -9605,6 +10017,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TDequeueResult.class)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(dequeue_result.class, metaDataMap);
     }
@@ -9613,10 +10027,12 @@ public class TOperationExecutor {
     }
 
     public dequeue_result(
-      TDequeueResult success)
+      TDequeueResult success,
+      TOperationException ex)
     {
       this();
       this.success = success;
+      this.ex = ex;
     }
 
     /**
@@ -9625,6 +10041,9 @@ public class TOperationExecutor {
     public dequeue_result(dequeue_result other) {
       if (other.isSetSuccess()) {
         this.success = new TDequeueResult(other.success);
+      }
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
       }
     }
 
@@ -9635,6 +10054,7 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.success = null;
+      this.ex = null;
     }
 
     public TDequeueResult getSuccess() {
@@ -9661,6 +10081,30 @@ public class TOperationExecutor {
       }
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public dequeue_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -9671,6 +10115,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -9678,6 +10130,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -9692,6 +10147,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -9715,6 +10172,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -9744,6 +10210,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -9769,6 +10245,14 @@ public class TOperationExecutor {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
       }
       first = false;
       sb.append(")");
@@ -9822,6 +10306,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -9840,6 +10333,11 @@ public class TOperationExecutor {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -9863,20 +10361,31 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, dequeue_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new TDequeueResult();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -10242,6 +10751,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getGroupId_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.I64, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -10250,10 +10760,12 @@ public class TOperationExecutor {
     }
 
     public long success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -10270,6 +10782,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -10317,6 +10831,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getGroupId_result.class, metaDataMap);
     }
@@ -10325,11 +10841,13 @@ public class TOperationExecutor {
     }
 
     public getGroupId_result(
-      long success)
+      long success,
+      TOperationException ex)
     {
       this();
       this.success = success;
       setSuccessIsSet(true);
+      this.ex = ex;
     }
 
     /**
@@ -10339,6 +10857,9 @@ public class TOperationExecutor {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.success = other.success;
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public getGroupId_result deepCopy() {
@@ -10349,6 +10870,7 @@ public class TOperationExecutor {
     public void clear() {
       setSuccessIsSet(false);
       this.success = 0;
+      this.ex = null;
     }
 
     public long getSuccess() {
@@ -10374,6 +10896,30 @@ public class TOperationExecutor {
       __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public getGroupId_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -10384,6 +10930,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -10391,6 +10945,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return Long.valueOf(getSuccess());
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -10405,6 +10962,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -10428,6 +10987,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -10457,6 +11025,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -10479,6 +11057,14 @@ public class TOperationExecutor {
 
       sb.append("success:");
       sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
@@ -10530,6 +11116,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -10548,6 +11143,11 @@ public class TOperationExecutor {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeI64(struct.success);
         oprot.writeFieldEnd();
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -10569,19 +11169,30 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           oprot.writeI64(struct.success);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, getGroupId_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = iprot.readI64();
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -10947,6 +11558,7 @@ public class TOperationExecutor {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueueMeta_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -10955,10 +11567,12 @@ public class TOperationExecutor {
     }
 
     public TQueueMeta success; // required
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -10975,6 +11589,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -11020,6 +11636,8 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueMeta.class)));
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueueMeta_result.class, metaDataMap);
     }
@@ -11028,10 +11646,12 @@ public class TOperationExecutor {
     }
 
     public getQueueMeta_result(
-      TQueueMeta success)
+      TQueueMeta success,
+      TOperationException ex)
     {
       this();
       this.success = success;
+      this.ex = ex;
     }
 
     /**
@@ -11040,6 +11660,9 @@ public class TOperationExecutor {
     public getQueueMeta_result(getQueueMeta_result other) {
       if (other.isSetSuccess()) {
         this.success = new TQueueMeta(other.success);
+      }
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
       }
     }
 
@@ -11050,6 +11673,7 @@ public class TOperationExecutor {
     @Override
     public void clear() {
       this.success = null;
+      this.ex = null;
     }
 
     public TQueueMeta getSuccess() {
@@ -11076,6 +11700,30 @@ public class TOperationExecutor {
       }
     }
 
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public getQueueMeta_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -11086,6 +11734,14 @@ public class TOperationExecutor {
         }
         break;
 
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
@@ -11093,6 +11749,9 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case EX:
+        return getEx();
 
       }
       throw new IllegalStateException();
@@ -11107,6 +11766,8 @@ public class TOperationExecutor {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -11130,6 +11791,15 @@ public class TOperationExecutor {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
           return false;
       }
 
@@ -11159,6 +11829,16 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -11184,6 +11864,14 @@ public class TOperationExecutor {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
       }
       first = false;
       sb.append(")");
@@ -11237,6 +11925,15 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -11255,6 +11952,11 @@ public class TOperationExecutor {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -11278,20 +11980,31 @@ public class TOperationExecutor {
         if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
           struct.success.write(oprot);
+        }
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, getQueueMeta_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           struct.success = new TQueueMeta();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
         }
       }
     }
@@ -11656,6 +12369,7 @@ public class TOperationExecutor {
   public static class clearFabric_result implements org.apache.thrift.TBase<clearFabric_result, clearFabric_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("clearFabric_result");
 
+    private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -11663,10 +12377,11 @@ public class TOperationExecutor {
       schemes.put(TupleScheme.class, new clearFabric_resultTupleSchemeFactory());
     }
 
+    public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-;
+      EX((short)1, "ex");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -11681,6 +12396,8 @@ public class TOperationExecutor {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
+          case 1: // EX
+            return EX;
           default:
             return null;
         }
@@ -11719,9 +12436,13 @@ public class TOperationExecutor {
         return _fieldName;
       }
     }
+
+    // isset id assignments
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(clearFabric_result.class, metaDataMap);
     }
@@ -11729,10 +12450,20 @@ public class TOperationExecutor {
     public clearFabric_result() {
     }
 
+    public clearFabric_result(
+      TOperationException ex)
+    {
+      this();
+      this.ex = ex;
+    }
+
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public clearFabric_result(clearFabric_result other) {
+      if (other.isSetEx()) {
+        this.ex = new TOperationException(other.ex);
+      }
     }
 
     public clearFabric_result deepCopy() {
@@ -11741,15 +12472,51 @@ public class TOperationExecutor {
 
     @Override
     public void clear() {
+      this.ex = null;
+    }
+
+    public TOperationException getEx() {
+      return this.ex;
+    }
+
+    public clearFabric_result setEx(TOperationException ex) {
+      this.ex = ex;
+      return this;
+    }
+
+    public void unsetEx() {
+      this.ex = null;
+    }
+
+    /** Returns true if field ex is set (has been assigned a value) and false otherwise */
+    public boolean isSetEx() {
+      return this.ex != null;
+    }
+
+    public void setExIsSet(boolean value) {
+      if (!value) {
+        this.ex = null;
+      }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case EX:
+        if (value == null) {
+          unsetEx();
+        } else {
+          setEx((TOperationException)value);
+        }
+        break;
+
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case EX:
+        return getEx();
+
       }
       throw new IllegalStateException();
     }
@@ -11761,6 +12528,8 @@ public class TOperationExecutor {
       }
 
       switch (field) {
+      case EX:
+        return isSetEx();
       }
       throw new IllegalStateException();
     }
@@ -11778,6 +12547,15 @@ public class TOperationExecutor {
       if (that == null)
         return false;
 
+      boolean this_present_ex = true && this.isSetEx();
+      boolean that_present_ex = true && that.isSetEx();
+      if (this_present_ex || that_present_ex) {
+        if (!(this_present_ex && that_present_ex))
+          return false;
+        if (!this.ex.equals(that.ex))
+          return false;
+      }
+
       return true;
     }
 
@@ -11794,6 +12572,16 @@ public class TOperationExecutor {
       int lastComparison = 0;
       clearFabric_result typedOther = (clearFabric_result)other;
 
+      lastComparison = Boolean.valueOf(isSetEx()).compareTo(typedOther.isSetEx());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEx()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ex, typedOther.ex);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -11814,6 +12602,13 @@ public class TOperationExecutor {
       StringBuilder sb = new StringBuilder("clearFabric_result(");
       boolean first = true;
 
+      sb.append("ex:");
+      if (this.ex == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ex);
+      }
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -11856,6 +12651,15 @@ public class TOperationExecutor {
             break;
           }
           switch (schemeField.id) {
+            case 1: // EX
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.ex = new TOperationException();
+                struct.ex.read(iprot);
+                struct.setExIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -11871,6 +12675,11 @@ public class TOperationExecutor {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.ex != null) {
+          oprot.writeFieldBegin(EX_FIELD_DESC);
+          struct.ex.write(oprot);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -11888,11 +12697,25 @@ public class TOperationExecutor {
       @Override
       public void write(org.apache.thrift.protocol.TProtocol prot, clearFabric_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetEx()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetEx()) {
+          struct.ex.write(oprot);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, clearFabric_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.ex = new TOperationException();
+          struct.ex.read(iprot);
+          struct.setExIsSet(true);
+        }
       }
     }
 

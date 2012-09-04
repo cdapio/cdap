@@ -536,7 +536,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
                 struct.columns = new ArrayList<ByteBuffer>(_list8.size);
                 for (int _i9 = 0; _i9 < _list8.size; ++_i9)
                 {
-                  ByteBuffer _elem10; // optional
+                  ByteBuffer _elem10; // required
                   _elem10 = iprot.readBinary();
                   struct.columns.add(_elem10);
                 }
@@ -554,7 +554,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
                 struct.values = new ArrayList<ByteBuffer>(_list11.size);
                 for (int _i12 = 0; _i12 < _list11.size; ++_i12)
                 {
-                  ByteBuffer _elem13; // optional
+                  ByteBuffer _elem13; // required
                   _elem13 = iprot.readBinary();
                   struct.values.add(_elem13);
                 }
@@ -674,7 +674,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
           struct.columns = new ArrayList<ByteBuffer>(_list18.size);
           for (int _i19 = 0; _i19 < _list18.size; ++_i19)
           {
-            ByteBuffer _elem20; // optional
+            ByteBuffer _elem20; // required
             _elem20 = iprot.readBinary();
             struct.columns.add(_elem20);
           }
@@ -687,7 +687,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
           struct.values = new ArrayList<ByteBuffer>(_list21.size);
           for (int _i22 = 0; _i22 < _list21.size; ++_i22)
           {
-            ByteBuffer _elem23; // optional
+            ByteBuffer _elem23; // required
             _elem23 = iprot.readBinary();
             struct.values.add(_elem23);
           }
