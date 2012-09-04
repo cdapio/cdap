@@ -183,7 +183,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @Override
   public void invalidate(QueueEntryPointer entryPointer,
-      long cleanWriteVersion) {
+      long cleanWriteVersion) throws OperationException {
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
     // Change meta data to INVALID
     this.table.put(shardRow, makeColumn(entryPointer.getEntryId(), ENTRY_META),
@@ -613,7 +613,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   private boolean allOtherGroupsFinalized(QueueEntryPointer entryPointer,
       int totalNumGroups, long curGroup,
-      ImmutablePair<ReadPointer,Long> dirtyPointer) {
+      ImmutablePair<ReadPointer,Long> dirtyPointer) throws OperationException {
 
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
 
@@ -681,7 +681,7 @@ public class TTQueueOnVCTable implements TTQueue {
    * @return true if there are pending entries, false if no pending entries
    */
   private boolean groupHasPendingEntries(GroupState groupState, long groupId,
-      ReadPointer readPointer) {
+      ReadPointer readPointer) throws OperationException {
     EntryPointer curEntry = groupState.getHead();
     while (curEntry != null) {
       // We are pointed at {entryPointer}=(shardid,entryid) and we are either
@@ -760,7 +760,7 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @SuppressWarnings("unused")
   private boolean groupIsEmpty(GroupState groupState, long groupId,
-      ReadPointer readPointer) {
+      ReadPointer readPointer) throws OperationException {
     // A group is empty if the head pointer points to the entry write pointer
     byte [] writePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
     long writePointer = getCounter(writePointerRow,
@@ -792,7 +792,8 @@ public class TTQueueOnVCTable implements TTQueue {
     return new ImmutablePair<ReadPointer,Long>(new MemoryReadPointer(now), 1L);
   }
 
-  private long getCounter(byte[] row, byte[] column, ReadPointer readPointer) {
+  private long getCounter(byte[] row, byte[] column, ReadPointer readPointer)
+      throws OperationException {
     OperationResult<byte[]> value = this.table.get(row, column, readPointer);
     if (value.isEmpty() || value.getValue().length == 0) return 0;
     return Bytes.toLong(value.getValue());
@@ -827,7 +828,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public QueueMeta getQueueMeta() {
+  public QueueMeta getQueueMeta() throws OperationException {
 
     // Get global queue state information
     QueueMeta meta = new QueueMeta();
@@ -861,7 +862,7 @@ public class TTQueueOnVCTable implements TTQueue {
     return meta;
   }
 
-  public String getInfo(int groupId) {
+  public String getInfo(int groupId) throws OperationException {
 
     StringBuilder sb = new StringBuilder();
     sb.append("TTQueueONVCTable (").append(Bytes.toString(this.queueName))
@@ -905,7 +906,7 @@ public class TTQueueOnVCTable implements TTQueue {
     return sb.toString();
   }
 
-  public String getEntryInfo(long entryId) {
+  public String getEntryInfo(long entryId) throws OperationException {
 
     long curShard = 1;
     long curEntry = 1;

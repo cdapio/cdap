@@ -2,6 +2,7 @@ package com.continuuity.data.table;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.conf.CConfiguration;
@@ -56,6 +57,6 @@ public abstract class SimpleColumnarTableHandle implements ColumnarTableHandle {
   }
 
   public abstract ColumnarTable createNewTable(byte [] tableName,
-      TimestampOracle timeOracle);
+      TimestampOracle timeOracle) throws OperationException;
 
 }

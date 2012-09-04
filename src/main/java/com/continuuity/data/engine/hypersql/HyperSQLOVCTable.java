@@ -590,18 +590,18 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, ReadPointer readPointer) {
-    throw new RuntimeException("Scans currently not supported");
+    throw new UnsupportedOperationException("Scans currently not supported");
   }
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow, byte[][] columns,
       ReadPointer readPointer) {
-    throw new RuntimeException("Scans currently not supported");
+    throw new UnsupportedOperationException("Scans currently not supported");
   }
 
   @Override
   public Scanner scan(ReadPointer readPointer) {
-    throw new RuntimeException("Scans currently not supported");
+    throw new UnsupportedOperationException("Scans currently not supported");
   }
 
   // Private Helper Methods

@@ -29,7 +29,7 @@ public interface TTQueueTable {
    *                     entry will be written with
    */
   public void invalidate(byte [] queueName, QueueEntryPointer entryPointer,
-      long writeVersion);
+      long writeVersion) throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -97,7 +97,7 @@ public interface TTQueueTable {
    * @param queueName
    * @return global meta information for the queue and its groups
    */
-  public QueueMeta getQueueMeta(byte [] queueName);
+  public QueueMeta getQueueMeta(byte [] queueName) throws OperationException;
 
   /**
    * Clears this queue table, completely wiping all queues.
@@ -106,7 +106,7 @@ public interface TTQueueTable {
 
   // Old debugging methods
 
-  public String getGroupInfo(byte[] queueName, int groupId);
+  public String getGroupInfo(byte[] queueName, int groupId) throws OperationException;
 
-  public String getEntryInfo(byte[] queueName, long entryId);
+  public String getEntryInfo(byte[] queueName, long entryId) throws OperationException;
 }

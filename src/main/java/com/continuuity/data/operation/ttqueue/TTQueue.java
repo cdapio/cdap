@@ -34,7 +34,7 @@ public interface TTQueue {
    * @param writeVersion version entry was written with and version invalidated
    *                     entry will be written with
    */
-  public void invalidate(QueueEntryPointer entryPointer, long writeVersion);
+  public void invalidate(QueueEntryPointer entryPointer, long writeVersion) throws OperationException;
 
   /**
    * Attempts to mark and return an entry from the queue for the specified
@@ -95,5 +95,5 @@ public interface TTQueue {
    * data available without walking the entire queue.
    * @return global meta information for this queue and its groups
    */
-  public QueueMeta getQueueMeta();
+  public QueueMeta getQueueMeta() throws OperationException;
 }

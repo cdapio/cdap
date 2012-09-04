@@ -3,14 +3,7 @@
  */
 package com.continuuity.data.engine.hbase;
 
-import java.io.IOException;
-
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.util.Bytes;
-
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -19,6 +12,13 @@ import com.continuuity.data.table.SimpleColumnarTableHandle;
 import com.continuuity.data.table.converter.ColumnarOnVersionedColumnarTable;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
 
 public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
   
@@ -26,7 +26,7 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
   private final HBaseAdmin admin;
   
   private static final IOExceptionHandler exceptionHandler =
-      new HBaseIOExceptionHandler();
+      new HBaseOVCTable.ToOperationExceptionHandler();
 
   private static final byte [] FAMILY = Bytes.toBytes("fam");
 
@@ -40,15 +40,15 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
   
   @Override
   public ColumnarTable createNewTable(byte[] tableName,
-      TimestampOracle timeOracle) {
+      TimestampOracle timeOracle) throws OperationException {
     HBaseOVCTable table = null;
     try {
       createTable(tableName);
-      table = new HBaseOVCTable(conf, tableName, FAMILY,
-          new HBaseIOExceptionHandler());
     } catch (IOException e) {
       exceptionHandler.handle(e);
     }
+    table = new HBaseOVCTable(conf, tableName, FAMILY,
+          exceptionHandler);
     return new ColumnarOnVersionedColumnarTable(table, timeOracle);
   }
 
@@ -61,12 +61,5 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
     htd.addFamily(hcd);
     this.admin.createTable(htd);
     return new HTable(conf, tableName);
-  }
-
-  public static class HBaseIOExceptionHandler implements IOExceptionHandler {
-    @Override
-    public void handle(IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

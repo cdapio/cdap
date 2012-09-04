@@ -46,7 +46,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   @Override
   public void invalidate(byte [] queueName, QueueEntryPointer entryPointer,
-      long writeVersion) {
+      long writeVersion) throws OperationException {
     getQueue(queueName).invalidate(entryPointer, writeVersion);
   }
 
@@ -75,7 +75,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public String getGroupInfo(byte[] queueName, int groupId) {
+  public String getGroupInfo(byte[] queueName, int groupId)
+      throws OperationException {
     TTQueue queue = getQueue(queueName);
     if (queue instanceof TTQueueOnVCTable)
       return ((TTQueueOnVCTable)queue).getInfo(groupId);
@@ -83,7 +84,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public String getEntryInfo(byte[] queueName, long entryId) {
+  public String getEntryInfo(byte[] queueName, long entryId)
+      throws OperationException {
     TTQueue queue = getQueue(queueName);
     if (queue instanceof TTQueueOnVCTable)
       return ((TTQueueOnVCTable)queue).getEntryInfo(entryId);
@@ -96,7 +98,7 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public QueueMeta getQueueMeta(byte[] queueName) {
+  public QueueMeta getQueueMeta(byte[] queueName) throws OperationException {
     return getQueue(queueName).getQueueMeta();
   }
 
