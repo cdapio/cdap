@@ -1,5 +1,7 @@
 package com.continuuity.data.table;
 
+import com.continuuity.api.data.OperationException;
+
 import java.util.List;
 
 
@@ -13,7 +15,7 @@ public interface OrderedVersionedColumnarTable extends VersionedColumnarTable {
    * @param readPointer
    * @return list of keys
    */
-  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer);
+  public List<byte[]> getKeys(int limit, int offset, ReadPointer readPointer) throws OperationException;
 
   /**
    * Scans all columns of all rows between the specified start row (inclusive)

@@ -26,7 +26,7 @@ public interface VersionedColumnarTable {
    * @param version
    * @param value
    */
-  public void put(byte [] row, byte [] column, long version, byte [] value);
+  public void put(byte [] row, byte [] column, long version, byte [] value) throws OperationException;
 
   /**
    * Writes the specified values for the specified columns at the specified
@@ -37,7 +37,7 @@ public interface VersionedColumnarTable {
    * @param values
    */
   public void put(byte [] row, byte [][] columns, long version,
-      byte [][] values);
+      byte [][] values) throws OperationException;
 
   /**
    * Deletes the specified version of the specified row and column.
@@ -45,7 +45,7 @@ public interface VersionedColumnarTable {
    * @param column
    * @param version
    */
-  public void delete(byte [] row, byte [] column, long version);
+  public void delete(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Deletes the specified version of the specified row and columns.
@@ -53,7 +53,7 @@ public interface VersionedColumnarTable {
    * @param columns
    * @param version
    */
-  public void delete(byte [] row, byte [][] columns, long version);
+  public void delete(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Deletes all versions of the specified row and column that have a version
@@ -62,7 +62,7 @@ public interface VersionedColumnarTable {
    * @param column
    * @param version
    */
-  public void deleteAll(byte [] row, byte [] column, long version);
+  public void deleteAll(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Deletes all versions of the specified row and columns that have a version
@@ -71,7 +71,7 @@ public interface VersionedColumnarTable {
    * @param columns
    * @param version
    */
-  public void deleteAll(byte [] row, byte [][] columns, long version);
+  public void deleteAll(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
@@ -80,7 +80,7 @@ public interface VersionedColumnarTable {
    * @param column
    * @param version
    */
-  public void undeleteAll(byte [] row, byte [] column, long version);
+  public void undeleteAll(byte [] row, byte [] column, long version) throws OperationException;
 
   /**
    * Undeletes (invalidates) a previously executed
@@ -89,7 +89,7 @@ public interface VersionedColumnarTable {
    * @param columns
    * @param version
    */
-  public void undeleteAll(byte [] row, byte [][] columns, long version);
+  public void undeleteAll(byte [] row, byte [][] columns, long version) throws OperationException;
 
   /**
    * Reads the latest version of all columns in the specified row, utilizing
@@ -99,7 +99,7 @@ public interface VersionedColumnarTable {
    * @return map of columns to values
    */
   public OperationResult<Map<byte [], byte []>>
-  get(byte [] row, ReadPointer readPointer);
+  get(byte [] row, ReadPointer readPointer) throws OperationException;
 
   /**
    * Reads the latest version of the specified column in the specified row,
@@ -112,7 +112,7 @@ public interface VersionedColumnarTable {
    *         none exists
    */
   public OperationResult<byte[]> get(byte [] row, byte [] column,
-                                     ReadPointer readPointer);
+                                     ReadPointer readPointer) throws OperationException;
 
   /**
    * Reads the latest version of the specified column in the specified row,
@@ -128,7 +128,7 @@ public interface VersionedColumnarTable {
    */
   public OperationResult<ImmutablePair<byte[], Long>> getWithVersion(
       byte[] row, byte[] column,
-      ReadPointer readPointer);
+      ReadPointer readPointer) throws OperationException;
 
   /**
    * Reads the latest versions of all columns in the specified row that are
@@ -142,7 +142,7 @@ public interface VersionedColumnarTable {
    */
   public OperationResult<Map<byte [], byte []>> get(
       byte [] row, byte[] startColumn, byte[] stopColumn,
-      ReadPointer readPointer);
+      ReadPointer readPointer) throws OperationException;
 
   /**
    * Reads the latest versions of the specified columns in the specified row,
@@ -154,7 +154,7 @@ public interface VersionedColumnarTable {
    */
   public OperationResult<Map<byte[], byte[]>> get(
       byte [] row, byte[][] columns,
-      ReadPointer readPointer);
+      ReadPointer readPointer) throws OperationException;
 
   /**
    * Increments (atomically) the specified row and column by the specified
