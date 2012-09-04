@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Async client for forwarding requests of type {@link com.continuuity
@@ -33,14 +34,9 @@ final class OpenTSDBClient extends IoHandlerAdapter {
   public static final long CONNECT_TIMEOUT = 30 *1000L;
 
   /**
-   * No of concurrent sessions.
-   */
-  public static final int CONCURRENT_SESSIONS = 100;
-
-  /**
    * Connect retry attempts.
    */
-  public static final int RETRY_ATTEMPTS = 10;
+  public static final int RETRY_ATTEMPTS = 50;
 
   /**
    * Intra connect gap (sleep).
@@ -65,8 +61,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
   /**
    * Queue of sessions
    */
-  private LinkedBlockingDeque<IoSession> idleSessions =
-    new LinkedBlockingDeque<IoSession>(CONCURRENT_SESSIONS);
+  private IoSession session;
 
 
   public OpenTSDBClient(final String hostname, final int port) {
@@ -86,8 +81,8 @@ final class OpenTSDBClient extends IoHandlerAdapter {
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
       @Override
       public void run() {
-        for(IoSession sesson : idleSessions) {
-          sesson.close(true).addListener(new IoFutureListener<CloseFuture>() {
+        if(session != null) {
+          session.close(true).addListener(new IoFutureListener<CloseFuture>() {
             @Override
             public void operationComplete(CloseFuture future) {
               if(future.isClosed()) {
@@ -99,7 +94,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
         if(connector != null) {
           connector.dispose();
         }
-        idleSessions = null;
+        session = null;
         connector = null;
       }
     }));
@@ -114,11 +109,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
 
     // if there idle sessions available then we take from it
     // else we proceed further to create a session to be used.
-    if(idleSessions.size() > 1)  {
-      IoSession session = null;
-      try {
-        session = idleSessions.take();
-      } catch (InterruptedException e) {}
+    if(session != null && session.isConnected()) {
       return session;
     }
 
@@ -129,8 +120,9 @@ final class OpenTSDBClient extends IoHandlerAdapter {
     ConnectFuture connectFuture =
       connector.connect(new InetSocketAddress(hostname, port));
     connectFuture.awaitUninterruptibly();
+
     try {
-      IoSession session = connectFuture.getSession();
+      return connectFuture.getSession();
     } catch (RuntimeIoException e) {
       Log.warn("Failing to connect to opentsdb server. Reason : {}",
                e.getMessage());
@@ -151,7 +143,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
    * @throws IOException
    */
   public WriteFuture send(String request) throws IOException {
-    IoSession session = connect();
+    session = connect();
     if(session == null) {
       int attempts = RETRY_ATTEMPTS;
       while(attempts > 0) {
@@ -184,51 +176,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
   public void exceptionCaught(IoSession session, Throwable cause) throws
     Exception {
     // We proactively remove the session that is a problem.
-    idleSessions.remove(session);
     Log.warn(cause.getMessage(), cause);
-  }
-
-  /**
-   * Callback when the session is opened.
-   * <p>
-   *   once the session is opened, we set the WRITER idle time
-   *   and add it to idle session list to be offered to writer.
-   * </p>
-   *
-   * @param session
-   */
-  @Override
-  public void sessionOpened(IoSession session) {
-    // Sets the writer idle time to 1 second.
-    session.getConfig().setIdleTime(IdleStatus.WRITER_IDLE, 1);
-    idleSessions.offer(session);
-  }
-
-  /**
-   * Session closure removes it from the session list if it was there.
-   *
-   * @param session being processed.
-   */
-  @Override
-  public void sessionClosed(IoSession session) {
-    // Remove the session from the sessions list as this has been closed.
-    idleSessions.remove(session);
-  }
-
-  /**
-   * If the session is idle, then it's moved on to the idle session list.
-   *
-   * @param session being processed.
-   * @param status of the session.
-   * @throws Exception
-   */
-  @Override
-  public void sessionIdle(IoSession session, IdleStatus status)
-    throws Exception {
-    // If writer is idle, then its move to idle session list.
-    if(status == IdleStatus.WRITER_IDLE) {
-      idleSessions.offer(session);
-    }
   }
 
 }

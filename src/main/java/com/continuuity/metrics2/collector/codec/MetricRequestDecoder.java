@@ -99,7 +99,6 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     // on it.
     slice.get(buffer);
     String command = new String(buffer);
-    Log.info("Received command : {}", command);
 
     // Split the command into it's constituents.
     Iterable<String> constituents = CMD_SPLITTER.split(command);
