@@ -13,23 +13,18 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
 
   private final String hyperSqlJDBCString;
-  private final Properties hyperSqlProperties;
   private final Connection connection;
 
   @Inject
   public HyperSQLOVCTableHandle(
-      @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString,
-      @Named("HyperSQLOVCTableHandleProperties")Properties hyperSqlProperties)
+      @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString)
           throws SQLException {
     this.hyperSqlJDBCString = hyperSqlJDBCString;
-    this.hyperSqlProperties = hyperSqlProperties;
-    this.connection = DriverManager.getConnection(this.hyperSqlJDBCString,
-        this.hyperSqlProperties);
+    this.connection = DriverManager.getConnection(this.hyperSqlJDBCString);
   }
 
   @Override

@@ -51,9 +51,9 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     return existing != null ? existing : table;
   }
 
-  public static final byte[] queueOVCTable = Bytes.toBytes("__queueOVCTable");
-  public static final byte[] streamOVCTable = Bytes.toBytes("__streamOVCTable");
-  
+  public static final byte [] queueOVCTable = Bytes.toBytes("queueOVCTable");
+  public static final byte [] streamOVCTable = Bytes.toBytes("streamOVCTable");
+
   @Override
   public TTQueueTable getQueueTable(byte[] queueTableName)
       throws OperationException {

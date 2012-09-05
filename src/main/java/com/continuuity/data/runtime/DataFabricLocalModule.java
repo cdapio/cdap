@@ -3,8 +3,6 @@
  */
 package com.continuuity.data.runtime;
 
-import java.util.Properties;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.HyperSQLAndMemoryOVCTableHandle;
 import com.continuuity.data.engine.hypersql.HyperSQLColumnarTableHandle;
@@ -20,38 +18,26 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import java.util.Properties;
+
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
 public class DataFabricLocalModule extends AbstractModule {
 
   private final String hyperSqlJDCBString;
-  private final Properties hyperSqlProperties;
-  
-  private static final Properties DEFAULT_PROPERTIES;
-  static {
-    DEFAULT_PROPERTIES = new Properties();
-    DEFAULT_PROPERTIES.setProperty("user", "SA");
-    DEFAULT_PROPERTIES.setProperty("password", "");
-  }
-  
+
   public DataFabricLocalModule() {
     CConfiguration conf = CConfiguration.create();
     this.hyperSqlJDCBString = conf.get("data.local.jdbc",
         "jdbc:hsqldb:file:" +
-        System.getProperty("java.io.tmpdir")) +
-        System.getProperty("file.separator") + "fabricdb";
-    this.hyperSqlProperties = DEFAULT_PROPERTIES;
+        System.getProperty("java.io.tmpdir") +
+        System.getProperty("file.separator") + "fabricdb;user=sa");
   }
-  
-  public DataFabricLocalModule(String hyperSqlJDBCString) {
-    this(hyperSqlJDBCString, DEFAULT_PROPERTIES);
-  }
-  
+
   public DataFabricLocalModule(String hyperSqlJDBCString,
       Properties hyperSqlProperties) {
     this.hyperSqlJDCBString = hyperSqlJDBCString;
-    this.hyperSqlProperties = hyperSqlProperties;
   }
 
   @Override
@@ -80,10 +66,6 @@ public class DataFabricLocalModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(Names.named("HyperSQLOVCTableHandleJDBCString"))
         .toInstance(hyperSqlJDCBString);
-    bind(Properties.class)
-        .annotatedWith(Names.named("HyperSQLOVCTableHandleProperties"))
-        .toInstance(hyperSqlProperties);
-
   }
 
   private void loadHsqlDriver() {

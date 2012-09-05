@@ -11,7 +11,6 @@ import com.google.inject.name.Named;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.sql.SQLException;
-import java.util.Properties;
 
 /**
  * A hybrid {@link OVCTableHandle} that primarily uses HyperSQL tables, except
@@ -22,10 +21,9 @@ public class HyperSQLAndMemoryOVCTableHandle extends HyperSQLOVCTableHandle {
 
   @Inject
   public HyperSQLAndMemoryOVCTableHandle(
-      @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString,
-      @Named("HyperSQLOVCTableHandleProperties")Properties hyperSqlProperties)
+      @Named("HyperSQLOVCTableHandleJDBCString")String hyperSqlJDBCString)
           throws SQLException {
-    super(hyperSqlJDBCString, hyperSqlProperties);
+    super(hyperSqlJDBCString);
   }
 
   @Override
