@@ -53,10 +53,10 @@ public class CuratorServiceTest {
       KillZKSession.kill(
           client.getZookeeperClient().getZooKeeper(),
           server.getConnectionString());
-      Thread.sleep(500);
+      Thread.sleep(500); // without this the test fails intermittently
       Assert.assertEquals(0,
-          discovery.queryForInstances("awesomeservice").size
-          ());
+          discovery.queryForInstances("awesomeservice").size());
+
     } finally {
       Collections.reverse(closeables);
       for(Closeable c : closeables) {
