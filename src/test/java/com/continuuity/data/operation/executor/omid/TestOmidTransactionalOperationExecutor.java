@@ -47,7 +47,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     rows.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // commit
     assertTrue(executor.commitTransaction(pointer, rows));
@@ -86,7 +86,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(new ClearFabric(true, false, false));
 
     // data is gone, queues still there
-    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(executor.execute(new ReadKey(dataKey)).isEmpty());
     assertTrue(Bytes.equals(queueKey, executor.execute(
         new QueueDequeue(queueKey, consumer, config)).getValue()));
     assertTrue(Bytes.equals(streamKey, executor.execute(
@@ -96,7 +96,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(new ClearFabric(false, true, true));
 
     // everything is gone
-    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(executor.execute(new ReadKey(dataKey)).isEmpty());
     assertTrue(executor.execute(
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
     assertTrue(executor.execute(
@@ -130,7 +130,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(new ClearFabric(true, true, false));
 
     // everything is gone
-    assertNull(executor.execute(new ReadKey(dataKey)));
+    assertTrue(executor.execute(new ReadKey(dataKey)).isEmpty());
     assertTrue(executor.execute(
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
     assertTrue(executor.execute(
@@ -155,7 +155,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // start tx two
     ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
@@ -168,7 +168,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     rowsTwo.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // commit tx two, should succeed
     assertTrue(executor.commitTransaction(pointerTwo, rowsTwo));
@@ -244,7 +244,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // commit write 1
     assertTrue(executor.commitTransaction(pointerWOne, rowsOne));
@@ -469,7 +469,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     rowsOne.addRow(key);
 
     // read should see nothing
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // commit
     assertTrue(executor.commitTransaction(pointerOne, rowsOne));
@@ -492,14 +492,14 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new ReadKey(key)).getValue());
 
     // dirty read should NOT see it
-    assertNull(executor.read(new ReadKey(key),
-            new MemoryReadPointer(Long.MAX_VALUE)));
+    assertTrue(executor.read(new ReadKey(key),
+            new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
 
     // commit it
     assertTrue(executor.commitTransaction(pointerTwo, rowsTwo));
 
     // clean read will not see it now
-    assertNull(executor.execute(new ReadKey(key)));
+    assertTrue(executor.execute(new ReadKey(key)).isEmpty());
 
     // write value two
     executor.execute(new Write(key, valueTwo));

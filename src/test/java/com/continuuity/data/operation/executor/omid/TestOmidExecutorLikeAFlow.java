@@ -117,7 +117,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(queueName, consumer, config)).isEmpty());
     assertTrue(this.executor.execute(
         new QueueDequeue(streamName, consumer, config)).isEmpty());
-    assertNull(this.executor.execute(new ReadKey(keyAndValue)));
+    assertTrue(this.executor.execute(new ReadKey(keyAndValue)).isEmpty());
   }
 
   @Test

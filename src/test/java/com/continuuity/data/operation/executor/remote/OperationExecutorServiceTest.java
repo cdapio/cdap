@@ -108,32 +108,23 @@ public abstract class OperationExecutorServiceTest extends
 
     // read back row with remote and verify null
     Read read = new Read(key);
-    Map<byte[], byte[]> columns = remote.execute(read).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertNull(columns.get(Operation.KV_COL));
+    Assert.assertTrue(remote.execute(read).isEmpty());
 
     // read back one column and verify null
     read = new Read(key, "none".getBytes());
-    columns = remote.execute(read).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertNull(columns.get("none".getBytes()));
+    Assert.assertTrue(remote.execute(read).isEmpty());
 
     // read back two columns and verify null
     read = new Read(key,
         new byte[][] { "neither".getBytes(), "nor".getBytes() });
-    columns = remote.execute(read).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertNull(columns.get("neither".getBytes()));
-    Assert.assertNull(columns.get("nor".getBytes()));
+    Assert.assertTrue(remote.execute(read).isEmpty());
 
     // read back column range and verify null
     ReadColumnRange readColumnRange = new ReadColumnRange(
         key,
         "from".getBytes(),
         "to".getBytes());
-    columns = remote.execute(readColumnRange).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertEquals(0, columns.size());
+    Assert.assertTrue(remote.execute(readColumnRange).isEmpty());
   }
 
    /** Tests Write, ReadColumnRange, Delete */
@@ -192,9 +183,7 @@ public abstract class OperationExecutorServiceTest extends
     // read back a disjoint column range, verify it is empty by not null
     readColumnRange =
         new ReadColumnRange(row, "d".getBytes(), "e".getBytes());
-    columns = remote.execute(readColumnRange).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertEquals(0, columns.size());
+    Assert.assertTrue(remote.execute(readColumnRange).isEmpty());
 
     // delete two of the columns with remote
     Delete delete = new Delete(row,
@@ -257,9 +246,7 @@ public abstract class OperationExecutorServiceTest extends
 
     // verify the row is not there any more, actually the read will return
     // a map with an entry for x, but with a null value
-    columns = remote.execute(read).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertNull(columns.get("x".getBytes()));
+    Assert.assertTrue(remote.execute(read).isEmpty());
 
     // compareAndSwap
     compareAndSwap = new CompareAndSwap(key,
@@ -272,9 +259,7 @@ public abstract class OperationExecutorServiceTest extends
     }
 
     // verify the row is still not there
-    columns = remote.execute(read).getValue();
-    Assert.assertNotNull(columns);
-    Assert.assertNull(columns.get("x".getBytes()));
+    Assert.assertTrue(remote.execute(read).isEmpty());
   }
 
   /** clear the tables, then write a batch of keys, then readAllKeys */
@@ -382,10 +367,10 @@ public abstract class OperationExecutorServiceTest extends
     }
 
     // verify that all operations were rolled back
-    Assert.assertNull(remote.execute(new ReadKey(keyA)));
+    Assert.assertTrue(remote.execute(new ReadKey(keyA)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
         remote.execute(new ReadKey(keyB)).getValue());
-    Assert.assertNull(remote.execute(new ReadKey(keyC)));
+    Assert.assertTrue(remote.execute(new ReadKey(keyC)).isEmpty());
     Assert.assertArrayEquals("0".getBytes(),
         remote.execute(new ReadKey(keyD)).getValue());
     Assert.assertTrue(remote.execute(
@@ -406,7 +391,7 @@ public abstract class OperationExecutorServiceTest extends
     // verify that all operations were performed
     Assert.assertArrayEquals("1".getBytes(),
         remote.execute(new ReadKey(keyA)).getValue());
-    Assert.assertNull(remote.execute(new ReadKey(keyB)));
+    Assert.assertTrue(remote.execute(new ReadKey(keyB)).isEmpty());
     Assert.assertArrayEquals(new byte[] { 0,0,0,0,0,0,0,5 },
         remote.execute(new ReadKey(keyC)).getValue());
     Assert.assertArrayEquals("2".getBytes(),
@@ -442,7 +427,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(new ClearFabric(true, true, true));
 
     // verify that all is gone
-    Assert.assertNull(remote.execute(new ReadKey(a)));
+    Assert.assertTrue(remote.execute(new ReadKey(a)).isEmpty());
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
     QueueConfig config = new
         QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
@@ -460,7 +445,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(new ClearFabric(true, false, false));
 
     // verify that the tables are gone, but queues and streams are there
-    Assert.assertNull(remote.execute(new ReadKey(a)));
+    Assert.assertTrue(remote.execute(new ReadKey(a)).isEmpty());
     Assert.assertArrayEquals(x,
         remote.execute(new QueueDequeue(q, consumer, config)).getValue());
     Assert.assertArrayEquals(x,

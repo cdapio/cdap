@@ -457,8 +457,20 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumer, config, readPointer).isEmpty());
 
     // second and third ackd, another ack should fail
-    queue.ack(resultTwo.getEntryPointer(), consumer);
-    queue.ack(resultThree.getEntryPointer(), consumer);
+    // second and third ackd, another ack should fail
+    try {
+      queue.ack(resultTwo.getEntryPointer(), consumer);
+      fail("ack should fail.");
+    } catch (OperationException e) {
+      // expected
+    }
+    try {
+      queue.ack(resultThree.getEntryPointer(), consumer);
+      fail("ack should fail.");
+    } catch (OperationException e) {
+      // expected
+    }
+
     // first and fourth are not acked, ack should pass
     queue.ack(resultOne.getEntryPointer(), consumer);
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);

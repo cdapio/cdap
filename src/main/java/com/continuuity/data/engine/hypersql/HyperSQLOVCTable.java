@@ -438,8 +438,18 @@ implements OrderedVersionedColumnarTable {
         ps.setBytes(idx, stopColumn);
       }
       ResultSet result = ps.executeQuery();
-      return new OperationResult<Map<byte[], byte[]>>(
-          filteredLatestColumns(result, readPointer));
+      if (result == null) {
+        return new OperationResult<Map<byte[], byte[]>>(
+            StatusCode.KEY_NOT_FOUND);
+      }
+      Map<byte[], byte[]> filtered =
+          filteredLatestColumns(result, readPointer);
+      if (filtered.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(
+            StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(filtered);
+      }
     } catch (SQLException e) {
       handleSQLException(e, "select");
     } finally {
@@ -477,9 +487,18 @@ implements OrderedVersionedColumnarTable {
         ps.setBytes(idx++, column);
       }
       ResultSet result = ps.executeQuery();
-      return new OperationResult<Map<byte[], byte[]>>(
-          filteredLatestColumns(result, readPointer));
-
+      if (result == null) {
+        return new OperationResult<Map<byte[], byte[]>>(
+            StatusCode.KEY_NOT_FOUND);
+      }
+      Map<byte[], byte[]> filtered =
+          filteredLatestColumns(result, readPointer);
+      if (filtered.isEmpty()) {
+        return new OperationResult<Map<byte[], byte[]>>(
+            StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(filtered);
+      }
     } catch (SQLException e) {
       handleSQLException(e, "select");
     } finally {

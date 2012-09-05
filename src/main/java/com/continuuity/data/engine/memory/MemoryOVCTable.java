@@ -191,7 +191,7 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
     Row r = new Row(row);
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
         p = getAndLockExistingRow(r);
-    if (p == null) return new
+    if (p == null || p.getSecond() == null) return new
         OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
 
     Map<byte[], byte[]> ret =
@@ -200,7 +200,8 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       NavigableMap<Version, Value> columnMap = getColumn(p.getSecond(), column);
       ImmutablePair<Long, byte[]> latest =
           filteredLatest(columnMap, readPointer);
-      ret.put(column, latest == null ? null : latest.getSecond());
+      if (latest != null)
+        ret.put(column, latest.getSecond());
     }
     unlockRow(r);
 

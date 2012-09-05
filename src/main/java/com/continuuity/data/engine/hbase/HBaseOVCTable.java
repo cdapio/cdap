@@ -302,7 +302,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         map.put(column, kv.getValue());
         last = column;
       }
-      return new OperationResult<Map<byte[], byte[]>>(map);
+      if (map.isEmpty()) {
+        return new
+            OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(map);
+      }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }
@@ -332,7 +337,12 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         map.put(column, kv.getValue());
         last = column;
       }
-      return new OperationResult<Map<byte[], byte[]>>(map);
+      if (map.isEmpty()) {
+        return new
+            OperationResult<Map<byte[], byte[]>>(StatusCode.COLUMN_NOT_FOUND);
+      } else {
+        return new OperationResult<Map<byte[], byte[]>>(map);
+      }
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
     }

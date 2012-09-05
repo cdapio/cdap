@@ -58,7 +58,7 @@ public abstract class TestOVCTable {
   public void testClearVerySimply() throws OperationException {
     byte [] row = Bytes.toBytes("testClear");
 
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     this.table.put(row, COL, 1L, row);
 
@@ -67,7 +67,7 @@ public abstract class TestOVCTable {
 
     this.table.clear();
 
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     this.table.put(row, COL, 1L, row);
 
@@ -382,8 +382,7 @@ public abstract class TestOVCTable {
     }
     this.table.compareAndSwap(row, COL, valueTwo, null, RP_MAX, 5L);
 
-    byte [] val = this.table.get(row, COL, RP_MAX).getValue();
-    assertNull("expected null but was " + Bytes.toString(val), val);
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
   }
 
   @Test
@@ -398,13 +397,7 @@ public abstract class TestOVCTable {
     assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // compare and swap null to valueOne, max to v2
-
-    try {
-      this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L);
-      fail("Expecting compare-and-swap to fail.");
-    } catch (OperationException e) {
-      // expected
-    }
+    this.table.compareAndSwap(row, COL, null, valueOne, RP_MAX, 2L);
 
     // null to valueTwo, read v1 write v3
     this.table.compareAndSwap(
@@ -633,7 +626,7 @@ public abstract class TestOVCTable {
     this.table.deleteAll(row, COL, 3L);
 
     // Read value, should not exist
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // Write at 3 (trying to overwrite existing deletes @ 3)
     this.table.put(row, COL, 3L, Bytes.toBytes(3L));
@@ -642,7 +635,7 @@ public abstract class TestOVCTable {
     // If writes can overwrite deletes at the same timestamp:
     // assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
     // Currently, a delete cannot be overwritten on the same version:
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // Undelete the delete all at 3
     this.table.undeleteAll(row, COL, 3L);
@@ -654,13 +647,13 @@ public abstract class TestOVCTable {
     this.table.deleteAll(row, COL, 5L);
 
     // Read value, should not exist
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // Write at 4
     this.table.put(row, COL, 4L, Bytes.toBytes(4L));
 
     // Read value, should not exist
-    assertNull(this.table.get(row, COL, RP_MAX));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // Write at 6
     this.table.put(row, COL, 6L, Bytes.toBytes(6L));
