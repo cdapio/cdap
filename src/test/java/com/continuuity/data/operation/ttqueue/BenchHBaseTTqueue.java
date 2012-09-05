@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -39,7 +40,7 @@ public class BenchHBaseTTqueue extends BenchTTQueue {
   }
 
   @Override
-  protected TTQueue createQueue(CConfiguration conf) {
+  protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
     return new TTQueueOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),

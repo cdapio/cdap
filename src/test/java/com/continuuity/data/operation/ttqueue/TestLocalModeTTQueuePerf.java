@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -58,7 +59,7 @@ public class TestLocalModeTTQueuePerf {
     testNEnqueuesThenSyncDequeues(10000);
   }
 
-  private void testNEnqueuesThenSyncDequeues(int n) {
+  private void testNEnqueuesThenSyncDequeues(int n) throws OperationException {
 
     byte [] queueName = Bytes.toBytes("queue://qtn_" + n);
     byte [] streamName = Bytes.toBytes("stream://stn_" + n);
@@ -93,11 +94,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result =
           queueTable.dequeue(queueName, consumer, config, readPointer);
-      try {
-        queueTable.ack(queueName, result.getEntryPointer(), consumer);
-      } catch (com.continuuity.api.data.OperationException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
+      queueTable.ack(queueName, result.getEntryPointer(), consumer);
       queueTable.finalize(queueName, result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }
@@ -120,11 +117,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result =
           streamTable.dequeue(queueName, consumer, config, readPointer);
-      try {
-        streamTable.ack(queueName, result.getEntryPointer(), consumer);
-      } catch (com.continuuity.api.data.OperationException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
+      streamTable.ack(queueName, result.getEntryPointer(), consumer);
       streamTable.finalize(queueName, result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }

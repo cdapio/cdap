@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -16,13 +17,13 @@ public abstract class BenchTTQueue {
   protected static TimestampOracle timeOracle =
       new MemoryStrictlyMonotonicTimeOracle();
 
-  private TTQueue createQueue() {
+  private TTQueue createQueue() throws OperationException {
     return createQueue(new CConfiguration());
   }
 
   private BenchConfig config = getConfig();
   
-  protected abstract TTQueue createQueue(CConfiguration conf);
+  protected abstract TTQueue createQueue(CConfiguration conf) throws OperationException;
 
   protected abstract BenchConfig getConfig();
   
