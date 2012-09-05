@@ -90,9 +90,6 @@ public class MetricsSingleNodeServer implements MetricsServer {
           server.serve();
         }
       }).start();
-    } catch (IOException e) {
-      Log.error("Failed to create FARService server. Reason : {}", e.getMessage());
-      throw new ServerException("Failed to create FARService server", e);
     } catch (TTransportException e) {
       Log.error("Non-blocking server error. Reason : {}", e.getMessage());
       throw new ServerException("Non-blocking server error.", e);
