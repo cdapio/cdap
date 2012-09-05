@@ -18,4 +18,16 @@ public class OperationException extends Exception {
     return this.statusCode;
   }
 
+  public String getStatusMessage() {
+    return String.format("[%d] %s", this.statusCode, super.getMessage());
+  }
+
+  @Override
+  public String getMessage() {
+    return getStatusMessage();
+  }
+
+  public String getMessageOnly() {
+    return super.getMessage();
+  }
 }
