@@ -1,5 +1,6 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.performance.benchmark.*;
@@ -65,8 +66,12 @@ public class QueueBenchmark extends OpexBenchmark {
 
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = new QueueEnqueue(queueBytes, value);
-    if (!opex.execute(enqueue))
-      throw new BenchmarkException("Operation " + enqueue + " failed.");
+    try {
+      opex.execute(enqueue);
+    } catch (OperationException e) {
+      throw new BenchmarkException(
+          "Operation " + enqueue + " failed: " + e.getMessage());
+    }
   }
 
   void doDequeue(int consumerId) throws BenchmarkException {
@@ -78,10 +83,12 @@ public class QueueBenchmark extends OpexBenchmark {
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
     // first dequeue
-    DequeueResult result = opex.execute(dequeue);
-    if (!result.isSuccess()) {
+    DequeueResult result;
+    try {
+      result = opex.execute(dequeue);
+    } catch (OperationException e) {
       throw new BenchmarkException(
-          "Operation " + dequeue + " failed: " + result.getMsg());
+          "Operation " + dequeue + " failed: " + e.getMessage());
     }
     if (result.isEmpty()) return;
 
@@ -97,8 +104,12 @@ public class QueueBenchmark extends OpexBenchmark {
 
     // execute the ack operation
     if (ackToExecute != null) {
-      if (!opex.execute(ackToExecute))
-        throw new BenchmarkException("Operation " + ackToExecute + " failed.");
+      try {
+        opex.execute(ackToExecute);
+      } catch (OperationException e) {
+        throw new BenchmarkException(
+            "Operation " + ackToExecute + " failed: " + e.getMessage());
+      }
       pending.removeFirst();
     }
   }
@@ -123,8 +134,11 @@ public class QueueBenchmark extends OpexBenchmark {
     // perform all pending acks to leave the queue in a good state
     for (List<QueueAck> pending : pendingAcks) {
       for (QueueAck ack : pending) {
-        opex.execute(ack);
-        // ignore success or failure
+        try {
+          opex.execute(ack);
+        } catch (OperationException e) {
+          // ignore success or failure
+        }
       }
     }
     // don't forget to call the base class' shutdown (for the opex)

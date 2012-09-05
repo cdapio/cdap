@@ -1,5 +1,6 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.Write;
 import com.continuuity.performance.benchmark.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -15,8 +16,12 @@ public class WriteBenchmark extends OpexBenchmark {
     final byte[] value = Bytes.toBytes(iteration);
     Write write = new Write(key, value);
 
-    if (!opex.execute(write))
-      throw new BenchmarkException("Operation " + write + " failed.");
+    try {
+      opex.execute(write);
+    } catch (OperationException e) {
+      throw new BenchmarkException(
+          "Operation " + write + " failed: " + e.getMessage());
+    }
   }
 
   @Override
