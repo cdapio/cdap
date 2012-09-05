@@ -29,7 +29,8 @@ public class CuratorServiceTest {
     closeables.add(server);
 
     try {
-      CuratorFramework client = CuratorFrameworkFactory.newClient(server.getConnectionString(), TIMEOUT, TIMEOUT,
+      CuratorFramework client = CuratorFrameworkFactory.
+          newClient(server.getConnectionString(), TIMEOUT, TIMEOUT,
         new RetryOneTime(1));
       closeables.add(client);
       client.start();
@@ -41,14 +42,21 @@ public class CuratorServiceTest {
         .build();
 
 
-      ServiceDiscovery<String> discovery = new ServiceDiscoveryImpl<String>(client, "/awesomeservice",
+      ServiceDiscovery<String> discovery =
+          new ServiceDiscoveryImpl<String>(client, "/awesomeservice",
         new JsonInstanceSerializer<String>(String.class), instance);
       closeables.add(discovery);
       discovery.start();
 
-      Assert.assertEquals(discovery.queryForInstances("awesomeservice").size(), 1);
-      KillZKSession.kill(client.getZookeeperClient().getZooKeeper(), server.getConnectionString());
-      Assert.assertEquals(discovery.queryForInstances("awesomeservice").size(), 0);
+      Assert.assertEquals(1,
+          discovery.queryForInstances("awesomeservice").size());
+      KillZKSession.kill(
+          client.getZookeeperClient().getZooKeeper(),
+          server.getConnectionString());
+      Thread.sleep(500);
+      Assert.assertEquals(0,
+          discovery.queryForInstances("awesomeservice").size
+          ());
     } finally {
       Collections.reverse(closeables);
       for(Closeable c : closeables) {
@@ -56,6 +64,5 @@ public class CuratorServiceTest {
       }
     }
   }
-
 
 }
