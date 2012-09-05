@@ -1,6 +1,3 @@
-#!/bin/sh
-# Set environment variables here.
-
 # Main class to be invoked.
 MAIN_CLASS=com.continuuity.runtime.MetricsCollectionServerMain
 
