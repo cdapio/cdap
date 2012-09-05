@@ -1,16 +1,15 @@
 package com.continuuity.data.operation.ttqueue;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.Random;
-
-import org.junit.Test;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.ReadPointer;
+import org.junit.Test;
+
+import java.util.Random;
+
+import static org.junit.Assert.assertTrue;
 
 public abstract class BenchTTQueue {
 
@@ -81,8 +80,8 @@ public abstract class BenchTTQueue {
     for (int i=0; i<iterations; i++) {
       DequeueResult result = queue.dequeue(consumer, config, rp);
       assertTrue(result.isSuccess());
-      assertTrue(queue.ack(result.getEntryPointer(), consumer));
-      assertTrue(queue.finalize(result.getEntryPointer(), consumer, -1));
+      queue.ack(result.getEntryPointer(), consumer);
+      queue.finalize(result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }
     long dend = now();

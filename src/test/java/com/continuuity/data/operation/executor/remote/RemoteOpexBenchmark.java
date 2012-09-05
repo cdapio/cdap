@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.ReadKey;
 import com.continuuity.api.data.Write;
 import com.continuuity.common.conf.CConfiguration;
@@ -82,28 +83,34 @@ public abstract class RemoteOpexBenchmark {
   abstract public void startService() throws Exception;
 
 
-  static long performNIncrements(OperationExecutor opex, int threadId, int numWrites) {
+  static long performNIncrements(OperationExecutor opex,
+                                 int threadId, int numWrites)
+      throws OperationException {
+
     System.err.println("Thread"  + threadId +
         ": Performing " + numWrites + " increments with opex: " + opex);
     final byte[] key = ("key" + threadId).getBytes();
     final byte[] value = { 0, 0, 0, 0, 0, 0, 0, 0 };
     Write write = new Write(key, value);
-    Assert.assertTrue(opex.execute(write));
+    opex.execute(write);
     Increment increment = new Increment(key, 1);
     long before = System.currentTimeMillis();
     for (int i = 0; i < numWrites; i++) {
-      Assert.assertTrue(opex.execute(increment));
+      opex.execute(increment);
     }
     long after = System.currentTimeMillis();
     ReadKey read = new ReadKey(key);
-    byte[] bytes = opex.execute(read);
+    byte[] bytes = opex.execute(read).getValue();
     Assert.assertNotNull(bytes);
     Assert.assertEquals(8, bytes.length);
     Assert.assertEquals(numWrites, Bytes.toLong(bytes));
     return after - before;
   }
 
-  static long performNWrites(OperationExecutor opex, int threadId, int numWrites) {
+  static long performNWrites(OperationExecutor opex,
+                             int threadId, int numWrites)
+      throws OperationException {
+
     System.err.println("Thread"  + threadId +
         ": Performing " + numWrites + " writes with opex: " + opex);
     final byte[] key = ("key" + threadId).getBytes();
@@ -112,9 +119,7 @@ public abstract class RemoteOpexBenchmark {
     long before = System.currentTimeMillis();
     for (int i = 0; i < numWrites; i++) {
       value[0] = (byte)(i%0x000000ff);
-      boolean success = opex.execute(write);
-      if (!success)
-        Assert.assertTrue(success);
+      opex.execute(write);
     }
     long after = System.currentTimeMillis();
     return after - before;
@@ -124,7 +129,9 @@ public abstract class RemoteOpexBenchmark {
     WRITE, INCREMENT
   }
 
-  long performOperations(OperationExecutor opex, Test test, int threadId, int numOps) {
+  long performOperations(OperationExecutor opex,
+                         Test test, int threadId, int numOps)
+      throws OperationException {
     switch(test) {
       case WRITE: return performNWrites(opex, threadId, numOps);
       case INCREMENT: return performNIncrements(opex, threadId, numOps);
@@ -146,8 +153,12 @@ public abstract class RemoteOpexBenchmark {
       this.runtimes = runtimes;
     }
     public void run() {
-      long milliSeconds = performOperations(opex, test, threadId, numOps);
-      runtimes[threadId] = milliSeconds;
+      try {
+        long milliSeconds = performOperations(opex, test, threadId, numOps);
+        runtimes[threadId] = milliSeconds;
+      } catch (OperationException e) {
+        Assert.fail("Thread got exception: " + e.getMessage());
+      }
     }
   }
 

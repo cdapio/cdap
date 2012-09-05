@@ -1,13 +1,8 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.executor.BatchOperationException;
-import com.continuuity.data.operation.executor.BatchOperationResult;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -30,27 +25,28 @@ public class TimeoutTest extends OpexServiceTestBase {
             return "noop(sleep on write)";
           }
           @Override
-          public boolean execute(Write write) {
+          public void execute(Write write) throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
-            return super.execute(write);
+            super.execute(write);
           }
           @Override
-          public BatchOperationResult execute(List<WriteOperation> batch)
-              throws OmidTransactionException {
+          public void execute(List<WriteOperation> batch)
+              throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
-            return super.execute(batch);
+            super.execute(batch);
           }
           int readCount = 0;
           @Override
-          public byte[] execute(ReadKey read) {
+          public OperationResult<byte[]> execute(ReadKey read)
+              throws OperationException {
             if (++readCount < 3) {
               try {
                 Thread.sleep(1000);
@@ -59,7 +55,8 @@ public class TimeoutTest extends OpexServiceTestBase {
               }
               return super.execute(read);
             } else {
-              return new byte[] { (byte)readCount };
+              return new OperationResult<byte[]>(
+                  new byte[] { (byte)readCount });
             }
           }
         });
@@ -69,23 +66,30 @@ public class TimeoutTest extends OpexServiceTestBase {
    * This tests that the thrift client times out and returns an error or
    * non-success in some other way.
    */
-  @Test(expected = BatchOperationException.class)
-  public void testThriftTimeout() throws BatchOperationException {
+  @Test(expected = OperationException.class)
+  public void testThriftTimeout() throws OperationException {
     Write write = new Write("x".getBytes(), "1".getBytes());
-    Assert.assertFalse(remote.execute(write));
-
-    List<WriteOperation> batch = Lists.newArrayList();
-    batch.add(write);
-    try {
-      remote.execute(batch);
-    } catch (OmidTransactionException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
+    remote.execute(write);
   }
 
+  /**
+   * This tests that the thrift client times out and returns an error or
+   * non-success in some other way.
+   */
+  @Test(expected = OperationException.class)
+  public void testThriftTimeoutBatch() throws OperationException {
+    List<WriteOperation> batch = Lists.newArrayList();
+    Write write = new Write("x".getBytes(), "1".getBytes());
+    batch.add(write);
+    remote.execute(batch);
+  }
+
+  /**
+   * This tests that the thrift client retries (see override of read() above.
+   */
   @Test
-  public void testRetry() {
+  public void testRetry() throws OperationException {
     ReadKey read = new ReadKey("x".getBytes());
-    Assert.assertArrayEquals(new byte[] { 3 }, remote.execute(read));
+    Assert.assertArrayEquals(new byte[] { 3 }, remote.execute(read).getValue());
   }
 }
