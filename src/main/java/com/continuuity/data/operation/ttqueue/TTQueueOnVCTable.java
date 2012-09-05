@@ -390,19 +390,21 @@ public class TTQueueOnVCTable implements TTQueue {
       // Do a dirty read of the entry group meta data
       byte [] entryGroupMetaColumn = makeColumn(entryPointer.getEntryId(),
           ENTRY_GROUP_META, consumer.getGroupId());
-      OperationResult<byte[]> entryGroupMetaData =
+      OperationResult<byte[]> entryGroupMetaDataResult =
           this.table.get(shardRow, entryGroupMetaColumn, dirty.getFirst());
 
-      if (entryGroupMetaData.isEmpty() ||
-          entryGroupMetaData.getValue().length == 0) {
-        // Group has not processed this entry yet, consider available for now
+      byte[] entryGroupMetaData = null;
+      if (entryGroupMetaDataResult.isEmpty() ||
+          entryGroupMetaDataResult.getValue() == null ||
+          entryGroupMetaDataResult.getValue().length == 0) {
+        // Group has not processed tihs entry yet, consider available for now
         if (TRACE) log("Group has not processed entry at id "
             + entryPointer.getEntryId());
-        entryGroupMetaData = null;
 
       } else {
+        entryGroupMetaData = entryGroupMetaDataResult.getValue();
         entryGroupMeta = EntryGroupMeta.
-            fromBytes(entryGroupMetaData.getValue());
+            fromBytes(entryGroupMetaData);
         if (TRACE) log("Group has already seen entry at id "
             + entryPointer.getEntryId() + ", groupMeta = "
             + entryGroupMeta.toString());
@@ -452,7 +454,7 @@ public class TTQueueOnVCTable implements TTQueue {
             // Attempt to update with updated timestamp
             try {
               this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-                  entryGroupMetaData.getValue(), newEntryGroupMeta.getBytes(),
+                  entryGroupMetaData, newEntryGroupMeta.getBytes(),
                   dirty.getFirst(), dirty.getSecond());
               // Successfully updated timestamp, still own it, return this
               this.dequeueReturns.incrementAndGet();
@@ -507,7 +509,7 @@ public class TTQueueOnVCTable implements TTQueue {
           EntryGroupState.DEQUEUED, now(), consumer.getInstanceId());
       try {
         this.table.compareAndSwap(shardRow, entryGroupMetaColumn,
-            entryGroupMetaData.getValue(), newEntryGroupMeta.getBytes(),
+            entryGroupMetaData, newEntryGroupMeta.getBytes(),
             dirty.getFirst(), dirty.getSecond());
 
         // We own it!  Return it.

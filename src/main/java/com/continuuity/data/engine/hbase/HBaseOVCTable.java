@@ -47,8 +47,8 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler = exceptionHandler;
     } catch (IOException e) {
       exceptionHandler.handle(e);
+      throw new InternalError("this point should never be reached.");
     }
-    throw new InternalError("this point should never be reached.");
   }
 
   private synchronized HTable getWriteTable() throws IOException {
