@@ -4,6 +4,8 @@ import com.continuuity.api.data.*;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
+import javax.management.OperationsException;
+
 public class ReaderFlowlet extends AbstractComputeFlowlet {
 
   @Override
@@ -24,11 +26,22 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
     ReadKey read = new ReadKey(key);
     ReadOperationExecutor executor =
       getFlowletLaunchContext().getReadExecutor();
-    byte [] value = executor.execute(read);
-  
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Read value (" +
-          new String(value) + ") for key (" + new String(key) + ")");
+    try {
+      OperationResult<byte []> value = executor.execute(read);
 
+      if (Common.debug) {
+        if (value.isEmpty()) {
+          System.out.println(this.getClass().getSimpleName() + ": No value " +
+              "read for key (" + new String(key) + ")");
+        } else {
+          System.out.println(this.getClass().getSimpleName() + ": Read value (" +
+              new String(value.getValue()) + ") for key (" + new String(key) +
+              ")");
+        }
+      }
+    } catch (OperationException e) {
+      System.err.println(this.getClass().getSimpleName() + ":  Error " +
+          "reading value for key (" + new String(key) + "): " + e.getMessage());
+    }
   }
 }
