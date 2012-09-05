@@ -45,7 +45,7 @@ public class CuratorServiceTest {
         new JsonInstanceSerializer<String>(String.class), instance);
       closeables.add(discovery);
       discovery.start();
-
+      Thread.sleep(1000);
       Assert.assertEquals(discovery.queryForInstances("awesomeservice").size(), 1);
       KillZKSession.kill(client.getZookeeperClient().getZooKeeper(), server.getConnectionString());
       Assert.assertEquals(discovery.queryForInstances("awesomeservice").size(), 0);
