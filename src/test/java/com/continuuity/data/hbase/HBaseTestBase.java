@@ -94,8 +94,13 @@ public abstract class HBaseTestBase {
     System.setProperty("test.build.data", dfsPath.toString());
     System.err.println("Instantiating dfs cluster in 1 sec...");
     Thread.sleep(1000);
-    dfsCluster = new MiniDFSCluster(0, conf, 1,
-        true, true, true, null, null, null, null);
+    dfsCluster = new MiniDFSCluster.Builder(conf)
+        .nameNodePort(0)
+        .numDataNodes(1)
+        .format(true)
+        .manageDataDfsDirs(true)
+        .manageNameDfsDirs(true)
+        .build();
     System.err.println("Waiting for dfs to start...");
     dfsCluster.waitClusterUp();
     System.err.println("DFS started...");
