@@ -99,8 +99,10 @@ implements OrderedVersionedColumnarTable {
       stmt.executeUpdate(createStatement);
       stmt.executeUpdate(indexStatement);
     } catch (SQLException e) {
-      // fail silent if table/index already exists (code -21 or -23)
-      if (e.getErrorCode() != -21 && e.getErrorCode() != -23) {
+      // fail silent if table/index already exists
+      // SQL state for determining the duplicate table create exception
+      // http://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html
+      if(!e.getSQLState().equalsIgnoreCase("42504")) {
         handleSQLException(e, "create");
       }
     } finally {
