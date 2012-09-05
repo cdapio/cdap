@@ -85,32 +85,24 @@ public class RemoteOperationExecutor
    * exception.
    * @param <T> The return type of the operation
    */
-  abstract static class Opexeptionable <T> {
+  abstract static class Operation<T> {
 
     /* the name of the operation */
-    String operation;
+    String name;
 
     /** constructor with name of operation */
-    Opexeptionable(String operation) {
-      this.operation = operation;
+    Operation(String name) {
+      this.name = name;
     }
 
     /** return the name of the operation */
     String getName() {
-      return operation;
+      return name;
     }
 
     /** execute the operation, given an opex client */
-    abstract T call(OperationExecutorClient client)
+    abstract T execute(OperationExecutorClient client)
         throws TException, OperationException;
-
-    /** produce a return value in the case of a thrift exception */
-    T error(TException te) throws OperationException {
-      String message =
-          "Thrift error for " + operation + ": " + te.getMessage();
-      Log.error(message, te);
-      throw new OperationException(StatusCode.THRIFT_ERROR, message, te);
-    }
   }
 
   /**
@@ -131,7 +123,7 @@ public class RemoteOperationExecutor
    * @throws OperationException if the operation fails with an exception
    *    other than TException
    */
-  private <T> T execute(Opexeptionable<T> operation)
+  private <T> T execute(Operation<T> operation)
       throws OperationException {
     RetryStrategy retryStrategy = retryStrategyProvider.newRetryStrategy();
     while (true) {
@@ -142,7 +134,7 @@ public class RemoteOperationExecutor
 
         // note that this can throw exceptions other than TException
         // hence the finally clause at the end
-        return operation.call(client);
+        return operation.execute(client);
 
       } catch (TException te) {
         // a thrift error occurred, the thrift client may be in a bad state
@@ -154,9 +146,11 @@ public class RemoteOperationExecutor
         // determine whether we should retry
         boolean retry = retryStrategy.failOnce();
         if (!retry) {
-          // retry strategy is exceeded, return an error
-          // note that this can throw an exception of type E
-          return operation.error(te);
+          // retry strategy is exceeded, throw an operation exception
+          String message =
+              "Thrift error for " + operation + ": " + te.getMessage();
+          Log.error(message, te);
+          throw new OperationException(StatusCode.THRIFT_ERROR, message, te);
         } else {
           // call retry strategy before retrying
           retryStrategy.beforeRetry();
@@ -176,9 +170,9 @@ public class RemoteOperationExecutor
   public void execute(final List<WriteOperation> writes)
       throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Batch") {
+        new Operation<Boolean>("Batch") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws OperationException, TException {
             client.execute(writes);
             return true;
@@ -190,9 +184,9 @@ public class RemoteOperationExecutor
   public DequeueResult execute(final QueueDequeue dequeue)
       throws OperationException {
     return this.execute(
-        new Opexeptionable<DequeueResult>("Dequeue") {
+        new Operation<DequeueResult>("Dequeue") {
           @Override
-          public DequeueResult call(OperationExecutorClient client)
+          public DequeueResult execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(dequeue);
           }
@@ -203,9 +197,9 @@ public class RemoteOperationExecutor
   public long execute(final QueueAdmin.GetGroupID getGroupID)
       throws OperationException {
     return this.execute(
-        new Opexeptionable<Long>("GetGroupID") {
+        new Operation<Long>("GetGroupID") {
           @Override
-          public Long call(OperationExecutorClient client)
+          public Long execute(OperationExecutorClient client)
               throws TException, OperationException {
             return client.execute(getGroupID);
           }
@@ -215,11 +209,11 @@ public class RemoteOperationExecutor
   @Override
   public OperationResult<QueueAdmin.QueueMeta>
   execute(final QueueAdmin.GetQueueMeta getQM) throws OperationException {
-    return this.execute(new Opexeptionable<
-        OperationResult<QueueAdmin.QueueMeta>>("GetQueueMeta") {
+    return this.execute(new Operation<
+            OperationResult<QueueAdmin.QueueMeta>>("GetQueueMeta") {
           @Override
           public OperationResult<QueueAdmin.QueueMeta>
-          call(OperationExecutorClient client)
+          execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(getQM);
           }
@@ -229,9 +223,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final ClearFabric clearFabric) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("ClearFabric") {
+        new Operation<Boolean>("ClearFabric") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(clearFabric);
             return true;
@@ -243,9 +237,9 @@ public class RemoteOperationExecutor
   public OperationResult<byte[]> execute(final ReadKey readKey)
       throws OperationException {
     return this.execute(
-        new Opexeptionable<OperationResult<byte[]>>("ReadKey") {
+        new Operation<OperationResult<byte[]>>("ReadKey") {
           @Override
-          public OperationResult<byte[]> call(OperationExecutorClient client)
+          public OperationResult<byte[]> execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(readKey);
           }
@@ -256,10 +250,10 @@ public class RemoteOperationExecutor
   public OperationResult<Map<byte[], byte[]>> execute(final Read read)
       throws OperationException {
     return this.execute(
-        new Opexeptionable<OperationResult<Map<byte[],byte[]>>>("Read") {
+        new Operation<OperationResult<Map<byte[],byte[]>>>("Read") {
           @Override
           public OperationResult<Map<byte[], byte[]>>
-          call(OperationExecutorClient client)
+          execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(read);
           }
@@ -270,10 +264,10 @@ public class RemoteOperationExecutor
   public OperationResult<List<byte[]>> execute(final ReadAllKeys readAllKeys)
       throws OperationException {
     return this.execute(
-        new Opexeptionable<OperationResult<List<byte[]>>>("ReadAllKeys") {
+        new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
           @Override
           public OperationResult<List<byte[]>>
-          call(OperationExecutorClient client)
+          execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(readAllKeys);
           }
@@ -284,11 +278,11 @@ public class RemoteOperationExecutor
   public OperationResult<Map<byte[], byte[]>>
   execute(final ReadColumnRange readColumnRange)
       throws OperationException {
-    return this.execute(new Opexeptionable<
-        OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
+    return this.execute(new Operation<
+            OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
           @Override
           public OperationResult<Map<byte[], byte[]>>
-          call(OperationExecutorClient client)
+          execute(OperationExecutorClient client)
               throws OperationException, TException {
             return client.execute(readColumnRange);
           }
@@ -298,9 +292,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final Write write) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Write") {
+        new Operation<Boolean>("Write") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(write);
             return true;
@@ -311,9 +305,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final Delete delete) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Delete") {
+        new Operation<Boolean>("Delete") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(delete);
             return true;
@@ -324,9 +318,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final Increment increment) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Increment") {
+        new Operation<Boolean>("Increment") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(increment);
             return true;
@@ -338,9 +332,9 @@ public class RemoteOperationExecutor
   public void execute(final CompareAndSwap compareAndSwap)
       throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("CompareAndSwap") {
+        new Operation<Boolean>("CompareAndSwap") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(compareAndSwap);
             return true;
@@ -351,9 +345,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final QueueEnqueue enqueue) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Enqueue") {
+        new Operation<Boolean>("Enqueue") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(enqueue);
             return true;
@@ -364,9 +358,9 @@ public class RemoteOperationExecutor
   @Override
   public void execute(final QueueAck ack) throws OperationException {
     this.execute(
-        new Opexeptionable<Boolean>("Ack") {
+        new Operation<Boolean>("Ack") {
           @Override
-          public Boolean call(OperationExecutorClient client)
+          public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(ack);
             return true;

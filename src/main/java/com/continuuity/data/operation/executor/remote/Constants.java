@@ -41,7 +41,7 @@ public class Constants {
   public static final String CFG_DATA_OPEX_CLIENT_COUNT
       = "data.opex.client.count";
 
-  /** to specify the number of times to retry a failed thrift call */
+  /** to specify the retry strategy for a failed thrift call */
   public static final String CFG_DATA_OPEX_CLIENT_RETRY_STRATEGY
       = "data.opex.client.retry.strategy";
 
