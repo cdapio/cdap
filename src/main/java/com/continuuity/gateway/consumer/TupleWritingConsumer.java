@@ -41,6 +41,23 @@ public class TupleWritingConsumer extends Consumer {
     this.executor = executor;
   }
 
+  /**
+   * To avoid the overhead of creating new serializer for every event,
+   * we keep a serializer for each thread in a thread local structure.
+   */
+  ThreadLocal<TupleSerializer> serializers =
+      new ThreadLocal<TupleSerializer>();
+
+  /**
+   * Utility method to get or create the thread local serializer
+   */
+  TupleSerializer getSerializer() {
+    if (this.serializers.get() == null) {
+      this.serializers.set(new TupleSerializer(false));
+    }
+    return this.serializers.get();
+  }
+
   @Override
   protected void single(Event event) throws Exception {
     this.batch(Collections.singletonList(event));
@@ -49,7 +66,7 @@ public class TupleWritingConsumer extends Consumer {
   @Override
   protected void batch(List<Event> events) throws Exception {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
-    TupleSerializer serializer = new TupleSerializer(false);
+    TupleSerializer serializer = getSerializer();
     for (Event event : events) {
       // convert the event into a tuple
       Tuple tuple = new TupleBuilder().

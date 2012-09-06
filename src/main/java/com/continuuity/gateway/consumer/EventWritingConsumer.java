@@ -25,6 +25,23 @@ public class EventWritingConsumer extends Consumer {
   private OperationExecutor executor;
 
   /**
+   * To avoid the overhead of creating new serializer for every event,
+   * we keep a serializer for each thread in a thread local structure.
+   */
+  ThreadLocal<EventSerializer> serializers =
+      new ThreadLocal<EventSerializer>();
+
+  /**
+   * Utility method to get or create the thread local serializer
+   */
+  EventSerializer getSerializer() {
+    if (this.serializers.get() == null) {
+      this.serializers.set(new EventSerializer());
+    }
+    return this.serializers.get();
+  }
+
+  /**
    * This is our Logger class
    */
   private static final Logger LOG = LoggerFactory
@@ -47,7 +64,7 @@ public class EventWritingConsumer extends Consumer {
   @Override
   protected void batch(List<Event> events) throws Exception {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
-    EventSerializer serializer = new EventSerializer();
+    EventSerializer serializer = getSerializer();
     for (Event event : events) {
       byte[] bytes = serializer.serialize(event);
       if (bytes == null) {
