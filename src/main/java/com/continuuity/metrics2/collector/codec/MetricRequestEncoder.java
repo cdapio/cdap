@@ -21,7 +21,7 @@ public class MetricRequestEncoder implements ProtocolEncoder {
 
     String request = (String) message;
     request = request + "\n";
-    IoBuffer buffer = IoBuffer.allocate(request.length()).setAutoExpand(true);
+    IoBuffer buffer = IoBuffer.allocate(request.length(), false);
     buffer.putString(request, Charset.defaultCharset().newEncoder());
     buffer.flip();
     out.write(buffer);

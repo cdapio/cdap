@@ -31,7 +31,6 @@ public class MetricResponseDecoder extends CumulativeProtocolDecoder {
       } else {
         status = MetricResponse.Status.INVALID;
       }
-
       MetricResponse response = new MetricResponse(status);
       out.write(response);
       return true;

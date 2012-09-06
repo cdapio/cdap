@@ -45,24 +45,22 @@ sonar {
 /**
  * Generate thrift files.
  */
-/*
-task thrift
-thrift {
-    group = 'Continuuity'
-    description = 'Generates thrift stubs'
-    files = fileTree(dir: 'src/main/thrift').matching{ include '*.thrift'}
-    doFirst {
-      println 'Generating thrift stubs ...'
-    }
-    exec {
-        executable = 'thrift'
-        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/main/java', files.collect { relativePath(it)}. join(",")]
-    }
-    doLast {
-      println 'Thrift stubs generation done ...'
-    }
-}
-*/
+//task thrift
+//thrift {
+//    group = 'Continuuity'
+//    description = 'Generates thrift stubs'
+//    files = fileTree(dir: 'src/main/thrift').matching{ include '*.thrift'}
+//    doFirst {
+//      println 'Generating thrift stubs ...'
+//    }
+//    exec {
+//        executable = 'thrift'
+//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/main/java', files.collect { relativePath(it)}. join(",")]
+//    }
+//    doLast {
+//      println 'Thrift stubs generation done ...'
+//    }
+//}
 
 /**
  * Exclude any config xml from jar

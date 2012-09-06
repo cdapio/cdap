@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * An entry point for the server for collecting metrics.
  */
-public final class MetricsCollectionServer extends AbstractRegisteredServer {
+public final class MetricsCollectionServer extends AbstractRegisteredServer
+    implements MetricsCollectionServerInterface {
+
   private static final Logger
       Log = LoggerFactory.getLogger(MetricsCollectionServer.class);
 
@@ -86,15 +88,6 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer {
   }
 
   /**
-   * Sets the metric Io handler to be used for receiving and sending data.
-   *
-   * @param handler instance of handler.
-   */
-  public void setIoHandler(MetricsCollectionServerIoHandler handler) {
-    this.handler = handler;
-  }
-
-  /**
    * Configures the metrics collection server and registers the address and
    * port the server is running on.
    *
@@ -108,8 +101,9 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer {
 
       // Verify that an IoHandler has been set.
       if(handler == null) {
-        throw new Exception("No IoHandler has been set. " +
-                              "Set using #setIoHandler API");
+        // Create an instance of metrics i/o handler.
+        handler =
+          new MetricsCollectionServerIoHandler(conf);
       }
 
       // Retrieve the port on which to run the overlord server.
@@ -129,6 +123,13 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer {
 
       // Set to reuse address
       acceptor.setReuseAddress(true);
+
+      // Configures to keep the connection alive if client wants to do
+      // so.
+      acceptor.getSessionConfig().setKeepAlive(true);
+
+      // Disable packet batching.
+      acceptor.getSessionConfig().setTcpNoDelay(true);
 
       // Create a JMX aware bean that wraps IoService object. In our case
       // it's NioSocketAcceptor.
@@ -189,7 +190,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer {
 
       // Set service name. This is the name by which the clients can find
       // me.
-      setServerName("metriccollector");
+      setServerName(Constants.SERVICE_METRICS_COLLECTION_SERVER);
 
       // Include the service payload.
       RegisteredServerInfo registrationInfo =

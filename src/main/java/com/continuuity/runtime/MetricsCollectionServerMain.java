@@ -1,40 +1,33 @@
 package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.collector.server.MetricsCollectionServer;
-import com.continuuity.metrics2.collector.server
-  .MetricsCollectionServerIoHandler;
+import com.continuuity.metrics2.collector.server.MetricsCollectionServerInterface;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Main server class for metrics collection server.
  */
-public class MetricsCollectionServerMain {
+final class MetricsCollectionServerMain {
   private static final Logger Log =
     LoggerFactory.getLogger(MetricsCollectionServerMain.class);
 
+  /**
+   * Metrics collection server object main.
+   * @param args from command line.
+   */
   public void doMain(String args[]) {
-
     try {
-      // Create a configuration object and read in the
-      // continuuity-default.xml first before continuuity-site.xml
-      CConfiguration conf = CConfiguration.create();
-
-      // Create an instance of metrics i/o handler.
-      MetricsCollectionServerIoHandler handler =
-        new MetricsCollectionServerIoHandler(conf);
-
-      // Create Metrics collection server.
-      MetricsCollectionServer server = new MetricsCollectionServer();
-
-      // Set the IO handler to the server.
-      server.setIoHandler(handler);
-
-      // Start FAR Server.
-      server.start(args, conf);
+      final Injector injector
+        = Guice.createInjector(new MetricsModules().getDistributedModules());
+      final MetricsCollectionServerInterface serverInterface
+        = injector.getInstance(MetricsCollectionServerInterface.class);
+      serverInterface.start(args, CConfiguration.create());
     } catch (Exception e) {
-      Log.error("Server failed to start. Reason : {}", e.getMessage());
+      Log.error("Metrics collection server failed to start. Reason : {}",
+                e.getMessage());
     }
   }
 

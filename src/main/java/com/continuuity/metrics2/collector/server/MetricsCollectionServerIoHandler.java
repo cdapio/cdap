@@ -1,20 +1,26 @@
 package com.continuuity.metrics2.collector.server;
 
+import akka.dispatch.*;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.collector.MetricType;
-import com.google.common.collect.Maps;
+import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
+import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
+import com.continuuity.metrics2.collector.server.plugins.OpenTSDBProcessor;
+import com.google.common.collect.Lists;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.integration.jmx.IoSessionMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Handler for metrics collection server.
@@ -36,8 +42,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
   /**
    * List of processor mapping to the type of metric they can process.
    */
-  private final Map<MetricType, MetricsProcessor> processors
-            = Maps.newHashMap();
+  private final List<ImmutablePair<MetricType, MetricsProcessor>> processors
+            = Lists.newArrayList();
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -56,24 +62,28 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
     this.mBeanServer = mBeanServer;
     this.configuration = configuration;
 
-    // Add the mapping from metric type to their respective processors.
-    MetricsProcessor openTSDB = new OpenTSDBProcessor(configuration);
+    boolean openTSDBEnabled =
+      configuration.getBoolean(
+        Constants.CFG_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED,
+        Constants.DEFAULT_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED
+      );
 
-    // If configured to send flow metrics to opentsdb then we set the
-    // right procesor for it.
-    if(configuration.getBoolean(
-      Constants.CFG_METRICS_COLLECTOR_FORWARD_FLOW_TO_OPENTSDB,
-      Constants.DEFAULT_METRICS_COLLECTOR_FORWARD_FLOW_TO_OPENTSDB
-    )) {
-      Log.info("Configuring to send flow metrics to opentsdb.");
-      add(MetricType.FlowSystem, openTSDB);
-      add(MetricType.FlowSystem, openTSDB);
+    // By default we will send all the flow metrics to
+    // flow metrics processor. But, in case the openTSDB is
+    // enabled, then we send the flow metrics to both places.
+    MetricsProcessor flowMetricsProcessor =
+      new FlowMetricsProcessor(configuration);
+
+    if(openTSDBEnabled) {
+      add(MetricType.FlowSystem, new OpenTSDBProcessor(configuration));
+      add(MetricType.FlowUser, new OpenTSDBProcessor(configuration));
+      add(MetricType.System, new OpenTSDBProcessor(configuration));
+      add(MetricType.FlowSystem, flowMetricsProcessor);
+      add(MetricType.FlowUser, flowMetricsProcessor);
     } else {
-      MetricsProcessor flow = new FlowMetricsProcessor(configuration);
-      add(MetricType.FlowSystem, flow);
-      add(MetricType.FlowUser, flow);
+      add(MetricType.FlowSystem, flowMetricsProcessor);
+      add(MetricType.FlowUser, flowMetricsProcessor);
     }
-    add(MetricType.System, openTSDB);
   }
 
   /**
@@ -100,7 +110,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
    * @param processor associated with the metric.
    */
   private void add(MetricType type, MetricsProcessor processor) {
-    processors.put(type, processor);
+    processors.add(new ImmutablePair<MetricType, MetricsProcessor>(type,
+                   processor));
   }
 
   /**
@@ -146,26 +157,71 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
    * @throws Exception
    */
   @Override
-  public void messageReceived(IoSession session, Object message) throws
-    Exception {
+  public void messageReceived(final IoSession session, final Object message)
+    throws Exception {
 
     if(message instanceof MetricRequest) {
-      MetricRequest request = (MetricRequest) message;
-      // If the request is valid.
+      final MetricRequest request = (MetricRequest) message;
+
+      // If we have a valid request then we iterate through all the
+      // processor attached to the metric type to process the metric.
+      // Each processor will return a future that is chained to form
+      // one response back to the client. There is no transactionality
+      // in terms of processing the request. If there is any issue in
+      // one of the future in processing the request, we return failure
+      // to the client.
       if(request.getValid()) {
-        // We see if there is a valid processor associated with the
-        // metric type. If there is any, then we use that to process
-        // the metric, else we return a flag indicating that the
-        // metric has been ignored.
-        if(processors.containsKey(request.getMetricType())) {
-          processors.get(request.getMetricType()).process(
-            session, request
-          );
-        } else {
-          session.write(new MetricResponse(MetricResponse.Status.IGNORED));
+        Future<MetricResponse.Status> future = null;
+
+        // Iterate through the processor invoking the process method
+        for(final ImmutablePair<MetricType, MetricsProcessor> processor :
+              processors) {
+
+          // If request metric type matches, then farm out the work
+          // to the processor. If the
+          if(request.getMetricType() == processor.getFirst()) {
+            if(future == null) {
+              future = processor.getSecond().process(request);
+            } else {
+              future = future.zip(processor.getSecond().process(request)).map(
+                new Mapper<Tuple2<MetricResponse.Status, MetricResponse.Status>, MetricResponse.Status>() {
+                  @Override
+                  public MetricResponse.Status apply(Tuple2<MetricResponse.Status, MetricResponse.Status> zipped) {
+                    if(zipped._1() != MetricResponse.Status.SUCCESS ||
+                       zipped._2() != MetricResponse.Status.SUCCESS) {
+                      return MetricResponse.Status.FAILED;
+                    }
+                    return MetricResponse.Status.SUCCESS;
+                  }
+                }
+              );
+            }
+          }
+        }
+
+        // After have got all the processors to work, we attach a completion
+        // handler that would write back to client the final status of
+        // processing.
+        if(future != null) {
+          future.onComplete(new OnComplete<MetricResponse.Status>() {
+            @Override
+            public void onComplete(Throwable failure, MetricResponse.Status
+              status) {
+              if(failure != null) {
+                session.write(new MetricResponse(MetricResponse.Status.FAILED));
+              } else {
+                session.write(status);
+              }
+            }
+          });
+          return;
         }
       }
     }
-  }
 
+    // if we are here that means either the request was invalid or the type
+    // of request is not MetricRequest type. In this case we return an
+    // status as INVALID to caller.
+    session.write(new MetricResponse(MetricResponse.Status.INVALID));
+  }
 }

@@ -1,60 +1,54 @@
 package com.continuuity.runtime;
 
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.metrics.service.*;
-import com.continuuity.observer.StateChangeCallback;
-import com.continuuity.observer.internal.SQLStateChangeSyncer;
+import com.continuuity.metrics2.collector.server.MetricsCollectionServer;
+import com.continuuity.metrics2.collector.server
+  .MetricsCollectionServerInterface;
+import com.continuuity.metrics2.frontend.MetricsFrontendServer;
+import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.name.Names;
 
 /**
- *
+ * Injectable modules related to metric collection service.
  */
 public class MetricsModules extends RuntimeModule {
 
-  private void loadHyperSQLDriver() {
-    try {
-      Class.forName("org.hsqldb.jdbcDriver");
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-  }
   @Override
   public Module getInMemoryModules() {
-    loadHyperSQLDriver();
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetricsServer.class).to(MetricsSingleNodeServer.class);
-        bind(MetricsHandler.class).to(SQLMetricsHandler.class);
-        bind(StateChangeCallback.class).to(SQLStateChangeSyncer.class);
+        bind(MetricsCollectionServerInterface.class)
+          .to(MetricsCollectionServer.class);
+        bind(MetricsFrontendServerInterface.class)
+          .to(MetricsFrontendServer.class);
       }
     };
   }
 
   @Override
   public Module getSingleNodeModules() {
-    loadHyperSQLDriver();
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetricsServer.class).to(MetricsSingleNodeServer.class);
-        bind(MetricsHandler.class).to(SQLMetricsHandler.class);
-        bind(StateChangeCallback.class).to(SQLStateChangeSyncer.class);
+        bind(MetricsCollectionServerInterface.class)
+          .to(MetricsCollectionServer.class);
+        bind(MetricsFrontendServerInterface.class)
+          .to(MetricsFrontendServer.class);
       }
     };
   }
 
   @Override
   public Module getDistributedModules() {
-    loadHyperSQLDriver(); /** For now we are using HyperSQL, but will change in future */
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetricsServer.class).to(MetricsRegisteredServer.class);
-        bind(MetricsHandler.class).to(SQLMetricsHandler.class);
-        bind(StateChangeCallback.class).to(SQLStateChangeSyncer.class);
+        bind(MetricsCollectionServerInterface.class)
+          .to(MetricsCollectionServer.class);
+        bind(MetricsFrontendServerInterface.class)
+          .to(MetricsFrontendServer.class);
       }
     };
   }

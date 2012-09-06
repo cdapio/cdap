@@ -6,6 +6,7 @@ import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.metrics2.collector.codec.MetricCodecFactory;
+import com.google.common.base.Preconditions;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
 import org.apache.commons.lang.time.StopWatch;
@@ -24,7 +25,8 @@ import java.util.concurrent.*;
 
 /**
  * This client is similar to the NetCat client. It connects
- * to the specified end point and prints out received data.
+ * to the specified end point and sends the command to be executed
+ * on the server.
  */
 public class MetricsClient {
   private static final Logger Log =
@@ -37,13 +39,26 @@ public class MetricsClient {
 
   /**
    * Number of attempts after which we fail to send metrics.
+   * Theoritically, we don't have limit on how attempts are there,
+   * but we just want to set a limit, which in future if needed
+   * can be used.
    */
-  private static final int RECONNECT_ATTEMPTS = 10;
+  private static final int RECONNECT_ATTEMPTS = 10000;
 
   /**
-   * Time to sleep between connection attempts.
+   * Specifies the maximum back-off time (in seconds).
    */
-  private static final int INTRA_CONNECT_SLEEP_MS = 250;
+  private static final int BACKOFF_MAX_TIME = 30;
+
+  /**
+   * Specifies the minimum back-off time (in seconds).
+   */
+  private static final int BACKOFF_MIN_TIME = 1;
+
+  /**
+   * Specifies the exponent to be used for backing off.
+   */
+  private static final int BACKOFF_EXPONENT = 2;
 
   /**
    * Hostname to connect to.
@@ -87,20 +102,24 @@ public class MetricsClient {
     Executors.newCachedThreadPool();
 
   /**
-   *
+   * Client used for discoverying the metrics collector service.
    */
   private final ServiceDiscoveryClient serviceDiscovery;
 
   /**
    * Dispatcher for handling sending metrics to the overlord server.
    * It runs in a seperate thread dequeuing the commands written by
-   * the client side metric collector.
+   * the client metric collector. If it's unable to connect to the
+   * server, it implements a exponential backoff to make sure we don't
+   * task the server trying to connect.
    */
   private class MetricsDispatcher implements Runnable {
     private volatile boolean keepRunning = true;
-    private final CountDownLatch completed = new CountDownLatch(1);
     private final StopWatch watcher = new StopWatch();
 
+    /**
+     * Stops the running thread.
+     */
     public void stop() {
       keepRunning = false;
       watcher.stop(); // stop the watcher.
@@ -108,6 +127,8 @@ public class MetricsClient {
 
     @Override
     public void run() {
+      int interval = BACKOFF_MIN_TIME;
+
       watcher.start();  // Start the timer.
 
       while(keepRunning || ! queue.isEmpty()) {
@@ -124,17 +145,28 @@ public class MetricsClient {
         while(session == null || !session.isConnected()) {
           try {
             if(attempts < 0 || connect()) {
+              // Once, we know we are connected, backoff a little, but
+              // we don't want to reset completely, so we go by exponent.
+              interval = Math.max(BACKOFF_MIN_TIME, interval/BACKOFF_EXPONENT);
               break;
             }
-            Log.warn("Attempting to connect to overlord. Attempt {}",
+            Log.debug("Attempting to connect to overlord. Attempt {}",
                      RECONNECT_ATTEMPTS - attempts);
 
-            // Sleep between connection attempts.
-            Thread.sleep(INTRA_CONNECT_SLEEP_MS);
+            // Sleep based on how much ever is interval set to.
+            Thread.sleep(interval * 1000L);
+
+            // Exponentially increase the amount of time to sleep,
+            // untill we reach 30 seconds sleep between reconnects.
+            interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
           } catch (ServiceDiscoveryClientException e) {
             Log.error("Failed to retrieve service endpoint. Reason : {}",
                       e.getMessage());
-          } catch (InterruptedException e) {}
+          } catch (InterruptedException e) {
+            // We have been interrupted, it's better for us to get out of
+            // this loop and check if we have been asked to stop.
+            break;
+          }
           attempts--;
         }
 
@@ -186,6 +218,13 @@ public class MetricsClient {
     }
   }
 
+  /**
+   * Constructs and initializes {@link MetricsClient}.
+   *
+   * @param configuration object.
+   * @throws ServiceDiscoveryClientException thrown when the client is
+   * unable to discovery the service or unable to connect to zookeeper.
+   */
   public MetricsClient(CConfiguration configuration)
     throws ServiceDiscoveryClientException {
 
@@ -204,22 +243,41 @@ public class MetricsClient {
     ProtocolCodecFilter protocolFilter
       = new ProtocolCodecFilter(new MetricCodecFactory(true));
 
+    // Set the protocol filter to metric codec factory.
     connector.getFilterChain().addLast("protocol", protocolFilter);
-    //connector.getFilterChain().addLast("logging", new LoggingFilter());
+
+    // Set Keep Alive.
+    connector.getSessionConfig().setKeepAlive(true);
+
+    // Set to send packets of any size. As our requests are small,
+    // we don't want them to be batched.
+    connector.getSessionConfig().setTcpNoDelay(true);
 
     // Attach a handler.
-    connector.setHandler(new MetricsProtocolHandler());
+    connector.setHandler(new MetricsClientProtocolHandler());
 
     // Register a shutdown hook.
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
-        dispatcher.stop();
-        connector.dispose();
+        // Shutdown the dispatcher thread.
+        if(dispatcher != null) {
+          dispatcher.stop();
+        }
+
+        // Dispose the connector.
+        if(connector != null) {
+          connector.dispose();
+          connector = null;
+        }
+
+        // Shutdown executor service.
         executorService.shutdown();
+
+        // Close the session.
         if(session != null) {
           session.close(true).awaitUninterruptibly(CONNECT_TIMEOUT);
+          session = null;
         }
-        session = null;
       }
     });
 
@@ -238,7 +296,7 @@ public class MetricsClient {
    */
   private void getServiceEndpoint() throws ServiceDiscoveryClientException {
     ServiceInstance<ServicePayload> instance =
-          serviceDiscovery.getInstance("metriccollector",
+          serviceDiscovery.getInstance(Constants.SERVICE_METRICS_COLLECTION_SERVER,
                                        new RandomStrategy<ServicePayload>());
     this.hostname = instance.getAddress();
     this.port = instance.getPort();
@@ -281,6 +339,7 @@ public class MetricsClient {
    * @return true if successfully put on the queue else false.
    */
   public boolean write(String buffer) {
+    Preconditions.checkNotNull(buffer);
     return queue.offer(buffer);
   }
 

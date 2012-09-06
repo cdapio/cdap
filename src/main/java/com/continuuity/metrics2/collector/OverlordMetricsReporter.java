@@ -87,6 +87,22 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   private MetricsClient client;
 
   /**
+   * Single instance of metrics overlord report.
+   */
+  private static OverlordMetricsReporter reporter = null;
+
+  /**
+   *
+   */
+  private static int BACKOFF_MIN_TIME = 1;
+
+  private static int BACKOFF_MAX_TIME = 30;
+
+  private static int BACKOFF_EXPONENT = 2;
+
+  private int interval = BACKOFF_MIN_TIME;
+
+  /**
    * Enables the overlord reporter for the default metrics registry, and causes
    * it to send reports to overlord.
    *
@@ -94,19 +110,27 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    * @param unit   the time unit of {@code period}
    * @param configuration the configuration to use
    */
-  public static void enable(long period, TimeUnit unit,
+  public static synchronized void enable(long period, TimeUnit unit,
                             CConfiguration configuration) {
-    final OverlordMetricsReporter reporter =
-      new OverlordMetricsReporter(Metrics.defaultRegistry(), configuration);
-    reporter.start(period, unit);
+    if(reporter == null) {
+      reporter = new OverlordMetricsReporter(
+        Metrics.defaultRegistry(), configuration
+      );
+      reporter.start(period, unit);
+    }
+  }
+
+  public static synchronized void disable() {
+    if(reporter != null) {
+      reporter.shutdown();
+      reporter = null;
+    }
   }
 
   /**
-   * Creates a new {@link com.yammer.metrics.reporting
-   * .AbstractPollingReporter} instance.
+   * Creates a new AbstractPollingReporter instance
    *
-   * @param registry the {@link com.yammer.metrics.core.MetricsRegistry}
-   *                 containing the metrics this reporter will
+   * @param registry the MetricRegistry containing the metrics this reporter will
    *                 report
    * @param configuration instance of configuration object.
    */
@@ -127,6 +151,17 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   }
 
   /**
+   * Returns the metrics registry associated with
+   * @return MetricsRegistry
+   */
+  public static MetricsRegistry getRegistry() {
+    if(reporter != null) {
+      reporter.getMetricsRegistry();
+    }
+    return null;
+  }
+
+  /**
    * Part of the thread that is invoked based on the period and unit
    * specified for collecting metrics.
    */
@@ -135,9 +170,6 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     // Ensures that the timestamp is the same for all the metrics
     // that are processed.
     this.timestamp = System.currentTimeMillis()/1000;
-
-    // Send JVM Metrics first.
-    sendJVMMetrics();
 
     // Iterate through all the metrics that we have collected.
     for(Map.Entry<MetricName, Metric> entry :
@@ -150,6 +182,9 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
                  metric.toString(), e.getMessage());
       }
     }
+
+    // Send JVM Metrics.
+    //sendJVMMetrics();
   }
 
   /**
@@ -187,8 +222,22 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
       command = String.format("put %s %s %s", metricName,
                               timestamp, metricValue);
     }
+
     if(client != null) {
-      client.write(command);
+      // Write the command into the client queue.
+      if(! client.write(command)) {
+        // If we fail then we back-off to a max of BACKOFF_MAX_TIME.
+        // While this thread is blocked, a thread in the client is
+        // dequeing and trying to make space for more stuff to be add
+        // later.
+        interval = Math.max(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT)*1000;
+        Log.error("Failed writing -- waiting for {} ms", interval);
+        try {
+          Thread.sleep(interval);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
     }
   }
 
