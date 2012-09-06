@@ -27,8 +27,8 @@ public class ServiceDiscoveryClient implements Closeable {
   public static final String SERVICE_PATH = "/continuuity/system/services";
   private static final int sessionTimeout = 10*1000;
   private static final int connectionTimeout = 5*1000;
-  private static final int numberOfRetry = 5;
-  private static final int timeBetweenRetries = 10;
+  private static final int numberOfRetry = 100;
+  private static final int timeBetweenRetries = 1000;
   private static boolean started = false;
 
   /**

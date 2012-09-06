@@ -15,6 +15,12 @@
     </property>
 
     <property>
+        <name>command.port.enabled</name>
+        <value>false</value>
+        <description>Specifies whether command port should be enabled.</description>
+    </property>
+
+    <property>
         <name>thrift.max.read.buffer</name>
         <value>1048576</value>
         <description>
@@ -241,34 +247,48 @@
     </property>
 
     <!--
-        Overlord configuration
+        Overlord Metrics & Other overlord related configuration.
     -->
     <property>
-        <name>overlord.jdbc.uri</name>
-        <value>jdbc:hsqldb:file:~/continuuty-data/metricsdb;user=sa</value>
-        <description>Specifies URI for metrics DB</description>
-    </property>
-
-    <property>
-        <name>flow.monitor.server.address</name>
+        <name>overlord.metrics.collection.server.address</name>
         <value>localhost</value>
-    </property>
-
-    <!--
-        Metrics collection configuration.
-    -->
-    <property>
-        <name>overlord.metrics.server.address</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the server address port for metrics
+        <description>Specifies the server address for metrics
             collection server.</description>
     </property>
 
     <property>
-        <name>overlord.metrics.server.port</name>
+        <name>overlord.metrics.collection.server.port</name>
         <value>45003</value>
         <description>Specifies the port on which metrics collection
             server will run on.</description>
+    </property>
+
+    <property>
+        <name>ovelord.metrics.server.opentsdb.enabled</name>
+        <value>false</value>
+        <description>Specifies whether opentsdb for metric storage is
+            enabled or no.</description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.frontend.server.address</name>
+        <value>localhost</value>
+        <description>Specifies the server address of metrics frontend
+            server</description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.frontend.server.port</name>
+        <value>45002</value>
+        <description>Specifies the port on which frontend metrics server
+            is started on</description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.connection.url</name>
+        <value>jdbc:hsqldb:file:~/continuuity-data/metricsdb?user=sa</value>
+        <description>Specifies the connection string where metrics are stored
+            </description>
     </property>
 
     <property>
@@ -281,13 +301,6 @@
         <name>opentsdb.server.port</name>
         <value>4242</value>
         <description>Specifies the port on which opentsdb will run.</description>
-    </property>
-
-    <property>
-        <name>overlord.metrics.server.forwardto.opentsdb</name>
-        <value>false</value>
-        <description>Specifies whether the flow metrics are to be
-            forwarded to opentsdb</description>
     </property>
 
     <!--

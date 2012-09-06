@@ -15,7 +15,8 @@ import org.slf4j.LoggerFactory;
  * <p>
  *   Here is an example of how ActorSyncCall is used:
  *   <pre>
- *     ActorSyncCall&lt;Integer&gt; actorSyncCall = new ActorSyncCall&lt;Integer&gt;(actorRef);
+ *     ActorSyncCall&lt;Integer&gt; actorSyncCall
+ *           = new ActorSyncCall&lt;Integer&gt;(actorRef);
  *     Integer value = actorSyncCall.get(new ActorRequest(), timeout);
  *   </pre>
  * </p>
@@ -25,7 +26,9 @@ public class ActorSyncCall<T> {
   private ActorRef ref;
 
   /**
-   * Initializes the instance of ActorSyncCall with the reference to the actor it needs to interact with.
+   * Initializes the instance of ActorSyncCall with the reference to the actor
+   * it needs to interact with.
+   *
    * @param ref to actor to which sync calls are made.
    */
   public ActorSyncCall(ActorRef ref) {
@@ -33,7 +36,9 @@ public class ActorSyncCall<T> {
   }
 
   /**
-   * Makes a sync (blocking) call passing in the <code>message</code> with a specified <code>timeout</code>
+   * Makes a sync (blocking) call passing in the <code>message</code> with a
+   * specified <code>timeout</code>
+   *
    * @param message to be passed to the actor.
    * @param timeout for sync call.
    * @return instance of type T
@@ -46,7 +51,8 @@ public class ActorSyncCall<T> {
       Future<Object> future = Patterns.ask(ref, message, timeout);
       object = (T) Await.result(future, timeout.duration());
     } catch (Exception e) {
-      Log.warn("Failed to get response from actor {} for message {}", new Object[]{ref.toString(), message});
+      Log.warn("Failed to get response from actor {} for message {}",
+        new Object[]{ref.toString(), message});
     }
     return object;
   }

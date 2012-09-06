@@ -95,7 +95,8 @@ public abstract class AbstractRegisteredServer {
    * @throws ServerException
    */
   public final void start(String[] args, CConfiguration conf) throws ServerException {
-    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE, Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
+    String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+                                 Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     Log.info("AbstractRegisteredServer using ensemble {}", zkEnsemble);
 
     Preconditions.checkNotNull(zkEnsemble);
@@ -184,12 +185,22 @@ public abstract class AbstractRegisteredServer {
         }
         try {
           Thread.sleep(1);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
       if(!running) {
         throw new ServerException("Service not started even after waiting for " + START_WAIT_TIME + "ms.");
       }
-      cmdPortServer.serve();
+
+      // If command port has been enabled, then we block else we destroy
+      // the command port object.
+      if(conf.getBoolean(Constants.CFG_COMMAND_PORT_ENABLED,
+                         Constants.DEFAULT_COMMAND_PORT_ENABLED)) {
+        cmdPortServer.serve();
+      } else {
+        cmdPortServer = null;
+      }
 
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
