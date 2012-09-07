@@ -92,6 +92,11 @@ public class SingleNodeMain {
   private CConfiguration myConfiguration;
 
   /**
+   * Creates a zookeeper data directory for single node.
+   */
+  private static final String ZOOKEEPER_DATA_DIR = "data/zookeeper";
+
+  /**
    * Bootstrap is where we initialize all the services that make up the
    * SingleNode version.
    */
@@ -120,7 +125,7 @@ public class SingleNodeMain {
     System.out.println(" Starting FlowManager Service");
     theFlowManager.start(null, myConfiguration);
 
-    System.out.println(" Starting Monitoring Webapp");
+    System.out.println(" Starting User Interface");
     theWebApp = new WebCloudAppService();
     theWebApp.start(null, myConfiguration);
 
@@ -147,10 +152,8 @@ public class SingleNodeMain {
    */
   private void startZookeeper() throws InterruptedException, IOException {
     // Create temporary directory where zookeeper data files will be stored.
-    File temporaryDir = File.createTempFile("zookeeper-", Long.toString(System.nanoTime()));
-    temporaryDir.delete();
+    File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
     temporaryDir.mkdir();
-    temporaryDir.deleteOnExit();
 
     zookeeper = new InMemoryZookeeper(temporaryDir);
 
@@ -165,10 +168,12 @@ public class SingleNodeMain {
    * directory, and loads all of the properties into those files.
    */
   private void loadConfiguration() {
-
     // Create our config object
     myConfiguration = CConfiguration.create();
+<<<<<<< HEAD
 
+=======
+>>>>>>> 750b723b56063b8042a29700421f13a67c938499
   } // end of loadConfiguration
 
 

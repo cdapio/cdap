@@ -12,6 +12,8 @@
     </property>
 
     <property>
+        <!-- TODO does anybody use this? ports are configured by connector,
+             I don't see sense it specifying it at the gateway level. -Andreas-->
         <name>gateway.port</name>
         <value>9999</value>
         <description>Specifies the port on which the Gateway will listen</description>
