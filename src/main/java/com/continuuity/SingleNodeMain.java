@@ -170,10 +170,6 @@ public class SingleNodeMain {
   private void loadConfiguration() {
     // Create our config object
     myConfiguration = CConfiguration.create();
-<<<<<<< HEAD
-
-=======
->>>>>>> 750b723b56063b8042a29700421f13a67c938499
   } // end of loadConfiguration
 
 
