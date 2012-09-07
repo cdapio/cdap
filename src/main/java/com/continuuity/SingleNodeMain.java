@@ -15,7 +15,9 @@ import com.continuuity.flow.runtime.FARModules;
 import com.continuuity.flow.runtime.FlowManagerModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
-import com.continuuity.metrics.service.MetricsServer;
+import com.continuuity.metrics2.collector.server
+  .MetricsCollectionServerInterface;
+import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetricsModules;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
@@ -56,10 +58,16 @@ public class SingleNodeMain {
   private Gateway theGateway;
 
   /**
-   * This is the Metrics Monitor service
+   * This is the Metrics Collection service
    */
   @Inject
-  private MetricsServer theOverlord;
+  private MetricsCollectionServerInterface theOverlordCollectionServer;
+
+  /**
+   * This is the Metrics Frontend service.
+   */
+  @Inject
+  private MetricsFrontendServerInterface theOverlordFrontendServer;
 
   /**
    * This is the FAR server.
@@ -83,17 +91,15 @@ public class SingleNodeMain {
    */
   private CConfiguration myConfiguration;
 
-
-
   /**
    * Bootstrap is where we initialize all the services that make up the
    * SingleNode version.
-   *
    */
   private void bootStrapServices() throws Exception {
 
     // Check all our preconditions (which should have been injected)
-    Preconditions.checkNotNull(theOverlord);
+    Preconditions.checkNotNull(theOverlordCollectionServer);
+    Preconditions.checkNotNull(theOverlordFrontendServer);
     Preconditions.checkNotNull(theGateway);
     Preconditions.checkNotNull(theFARServer);
     Preconditions.checkNotNull(theFlowManager);
@@ -102,7 +108,8 @@ public class SingleNodeMain {
     startZookeeper();
 
     System.out.println(" Starting Metrics Service");
-    theOverlord.start(null, myConfiguration);
+    theOverlordCollectionServer.start(null, myConfiguration);
+    theOverlordFrontendServer.start(null, myConfiguration);
 
     System.out.println(" Starting Gateway Service");
     theGateway.start(null, myConfiguration);
@@ -161,15 +168,6 @@ public class SingleNodeMain {
 
     // Create our config object
     myConfiguration = CConfiguration.create();
-
-    // Clear all of the hadoop settings
-    myConfiguration.clear();
-
-    // TODO: Make this generic and scan for files before adding them
-    myConfiguration.addResource("continuuity-flow.xml");
-    myConfiguration.addResource("continuuity-gateway.xml");
-    myConfiguration.addResource("continuuity-webapp.xml");
-    myConfiguration.addResource("continuuity-overlord.xml");
 
   } // end of loadConfiguration
 
