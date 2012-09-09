@@ -38,7 +38,7 @@ task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
 }
 
 // check jshint output file and if non-zero length, then fail build 
-task c_syntax(dependsOn: ['jshintjs']) {
+task x_syntax(dependsOn: ['clean', 'jshintjs']) {
     doLast {
         ext.jshintlog = file("${buildDir}/jshint.out")
         if( ext.jshintlog.length() != 0 ) {
@@ -48,12 +48,15 @@ task c_syntax(dependsOn: ['jshintjs']) {
     }
 }
 
+task clean () << {
+    
+}
 
-task a_cleanbuild(description: 'Remove all files from ./build/') << {
+task cleanbuild(description: 'Remove all files from ./build/') << {
 	"rm -rf ./build".execute()
 }
 
-task b_gitPull(type: Exec, description: 'Update git repositories and submodules') {
+task gitPull(type: Exec, description: 'Update git repositories and submodules') {
     commandLine = ['git', 'pull']
 }
 
@@ -74,11 +77,11 @@ task binaries (type: Copy) {
 	into 'build/bin'
 }
 
-task d_server(type:Copy, description: 'Copies relevant server files to build') {
+task y_server(type:Copy, description: 'Copies relevant server files to build') {
 	from 'server/'
 	into 'build/' + project.ext.edition + '/server'
 }
-d_server.configure {
+y_server.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
 }
 
@@ -95,12 +98,12 @@ task assets(type:Copy, dependsOn: 'jslibs') {
     from 'client/assets'
     into 'build/' + project.ext.edition + '/client/assets'
 }
-task e_client(type:Copy, dependsOn: 'assets') {
+task z_client(type:Copy, dependsOn: 'assets') {
     from 'client/' + project.ext.edition + '/index.html'
     into 'build/' + project.ext.edition + '/client'
 }
 
-task build(dependsOn: ['a_cleanbuild', 'b_gitPull', 'c_syntax', 'd_server', 'e_client']) << {
+task build(overwrite: true, dependsOn: ['cleanbuild', 'gitPull', 'x_syntax', 'y_server', 'z_client']) << {
    
 }
 
