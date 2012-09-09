@@ -763,88 +763,6 @@ FlowServiceException.prototype.write = function(output) {
   return;
 };
 
-var FlowletStatus = module.exports.FlowletStatus = function(args) {
-  this.name = null;
-  this.code = null;
-  this.message = null;
-  if (args) {
-    if (args.name !== undefined) {
-      this.name = args.name;
-    }
-    if (args.code !== undefined) {
-      this.code = args.code;
-    }
-    if (args.message !== undefined) {
-      this.message = args.message;
-    }
-  }
-};
-FlowletStatus.prototype = {};
-FlowletStatus.prototype.read = function(input) {
-  input.readStructBegin();
-  while (true)
-  {
-    var ret = input.readFieldBegin();
-    var fname = ret.fname;
-    var ftype = ret.ftype;
-    var fid = ret.fid;
-    if (ftype == Thrift.Type.STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-      if (ftype == Thrift.Type.STRING) {
-        this.name = input.readString();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      case 2:
-      if (ftype == Thrift.Type.I32) {
-        this.code = input.readI32();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      case 3:
-      if (ftype == Thrift.Type.STRING) {
-        this.message = input.readString();
-      } else {
-        input.skip(ftype);
-      }
-      break;
-      default:
-        input.skip(ftype);
-    }
-    input.readFieldEnd();
-  }
-  input.readStructEnd();
-  return;
-};
-
-FlowletStatus.prototype.write = function(output) {
-  output.writeStructBegin('FlowletStatus');
-  if (this.name) {
-    output.writeFieldBegin('name', Thrift.Type.STRING, 1);
-    output.writeString(this.name);
-    output.writeFieldEnd();
-  }
-  if (this.code) {
-    output.writeFieldBegin('code', Thrift.Type.I32, 2);
-    output.writeI32(this.code);
-    output.writeFieldEnd();
-  }
-  if (this.message) {
-    output.writeFieldBegin('message', Thrift.Type.STRING, 3);
-    output.writeString(this.message);
-    output.writeFieldEnd();
-  }
-  output.writeFieldStop();
-  output.writeStructEnd();
-  return;
-};
-
 var RunIdentifier = module.exports.RunIdentifier = function(args) {
   this.id = null;
   if (args) {
@@ -1095,6 +1013,234 @@ FlowDescriptor.prototype.write = function(output) {
       }
     }
     output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var ActiveFlow = module.exports.ActiveFlow = function(args) {
+  this.applicationId = null;
+  this.flowId = null;
+  this.lastStopped = null;
+  this.lastStarted = null;
+  this.currentState = null;
+  this.runs = null;
+  if (args) {
+    if (args.applicationId !== undefined) {
+      this.applicationId = args.applicationId;
+    }
+    if (args.flowId !== undefined) {
+      this.flowId = args.flowId;
+    }
+    if (args.lastStopped !== undefined) {
+      this.lastStopped = args.lastStopped;
+    }
+    if (args.lastStarted !== undefined) {
+      this.lastStarted = args.lastStarted;
+    }
+    if (args.currentState !== undefined) {
+      this.currentState = args.currentState;
+    }
+    if (args.runs !== undefined) {
+      this.runs = args.runs;
+    }
+  }
+};
+ActiveFlow.prototype = {};
+ActiveFlow.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.applicationId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.I64) {
+        this.lastStopped = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.I64) {
+        this.lastStarted = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 5:
+      if (ftype == Thrift.Type.STRING) {
+        this.currentState = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 6:
+      if (ftype == Thrift.Type.I32) {
+        this.runs = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+ActiveFlow.prototype.write = function(output) {
+  output.writeStructBegin('ActiveFlow');
+  if (this.applicationId) {
+    output.writeFieldBegin('applicationId', Thrift.Type.STRING, 1);
+    output.writeString(this.applicationId);
+    output.writeFieldEnd();
+  }
+  if (this.flowId) {
+    output.writeFieldBegin('flowId', Thrift.Type.STRING, 2);
+    output.writeString(this.flowId);
+    output.writeFieldEnd();
+  }
+  if (this.lastStopped) {
+    output.writeFieldBegin('lastStopped', Thrift.Type.I64, 3);
+    output.writeI64(this.lastStopped);
+    output.writeFieldEnd();
+  }
+  if (this.lastStarted) {
+    output.writeFieldBegin('lastStarted', Thrift.Type.I64, 4);
+    output.writeI64(this.lastStarted);
+    output.writeFieldEnd();
+  }
+  if (this.currentState) {
+    output.writeFieldBegin('currentState', Thrift.Type.STRING, 5);
+    output.writeString(this.currentState);
+    output.writeFieldEnd();
+  }
+  if (this.runs) {
+    output.writeFieldBegin('runs', Thrift.Type.I32, 6);
+    output.writeI32(this.runs);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowRunRecord = module.exports.FlowRunRecord = function(args) {
+  this.runId = null;
+  this.startTime = null;
+  this.endTime = null;
+  this.endStatus = null;
+  if (args) {
+    if (args.runId !== undefined) {
+      this.runId = args.runId;
+    }
+    if (args.startTime !== undefined) {
+      this.startTime = args.startTime;
+    }
+    if (args.endTime !== undefined) {
+      this.endTime = args.endTime;
+    }
+    if (args.endStatus !== undefined) {
+      this.endStatus = args.endStatus;
+    }
+  }
+};
+FlowRunRecord.prototype = {};
+FlowRunRecord.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.runId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.I64) {
+        this.startTime = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.I64) {
+        this.endTime = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.STRING) {
+        this.endStatus = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowRunRecord.prototype.write = function(output) {
+  output.writeStructBegin('FlowRunRecord');
+  if (this.runId) {
+    output.writeFieldBegin('runId', Thrift.Type.STRING, 1);
+    output.writeString(this.runId);
+    output.writeFieldEnd();
+  }
+  if (this.startTime) {
+    output.writeFieldBegin('startTime', Thrift.Type.I64, 2);
+    output.writeI64(this.startTime);
+    output.writeFieldEnd();
+  }
+  if (this.endTime) {
+    output.writeFieldBegin('endTime', Thrift.Type.I64, 3);
+    output.writeI64(this.endTime);
+    output.writeFieldEnd();
+  }
+  if (this.endStatus) {
+    output.writeFieldBegin('endStatus', Thrift.Type.STRING, 4);
+    output.writeString(this.endStatus);
     output.writeFieldEnd();
   }
   output.writeFieldStop();

@@ -1,5 +1,0 @@
-{
-	"glob": ["./client/js/**/*.js"],
-	"except": "./client/js/lib/*.js",
-	"out": "./build/docs/"
-}

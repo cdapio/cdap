@@ -4,10 +4,10 @@ var http = require('http'),
 	fs = require('fs');
 
 var FARService = require('./thrift_bindings/FARService.js'),
-	FlowService = require('./thrift_bindings/FlowService.js'),
+	MetricsFrontendService = require('./thrift_bindings/MetricsFrontendService.js'),
+	metricsservice_types = require('./thrift_bindings/metricsservice_types.js');
+var FlowService = require('./thrift_bindings/FlowService.js'),
 	flowservices_types = require('./thrift_bindings/flowservices_types.js');
-var FlowMonitor = require('./thrift_bindings/FlowMonitor.js'),
-	flowmonitor_types = require('./thrift_bindings/flowmonitor_types.js');
 var SubscriptionService;
 var ttransport, tprotocol;
 
@@ -86,6 +86,27 @@ try {
 				Manager.status(auth_token, identifier, done);
 				conn.end();
 				
+			break;
+			case 'getFlowDefinition': 
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: -1,
+					accountId: 'demo'
+				});
+
+				Manager.getFlowDefinition(identifier, done);
+			break;
+			case 'getFlowHistory': 
+
+				identifier = new flowservices_types.FlowIdentifier({
+					app: params[0],
+					flow: params[1],
+					version: -1,
+					accountId: 'demo'
+				});
+
+				Manager.getFlowHistory(identifier, done);
 			break;
 			case 'setInstances':
 				identifier = new flowservices_types.FlowIdentifier({
@@ -217,12 +238,18 @@ try {
 		});
 		
 		conn.on('connect', function (response) {
-			var Monitor = thrift.createClient(FlowMonitor, conn);
-			if (method in Monitor) {
-				Monitor[method].apply(Monitor, params.concat(done));
-			} else {
-				done('Unknown method for service Monitor: ' + method, null);
-			}
+			var Monitor = thrift.createClient(MetricsFrontendService, conn);
+
+			var flow = new metricsservice_types.FlowArgument({
+				accountId: 'demo',
+				applicationId: params[0],
+				flowId: params[1]
+			});
+			var request = new metricsservice_types.CounterRequest({
+				argument: flow
+			});
+
+			Monitor.getCounters(request, done);
 
 			conn.end();
 			

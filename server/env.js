@@ -17,24 +17,39 @@
 			this.PASSWORD = 'realwh00p';
 		}
 
-		app.get('/', function (req, res) {
-			res.sendfile(__dirname + '/index.html');
-		});
 		app.use(express['static'](__dirname + '/../client/'));
+
+		console.log('Using static directory ', __dirname + '/../client/');
 
 		var api = this.api = require('./api');
 		var fs = require('fs'),
 			xml2js = require('xml2js');
 		var parser = new xml2js.Parser();
 
-		fs.readFile((process.env.CONTINUUITY_HOME || '.') + '/conf/continuuity-site.xml',
+		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/conf/continuuity-site.xml',
 			function (err, result) {
 
 				if (err) {
-					console.log('COULD NOT OPEN CONFIG (' + (process.env.CONTINUUITY_HOME || '.') +
+					console.log('COULD NOT OPEN CONFIG. Defaulting to localhost for all services. (' + (process.env.CONTINUUITY_HOME || './server') +
 						'/conf/continuuity-site.xml)');
 
-					done(false);
+					var config = {};
+
+					// Upload
+					config['resource.manager.server.port'] = 45000;
+					config['resource.manager.server.address'] = '127.0.0.1';
+					// Manager
+					config['flow.manager.server.port'] = 45001;
+					config['flow.manager.server.address'] = '127.0.0.1';
+					// Monitor
+					config['flow.monitor.server.port'] = 45002;
+					config['gateway.hostname'] = '127.0.0.1';
+					// Gateway
+					config['gateway.port'] = 10000;
+					config['flow.monitor.server.address'] = '127.0.0.1';
+
+					api.configure(config);
+					done(true);
 
 				} else {
 					parser.parseString(result, function (err, result) {

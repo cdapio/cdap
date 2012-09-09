@@ -12,15 +12,20 @@ apply plugin: 'js'
 
 defaultTasks 'build'
 
+project.ext.set("edition", "developer")
+
 //define source for JSHint
 javascript.source {
     prod {
         js {
             srcDir "server" 
-            srcDir "client/js"
-            srcDir "client/js/models"
-            srcDir "client/js/views"
-            srcDir "client/js/controllers"
+            srcDir "client/core"
+            srcDir "client/core/models"
+            srcDir "client/core/views"
+            srcDir "client/core/controllers"
+            srcDir "client/developer/**/*.js"
+            srcDir "client/enterprise/**/*.js"
+            srcDir "client/cloud/**/*.js"
             include "*.js"
         }
     }
@@ -33,7 +38,7 @@ task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
 }
 
 // check jshint output file and if non-zero length, then fail build 
-task syntax(dependsOn: ['clean', 'jshintjs']) {
+task c_syntax(dependsOn: ['jshintjs']) {
     doLast {
         ext.jshintlog = file("${buildDir}/jshint.out")
         if( ext.jshintlog.length() != 0 ) {
@@ -44,144 +49,62 @@ task syntax(dependsOn: ['clean', 'jshintjs']) {
 }
 
 
-task cleanbuild(type: Exec, description: 'Remove all files from ./build/') {
-	commandLine = ['rm', '-rf', './build']
+task a_cleanbuild(description: 'Remove all files from ./build/') << {
+	"rm -rf ./build".execute()
+}
+
+task b_gitPull(type: Exec, description: 'Update git repositories and submodules') {
+    commandLine = ['git', 'pull']
 }
 
 // task to run syntax checking with node and jshint options.  requires "node" executable in path.
 // CI Build runs 'syntax' task instead
-task syntax_node(type: Exec, description: 'runs jshint on all non-test and lib JS files') {
+task syntax_node(type: Exec, description: 'runs jshint on all non-test and lib JS files') << {
 	
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
 
 	commandLine = ["./tools/jshint/bin/hint", 
-		"./client/js/models/", "./client/js/views/", "./client/js/controllers/", "./client/js/",
+		"./client/core/models/", "./client/core/views/", "./client/core/controllers/", "./client/core/", "./client/" + project.ext.edition + "/patch/views", 
 		"./server/", "--config", 'jshint.json']
 }
-
-//task link() {
-//	"npm link ./server/".execute();
-//	"rm -rf ./node_modules/".execute();
-//}
 
 task binaries (type: Copy) {
 	from 'bin/'
 	into 'build/bin'
 }
 
-task server(type:Copy, dependsOn: 'syntax', description: 'Copies relevant server files to build') {
+task d_server(type:Copy, description: 'Copies relevant server files to build') {
 	from 'server/'
-	into 'build/server'
+	into 'build/' + project.ext.edition + '/server'
 }
-server.configure {
-	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js', 'index.html')
-}
-
-task templates(type:Copy, dependsOn: 'syntax') {
-    from 'client/templates/'
-    into 'build/client/templates/'
+d_server.configure {
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
 }
 
-task jsraw(type:Copy, dependsOn: 'templates') {
-    from 'client/js/'
-    into 'build/client/js/'
+task js(description: 'Combines and minifies JS') << {
+	("mkdir ./build/" + project.ext.edition).execute()
+	('r.js -o ' + project.ext.edition + '.build.js').execute()
 }
 
-task js(type: Exec, dependsOn: 'syntax', description: 'Combines and minifies JS') {
-	
-	// Uses app.build.js configuration file
-	"mkdir ./build/client".execute()
-	"mkdir ./build/client/js".execute()
-	commandLine = ['./tools/requirejs/bin/r.js', '-o', 'app.build.js']
-
+task jslibs(type:Copy, dependsOn: 'js') {
+    from 'client/core/lib'
+    into 'build/' + project.ext.edition + '/client/core/lib'
+}
+task assets(type:Copy, dependsOn: 'jslibs') {
+    from 'client/assets'
+    into 'build/' + project.ext.edition + '/client/assets'
+}
+task e_client(type:Copy, dependsOn: 'assets') {
+    from 'client/' + project.ext.edition + '/index.html'
+    into 'build/' + project.ext.edition + '/client'
 }
 
-task jslibs(type:Copy) {
-    from 'client/js/lib'
-    into 'build/client/js/lib'
-}
-
-task css(type: Exec, dependsOn: 'jsraw', description: 'Process and minify LESS -> CSS') {
-	"mkdir ./build/client/css".execute()
-	commandLine = ['cp', '-r', './client/css', './build/client/']
-}
-
-task images(type:Copy) {
-    from 'client/img'
-    into 'build/client/img'
-}
-
-task tests(type: Exec, dependsOn: 'css', description: 'Run tests in a headless browser environment') {
-	
-	// Pulled from https://github.com/detro/phantomjs-jasminexml-example
-	commandLine = ['phantomjs', './tests/runner.js', './tests/runner.html', './tests/output.xml']
-}
-
-task docs(type: Exec, dependsOn: 'css', description: 'Generates Groc documentation') {
-	
-	// Uses .groc.json configuration file
-    commandLine = ['./tools/groc']
-}
-// disabling docs for now due to issue with groc/pygmentize 
-docs.enabled = false
-
-task upload(type: Exec, dependsOn: 'docs', description: 'Uploads to webserver') {
-    commandLine = ['./upload.sh']
-}
-
-//task build(overwrite: true, dependsOn: ['cleanbuild', 'syntax', 'server', 'js', 'jslibs', 'css', 'images', 'docs']) {
-task build(overwrite: true, dependsOn: ['cleanbuild', 'server', 'jsraw', 'jslibs', 'css', 'images', 'docs']) {
-	doLast {
-		println "Done!"
-	}
+task build(dependsOn: ['a_cleanbuild', 'b_gitPull', 'c_syntax', 'd_server', 'e_client']) << {
+   
 }
 
 task run (type: Exec, dependsOn: ['build']) {
-	commandLine = ['node', 'build/server/main.js']
-}
-
-task deploy(dependsOn: ['build', 'upload']) {
-	doLast {
-		println "Deployed!"
-	}
-}
-
-/**
- * Create Release TAR ball - overwrite global task
- * 
- */
-//task release (type:  Tar, overwrite: true, dependsOn: build ) << {
-task release (type:  Tar, overwrite: true) << {
-
-    //placeholder
-
-    /*
-    group = 'Continuuity'
-    description = 'Generates distribution tar file.'
-
-    compression = Compression.GZIP
-
-    release.baseName = "web_cloud_app"
-
-    from('build/client') {
-        into("${release.baseName}-${project.version}/web-app/client")
-    }
-
-    from('build/server') {
-        into("${release.baseName}-${project.version}/web-app/server")
-    }
-
-    from('conf') {
-        into("${release.baseName}-${project.version}/conf")
-    }
-    */
-}
-
-task upload_release (overwrite: true, dependsOn: release) << {
-    //placeholder
-}
-task distro (overwrite: true, dependsOn: upload_release) << {
-    //placeholder
+	commandLine = ['node', 'build/developer/server/main.js']
 }
 

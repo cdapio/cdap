@@ -1,0 +1,371 @@
+html {
+	
+}
+body {
+	background-image: url(../img/groovepaper.png);
+	padding: 20px;
+}
+/*
+ * Bootstrap Overrides
+ */
+.navbar-inner {
+	padding: 0px 10px;
+	background-color: #152c52;
+	background-image: -webkit-linear-gradient(top, #152c52, #061c35) !important;
+}
+.navbar .nav > li > a {
+	color: #b8c0cc;
+}
+a {
+	color: #061c35;
+}
+a:hover {
+	color: #152c52;
+}
+li a {
+	cursor: pointer;
+}
+a.brand {
+	width: 140px;
+	height: 40px;
+	padding: 0 !important;
+	margin: 0 18px 0 0 !important;
+	background-image: url(../img/logo-header.png);
+}
+.navbar .divider-vertical {
+	background-color: #061c35;
+	border-right: 1px solid #152c52;
+}
+#modal-from-dom {
+	display: none;
+}
+.modal-footer .btn {
+	margin :0;
+}
+.table {
+	margin: 0;
+}
+.table-condensed td {
+	line-height: 14px !important;
+}
+td {
+	line-height: 30px !important;
+	padding: 0px 10px;
+}
+h2 {
+	font-weight: 100 !important;
+	letter-spacing: 0.06em;
+	font-size: 30px;
+	margin-bottom: 12px;
+}
+.label {
+	cursor: default
+}
+a strong {
+	color: #555;
+}
+.navbar-inner .container {
+	padding: 6px 0px 6px 6px;
+}
+.breadcrumb {
+	padding: 4px 8px;
+	margin: 0;
+	margin-bottom: 12px;
+}
+#action-buttons {
+	margin-top: 8px;
+	padding-right: 0;
+}
+#action-buttons .btn {
+	margin-right:0;
+}
+
+.btn-group.pull-right > .btn {
+	float: right;
+}
+.btn-group.pull-right > .btn:first-child {
+	margin-left: -1px;
+	border-radius: 0;
+	border-bottom-right-radius: 4px;
+	border-top-right-radius: 4px;
+}
+.btn-group.pull-right > .btn:last-child {
+	border-radius: 0;
+	border-bottom-left-radius: 4px;
+	border-top-left-radius: 4px;
+}
+
+/*
+ * Rules
+ */
+#header {
+	margin: 0px auto 12px;
+	max-width: 1280px;
+	min-width: 800px;
+}
+#wrapper {
+	min-width: 800px;
+	padding: 12px 20px;
+	margin: 0 auto 16px;
+	max-width: 1240px;
+	background-color: #FFF;
+	border-radius: 3px;
+	box-shadow: rgba(0, 0, 0, 0.2) 0 1px 3px 0px;
+}
+td a {
+	display: block;
+}
+#footer {
+	text-transform: uppercase;
+	text-align: center;
+	padding: 16px 10px;
+	color: #999;
+	font-size: 11px;
+}
+#footer a, #footer span {
+	color: #777;
+}
+#navi {
+	width: 156px;
+	float: left;
+}
+#content {
+	position: relative;
+	margin-left: 170px;
+}
+#interstitial {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: white;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	z-index: 10;
+}
+#interstitial * {
+	padding-top: 52px;
+}
+.product {
+	font-size: 14px;
+	text-align: right;
+	width: 200px;
+	color: #9baeca;
+
+	text-transform: uppercase;
+	font-family: 'Orbitron', sans-serif;
+	font-weight: 100;
+
+	margin: 13px 12px 0px 0px;
+	background-position: top right;
+
+}
+.product.developer {
+	background-image: url(../img/developer-product-header.png);
+}
+.product.cloud {
+	background-image: url(../img/cloud-product-header.png);
+}
+.widget {
+	border-radius: 5px;
+	background-color: #fafafa;
+	margin-bottom: 16px;
+	padding-top: 6px;
+}
+.widget-header {
+	font-size: 18px;
+	margin: 0px 6px;
+	padding: 6px;
+	border-radius: 3px;
+	border: 1px solid #dfdfdf;
+	background-color: #eee;
+	font-weight: 200;
+	color: #333;
+}
+.widget-header span {
+	color: #999;
+}
+.widget-header i {
+	vertical-align: bottom;
+}
+.widget-body {
+	padding: 8px 12px 8px;
+	font-size: 11px;
+}
+.widget-body-empty {
+	padding: 16px;
+	text-align: center;
+}
+.widget-body-empty.widget-chart {
+	padding: 8px;
+}
+.widget-item {
+	margin-bottom: 3px;
+}
+.widget-chart {
+	border: 1px solid #ddd;
+	background-color: #fff;
+	margin: 6px 0px 12px;
+}
+#flowviz {
+	margin: 0 auto;
+	position: relative;
+}
+#flowviz-container {
+	margin-bottom: 12px;
+	padding: 0px;
+	overflow: auto;
+	overflow-y: hidden;
+	background-color: #fcfcfc;
+}
+.flowletviz {
+	position: absolute;
+	top: 22px;
+	left: 0px;
+	border-radius: 3px;
+	background-color: rgba(255, 255, 255, 0.95);
+	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+	width: 215px;
+	min-height: 130px;
+	z-index: 5;
+	padding: 10px;
+	font-size: 11px;
+	display: none;
+}
+.flowletviz i {
+	cursor: pointer;
+}
+.flowletviz .section-header {
+
+}
+.flowletviz h4 {
+	color: #061c35;
+	font-size: 14px;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 4px;
+	margin-bottom: 6px;
+	padding: 0px 2px 4px;
+	font-weight: 400;
+}
+
+.flowletviz h4 span {
+	color: #999;
+}
+#stream-inject {
+	width: 135px;
+	margin: 0;
+}
+#far-upload {
+	padding: 48px;
+	text-align: center;
+}
+#far-upload a {
+	text-decoration: underline;
+}
+#far-upload h3 {
+	padding: 48px;
+	border: 1px dashed #AAA;
+	border-radius: 4px;
+}
+#informer {
+	padding: 0px 0px 0px;
+	position: absolute;
+	width: 100%;
+}
+.alert-wrapper {
+	overflow: hidden;
+	display: none;
+}
+#sub-header {
+
+}
+#sub-header .alert {
+	padding: 4px 12px;
+	margin: 0;
+}
+#object-list {
+	margin: 0 auto 12px;
+	border: 1px solid #EDEDED;
+	border-radius: 4px;
+	padding: 8px;
+}
+.object-list-empty {
+	padding: 48px;
+	text-align: center;
+}
+.object-list-empty a {
+	text-decoration: underline;
+}
+h3 a {
+	text-decoration: underline;
+}
+#content-header span {
+	color: #ccc;
+}
+ol {
+	margin: 0;
+	padding: 0;
+	padding-left: 32px;
+}
+#run-info {
+	display: none;
+}
+/*
+ * jsplumb
+ */
+.column {
+	padding: 42px 42px 0px;
+	float: left;
+}
+.window { 
+	border:1px solid #BBB;
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+	border-radius:4px;
+	width: 120px;
+	height: 60px;
+	text-align:center;
+	z-index:20; 
+	background-image: -webkit-linear-gradient(top, #fff, #dfdfdf) !important;
+	color:black;
+	font-family:helvetica;
+	font-size:12px;
+	float: left;
+	cursor: pointer;
+	clear: left;
+	margin-bottom: 42px;
+}
+.window:hover {
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+.window-title {
+	vertical-align: center;
+	padding: 4px 8px 0px;
+}
+.window-value {
+	font-size: 14px;
+	font-weight: bold;
+	color: #333;
+	text-shadow: 0px 1px #fff;
+}
+.window-instances {
+	font-size: 10px;
+	color: #777;
+	text-shadow: 0px 1px #fff;
+	text-transform: uppercase;
+}
+.window.source {
+	background-image: url(../img/stream-source-bg.png) !important;
+	border: 1px solid #FFF;
+	padding: 0;
+	width: 120px;
+	height: 60px;
+}
+.window.source .window-title {
+	text-shadow: 0px 1px #eee;
+	font-weight: bold;
+	padding: 20px 0px;
+}
+
+._jsPlumb_connector { z-index:1; }
+._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:2; cursor:pointer; }

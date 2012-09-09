@@ -1,3 +1,0 @@
-[submodule "client/shared"]
-	path = client/shared
-	url = https://github.com/continuuity/web-shared.git
