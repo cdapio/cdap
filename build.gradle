@@ -38,7 +38,7 @@ task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
 }
 
 // check jshint output file and if non-zero length, then fail build 
-task x_syntax(dependsOn: ['clean', 'jshintjs']) {
+task x_syntax(dependsOn: ['jshintjs']) {
     doLast {
         ext.jshintlog = file("${buildDir}/jshint.out")
         if( ext.jshintlog.length() != 0 ) {
