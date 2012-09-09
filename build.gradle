@@ -83,7 +83,7 @@ y_server.configure {
 
 task js(description: 'Combines and minifies JS') << {
 	("mkdir ./build/" + project.ext.edition).execute()
-	('r.js -o ' + project.ext.edition + '.build.js').execute()
+	('./tools/requirejs/bin/r.js -o ' + project.ext.edition + '.build.js').execute()
 }
 
 task jslibs(type:Copy, dependsOn: 'js') {
