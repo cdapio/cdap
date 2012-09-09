@@ -48,7 +48,7 @@ task x_syntax(dependsOn: ['jshintjs']) {
     }
 }
 
-task cleanbuild(description: 'Remove all files from ./build/') << {
+task cleanbuild(overwrite: true, description: 'Remove all files from ./build/') << {
 	"rm -rf ./build".execute()
 }
 
