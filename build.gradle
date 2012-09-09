@@ -48,10 +48,6 @@ task x_syntax(dependsOn: ['clean', 'jshintjs']) {
     }
 }
 
-task clean () << {
-    
-}
-
 task cleanbuild(description: 'Remove all files from ./build/') << {
 	"rm -rf ./build".execute()
 }
