@@ -48,7 +48,7 @@ task x_syntax(dependsOn: ['jshintjs']) {
     }
 }
 
-task cleanbuild(overwrite: true, description: 'Remove all files from ./build/') << {
+task clean(overwrite: true, description: 'Remove all files from ./build/') << {
 	"rm -rf ./build".execute()
 }
 
@@ -99,8 +99,8 @@ task z_client(type:Copy, dependsOn: 'assets') {
     into 'build/' + project.ext.edition + '/client'
 }
 
-//task build(overwrite: true, dependsOn: ['cleanbuild', 'x_syntax', 'y_server', 'z_client']) << {
-task build(overwrite: true) << {
+task build(overwrite: true, dependsOn: ['clean', 'x_syntax', 'y_server', 'z_client']) << {
+//task build(overwrite: true) << {
  
 }
 
