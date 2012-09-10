@@ -49,7 +49,7 @@ task x_syntax(dependsOn: ['jshintjs']) {
 }
 
 task clean(overwrite: true, description: 'Remove all files from ./build/') << {
-	"rm -rf ./build".execute()
+	"rm -rf ${project.projectDir}/build".execute()
 }
 
 task gitPull(type: Exec, description: 'Update git repositories and submodules') {
