@@ -99,8 +99,9 @@ task z_client(type:Copy, dependsOn: 'assets') {
     into 'build/' + project.ext.edition + '/client'
 }
 
-task build(overwrite: true, dependsOn: ['cleanbuild', 'x_syntax', 'y_server', 'z_client']) << {
-   
+//task build(overwrite: true, dependsOn: ['cleanbuild', 'x_syntax', 'y_server', 'z_client']) << {
+task build(overwrite: true) << {
+ 
 }
 
 task run (type: Exec, dependsOn: ['build']) {
