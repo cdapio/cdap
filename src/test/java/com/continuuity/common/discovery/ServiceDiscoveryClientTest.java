@@ -15,7 +15,9 @@ public class ServiceDiscoveryClientTest extends InMemoryZKBaseTest {
 
   @Test
   public void testRegistration() throws Exception {
-    ServiceDiscoveryClient client = new ServiceDiscoveryClient(server.getConnectionString());
+    ServiceDiscoveryClient client = new ServiceDiscoveryClient(
+      server.getConnectionString()
+    );
     try {
       ServicePayload payload = new ServicePayload();
       payload.add("A1", "1");

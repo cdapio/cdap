@@ -80,8 +80,8 @@ public class Constants {
   /**
    * Default constants defined for resource manager
    */
-  public static final String DEFAULT_RESOURCE_MANAGER_SERVER_PORT = "45000";
-  public static final String DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = "2";
+  public static final int DEFAULT_RESOURCE_MANAGER_SERVER_PORT = 45000;
+  public static final int DEFAULT_RESOURCE_MANAGER_SERVER_THREADS = 2;
 
 
   /**
@@ -103,8 +103,8 @@ public class Constants {
   /**
    * Default constants defined for flow manager.
    */
-  public static final String DEFAULT_FLOW_MANAGER_SERVER_PORT = "45001";
-  public static final String DEFAULT_FLOW_MANAGER_SERVER_THREADS = "2";
+  public static final int DEFAULT_FLOW_MANAGER_SERVER_PORT = 45001;
+  public static final int DEFAULT_FLOW_MANAGER_SERVER_THREADS = 2;
   public static final String DEFAULT_FLOW_MANAGER_SERVER_ADDRESS = "0.0.0.0";
 
 
@@ -117,7 +117,7 @@ public class Constants {
     CFG_RESOURCE_MANAGER_CLOUD_PORT = "resource.manager.cloud.port";
   public static final String
     DEFAULT_RESOURCE_MANAGER_CLOUD_HOST = "localhost";
-  public static final String
+  public static final int
     DEFAULT_RESOURCE_MANAGER_CLOUD_PORT = DEFAULT_RESOURCE_MANAGER_SERVER_PORT;
 
   /**

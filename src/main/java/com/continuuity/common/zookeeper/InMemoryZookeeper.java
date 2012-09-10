@@ -76,6 +76,9 @@ public class InMemoryZookeeper implements Closeable {
   private InMemoryZookeeper(InstanceSpecification specification) throws InterruptedException, IOException {
     this.specification = specification;
     inMemoryZookeeperServer = new InMemoryZookeeperServer(new QuorumConfigBuilder(specification));
+    // Disables event logging and connection issues.
+    System.setProperty("curator-log-events", "false");
+    System.setProperty("curator-dont-log-connection-problems", "true");
     LOG.info("Starting InMemoryZookeeper ...");
     inMemoryZookeeperServer.start();
   }
