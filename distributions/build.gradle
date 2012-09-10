@@ -108,12 +108,12 @@ task singlenode_stage_root (type: Copy) {
 
 // these should be build tasks in webapp
 task singlenode_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/client')
+    from project(':web-cloud-app').file('build/developer/client')
     into "${buildDir}/singlenode/web-app/client" 
 }
 
 task singlenode_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/server')
+    from project(':web-cloud-app').file('build/developer/server')
     into "${buildDir}/singlenode/web-app/server" 
 }
 
@@ -180,12 +180,12 @@ task cloud_stage_envconf (type: Copy) {
 
 // these should be build tasks in webapp
 task cloud_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/client')
+    from project(':web-cloud-app').file('build/developer/client')
     into "${buildDir}/cloud/web-app/client"
 }
 
 task cloud_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/server')
+    from project(':web-cloud-app').file('build/developer/server')
     into "${buildDir}/cloud/web-app/server"
 }
 
