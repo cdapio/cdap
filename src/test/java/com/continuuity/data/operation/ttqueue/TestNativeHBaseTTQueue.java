@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
@@ -67,4 +69,10 @@ public class TestNativeHBaseTTQueue extends TestTTQueue {
   protected int getNumIterations() {
     return 10;
   }
+
+  @Test @Override @Ignore
+  public void testEvictOnAck_OneGroup() throws Exception {}
+
+  @Test @Override @Ignore
+  public void testEvictOnAck_ThreeGroups() throws Exception {}
 }

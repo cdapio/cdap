@@ -124,11 +124,24 @@ public abstract class TestTTQueue {
     }
   }
 
+  private ReadPointer getDirtyPointer() {
+    return new MemoryReadPointer(
+        Long.MAX_VALUE, timeOracle.getTimestamp(), null);
+  }
+  
+  private ReadPointer getCleanPointer() {
+    return getCleanPointer(timeOracle.getTimestamp());
+  }
+  
+  private ReadPointer getCleanPointer(long now) {
+    return new MemoryReadPointer(now + 1, now, null);
+  }
+  
   @Test
   public void testEvictOnAck_OneGroup() throws Exception {
     final boolean singleEntry = true;
     long dirtyVersion = 1;
-    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+    ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConsumer consumer2 = new QueueConsumer(0, 1, 1);
@@ -193,7 +206,7 @@ public abstract class TestTTQueue {
     TTQueue queue = createQueue();
     final boolean singleEntry = true;
     long dirtyVersion = 1;
-    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+    ReadPointer dirtyReadPointer = getDirtyPointer();
 
     QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1);
     QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1);
@@ -296,7 +309,7 @@ public abstract class TestTTQueue {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long dirtyVersion = 1;
-    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+    ReadPointer dirtyReadPointer = getDirtyPointer();
 
     byte [] valueOne = Bytes.toBytes("value1");
     byte [] valueTwo = Bytes.toBytes("value2");
@@ -347,7 +360,7 @@ public abstract class TestTTQueue {
     conf.setLong("ttqueue.entry.semiacked.max", semiAckedTimeout);
     TTQueue queue = createQueue(conf);
     long dirtyVersion = 1;
-    ReadPointer dirtyReadPointer = new MemoryReadPointer(Long.MAX_VALUE);
+    ReadPointer dirtyReadPointer = getDirtyPointer();
 
     byte [] valueSemiAckedTimeout = Bytes.toBytes("semiAckedTimeout");
     byte [] valueSemiAckedToDequeued = Bytes.toBytes("semiAckedToDequeued");
@@ -417,7 +430,7 @@ public abstract class TestTTQueue {
     final boolean singleEntry = false;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue ten entries
     int n=10;
@@ -495,7 +508,7 @@ public abstract class TestTTQueue {
     final boolean singleEntry = false;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue ten entries
     int n=10;
@@ -607,7 +620,7 @@ public abstract class TestTTQueue {
       throws Exception {
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue 3 entries
     int n=3;
@@ -669,7 +682,7 @@ public abstract class TestTTQueue {
       throws Exception {
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue four entries
     int n=4;
@@ -816,7 +829,7 @@ public abstract class TestTTQueue {
   public void testSingleConsumerSingleGroup_dynamicReconfig() throws Exception {
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue four entries
     int n=4;
@@ -932,7 +945,7 @@ public abstract class TestTTQueue {
   public void testMultiConsumerSingleGroup_dynamicReconfig() throws Exception {
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     // enqueue one hundred entries
     int n=100;
@@ -1051,7 +1064,7 @@ public abstract class TestTTQueue {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
+    ReadPointer readPointer = getCleanPointer(version);
 
     byte [] valueOne = Bytes.toBytes("value1");
     byte [] valueTwo = Bytes.toBytes("value2");
@@ -1143,8 +1156,13 @@ public abstract class TestTTQueue {
   public void testConcurrentEnqueueDequeue() throws Exception {
     final TTQueue queue = createQueue();
     final long version = timeOracle.getTimestamp();
-    final ReadPointer readPointer = new MemoryReadPointer(version);
-    AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+    final ReadPointer readPointer = getCleanPointer(version);
+    AtomicLong dequeueReturns = null;
+    if (queue instanceof TTQueueOnVCTable) {
+      dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueOnHBaseNative) {
+      dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+    }
 
     final int n = getNumIterations();
 
@@ -1224,8 +1242,13 @@ public abstract class TestTTQueue {
     final boolean singleEntry = true;
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
-    ReadPointer readPointer = new MemoryReadPointer(version);
-    AtomicLong dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+    ReadPointer readPointer = getCleanPointer(version);
+    AtomicLong dequeueReturns = null;
+    if (queue instanceof TTQueueOnVCTable) {
+      dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueOnHBaseNative) {
+      dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+    }
 
     // Create 4 consumer groups with 4 consumers each
     int n = 4;

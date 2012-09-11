@@ -79,17 +79,14 @@ public class MemoryReadPointer implements ReadPointer {
   }
 
   public long getWritePointer() {
-    // TODO Auto-generated method stub
-    return 0;
+    return this.writePoint;
   }
 
   public long getReadPointer() {
-    // TODO Auto-generated method stub
-    return 0;
+    return this.readPoint;
   }
 
   public Set<Long> getReadExcludes() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.excludes;
   }
 }
