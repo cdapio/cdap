@@ -1,5 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.hbase.ttqueue.HBQDequeueResult;
+import com.continuuity.hbase.ttqueue.HBQDequeueResult.HBQDequeueStatus;
 import com.google.common.base.Objects;
 
 /**
@@ -22,6 +24,21 @@ public class DequeueResult {
     this.value = value;
   }
   
+  public DequeueResult(final byte [] queueName,
+      final HBQDequeueResult dequeueResult) {
+    if (dequeueResult.getStatus() == HBQDequeueStatus.EMPTY) {
+      this.status = DequeueStatus.EMPTY;
+    } else if (dequeueResult.getStatus() == HBQDequeueStatus.SUCCESS) {
+      this.status = DequeueStatus.SUCCESS;
+    } else {
+      throw new RuntimeException("Invalid state");
+    }
+    this.pointer = new QueueEntryPointer(queueName,
+        dequeueResult.getEntryPointer().getEntryId(),
+        dequeueResult.getEntryPointer().getShardId());
+    this.value = dequeueResult.getData();
+  }
+
   public boolean isSuccess() {
     return this.status == DequeueStatus.SUCCESS;
   }

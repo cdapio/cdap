@@ -3,7 +3,10 @@ package com.continuuity.data.operation.ttqueue;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.ReadOperation;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
+import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
+import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.google.common.base.Objects;
 
 import java.util.Arrays;
@@ -81,6 +84,24 @@ public class QueueAdmin {
       this.groups = groups;
     }
 
+    public QueueMeta(HBQQueueMeta queueMeta) {
+      this(queueMeta.getGlobalHeadPointer(), queueMeta.getCurrentWritePointer(),
+          convertGroupArray(queueMeta.getGroups()));
+    }
+
+    private static GroupState[] convertGroupArray(
+        com.continuuity.hbase.ttqueue.internal.GroupState[] groups) {
+      GroupState [] convertedGroups = new GroupState[groups.length];
+      for (int i=0; i<groups.length; i++) {
+        convertedGroups[i] = new GroupState(groups[i].getGroupSize(),
+            new EntryPointer(groups[i].getHead().getEntryId(),
+                groups[i].getHead().getShardId()),
+            ExecutionMode.fromHBQ(groups[i].getMode()));
+      }
+      // TODO Auto-generated method stub
+      return null;
+    }
+
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
@@ -90,6 +111,7 @@ public class QueueAdmin {
           .toString();
     }
 
+    @Override
     public boolean equals(Object object) {
       if (object == null || !(object instanceof QueueMeta))
         return false;
