@@ -99,15 +99,6 @@ public class CMetricsTest {
 
   }
 
-  @Test
-  public void testDate() {
-    Date date = new Date(System.currentTimeMillis());
-    long timestamp = date.getTime();
-    date.setTime(System.currentTimeMillis());
-    timestamp = date.getTime() - timestamp;
-    Assert.assertTrue(timestamp > 0);
-  }
-
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyMetricGroupForFlowSystem() throws Exception {
     CMetrics metrics = new CMetrics(MetricType.FlowSystem);
