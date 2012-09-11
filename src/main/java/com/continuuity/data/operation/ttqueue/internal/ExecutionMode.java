@@ -35,4 +35,13 @@ public enum ExecutionMode {
         .add("mode", this.name())
         .toString();
   }
+
+  public static ExecutionMode fromHBQ(
+      com.continuuity.hbase.ttqueue.internal.ExecutionMode mode) {
+    if (mode ==
+        com.continuuity.hbase.ttqueue.internal.ExecutionMode.SINGLE_ENTRY) {
+      return ExecutionMode.SINGLE_ENTRY;
+    }
+    return ExecutionMode.MULTI_ENTRY;
+  }
 }

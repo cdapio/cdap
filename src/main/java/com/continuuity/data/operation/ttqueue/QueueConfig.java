@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.hbase.ttqueue.HBQConfig;
 import com.google.common.base.Objects;
 
 /**
@@ -35,5 +36,9 @@ public class QueueConfig {
         .add("singleEntry", this.singleEntry)
         .add("partitioner", this.partitioner)
         .toString();
+  }
+
+  public HBQConfig toHBQ() {
+    return new HBQConfig(singleEntry);
   }
 }

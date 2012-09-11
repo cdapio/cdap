@@ -77,4 +77,19 @@ public class MemoryReadPointer implements ReadPointer {
   public long getMaximum() {
     return this.readPoint;
   }
+
+  public long getWritePointer() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  public long getReadPointer() {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  public Set<Long> getReadExcludes() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }

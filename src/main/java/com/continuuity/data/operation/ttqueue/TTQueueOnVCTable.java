@@ -658,7 +658,7 @@ public class TTQueueOnVCTable implements TTQueue {
     // Should be in semiAcked state
     if (!groupMeta.isSemiAcked())
       throw new OperationException(StatusCode.ILLEGAL_UNACK,
-          "Attempt to finalize an entry that is not in semi-acked state.");
+          "Attempt to unack an entry that is not in semi-acked state.");
 
     // It is in the right state, attempt atomic semi_ack to dequeued
     // (finalize passed if this CAS works, fails if this CAS fails)
