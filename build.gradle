@@ -82,8 +82,14 @@ y_server.configure {
 }
 
 task js(description: 'Combines and minifies JS') << {
+
+    def fileName = ".build.js";
+    if (new File(".").getAbsolutePath().indexOf("web-cloud-app") == -1) {
+        fileName = ".build.multimodule.js";
+    }
+
 	("mkdir ./build/" + project.ext.edition).execute()
-	("${project.projectDir}/tools/requirejs/bin/r.js -o " + project.ext.edition + ".build.js").execute()
+	("${project.projectDir}/tools/requirejs/bin/r.js -o " + project.ext.edition + fileName).execute()
 }
 
 task jslibs(type:Copy, dependsOn: 'js') {
@@ -100,7 +106,6 @@ task z_client(type:Copy, dependsOn: 'assets') {
 }
 
 task build(overwrite: true, dependsOn: ['clean', 'x_syntax', 'y_server', 'z_client']) << {
-//task build(overwrite: true) << {
  
 }
 
