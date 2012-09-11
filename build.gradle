@@ -84,7 +84,7 @@ y_server.configure {
 task js(description: 'Combines and minifies JS') << {
 
 	("mkdir ${project.projectDir}/build/" + project.ext.edition).execute()
-	("${project.projectDir}/tools/requirejs/bin/r.js -o app.build.js baseUrl=${project.projectDir}/client/${project.ext.edition} out=${project.projectDir}/build/${project.ext.edition}/client/main.js").execute()
+	("${project.projectDir}/bin/node ${project.projectDir}/tools/requirejs/bin/r.js -o ${project.projectDir}/app.build.js baseUrl=${project.projectDir}/client/${project.ext.edition} out=${project.projectDir}/build/${project.ext.edition}/client/main.js").execute()
 
 }
 
