@@ -28,15 +28,17 @@ public class DequeueResult {
       final HBQDequeueResult dequeueResult) {
     if (dequeueResult.getStatus() == HBQDequeueStatus.EMPTY) {
       this.status = DequeueStatus.EMPTY;
+      this.pointer = null;
+      this.value = null;
     } else if (dequeueResult.getStatus() == HBQDequeueStatus.SUCCESS) {
       this.status = DequeueStatus.SUCCESS;
+      this.pointer = new QueueEntryPointer(queueName,
+          dequeueResult.getEntryPointer().getEntryId(),
+          dequeueResult.getEntryPointer().getShardId());
+      this.value = dequeueResult.getData();
     } else {
       throw new RuntimeException("Invalid state");
     }
-    this.pointer = new QueueEntryPointer(queueName,
-        dequeueResult.getEntryPointer().getEntryId(),
-        dequeueResult.getEntryPointer().getShardId());
-    this.value = dequeueResult.getData();
   }
 
   public boolean isSuccess() {
