@@ -120,6 +120,18 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     }
   }
 
+  /**
+   * Clears
+   */
+  public static synchronized void clear(String name) {
+    for(Map.Entry<MetricName, Metric> entry :
+      Metrics.defaultRegistry().allMetrics().entrySet()) {
+      if(entry.getKey().getGroup().contains(name)) {
+        Metrics.defaultRegistry().removeMetric(entry.getKey());
+      }
+    }
+  }
+
   public static synchronized void disable() {
     if(reporter != null) {
       reporter.shutdown();
