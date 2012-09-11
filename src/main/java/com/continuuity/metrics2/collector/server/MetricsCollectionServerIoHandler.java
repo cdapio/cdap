@@ -217,11 +217,11 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
           return;
         }
       }
+    } else {
+      // if we are here that means either the request was invalid or the type
+      // of request is not MetricRequest type. In this case we return an
+      // status as INVALID to caller.
+      session.write(new MetricResponse(MetricResponse.Status.INVALID));
     }
-
-    // if we are here that means either the request was invalid or the type
-    // of request is not MetricRequest type. In this case we return an
-    // status as INVALID to caller.
-    session.write(new MetricResponse(MetricResponse.Status.INVALID));
   }
 }

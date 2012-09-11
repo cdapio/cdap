@@ -131,11 +131,13 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     // set that it's a invalid metric request.
     if(cmd == null || metric == null || timestampStr == null
       || valueStr == null) {
+      Log.warn("Request has empty field(s). Command {}", command);
       return invalidMetric;
     }
 
     // We make more checks to make sure the request is well formed.
     if(! "put".equals(cmd)) {
+      Log.warn("Request is not a put metric operation");
       return invalidMetric;
     }
 
@@ -157,6 +159,7 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     try {
       timestamp = Long.parseLong(timestampStr);
     } catch (NumberFormatException e) {
+      Log.warn("invalid timestamp {} passed.", timestampStr);
       return invalidMetric;
     }
 
@@ -165,6 +168,7 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     try {
       value = Float.parseFloat(valueStr);
     } catch (NumberFormatException e) {
+      Log.warn("Invalid value {}", valueStr);
       return invalidMetric;
     }
 

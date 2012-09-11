@@ -287,6 +287,7 @@ public class MetricsClient {
                         Constants.DEFAULT_ZOOKEEPER_ENSEMBLE)
     );
 
+
     // Start the dispatcher thread.
     executorService.submit(dispatcher);
   }

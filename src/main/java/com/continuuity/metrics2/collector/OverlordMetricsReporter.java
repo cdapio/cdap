@@ -182,9 +182,6 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
                  metric.toString(), e.getMessage());
       }
     }
-
-    // Send JVM Metrics.
-    //sendJVMMetrics();
   }
 
   /**

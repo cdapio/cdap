@@ -123,9 +123,6 @@ public class MetricsFrontendServer extends AbstractRegisteredServer
       // create a new Half-Sync / Half-Async server.
       server = new THsHaServer(serverArgs);
 
-      // Start the flow metrics reporter.
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);
-
       // Set the server name.
       setServerName(Constants.SERVICE_METRICS_FRONTEND_SERVER);
 

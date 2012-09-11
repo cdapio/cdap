@@ -33,12 +33,12 @@ dependencies {
 }
 
 clover {
-    excludes << '**/metrics/stubs/*'
+    excludes << '**/metrics2/stubs/*'
 }
 
 sonar {
     project {
-        sourceExclusions = '**/metrics/stubs/*'
+        sourceExclusions = '**/metrics2/stubs/*'
     }
 }
 

@@ -1,5 +1,5 @@
 # Main class to be invoked.
-MAIN_CLASS=com.continuuity.runtime.FlowMonitorMain
+MAIN_CLASS=com.continuuity.runtime.MetricsCollectionServerMain
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""

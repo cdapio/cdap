@@ -75,7 +75,6 @@ public class CMetricsTest {
     if(serverInterface != null) {
       serverInterface.stop(true);
     }
-    OverlordMetricsReporter.disable();
   }
 
   @Test

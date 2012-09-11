@@ -68,13 +68,13 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
     // Unbind from the port so that we don't receive any more
     // requests. Assumption is that the <code>AbstractRegisteredServer</code>
     // has already unregistered, so it's safe to unbind the port.
-    acceptor.unbind();
-
-    // latch down the counter.
-    finished.countDown();
-
-    // dispose of the acceptor
-    acceptor.dispose();
+    if(acceptor != null) {
+      acceptor.unbind();
+      // latch down the counter.
+      finished.countDown();
+      // dispose of the acceptor
+      acceptor.dispose();
+    }
   }
 
   /**
