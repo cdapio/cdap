@@ -20,8 +20,9 @@ struct FlowArgument {
   1: string accountId,
   2: string applicationId,
   3: string flowId,
-  4: optional string flowletId,
-  5: optional i32 instanceId,
+  4: string runId,
+  5: optional string flowletId,
+  6: optional i32 instanceId,
 }
 
 /**

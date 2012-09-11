@@ -110,6 +110,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "   CAST('%s' AS VARCHAR(64))," +
       "   CAST('%s' AS VARCHAR(64))," +
       "   CAST('%s' AS VARCHAR(64))," +
+      "   CAST('%s' AS VARCHAR(64))," +
       "   CAST(%d AS INT)," +
       "   CAST('%s' AS VARCHAR(64))" +
       "))" +
@@ -117,6 +118,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "      account_id," +
       "      application_id," +
       "      flow_id," +
+      "      run_id, " +
       "      flowlet_id," +
       "      instance_id," +
       "      metric" +
@@ -126,12 +128,13 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "      metrics.application_id = vals.application_id AND " +
       "      metrics.flow_id = vals.flow_id AND " +
       "      metrics.flowlet_id = vals.flowlet_id AND " +
+      "      metrics.run_id = vals.run_id AND " +
       "      metrics.instance_id = vals.instance_id AND " +
       "      metrics.metric = vals.metric " +
       " WHEN MATCHED THEN UPDATE SET " +
       "      metrics.value = %f, metrics.last_updt = now() " +
       " WHEN NOT MATCHED THEN INSERT VALUES (" +
-      "      '%s', '%s', '%s', '%s', %d, '%s', %f, now())";
+      "      '%s', '%s', '%s', '%s', '%s', %d, '%s', %f, now())";
 
     // Bind parameters in prepared statements can be used only
     // for queries. As this sql is not exactly we cannot use prepared
@@ -140,6 +143,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
                         elements.getAccountId(),
                         elements.getApplicationId(),
                         elements.getFlowId(),
+                        elements.getRunId(),
                         elements.getFlowletId(),
                         elements.getInstanceId(),
                         elements.getMetric(),
@@ -147,6 +151,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
                         elements.getAccountId(),
                         elements.getApplicationId(),
                         elements.getFlowId(),
+                        elements.getRunId(),
                         elements.getFlowletId(),
                         elements.getInstanceId(),
                         elements.getMetric(),
@@ -189,13 +194,14 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "   account_id, " +
       "   application_id, " +
       "   flow_id, " +
+      "   run_id, " +
       "   flowlet_id, " +
       "   instance_id, " +
       "   metric, " +
       "   value, " +
       "   last_updt " +
       ")" +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, now()) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, now()) " +
       "ON DUPLICATE KEY UPDATE value = ?, last_updt = now()";
 
     Connection connection = null;
@@ -206,11 +212,12 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setString(1, elements.getAccountId());
       stmt.setString(2, elements.getApplicationId());
       stmt.setString(3, elements.getFlowId());
-      stmt.setString(4, elements.getFlowletId());
-      stmt.setInt(5, elements.getInstanceId());
-      stmt.setString(6, request.getMetricName());
-      stmt.setFloat(7, request.getValue());
+      stmt.setString(4, elements.getRunId());
+      stmt.setString(5, elements.getFlowletId());
+      stmt.setInt(6, elements.getInstanceId());
+      stmt.setString(7, request.getMetricName());
       stmt.setFloat(8, request.getValue());
+      stmt.setFloat(9, request.getValue());
       stmt.executeUpdate();
       stmt.close();
     } catch (SQLException e) {

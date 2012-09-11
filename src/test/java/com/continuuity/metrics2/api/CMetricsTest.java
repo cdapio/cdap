@@ -13,10 +13,12 @@ import com.continuuity.runtime.MetricsModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mortbay.log.Log;
 
+import java.sql.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -95,6 +97,15 @@ public class CMetricsTest {
       Thread.sleep(100);
     }
 
+  }
+
+  @Test
+  public void testDate() {
+    Date date = new Date(System.currentTimeMillis());
+    long timestamp = date.getTime();
+    date.setTime(System.currentTimeMillis());
+    timestamp = date.getTime() - timestamp;
+    Assert.assertTrue(timestamp > 0);
   }
 
   @Test(expected = IllegalArgumentException.class)

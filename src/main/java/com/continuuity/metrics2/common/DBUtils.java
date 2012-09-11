@@ -63,12 +63,13 @@ public class DBUtils {
       "   (account_id VARCHAR(64) NOT NULL, \n" +
       "    application_id VARCHAR(64) NOT NULL, \n" +
       "    flow_id VARCHAR(64) NOT NULL, \n" +
+      "    run_id VARCHAR(64) NOT NULL, \n" +
       "    flowlet_id VARCHAR(64) NOT NULL, \n" +
       "    instance_id INT DEFAULT 1, \n" +
       "    metric VARCHAR(64), \n" +
       "    value FLOAT,\n" +
       "    last_updt DATETIME,\n" +
-      " PRIMARY KEY(account_id, application_id, flow_id, flowlet_id, " +
+      " PRIMARY KEY(account_id, application_id, flow_id, run_id, flowlet_id," +
       "             instance_id, metric))";
 
     try {
