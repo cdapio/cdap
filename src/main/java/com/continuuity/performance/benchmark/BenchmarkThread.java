@@ -72,9 +72,9 @@ public class BenchmarkThread extends Thread {
 
     long runtime = System.currentTimeMillis() - startTime;
     System.out.println(agentGroup.getName() + " " + agentId + " done: " +
-        runs + " runs in " + runtime + " ms, average " +
-        (runs * 1000L / runtime) + "/second, average " +
-        (accumulatedTime / runs) + " ms/run");
+        runs + " runs in " + runtime + " ms" +
+        (runtime == 0 ? "" : ", average " + (runs * 1000L / runtime) + "/sec") +
+        (runs == 0 ? "" : ", average " + (accumulatedTime / runs) + " ms/run"));
   }
 
 }
