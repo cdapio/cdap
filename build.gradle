@@ -81,10 +81,15 @@ y_server.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
 }
 
-task js(description: 'Combines and minifies JS') << {
 
-	("mkdir ${project.projectDir}/build/" + project.ext.edition).execute()
-	("${project.projectDir}/bin/node ${project.projectDir}/tools/requirejs/bin/r.js -o ${project.projectDir}/app.build.js baseUrl=${project.projectDir}/client/${project.ext.edition} out=${project.projectDir}/build/${project.ext.edition}/client/main.js").execute()
+buildDir = new File("${project.projectDir}/build/" + project.ext.edition)
+
+task js(type:Exec, description: 'Combines and minifies JS') {
+
+        buildDir.mkdirs()
+
+        commandLine "${project.projectDir}/bin/node"
+        args "${project.projectDir}/tools/requirejs/bin/r.js", "-o", "${project.projectDir}/app.build.js", "baseUrl=${project.projectDir}/client/${project.ext.edition}", "out=${project.projectDir}/build/${project.ext.edition}/client/main.js"
 
 }
 
