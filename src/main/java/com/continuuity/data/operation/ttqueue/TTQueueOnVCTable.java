@@ -494,7 +494,7 @@ public class TTQueueOnVCTable implements TTQueue {
           makeColumn(entryPointer.getEntryId(), ENTRY_DATA), dirty.getFirst());
       assert(!data.isEmpty());
 
-      if (!config.getPartitioner().shouldEmit(consumer,
+      if (!config.getPartitionerType().getPartitioner().shouldEmit(consumer,
           entryPointer.getEntryId(), data.getValue())) {
 
         // Partitioner says skip, flag as available, move to next entry in shard

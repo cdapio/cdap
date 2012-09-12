@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
 
 /**
@@ -21,6 +22,35 @@ public interface QueuePartitioner {
   public boolean shouldEmit(QueueConsumer consumer, long entryId,
       byte [] value);
 
+  public static enum PartitionerType {
+    RANDOM, HASH_ON_VALUE, MODULO_LONG_VALUE;
+
+    private static final QueuePartitioner PARTITIONER_RANDOM =
+        new RandomPartitioner();
+    private static final QueuePartitioner PARTITIONER_HASH =
+        new HashPartitioner();
+    private static final QueuePartitioner PARTITIONER_LONG_MOD =
+        new LongValueHashPartitioner();
+    
+    public QueuePartitioner getPartitioner() {
+      switch (this) {
+        case RANDOM: return PARTITIONER_RANDOM;
+        case HASH_ON_VALUE: return PARTITIONER_HASH;
+        case MODULO_LONG_VALUE: return PARTITIONER_LONG_MOD;
+        default: return PARTITIONER_RANDOM;
+      }
+    }
+    
+    public HBQPartitionerType toHBQ() {
+      switch (this) {
+        case RANDOM: return HBQPartitionerType.RANDOM;
+        case HASH_ON_VALUE: return HBQPartitionerType.HASH_ON_VALUE;
+        case MODULO_LONG_VALUE: return HBQPartitionerType.MODULO_LONG_VALUE;
+        default: return HBQPartitionerType.RANDOM;
+      }
+    }
+  }
+  
   public static class RandomPartitioner implements QueuePartitioner {
     @Override
     public boolean shouldEmit(QueueConsumer consumer, long entryId,
@@ -45,6 +75,15 @@ public interface QueuePartitioner {
     @Override
     public String toString() {
       return Objects.toStringHelper(this).toString();
+    }
+  }
+
+  public static class LongValueHashPartitioner implements QueuePartitioner {
+    @Override
+    public boolean shouldEmit(QueueConsumer consumer, long entryId,
+        byte [] value) {
+      long val = Bytes.toLong(value);
+      return (val % consumer.getGroupSize()) == consumer.getInstanceId();
     }
   }
 }

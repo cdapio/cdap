@@ -14,6 +14,7 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
@@ -447,13 +448,14 @@ public class ConverterUtils {
   /** wrap a queue config */
   TQueueConfig wrap(QueueConfig config) {
     return new TQueueConfig(
-        wrap(config.getPartitioner()),
+        wrap(config.getPartitionerType().getPartitioner()),
         config.isSingleEntry());
   }
+  // TODO: Need to update thrift API with new queue partitioner enum
   /** unwrap a queue config */
   QueueConfig unwrap(TQueueConfig config) {
-    return new QueueConfig(
-        unwrap(config.getPartitioner()),
+    return new QueueConfig(PartitionerType.RANDOM,
+//        unwrap(config.getPartitioner()),
         config.isSingleEntry());
   }
 

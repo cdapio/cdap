@@ -7,6 +7,7 @@ import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.OVCTableHandle;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
@@ -57,7 +58,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     this.executor.execute(new QueueEnqueue(queueName, queueName));
     this.executor.execute(new QueueDequeue(queueName, consumer, config));
@@ -86,7 +87,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumer = new QueueConsumer(0, groupid, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     // enqueue to queue, stream, and write data
     this.executor.execute(new QueueEnqueue(queueName, queueName));
@@ -126,7 +127,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -211,7 +212,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     MemoryOracle.TRACE = true;
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     // Queue should be empty
     QueueDequeue dequeue = new QueueDequeue(queueName, consumer, config);
@@ -258,7 +259,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     // One source queue
     byte [] srcQueueName = Bytes.toBytes("testAckRollback_srcQueue1");
@@ -346,7 +347,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
 
     // One source queue
     byte [] srcQueueName = Bytes.toBytes("AAtestAckRollback_srcQueue1");
@@ -499,7 +500,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumerOne = new QueueConsumer(0, 0, 1);
     QueueConfig configOne = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           this.executor.execute(new QueueDequeue(queueName, consumerOne, configOne));
@@ -521,7 +522,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     QueueConsumer consumerTwo = new QueueConsumer(0, 2, 1);
     QueueConfig configTwo = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), false);
+        PartitionerType.RANDOM, false);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           this.executor.execute(new QueueDequeue(queueName, consumerTwo, configTwo));
@@ -556,7 +557,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Create and start a thread that dequeues in a loop
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     final QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+        PartitionerType.RANDOM, true);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
@@ -669,12 +670,12 @@ public abstract class TestOmidExecutorLikeAFlow {
                 Consumer [] consumerGroupTwo = new Consumer[p];
                 for (int i=0;i<p;i++) {
                   consumerGroupOne[i] = new Consumer(new QueueConsumer(i, 0, p),
-                      new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
+                      new QueueConfig(PartitionerType.RANDOM, true),
                       dequeuedMapOne, producersDone);
                 }
                 for (int i=0;i<p;i++) {
                   consumerGroupTwo[i] = new Consumer(new QueueConsumer(i, 1, p),
-                      new QueueConfig(new QueuePartitioner.RandomPartitioner(), true),
+                      new QueueConfig(PartitionerType.RANDOM, true),
                       dequeuedMapTwo, producersDone);
                 }
 
