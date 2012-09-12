@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -339,7 +340,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(new QueueEnqueue(q, "1".getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
     QueueConfig config =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(PartitionerType.RANDOM, true);
     QueueDequeue dequeue = new QueueDequeue(q, consumer, config);
     DequeueResult dequeueResult = remote.execute(dequeue);
     Assert.assertNotNull(dequeueResult);
@@ -429,8 +430,7 @@ public abstract class OperationExecutorServiceTest extends
     // verify that all is gone
     Assert.assertTrue(remote.execute(new ReadKey(a)).isEmpty());
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
-    QueueConfig config = new
-        QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     Assert.assertTrue(
         remote.execute(new QueueDequeue(q, consumer, config)).isEmpty());
     Assert.assertTrue(
@@ -514,9 +514,9 @@ public abstract class OperationExecutorServiceTest extends
 
     // creeate two configs, one hash, one random, one single, one multi
     QueueConfig conf1 =
-        new QueueConfig(new QueuePartitioner.HashPartitioner(), false);
+        new QueueConfig(PartitionerType.HASH_ON_VALUE, false);
     QueueConfig conf2 =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(PartitionerType.RANDOM, true);
 
     // dequeue with each consumer
     DequeueResult res11 = remote.execute(new QueueDequeue(q, cons11, conf1));

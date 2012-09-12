@@ -10,6 +10,7 @@ import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
@@ -66,8 +67,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
 
     // insert to all three types
     executor.execute(new Write(dataKey, dataKey));
@@ -380,8 +380,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // Dequeue it
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     DequeueResult dequeueResult = executor.execute(
         new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isSuccess());

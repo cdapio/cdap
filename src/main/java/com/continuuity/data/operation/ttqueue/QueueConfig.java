@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.hbase.ttqueue.HBQConfig;
 import com.google.common.base.Objects;
 
@@ -10,16 +11,16 @@ import com.google.common.base.Objects;
  */
 public class QueueConfig {
 
-  private final QueuePartitioner partitioner;
+  private final PartitionerType partitionerType;
   private final boolean singleEntry;
 
-  public QueueConfig(QueuePartitioner partitioner, boolean singleEntry) {
-    this.partitioner = partitioner;
+  public QueueConfig(PartitionerType partitionerType, boolean singleEntry) {
+    this.partitionerType = partitionerType;
     this.singleEntry = singleEntry;
   }
 
-  public QueuePartitioner getPartitioner() {
-    return this.partitioner;
+  public PartitionerType getPartitionerType() {
+    return this.partitionerType;
   }
 
   public boolean isSingleEntry() {
@@ -34,11 +35,11 @@ public class QueueConfig {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("singleEntry", this.singleEntry)
-        .add("partitioner", this.partitioner)
+        .add("partitionerType", this.partitionerType)
         .toString();
   }
 
   public HBQConfig toHBQ() {
-    return new HBQConfig(singleEntry);
+    return new HBQConfig(partitionerType.toHBQ(), singleEntry);
   }
 }

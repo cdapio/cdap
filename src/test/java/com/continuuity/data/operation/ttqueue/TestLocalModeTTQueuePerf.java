@@ -6,6 +6,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.ReadPointer;
@@ -68,8 +69,7 @@ public class TestLocalModeTTQueuePerf {
     long version = 10L;
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     ReadPointer readPointer = new MemoryReadPointer(version);
 
     // first test it with the intra-flow queues

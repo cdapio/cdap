@@ -5,6 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import org.junit.Test;
 
@@ -75,8 +76,7 @@ public abstract class BenchTTQueue {
     long dstart = now();
     last = dstart;
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     ReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
     for (int i=0; i<iterations; i++) {
       DequeueResult result = queue.dequeue(consumer, config, rp);

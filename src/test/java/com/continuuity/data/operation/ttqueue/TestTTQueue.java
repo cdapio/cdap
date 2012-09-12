@@ -23,6 +23,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 
 public abstract class TestTTQueue {
@@ -63,8 +64,7 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
     QueueConsumer consumerSync = new QueueConsumer(0, 0, 1);
-    QueueConfig configSync = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+    QueueConfig configSync = new QueueConfig(PartitionerType.RANDOM, true);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerSync, configSync,
@@ -86,8 +86,7 @@ public abstract class TestTTQueue {
     // Async
 
     QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1);
-    QueueConfig configAsync = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), false);
+    QueueConfig configAsync = new QueueConfig(PartitionerType.RANDOM, false);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, configAsync,
@@ -145,8 +144,7 @@ public abstract class TestTTQueue {
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConsumer consumer2 = new QueueConsumer(0, 1, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
 
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
@@ -211,8 +209,7 @@ public abstract class TestTTQueue {
     QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1);
     QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1);
     QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
@@ -320,8 +317,7 @@ public abstract class TestTTQueue {
 
     // dequeue it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
     DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
 
     // verify we got something and it's the first value
@@ -373,8 +369,7 @@ public abstract class TestTTQueue {
 
     // dequeue with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, true);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
 
     // get the first entry
     DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
@@ -414,7 +409,7 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumer, config, dirtyReadPointer).isEmpty());
 
     // since there are no pending entries, we can change our config
-    QueueConfig newConfig = new QueueConfig(partitioner, false);
+    QueueConfig newConfig = new QueueConfig(PartitionerType.RANDOM, false);
     assertTrue(queue.dequeue(consumer, newConfig, dirtyReadPointer).isEmpty());
 
     // now sleep timeout+1 to allow semi-ack to timeout
@@ -440,8 +435,7 @@ public abstract class TestTTQueue {
 
     // dequeue it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, config, readPointer);
@@ -518,8 +512,7 @@ public abstract class TestTTQueue {
 
     // dequeue it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, config, readPointer);
@@ -574,8 +567,16 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumer, config, readPointer).isEmpty());
 
     // now set the timeout and sleep for timeout + 1
-    long oldTimeout = ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis;
-    ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = 50;
+    long oldTimeout = 0L;
+    if (queue instanceof TTQueueOnVCTable) {
+      oldTimeout = ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis;
+      ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = 50;
+    } else if (queue instanceof TTQueueOnHBaseNative) {
+      oldTimeout = ((TTQueueOnHBaseNative)queue).expirationConfig
+          .getMaxAgeBeforeExpirationInMillis();
+      ((TTQueueOnHBaseNative)queue).expirationConfig
+          .setMaxAgeBeforeExpirationInMillis(50);
+    }
     Thread.sleep(51);
 
     // two dequeues in a row should give values one and four
@@ -612,7 +613,12 @@ public abstract class TestTTQueue {
     }
 
     // restore timeout
-    ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = oldTimeout;
+    if (queue instanceof TTQueueOnVCTable) {
+      ((TTQueueOnVCTable)queue).maxAgeBeforeExpirationInMillis = oldTimeout;
+    } else if (queue instanceof TTQueueOnHBaseNative) {
+      ((TTQueueOnHBaseNative)queue).expirationConfig
+          .setMaxAgeBeforeExpirationInMillis(oldTimeout);
+    }
   }
 
   @Test
@@ -630,8 +636,7 @@ public abstract class TestTTQueue {
 
     // dequeue it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig multiConfig = new QueueConfig(partitioner, false);
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, multiConfig, readPointer);
@@ -656,7 +661,7 @@ public abstract class TestTTQueue {
     // one is still not acked, queue is not empty
 
     // attempt to change to single entry mode should fail
-    QueueConfig singleConfig = new QueueConfig(partitioner, true);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
     try {
       queue.dequeue(consumer, singleConfig, readPointer);
       fail("dequeue should fail because it changes single entry mode.");
@@ -697,9 +702,8 @@ public abstract class TestTTQueue {
 
     // dequeue with a single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig multiConfig = new QueueConfig(partitioner, false);
-    QueueConfig singleConfig = new QueueConfig(partitioner, true);
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
 
     // use single entry first
 
@@ -841,9 +845,8 @@ public abstract class TestTTQueue {
 
     // single consumer in this test, switch between single and multi mode
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig multiConfig = new QueueConfig(partitioner, false);
-    QueueConfig singleConfig = new QueueConfig(partitioner, true);
+    QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConfig singleConfig = new QueueConfig(PartitionerType.RANDOM, true);
 
     // use single config first
     QueueConfig config = singleConfig;
@@ -960,10 +963,10 @@ public abstract class TestTTQueue {
     // two consumers with a hash partitioner, both single mode
     QueueConsumer consumer1 = new QueueConsumer(0, 0, 2);
     QueueConsumer consumer2 = new QueueConsumer(1, 0, 2);
-    QueuePartitioner partitioner = new QueuePartitioner.HashPartitioner();
+    PartitionerType hashPartitionerType = PartitionerType.HASH_ON_VALUE;
 
     // use multi config
-    QueueConfig config = new QueueConfig(partitioner, false);
+    QueueConfig config = new QueueConfig(hashPartitionerType, false);
 
     // dequeue all entries for consumer 1 but only ack until the first hole
     boolean ack = true;
@@ -1072,12 +1075,11 @@ public abstract class TestTTQueue {
 
     // dequeue it with the single consumer and random partitioner
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueuePartitioner partitioner = new QueuePartitioner.RandomPartitioner();
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
 
     // spawn a thread to dequeue
-    QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer, partitioner,
-        singleEntry, readPointer);
+    QueueDequeuer dequeuer = new QueueDequeuer(queue, consumer,
+        PartitionerType.RANDOM, singleEntry, readPointer);
     dequeuer.start();
 
     // dequeuer should be empty
@@ -1168,8 +1170,7 @@ public abstract class TestTTQueue {
 
     // Create and start a thread that dequeues in a loop
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    final QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), true);
+    final QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
@@ -1234,7 +1235,8 @@ public abstract class TestTTQueue {
     assertEquals(n, dequeued.size());
 
     // And dequeuedEntries should be >= n
-    assertTrue(n <= dequeueReturns.get());
+    assertTrue("Expected dequeued >= n (dequeued=" + dequeueReturns.get() +
+        ") (n=" + n + ")", n <= dequeueReturns.get());
   }
 
   @Test
@@ -1267,23 +1269,16 @@ public abstract class TestTTQueue {
     }
 
     // Make a partitioner that just converts value to long and modulos it
-    QueuePartitioner partitioner = new QueuePartitioner() {
-      @Override
-      public boolean shouldEmit(QueueConsumer consumer, long entryId,
-          byte [] value) {
-        long val = Bytes.toLong(value);
-        return (val % consumer.getGroupSize()) == consumer.getInstanceId();
-      }
-    };
-    QueueConfig config = new QueueConfig(partitioner, singleEntry);
+    PartitionerType partitionerType = PartitionerType.MODULO_LONG_VALUE;
+    QueueConfig config = new QueueConfig(partitionerType, singleEntry);
 
     // Start a dequeuer for every consumer!
     QueueDequeuer [][] dequeuers = new QueueDequeuer[n][];
     for (int i=0; i<n; i++) {
       dequeuers[i] = new QueueDequeuer[n];
       for (int j=0; j<n; j++) {
-        dequeuers[i][j] = new QueueDequeuer(queue, consumers[i][j], partitioner,
-            singleEntry, readPointer);
+        dequeuers[i][j] = new QueueDequeuer(queue, consumers[i][j],
+            partitionerType, singleEntry, readPointer);
         dequeuers[i][j].start();
         assertTrue(dequeuers[i][j].triggerdequeue());
       }
@@ -1541,11 +1536,11 @@ public abstract class TestTTQueue {
     private boolean keepgoing = true;
 
     QueueDequeuer(TTQueue queue, QueueConsumer consumer,
-        QueuePartitioner partitioner, boolean singleEntry,
+        PartitionerType partitionerType, boolean singleEntry,
         ReadPointer readPointer) {
       this.queue = queue;
       this.consumer = consumer;
-      this.config = new QueueConfig(partitioner, singleEntry);
+      this.config = new QueueConfig(partitionerType, singleEntry);
       this.readPointer = readPointer;
       this.result = null;
     }
