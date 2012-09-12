@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.common.conf.CConfiguration;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,19 +18,18 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
   }
 
   @Override
-  public OperationExecutorClient getClient() {
+  public OperationExecutorClient getClient() throws TException {
     OperationExecutorClient client = this.clients.get();
     if (client == null) {
       try {
         client = this.newClient();
         clients.set(client);
-      } catch (Exception e) {
+      } catch (TException e) {
         Log.error("Unable to create new opex client for thread: "
             + e.getMessage());
-        // TODO we need
-        return null;
+        throw e;
       }
-    }
+  }
     return client;
   }
 
