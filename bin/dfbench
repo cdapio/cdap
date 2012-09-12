@@ -17,4 +17,4 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-java -cp @classpath@ com.continuuity.data.operation.executor.benchmark.BenchmarkRunner "$@"
+java -cp @classpath@ com.continuuity.performance.benchmark.BenchmarkRunner "$@"
