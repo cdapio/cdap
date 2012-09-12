@@ -1,13 +1,15 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
-import com.continuuity.metrics2.collector.OverlordMetricsReporter;
 
+import java.io.File;
 import java.io.PrintStream;
-import java.util.concurrent.TimeUnit;
+import java.util.Random;
 
 public class NoOpexServiceMain {
 
@@ -19,8 +21,7 @@ public class NoOpexServiceMain {
     out.println("  " + name + " ( start | stop ) ");
   }
 
-
-  public static void main(String args[]) {
+  public static void main(String args[]) throws Exception {
 
     if (args.length != 1) {
       usage(true);
@@ -46,17 +47,25 @@ public class NoOpexServiceMain {
       return;
     }
 
-
     OperationExecutorService opexService =
         new OperationExecutorService(new NoOperationExecutor());
 
     if (START == command) {
 
-      // enable metrics collection
-      CConfiguration configuration = CConfiguration.create();
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, configuration);
-
       Copyright.print(System.out);
+
+      // Start ZooKeeper
+      System.out.print("Starting ZooKeeper...");
+      System.out.flush();
+      InMemoryZookeeper zkCluster = new InMemoryZookeeper();
+      System.out.println("running at " + zkCluster
+          .getConnectionString() + ".");
+
+      // Add ZK info to conf
+      CConfiguration configuration = CConfiguration.create();
+      configuration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+          zkCluster.getConnectionString());
+
       System.out.println("Starting Operation Executor Service...");
       // start it. start is blocking, hence main won't terminate
       try {
@@ -72,4 +81,15 @@ public class NoOpexServiceMain {
       opexService.stop(true);
     }
   }
+
+  private static File getRandomTempDir() {
+    File file = new File(System.getProperty("java.io.tmpdir"),
+        Integer.toString(Math.abs(
+            new Random(System.currentTimeMillis()).nextInt())));
+    if (!file.mkdir()) {
+      throw new RuntimeException("Unable to create temp directory");
+    }
+    return file;
+  }
+
 }

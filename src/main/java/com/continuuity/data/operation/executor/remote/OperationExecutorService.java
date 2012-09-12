@@ -5,7 +5,6 @@ import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
-import com.continuuity.metrics2.collector.OverlordMetricsReporter;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.server.THsHaServer;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This implements an Operation Executor as a Thrift service. It registers
@@ -88,10 +86,6 @@ public class OperationExecutorService extends AbstractRegisteredServer {
 
       Log.info("Configuring Operation Executor Service: " + this.threads +
           " threads at " + socketAddr.toString());
-
-      // enable overlord metrics reporter
-      OverlordMetricsReporter.enable(1, TimeUnit.SECONDS,
-          CConfiguration.create());
 
       // create a new thread pool
       this.executorService = Executors.newCachedThreadPool();
