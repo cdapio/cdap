@@ -36,7 +36,7 @@ public class BenchmarkThread extends Thread {
       long thisTime = System.currentTimeMillis();
       try {
         agent.runOnce(runs + 1, agentId, numAgents);
-      } catch (Exception e) {
+      } catch (BenchmarkException e) {
         // TODO: better way to report the error
         // TODO: add option to continue
         e.printStackTrace();
