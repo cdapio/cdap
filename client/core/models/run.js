@@ -11,10 +11,10 @@ define([], function () {
 			}
 		}.property(),
 		started: function () {
-			return this.startTime >= 0 ? $.timeago(this.startTime * 1000) : 'Never';
+			return this.startTime >= 0 ? $.timeago(this.startTime) : 'Never';
 		}.property('timeTrigger'),
 		ended: function () {
-			return this.endTime >= 0 ? $.timeago(this.endTime * 1000) : 'Never';
+			return this.endTime >= 0 ? $.timeago(this.endTime) : 'Never';
 		}.property('timeTrigger'),
 		statusClass: function () {
 			return {

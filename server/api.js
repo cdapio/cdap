@@ -48,7 +48,12 @@ try {
 		});
 		
 		var Manager = thrift.createClient(FlowService, conn);
-		var identifier;
+		var identifier = new flowservices_types.FlowIdentifier({
+			app: params[0],
+			flow: params[1],
+			version: params[2] ? parseInt(params[2], 10) : -1,
+			accountId: 'demo'
+		});
 
 		switch (method) {
 			case 'start':
@@ -62,59 +67,21 @@ try {
 					"arguments": []
 				});
 				Manager.start(auth_token, identifier, done);
-				conn.end();
-				
 			break;
 			case 'stop':
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: parseInt(params[2], 10),
-					accountId: 'demo'
-				});
 				Manager.stop(auth_token, identifier, done);
-				conn.end();
-				
 			break;
 			case 'status':
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: parseInt(params[2], 10),
-					accountId: 'demo'
-				});
 				Manager.status(auth_token, identifier, done);
-				conn.end();
-				
 			break;
-			case 'getFlowDefinition': 
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: -1,
-					accountId: 'demo'
-				});
-
+			case 'getFlowDefinition':
 				Manager.getFlowDefinition(identifier, done);
 			break;
-			case 'getFlowHistory': 
-
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: -1,
-					accountId: 'demo'
-				});
-
+			case 'getFlowHistory':
 				Manager.getFlowHistory(identifier, done);
 			break;
 			case 'setInstances':
-				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
-					version: params[2],
-					accountId: 'demo'
-				});
+
 				var flowlet_id = params[3];
 				var instances = params[4];
 
@@ -162,8 +129,10 @@ try {
 				} else {
 					done('Unknown method for service Manager: ' + method, null);
 				}
-				conn.end();
+				
 		}
+
+		conn.end();
 
 	};
 

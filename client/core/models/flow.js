@@ -25,10 +25,10 @@ define([], function () {
 			return arr;
 		}.property('meta'),
 		started: function () {
-			return this.lastStarted >= 0 ? $.timeago(this.lastStarted * 1000) : 'Never';
+			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'Never';
 		}.property('timeTrigger'),
 		stopped: function () {
-			return this.lastStopped >= 0 ? $.timeago(this.lastStopped * 1000) : 'Never';
+			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'Never';
 		}.property('timeTrigger'),
 		statusClass: function () {
 			return {

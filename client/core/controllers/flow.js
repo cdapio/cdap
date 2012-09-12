@@ -246,8 +246,6 @@ define([], function () {
 					}
 					flowlet.set('processed', finish);
 
-					console.log(metrics[i].qualifier, metrics[i].value);
-
 					$('#stat' + metrics[i].qualifier).html(finish);
 				}
 
