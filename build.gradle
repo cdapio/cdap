@@ -88,7 +88,7 @@ task js(type:Exec, description: 'Combines and minifies JS') {
 
         buildDir.mkdirs()
 
-        commandLine "${project.projectDir}/bin/node"
+        commandLine "node"
         args "${project.projectDir}/tools/requirejs/bin/r.js", "-o", "${project.projectDir}/app.build.js", "baseUrl=${project.projectDir}/client/${project.ext.edition}", "out=${project.projectDir}/build/${project.ext.edition}/client/main.js"
 
 }
