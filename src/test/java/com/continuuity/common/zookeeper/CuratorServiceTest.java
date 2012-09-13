@@ -29,11 +29,11 @@ public class CuratorServiceTest {
     closeables.add(server);
 
     try {
-      CuratorFramework client = CuratorFrameworkFactory.
-          newClient(server.getConnectionString(), TIMEOUT, TIMEOUT,
-        new RetryOneTime(1));
+      CuratorFramework client = ZookeeperClientProvider.getClient(
+        server.getConnectionString(),
+        1, TIMEOUT
+      );
       closeables.add(client);
-      client.start();
 
       ServiceInstance<String> instance = ServiceInstance.<String>builder()
         .payload("testBasicCuratorService")

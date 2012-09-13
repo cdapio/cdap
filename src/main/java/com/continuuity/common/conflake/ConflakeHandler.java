@@ -1,5 +1,6 @@
 package com.continuuity.common.conflake;
 
+import com.continuuity.common.zookeeper.ZookeeperClientProvider;
 import com.google.common.io.Closeables;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
@@ -89,10 +90,8 @@ class ConflakeHandler implements Conflake {
    */
   public boolean start() {
     try {
-      client = CuratorFrameworkFactory.newClient(zkEnsemble,
-        new RetryNTimes(RETRY_COUNT, INTER_RETRY_TIME));
-      client.start();
-
+      client = ZookeeperClientProvider.getClient(zkEnsemble, RETRY_COUNT,
+                                                 INTER_RETRY_TIME);
       /** Make sure the path exists, if not create it. This would no-op once created */
       EnsurePath workerPath = new EnsurePath(ZK_CONFLAKE_WORKER);
       workerPath.ensure(client.getZookeeperClient());

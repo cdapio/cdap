@@ -1,5 +1,6 @@
 package com.continuuity.common.discovery;
 
+import com.continuuity.common.zookeeper.ZookeeperClientProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -25,8 +26,6 @@ public class ServiceDiscoveryClient implements Closeable {
   private final List<Closeable> closeables;
   private static ServiceDiscovery<ServicePayload> discovery = null;
   public static final String SERVICE_PATH = "/continuuity/system/services";
-  private static final int sessionTimeout = 10*1000;
-  private static final int connectionTimeout = 5*1000;
   private static final int numberOfRetry = 100;
   private static final int timeBetweenRetries = 1000;
   private static boolean started = false;
@@ -52,10 +51,12 @@ public class ServiceDiscoveryClient implements Closeable {
     CuratorFramework client;
     try {
       // Create a curator client.
-      client = CuratorFrameworkFactory.newClient(connectionString, sessionTimeout,
-          connectionTimeout, new RetryNTimes(numberOfRetry, timeBetweenRetries));
+      client = ZookeeperClientProvider.getClient(
+        connectionString,
+        numberOfRetry,
+        timeBetweenRetries
+      );
       closeables.add(client);
-      client.start();
 
       // Create a service discovery that allocated ServiceProviders.
       discovery = ServiceDiscoveryBuilder.builder(ServicePayload.class)
@@ -97,7 +98,9 @@ public class ServiceDiscoveryClient implements Closeable {
     port = Preconditions.checkNotNull(port);
 
     if(! started) {
-      throw new ServiceDiscoveryClientException("ServiceDiscoveryClient#start has not been called.");
+      throw new
+        ServiceDiscoveryClientException("ServiceDiscoveryClient#start has " +
+                                          "not been called.");
     }
 
     try {
