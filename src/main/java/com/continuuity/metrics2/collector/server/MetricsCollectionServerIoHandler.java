@@ -20,12 +20,15 @@ import scala.Tuple2;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
 /**
  * Handler for metrics collection server.
  */
-public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
+public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
+  implements Closeable {
   private static final Logger Log
     = LoggerFactory.getLogger(MetricsCollectionServerIoHandler.class);
 
@@ -222,6 +225,13 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter {
       // of request is not MetricRequest type. In this case we return an
       // status as INVALID to caller.
       session.write(new MetricResponse(MetricResponse.Status.INVALID));
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    for(ImmutablePair<MetricType, MetricsProcessor> processor : processors) {
+      processor.getSecond().close();
     }
   }
 }

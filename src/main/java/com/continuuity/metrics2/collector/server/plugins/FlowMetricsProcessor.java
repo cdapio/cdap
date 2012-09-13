@@ -13,10 +13,15 @@ import com.continuuity.metrics2.common.DBConnectionPoolManager;
 import com.continuuity.metrics2.common.DBUtils;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
+import org.rrd4j.ConsolFun;
+import org.rrd4j.DsType;
+import org.rrd4j.core.RrdDb;
+import org.rrd4j.core.RrdDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.CommonDataSource;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -54,7 +59,6 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    */
   private final ExecutionContext ec
     = ExecutionContexts.fromExecutorService(Executors.newCachedThreadPool());
-
 
   /**
    * Connection Pool Manager.
@@ -292,4 +296,31 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     return invalidFutureResponse;
   }
 
+  /**
+   * Closes the DB
+   *
+   * @throws IOException
+   */
+  @Override
+  public void close() throws IOException {
+    Statement st = null;
+    try {
+      if(type == DBUtils.DBType.HSQLDB) {
+        st = getConnection().createStatement();
+        st.execute("SHUTDOWN");
+        st.close();
+      }
+      poolManager.dispose();
+    } catch (SQLException e) {
+      Log.warn("Failed while shutting down. Reason : {}", e.getMessage());
+    } finally {
+      if(st != null) {
+        try {
+          st.close();
+        } catch (SQLException e){
+          Log.warn("Failed to close statement. Reason : {}", e.getMessage());
+        }
+      }
+    }
+  }
 }

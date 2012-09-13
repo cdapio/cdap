@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.*;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
@@ -191,6 +192,22 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       // Set service name. This is the name by which the clients can find
       // me.
       setServerName(Constants.SERVICE_METRICS_COLLECTION_SERVER);
+
+      // Add a shutdown hook for smooth shutdown.
+      Runtime.getRuntime().addShutdownHook(
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              Log.info("Shutting down gracefully.");
+              handler.close();
+            } catch (IOException e) {
+              Log.error("Failing closing the handler. Reason : {}",
+                        e.getMessage());
+            }
+          }
+        })
+      );
 
       // Include the service payload.
       RegisteredServerInfo registrationInfo =

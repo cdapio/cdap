@@ -122,4 +122,9 @@ public final class OpenTSDBProcessor implements MetricsProcessor {
     }
     return invalidFutureResponse;
   }
+
+  @Override
+  public void close() throws IOException {
+    // nothing to be done here.
+  }
 }

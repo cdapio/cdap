@@ -5,12 +5,13 @@ import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import org.apache.mina.core.session.IoSession;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Interface defining processing of a metric.
  */
-public interface MetricsProcessor {
+public interface MetricsProcessor extends Closeable {
 
   /**
    * Processes a {@link MetricRequest}.
