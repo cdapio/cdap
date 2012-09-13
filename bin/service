@@ -156,7 +156,7 @@ rh_status() {
 ub_status() {
     echo "checking status"
     # call sourced status function
-    status_of_proc -p $pid
+    status_of_proc -p $pid "$0" "$APP"
 }
 
 case "$1" in
