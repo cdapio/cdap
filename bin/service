@@ -2,9 +2,17 @@
 
 # Copyright (c) to Continuuity Inc. All rights reserved.
 
-
 # Source function library. used for "status" use case
-. /etc/rc.d/init.d/functions
+if [ -f "/etc/rc.d/init.d/functions" ]; then
+  PLATFORM="RHEL"
+  . /etc/rc.d/init.d/functions
+elif [ -f /lib/lsb/init-functions ] ; then
+  PLATFORM="UBUNTU"
+  . /lib/lsb/init-functions
+else
+  echo "Platform is unsupported."
+  exit 0
+fi
 
 NAME=`basename $0`
 
@@ -145,6 +153,12 @@ rh_status() {
     status -p $pid 
 }
 
+ub_status() {
+    echo "checking status"
+    # call sourced status function
+    status_of_proc -p $pid
+}
+
 case "$1" in
   start)
     $1  
@@ -159,7 +173,14 @@ case "$1" in
   ;;
 
   status)
-   rh_status 
+    case "$PLATFORM" in
+      "RHEL")
+        rh_status
+      ;;
+      "UBUNTU")
+        ub_status
+      ;;
+    esac 
   ;;
 
   *)
