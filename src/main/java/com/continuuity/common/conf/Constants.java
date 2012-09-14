@@ -144,9 +144,6 @@ public class Constants {
     CFG_METRICS_COLLECTOR_SERVER_PORT
     = "overlord.metrics.collection.server.port";
   public static final String
-    CFG_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED
-    = "ovelord.metrics.server.opentsdb.enabled";
-  public static final String
     CFG_METRICS_FRONTEND_SERVER_ADDRESS
     = "overlord.metrics.frontend.server.address";
   public static final String
@@ -157,6 +154,15 @@ public class Constants {
     = "overlord.metrics.frontend.server.threads";
   public static final String
     CFG_METRICS_CONNECTION_URL = "overlord.metrics.connection.url";
+  public static final String
+    CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS
+    = "overlord.metrics.processor.plugins.flowsystem";
+  public static final String
+    CFG_METRICS_COLLECTION_SYSTEM_PLUGINS
+    = "overlord.metrics.processor.plugins.system";
+  public static final String
+    CFG_METRICS_COLLECTION_FLOW_USER_PLUGINS
+    = "overlord.metrics.processor.plugins.flowuser";
 
   /**
    * Defaults for metrics collection server
@@ -164,8 +170,6 @@ public class Constants {
   public static final String
     DEFAULT_METRICS_COLLECTOR_SERVER_ADDRESS = "localhost";
   public static final int DEFAULT_METRICS_COLLECTOR_SERVER_PORT = 45003;
-  public static final boolean
-    DEFAULT_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED = false;
   public static final String
     DEFAULT_METRICS_FRONTEND_SERVER_ADDRESS = "localhost";
   public static final int
