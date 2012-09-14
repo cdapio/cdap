@@ -230,6 +230,10 @@ define([], function () {
 					return;
 				}
 
+				if (!response.params) {
+					return;
+				}
+
 				var metrics = response.params;
 				for (var i = 0; i < metrics.length; i ++) {
 
