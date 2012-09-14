@@ -41,7 +41,7 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
   protected boolean doDecode(IoSession session, IoBuffer in,
                              ProtocolDecoderOutput out) throws Exception {
 
-    // Remeber the initial position.
+    // Remember the initial position.
     int start = in.position();
 
     // Now find the first CRLF in the buffer.

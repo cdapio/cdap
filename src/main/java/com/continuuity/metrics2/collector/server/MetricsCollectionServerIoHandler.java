@@ -65,28 +65,61 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     this.mBeanServer = mBeanServer;
     this.configuration = configuration;
 
-    boolean openTSDBEnabled =
-      configuration.getBoolean(
-        Constants.CFG_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED,
-        Constants.DEFAULT_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED
-      );
-
     // By default we will send all the flow metrics to
     // flow metrics processor. But, in case the openTSDB is
     // enabled, then we send the flow metrics to both places.
     MetricsProcessor flowMetricsProcessor =
       new FlowMetricsProcessor(configuration);
 
-    if(openTSDBEnabled) {
-      add(MetricType.FlowSystem, new OpenTSDBProcessor(configuration));
-      add(MetricType.FlowUser, new OpenTSDBProcessor(configuration));
-      add(MetricType.System, new OpenTSDBProcessor(configuration));
-      add(MetricType.FlowSystem, flowMetricsProcessor);
-      add(MetricType.FlowUser, flowMetricsProcessor);
+    add(MetricType.FlowSystem, flowMetricsProcessor);
+    add(MetricType.FlowUser, flowMetricsProcessor);
+
+    // Read in the processors to be used for managing system metrics.
+    // If there are none defined, then we don't assign defaults. If
+    // there any defined, then we create instance of processor and
+    // pass in the configuration object to it.
+    String[] klassSystem = configuration.getStrings(
+        Constants.CFG_METRICS_COLLECTION_SYSTEM_PLUGINS
+    );
+    if(klassSystem.length > 0) {
+      for(String klass : klassSystem) {
+        loadCreateAndAddToList(MetricType.System, klass);
+      }
+    }
+
+    // Load processor for handling flow system metrics. If none defined,
+    // we add a default processor.
+    String[] klassFlowSystem = configuration.getStrings(
+      Constants.CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS
+    );
+    if(klassSystem.length > 0) {
+      for(String klass : klassFlowSystem) {
+        loadCreateAndAddToList(MetricType.FlowUser, klass);
+      }
     } else {
       add(MetricType.FlowSystem, flowMetricsProcessor);
-      add(MetricType.FlowUser, flowMetricsProcessor);
     }
+
+    // Load processor for handling flow user metrics. If none defined,
+    // we add a default processor.
+    String[] klassFlowUser = configuration.getStrings(
+      Constants.CFG_METRICS_COLLECTION_FLOW_USER_PLUGINS
+    );
+
+    if(klassFlowUser.length > 0) {
+      for(String klass : klassFlowUser) {
+        loadCreateAndAddToList(MetricType.FlowUser, klass);
+      }
+    }
+  }
+
+  private void loadCreateAndAddToList(MetricType type, String klassName)
+    throws Exception {
+    MetricsProcessor processor
+      = (MetricsProcessor) Class.forName(klassName)
+      .getDeclaredConstructor(CConfiguration.class)
+      .newInstance(configuration);
+    add(type, processor);
   }
 
   /**

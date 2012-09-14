@@ -154,13 +154,11 @@ public class MetricsCollectionServerMainTest {
    */
   @Test
   public void testEnd2EndWithOpenTSDB() throws Exception {
-    // We enable forwarding to opentsdb
-    configuration.setBoolean(
-      Constants.CFG_METRICS_COLLECTION_SERVER_OPENTSDB_ENABLED,
-      true
-    );
-
     // Start the openTSDBInMemory mock server on free port available.
+    configuration.set(
+      Constants.CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS,
+      "com.continuuity.metrics2.collector.server.plugins.OpenTSDBProcessor"
+    );
     int port = PortDetector.findFreePort();
     OpenTSDBInMemoryServer server = new OpenTSDBInMemoryServer(port);
     ExecutorService service = Executors.newFixedThreadPool(1);

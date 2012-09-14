@@ -13,15 +13,10 @@ import com.continuuity.metrics2.common.DBConnectionPoolManager;
 import com.continuuity.metrics2.common.DBUtils;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
-import org.rrd4j.ConsolFun;
-import org.rrd4j.DsType;
-import org.rrd4j.core.RrdDb;
-import org.rrd4j.core.RrdDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.CommonDataSource;
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
