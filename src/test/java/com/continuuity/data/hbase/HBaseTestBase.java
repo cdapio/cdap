@@ -92,6 +92,7 @@ public abstract class HBaseTestBase {
 
     File dfsPath = getRandomTempDir();
     System.setProperty("test.build.data", dfsPath.toString());
+    System.setProperty("test.cache.data", dfsPath.toString());
     System.err.println("Instantiating dfs cluster in 1 sec...");
     Thread.sleep(1000);
     dfsCluster = new MiniDFSCluster.Builder(conf)
