@@ -77,18 +77,4 @@ public class TestNativeHBaseTTQueue extends TestTTQueue {
 
   @Test @Override @Ignore
   public void testEvictOnAck_ThreeGroups() throws Exception {}
-
-  // Invalid group reconfigurations not supported
-  
-  @Test @Override @Ignore
-  public void testSingleConsumerMultiEntry_Empty_ChangeToSingleConsumerSingleEntry() {}
-
-  @Test @Override @Ignore
-  public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() {}
-
-  @Test @Override @Ignore
-  public void testSingleConsumerSingleGroup_dynamicReconfig() {}
-
-  @Test @Override @Ignore
-  public void testMultiConsumerSingleGroup_dynamicReconfig() {}
 }

@@ -741,7 +741,9 @@ public abstract class TestTTQueue {
     // dequeue again, should get four not three as it was invalidated
     DequeueResult resultFourA = queue.dequeue(consumer, singleConfig, readPointer);
     assertNotNull(resultFourA);
-    assertTrue(Bytes.equals(resultFourA.getValue(), Bytes.toBytes(4)));
+    assertTrue("Expected to read 4 but read: " +
+          Bytes.toInt(resultFourA.getValue()),
+        Bytes.equals(resultFourA.getValue(), Bytes.toBytes(4)));
 
     // trying to change to multi now should fail
     try {

@@ -37,7 +37,7 @@ public class DequeueResult {
           dequeueResult.getEntryPointer().getShardId());
       this.value = dequeueResult.getData();
     } else {
-      throw new RuntimeException("Invalid state");
+      throw new RuntimeException("Invalid state: " + dequeueResult.toString());
     }
   }
 
