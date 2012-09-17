@@ -83,6 +83,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassSystem != null && klassSystem.length > 0) {
       for(String klass : klassSystem) {
+        Log.debug("Adding {} plugin for processing system metrics.",
+                  klass);
         loadCreateAndAddToList(MetricType.System, klass);
       }
     }
@@ -94,6 +96,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
+        Log.debug("Adding {} plugin for processing flow system metrics.",
+                  klass);
         loadCreateAndAddToList(MetricType.FlowUser, klass);
       }
     } else {
@@ -108,6 +112,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(klassFlowUser != null && klassFlowUser.length > 0) {
       for(String klass : klassFlowUser) {
+        Log.debug("Adding {} plugin for processing flow user metrics.",
+                  klass);
         loadCreateAndAddToList(MetricType.FlowUser, klass);
       }
     }

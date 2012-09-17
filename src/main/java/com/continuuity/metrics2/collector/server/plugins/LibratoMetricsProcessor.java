@@ -119,6 +119,8 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
         return;
       }
 
+      Log.debug("Sending a batch of {} to librato.", count);
+
       // Iterate through the queue and generate the body of the
       // request to be sent to librato.
       while(!queue.isEmpty() && count > 0) {
@@ -161,7 +163,7 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
         = client.executeRequest(builder.build());
       Response r = response.get();
       if(r.getStatusCode() != 200) {
-        Log.warn("Failed writing to librato. Status code {}, status {}",
+        Log.warn("Failed sending metric to librato. Status code {}, status {}",
                  r.getStatusCode(), r.getStatusText());
       }
     }
@@ -210,6 +212,8 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
   public Future<MetricResponse.Status> process(final MetricRequest request)
     throws IOException {
 
+    // Check if librato batcher is running, if not then we return
+    // appropriate server side error to client.
     if(! libratoBatcher.isRunning()) {
       return Futures.future(new Callable<MetricResponse.Status>() {
         @Override
@@ -219,6 +223,9 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
       }, ec);
     }
 
+    // We add it to queue and because adding it to queue can block
+    // we return future. This could become an issue on the server
+    // side if the queue is blocked for long periods of time.
     return Futures.future(new Callable<MetricResponse.Status>() {
       @Override
       public MetricResponse.Status call() throws Exception {
