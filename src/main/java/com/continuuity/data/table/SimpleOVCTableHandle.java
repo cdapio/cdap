@@ -14,15 +14,15 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   
 
 
-  private final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
+  protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
       new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
           Bytes.BYTES_COMPARATOR);
   
-  private final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
+  protected final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
   
-  private final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
+  protected final ConcurrentSkipListMap<byte[], TTQueueTable> streamTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
           Bytes.BYTES_COMPARATOR);
 

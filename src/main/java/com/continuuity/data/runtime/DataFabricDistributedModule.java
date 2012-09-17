@@ -1,6 +1,10 @@
 package com.continuuity.data.runtime;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -13,14 +17,17 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 
 public class DataFabricDistributedModule extends AbstractModule {
 
   private final CConfiguration conf;
 
   private final Configuration hbaseConf;
+
+  private static final String CONF_ENABLE_NATIVE_QUEUES =
+      "fabric.queue.hbase.native";
+  
+  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
 
   public DataFabricDistributedModule() {
     this.conf = loadConfiguration();
@@ -52,6 +59,13 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
 
+    Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
+    // Check if native hbase queue handle should be used
+    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES,
+        CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
+      ovcTableHandle = HBaseNativeOVCTableHandle.class;
+    }
+    
     // Bind our implementations
 
     // Bind remote operation executor
@@ -64,7 +78,7 @@ public class DataFabricDistributedModule extends AbstractModule {
         .annotatedWith(Names.named("DataFabricOperationExecutor"))
         .to(OmidTransactionalOperationExecutor.class)
         .in(Singleton.class);
-    bind(OVCTableHandle.class).to(HBaseOVCTableHandle.class);
+    bind(OVCTableHandle.class).to(ovcTableHandle);
 
     // For now, just bind to in-memory omid oracles
     bind(TimestampOracle.class).

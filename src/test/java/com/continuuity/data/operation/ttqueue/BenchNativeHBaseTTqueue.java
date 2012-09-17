@@ -65,7 +65,7 @@ public class BenchNativeHBaseTTqueue extends BenchTTQueue {
   static {
     config.numJustEnqueues = 500;
     config.queueEntrySize = 10;
-    config.numEnqueuesThenSyncDequeueAckFinalize = 500;
+    config.numEnqueuesThenSyncDequeueAckFinalize = 5000;
   }
 
   @Override

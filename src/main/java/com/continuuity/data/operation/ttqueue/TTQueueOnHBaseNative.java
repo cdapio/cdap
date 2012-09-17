@@ -223,7 +223,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
 
   // Private helpers
 
-  public static boolean TRACE = true;
+  public static boolean TRACE = false;
 
   private void log(String msg) {
     if (TRACE) System.out.println(Thread.currentThread().getId() + " : " + msg);

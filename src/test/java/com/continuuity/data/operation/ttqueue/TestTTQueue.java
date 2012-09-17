@@ -270,8 +270,11 @@ public abstract class TestTTQueue {
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
     queue.ack(result.getEntryPointer(), consumer4);
-    queue.finalize(result.getEntryPointer(), consumer4, numGroups);
+    queue.finalize(result.getEntryPointer(), consumer4, ++numGroups); // numGroups=4
 
+    // TODO: there is some weirdness here.  is the new native queue correct in
+    //       behavior or are the old ttqueue implementations correct?
+    
     // dequeue again should be empty on consumer4
     assertTrue(
         queue.dequeue(consumer4, config, dirtyReadPointer).isEmpty());
@@ -287,8 +290,8 @@ public abstract class TestTTQueue {
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
     queue.ack(result.getEntryPointer(), consumer3);
-    // finalize now with numGroups+1
-    queue.finalize(result.getEntryPointer(), consumer3, numGroups+1);
+    // finalize now with numGroups=4
+    queue.finalize(result.getEntryPointer(), consumer3, numGroups);
 
     // everyone is empty now!
     assertTrue(
