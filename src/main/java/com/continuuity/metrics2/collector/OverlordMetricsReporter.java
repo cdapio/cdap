@@ -239,7 +239,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
         // While this thread is blocked, a thread in the client is
         // dequeing and trying to make space for more stuff to be add
         // later.
-        interval = Math.max(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT)*1000;
+        interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT)*1000;
         Log.error("Failed writing -- waiting for {} ms", interval);
         try {
           Thread.sleep(interval);
