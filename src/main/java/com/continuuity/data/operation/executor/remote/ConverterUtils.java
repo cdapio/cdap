@@ -420,14 +420,15 @@ public class ConverterUtils {
    * caller). If we find a partitioner that is not predefined
    * by data fabric, we log an error and default to random.
    */
-  TQueuePartitioner wrap(QueuePartitioner partitioner) {
-    if (partitioner instanceof QueuePartitioner.HashPartitioner)
+  TQueuePartitioner wrap(PartitionerType partitioner) {
+    if (PartitionerType.HASH_ON_VALUE.equals(partitioner))
       return TQueuePartitioner.HASH;
-    if (partitioner instanceof QueuePartitioner.RandomPartitioner)
+    if (PartitionerType.RANDOM.equals(partitioner))
       return TQueuePartitioner.RANDOM;
+    if (PartitionerType.MODULO_LONG_VALUE.equals(partitioner))
+      return TQueuePartitioner.LONGMOD;
     Log.error("Internal Error: Received an unknown QueuePartitioner with " +
-        "class " + partitioner.getClass().getName() + ". Defaulting to " +
-        QueuePartitioner.RandomPartitioner.class.getName());
+        "class " + partitioner + ". Defaulting to RANDOM.");
     return TQueuePartitioner.RANDOM;
   }
   /**
@@ -435,27 +436,28 @@ public class ConverterUtils {
    * instances of the Thrift enum. If we encounter something else,
    * we log an error and fall back to random.
    */
-  QueuePartitioner unwrap(TQueuePartitioner tPartitioner) {
+  PartitionerType unwrap(TQueuePartitioner tPartitioner) {
     if (TQueuePartitioner.HASH.equals(tPartitioner))
-      return new QueuePartitioner.HashPartitioner();
+      return PartitionerType.HASH_ON_VALUE;
     if (TQueuePartitioner.RANDOM.equals(tPartitioner))
-      return new QueuePartitioner.RandomPartitioner();
+      return PartitionerType.RANDOM;
+    if (TQueuePartitioner.LONGMOD.equals(tPartitioner))
+      return PartitionerType.MODULO_LONG_VALUE;
     Log.error("Internal Error: Received unknown QueuePartitioner " +
-        tPartitioner + ". Defaulting to " + TQueuePartitioner.RANDOM + ".");
-    return new QueuePartitioner.RandomPartitioner();
+        tPartitioner + ". Defaulting to " + PartitionerType.RANDOM + ".");
+    return PartitionerType.RANDOM;
   }
 
   /** wrap a queue config */
   TQueueConfig wrap(QueueConfig config) {
     return new TQueueConfig(
-        wrap(config.getPartitionerType().getPartitioner()),
+        wrap(config.getPartitionerType()),
         config.isSingleEntry());
   }
-  // TODO: Need to update thrift API with new queue partitioner enum
   /** unwrap a queue config */
   QueueConfig unwrap(TQueueConfig config) {
-    return new QueueConfig(PartitionerType.RANDOM,
-//        unwrap(config.getPartitioner()),
+    return new QueueConfig(
+        unwrap(config.getPartitioner()),
         config.isSingleEntry());
   }
 

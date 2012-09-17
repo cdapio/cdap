@@ -78,6 +78,7 @@ struct TQueueAck {
 enum TQueuePartitioner {
   RANDOM,
   HASH,
+  LONGMOD,
 }
 
 struct TQueueConfig {
