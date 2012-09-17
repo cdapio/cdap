@@ -14,7 +14,8 @@ public class MetricResponse {
     SUCCESS(0),
     FAILED(1),
     IGNORED(2),
-    INVALID(3);
+    INVALID(3),
+    SERVER_ERROR(4);
     private int code;
 
     Status(int code) {

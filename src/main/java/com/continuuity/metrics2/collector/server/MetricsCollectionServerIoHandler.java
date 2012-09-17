@@ -81,7 +81,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     String[] klassSystem = configuration.getStrings(
         Constants.CFG_METRICS_COLLECTION_SYSTEM_PLUGINS
     );
-    if(klassSystem.length > 0) {
+    if(klassSystem != null && klassSystem.length > 0) {
       for(String klass : klassSystem) {
         loadCreateAndAddToList(MetricType.System, klass);
       }
@@ -92,7 +92,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     String[] klassFlowSystem = configuration.getStrings(
       Constants.CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS
     );
-    if(klassSystem.length > 0) {
+    if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
         loadCreateAndAddToList(MetricType.FlowUser, klass);
       }
@@ -106,7 +106,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       Constants.CFG_METRICS_COLLECTION_FLOW_USER_PLUGINS
     );
 
-    if(klassFlowUser.length > 0) {
+    if(klassFlowUser != null && klassFlowUser.length > 0) {
       for(String klass : klassFlowUser) {
         loadCreateAndAddToList(MetricType.FlowUser, klass);
       }

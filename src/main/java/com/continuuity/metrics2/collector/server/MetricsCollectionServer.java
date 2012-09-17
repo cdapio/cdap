@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.metrics2.collector.codec.MetricCodecFactory;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -215,7 +216,9 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
 
       return registrationInfo;
     } catch (Exception e) {
-      Log.error(e.getMessage());
+      Log.debug(StackTraceUtil.toStringStackTrace(e));
+      Log.error("Failed configuring metrics collection server : {}",
+                e.getMessage());
     }
     return null;
   }
