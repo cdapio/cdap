@@ -17,8 +17,13 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataFabricDistributedModule extends AbstractModule {
+
+  private static final Logger Log =
+      LoggerFactory.getLogger(DataFabricDistributedModule.class);
 
   private final CConfiguration conf;
 
@@ -86,7 +91,7 @@ public class DataFabricDistributedModule extends AbstractModule {
         CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
       ovcTableHandle = HBaseNativeOVCTableHandle.class;
     }
-    System.err.println("ovcTableHandle is " + ovcTableHandle.getName());
+    Log.info("Table Handle is " + ovcTableHandle.getName());
 
     // Bind our implementations
 
