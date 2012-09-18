@@ -510,7 +510,7 @@ public class RestAccessorTest {
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
@@ -546,7 +546,7 @@ public class RestAccessorTest {
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);
@@ -581,7 +581,7 @@ public class RestAccessorTest {
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
     DequeueResult result = this.executor.execute(dequeue);

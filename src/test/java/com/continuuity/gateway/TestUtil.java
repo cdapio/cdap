@@ -294,7 +294,7 @@ public class TestUtil {
     // prepare the queue consumer
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
@@ -338,7 +338,7 @@ public class TestUtil {
     // prepare the queue consumer
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config =
-        new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+        new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = tuplesExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer

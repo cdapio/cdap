@@ -293,7 +293,7 @@ public class RestHandler extends NettyRestHandler {
         QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
         // singleEntry = true means we must ack before we can see the next entry
         QueueConfig queueConfig =
-            new QueueConfig(new QueuePartitioner.RandomPartitioner(), true);
+            new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
         QueueDequeue dequeue = new QueueDequeue(
             queueURI.getBytes(), queueConsumer, queueConfig);
         DequeueResult result;
