@@ -24,21 +24,42 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   private final Configuration hbaseConf;
 
-  private static final String CONF_ENABLE_NATIVE_QUEUES =
+  public static final String CONF_ENABLE_NATIVE_QUEUES =
       "fabric.queue.hbase.native";
   
   private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
 
+  /**
+   * Create a module with default configuration for HBase and Continuuity
+   */
   public DataFabricDistributedModule() {
     this.conf = loadConfiguration();
     this.hbaseConf = HBaseConfiguration.create(conf);
   }
 
+  /**
+   * Create a module with custom configuration for HBase,
+   * and defaults for Continuuity
+   */
   public DataFabricDistributedModule(Configuration conf) {
     this.hbaseConf = new Configuration(conf);
     this.conf = loadConfiguration();
   }
 
+  /**
+   * Create a module with separate, custom configurations for HBase
+   * and for Continuuity
+   */
+  public DataFabricDistributedModule(Configuration conf,
+                                     CConfiguration cconf) {
+    this.hbaseConf = new Configuration(conf);
+    this.conf = cconf;
+  }
+
+  /**
+   * Create a module with custom configuration, which will
+   * be used both for HBase and for Continuuity
+   */
   public DataFabricDistributedModule(CConfiguration conf) {
     this.hbaseConf = new Configuration(conf);
     this.conf = conf;
@@ -65,7 +86,8 @@ public class DataFabricDistributedModule extends AbstractModule {
         CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
       ovcTableHandle = HBaseNativeOVCTableHandle.class;
     }
-    
+    System.err.println("ovcTableHandle is " + ovcTableHandle.getName());
+
     // Bind our implementations
 
     // Bind remote operation executor
