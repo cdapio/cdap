@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
 
-public class LocalHBaseOpexProvider extends OpexProvider {
+public class LocalNativeHBaseOpexProvider extends OpexProvider {
 
   @Override
   OperationExecutor create() throws BenchmarkException {
@@ -35,7 +35,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
     }
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(
-        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
     DataFabricDistributedModule module =
         new DataFabricDistributedModule(hbaseConf, conf);
     Injector injector = Guice.createInjector(module);
@@ -150,7 +150,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
   public static void main(String[] args) {
     String[] args1 = Arrays.copyOf(args, args.length + 2);
     args1[args.length] = "--opex";
-    args1[args.length + 1] = LocalHBaseOpexProvider.class.getName();
+    args1[args.length + 1] = LocalNativeHBaseOpexProvider.class.getName();
     BenchmarkRunner.main(args1);
   }
 }
