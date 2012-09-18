@@ -214,9 +214,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setString(4, elements.getRunId());
       stmt.setString(5, elements.getFlowletId());
       stmt.setInt(6, elements.getInstanceId());
-      stmt.setString(7, request.getMetricName());
+      stmt.setString(7, elements.getMetric());
       stmt.setFloat(8, request.getValue());
-      stmt.setFloat(9, request.getValue());
       stmt.executeUpdate();
       stmt.close();
     } catch (SQLException e) {
