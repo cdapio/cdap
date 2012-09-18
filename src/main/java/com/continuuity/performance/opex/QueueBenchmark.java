@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.performance.benchmark.*;
+import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -69,8 +70,8 @@ public class QueueBenchmark extends OpexBenchmark {
     try {
       opex.execute(enqueue);
     } catch (OperationException e) {
-      throw new BenchmarkException(
-          "Operation " + enqueue + " failed: " + e.getMessage());
+      Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
+          "(Ignoring this error)", e);
     }
   }
 
@@ -79,7 +80,7 @@ public class QueueBenchmark extends OpexBenchmark {
     // create a dequeue operation
     QueueConsumer consumer = new QueueConsumer(consumerId, 1, numConsumers);
     QueueConfig config = new QueueConfig(
-        new QueuePartitioner.RandomPartitioner(), numPendingAcks == 0);
+        QueuePartitioner.PartitionerType.RANDOM, numPendingAcks == 0);
     QueueDequeue dequeue = new QueueDequeue(queueBytes, consumer, config);
 
     // first dequeue
@@ -87,8 +88,9 @@ public class QueueBenchmark extends OpexBenchmark {
     try {
       result = opex.execute(dequeue);
     } catch (OperationException e) {
-      throw new BenchmarkException(
-          "Operation " + dequeue + " failed: " + e.getMessage());
+      Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
+          "(Ignoring this error)", e);
+      return;
     }
     if (result.isEmpty()) return;
 
@@ -107,8 +109,8 @@ public class QueueBenchmark extends OpexBenchmark {
       try {
         opex.execute(ackToExecute);
       } catch (OperationException e) {
-        throw new BenchmarkException(
-            "Operation " + ackToExecute + " failed: " + e.getMessage());
+        Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
+            "(Ignoring this error)", e);
       }
       pending.removeFirst();
     }
