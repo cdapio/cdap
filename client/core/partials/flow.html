@@ -1,72 +1,78 @@
-<div id="sub-header">
-	{{#unless run}}
-	<div id="action-buttons" class="btn-group pull-right" style="width:300px;">
-	  	<button class="btn dropdown-toggle" data-toggle="dropdown">
-			<span class="caret"></span>
-		</button>
-		<ul class="dropdown-menu">
-			<li style="min-width:200px; padding:4px 16px 2px;">
-				{{#each current.getMeta}}
-					<div><strong>{{k}}</strong>: {{v}}
-				{{/each}}
-			</li>
-			<li class="divider"></li>
-			<li><a href="#/upload/new">Upload a New Version</a></li>
-			<li><a {{action "delete" on="click"}}>Remove This Flow</a></li>
-			{{#unless ENV.isCloud}}
-			<li class="divider"></li>
-			<li><a {{action "promote" on="click"}}>Push to the Cloud</a></li>
-			{{/unless}}
-		</ul>
-	  	<button class="btn" style="width:75px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}>{{current.defaultAction}}</button>
-	  	<button disabled="true" style="width: 100px;" {{bindAttr class="current.defaultActionClass"}}>{{current.currentState}}</button>
+
+<div id="title">
+	<h1 id="content-header">{{current.meta.name}} <span>Flow</span></h1>
+</div>
+
+<div id="info">
+	<div class="info-box" style="float: right; border: 0;">
+		{{#unless run}}
+		<div id="action-buttons" class="btn-group pull-right" style="width:320px;">
+		  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+				<span class="caret"></span>
+			</button>
+			<ul class="dropdown-menu">
+				<li style="min-width:200px; padding:4px 16px 2px;">
+					{{#each current.getMeta}}
+						<div><strong>{{k}}</strong>: {{v}}
+					{{/each}}
+				</li>
+				<li class="divider"></li>
+				<li><a href="#/upload/new">Upload a New Version</a></li>
+				<li><a {{action "delete" on="click"}}>Remove This Flow</a></li>
+				{{#unless ENV.isCloud}}
+				<li class="divider"></li>
+				<li><a {{action "promote" on="click"}}>Push to the Cloud</a></li>
+				{{/unless}}
+			</ul>
+		 	<button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
+		 	<button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
+		  	<button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+		  	<button disabled="true" style="width: 90px;" class="btn">{{current.currentState}}</button>
+		</div>
+		{{/unless}}
 	</div>
-	{{/unless}}
-	<h2 id="content-header">{{current.meta.name}} <span>Flow</span></h2>
-	<ul class="breadcrumb">
-		<li><a href="#"><i class="icon-home" /> </a><a href="#">All Flows</a> <span class="divider">/</span></li>
-		{{#if run}}
-			<li><a {{bindAttr href="current.href"}}>{{current.meta.name}}</a></li>
-			<span class="divider">/</span></li>
-			<li class="selected">Run</li>
-		{{else}}
-			<li class="selected">{{current.meta.name}}</li>
-		{{/if}}
-		<li class="pull-right">Displaying {{App.Controllers.Flow.content.length}} flowlets.</li>
-	</ul>
+	<div class="info-box health-box"></div>
+</div>
+
+<div id="panels">
+
 	<div id="informer"></div>
 	
-</div>
-
-<div id="flowviz-container" class="well">
-	{{view App.Views.Visualizer viewName="visualizer"}}
-</div>
-
-<div id="object-list">
-	{{#if run}}
-		<div class="object-list-empty">
-			To view run history, <a {{bindAttr href="current.href"}}>return to the flow.</a>
+	<div class="panel">
+		<div id="flowviz-container">
+			{{view App.Views.Visualizer viewName="visualizer"}}
 		</div>
-	{{else}}
-		{{#if history.length}}
-		<table class="table table-condensed">
-			<thead>
-				<tr><th style="width: 215px;">Started</th>
-				<th>Ended</th>
-				<th style="width:250px;">Result</th>
-			</tr></thead>
-			{{#each history tagName="tbody"}}
-				<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
-					<td>{{started}}</td>
-					<td>{{ended}}</td>
-					<td>{{detail}}</td>
-				</tr>
-			{{/each}}
-		</table>
-		{{else}}
-		<div class="object-list-empty">
-			This flow has not completed a run yet.
+	</div>
+
+	<div class="panel">
+		<div id="object-list">
+			{{#if run}}
+				<div class="object-list-empty">
+					To view run history, <a {{bindAttr href="current.href"}}>return to the flow.</a>
+				</div>
+			{{else}}
+				{{#if history.length}}
+				<table class="table table-condensed">
+					<thead>
+						<tr><th style="width: 215px;">Started</th>
+						<th>Ended</th>
+						<th style="width:250px;">Result</th>
+					</tr></thead>
+					{{#each history tagName="tbody"}}
+						<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
+							<td>{{started}}</td>
+							<td>{{ended}}</td>
+							<td>{{detail}}</td>
+						</tr>
+					{{/each}}
+				</table>
+				{{else}}
+				<div class="object-list-empty">
+					This flow has not completed a run yet.
+				</div>
+				{{/if}}
+			{{/if}}
 		</div>
-		{{/if}}
-	{{/if}}
+	</div>
+
 </div>

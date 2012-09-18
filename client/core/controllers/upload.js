@@ -96,13 +96,13 @@ define([], function () {
 					case 5:
 						App.Views.Informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
 						this.processing = false;
-						App.Views.Upload.reset();
+						App.router.applicationController.view.resetUpload();
 						this.sendFile();
 					break;
 					default:
 						App.Views.Informer.show(response.message, 'alert-error');
 						this.processing = false;
-						App.Views.Upload.reset();
+						App.router.applicationController.view.resetUpload();
 						this.sendFile();
 				}
 			}

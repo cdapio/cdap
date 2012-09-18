@@ -6,9 +6,9 @@ define([], function () {
 	return Em.Object.extend({
 		href: function () {
 			if (this.get('applicationId')) {
-				return '#/flow/' + this.get('applicationId') + '/' + this.get('flowId');
+				return '#/flows/' + this.get('applicationId') + '/' + this.get('flowId');
 			} else {
-				return '#/flow/' + this.get('meta').app + '/' + this.get('meta').name;
+				return '#/flows/' + this.get('meta').app + '/' + this.get('meta').name;
 			}
 		}.property(),
 		undeployHref: function () {
@@ -30,6 +30,21 @@ define([], function () {
 		stopped: function () {
 			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'Never';
 		}.property('timeTrigger'),
+		actionIcon: function () {
+			return {
+				'deployed': 'btn-start',
+				'stopped': 'btn-start',
+				'running': 'btn-pause'
+			}[this.currentState.toLowerCase()];
+		}.property('currentState'),
+		stopDisabled: function () {
+
+			if (this.currentState.toLowerCase() === 'running') {
+				return false;
+			}
+			return true;
+
+		}.property('currentState'),
 		statusClass: function () {
 			return {
 				'deployed': 'label label-info',
@@ -60,7 +75,7 @@ define([], function () {
 				'stopped': 'Start',
 				'stopping': '...',
 				'starting': '...',
-				'running': 'Stop',
+				'running': 'Pause',
 				'adjusting': '...',
 				'draining': '...',
 				'failed': 'Start'

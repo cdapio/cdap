@@ -37,6 +37,8 @@ define([], function () {
 				}, 1000);
 
 			});
+
+
 		},
 		unload: function () {
 			clearInterval(this.interval);

@@ -41,6 +41,6 @@
 	"wsh"          : true,
 	"indent"       : 4,
 	"predef"       : [
-		"App", "Ember", "Em", "io", "define", "jsPlumb"
+		"App", "Ember", "Em", "io", "define", "jsPlumb", "d3"
 	]
 }

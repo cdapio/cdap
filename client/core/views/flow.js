@@ -3,14 +3,18 @@ define([
 	'lib/text!../partials/flow.html'
 	], function (Template) {
 	
-	return Em.View.create({
+	return Em.View.extend({
 		template: Em.Handlebars.compile(Template),
 		currentBinding: 'App.Controllers.Flow.current',
 		runBinding: 'App.Controllers.Flow.run',
 		historyBinding: 'App.Controllers.Flow.history',
 		exec: function (event) {
-
+			
 			var control = $(event.target);
+			if (event.target.tagName === "SPAN") {
+				control = control.parent();
+			}
+
 			var id = control.attr('flow-id');
 			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
@@ -71,7 +75,7 @@ define([
 				if (error) {
 					App.Views.Informer.show(error.message, 'alert-error');
 				} else {
-					App.router.set('location', '#/');
+					App.router.transitionTo('home');
 				}
 
 			});

@@ -13,51 +13,57 @@
   <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="../assets/css/main.css">
 
-  <script type="text/javascript">
-    ENV = {};
-    ENV.CP_DEFAULT_CACHEABLE = true;
-    ENV.VIEW_PRESERVES_CONTEXT = true;
-  </script>
-
-
   <script type="text/javascript" src="/core/lib/jquery.min.js"></script>
   <script type="text/javascript" src="/core/lib/bootstrap.min.js"></script>
-  <script type="text/javascript" src="/core/lib/ember-latest.js"></script>
-  <script type="text/javascript" src="/core/lib/ember-route-manager.js"></script>
+  
+  <script type="text/javascript" src="/core/lib/handlebars-1.0.0.beta.6.js"></script>
+  <script type="text/javascript" src="/core/lib/ember-1.0.pre.js"></script>
+  
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
+
+  <script type="text/javascript" src="http://d3js.org/d3.v2.min.js?2.9.6"></script>
 
   <script data-main="main" src="../core/lib/require.js"></script>
 
 </head>
 <body>
-
-<div id="header" class="navbar">
-  <div class="navbar-inner">
-    <div class="container">
-      <a href="#" class="brand"></a>
-      <div id="product-edition" class="product pull-right"></div>
-    </div>
+ <div id="nav">
+    <a href="#" id="logo"></a>
+    <ul>
+      <li><a class="nav-link nav-dash" href="#">Dashboard</a></li>
+      <li><a class="nav-link nav-apps" href="#">Applications</a></li>
+      <li><a class="nav-link nav-flows" href="#">Flows</a></li>
+      <li><a class="nav-link nav-streams" href="#">Streams</a></li>
+      <li><a class="nav-link nav-datasets" href="#">Datasets</a></li>    
+    </ul>
   </div>
-</div>
 
-<div id="wrapper" class="container-fluid">
-  <div class="row-fluid">
-    <div id="navi"></div>
-    <div id="content">
-      <div id="interstitial"></div>
-      <div id="content-body"></div>
+  <script type="text/x-handlebars" data-template-name="application">
+    <div id="header">
+      <div id="global">
+        <a class="global-link global-help" href="#"></a>
+        <a class="global-link global-user" href="#">{{user.name}}</a>
+        <a class="global-link global-dev" href="#">Dev Center</a>
+      </div>
+      <ul id="breadcrumb">
+      {{#each breadcrumbs}}
+        <li><a {{bindAttr href="href"}}>{{name}}</a></li>
+      {{/each}}
+      </ul>
     </div>
-  </div>
-</div>
+    <div id="interstitial"></div>
+    <div id="content-body">
+      {{outlet}}
+    </div>
+    <div id="footer">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
+      <i class="icon-question-sign"></i>
+      <a style="text-decoration: underline;" href="mailto:support@continuuity.com">Send us Questions &amp; Feedback</a><br />
+    </div>
+  </script>
 
 <div style="display:none;" id="flowletviz"></div>
-
-<div id="footer">
-  COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
-    <i class="icon-question-sign"></i> <a style="text-decoration: underline;" href="mailto:support@continuuity.com">Send us Questions &amp; Feedback</a><br />
-</div>
 
 </body>
 </html>

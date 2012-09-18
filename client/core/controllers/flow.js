@@ -4,7 +4,7 @@
 
 define([], function () {
 
-	var COLUMN_WIDTH = 206;
+	var COLUMN_WIDTH = 216;
 
 	return Em.ArrayProxy.create({
 		content: [],
@@ -32,13 +32,13 @@ define([], function () {
 
 			this.sourcespec = {
 				endpoint: 'Dot',
-				paintStyle : { radius:5, fillStyle:"#89b086" },
+				paintStyle : { radius:1, fillStyle:"#89b086" },
 				isSource:true
 			};
 
 			this.destspec = {
 				endpoint: 'Dot',
-				paintStyle : { radius:5, fillStyle:"#89b086" },
+				paintStyle : { radius:1, fillStyle:"#89b086" },
 				maxConnections:-1,
 				isTarget:true
 			};
@@ -248,9 +248,22 @@ define([], function () {
 					for (var j = 0; j < fs.length; j ++) {
 						fs[j].set('metrics', finish);
 					}
+
+					if (finish > 1000) {
+
+						var digits = 3 - (Math.round(finish / 1000) + '').length;
+
+						finish = finish / 1000;
+
+						var rounded = Math.round(finish * Math.pow(10, digits)) / Math.pow(10, digits);
+
+						console.log(rounded);
+
+						finish = rounded + 'K';
+					}
+
 					flowlet.set('processed', finish);
 
-					$('#stat' + metrics[i].qualifier).html(finish);
 				}
 
 				if (!for_run_id) {
@@ -363,7 +376,7 @@ define([], function () {
 					});
 
 					// Attach it to and expand the visualizer.
-					var viz = App.Views.Flow.get('visualizer');
+					var viz = App.router.applicationController.view.get('visualizer');
 					viz.get('childViews').pushObject(columns[column]);
 					$(viz.get('element')).css({width: (++numColumns * COLUMN_WIDTH) + 'px'});
 
@@ -384,7 +397,7 @@ define([], function () {
 					return;
 				}
 
-
+				// Use the run loop to ensure nodes have already been appended (previous append)
 				Ember.run.next(this, function () {
 
 					var elId;
@@ -413,18 +426,24 @@ define([], function () {
 
 					var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
 
+					// If drawing a straight line from LTR, use flowchart renderer
 					if (column_map[from].row === column_map[to].row) {
-						connector = [ "Flowchart", { gap: 0, stub: 1 } ];
-					}
 
-					var color = '#152C52';
+						var col1 = column_map[from].column;
+						var col2 = column_map[to].column;
+
+						if (columns[col1]._childViews.length === columns[col2]._childViews.length) {
+							connector = [ "Flowchart", { gap: 0, stub: 1 } ];
+						}
+					}
+					
+
+					var color = '#CCC';
 					self.plumber.connect({
-						paintStyle: { strokeStyle:color, lineWidth:2 },
+						paintStyle: { strokeStyle:color, lineWidth:6 },
 						uuids:['flowlet' + from + 'RightMiddle',
 							'flowlet' + to + 'LeftMiddle'],
-						overlays: [
-							[ "Arrow", { location:0.5 }, { foldback:0.7, fillStyle:color, width:14 } ]
-						],
+						
 						connector: connector
 					});
 
@@ -448,7 +467,7 @@ define([], function () {
 						for (var k = 0; k < conns[i].length; k ++) {
 							if (conns[i][k] === id) {
 								append(i, column_map[id].column + 1, id);
-								connect(id, i);
+								//connect(id, i);
 								bind_to(i);
 							}
 						}
@@ -464,6 +483,46 @@ define([], function () {
 			}
 
 			bind_to(hasSource ? flowSource.name : null);
+
+			// Find max nodes in any column
+			var maxHeight = 0;
+			for (var i in columns) {
+				if (columns[i]._childViews.length > maxHeight) {
+					maxHeight = columns[i]._childViews.length;
+				}
+			}
+
+			// Vertically center nodes
+			for (var i in columns) {
+				var num = columns[i]._childViews.length;
+				var diff = maxHeight - num;
+				var el = columns[i]._childViews[0].set('classNames', ['ember-view', 'window', 'window-' + diff]);
+			}
+
+			// Draw connections
+			for (var i in conns) {
+				for (var k = 0; k < conns[i].length; k ++) {
+					connect(conns[i][k], i);
+				}
+			}
+
+			var data = [3, 6, 2, 7, 5, 2, 1, 3, 8, 9, 2, 5, 7],
+				w = 240,
+				h = 88,
+				margin = 6,
+				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
+
+			App.util.sparkline(widget, data, w, h, margin);
+			$('#info').append('<div class="info-box sparkline-value"><strong>50</strong><br />tuples/sec</div>');
+
+			var data = [10, 11, 12, 20, 10, 30, 20, 25, 35, 45],
+				w = 240,
+				h = 88,
+				margin = 12,
+				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
+
+			App.util.sparkline(widget, data, w, h, margin);
+			$('#info').append('<div class="info-box sparkline-value"><strong>50%</strong><br />busyness</div>');
 
 		}
 	});

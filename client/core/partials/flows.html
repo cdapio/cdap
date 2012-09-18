@@ -1,25 +1,33 @@
-<div id="sub-header">
-	<div id="action-buttons" class="pull-right">
-		{{#if App.Controllers.Flows.length}}
-			<button class="btn" {{action "upload" on="click"}}>Upload a Flow</button>
-		{{else}}
-			<button class="btn btn-success" {{action "upload" on="click"}}>Upload a Flow</button>
-		{{/if}}
-	</div>
-	<h2 id="content-header">All Flows</h2>
-	<ul class="breadcrumb">
-		<li class="selected"><i class="icon-home" /> All Flows</li>
-		<li class="pull-right">Displaying {{App.Controllers.Flows.length}} of {{App.Controllers.Flows.length}} flows.</li>
-	</ul>
-	<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
+
+<div id="title">
+	<h1>All Flows</h1>
 </div>
-<div id="informer"></div>
-<div id="object-list">
-	{{#if App.Controllers.Flows.length}}
-		{{view App.Context.Views.FlowList}}
-	{{else}}
-		<div class="object-list-empty">
-			No flows are currently deployed. <a href="#/upload/new">Upload flows</a> to deploy a jar.
+
+<div id="info">
+	<div class="info-box" style="float: right; border: 0;">
+		<div id="upload-dropzone" class="drop-zone">
+			<div id="far-upload-status">
+				Drop a JAR or <a href="#">Browse</a>
+			</div>
 		</div>
-	{{/if}}
+	</div>
+	<div class="info-box health-box"></div>
+</div>
+
+<div id="informer"></div>
+
+<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
+
+<div id="panels">
+	<div class="panel">
+		<div id="object-list">
+			{{#if App.Controllers.Flows.length}}
+				{{view App.Context.Views.FlowList}}
+			{{else}}
+				<div class="object-list-empty">
+					No flows are currently deployed. <a href="#/upload">Upload flows</a> to deploy a jar.
+				</div>
+			{{/if}}
+		</div>
+	</div>
 </div>

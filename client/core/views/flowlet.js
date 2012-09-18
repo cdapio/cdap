@@ -120,10 +120,10 @@ define([
 		inject: function () {
 
 			var payload = this.get('payload');
-			var flow = App.Views.Flow.current.get('meta').name;
+			var flow = App.Controllers.Flow.current.get('meta').name;
 			var stream = '';
-			if (App.Views.Flow.current.get('flowStreams')) {
-				stream = App.Views.Flow.current.get('flowStreams')[0].name;
+			if (App.Controllers.Flow.current.get('flowStreams')) {
+				stream = App.Controllers.Flow.current.get('flowStreams')[0].name;
 			}
 
 			this.set('payload', '');
