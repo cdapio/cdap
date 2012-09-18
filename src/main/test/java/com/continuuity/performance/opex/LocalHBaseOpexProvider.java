@@ -1,5 +1,6 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -32,8 +33,11 @@ public class LocalHBaseOpexProvider extends OpexProvider {
       throw new BenchmarkException(
           "Unable to start HBase: " + e.getMessage(), e);
     }
+    CConfiguration conf = CConfiguration.create();
+    conf.setBoolean(
+        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
     DataFabricDistributedModule module =
-        new DataFabricDistributedModule(conf);
+        new DataFabricDistributedModule(hbaseConf, conf);
     Injector injector = Guice.createInjector(module);
     return injector.getInstance(Key.get(OperationExecutor.class,
         Names.named("DataFabricOperationExecutor")));
@@ -49,7 +53,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
     }
   }
 
-  private Configuration conf;
+  private Configuration hbaseConf;
   private MiniZooKeeperCluster zkCluster;
   private MiniDFSCluster dfsCluster;
   private MiniHBaseCluster hbaseCluster;
@@ -69,24 +73,24 @@ public class LocalHBaseOpexProvider extends OpexProvider {
   private void startHBase() throws Exception {
 
     // disable UIs to prevent port conflicts)
-    conf = new Configuration();
-    conf.setInt("hbase.regionserver.info.port", -1);
-    conf.setInt("hbase.master.info.port", -1);
+    hbaseConf = new Configuration();
+    hbaseConf.setInt("hbase.regionserver.info.port", -1);
+    hbaseConf.setInt("hbase.master.info.port", -1);
 
     // Start ZooKeeper
     System.out.println("Starting ZooKeeper ...");
-    zkCluster = new MiniZooKeeperCluster(conf);
+    zkCluster = new MiniZooKeeperCluster(hbaseConf);
     int zkPort = zkCluster.startup(getRandomTempDir(), 1);
 
-    // Add ZK info to conf
-    conf.set(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(zkPort));
+    // Add ZK info to hbaseConf
+    hbaseConf.set(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(zkPort));
 
     // Start DFS
     System.err.println("Starting Mini DFS ...");
     File dfsPath = getRandomTempDir();
     System.setProperty("test.build.data", dfsPath.toString());
     Thread.sleep(1000);
-    dfsCluster = new MiniDFSCluster.Builder(conf)
+    dfsCluster = new MiniDFSCluster.Builder(hbaseConf)
         .nameNodePort(0)
         .numDataNodes(1)
         .format(true)
@@ -95,15 +99,15 @@ public class LocalHBaseOpexProvider extends OpexProvider {
         .build();
     dfsCluster.waitClusterUp();
 
-    // Add HDFS info to conf
-    conf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
+    // Add HDFS info to hbaseConf
+    hbaseConf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
 
     // Start HBase
     System.out.println("Starting HBase ...");
-    createHBaseRootDir(conf);
-    conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
-    conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
-    Configuration c = new Configuration(conf);
+    createHBaseRootDir(hbaseConf);
+    hbaseConf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
+    hbaseConf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
+    Configuration c = new Configuration(hbaseConf);
     hbaseCluster = new MiniHBaseCluster(c, 1, 1);
 
     // Sleep a short time
