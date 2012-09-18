@@ -53,9 +53,17 @@ define([
 			this.welcome_message = $('#far-upload-status').html();
 			$('#far-upload-alert').hide();
 
+			$('#file-input').change(function () {
+				
+				App.Controllers.Upload.sendFiles(
+					$('#file-input')[0].files
+				);
+
+			});
+
 		},
 		resetUpload: function () {
-			$("#far-upload-status").html('Drop a JAR or <a href="#">Browse</a>');
+			$("#far-upload-status").html('<input type="file" id="file-input" multiple />');
 
 			App.Controllers.Flows.load();
 

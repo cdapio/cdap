@@ -120,6 +120,9 @@
 		*/
 
 		io.configure('production', function(){
+			io.set('transports', ['websocket']);
+		});
+		/*
 			io.enable('browser client minification');
 			io.enable('browser client etag');
 			io.enable('browser client gzip');
@@ -132,6 +135,7 @@
 				'jsonp-polling'
 				]);
 		});
+		*/
 
 		io.configure('development', function(){
 			io.set('transports', ['websocket']);

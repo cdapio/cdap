@@ -61,7 +61,7 @@ define([], function () {
 
 				};
 
-				$('#far-upload-status').html('Reading ' + file.name + '...');
+				$('#far-upload-status').html('Reading file...');
 				reader.readAsArrayBuffer(file);
 
 			} else {

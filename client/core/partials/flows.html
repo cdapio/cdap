@@ -7,7 +7,7 @@
 	<div class="info-box" style="float: right; border: 0;">
 		<div id="upload-dropzone" class="drop-zone">
 			<div id="far-upload-status">
-				Drop a JAR or <a href="#">Browse</a>
+				<input type="file" id="file-input" multiple />
 			</div>
 		</div>
 	</div>
@@ -25,7 +25,7 @@
 				{{view App.Context.Views.FlowList}}
 			{{else}}
 				<div class="object-list-empty">
-					No flows are currently deployed. <a href="#/upload">Upload flows</a> to deploy a jar.
+					No flows are currently deployed. Drag-and-drop or browse for a file above.
 				</div>
 			{{/if}}
 		</div>
