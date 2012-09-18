@@ -71,7 +71,6 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     this.type = DBUtils.loadDriver(connectionUrl);
 
     // Creates a pooled data source.
-    CommonDataSource dataSource;
     if(this.type == DBUtils.DBType.MYSQL) {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();

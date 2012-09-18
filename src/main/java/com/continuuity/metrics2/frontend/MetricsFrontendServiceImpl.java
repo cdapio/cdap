@@ -2,6 +2,7 @@ package com.continuuity.metrics2.frontend;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.stubs.*;
 import com.continuuity.metrics2.stubs.MetricsFrontendService;
@@ -9,7 +10,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.thrift.TException;
+import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.mortbay.log.Log;
 
 import javax.annotation.Nullable;
@@ -38,7 +41,7 @@ public class MetricsFrontendServiceImpl
    * {@link com.continuuity.metrics2.common.DBConnectionPoolManager}  for
    * managing connections to the DB.
    */
-  private Connection connection;
+  private static DBConnectionPoolManager poolManager;
 
   public MetricsFrontendServiceImpl(CConfiguration configuration)
     throws ClassNotFoundException, SQLException {
@@ -46,6 +49,19 @@ public class MetricsFrontendServiceImpl
       = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
                           Constants.DEFAULT_METIRCS_CONNECTION_URL);
     this.type = DBUtils.loadDriver(connectionUrl);
+
+    // Creates a pooled data source.
+    if(this.type == DBUtils.DBType.MYSQL) {
+      MysqlConnectionPoolDataSource mysqlDataSource =
+        new MysqlConnectionPoolDataSource();
+      mysqlDataSource.setUrl(connectionUrl);
+      poolManager = new DBConnectionPoolManager(mysqlDataSource, 40);
+    } else if(this.type == DBUtils.DBType.HSQLDB) {
+      JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
+      jdbcDataSource.setUrl(connectionUrl);
+      poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
+    }
+
     DBUtils.createMetricsTables(getConnection(), this.type);
   }
 
@@ -54,10 +70,10 @@ public class MetricsFrontendServiceImpl
    * @throws java.sql.SQLException thrown in case of any error.
    */
   private synchronized Connection getConnection() throws SQLException {
-    if(connection == null) {
-      connection = DriverManager.getConnection(connectionUrl);
+    if(poolManager != null) {
+      return poolManager.getValidConnection();
     }
-    return connection;
+    return null;
   }
 
   /**
@@ -132,10 +148,12 @@ public class MetricsFrontendServiceImpl
         " AND metric in (" + values + ") GROUP BY flowlet_id, metric";
     }
 
+    Connection connection = null;
     PreparedStatement stmt = null;
     ResultSet rs = null;
     try {
-      stmt = getConnection().prepareStatement(sql);
+      connection = getConnection();
+      stmt = connection.prepareStatement(sql);
       stmt.setString(1, request.getArgument().getAccountId());
       stmt.setString(2, request.getArgument().getApplicationId());
       stmt.setString(3, request.getArgument().getFlowId());
@@ -150,20 +168,19 @@ public class MetricsFrontendServiceImpl
     } catch (SQLException e) {
       Log.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
     } finally {
-      if(stmt != null) {
-        try {
-          stmt.close();
-        } catch (SQLException e) {
-          Log.warn("Failed to close prepared statement. Reason : {}",
-                   e.getMessage());
-        }
-      }
-      if(rs != null) {
-        try {
+      try {
+        if(rs != null) {
           rs.close();
-        } catch (SQLException e) {
-          Log.warn("Failed to close record set. Reason : {}", e.getMessage());
         }
+        if(stmt != null) {
+          stmt.close();
+        }
+        if(connection != null) {
+          connection.close();
+        }
+      } catch(SQLException e) {
+        Log.warn("Failed to close connection/statement/record. Reason : {}",
+                 e.getMessage());
       }
     }
 

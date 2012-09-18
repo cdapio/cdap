@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -72,10 +73,11 @@ public class DBUtils {
       " PRIMARY KEY(account_id, application_id, flow_id, run_id, flowlet_id," +
       "             instance_id, metric))";
 
+    PreparedStatement stmt = null;
     try {
-      connection
-        .prepareStatement("SET DATABASE DEFAULT RESULT MEMORY ROWS 1000")
-        .execute();
+      stmt = connection.prepareStatement("SET DATABASE DEFAULT " +
+                                           "RESULT MEMORY ROWS 1000");
+      stmt.execute();
       connection.prepareStatement(metricsTableCreateDDL).execute();
     } catch (SQLException e) {
       // SQL state for determining the duplicate table create exception
@@ -83,6 +85,18 @@ public class DBUtils {
       if(!e.getSQLState().equalsIgnoreCase("42504")) {
         Log.warn("Failed creating tables. Reason : {}", e.getMessage());
         return false;
+      }
+    } finally {
+      try {
+        if(stmt != null) {
+          stmt.close();
+        }
+        if(connection != null) {
+          connection.close();
+        }
+      } catch(SQLException e) {
+        Log.warn("Failed closing connection/statement. Reason : {}",
+                 e.getMessage());
       }
     }
     return true;

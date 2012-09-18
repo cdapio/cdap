@@ -77,11 +77,6 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   private final String hostname;
 
   /**
-   * Instance of configuration object.
-   */
-  private final CConfiguration configuration;
-
-  /**
    * Handler for sending metrics to overlord.
    */
   private MetricsClient client;
@@ -92,14 +87,23 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   private static OverlordMetricsReporter reporter = null;
 
   /**
-   *
+   * Specifies the backoff minimum time to be used for backing off.
    */
   private static int BACKOFF_MIN_TIME = 1;
 
+  /**
+   * Specifies the backoff maximum time.
+   */
   private static int BACKOFF_MAX_TIME = 30;
 
+  /**
+   * Specifies the exponent for increasing the backoff by.
+   */
   private static int BACKOFF_EXPONENT = 2;
 
+  /**
+   * Current interval to sleep during back-off.
+   */
   private int interval = BACKOFF_MIN_TIME;
 
   /**
@@ -121,7 +125,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   }
 
   /**
-   * Clears
+   * Clears metrics for a given name.
    */
   public static synchronized void clear(String name) {
     for(Map.Entry<MetricName, Metric> entry :
@@ -132,6 +136,9 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     }
   }
 
+  /**
+   * Disables the overlord metric reporter.
+   */
   public static synchronized void disable() {
     if(reporter != null) {
       reporter.shutdown();
@@ -151,7 +158,6 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
     super(registry, "overlord-metric-reporter");
     Preconditions.checkNotNull(configuration);
     Preconditions.checkNotNull(registry);
-    this.configuration = configuration;
     this.vm = VirtualMachineMetrics.getInstance();
     this.hostname = getDefaultHostLabel();
     try {
