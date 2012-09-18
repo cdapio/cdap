@@ -14,7 +14,6 @@ import org.mortbay.log.Log;
 
 import javax.annotation.Nullable;
 import java.sql.*;
-import java.util.Iterator;
 import java.util.List;
 
 /**

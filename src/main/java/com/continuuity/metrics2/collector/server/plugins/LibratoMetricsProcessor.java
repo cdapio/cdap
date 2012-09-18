@@ -33,7 +33,7 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
    * Execution context under which the DB updates will happen.
    */
   private final ExecutionContext ec
-    = ExecutionContexts.fromExecutorService(Executors.newCachedThreadPool());
+    = ExecutionContexts.fromExecutorService(Executors.newFixedThreadPool(50));
 
   /**
    * Specifies the user agent.

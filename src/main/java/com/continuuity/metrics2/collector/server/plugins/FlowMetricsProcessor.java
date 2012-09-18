@@ -7,9 +7,9 @@ import akka.dispatch.Futures;
 import com.continuuity.common.builder.BuilderException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.common.DBConnectionPoolManager;
 import com.continuuity.metrics2.common.DBUtils;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
@@ -53,7 +53,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    * Execution context under which the DB updates will happen.
    */
   private final ExecutionContext ec
-    = ExecutionContexts.fromExecutorService(Executors.newCachedThreadPool());
+    = ExecutionContexts.fromExecutorService(Executors.newFixedThreadPool(40));
 
   /**
    * Connection Pool Manager.
@@ -76,11 +76,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
+      poolManager = new DBConnectionPoolManager(mysqlDataSource, 40);
     } else if(this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(jdbcDataSource, 20);
+      poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
     }
 
     // Create any tables needed for initializing.
@@ -94,7 +94,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    */
   private Connection getConnection() throws SQLException {
     if(poolManager != null) {
-      return poolManager.getConnection();
+      return poolManager.getValidConnection();
     }
     return null;
   }

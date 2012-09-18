@@ -188,7 +188,9 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   @Override
   public void exceptionCaught(IoSession session, Throwable cause) throws
     Exception {
-    Log.warn(cause.getMessage(), cause);
+    if(cause != null && cause.getMessage() != null) {
+      Log.warn(cause.getMessage(), cause);
+    }
   }
 
   /**
@@ -250,9 +252,11 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
             public void onComplete(Throwable failure, MetricResponse.Status
               status) {
               if(failure != null) {
-                session.write(new MetricResponse(MetricResponse.Status.FAILED));
+                writeIfConnected(session,
+                                 new MetricResponse(MetricResponse.Status.FAILED));
               } else {
-                session.write(status);
+                writeIfConnected(session,
+                                 new MetricResponse(status));
               }
             }
           });
@@ -263,7 +267,16 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       // if we are here that means either the request was invalid or the type
       // of request is not MetricRequest type. In this case we return an
       // status as INVALID to caller.
-      session.write(new MetricResponse(MetricResponse.Status.INVALID));
+      writeIfConnected(
+         session,
+         new MetricResponse(MetricResponse.Status.INVALID)
+      );
+    }
+  }
+
+  private void writeIfConnected(IoSession session, MetricResponse response) {
+    if(session.isConnected()) {
+      session.write(response);
     }
   }
 

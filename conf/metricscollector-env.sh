@@ -6,3 +6,6 @@ MAIN_CLASS=com.continuuity.runtime.MetricsCollectionServerMain
 
 # Add Hadoop HDFS classpath
 EXTRA_CLASSPATH=""
+
+# Specify Heap Size.
+JAVA_HEAPMAX=-Xmx1024m
