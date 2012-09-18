@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class EventWritingConsumer extends Consumer {
@@ -56,30 +55,45 @@ public class EventWritingConsumer extends Consumer {
     this.executor = executor;
   }
 
+  private QueueEnqueue constructOperation(Event event) throws Exception {
+    EventSerializer serializer = getSerializer();
+    byte[] bytes = serializer.serialize(event);
+    if (bytes == null) {
+      LOG.warn("Could not serialize event: " + event);
+      throw new Exception("Could not serialize event: " + event);
+    }
+    String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
+    if (destination == null) {
+      LOG.warn("Enqueuing an event that has no destination. " +
+          "Using 'default' instead.");
+      destination = "default";
+    }
+    // construct the stream URO to use for the data fabric
+    String queueURI = FlowStream.buildStreamURI(destination).toString();
+    LOG.debug("Sending event to " + queueURI + ", event = " + event);
+
+    return new QueueEnqueue(queueURI.getBytes(), bytes);
+  }
+
+
   @Override
   protected void single(Event event) throws Exception {
-    this.batch(Collections.singletonList(event));
+    try {
+      QueueEnqueue enqueue = constructOperation(event);
+      this.executor.execute(enqueue);
+    } catch (Exception e) {
+      Exception e1 = new Exception(
+          "Failed to enqueue event(s): " + e.getMessage(), e);
+      LOG.error(e.getMessage(), e);
+      throw e1;
+    }
   }
 
   @Override
   protected void batch(List<Event> events) throws Exception {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
-    EventSerializer serializer = getSerializer();
     for (Event event : events) {
-      byte[] bytes = serializer.serialize(event);
-      if (bytes == null) {
-        LOG.warn("Could not serialize event: " + event);
-        throw new Exception("Could not serialize event: " + event);
-      }
-      String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
-      if (destination == null) {
-        LOG.warn("Enqueuing an event that has no destination. " +
-            "Using 'default' instead.");
-        destination = "default";
-      }
-      // construct the stream URO to use for the data fabric
-      String queueURI = FlowStream.buildStreamURI(destination).toString();
-      operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
+      operations.add(constructOperation(event));
     }
     try {
       this.executor.execute(operations);

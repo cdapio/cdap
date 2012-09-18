@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TupleWritingConsumer extends Consumer {
@@ -58,40 +57,52 @@ public class TupleWritingConsumer extends Consumer {
     return this.serializers.get();
   }
 
+  private QueueEnqueue constructOperation(Event event) throws Exception {
+    TupleSerializer serializer = getSerializer();
+    // convert the event into a tuple
+    Tuple tuple = new TupleBuilder().
+        set("headers", event.getHeaders()).
+        set("body", event.getBody()).
+        create();
+    // and serialize it
+    byte[] bytes = serializer.serialize(tuple);
+    if (bytes == null) {
+      Exception e = new Exception("Could not serialize event: " + event);
+      LOG.warn("Could not serialize event: " + event, e);
+      throw e;
+    }
+    // figure out where to write it
+    String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
+    if (destination == null) {
+      LOG.debug("Enqueuing an event that has no destination. " +
+          "Using 'default' instead.");
+      destination = "default";
+    }
+    // construct the stream URI to use for the data fabric
+    String queueURI = FlowStream.buildStreamURI(destination).toString();
+    LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
+
+    return new QueueEnqueue(queueURI.getBytes(), bytes);
+  }
+
   @Override
   protected void single(Event event) throws Exception {
-    this.batch(Collections.singletonList(event));
+    try {
+      QueueEnqueue enqueue = constructOperation(event);
+      this.executor.execute(enqueue);
+    } catch (Exception e) {
+      Exception e1 = new Exception(
+          "Failed to enqueue event(s): " + e.getMessage(), e);
+      LOG.error(e.getMessage(), e);
+      throw e1;
+    }
   }
 
   @Override
   protected void batch(List<Event> events) throws Exception {
     List<WriteOperation> operations = new ArrayList<WriteOperation>(events.size());
-    TupleSerializer serializer = getSerializer();
     for (Event event : events) {
-      // convert the event into a tuple
-      Tuple tuple = new TupleBuilder().
-          set("headers", event.getHeaders()).
-          set("body", event.getBody()).
-          create();
-      // and serialize it
-      byte[] bytes = serializer.serialize(tuple);
-      if (bytes == null) {
-        Exception e = new Exception("Could not serialize event: " + event);
-        LOG.warn("Could not serialize event: " + event, e);
-        throw e;
-      }
-      // figure out where to write it
-      String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
-      if (destination == null) {
-        LOG.debug("Enqueuing an event that has no destination. " +
-            "Using 'default' instead.");
-        destination = "default";
-      }
-      // construct the stream URI to use for the data fabric
-      String queueURI = FlowStream.buildStreamURI(destination).toString();
-      operations.add(new QueueEnqueue(queueURI.getBytes(), bytes));
-      LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
-
+      operations.add(constructOperation(event));
     }
     try {
       this.executor.execute(operations);
