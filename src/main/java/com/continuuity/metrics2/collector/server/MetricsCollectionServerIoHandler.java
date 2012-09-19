@@ -1,6 +1,7 @@
 package com.continuuity.metrics2.collector.server;
 
 import akka.dispatch.*;
+import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
@@ -11,6 +12,8 @@ import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
 import com.continuuity.metrics2.collector.server.plugins.OpenTSDBProcessor;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractService;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.integration.jmx.IoSessionMBean;
@@ -23,6 +26,8 @@ import javax.management.ObjectName;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Handler for metrics collection server.
@@ -46,7 +51,61 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    * List of processor mapping to the type of metric they can process.
    */
   private final List<ImmutablePair<MetricType, MetricsProcessor>> processors
-            = Lists.newArrayList();
+            = Lists.newCopyOnWriteArrayList();
+
+  /**
+   * List of futures.
+   */
+  private final List<Future<MetricResponse.Status>> futureList =
+    Lists.newArrayList();
+
+  /**
+   * Future monitor is iterating through all the futures and making
+   * sure that if it's completed, it's removed from the <code>futuresList</code>
+   * and also if the future is timed out it's removed from the list and the
+   * future is failed.
+   */
+  private final class FutureMointor extends AbstractScheduledService {
+    /**
+     * Run one iteration of the scheduled task. If any invocation of this
+     * method throws an exception,
+     * the service will transition to the {@link com.google.common.util
+     * .concurrent.Service.State#FAILED} state and this method will no
+     * longer be called.
+     */
+    @Override
+    protected void runOneIteration() throws Exception {
+      for(Future<MetricResponse.Status> future : futureList) {
+        // NOTE: This is a blocking operation.
+        try {
+          Await.ready(future, Duration.parse("1 second"));
+        } catch (TimeoutException e) {
+          future.failed();
+        }
+
+        // Once the future is completed, we remove it from the
+        // the futures list.
+        if(future.isCompleted()) {
+          futureList.remove(future);
+        }
+      }
+    }
+
+    /**
+     * Instance of Future
+     */
+
+    /**
+     * Returns the {@link com.google.common.util.concurrent
+     * .AbstractScheduledService.Scheduler} object used to configure this
+     * service.  This method will only be
+     * called once.
+     */
+    @Override
+    protected Scheduler scheduler() {
+      return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.SECONDS);
+    }
+  }
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -260,6 +319,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
               }
             }
           });
+          futureList.add(future);
           return;
         }
       }

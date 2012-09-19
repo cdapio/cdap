@@ -17,11 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Concrete implementation of {@link com.continuuity.metrics2.collector.server.plugins.MetricsProcessor} for forwarding
- * metrics to opentsdb.
+ * Concrete implementation of
+ * {@link com.continuuity.metrics2.collector.server.plugins.MetricsProcessor}
+ * for forwarding metrics to opentsdb.
  */
 public final class OpenTSDBProcessor implements MetricsProcessor {
   private static final Logger Log = LoggerFactory.getLogger(
@@ -32,10 +34,15 @@ public final class OpenTSDBProcessor implements MetricsProcessor {
   private final OpenTSDBClient client;
 
   /**
+   * Executor service instance.
+   */
+  private final ExecutorService es = Executors.newFixedThreadPool(50);
+
+  /**
    * Execution context under which the DB updates will happen.
    */
   private final ExecutionContext ec
-    = ExecutionContexts.fromExecutorService(Executors.newCachedThreadPool());
+    = ExecutionContexts.fromExecutorService(es);
 
   public OpenTSDBProcessor(CConfiguration configuration) {
     // Retrieve server and port from confiuguration.
@@ -125,6 +132,8 @@ public final class OpenTSDBProcessor implements MetricsProcessor {
 
   @Override
   public void close() throws IOException {
-    // nothing to be done here.
+    if(es != null) {
+      es.shutdown();
+    }
   }
 }

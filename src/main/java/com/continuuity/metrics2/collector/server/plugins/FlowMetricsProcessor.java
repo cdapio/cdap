@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -50,10 +51,15 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   private DBUtils.DBType type;
 
   /**
+   * Executor service instance.
+   */
+  private final ExecutorService es = Executors.newFixedThreadPool(50);
+
+  /**
    * Execution context under which the DB updates will happen.
    */
   private final ExecutionContext ec
-    = ExecutionContexts.fromExecutorService(Executors.newFixedThreadPool(40));
+    = ExecutionContexts.fromExecutorService(es);
 
   /**
    * Connection Pool Manager.
@@ -315,6 +321,10 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
           Log.warn("Failed to close statement. Reason : {}", e.getMessage());
         }
       }
+    }
+
+    if(es != null) {
+      es.shutdown();
     }
   }
 }

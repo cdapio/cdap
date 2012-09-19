@@ -8,10 +8,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.Realm;
-import com.ning.http.client.RequestBuilder;
-import com.ning.http.client.Response;
+import com.ning.http.client.*;
 import com.ning.http.util.Base64;
 import com.sun.jersey.core.util.StringIgnoreCaseKeyComparator;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -23,24 +20,17 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- *
+ * Processor plugin for sending the metrics received to librato using
+ * the librato RESTful APIs. Documentation for librato APIs are available
+ * here http://dev.librato.com/v1/metrics.
  */
-public class LibratoMetricsProcessor implements MetricsProcessor {
+public final class LibratoMetricsProcessor implements MetricsProcessor {
   private static final Logger Log
     = LoggerFactory.getLogger(LibratoMetricsProcessor.class);
 
   /**
-   * Execution context under which the DB updates will happen.
+   * Static block for initializing a few things needed.
    */
-  private final ExecutionContext ec
-    = ExecutionContexts.fromExecutorService(Executors.newFixedThreadPool(50));
-
-  /**
-   * Specifies the user agent.
-   */
-  private static final String userAgent;
-  private static final int QUEUE_LENGTH = 1000;
-
   static {
     String libVersion = "1.1";
     String agentIdentifier = "librato-reporter";
@@ -49,9 +39,57 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
   }
 
   /**
-   * Instance of async http client.
+   * Executor service instance.
    */
-  private final AsyncHttpClient client = new AsyncHttpClient();
+  private final ExecutorService es = Executors.newFixedThreadPool(50);
+
+  /**
+   * Execution context under which the DB updates will happen.
+   */
+  private final ExecutionContext ec
+    = ExecutionContexts.fromExecutorService(es);
+
+  /**
+   * Specifies the user agent.
+   */
+  private static final String userAgent;
+
+  /**
+   * Maximum number of elements in queue before they
+   * are sent to librato.
+   */
+  private static final int QUEUE_LENGTH = 1000;
+
+  /**
+   * Maximum time a request can take.
+   */
+  private static final int LIBRATO_HTTP_REQUEST_TIMEOUT_MS = 2000;
+
+  /**
+   * Maximum time to connect to librato service.
+   */
+  private static final int LIBRATO_HTTP_CONNECT_TIMEOUT_MS = 1000;
+
+  /**
+   * Maximum time a connection is pool is idle.
+   */
+  private static final int LIBRATO_HTTP_IDLE_CONNECTION_IN_POOL_TIMEOUT_MS
+    = 30000;
+
+  /**
+   * Instance of async http client with default timeout across
+   * all the requests made to librato.
+   */
+  private final AsyncHttpClient client = new AsyncHttpClient(
+    new AsyncHttpClientConfig.Builder()
+      .setRequestTimeoutInMs(LIBRATO_HTTP_REQUEST_TIMEOUT_MS)
+      .setConnectionTimeoutInMs(LIBRATO_HTTP_CONNECT_TIMEOUT_MS)
+      .setCompressionEnabled(true)
+      .setIdleConnectionInPoolTimeoutInMs(
+        LIBRATO_HTTP_IDLE_CONNECTION_IN_POOL_TIMEOUT_MS
+      )
+      .build()
+  );
 
   /**
    * Instance of JSON object mapper.
@@ -165,6 +203,8 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
       if(r.getStatusCode() != 200) {
         Log.warn("Failed sending metric to librato. Status code {}, status {}",
                  r.getStatusCode(), r.getStatusText());
+      } else {
+        Log.debug("Successfully sent metric to librato.");
       }
     }
 
@@ -243,6 +283,9 @@ public class LibratoMetricsProcessor implements MetricsProcessor {
   public void close() throws IOException {
     if(client != null) {
       client.close();
+    }
+    if(es != null) {
+      es.shutdown();
     }
   }
 }
