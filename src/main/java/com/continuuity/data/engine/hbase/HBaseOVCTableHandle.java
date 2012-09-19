@@ -20,13 +20,13 @@ import java.io.IOException;
 
 public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
-  private final Configuration conf;
-  private final HBaseAdmin admin;
+  protected final Configuration conf;
+  protected final HBaseAdmin admin;
 
-  private static final IOExceptionHandler exceptionHandler =
+  protected static final IOExceptionHandler exceptionHandler =
       new HBaseIOExceptionHandler();
 
-  private static final byte [] FAMILY = Bytes.toBytes("fam");
+  protected static final byte [] FAMILY = Bytes.toBytes("fam");
 
   @Inject
   public HBaseOVCTableHandle(
@@ -41,7 +41,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
       throws OperationException {
     HBaseOVCTable table = null;
     try {
-      createTable(tableName);
+      createTable(tableName, FAMILY);
       table = new HBaseOVCTable(this.conf, tableName, FAMILY,
           new HBaseIOExceptionHandler());
     } catch (IOException e) {
@@ -50,12 +50,13 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     return table;
   }
 
-  private HTable createTable(byte [] tableName) throws IOException {
+  protected HTable createTable(byte [] tableName, byte [] family)
+      throws IOException {
     if (this.admin.tableExists(tableName)) {
       return new HTable(this.conf, tableName);
     }
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    HColumnDescriptor hcd = new HColumnDescriptor(FAMILY);
+    HColumnDescriptor hcd = new HColumnDescriptor(family);
     htd.addFamily(hcd);
     this.admin.createTable(htd);
     return new HTable(this.conf, tableName);
