@@ -10,11 +10,9 @@ import com.continuuity.metrics2.collector.MetricResponse;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.ning.http.client.*;
 import com.ning.http.util.Base64;
-import com.sun.jersey.core.util.StringIgnoreCaseKeyComparator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.jvm.hotspot.runtime.Threads;
 
 import java.io.IOException;
 import java.util.*;
