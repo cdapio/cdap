@@ -13,6 +13,7 @@ public final class ZookeeperClientProvider {
     static {
       System.setProperty("curator-log-events", "false");
       System.setProperty("curator-dont-log-connection-problems", "true");
+      System.setProperty("zookeeper.disableAutoWatchReset", "true");
     }
 
     public static CuratorFramework getClient(String connectionString,
