@@ -57,7 +57,12 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
    * Maximum number of elements in queue before they
    * are sent to librato.
    */
-  private static final int QUEUE_LENGTH = 1000;
+  private static final int QUEUE_LENGTH = 100000;
+
+  /**
+   * Size of batch to be sent to librato.
+   */
+  private static final int BATCH_SIZE = 1000;
 
   /**
    * Maximum time a request can take.
@@ -147,7 +152,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         // If we have reached the size or we have attempted to
         // send the metrics and have not been due to length of
         // queue not reaching the limit.
-        if(queue.size() < QUEUE_LENGTH && attemptCount < 10) {
+        if(queue.size() < BATCH_SIZE && attemptCount < 10) {
           return;
         }
 
@@ -155,7 +160,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         attemptCount = 0;
 
         List<Object> metrics = new ArrayList<Object>();
-        int count = queue.size();
+        int count = Math.min(queue.size(), BATCH_SIZE);
 
 
         Log.debug("Current queue size {}, sending metrics to librato",
