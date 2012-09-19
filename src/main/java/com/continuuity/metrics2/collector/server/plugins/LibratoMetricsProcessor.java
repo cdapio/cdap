@@ -67,7 +67,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
   /**
    * Maximum time a request can take.
    */
-  private static final int LIBRATO_HTTP_REQUEST_TIMEOUT_MS = 2000;
+  private static final int DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS = 2000;
 
   /**
    * Maximum time to connect to librato service.
@@ -90,16 +90,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
    * Instance of async http client with default timeout across
    * all the requests made to librato.
    */
-  private final AsyncHttpClient client = new AsyncHttpClient(
-    new AsyncHttpClientConfig.Builder()
-      .setRequestTimeoutInMs(LIBRATO_HTTP_REQUEST_TIMEOUT_MS)
-      .setConnectionTimeoutInMs(LIBRATO_HTTP_CONNECT_TIMEOUT_MS)
-      .setCompressionEnabled(true)
-      .setIdleConnectionInPoolTimeoutInMs(
-        LIBRATO_HTTP_IDLE_CONNECTION_IN_POOL_TIMEOUT_MS
-      )
-      .build()
-  );
+  private final AsyncHttpClient client;
 
   /**
    * Instance of JSON object mapper.
@@ -120,6 +111,11 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
    * URL to send metrics to.
    */
   private String libratoUrl;
+
+  /**
+   * Request timeout for librato.
+   */
+  private final int libratoRequestTimeout;
 
   /**
    * Queue.
@@ -256,9 +252,24 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     libratoUrl = configuration.get(
       "librato.url", "https://metrics-api.librato.com/v1/metrics"
     );
+    libratoRequestTimeout = configuration.getInt(
+      "librato.request.timeout", DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS
+    );
 
     // We don't need to wait for future.
     libratoBatcher.start();
+
+    // Create async client
+    client = new AsyncHttpClient(
+      new AsyncHttpClientConfig.Builder()
+        .setRequestTimeoutInMs(libratoRequestTimeout)
+        .setConnectionTimeoutInMs(LIBRATO_HTTP_CONNECT_TIMEOUT_MS)
+        .setCompressionEnabled(true)
+        .setIdleConnectionInPoolTimeoutInMs(
+          LIBRATO_HTTP_IDLE_CONNECTION_IN_POOL_TIMEOUT_MS
+        )
+        .build()
+    );
   }
 
   /**
