@@ -16,7 +16,6 @@ import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.CommonDataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -244,8 +243,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     return true;
   }
 
-  private boolean insertUpdate(FlowMetricElements elements,
-                               MetricRequest request) {
+  private boolean insertUpdateCounters(FlowMetricElements elements,
+                                       MetricRequest request) {
     if(type == DBUtils.DBType.HSQLDB) {
       return insertUpdateHSQLDB(elements, request);
     } else if(type == DBUtils.DBType.MYSQL) {
@@ -283,12 +282,16 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       if(elements != null) {
         return Futures.future(new Callable<MetricResponse.Status>() {
           public MetricResponse.Status call() {
-            if (insertUpdate(elements, request)) {
+            if (insertUpdateCounters(elements, request)) {
+              Log.debug("Successfully processed metric {}.", request.toString());
               return MetricResponse.Status.SUCCESS;
             }
             return MetricResponse.Status.FAILED;
           }
         }, ec);
+      } else {
+        Log.debug("Invalid flow metric elements for request {}",
+                  request.toString());
       }
     } catch (BuilderException e) {
       Log.warn("Invalid flow metric received. Reason : {}.", e.getMessage());

@@ -76,7 +76,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       for(Future<MetricResponse.Status> future : futureList) {
         // NOTE: This is a blocking operation.
         try {
-          Await.ready(future, Duration.parse("1 second"));
+          Await.ready(future, Duration.parse("5 second"));
         } catch (TimeoutException e) {
           future.failed();
         }
