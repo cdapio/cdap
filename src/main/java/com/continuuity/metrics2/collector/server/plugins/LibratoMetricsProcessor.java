@@ -77,6 +77,12 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     = 30000;
 
   /**
+   * Specifies the amount of time to wait till the queue is available
+   * to insert the data point.
+   */
+  private static final int QUEUE_OFFER_TIMEOUT_SECONDS = 2;
+
+  /**
    * Instance of async http client with default timeout across
    * all the requests made to librato.
    */
@@ -258,6 +264,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
       return Futures.future(new Callable<MetricResponse.Status>() {
         @Override
         public MetricResponse.Status call() throws Exception {
+          Log.error("Server error. Librato batcher is not running.");
           return MetricResponse.Status.SERVER_ERROR;
         }
       }, ec);
@@ -270,10 +277,17 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
       @Override
       public MetricResponse.Status call() throws Exception {
         try {
-          queue.put(request);
+          if(! queue.offer(request, QUEUE_OFFER_TIMEOUT_SECONDS,
+                           TimeUnit.SECONDS)) {
+            Log.warn("Ignoring data point. Queue is full, timeout {}s reached.",
+                     QUEUE_OFFER_TIMEOUT_SECONDS);
+            return MetricResponse.Status.IGNORED;
+          }
         } catch (InterruptedException e) {
-          return MetricResponse.Status.FAILED;
+          return MetricResponse.Status.IGNORED;
         }
+        Log.debug("Successfully added metric {} to librato queue.",
+                  request.toString());
         return MetricResponse.Status.SUCCESS;
       }
     }, ec);

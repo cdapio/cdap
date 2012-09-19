@@ -10,10 +10,8 @@ import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.collector.MetricType;
 import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
-import com.continuuity.metrics2.collector.server.plugins.OpenTSDBProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.common.util.concurrent.AbstractService;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.integration.jmx.IoSessionMBean;
@@ -65,7 +63,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    * and also if the future is timed out it's removed from the list and the
    * future is failed.
    */
-  private final class FutureMointor extends AbstractScheduledService {
+  private final class FutureMonitor extends AbstractScheduledService {
     /**
      * Run one iteration of the scheduled task. If any invocation of this
      * method throws an exception,
@@ -92,10 +90,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     }
 
     /**
-     * Instance of Future
-     */
-
-    /**
      * Returns the {@link com.google.common.util.concurrent
      * .AbstractScheduledService.Scheduler} object used to configure this
      * service.  This method will only be
@@ -106,6 +100,11 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.SECONDS);
     }
   }
+
+  /**
+   * Instance of FutureMonitor.
+   */
+  private final FutureMonitor futureMonitor = new FutureMonitor();
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -176,6 +175,9 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
         loadCreateAndAddToList(MetricType.FlowUser, klass);
       }
     }
+
+    Log.info("Starting future monitor");
+    futureMonitor.start();
   }
 
   private void loadCreateAndAddToList(MetricType type, String klassName)
