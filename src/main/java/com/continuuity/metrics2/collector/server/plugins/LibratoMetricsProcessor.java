@@ -14,6 +14,7 @@ import com.sun.jersey.core.util.StringIgnoreCaseKeyComparator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.jvm.hotspot.runtime.Threads;
 
 import java.io.IOException;
 import java.util.*;
@@ -141,76 +142,91 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
      */
     @Override
     protected void runOneIteration() throws Exception {
-      // We increase the attempt count.
-      attemptCount++;
+      try {
+        // We increase the attempt count.
+        attemptCount++;
 
-      // If we have reached the size or we have attempted to
-      // send the metrics and have not been due to length of
-      // queue not reaching the limit.
-      if(queue.size() < QUEUE_LENGTH && attemptCount < 10) {
-        return;
-      }
-
-      // Reset the counter.
-      attemptCount = 0;
-
-      List<Object> metrics = new ArrayList<Object>();
-      int count = queue.size();
-
-      // If there is nothing in queue, then we don't need to
-      // send anything to librato.
-      if(count < 1) {
-        return;
-      }
-
-      Log.debug("Sending a batch of {} to librato.", count);
-
-      // Iterate through the queue and generate the body of the
-      // request to be sent to librato.
-      while(!queue.isEmpty() && count > 0) {
-        MetricRequest request = queue.poll();
-        if(request == null) {
-          break;
+        // If we have reached the size or we have attempted to
+        // send the metrics and have not been due to length of
+        // queue not reaching the limit.
+        if(queue.size() < QUEUE_LENGTH && attemptCount < 10) {
+          return;
         }
-        // Serialize the metrics into the format needed.
-        Map<String, Object> metric = new HashMap<String, Object>();
-        metric.put("name", request.getMetricName());
-        metric.put("source", request.getTags().get(0).getSecond());
-        metric.put("measure_time", request.getTimestamp());
-        metric.put("period", 1);
-        metric.put("value", request.getValue());
-        metrics.add(metric);
-        count--;
-      }
 
-      Map<String, Object> guages = new HashMap<String, Object>();
-      guages.put("gauges", metrics);
+        // Reset the counter.
+        attemptCount = 0;
 
-      // Write the body and prepare the request to be sent.
-      final RequestBuilder builder = new RequestBuilder("POST");
-      String json = mapper.writeValueAsString(guages);
-      builder.setBody(json);
-      builder.addHeader("Content-Type", "application/json");
-      builder.setHeader("User-Agent", userAgent);
-      builder.setHeader("Keep-Alive", "true");
-      builder.addHeader("Authorization",
-                        String.format("Basic %s",
-                                      Base64.encode(
-                                        (libratoAccount + ":" + libratoToken)
-                                          .getBytes()
-                                      )
-                        )
-      );
-      builder.setUrl(libratoUrl);
+        List<Object> metrics = new ArrayList<Object>();
+        int count = queue.size();
 
-      java.util.concurrent.Future<Response> response
-        = client.executeRequest(builder.build());
-      Response r = response.get();
-      if(r.getStatusCode() != 200) {
-        Log.warn("Failed sending metric to librato. Status code {}, status {}",
-                 r.getStatusCode(), r.getStatusText());
-      } else {
-        Log.debug("Successfully sent metric to librato.");
+
+        Log.debug("Current queue size {}, sending metrics to librato",
+                  count);
+
+        // If there is nothing in queue, then we don't need to
+        // send anything to librato.
+        if(count < 1) {
+          return;
+        }
+
+        Log.debug("Sending a batch of {} to librato.", count);
+
+        // Iterate through the queue and generate the body of the
+        // request to be sent to librato.
+        while(!queue.isEmpty() && count > 0) {
+          MetricRequest request = queue.poll();
+          if(request == null) {
+            break;
+          }
+          // Serialize the metrics into the format needed.
+          Map<String, Object> metric = new HashMap<String, Object>();
+          metric.put("name", request.getMetricName());
+          metric.put("source", request.getTags().get(0).getSecond());
+          metric.put("measure_time", request.getTimestamp());
+          metric.put("period", 1);
+          metric.put("value", request.getValue());
+          metrics.add(metric);
+          count--;
+        }
+
+        Map<String, Object> guages = new HashMap<String, Object>();
+        guages.put("gauges", metrics);
+
+        // Write the body and prepare the request to be sent.
+        final RequestBuilder builder = new RequestBuilder("POST");
+        String json = mapper.writeValueAsString(guages);
+        builder.setBody(json);
+        builder.addHeader("Content-Type", "application/json");
+        builder.setHeader("User-Agent", userAgent);
+        builder.setHeader("Keep-Alive", "true");
+        builder.addHeader("Authorization",
+                          String.format("Basic %s",
+                                        Base64.encode(
+                                          (libratoAccount + ":" + libratoToken)
+                                            .getBytes()
+                                        )
+                          )
+        );
+        builder.setUrl(libratoUrl);
+
+        java.util.concurrent.Future<Response> response
+          = client.executeRequest(builder.build());
+        Response r = response.get();
+        if(r.getStatusCode() != 200) {
+          Log.warn("Failed sending metric to librato. Status code {}, status {}",
+                   r.getStatusCode(), r.getStatusText());
+        } else {
+          Log.debug("Successfully sent metric to librato.");
+        }
+      } catch (IOException e) {
+        Log.warn("I/O Exception. Reason : {}", e.getMessage());
+      } catch (IllegalArgumentException e) {
+        Log.warn("Illegal argument exception. Reason : {}", e.getMessage());
+      } catch (InterruptedException e) {
+        Log.warn("Thread interrupted. Reason : {}", e.getMessage());
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        Log.warn("Execution exception. Reason : {}", e.getMessage());
       }
     }
 
