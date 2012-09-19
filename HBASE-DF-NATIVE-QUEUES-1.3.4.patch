@@ -79,6 +79,2443 @@ index 66b3aaa..cf50db7 100644
        <properties>
          <hadoop.version>2.0.0-alpha</hadoop.version>
          <slf4j.version>1.6.1</slf4j.version>
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQAck.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQAck.java
+new file mode 100644
+index 0000000..d7747b8
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQAck.java
+@@ -0,0 +1,74 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import com.google.common.base.Objects;
++
++/**
++ * Ack operation request for HBase Native Queues.
++ */
++public class HBQAck extends HBQOperation {
++
++  private HBQEntryPointer entryPointer;
++
++  private HBReadPointer readPointer;
++
++  private HBQConsumer consumer;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQAck() {
++    super();
++  }
++
++  public HBQAck(final byte [] queueName,
++      final HBQConsumer consumer, final HBQEntryPointer entryPointer,
++      final HBReadPointer readPointer) {
++    super(queueName);
++    this.entryPointer = entryPointer;
++    this.readPointer = readPointer;
++    this.consumer = consumer;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++
++  public HBReadPointer getPointer() {
++    return this.readPointer;
++  }
++
++  public HBQConsumer getConsumer() {
++    return this.consumer;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.entryPointer = new HBQEntryPointer();
++    this.entryPointer.readFields(in);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++    this.consumer = new HBQConsumer();
++    this.consumer.readFields(in);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    this.entryPointer.write(out);
++    this.readPointer.write(out);
++    this.consumer.write(out);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("entryPointer", this.entryPointer)
++        .add("readPointer", this.readPointer)
++        .add("queueConsumer", this.consumer)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQConfig.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQConfig.java
+new file mode 100644
+index 0000000..69a184a
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQConfig.java
+@@ -0,0 +1,63 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
++import com.google.common.base.Objects;
++
++/**
++ * Queue configuration settings, used by a consumer during a dequeue.
++ * 
++ * TODO: The partitioner has been removed for now until we figure out how it
++ *       will actually work
++ */
++public class HBQConfig implements Writable {
++
++  private HBQPartitionerType partitionerType;
++  private boolean singleEntry;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQConfig() {}
++  
++  public HBQConfig(final HBQPartitionerType partitionerType,
++      final boolean singleEntry) {
++    this.partitionerType = partitionerType;
++    this.singleEntry = singleEntry;
++  }
++
++  public boolean isSingleEntry() {
++    return this.singleEntry;
++  }
++
++  public boolean isMultiEntry() {
++    return !isSingleEntry();
++  }
++
++  public HBQPartitionerType getPartitionerType() {
++    return this.partitionerType;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.partitionerType = HBQPartitionerType.fromByte(in.readByte());
++    this.singleEntry = in.readBoolean();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeByte(this.partitionerType.getByte());
++    out.writeBoolean(this.singleEntry);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("partitionerType", this.partitionerType)
++        .add("singleEntry", this.singleEntry)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQConstants.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQConstants.java
+new file mode 100644
+index 0000000..81a7918
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQConstants.java
+@@ -0,0 +1,32 @@
++package com.continuuity.hbase.ttqueue;
++
++import org.apache.hadoop.hbase.util.Bytes;
++
++public class HBQConstants {
++
++  public static final byte [] HBQ_FAMILY = Bytes.toBytes("f");
++
++  // Row headers
++  public static final byte [] GLOBAL_META_HEADER = bytes((byte)10);
++  public static final byte [] GLOBAL_GROUPS_HEADER = bytes((byte)30);
++  public static final byte [] GLOBAL_DATA_HEADER = bytes((byte)50);
++
++  // Columns for row = GLOBAL_ENTRY_HEADER
++  public static final byte [] GLOBAL_ENTRYID_COUNTER = bytes((byte)10);
++  public static final byte [] GLOBAL_SHARD_META = bytes((byte)30);
++
++  // Columns for row = GLOBAL_GROUPS_HEADER
++  public static final byte [] GROUP_ID_GEN = bytes((byte)10);
++  
++  // Columns for row = GLOBAL_GROUPS_HEADER+GROUP_ID
++  public static final byte [] GROUP_STATE = bytes((byte)20);
++
++  // Columns for row = GLOBAL_DATA_HEADER
++  public static final byte [] ENTRY_META = bytes((byte)10);
++  public static final byte [] ENTRY_GROUP_META = bytes((byte)20);
++  public static final byte [] ENTRY_DATA = bytes((byte)30);
++
++  private static byte [] bytes(byte b) {
++    return new byte [] { b };
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQConsumer.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQConsumer.java
+new file mode 100644
+index 0000000..8182d1a
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQConsumer.java
+@@ -0,0 +1,64 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * Information about a single consumer from a single group.
++ */
++public class HBQConsumer implements Writable {
++
++  private int instanceId;
++  private long groupId;
++  private int groupSize;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQConsumer() {}
++  
++  public HBQConsumer(final int instanceId, final long groupId,
++      final int groupSize) {
++    this.instanceId = instanceId;
++    this.groupId = groupId;
++    this.groupSize = groupSize;
++  }
++
++  public int getInstanceId() {
++    return this.instanceId;
++  }
++  
++  public long getGroupId() {
++    return this.groupId;
++  }
++
++  public int getGroupSize() {
++    return this.groupSize;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.instanceId = in.readInt();
++    this.groupId = in.readLong();
++    this.groupSize = in.readInt();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeInt(this.instanceId);
++    out.writeLong(this.groupId);
++    out.writeInt(this.groupSize);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("instanceId", this.instanceId)
++        .add("groupId", this.groupId)
++        .add("groupSize", this.groupSize)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeue.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeue.java
+new file mode 100644
+index 0000000..85ce751
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeue.java
+@@ -0,0 +1,97 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.hbase.util.Bytes;
++
++import com.google.common.base.Objects;
++
++/**
++ * Dequeue operation request for HBase Native Queues.
++ */
++public class HBQDequeue extends HBQOperation {
++  
++  private HBReadPointer readPointer;
++  
++  private HBQConsumer consumer;
++  
++  private HBQConfig config;
++  
++  private HBQExpirationConfig expirationConfig;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQDequeue() {
++    super();
++  }
++  
++  public HBQDequeue(final byte [] queueName,
++      final HBQConsumer consumer, final HBQConfig config,
++      final HBReadPointer readPointer,
++      final HBQExpirationConfig expirationConfig) {
++    super(queueName);
++    this.readPointer = readPointer;
++    this.consumer = consumer;
++    this.config = config;
++    this.expirationConfig = expirationConfig;
++  }
++
++  public HBReadPointer getPointer() {
++    return this.readPointer;
++  }
++
++  public HBQConsumer getConsumer() {
++    return this.consumer;
++  }
++
++  public HBQConfig getConfig() {
++    return this.config;
++  }
++
++  public HBQExpirationConfig getExpirationConfig() {
++    return this.expirationConfig;
++  }
++
++  /**
++   * Returns the group metadata row for the queue of this operation.
++   * @return group meta row for this queue
++   */
++  public byte [] getGroupMetaRow() {
++    return generateRow(HBQConstants.GLOBAL_GROUPS_HEADER,
++        Bytes.toBytes(consumer.getGroupId()));
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++    this.consumer = new HBQConsumer();
++    this.consumer.readFields(in);
++    this.config = new HBQConfig();
++    this.config.readFields(in);
++    this.expirationConfig = new HBQExpirationConfig();
++    this.expirationConfig.readFields(in);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    this.readPointer.write(out);
++    this.consumer.write(out);
++    this.config.write(out);
++    this.expirationConfig.write(out);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("readPointer", this.readPointer)
++        .add("queueConsumer", this.consumer)
++        .add("queueConfig", this.config)
++        .add("queueExpirationConfig", this.expirationConfig)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeueResult.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeueResult.java
+new file mode 100644
+index 0000000..1d41628
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQDequeueResult.java
+@@ -0,0 +1,442 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.hbase.util.Bytes;
++import org.apache.hadoop.io.Writable;
++
++import com.continuuity.hbase.ttqueue.internal.GroupState;
++import com.google.common.base.Objects;
++
++/**
++ * The result from a dequeue operation.
++ * <p>
++ * TODO: Break this class into a second class (HBQDequeueInternalResult)
++ */
++public class HBQDequeueResult implements Writable {
++
++  // Returned values
++  private HBQDequeueStatus status = null;
++  private String msg = null;
++  private HBQEntryPointer entryPointer = null;
++  private byte [] queueData = null;
++  
++  // Variables used when dequeue request jumps regions/servers
++  private boolean pendingEntryCheck = false;
++  private boolean groupToBeUpdated = false;
++  private boolean dataFindDone = false;
++  private HBQDequeue dequeue = null;
++  private HBQEntryPointer curPointer = null;
++  private GroupState currentGroupState = null;
++  
++  /** Empty constructor for Writable (do not use) */
++  public HBQDequeueResult() {}
++  
++  /**
++   * Failed dequeue constructor.  Just specify message.
++   * @param msg
++   */
++  public HBQDequeueResult(final String msg) {
++    this.status = HBQDequeueStatus.FAILURE;
++    this.msg = msg;
++  }
++
++  /**
++   * Successful and completed dequeue.  Contains final status, and if not empty,
++   * an entry pointer and data.
++   * @param status
++   * @param entryPointer
++   * @param queueData
++   */
++  public HBQDequeueResult(final HBQDequeueStatus status,
++      final HBQEntryPointer entryPointer, final byte [] queueData) {
++    this.status = status;
++    this.entryPointer = entryPointer;
++    this.queueData = queueData;
++  }
++  
++  /**
++   * Constructor for when queue is empty.
++   * @param status 
++   */
++  public HBQDequeueResult(HBQDequeueStatus status) {
++    assert(status == HBQDequeueStatus.EMPTY);
++    this.status = status;
++  }
++
++  /**
++   * Constructor for an in-progress dequeue that is currently performing a check
++   * for dynamic queue reconfiguration (whether there are pending entries).
++   * @param dequeue the original dequeue operation
++   * @param currentEntryPointer the pointer to the current entry to be checked
++   * @param existingGroupState the original group state
++   * @param pendingEntryCheck true if this is an in-progress pending entry
++   *                          check, otherwise it will be treated as a normal
++   *                          in-progress data entry search
++   */
++  public HBQDequeueResult(HBQDequeue dequeue,
++      HBQEntryPointer currentEntryPointer, GroupState existingGroupState,
++      boolean pendingEntryCheck) {
++    this.status = HBQDequeueStatus.IN_PROGRESS;
++    this.curPointer = currentEntryPointer;
++    this.currentGroupState = existingGroupState;
++    this.pendingEntryCheck = pendingEntryCheck;
++  }
++
++  /**
++   * Constructor for an in-progress dequeue that may or may not be completed
++   * because it is not yet known whether a group update is needed.  This
++   * constructor will determine if the specified initial group state is
++   * different from the current, and if so, will set it to be updated and the
++   * request will stay in progress
++   * 
++   * The data entry has already been found, or dequeue should return empty.
++   * 
++   * If dequeue should return empty, use null for queue data and entry pointer.
++   * 
++   * @param dequeue the original dequeue operation
++   * @param entryPointer pointer to the found and returned entry, null for empty
++   * @param queueData data of the found and returned entry, null for empty
++   * @param initialGroupState the initial group state
++   * @param currentGroupState the current group state
++   */
++  public HBQDequeueResult(HBQDequeue dequeue, HBQEntryPointer entryPointer,
++      byte [] queueData, GroupState initialGroupState,
++      GroupState currentGroupState) {
++    if (initialGroupState == null || currentGroupState == null ||
++        initialGroupState.equals(currentGroupState)) {
++      this.status = queueData == null ?
++          HBQDequeueStatus.EMPTY : HBQDequeueStatus.SUCCESS;
++      this.entryPointer = entryPointer;
++      this.queueData = queueData;
++    } else {
++      this.status = HBQDequeueStatus.IN_PROGRESS;
++      this.dequeue = dequeue;
++      this.entryPointer = entryPointer;
++      this.queueData = queueData;
++      this.currentGroupState = currentGroupState;
++      this.groupToBeUpdated = true;
++      this.dataFindDone = true;
++    }
++  }
++
++  /**
++   * Constructor for an in-progress dequeue that is not yet completed because
++   * the data entry has not yet been found and, if specified, the group state
++   * must be updated.  If specified group state is null, no group update will
++   * be done.
++   * 
++   * This should not be returned to the client before further processing.
++   * 
++   * @param dequeue the original dequeue operation
++   * @param curPointer pointer to the current data entry (next entry to check)
++   * @param currentGroupState the current group state
++   */
++  public HBQDequeueResult(HBQDequeue dequeue, HBQEntryPointer curPointer,
++      GroupState currentGroupState) {
++    this.status = HBQDequeueStatus.IN_PROGRESS;
++    this.dequeue = dequeue;
++    this.curPointer = curPointer;
++    this.currentGroupState = currentGroupState;
++    this.groupToBeUpdated = (currentGroupState != null);
++    this.dataFindDone = false;
++  }
++
++  /**
++   * Constructor for an in-progress dequeue that is not yet completed because
++   * the data has not yet been found.  No update to the group state is
++   * necessary.
++   * 
++   * This should not be returned to the client before further processing.
++   * 
++   * @param dequeue
++   * @param curPointer
++   */
++  public HBQDequeueResult(HBQDequeue dequeue, HBQEntryPointer curPointer) {
++    this.status = HBQDequeueStatus.IN_PROGRESS;
++    this.dequeue = dequeue;
++    this.curPointer = curPointer;
++    this.groupToBeUpdated = false;
++    this.dataFindDone = false;
++  }
++
++  /**
++   * Constructor for an in-progress dequeue that is not yet completed because
++   * the data has not yet been found.  The group state will be set to be updated
++   * if the specified initial group state is different from the specified
++   * current group state.  If either group state is null, it will also not be
++   * set to be updated.
++   * <p>
++   * This should not be returned to the client before further processing.
++   * 
++   * @param dequeue
++   * @param entryPointer
++   * @param initialGroupState
++   * @param currentGroupState
++   */
++  public HBQDequeueResult(HBQDequeue dequeue, HBQEntryPointer entryPointer,
++      GroupState initialGroupState, GroupState currentGroupState) {
++    this.status = HBQDequeueStatus.IN_PROGRESS;
++    this.dequeue = dequeue;
++    this.curPointer = entryPointer;
++    this.dataFindDone = false;
++    if (initialGroupState == null || currentGroupState == null ||
++        initialGroupState.equals(currentGroupState)) {
++      this.groupToBeUpdated = false;
++    } else {
++      this.currentGroupState = currentGroupState;
++      this.groupToBeUpdated = true;
++    }
++  }
++
++  public String getFailureMessage() {
++    return this.msg;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++
++  /**
++   * Checks whether this in-progress dequeue operation is currently doing
++   * a pending entry check during a group reconfiguration.
++   * @return true if dequeue is in-progress and doing a pending entry check,
++   *         false if not
++   */
++  public boolean checkingPendingEntries() {
++    return this.pendingEntryCheck;
++  }
++
++  /**
++   * Checks whether search for data entry is done (either have an entry or
++   * empty).
++   * @return true if a data entry search is done, false if not
++   */
++  public boolean dataEntrySearchDone() {
++    return this.dataFindDone;
++  }
++
++  /**
++   * Checks whether during an in-progress dequeue, the group state needs to
++   * be updated.  If this returns true, the group state should be updated to the
++   * current state available in {@link #getCurrentGroupState()}.
++   *  
++   * @return true if group state should be updated to final state, false if not
++   */
++  public boolean groupStateNeedsToBeUpdated() {
++    return this.groupToBeUpdated;
++  }
++  
++  public byte [] getData() {
++    return this.queueData;
++  }
++  
++  public HBQDequeueStatus getStatus() {
++    return this.status;
++  }
++  
++  public boolean isSuccess() {
++    return this.status == HBQDequeueStatus.SUCCESS;
++  }
++
++  public boolean isFailure() {
++    return this.status == HBQDequeueStatus.FAILURE;
++  }
++
++  public boolean isEmpty() {
++    return this.status == HBQDequeueStatus.EMPTY;
++  }
++
++  public boolean isInProgress() {
++    return this.status == HBQDequeueStatus.IN_PROGRESS;
++  }
++
++  public void updateGroupState(GroupState updatedGroupState) {
++    this.currentGroupState = updatedGroupState;
++    this.groupToBeUpdated = true;
++  }
++
++  /**
++   * The group state was set to be updated and has now been completed.
++   */
++  public void groupStateUpdated() {
++    this.groupToBeUpdated = false;
++    if (dataEntrySearchDone()) {
++      if (this.queueData == null) {
++        this.status = HBQDequeueStatus.EMPTY;
++      } else {
++        this.status = HBQDequeueStatus.SUCCESS;
++      }
++    }
++  }
++
++  public GroupState getCurrentGroupState() {
++    return this.currentGroupState;
++  }
++
++  public HBQEntryPointer getCurrentEntryPointer() {
++    return this.curPointer;
++  }
++
++  public HBQDequeue getDequeue() {
++    return this.dequeue;
++  }
++
++  /**
++   * Determines and returns the next row to visit for an in-progress dequeue.
++   * 
++   * If data entry search is complete, then the group needs to be updated, and
++   * the next row will be the group meta row.
++   * 
++   * If the data entry search is not complete, the next row will be the
++   * returned shard row.
++   * 
++   * @return next row to be processed for in-progress dequeue
++   */
++  public byte[] getNextRow() {
++    if (dataEntrySearchDone()) {
++      return getDequeue().getGroupMetaRow();
++    } else {
++      return getDequeue().getDataRow(Bytes.toBytes(
++          getCurrentEntryPointer().getShardId()));
++    }
++  }
++
++  public static enum HBQDequeueStatus {
++    SUCCESS, EMPTY, FAILURE, IN_PROGRESS;
++    public byte getByte() {
++      switch (this) {
++        case SUCCESS: return 1;
++        case EMPTY:   return 2;
++        case FAILURE: return 3;
++        case IN_PROGRESS: return 4;
++        default: throw new RuntimeException("Serialization error");
++      }
++    }
++    public static HBQDequeueStatus fromByte(byte b) {
++      switch (b) {
++        case 1: return SUCCESS;
++        case 2: return EMPTY;
++        case 3: return FAILURE;
++        case 4: return IN_PROGRESS;
++        default: throw new RuntimeException("Deserialization error");
++      }
++    }
++  }
++  
++  // in progress field order:
++  // groupUpdate, dataFindDone, dequeue, curPointer, currentGroup,
++  // entryPointer, queueData
++  // all fields are first represented by a boolean representing them as null
++  // except queue data which has a length integer
++  
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.status = HBQDequeueStatus.fromByte(in.readByte());
++    if (isSuccess()) {
++      this.entryPointer = new HBQEntryPointer();
++      this.entryPointer.readFields(in);
++      int len = in.readInt();
++      this.queueData = new byte[len];
++      in.readFully(queueData);
++    } else if (isFailure()) {
++      this.msg = in.readUTF();
++    } else if (isInProgress()) {
++      this.pendingEntryCheck = in.readBoolean();
++      this.groupToBeUpdated = in.readBoolean();
++      this.dataFindDone = in.readBoolean();
++      if (in.readBoolean()) {
++        this.dequeue = new HBQDequeue();
++        this.dequeue.readFields(in);
++      }
++      if (in.readBoolean()) {
++        this.curPointer = new HBQEntryPointer();
++        this.curPointer.readFields(in);
++      }
++      if (in.readBoolean()) {
++        this.currentGroupState = new GroupState();
++        this.currentGroupState.readFields(in);
++      }
++      if (in.readBoolean()) {
++        this.entryPointer = new HBQEntryPointer();
++        this.entryPointer.readFields(in);
++      }
++      int len = in.readInt();
++      if (len > 0) {
++        this.queueData = new byte[len];
++        in.readFully(queueData);
++      }
++    }
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeByte(this.status.getByte());
++    if (isSuccess()) {
++      this.entryPointer.write(out);
++      out.writeInt(this.queueData.length);
++      out.write(this.queueData);
++    } else if (isFailure()) {
++      out.writeUTF(this.msg);
++    } else if (isInProgress()) {
++      out.writeBoolean(this.pendingEntryCheck);
++      out.writeBoolean(this.groupToBeUpdated);
++      out.writeBoolean(this.dataFindDone);
++      out.writeBoolean(this.dequeue != null);
++      if (this.dequeue != null) {
++        this.dequeue.write(out); 
++      }
++      out.writeBoolean(this.curPointer != null);
++      if (this.curPointer != null) {
++        this.curPointer.write(out); 
++      }
++      out.writeBoolean(this.currentGroupState != null);
++      if (this.currentGroupState != null) {
++        this.currentGroupState.write(out); 
++      }
++      out.writeBoolean(this.entryPointer != null);
++      if (this.entryPointer != null) {
++        this.entryPointer.write(out); 
++      }
++      out.writeInt(this.queueData == null ? 0 : this.queueData.length);
++      if (this.queueData != null) {
++        out.write(this.queueData);
++      }
++    }
++  }
++
++  @Override
++  public String toString() {
++    if (isSuccess()) {
++      return Objects.toStringHelper(this)
++          .add("status", this.status)
++          .add("entryPointer", this.entryPointer.toString())
++          .add("data.length", this.queueData.length)
++          .toString();
++    } else if (isFailure()) {
++      return Objects.toStringHelper(this)
++          .add("status", this.status)
++          .add("failureMsg", this.msg)
++          .toString();
++    } else if (isInProgress()) {
++      return Objects.toStringHelper(this)
++          .add("status", this.status)
++          .add("dequeue", this.dequeue)
++          .add("pendingEntryCheck", this.pendingEntryCheck)
++          .add("dataFindDone", this.dataFindDone)
++          .add("groupToBeUpdated", this.groupToBeUpdated)
++          .add("curPointer", this.curPointer)
++          .add("currentGroupState", this.currentGroupState)
++          .add("entryPointer", this.entryPointer)
++          .add("data.length", this.queueData == null ? "null" :
++              "" + this.queueData.length)
++          .toString();
++    } else {
++      return Objects.toStringHelper(this)
++          .add("status", this.status)
++          .toString();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueue.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueue.java
+new file mode 100644
+index 0000000..f5e4c79
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueue.java
+@@ -0,0 +1,74 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import com.google.common.base.Objects;
++
++/**
++ * Enqueue operation request for HBase Native Queues.
++ */
++public class HBQEnqueue extends HBQOperation {
++
++  private byte [] queueData;
++  
++  private HBReadPointer readPointer;
++  
++  private HBQShardConfig shardConfig;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQEnqueue() {
++    super();
++  }
++  
++  public HBQEnqueue(final byte [] queueName, final byte [] queueData,
++      final HBReadPointer readPointer, final HBQShardConfig shardConfig) {
++    super(queueName);
++    this.queueData = queueData;
++    this.readPointer = readPointer;
++    this.shardConfig = shardConfig;
++  }
++
++  public byte [] getQueueData() {
++    return this.queueData;
++  }
++
++  public HBReadPointer getReadPointer() {
++    return this.readPointer;
++  }
++
++  public HBQShardConfig getShardConfig() {
++    return this.shardConfig;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    int len = in.readInt();
++    this.queueData = new byte[len];
++    in.readFully(this.queueData);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++    this.shardConfig = new HBQShardConfig();
++    this.shardConfig.readFields(in);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    out.writeInt(this.queueData.length);
++    out.write(this.queueData);
++    this.readPointer.write(out);
++    this.shardConfig.write(out);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("readPointer", this.readPointer)
++        .add("data.length", this.queueData.length)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueueResult.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueueResult.java
+new file mode 100644
+index 0000000..97ae462
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQEnqueueResult.java
+@@ -0,0 +1,120 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * Result of an enqueue operation.
++ */
++public class HBQEnqueueResult implements Writable {
++
++  private boolean success;
++  private String msg;
++  private HBQEntryPointer entryPointer;
++  private boolean dataWritten = false;
++  private boolean insertShardEnd = false;
++  
++  /** Empty constructor for Writable (do not use) */
++  public HBQEnqueueResult() {}
++  
++  /**
++   * Failed dequeue constructor.  Just specify message.
++   * @param msg
++   */
++  public HBQEnqueueResult(final String msg) {
++    this.success = false;
++    this.msg = msg;
++  }
++
++  /**
++   * Constructs an enqueue result that is completely finished, that is,
++   * both meta and data have been inserted successfully.
++   * @param entryPointer
++   */
++  public HBQEnqueueResult(final HBQEntryPointer entryPointer) {
++    this.success = true;
++    this.entryPointer = entryPointer;
++    this.dataWritten = true;
++  }
++
++  /**
++   * Constructs an enqueue result when data has not yet been inserted,
++   * signaling the caller to perform the call on another region or server.
++   * @param hbqEntryPointer
++   * @param insertShardEnd
++   */
++  public HBQEnqueueResult(final HBQEntryPointer hbqEntryPointer,
++      final boolean insertShardEnd) {
++    this.success = true;
++    this.entryPointer = hbqEntryPointer;
++    this.dataWritten = false;
++    this.insertShardEnd = insertShardEnd;
++  }
++  
++  public boolean isSuccess() {
++    return this.success;
++  }
++
++  public String getFailureMessage() {
++    return this.msg;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++  
++  public boolean getInsertShardEnd() {
++    return this.insertShardEnd;
++  }
++  
++  public boolean getDataWritten() {
++    return this.dataWritten;
++  }
++  
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.success = in.readBoolean();
++    if (this.success) {
++       this.entryPointer = new HBQEntryPointer();
++       this.entryPointer.readFields(in);
++       this.insertShardEnd = in.readBoolean();
++       this.dataWritten = in.readBoolean();
++    } else {
++      this.msg = in.readUTF();
++    }
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeBoolean(this.success);
++    if (this.success) {
++      this.entryPointer.write(out);
++      out.writeBoolean(this.insertShardEnd);
++      out.writeBoolean(this.dataWritten);
++    } else {
++      out.writeUTF(this.msg);
++    }
++  }
++
++  @Override
++  public String toString() {
++    if (success) {
++      return Objects.toStringHelper(this)
++          .add("success", this.success)
++          .add("entryPointer", this.entryPointer.toString())
++          .add("insertShardEnd", this.insertShardEnd)
++          .add("dataWritten", this.dataWritten)
++          .toString();
++    } else {
++      return Objects.toStringHelper(this)
++          .add("success", this.success)
++          .add("failureMsg", this.msg)
++          .toString();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQEntryPointer.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQEntryPointer.java
+new file mode 100644
+index 0000000..a4fb860
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQEntryPointer.java
+@@ -0,0 +1,80 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.hbase.util.Bytes;
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * A pointer for a single queue entry.
++ */
++public class HBQEntryPointer implements Writable {
++
++  protected long entryId;
++  protected long shardId;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQEntryPointer() {}
++  
++  public HBQEntryPointer(final long entryId, final long shardId) {
++    this.entryId = entryId;
++    this.shardId = shardId;
++  }
++
++  public long getEntryId() {
++    return this.entryId;
++  }
++
++  public long getShardId() {
++    return this.shardId;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.entryId = in.readLong();
++    this.shardId = in.readLong();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeLong(this.entryId);
++    out.writeLong(this.shardId);
++  }
++
++  @Override
++  public boolean equals(Object o) {
++    return this.entryId == ((HBQEntryPointer)o).entryId &&
++        this.shardId == ((HBQEntryPointer)o).shardId;
++  }
++
++  @Override
++  public int hashCode() {
++    return Bytes.hashCode(
++        Bytes.toBytes(entryId)) ^ Bytes.hashCode(Bytes.toBytes(shardId));
++  }
++
++  public HBQEntryPointer makeCopy() {
++    return new HBQEntryPointer(this.entryId, this.shardId);
++  }
++
++  public byte [] getBytes() {
++    return Bytes.add(Bytes.toBytes(this.entryId),
++        Bytes.toBytes(this.shardId));
++  }
++
++  public static HBQEntryPointer fromBytes(byte [] bytes) {
++    return new HBQEntryPointer(Bytes.toLong(bytes, 0), Bytes.toLong(bytes, 8));
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("entryId", this.entryId)
++        .add("shardId", this.shardId)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQExpirationConfig.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQExpirationConfig.java
+new file mode 100644
+index 0000000..8d294d9
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQExpirationConfig.java
+@@ -0,0 +1,60 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * Expiration configuration settings.
++ */
++public class HBQExpirationConfig implements Writable {
++
++  long maxAgeBeforeExpirationInMillis;
++  long maxAgeBeforeSemiAckedToAcked;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQExpirationConfig() {}
++  
++  public HBQExpirationConfig(final long maxAgeBeforeExpirationInMillis,
++      final long maxAgeBeforeSemiAckedToAcked) {
++    this.maxAgeBeforeExpirationInMillis = maxAgeBeforeExpirationInMillis;
++    this.maxAgeBeforeSemiAckedToAcked = maxAgeBeforeSemiAckedToAcked;
++  }
++
++  public void setMaxAgeBeforeExpirationInMillis(long expirationInMillis) {
++    this.maxAgeBeforeExpirationInMillis = expirationInMillis;
++  }
++
++  public long getMaxAgeBeforeExpirationInMillis() {
++    return this.maxAgeBeforeExpirationInMillis;
++  }
++
++  public long getMaxAgeBeforeSemiAckedToAcked() {
++    return this.maxAgeBeforeSemiAckedToAcked;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.maxAgeBeforeExpirationInMillis = in.readLong();
++    this.maxAgeBeforeSemiAckedToAcked = in.readLong();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeLong(this.maxAgeBeforeExpirationInMillis);
++    out.writeLong(this.maxAgeBeforeSemiAckedToAcked);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("maxAgeBeforeExpirationInMillis",
++            this.maxAgeBeforeExpirationInMillis)
++        .add("maxAgeBeforeSemiAckedToAcked", this.maxAgeBeforeSemiAckedToAcked)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQFinalize.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQFinalize.java
+new file mode 100644
+index 0000000..1e56fd9
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQFinalize.java
+@@ -0,0 +1,90 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import com.google.common.base.Objects;
++
++/**
++ * Ack operation request for HBase Native Queues.
++ */
++public class HBQFinalize extends HBQOperation {
++
++  private HBQEntryPointer entryPointer;
++
++  private HBQConsumer consumer;
++  
++  private int totalNumGroups;
++  
++  private HBReadPointer readPointer;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQFinalize() {
++    super();
++  }
++  
++  public HBQFinalize(final byte [] queueName,
++      final HBQConsumer consumer, final HBQEntryPointer entryPointer,
++      final HBReadPointer readPointer) {
++    this(queueName, consumer, entryPointer, readPointer, 0);
++  }
++  
++  public HBQFinalize(final byte [] queueName,
++      final HBQConsumer consumer, final HBQEntryPointer entryPointer,
++      final HBReadPointer readPointer, int totalNumGroups) {
++    super(queueName);
++    this.entryPointer = entryPointer;
++    this.readPointer = readPointer;
++    this.consumer = consumer;
++    this.totalNumGroups = totalNumGroups;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++
++  public HBReadPointer getPointer() {
++    return this.readPointer;
++  }
++
++  public HBQConsumer getConsumer() {
++    return this.consumer;
++  }
++
++  public int getTotalNumGroups() {
++    return this.totalNumGroups;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.entryPointer = new HBQEntryPointer();
++    this.entryPointer.readFields(in);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++    this.consumer = new HBQConsumer();
++    this.consumer.readFields(in);
++    this.totalNumGroups = in.readInt();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    this.entryPointer.write(out);
++    this.readPointer.write(out);
++    this.consumer.write(out);
++    out.writeInt(this.totalNumGroups);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("entryPointer", this.entryPointer)
++        .add("readPointer", this.readPointer)
++        .add("consumer", this.consumer)
++        .add("totalNumGroups", this.totalNumGroups)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidate.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidate.java
+new file mode 100644
+index 0000000..d702966
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidate.java
+@@ -0,0 +1,62 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import com.google.common.base.Objects;
++
++/**
++ * Invalidate operation request for HBase Native Queues.
++ */
++public class HBQInvalidate extends HBQOperation {
++
++  private HBQEntryPointer entryPointer;
++  
++  private HBReadPointer readPointer;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQInvalidate() {
++    super();
++  }
++  
++  public HBQInvalidate(final byte [] queueName,
++      final HBQEntryPointer entryPointer, final HBReadPointer readPointer) {
++    super(queueName);
++    this.entryPointer = entryPointer;
++    this.readPointer = readPointer;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++
++  public HBReadPointer getPointer() {
++    return this.readPointer;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.entryPointer = new HBQEntryPointer();
++    this.entryPointer.readFields(in);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    this.entryPointer.write(out);
++    this.readPointer.write(out);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("entryPointer", this.entryPointer)
++        .add("readPointer", this.readPointer)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidateResult.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidateResult.java
+new file mode 100644
+index 0000000..1b54cdf
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQInvalidateResult.java
+@@ -0,0 +1,97 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * A pointer for a single queue entry.
++ */
++public class HBQInvalidateResult implements Writable {
++
++  private boolean success;
++  private String msg;
++  private HBQEntryPointer entryPointer;
++  private byte [] queueData;
++  
++  /** Empty constructor for Writable (do not use) */
++  public HBQInvalidateResult() {}
++  
++  /**
++   * Failed dequeue constructor.  Just specify message.
++   * @param msg
++   */
++  public HBQInvalidateResult(final String msg) {
++    this.success = false;
++    this.msg = msg;
++  }
++
++  public HBQInvalidateResult(final HBQEntryPointer entryPointer,
++      final byte [] queueData) {
++    this.success = true;
++    this.entryPointer = entryPointer;
++    this.queueData = queueData;
++  }
++  
++  public boolean isSuccess() {
++    return this.success;
++  }
++
++  public String getFailureMessage() {
++    return this.msg;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++  
++  public byte [] getData() {
++    return this.queueData;
++  }
++  
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.success = in.readBoolean();
++    if (this.success) {
++       int len = in.readInt();
++       this.queueData = new byte[len];
++       in.readFully(queueData);
++       this.entryPointer = new HBQEntryPointer();
++       this.entryPointer.readFields(in);
++    } else {
++      this.msg = in.readUTF();
++    }
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeBoolean(this.success);
++    if (this.success) {
++      out.writeInt(this.queueData.length);
++      out.write(this.queueData);
++      this.entryPointer.write(out);
++    } else {
++      out.writeUTF(this.msg);
++    }
++  }
++
++  @Override
++  public String toString() {
++    if (success) {
++      return Objects.toStringHelper(this)
++          .add("success", this.success)
++          .add("entryPointer", this.entryPointer.toString())
++          .add("data.length", this.queueData.length)
++          .toString();
++    } else {
++      return Objects.toStringHelper(this)
++          .add("success", this.success)
++          .add("failureMsg", this.msg)
++          .toString();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQMetaOperation.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQMetaOperation.java
+new file mode 100644
+index 0000000..f2e849c
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQMetaOperation.java
+@@ -0,0 +1,67 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * Meta operations.
++ */
++public class HBQMetaOperation extends HBQOperation implements Writable {
++
++  private MetaOperationType operationType;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQMetaOperation() {
++    super();
++  }
++
++  public HBQMetaOperation(final byte [] queueName,
++      final MetaOperationType operationType) {
++    super(queueName);
++    this.operationType = operationType;
++  }
++
++  public byte[] getGroupIdRow() {
++    return generateRow(HBQConstants.GLOBAL_GROUPS_HEADER);
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.operationType = MetaOperationType.fromByte(in.readByte());
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    out.writeByte(operationType.toByte());
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("operationType", operationType.name())
++        .toString();
++  }
++
++  public static enum MetaOperationType {
++    GET_GROUP_ID, GET_QUEUE_META;
++    public static MetaOperationType fromByte(byte b) {
++      switch (b) {
++        case '0': return GET_GROUP_ID;
++        case '1': return GET_QUEUE_META;
++        default: throw new RuntimeException("Fatal serialization error");
++      }
++    }
++    public byte toByte() {
++      if (this == GET_GROUP_ID) return '0';
++      else return '1';
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQOperation.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQOperation.java
+new file mode 100644
+index 0000000..b67d1bf
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQOperation.java
+@@ -0,0 +1,76 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.hbase.util.Bytes;
++import org.apache.hadoop.io.Writable;
++
++public class HBQOperation implements Writable {
++
++  protected byte [] queueName;
++  
++  protected boolean writeToWAL = true;
++
++  protected HBQOperation() {}
++  
++  protected HBQOperation(final byte [] queueName) {
++    this.queueName = queueName;
++  }
++
++  public byte [] getQueueName() {
++    return this.queueName;
++  }
++
++  /**
++   * Returns the primary metadata row for the queue of this operation.
++   * @return meta row for this queue
++   */
++  public byte [] getMetaRow() {
++    return generateRow(HBQConstants.GLOBAL_META_HEADER);
++  }
++
++  public boolean getWriteToWAL() {
++    return this.writeToWAL;
++  }
++
++  public void setWriteToWAL(boolean writeToWAL) {
++    this.writeToWAL = writeToWAL;
++  }
++
++  /**
++   * Returns the primary metadata row for the queue of this operation.
++   * @param shardid 
++   * @return row key of the data row for this queue operation and the specified
++   *         shard
++   */
++  public byte [] getDataRow(byte [] shardid) {
++    return generateRow(HBQConstants.GLOBAL_DATA_HEADER, shardid);
++  }
++
++  protected byte [] generateRow(byte [] header) {
++    return Bytes.add(this.queueName, header);
++  }
++
++  protected byte [] generateRow(byte [] headerOne, byte [] headerTwo) {
++    return Bytes.add(this.queueName, headerOne, headerTwo);
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    int len = in.readInt();
++    this.queueName = new byte[len];
++    in.readFully(this.queueName);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeInt(this.queueName.length);
++    out.write(this.queueName);
++  }
++
++  public static enum HBQOperationType {
++    ENQUEUE, DEQUEUE, INVALIDATE, ACK, UNACK, FINALIZE
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQPartitioner.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQPartitioner.java
+new file mode 100644
+index 0000000..35f24c4
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQPartitioner.java
+@@ -0,0 +1,95 @@
++package com.continuuity.hbase.ttqueue;
++
++import org.apache.hadoop.hbase.util.Bytes;
++
++import com.google.common.base.Objects;
++
++/**
++ * Interface used to determine whether a queue entry should be returned to a
++ * given consumer.
++ */
++public interface HBQPartitioner {
++
++  /**
++   * Returns true if the specified entry should be emitted to the specified
++   * consumer.
++   * @param consumer
++   * @param entryId
++   * @param value
++   * @return true if entry should be emitted to consumer, false if not
++   */
++  public boolean shouldEmit(HBQConsumer consumer, long entryId,
++      byte [] value);
++
++  public static enum HBQPartitionerType {
++    RANDOM, HASH_ON_VALUE, MODULO_LONG_VALUE;
++
++    private static final HBQPartitioner PARTITIONER_RANDOM =
++        new RandomPartitioner();
++    private static final HBQPartitioner PARTITIONER_HASH =
++        new HashPartitioner();
++    private static final HBQPartitioner PARTITIONER_LONG_MOD =
++        new LongValueHashPartitioner();
++    
++    public HBQPartitioner getPartitioner() {
++      switch (this) {
++        case RANDOM: return PARTITIONER_RANDOM;
++        case HASH_ON_VALUE: return PARTITIONER_HASH;
++        case MODULO_LONG_VALUE: return PARTITIONER_LONG_MOD;
++        default: return new RandomPartitioner();
++      }
++    }
++    public byte getByte() {
++      switch (this) {
++        case RANDOM: return '0';
++        case HASH_ON_VALUE: return '1';
++        case MODULO_LONG_VALUE: return '2';
++        default: return '0';
++      }
++    }
++    public static HBQPartitionerType fromByte(byte b) {
++      switch (b) {
++        case '0': return RANDOM;
++        case '1': return HASH_ON_VALUE;
++        case '2': return MODULO_LONG_VALUE;
++        default: return RANDOM;
++      }
++    }
++  }
++  
++  public static class RandomPartitioner implements HBQPartitioner {
++    @Override
++    public boolean shouldEmit(HBQConsumer consumer, long entryId,
++        byte [] value) {
++      return true;
++    }
++
++    @Override
++    public String toString() {
++      return Objects.toStringHelper(this).toString();
++    }
++  }
++
++  public static class HashPartitioner implements HBQPartitioner {
++    @Override
++    public boolean shouldEmit(HBQConsumer consumer, long entryId,
++        byte [] value) {
++      int hash = Bytes.hashCode(value);
++      return (hash % consumer.getGroupSize() == consumer.getInstanceId());
++    }
++
++    @Override
++    public String toString() {
++      return Objects.toStringHelper(this).toString();
++    }
++  }
++
++  public static class LongValueHashPartitioner implements HBQPartitioner {
++    @Override
++    public boolean shouldEmit(HBQConsumer consumer, long entryId,
++        byte [] value) {
++      long val = Bytes.toLong(value);
++      return (val % consumer.getGroupSize()) == consumer.getInstanceId();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQQueueMeta.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQQueueMeta.java
+new file mode 100644
+index 0000000..22d4857
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQQueueMeta.java
+@@ -0,0 +1,73 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.continuuity.hbase.ttqueue.internal.GroupState;
++import com.google.common.base.Objects;
++
++/**
++ * Queue meta data.
++ */
++public class HBQQueueMeta implements Writable {
++
++  long globalHeadPointer;
++  long currentWritePointer;
++  GroupState [] groups;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQQueueMeta() {}
++
++  public HBQQueueMeta(long globalHeadPointer, long currentWritePointer,
++      GroupState[] groups) {
++    this.globalHeadPointer = globalHeadPointer;
++    this.currentWritePointer = currentWritePointer;
++    this.groups = groups;
++  }
++
++  public long getGlobalHeadPointer() {
++    return this.globalHeadPointer;
++  }
++
++  public long getCurrentWritePointer() {
++    return this.currentWritePointer;
++  }
++
++  public GroupState [] getGroups() {
++    return this.groups;
++  }
++  
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.globalHeadPointer = in.readLong();
++    this.currentWritePointer = in.readLong();
++    int len = in.readInt();
++    this.groups = new GroupState[len];
++    for (int i=0; i<len; i++) {
++      this.groups[i] = new GroupState();
++      this.groups[i].readFields(in);
++    }
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeLong(this.globalHeadPointer);
++    out.writeLong(this.currentWritePointer);
++    out.writeInt(this.groups.length);
++    for (GroupState groupState : groups) {
++      groupState.write(out);
++    }
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("globalHeadPointer", this.globalHeadPointer)
++        .add("currentWritePointer", this.currentWritePointer)
++        .add("groups", this.groups)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQShardConfig.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQShardConfig.java
+new file mode 100644
+index 0000000..de81758
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQShardConfig.java
+@@ -0,0 +1,55 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.io.Writable;
++
++import com.google.common.base.Objects;
++
++/**
++ * Shard configuration settings.
++ */
++public class HBQShardConfig implements Writable {
++
++  long maxEntriesPerShard;
++  long maxBytesPerShard;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQShardConfig() {}
++  
++  public HBQShardConfig(final long maxEntriesPerShard,
++      final long maxBytesPerShard) {
++    this.maxEntriesPerShard = maxEntriesPerShard;
++    this.maxBytesPerShard = maxBytesPerShard;
++  }
++
++  public long getMaxEntriesPerShard() {
++    return this.maxEntriesPerShard;
++  }
++
++  public long getMaxBytesPerShard() {
++    return this.maxBytesPerShard;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.maxEntriesPerShard = in.readLong();
++    this.maxBytesPerShard = in.readLong();
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeLong(this.maxEntriesPerShard);
++    out.writeLong(this.maxBytesPerShard);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("maxEntriesPerShard", this.maxEntriesPerShard)
++        .add("maxBytesPerShard", this.maxBytesPerShard)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBQUnack.java b/src/main/java/com/continuuity/hbase/ttqueue/HBQUnack.java
+new file mode 100644
+index 0000000..039e1f3
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBQUnack.java
+@@ -0,0 +1,74 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import com.google.common.base.Objects;
++
++/**
++ * Ack operation request for HBase Native Queues.
++ */
++public class HBQUnack extends HBQOperation {
++
++  private HBQEntryPointer entryPointer;
++  
++  private HBReadPointer readPointer;
++
++  private HBQConsumer consumer;
++
++  /** Empty constructor for Writable (do not use) */
++  public HBQUnack() {
++    super();
++  }
++  
++  public HBQUnack(final byte [] queueName,
++      final HBQConsumer consumer, final HBQEntryPointer entryPointer,
++      final HBReadPointer readPointer) {
++    super(queueName);
++    this.entryPointer = entryPointer;
++    this.readPointer = readPointer;
++    this.consumer = consumer;
++  }
++
++  public HBQEntryPointer getEntryPointer() {
++    return this.entryPointer;
++  }
++
++  public HBReadPointer getPointer() {
++    return this.readPointer;
++  }
++
++  public HBQConsumer getConsumer() {
++    return this.consumer;
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    super.readFields(in);
++    this.entryPointer = new HBQEntryPointer();
++    this.entryPointer.readFields(in);
++    this.readPointer = new HBReadPointer();
++    this.readPointer.readFields(in);
++    this.consumer = new HBQConsumer();
++    this.consumer.readFields(in);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    super.write(out);
++    this.entryPointer.write(out);
++    this.readPointer.write(out);
++    this.consumer.write(out);
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("hbqOperation", super.toString())
++        .add("entryPointer", this.entryPointer)
++        .add("readPointer", this.readPointer)
++        .add("queueConsumer", this.consumer)
++        .toString();
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/HBReadPointer.java b/src/main/java/com/continuuity/hbase/ttqueue/HBReadPointer.java
+new file mode 100644
+index 0000000..a5eb4fb
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/HBReadPointer.java
+@@ -0,0 +1,80 @@
++package com.continuuity.hbase.ttqueue;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++import java.util.HashSet;
++import java.util.Set;
++
++import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
++import org.apache.hadoop.io.Writable;
++
++public class HBReadPointer implements Writable {
++
++  private long writePointer;
++  
++  private long readPointer;
++  
++  private Set<Long> readExcludes;
++
++  /** Writable constructor (do not use) */
++  public HBReadPointer() {}
++  
++  public HBReadPointer(long writePointer, long readPointer) {
++    this(writePointer, readPointer, new HashSet<Long>());
++  }
++  
++  public HBReadPointer(long writePointer, long readPointer,
++      Set<Long> readExcludes) {
++    this.writePointer = writePointer;
++    this.readPointer = readPointer;
++    this.readExcludes = readExcludes;
++  }
++  
++  // Note: This is the com.continuuity.data.table.ReadPointer interface but not
++  // actually defined here as we don't want HBase to depend on data-fabric
++  // (and we don't need this to actually support that interface)
++
++  public boolean isVisible(long txid) {
++    if (txid == this.writePointer) return true;
++    if (txid > this.readPointer) return false;
++    return !isExcluded(txid);
++  }
++
++  private boolean isExcluded(long txid) {
++    return this.readExcludes != null && this.readExcludes.contains(txid);
++  }
++
++  public long getReadPointer() {
++    return this.readPointer;
++  }
++  
++  public long getWritePointer() {
++    return this.writePointer < 0 ?
++        EnvironmentEdgeManager.currentTimeMillis() : this.writePointer;
++  }
++  
++  // Writable
++  
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.writePointer = in.readLong();
++    this.readPointer = in.readLong();
++    int n = in.readInt();
++    this.readExcludes = new HashSet<Long>(n < 4 ? 4 : n);
++    for (int i=0; i<n; i++) this.readExcludes.add(in.readLong());
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeLong(this.writePointer);
++    out.writeLong(this.readPointer);
++    if (this.readExcludes == null || this.readExcludes.isEmpty()) {
++      out.writeInt(0);
++    } else {
++      out.writeInt(this.readExcludes.size());
++      for (Long excluded : readExcludes) out.writeLong(excluded);
++    }
++  }
++
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryGroupMeta.java b/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryGroupMeta.java
+new file mode 100644
+index 0000000..b0abd61
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryGroupMeta.java
+@@ -0,0 +1,121 @@
++package com.continuuity.hbase.ttqueue.internal;
++
++import org.apache.hadoop.hbase.util.Bytes;
++
++import com.google.common.base.Objects;
++
++/**
++ * Meta data for a group about a queue entry.
++ */
++public class EntryGroupMeta {
++
++  private final EntryGroupState state;
++  private final long timestamp;
++  private final int instanceId;
++  
++  public EntryGroupMeta(final EntryGroupState state, final long timestamp,
++      final int instanceId) {
++    this.state = state;
++    this.timestamp = timestamp;
++    this.instanceId = instanceId;
++  }
++
++  public boolean isAvailable() {
++    return state == EntryGroupState.AVAILABLE;
++  }
++  
++  public boolean isAckedOrSemiAcked() {
++    return state == EntryGroupState.SEMI_ACKED ||
++        state == EntryGroupState.ACKED;
++  }
++
++  public boolean isSemiAcked() {
++    return state == EntryGroupState.SEMI_ACKED;
++  }
++  
++  public boolean isAcked() {
++    return state == EntryGroupState.ACKED;
++  }
++  
++  public boolean isDequeued() {
++    return state == EntryGroupState.DEQUEUED;
++  }
++  
++  public EntryGroupState getState() {
++    return this.state;
++  }
++
++  public long getTimestamp() {
++    return this.timestamp;
++  }
++  
++  public int getInstanceId() {
++    return this.instanceId;
++  }
++  
++  public byte [] getBytes() {
++    return Bytes.add(this.state.getBytes(), Bytes.toBytes(timestamp),
++        Bytes.toBytes(instanceId));
++  }
++  
++  public static EntryGroupMeta fromBytes(byte [] bytes) {
++    return new EntryGroupMeta(EntryGroupState.fromBytes(new byte[] {bytes[0]}),
++        Bytes.toLong(bytes, 1), Bytes.toInt(bytes, 9));
++  }
++
++  @Override
++  public boolean equals(Object o) {
++    if (o == null) return false;
++    if (!(o instanceof EntryGroupMeta)) return false;
++    EntryGroupMeta egm = (EntryGroupMeta)o;
++    if (egm.getState() != this.state) return false;
++    if (egm.getInstanceId() != this.instanceId) return false;
++    if (egm.getTimestamp() != this.timestamp) return false;
++    return true;
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("state", this.state)
++        .add("timestamp", this.timestamp)
++        .add("instanceId", this.instanceId)
++        .toString();
++  }
++  
++  public static enum EntryGroupState {
++    AVAILABLE, SEMI_ACKED, ACKED, DEQUEUED;
++    
++    private static final byte [] AVAILABLE_BYTES = new byte [] { 0 };
++    private static final byte [] SEMI_ACKED_BYTES = new byte [] { 1 };
++    private static final byte [] ACKED_BYTES = new byte [] { 2 };
++    private static final byte [] DEQUEUED_BYTES = new byte [] { 3 };
++    
++    public byte [] getBytes() {
++      switch (this) {
++        case AVAILABLE: return AVAILABLE_BYTES;
++        case SEMI_ACKED:return SEMI_ACKED_BYTES;
++        case ACKED:     return ACKED_BYTES;
++        case DEQUEUED:  return DEQUEUED_BYTES;
++      }
++      return null;
++    }
++    
++    public static EntryGroupState fromBytes(byte [] bytes) {
++      if (bytes.length == 1) {
++        if (bytes[0] == AVAILABLE_BYTES[0]) return AVAILABLE;
++        if (bytes[0] == SEMI_ACKED_BYTES[0]) return SEMI_ACKED;
++        if (bytes[0] == ACKED_BYTES[0]) return ACKED;
++        if (bytes[0] == DEQUEUED_BYTES[0]) return DEQUEUED;
++      }
++      throw new RuntimeException("Invalid deserialization of EntryGroupState");
++    }
++
++    @Override
++    public String toString() {
++      return Objects.toStringHelper(this)
++          .add("state", this.name())
++          .toString();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryMeta.java b/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryMeta.java
+new file mode 100644
+index 0000000..baa5478
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/internal/EntryMeta.java
+@@ -0,0 +1,83 @@
++package com.continuuity.hbase.ttqueue.internal;
++
++import com.google.common.base.Objects;
++
++
++/**
++ * Meta data about a queue entry.
++ */
++public class EntryMeta {
++
++  private final EntryState state;
++
++  public EntryMeta(final EntryState state) {
++    this.state = state;
++  }
++
++  public boolean isValid() {
++    return this.state == EntryState.VALID;
++  }
++
++  public boolean isInvalid() {
++    return this.state == EntryState.INVALID;
++  }
++
++  public boolean isEndOfShard() {
++    return this.state == EntryState.SHARD_END;
++  }
++
++  public boolean isEvicted() {
++    return this.state == EntryState.EVICTED;
++  }
++
++  public byte [] getBytes() {
++    return this.state.getBytes();
++  }
++
++  public static EntryMeta fromBytes(byte [] bytes) {
++    return new EntryMeta(EntryState.fromBytes(bytes));
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("state", this.state)
++        .toString();
++  }
++
++  public static enum EntryState {
++    VALID, INVALID, SHARD_END, EVICTED;
++
++    private static final byte [] VALID_BYTES = new byte [] { 0 };
++    private static final byte [] INVALID_BYTES = new byte [] { 1 };
++    private static final byte [] SHARD_END_BYTES = new byte [] { 2 };
++    private static final byte [] EVICTED_BYTES = new byte [] { 3 };
++
++    public byte [] getBytes() {
++      switch (this) {
++        case VALID:     return VALID_BYTES;
++        case INVALID:   return INVALID_BYTES;
++        case SHARD_END: return SHARD_END_BYTES;
++        case EVICTED:   return EVICTED_BYTES;
++      }
++      throw new RuntimeException("Invalid serialization of EntryState");
++    }
++
++    public static EntryState fromBytes(byte [] bytes) {
++      if (bytes.length == 1) {
++        if (bytes[0] == VALID_BYTES[0]) return VALID;
++        if (bytes[0] == INVALID_BYTES[0]) return INVALID;
++        if (bytes[0] == SHARD_END_BYTES[0]) return SHARD_END;
++        if (bytes[0] == EVICTED_BYTES[0]) return EVICTED;
++      }
++      throw new RuntimeException("Invalid deserialization of EntryState");
++    }
++
++    @Override
++    public String toString() {
++      return Objects.toStringHelper(this)
++          .add("state", this.name())
++          .toString();
++    }
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/internal/ExecutionMode.java b/src/main/java/com/continuuity/hbase/ttqueue/internal/ExecutionMode.java
+new file mode 100644
+index 0000000..71dba83
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/internal/ExecutionMode.java
+@@ -0,0 +1,38 @@
++package com.continuuity.hbase.ttqueue.internal;
++
++import com.continuuity.hbase.ttqueue.HBQConfig;
++import com.google.common.base.Objects;
++
++/**
++ * The execution mode of a {@link com.continuuity.hbase.ttqueue.HBQConsumer}s within a group.
++ */
++public enum ExecutionMode {
++  SINGLE_ENTRY,
++  MULTI_ENTRY;
++
++  private static final byte [] SINGLE_BYTES = new byte [] { 0 };
++  private static final byte [] MULTI_BYTES = new byte [] { 1 };
++
++  public byte [] getBytes() {
++    return this == SINGLE_ENTRY ? SINGLE_BYTES : MULTI_BYTES;
++  }
++
++  public static ExecutionMode fromBytes(byte [] bytes) {
++    if (bytes.length == 1) {
++      if (bytes[0] == SINGLE_BYTES[0]) return SINGLE_ENTRY;
++      if (bytes[0] == MULTI_BYTES[0]) return MULTI_ENTRY;
++    }
++    throw new RuntimeException("Invalid deserialization of ExecutionMode");
++  }
++
++  public static ExecutionMode fromQueueConfig(HBQConfig config) {
++    return config.isSingleEntry() ? SINGLE_ENTRY : MULTI_ENTRY;
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("mode", name())
++        .toString();
++  }
++}
+\ No newline at end of file
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/internal/GroupState.java b/src/main/java/com/continuuity/hbase/ttqueue/internal/GroupState.java
+new file mode 100644
+index 0000000..f58d816
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/internal/GroupState.java
+@@ -0,0 +1,116 @@
++package com.continuuity.hbase.ttqueue.internal;
++
++import java.io.DataInput;
++import java.io.DataOutput;
++import java.io.IOException;
++
++import org.apache.hadoop.hbase.util.Bytes;
++import org.apache.hadoop.io.Writable;
++
++import com.continuuity.hbase.ttqueue.HBQEntryPointer;
++import com.google.common.base.Objects;
++
++public class GroupState implements Writable {
++
++  private int groupSize;
++  private HBQEntryPointer head;
++  private ExecutionMode mode;
++
++  /** Writable Constructor - Do not use */
++  public GroupState() {}
++
++  public GroupState(final int groupSize, final HBQEntryPointer head,
++      final ExecutionMode mode) {
++    this.groupSize = groupSize;
++    this.head = head;
++    this.mode = mode;
++  }
++
++  public GroupState(GroupState groupState, HBQEntryPointer entryPointer) {
++    this(groupState.getGroupSize(), entryPointer, groupState.getMode());
++  }
++
++  public int getGroupSize() {
++    return this.groupSize;
++  }
++
++  public HBQEntryPointer getHead() {
++    return this.head;
++  }
++
++  public ExecutionMode getMode() {
++    return this.mode;
++  }
++
++  public byte [] getBytes() {
++    return Bytes.add(
++        Bytes.toBytes(this.groupSize), // 4 bytes
++        this.head.getBytes(),          // 16 bytes
++        this.mode.getBytes());         // 1 byte
++  }
++
++  public static GroupState fromBytes(byte [] bytes) {
++    return new GroupState(Bytes.toInt(bytes),
++        new HBQEntryPointer(Bytes.toLong(bytes, 4), Bytes.toLong(bytes, 12)),
++        ExecutionMode.fromBytes(Bytes.tail(bytes, 1)));
++  }
++
++  /**
++   * Checks if group size and mode are the same.
++   * @param groupState
++   * @return
++   */
++  public boolean nonPointerConfigEquals(GroupState groupState) {
++    if (groupState.getGroupSize() != getGroupSize()) return false;
++    if (groupState.getMode() != getMode()) return false;
++    return true;
++  }
++
++  /**
++   * Checks if this group state entry pointer is greater than or equal to the
++   * specified group state.
++   * @param groupState
++   * @return
++   */
++  public boolean isGreaterThanOrEqual(GroupState groupState) {
++    if (this.head.getEntryId() >= groupState.head.getEntryId()) return true;
++    return false;
++  }
++
++  @Override
++  public boolean equals(Object o) {
++    if (o == null) return false;
++    if (!(o instanceof GroupState)) return false;
++    GroupState gs = (GroupState)o;
++    if (gs.getGroupSize() != this.groupSize) return false;
++    if (!gs.getHead().equals(this.head)) return false;
++    if (gs.getMode() != this.mode) return false;
++    return true;
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("groupSize", this.groupSize)
++        .add("headPointer", this.head)
++        .add("execMode", this.mode.name())
++        .toString();
++  }
++
++  @Override
++  public void readFields(DataInput in) throws IOException {
++    this.groupSize = in.readInt();
++    this.head = new HBQEntryPointer();
++    this.head.readFields(in);
++    byte [] modeBytes = new byte[1];
++    in.readFully(modeBytes);
++    this.mode = ExecutionMode.fromBytes(modeBytes);
++  }
++
++  @Override
++  public void write(DataOutput out) throws IOException {
++    out.writeInt(this.groupSize);
++    this.head.write(out);
++    out.write(this.mode.getBytes());
++  }
++}
+diff --git a/src/main/java/com/continuuity/hbase/ttqueue/internal/ShardMeta.java b/src/main/java/com/continuuity/hbase/ttqueue/internal/ShardMeta.java
+new file mode 100644
+index 0000000..f29e5ba
+--- /dev/null
++++ b/src/main/java/com/continuuity/hbase/ttqueue/internal/ShardMeta.java
+@@ -0,0 +1,53 @@
++package com.continuuity.hbase.ttqueue.internal;
++
++import org.apache.hadoop.hbase.util.Bytes;
++
++import com.google.common.base.Objects;
++
++/**
++ * Meta data about the current shard.
++ */
++public class ShardMeta {
++
++  private final long shardId;
++  private final long shardBytes;
++  private final long shardEntries;
++
++  public ShardMeta(final long shardId, final long shardBytes,
++      final long shardEntries) {
++    this.shardId = shardId;
++    this.shardBytes = shardBytes;
++    this.shardEntries = shardEntries;
++  }
++
++  public long getShardId() {
++    return this.shardId;
++  }
++
++  public long getShardBytes() {
++    return this.shardBytes;
++  }
++
++  public long getShardEntries() {
++    return this.shardEntries;
++  }
++
++  public byte [] getBytes() {
++    return Bytes.add(Bytes.toBytes(this.shardId),
++        Bytes.toBytes(this.shardBytes), Bytes.toBytes(this.shardEntries));
++  }
++
++  public static ShardMeta fromBytes(byte [] bytes) {
++    return new ShardMeta(Bytes.toLong(bytes, 0), Bytes.toLong(bytes, 8),
++        Bytes.toLong(bytes, 16));
++  }
++
++  @Override
++  public String toString() {
++    return Objects.toStringHelper(this)
++        .add("shardId", this.shardId)
++        .add("shardBytes", this.shardBytes)
++        .add("shardEntries", this.shardEntries)
++        .toString();
++  }
++}
 diff --git a/src/main/java/org/apache/hadoop/hbase/KeyValue.java b/src/main/java/org/apache/hadoop/hbase/KeyValue.java
 index bd87c34..ed0fff8 100644
 --- a/src/main/java/org/apache/hadoop/hbase/KeyValue.java
