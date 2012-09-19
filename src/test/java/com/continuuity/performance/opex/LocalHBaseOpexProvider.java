@@ -1,6 +1,7 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -15,7 +16,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 
 import java.io.File;
@@ -24,6 +24,11 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class LocalHBaseOpexProvider extends OpexProvider {
+
+  /** override this to enable native queues */
+  protected boolean useNativeQueues() {
+    return false;
+  }
 
   @Override
   OperationExecutor create() throws BenchmarkException {
@@ -35,7 +40,8 @@ public class LocalHBaseOpexProvider extends OpexProvider {
     }
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(
-        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+        DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES,
+        this.useNativeQueues());
     DataFabricDistributedModule module =
         new DataFabricDistributedModule(hbaseConf, conf);
     Injector injector = Guice.createInjector(module);
@@ -54,7 +60,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
   }
 
   private Configuration hbaseConf;
-  private MiniZooKeeperCluster zkCluster;
+  private InMemoryZookeeper zkCluster;
   private MiniDFSCluster dfsCluster;
   private MiniHBaseCluster hbaseCluster;
 
@@ -79,8 +85,8 @@ public class LocalHBaseOpexProvider extends OpexProvider {
 
     // Start ZooKeeper
     System.out.println("Starting ZooKeeper ...");
-    zkCluster = new MiniZooKeeperCluster(hbaseConf);
-    int zkPort = zkCluster.startup(getRandomTempDir(), 1);
+    zkCluster = new InMemoryZookeeper();
+    int zkPort = zkCluster.getPort();
 
     // Add ZK info to hbaseConf
     hbaseConf.set(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(zkPort));
@@ -129,7 +135,7 @@ public class LocalHBaseOpexProvider extends OpexProvider {
 
     // Stop ZK
     System.out.println("Shutting down ZooKeeper ...");
-    zkCluster.shutdown();
+    zkCluster.stop();
     zkCluster = null;
 
     System.out.println("Done.");
