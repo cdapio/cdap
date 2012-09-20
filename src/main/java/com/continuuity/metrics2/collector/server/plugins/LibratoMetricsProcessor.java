@@ -7,6 +7,7 @@ import akka.dispatch.Futures;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
+import com.continuuity.metrics2.collector.MetricType;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.ning.http.client.*;
 import com.ning.http.util.Base64;
@@ -182,7 +183,9 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
           metric.put("name", request.getMetricName());
           metric.put("source", request.getTags().get(0).getSecond());
           metric.put("measure_time", request.getTimestamp());
-          metric.put("period", 1);
+          if(request.getMetricType() == MetricType.System) {
+            metric.put("period", 60);
+          }
           metric.put("value", request.getValue());
           metrics.add(metric);
           count--;
@@ -252,9 +255,8 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     libratoUrl = configuration.get(
       "librato.url", "https://metrics-api.librato.com/v1/metrics"
     );
-    libratoRequestTimeout = configuration.getInt(
-      "librato.request.timeout", DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS
-    );
+    libratoRequestTimeout = configuration.getInt("librato.request.timeout",
+                                                 DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS);
 
     // We don't need to wait for future.
     libratoBatcher.start();
