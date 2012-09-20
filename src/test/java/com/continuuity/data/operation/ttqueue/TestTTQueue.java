@@ -1,23 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Test;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
@@ -25,6 +7,14 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.junit.Assert.*;
 
 public abstract class TestTTQueue {
 
@@ -1231,6 +1221,7 @@ public abstract class TestTTQueue {
     enqueueThread.join();
 
     // Tell the dequeuer to stop (once he gets an empty)
+    Thread.sleep(200);
     stop.set(true);
     dequeueThread.join();
     System.out.println("DequeueThread is done.  Set size is " +
