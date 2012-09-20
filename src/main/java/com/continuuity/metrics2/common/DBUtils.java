@@ -75,6 +75,14 @@ public class DBUtils {
 
     PreparedStatement stmt = null;
     try {
+      stmt = connection.prepareStatement(metricsTableCreateDDL);
+      stmt.execute();
+
+      if(stmt != null) {
+        stmt.close();
+        stmt = null;
+      }
+
       // set database to
       stmt = connection.prepareStatement("SET DATABASE DEFAULT " +
                                            "RESULT MEMORY ROWS 1000");
@@ -84,9 +92,6 @@ public class DBUtils {
         stmt.close();
         stmt = null;
       }
-
-
-
     } catch (SQLException e) {
       // SQL state for determining the duplicate table create exception
       // http://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html
