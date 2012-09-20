@@ -40,13 +40,14 @@ public class MetricsClientProtocolHandler extends IoHandlerAdapter {
     if(message instanceof MetricResponse) {
       MetricResponse response = (MetricResponse) message;
       if(response.getStatus() == MetricResponse.Status.FAILED) {
-        Log.warn("Failed processing metric on the overlord server. Look at "
+        Log.warn("Failed processing metric on the overlord server. Request "
                    + "server logs.");
       } else if(response.getStatus() == MetricResponse.Status.IGNORED) {
-        Log.warn("Metrics collection server ignore the metric type as there " +
-                   "was no appropriate processor attached for processing.");
+        Log.warn("Server ignored the data point due to capacity.");
       } else if(response.getStatus() == MetricResponse.Status.INVALID) {
         Log.warn("Invalid request was sent to the server.");
+      } else if(response.getStatus() == MetricResponse.Status.SERVER_ERROR) {
+        Log.warn("Internal server error.");
       }
     } else {
       Log.warn("Invalid message received from the server. Message : {}",

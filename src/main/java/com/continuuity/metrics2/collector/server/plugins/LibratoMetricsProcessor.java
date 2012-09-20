@@ -211,24 +211,28 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         );
         builder.setUrl(libratoUrl);
 
-        java.util.concurrent.Future<Response> response
-          = client.executeRequest(builder.build());
-        Response r = response.get();
-        if(r.getStatusCode() != 200) {
-          Log.warn("Failed sending metric to librato. Status code {}, status {}",
-                   r.getStatusCode(), r.getStatusText());
-        } else {
-          Log.debug("Successfully sent metric to librato.");
-        }
+        client.executeRequest(builder.build(), new AsyncCompletionHandler<Response>() {
+          @Override
+          public Response onCompleted(Response response) throws Exception {
+            if(response.getStatusCode() != 200) {
+              Log.warn("Failed sending metric to librato. Status code {}, status {}",
+                       response.getStatusCode(), response.getStatusText());
+            } else {
+              Log.debug("Successfully sent metric to librato.");
+            }
+            return response;
+          }
+
+          @Override
+          public void onThrowable(Throwable t) {
+            Log.warn("There was problem sending metrics to librato. Reason : {}",
+                     t.getMessage());
+          }
+        });
       } catch (IOException e) {
         Log.warn("I/O Exception. Reason : {}", e.getMessage());
       } catch (IllegalArgumentException e) {
         Log.warn("Illegal argument exception. Reason : {}", e.getMessage());
-      } catch (InterruptedException e) {
-        Log.warn("Thread interrupted. Reason : {}", e.getMessage());
-        Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-        Log.warn("Execution exception. Reason : {}", e.getMessage());
       }
     }
 
@@ -255,8 +259,9 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     libratoUrl = configuration.get(
       "librato.url", "https://metrics-api.librato.com/v1/metrics"
     );
-    libratoRequestTimeout = configuration.getInt("librato.request.timeout",
-                                                 DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS);
+    libratoRequestTimeout = configuration.getInt(
+      "librato.request.timeout", DEFAULT_LIBRATO_REQUEST_TIMEOUT_MS
+    );
 
     // We don't need to wait for future.
     libratoBatcher.start();
