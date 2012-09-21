@@ -163,6 +163,9 @@ public class Constants {
   public static final String
     CFG_METRICS_COLLECTION_FLOW_USER_PLUGINS
     = "overlord.metrics.processor.plugins.flowuser";
+  public static final String
+    CFG_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS
+    = "overlord.metrics.timeseries.metrics";
 
   /**
    * Defaults for metrics collection server
@@ -178,4 +181,6 @@ public class Constants {
     DEFAULT_METRICS_FRONTEND_SERVER_THREADS = 2;
   public static final String
     DEFAULT_METIRCS_CONNECTION_URL = "jdbc:hsqldb:mem:metricsdb?user=sa";
+  public static final String
+    DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS = "processed.count";
 }
