@@ -20,7 +20,7 @@ struct FlowArgument {
   1: string accountId,
   2: string applicationId,
   3: string flowId,
-  4: string runId,
+  4: optional string runId,
   5: optional string flowletId,
   6: optional i32 instanceId,
 }
@@ -34,6 +34,44 @@ struct CounterRequest {
 }
 
 /**
+ * Point in time.
+ */
+struct DataPoint {
+  1: i64 timestamp,
+  2: double value
+}
+
+enum MetricTimeseriesLevel {
+  ACCOUNT_LEVEL = 1,
+  APPLICATION_LEVEL = 2,
+  FLOW_LEVEL = 4,
+  FLOWLET_LEVEL = 8,
+  RUNID_LEVEL = 16,
+}
+
+/**
+ * Collection of data points for a given metric.
+ */
+struct DataPoints {
+   1: map<string, list<DataPoint>> points,
+   2: optional map<string, double> current,
+   3: optional map<string, double> max,
+   4: optional map<string, double> min,
+}
+
+/**
+ * Timeseries request
+ */
+struct TimeseriesRequest {
+   1: required FlowArgument argument,
+   2: required list<string> metrics,
+   3: required MetricTimeseriesLevel level = MetricTimeseriesLevel.FLOW_LEVEL,
+   4: optional i64 startts,
+   5: required i64 endts,
+   6: optional bool summary = 1,
+}
+
+/**
  * Metrics Service is a frontend service for retreiving metrics.
  */
 service MetricsFrontendService {
@@ -44,5 +82,11 @@ service MetricsFrontendService {
   * ALL in the metric name.
   */
   list<Counter> getCounters(1: CounterRequest request)
+    throws (1: MetricsServiceException e),
+
+ /**
+  * API to request time series data for a set of metrics.
+  */
+  DataPoints getTimeSeries(1: TimeseriesRequest request)
     throws (1: MetricsServiceException e),
 }

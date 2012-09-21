@@ -5,6 +5,7 @@
  */
 package com.continuuity.metrics2.stubs;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -26,12 +27,14 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
   private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField APPLICATION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("applicationId", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField FLOW_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowId", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField FLOWLET_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowletId", org.apache.thrift.protocol.TType.STRING, (short)4);
-  private static final org.apache.thrift.protocol.TField INSTANCE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("instanceId", org.apache.thrift.protocol.TType.I32, (short)5);
+  private static final org.apache.thrift.protocol.TField RUN_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("runId", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField FLOWLET_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowletId", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField INSTANCE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("instanceId", org.apache.thrift.protocol.TType.I32, (short)6);
 
   private String accountId; // required
   private String applicationId; // required
   private String flowId; // required
+  private String runId; // required
   private String flowletId; // required
   private int instanceId; // required
 
@@ -40,8 +43,9 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     ACCOUNT_ID((short)1, "accountId"),
     APPLICATION_ID((short)2, "applicationId"),
     FLOW_ID((short)3, "flowId"),
-    FLOWLET_ID((short)4, "flowletId"),
-    INSTANCE_ID((short)5, "instanceId");
+    RUN_ID((short)4, "runId"),
+    FLOWLET_ID((short)5, "flowletId"),
+    INSTANCE_ID((short)6, "instanceId");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -62,9 +66,11 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
           return APPLICATION_ID;
         case 3: // FLOW_ID
           return FLOW_ID;
-        case 4: // FLOWLET_ID
+        case 4: // RUN_ID
+          return RUN_ID;
+        case 5: // FLOWLET_ID
           return FLOWLET_ID;
-        case 5: // INSTANCE_ID
+        case 6: // INSTANCE_ID
           return INSTANCE_ID;
         default:
           return null;
@@ -118,6 +124,8 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.FLOW_ID, new org.apache.thrift.meta_data.FieldMetaData("flowId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.RUN_ID, new org.apache.thrift.meta_data.FieldMetaData("runId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.FLOWLET_ID, new org.apache.thrift.meta_data.FieldMetaData("flowletId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.INSTANCE_ID, new org.apache.thrift.meta_data.FieldMetaData("instanceId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
@@ -155,6 +163,9 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     if (other.isSetFlowId()) {
       this.flowId = other.flowId;
     }
+    if (other.isSetRunId()) {
+      this.runId = other.runId;
+    }
     if (other.isSetFlowletId()) {
       this.flowletId = other.flowletId;
     }
@@ -170,6 +181,7 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     this.accountId = null;
     this.applicationId = null;
     this.flowId = null;
+    this.runId = null;
     this.flowletId = null;
     setInstanceIdIsSet(false);
     this.instanceId = 0;
@@ -244,6 +256,29 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     }
   }
 
+  public String getRunId() {
+    return this.runId;
+  }
+
+  public void setRunId(String runId) {
+    this.runId = runId;
+  }
+
+  public void unsetRunId() {
+    this.runId = null;
+  }
+
+  /** Returns true if field runId is set (has been assigned a value) and false otherwise */
+  public boolean isSetRunId() {
+    return this.runId != null;
+  }
+
+  public void setRunIdIsSet(boolean value) {
+    if (!value) {
+      this.runId = null;
+    }
+  }
+
   public String getFlowletId() {
     return this.flowletId;
   }
@@ -315,6 +350,14 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
       }
       break;
 
+    case RUN_ID:
+      if (value == null) {
+        unsetRunId();
+      } else {
+        setRunId((String)value);
+      }
+      break;
+
     case FLOWLET_ID:
       if (value == null) {
         unsetFlowletId();
@@ -345,6 +388,9 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     case FLOW_ID:
       return getFlowId();
 
+    case RUN_ID:
+      return getRunId();
+
     case FLOWLET_ID:
       return getFlowletId();
 
@@ -368,6 +414,8 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
       return isSetApplicationId();
     case FLOW_ID:
       return isSetFlowId();
+    case RUN_ID:
+      return isSetRunId();
     case FLOWLET_ID:
       return isSetFlowletId();
     case INSTANCE_ID:
@@ -416,6 +464,15 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
         return false;
     }
 
+    boolean this_present_runId = true && this.isSetRunId();
+    boolean that_present_runId = true && that.isSetRunId();
+    if (this_present_runId || that_present_runId) {
+      if (!(this_present_runId && that_present_runId))
+        return false;
+      if (!this.runId.equals(that.runId))
+        return false;
+    }
+
     boolean this_present_flowletId = true && this.isSetFlowletId();
     boolean that_present_flowletId = true && that.isSetFlowletId();
     if (this_present_flowletId || that_present_flowletId) {
@@ -439,7 +496,39 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_accountId = true && (isSetAccountId());
+    builder.append(present_accountId);
+    if (present_accountId)
+      builder.append(accountId);
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_flowId = true && (isSetFlowId());
+    builder.append(present_flowId);
+    if (present_flowId)
+      builder.append(flowId);
+
+    boolean present_runId = true && (isSetRunId());
+    builder.append(present_runId);
+    if (present_runId)
+      builder.append(runId);
+
+    boolean present_flowletId = true && (isSetFlowletId());
+    builder.append(present_flowletId);
+    if (present_flowletId)
+      builder.append(flowletId);
+
+    boolean present_instanceId = true && (isSetInstanceId());
+    builder.append(present_instanceId);
+    if (present_instanceId)
+      builder.append(instanceId);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowArgument other) {
@@ -476,6 +565,16 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
     }
     if (isSetFlowId()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flowId, typedOther.flowId);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetRunId()).compareTo(typedOther.isSetRunId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetRunId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.runId, typedOther.runId);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -538,14 +637,21 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // FLOWLET_ID
+        case 4: // RUN_ID
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.runId = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // FLOWLET_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.flowletId = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 5: // INSTANCE_ID
+        case 6: // INSTANCE_ID
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.instanceId = iprot.readI32();
             setInstanceIdIsSet(true);
@@ -580,6 +686,13 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
       oprot.writeFieldBegin(FLOW_ID_FIELD_DESC);
       oprot.writeString(this.flowId);
       oprot.writeFieldEnd();
+    }
+    if (this.runId != null) {
+      if (isSetRunId()) {
+        oprot.writeFieldBegin(RUN_ID_FIELD_DESC);
+        oprot.writeString(this.runId);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.flowletId != null) {
       if (isSetFlowletId()) {
@@ -625,6 +738,16 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
       sb.append(this.flowId);
     }
     first = false;
+    if (isSetRunId()) {
+      if (!first) sb.append(", ");
+      sb.append("runId:");
+      if (this.runId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.runId);
+      }
+      first = false;
+    }
     if (isSetFlowletId()) {
       if (!first) sb.append(", ");
       sb.append("flowletId:");

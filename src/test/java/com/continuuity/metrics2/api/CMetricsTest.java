@@ -89,12 +89,12 @@ public class CMetricsTest {
       = new CMetrics(MetricType.FlowUser,
                      "act.app.flow.run.let.2");
 
-    for(int i = 0; i < 50; i++) {
+    for(int i = 0; i < 10; i++) {
       systemMetrics.meter(CMetricsTest.class, "stream.in", 1);
       systemMetrics.meter("stream.out", 1);
       systemMetrics.histogram("window", 1);
       userMetrics.histogram("mytest", 1);
-      Thread.sleep(100);
+      Thread.sleep(1000);
     }
 
   }

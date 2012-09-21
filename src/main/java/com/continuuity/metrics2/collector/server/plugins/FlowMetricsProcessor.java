@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -162,14 +159,48 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
                         );
 
     Connection connection = null;
-    Statement stmt = null;
+    PreparedStatement stmt = null;
+
     try {
       connection = getConnection();
+
       if(connection == null) {
         return false;
       }
-      stmt = connection.createStatement();
-      stmt.executeUpdate(sql);
+
+      stmt = connection.prepareStatement(sql);
+      stmt.executeUpdate();
+
+      if(stmt != null) {
+        stmt.close();
+      }
+
+      sql =
+        "INSERT INTO timeseries (" +
+          "   account_id, " +
+          "   application_id, " +
+          "   flow_id, " +
+          "   run_id, " +
+          "   flowlet_id, " +
+          "   instance_id, " +
+          "   metric, " +
+          "   timestamp, " +
+          "   value " +
+          ")" +
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+      stmt = connection.prepareStatement(sql);
+      stmt.setString(1, elements.getAccountId());
+      stmt.setString(2, elements.getApplicationId());
+      stmt.setString(3, elements.getFlowId());
+      stmt.setString(4, elements.getRunId());
+      stmt.setString(5, elements.getFlowletId());
+      stmt.setInt(6, elements.getInstanceId());
+      stmt.setString(7, elements.getMetric());
+      long ts = request.getTimestamp();
+      stmt.setTimestamp(8, new Timestamp(ts));
+      stmt.setFloat(9, request.getValue());
+      stmt.executeUpdate();
+
     } catch (SQLException e) {
       Log.error("Failed writing metric to HSQLDB. Reason : {}",
                 e.getMessage());
@@ -211,6 +242,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     PreparedStatement stmt = null;
     try {
       connection = getConnection();
+      connection.setAutoCommit(false);
+
       stmt = connection.prepareStatement(sql);
       stmt.setString(1, elements.getAccountId());
       stmt.setString(2, elements.getApplicationId());
@@ -222,7 +255,37 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setFloat(8, request.getValue());
       stmt.setFloat(9, request.getValue());
       stmt.executeUpdate();
-      stmt.close();
+
+      if(stmt != null) {
+        stmt.close();
+      }
+
+      sql =
+        "INSERT INTO timeseries (" +
+          "   account_id, " +
+          "   application_id, " +
+          "   flow_id, " +
+          "   run_id, " +
+          "   flowlet_id, " +
+          "   instance_id, " +
+          "   metric, " +
+          "   timestamp, " +
+          "   value " +
+          ")" +
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+          "ON DUPLICATE KEY UPDATE value = ?";
+      stmt = connection.prepareStatement(sql);
+      stmt.setString(1, elements.getAccountId());
+      stmt.setString(2, elements.getApplicationId());
+      stmt.setString(3, elements.getFlowId());
+      stmt.setString(4, elements.getRunId());
+      stmt.setString(5, elements.getFlowletId());
+      stmt.setInt(6, elements.getInstanceId());
+      stmt.setString(7, elements.getMetric());
+      stmt.setTimestamp(8, new Timestamp(request.getTimestamp()));
+      stmt.setFloat(9, request.getValue());
+      stmt.setFloat(10, request.getValue());
+      stmt.executeUpdate();
     } catch (SQLException e) {
       Log.error("Failed writing metrics to MYSQLDB. Reason : {}",
                 e.getMessage());
@@ -233,6 +296,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
           stmt.close();
         }
         if(connection != null) {
+          connection.commit();
           connection.close();
         }
       } catch (SQLException e) {

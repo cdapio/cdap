@@ -10,7 +10,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.thrift.TException;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.mortbay.log.Log;
@@ -18,6 +20,7 @@ import org.mortbay.log.Log;
 import javax.annotation.Nullable;
 import java.sql.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * MetricsService provides a readonly service for metrics.
@@ -37,9 +40,7 @@ public class MetricsFrontendServiceImpl
   private DBUtils.DBType type;
 
   /**
-   * TODO: Move this to use
-   * {@link com.continuuity.metrics2.common.DBConnectionPoolManager}  for
-   * managing connections to the DB.
+   * DB Connection Pool manager.
    */
   private static DBConnectionPoolManager poolManager;
 
@@ -184,6 +185,259 @@ public class MetricsFrontendServiceImpl
       }
     }
 
+    return results;
+  }
+
+  private void validateTimeseriesRequest(TimeseriesRequest request)
+    throws MetricsServiceException {
+
+    if(! request.isSetArgument()) {
+      throw new MetricsServiceException("Flow arguments should be specified.");
+    }
+
+    if(! request.isSetEndts()) {
+      throw new MetricsServiceException("End time needs to be set");
+    }
+
+    if(! request.isSetMetrics()) {
+      throw new MetricsServiceException("No metrics specified");
+    }
+
+    if(! request.isSetLevel()) {
+      throw new MetricsServiceException("Metric timeseries level not set.");
+    }
+  }
+
+  /**
+   * API to request time series data for a set of metrics.
+   *
+   * @param request
+   */
+  @Override
+  public DataPoints getTimeSeries(TimeseriesRequest request)
+    throws MetricsServiceException, TException {
+
+
+    // Validate the timing request.
+    validateTimeseriesRequest(request);
+
+    MetricTimeseriesLevel level = request.getLevel();
+
+    // transform the metric names by adding single quotes around
+    // each metric name as they are treated as metric.
+    Iterable<String> iterator =
+      Iterables.transform(request.getMetrics(), new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+          return "'" + input + "'";
+        }
+      });
+
+    // Join each with comma (,) as seperator.
+    String values = Joiner.on(",").join(iterator);
+
+    Connection connection = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    long timestamp = System.currentTimeMillis()/1000;
+    Timestamp start = new Timestamp(timestamp);
+    Timestamp stop = new Timestamp(timestamp);
+
+    DataPoints results = new DataPoints();
+
+    try {
+
+      // If start time is specified and end time is negative offset
+      // from that start time, then we use that.
+      if(request.isSetStartts() && request.getEndts() < 0) {
+        start = new Timestamp(request.getStartts() - (request.getEndts() * 1000));
+        stop = new Timestamp(request.getStartts());
+      }
+
+      // If endts is negative and the startts is not set, then we offset it
+      // from the current time.
+      if(! request.isSetStartts() && request.getEndts() < 0) {
+        start = new Timestamp(request.getStartts() - (request.getEndts() * 1000));
+      }
+
+      // if startts is set and endts > 0 then it endts has to be greater than
+      // startts.
+      if(request.isSetStartts() && request.getEndts() > 0) {
+        if(request.getEndts() < request.getEndts()) {
+          throw new MetricsServiceException("End time is less than start time");
+        }
+        start = new Timestamp(request.getStartts());
+        stop = new Timestamp(request.getEndts());
+      }
+
+      connection = getConnection();
+
+      if(level == MetricTimeseriesLevel.RUNID_LEVEL) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
+        sb.append(" ").append(" FROM timeseries");
+        sb.append(" ").append("WHERE");
+        sb.append(" ").append("account_id = ? AND");
+        sb.append(" ").append("application_id = ? AND");
+        sb.append(" ").append("flow_id = ? AND");
+        sb.append(" ").append("run_id = ? AND");
+        sb.append(" ").append("timestamp >= ? AND");
+        sb.append(" ").append("timestamp < ? AND");
+        sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
+        sb.append(" ").append("GROUP BY timestamp, metric");
+        sb.append(" ").append("ORDER BY timestamp");
+
+        // Connection
+        stmt = connection.prepareStatement(sb.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setString(2, request.getArgument().getApplicationId());
+        stmt.setString(3, request.getArgument().getFlowId());
+        stmt.setString(4, request.getArgument().getRunId());
+        stmt.setTimestamp(5, start);
+        stmt.setTimestamp(6, stop);
+      } else if(level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
+        sb.append(" ").append(" FROM timeseries");
+        sb.append(" ").append("WHERE");
+        sb.append(" ").append("account_id = ? AND");
+        sb.append(" ").append("timestamp >= ? AND");
+        sb.append(" ").append("timestamp < ? AND");
+        sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
+        sb.append(" ").append("GROUP BY timestamp, metric");
+        sb.append(" ").append("ORDER BY timestamp");
+
+        // Connection
+        stmt = connection.prepareStatement(sb.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setTimestamp(2, start);
+        stmt.setTimestamp(3, stop);
+      } else if(level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
+        sb.append(" ").append(" FROM timeseries");
+        sb.append(" ").append("WHERE");
+        sb.append(" ").append("account_id = ? AND");
+        sb.append(" ").append("application_id = ? AND");
+        sb.append(" ").append("timestamp >= ? AND");
+        sb.append(" ").append("timestamp < ? AND");
+        sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
+        sb.append(" ").append("GROUP BY timestamp, metric");
+        sb.append(" ").append("ORDER BY timestamp");
+
+        // Connection
+        stmt = connection.prepareStatement(sb.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setString(2, request.getArgument().getApplicationId());
+        stmt.setTimestamp(3, start);
+        stmt.setTimestamp(4, stop);
+      } else if(level == MetricTimeseriesLevel.FLOW_LEVEL) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
+        sb.append(" ").append(" FROM timeseries");
+        sb.append(" ").append("WHERE");
+        sb.append(" ").append("account_id = ? AND");
+        sb.append(" ").append("application_id = ? AND");
+        sb.append(" ").append("flow_id = ? AND");
+        sb.append(" ").append("timestamp >= ? AND");
+        sb.append(" ").append("timestamp < ? AND");
+        sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
+        sb.append(" ").append("GROUP BY timestamp, metric");
+        sb.append(" ").append("ORDER BY timestamp");
+
+        // Connection
+        stmt = connection.prepareStatement(sb.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setString(2, request.getArgument().getApplicationId());
+        stmt.setString(3, request.getArgument().getFlowId());
+        stmt.setTimestamp(4, start);
+        stmt.setTimestamp(5, stop);
+      } else if(level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
+        sb.append(" ").append(" FROM timeseries");
+        sb.append(" ").append("WHERE");
+        sb.append(" ").append("account_id = ? AND");
+        sb.append(" ").append("application_id = ? AND");
+        sb.append(" ").append("flow_id = ? AND");
+        sb.append(" ").append("flowlet_id = ? AND");
+        sb.append(" ").append("timestamp >= ? AND");
+        sb.append(" ").append("timestamp < ? AND");
+        sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
+        sb.append(" ").append("GROUP BY timestamp, metric");
+        sb.append(" ").append("ORDER BY timestamp");
+
+        // Connection
+        stmt = connection.prepareStatement(sb.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setString(2, request.getArgument().getApplicationId());
+        stmt.setString(3, request.getArgument().getFlowId());
+        stmt.setString(4, request.getArgument().getFlowletId());
+        stmt.setTimestamp(5, start);
+        stmt.setTimestamp(6, stop);
+      }
+
+      rs = stmt.executeQuery();
+
+      Map<String, List<DataPoint>> points = Maps.newHashMap();
+      Map<String, Double> previousPoint = Maps.newHashMap();
+      Map<String, Double> current = Maps.newHashMap();
+
+      while(rs.next()) {
+        String metric = rs.getString("metric");
+        long ts = rs.getTimestamp("timestamp").getTime();
+        double value = rs.getFloat("aggregate");
+        double newValue = value;
+
+        if(request.isSetSummary() && request.isSetSummary()) {
+          current.put(metric, value);
+        }
+
+        if(previousPoint.containsKey(metric)) {
+          newValue = value - previousPoint.get(metric);
+        } else {
+          previousPoint.put(metric, value);
+        }
+
+        DataPoint point = new DataPoint(ts, newValue);
+
+        if(points.containsKey(metric)) {
+          points.get(metric).add(point);
+        } else {
+          List<DataPoint> newPoints = Lists.newArrayList();
+          newPoints.add(point);
+          points.put(metric, newPoints);
+        }
+      }
+
+      // Sets the points retrieved.
+      results.setPoints(points);
+
+      // If summary was setup, then we need add all the summary
+      // data to response.
+      if(request.isSetSummary() && request.isSetSummary()) {
+        results.setCurrent(current);
+      }
+    } catch (SQLException e) {
+      Log.warn("Failed retrieving data for request {}. Reason : {}",
+               request.toString(), e.getMessage());
+    } finally {
+      try {
+        if(rs != null) {
+          rs.close();
+        }
+        if(stmt != null) {
+          stmt.close();
+        }
+        if(connection != null) {
+          connection.close();
+        }
+      } catch (SQLException e) {
+        Log.warn("Failed closing recordset/statement/connection. Reason : {}",
+                 e.getMessage());
+      }
+    }
     return results;
   }
 

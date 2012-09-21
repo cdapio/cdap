@@ -73,6 +73,19 @@ public class DBUtils {
       " PRIMARY KEY(account_id, application_id, flow_id, run_id, flowlet_id," +
       "             instance_id, metric))";
 
+    String metricsTimeseriesCreateTableDDL = "CREATE TABLE timeseries\n" +
+      "   (account_id VARCHAR(64) NOT NULL, \n" +
+      "    application_id VARCHAR(64) NOT NULL, \n" +
+      "    flow_id VARCHAR(64) NOT NULL, \n" +
+      "    run_id VARCHAR(64) NOT NULL, \n" +
+      "    flowlet_id VARCHAR(64) NOT NULL, \n" +
+      "    instance_id INT DEFAULT 1, \n" +
+      "    metric VARCHAR(64), \n" +
+      "    timestamp TIMESTAMP,\n" +
+      "    value FLOAT,\n" +
+      " PRIMARY KEY(account_id, application_id, flow_id, run_id, flowlet_id," +
+      "             instance_id, metric, timestamp))";
+
     PreparedStatement stmt = null;
     try {
       stmt = connection.prepareStatement(metricsTableCreateDDL);
@@ -83,12 +96,20 @@ public class DBUtils {
         stmt = null;
       }
 
-      // set database to
+      // set database to default memory rows.
       stmt = connection.prepareStatement("SET DATABASE DEFAULT " +
                                            "RESULT MEMORY ROWS 1000");
       stmt.execute();
 
       if(stmt != null) {
+        stmt.close();
+        stmt = null;
+      }
+
+      stmt = connection.prepareStatement(metricsTimeseriesCreateTableDDL);
+      stmt.execute();
+
+      if(stmt != null){
         stmt.close();
         stmt = null;
       }

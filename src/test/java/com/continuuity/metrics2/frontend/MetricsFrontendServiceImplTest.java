@@ -8,12 +8,14 @@ import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
 import com.continuuity.metrics2.stubs.*;
+import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -73,6 +75,63 @@ public class MetricsFrontendServiceImplTest {
     Assert.assertThat(counters.size(), CoreMatchers.is(3));
   }
 
+  @Test
+  public void testTimeseriesBasic() throws Exception {
+
+    for(int i = 0; i < 10; ++i) {
+      addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
+      addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
+      addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
+      Thread.sleep(1000);
+    }
+
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("processed");
+    long ets = System.currentTimeMillis()/1000;
+    long sts = ets - 30;
+    DataPoints pointsFlowLevel = getTimeseries(
+      new FlowArgument("demo", "myapp", "myflow"),
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      sts,
+      ets
+    );
+    Assert.assertTrue(pointsFlowLevel.getPoints().get("processed").size() > 1);
+
+    DataPoints pointsAppLevel = getTimeseries(
+      new FlowArgument("demo", "myapp", "myflow"),
+      metrics,
+      MetricTimeseriesLevel.APPLICATION_LEVEL,
+      sts,
+      ets
+    );
+    Assert.assertTrue(pointsAppLevel.equals(pointsFlowLevel));
+
+    DataPoints accountLevel = getTimeseries(
+      new FlowArgument("demo", "myapp", "myflow"),
+      metrics,
+      MetricTimeseriesLevel.ACCOUNT_LEVEL,
+      sts,
+      ets
+    );
+    Assert.assertTrue(accountLevel.equals(pointsFlowLevel));
+    Assert.assertTrue(accountLevel.equals(pointsAppLevel));
+
+    FlowArgument arg = new FlowArgument("demo", "myapp", "myflow");
+    arg.setFlowletId("source");
+    DataPoints pointsFlowletLevel = getTimeseries(
+      arg,
+      metrics,
+      MetricTimeseriesLevel.FLOWLET_LEVEL,
+      sts,
+      ets
+    );
+    Assert.assertTrue(pointsFlowletLevel.getPoints().get("processed").size() >
+                        1);
+
+  }
+
+
   @Test(timeout = 2000)
   public void testMultipleFlowletsAndMultipleInstancePerFlowlet() throws
     Exception {
@@ -130,4 +189,21 @@ public class MetricsFrontendServiceImplTest {
     }
     return client.getCounters(request);
   }
+
+  private DataPoints getTimeseries(FlowArgument argument,
+                                   List<String> metrics,
+                                   MetricTimeseriesLevel level,
+                                   long start,
+                                   long end)
+    throws TException, MetricsServiceException {
+    TimeseriesRequest request = new TimeseriesRequest();
+    request.setArgument(argument);
+    request.setMetrics(metrics);
+    request.setStartts(start);
+    request.setLevel(level);
+    request.setEndts(end);
+    request.setSummary(true);
+    return client.getTimeSeries(request);
+  }
+
 }
