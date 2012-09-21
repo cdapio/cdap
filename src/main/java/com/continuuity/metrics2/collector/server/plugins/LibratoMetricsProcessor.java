@@ -311,7 +311,8 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     // we log an error message and ignore the metric.
     if(request.getMetricName().length() > 64) {
       Log.warn("Metric '{}' is greater than 63 bytes. Librato doesn't accept" +
-                 "metrics that are greater than 63. Ignoring metric");
+                 "metrics that are greater than 63. Ignoring metric",
+               request.getMetricName());
       return Futures.future(new Callable<MetricResponse.Status>() {
         @Override
         public MetricResponse.Status call() throws Exception {
