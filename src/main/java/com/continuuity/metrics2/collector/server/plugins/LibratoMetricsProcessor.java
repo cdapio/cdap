@@ -307,6 +307,19 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
       }, ec);
     }
 
+    // Check if metric request is greater than 63 bytes, if so, then
+    // we log an error message and ignore the metric.
+    if(request.getMetricName().length() > 64) {
+      Log.warn("Metric '{}' is greater than 63 bytes. Librato doesn't accept" +
+                 "metrics that are greater than 63. Ignoring metric");
+      return Futures.future(new Callable<MetricResponse.Status>() {
+        @Override
+        public MetricResponse.Status call() throws Exception {
+          return MetricResponse.Status.IGNORED;
+        }
+      }, ec);
+    }
+
     // We add it to queue and because adding it to queue can block
     // we return future. This could become an issue on the server
     // side if the queue is blocked for long periods of time.

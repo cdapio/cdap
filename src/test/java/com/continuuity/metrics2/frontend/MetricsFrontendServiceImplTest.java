@@ -30,7 +30,7 @@ public class MetricsFrontendServiceImplTest {
   private static MetricsFrontendService.Iface client = null;
   private static long timestamp = System.currentTimeMillis()/1000;
   private static long counter = 0;
-  private static int POINTS = 1000;
+  private static int POINTS = 10;
 
 
   @BeforeClass
