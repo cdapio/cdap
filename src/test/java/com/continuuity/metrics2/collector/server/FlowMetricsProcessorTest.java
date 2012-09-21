@@ -53,7 +53,7 @@ public class FlowMetricsProcessorTest {
         .create();
         // Makes a blocking call.
         MetricResponse.Status status = Await.result(processor.process(request),
-                                          Duration.create(1, TimeUnit.SECONDS));
+                                          Duration.create(5, TimeUnit.SECONDS));
         Assert.assertTrue(status == MetricResponse.Status.SUCCESS);
     }
 
