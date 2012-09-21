@@ -28,21 +28,15 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataPoints");
 
   private static final org.apache.thrift.protocol.TField POINTS_FIELD_DESC = new org.apache.thrift.protocol.TField("points", org.apache.thrift.protocol.TType.MAP, (short)1);
-  private static final org.apache.thrift.protocol.TField CURRENT_FIELD_DESC = new org.apache.thrift.protocol.TField("current", org.apache.thrift.protocol.TType.MAP, (short)2);
-  private static final org.apache.thrift.protocol.TField MAX_FIELD_DESC = new org.apache.thrift.protocol.TField("max", org.apache.thrift.protocol.TType.MAP, (short)3);
-  private static final org.apache.thrift.protocol.TField MIN_FIELD_DESC = new org.apache.thrift.protocol.TField("min", org.apache.thrift.protocol.TType.MAP, (short)4);
+  private static final org.apache.thrift.protocol.TField LATEST_FIELD_DESC = new org.apache.thrift.protocol.TField("latest", org.apache.thrift.protocol.TType.MAP, (short)2);
 
   private Map<String,List<DataPoint>> points; // required
-  private Map<String,Double> current; // required
-  private Map<String,Double> max; // required
-  private Map<String,Double> min; // required
+  private Map<String,Double> latest; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     POINTS((short)1, "points"),
-    CURRENT((short)2, "current"),
-    MAX((short)3, "max"),
-    MIN((short)4, "min");
+    LATEST((short)2, "latest");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -59,12 +53,8 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       switch(fieldId) {
         case 1: // POINTS
           return POINTS;
-        case 2: // CURRENT
-          return CURRENT;
-        case 3: // MAX
-          return MAX;
-        case 4: // MIN
-          return MIN;
+        case 2: // LATEST
+          return LATEST;
         default:
           return null;
       }
@@ -114,15 +104,7 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
                 new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataPoint.class)))));
-    tmpMap.put(_Fields.CURRENT, new org.apache.thrift.meta_data.FieldMetaData("current", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE))));
-    tmpMap.put(_Fields.MAX, new org.apache.thrift.meta_data.FieldMetaData("max", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE))));
-    tmpMap.put(_Fields.MIN, new org.apache.thrift.meta_data.FieldMetaData("min", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.LATEST, new org.apache.thrift.meta_data.FieldMetaData("latest", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE))));
@@ -162,50 +144,20 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       }
       this.points = __this__points;
     }
-    if (other.isSetCurrent()) {
-      Map<String,Double> __this__current = new HashMap<String,Double>();
-      for (Map.Entry<String, Double> other_element : other.current.entrySet()) {
+    if (other.isSetLatest()) {
+      Map<String,Double> __this__latest = new HashMap<String,Double>();
+      for (Map.Entry<String, Double> other_element : other.latest.entrySet()) {
 
         String other_element_key = other_element.getKey();
         Double other_element_value = other_element.getValue();
 
-        String __this__current_copy_key = other_element_key;
+        String __this__latest_copy_key = other_element_key;
 
-        Double __this__current_copy_value = other_element_value;
+        Double __this__latest_copy_value = other_element_value;
 
-        __this__current.put(__this__current_copy_key, __this__current_copy_value);
+        __this__latest.put(__this__latest_copy_key, __this__latest_copy_value);
       }
-      this.current = __this__current;
-    }
-    if (other.isSetMax()) {
-      Map<String,Double> __this__max = new HashMap<String,Double>();
-      for (Map.Entry<String, Double> other_element : other.max.entrySet()) {
-
-        String other_element_key = other_element.getKey();
-        Double other_element_value = other_element.getValue();
-
-        String __this__max_copy_key = other_element_key;
-
-        Double __this__max_copy_value = other_element_value;
-
-        __this__max.put(__this__max_copy_key, __this__max_copy_value);
-      }
-      this.max = __this__max;
-    }
-    if (other.isSetMin()) {
-      Map<String,Double> __this__min = new HashMap<String,Double>();
-      for (Map.Entry<String, Double> other_element : other.min.entrySet()) {
-
-        String other_element_key = other_element.getKey();
-        Double other_element_value = other_element.getValue();
-
-        String __this__min_copy_key = other_element_key;
-
-        Double __this__min_copy_value = other_element_value;
-
-        __this__min.put(__this__min_copy_key, __this__min_copy_value);
-      }
-      this.min = __this__min;
+      this.latest = __this__latest;
     }
   }
 
@@ -216,9 +168,7 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
   @Override
   public void clear() {
     this.points = null;
-    this.current = null;
-    this.max = null;
-    this.min = null;
+    this.latest = null;
   }
 
   public int getPointsSize() {
@@ -255,105 +205,37 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     }
   }
 
-  public int getCurrentSize() {
-    return (this.current == null) ? 0 : this.current.size();
+  public int getLatestSize() {
+    return (this.latest == null) ? 0 : this.latest.size();
   }
 
-  public void putToCurrent(String key, double val) {
-    if (this.current == null) {
-      this.current = new HashMap<String,Double>();
+  public void putToLatest(String key, double val) {
+    if (this.latest == null) {
+      this.latest = new HashMap<String,Double>();
     }
-    this.current.put(key, val);
+    this.latest.put(key, val);
   }
 
-  public Map<String,Double> getCurrent() {
-    return this.current;
+  public Map<String,Double> getLatest() {
+    return this.latest;
   }
 
-  public void setCurrent(Map<String,Double> current) {
-    this.current = current;
+  public void setLatest(Map<String,Double> latest) {
+    this.latest = latest;
   }
 
-  public void unsetCurrent() {
-    this.current = null;
+  public void unsetLatest() {
+    this.latest = null;
   }
 
-  /** Returns true if field current is set (has been assigned a value) and false otherwise */
-  public boolean isSetCurrent() {
-    return this.current != null;
+  /** Returns true if field latest is set (has been assigned a value) and false otherwise */
+  public boolean isSetLatest() {
+    return this.latest != null;
   }
 
-  public void setCurrentIsSet(boolean value) {
+  public void setLatestIsSet(boolean value) {
     if (!value) {
-      this.current = null;
-    }
-  }
-
-  public int getMaxSize() {
-    return (this.max == null) ? 0 : this.max.size();
-  }
-
-  public void putToMax(String key, double val) {
-    if (this.max == null) {
-      this.max = new HashMap<String,Double>();
-    }
-    this.max.put(key, val);
-  }
-
-  public Map<String,Double> getMax() {
-    return this.max;
-  }
-
-  public void setMax(Map<String,Double> max) {
-    this.max = max;
-  }
-
-  public void unsetMax() {
-    this.max = null;
-  }
-
-  /** Returns true if field max is set (has been assigned a value) and false otherwise */
-  public boolean isSetMax() {
-    return this.max != null;
-  }
-
-  public void setMaxIsSet(boolean value) {
-    if (!value) {
-      this.max = null;
-    }
-  }
-
-  public int getMinSize() {
-    return (this.min == null) ? 0 : this.min.size();
-  }
-
-  public void putToMin(String key, double val) {
-    if (this.min == null) {
-      this.min = new HashMap<String,Double>();
-    }
-    this.min.put(key, val);
-  }
-
-  public Map<String,Double> getMin() {
-    return this.min;
-  }
-
-  public void setMin(Map<String,Double> min) {
-    this.min = min;
-  }
-
-  public void unsetMin() {
-    this.min = null;
-  }
-
-  /** Returns true if field min is set (has been assigned a value) and false otherwise */
-  public boolean isSetMin() {
-    return this.min != null;
-  }
-
-  public void setMinIsSet(boolean value) {
-    if (!value) {
-      this.min = null;
+      this.latest = null;
     }
   }
 
@@ -367,27 +249,11 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       }
       break;
 
-    case CURRENT:
+    case LATEST:
       if (value == null) {
-        unsetCurrent();
+        unsetLatest();
       } else {
-        setCurrent((Map<String,Double>)value);
-      }
-      break;
-
-    case MAX:
-      if (value == null) {
-        unsetMax();
-      } else {
-        setMax((Map<String,Double>)value);
-      }
-      break;
-
-    case MIN:
-      if (value == null) {
-        unsetMin();
-      } else {
-        setMin((Map<String,Double>)value);
+        setLatest((Map<String,Double>)value);
       }
       break;
 
@@ -399,14 +265,8 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     case POINTS:
       return getPoints();
 
-    case CURRENT:
-      return getCurrent();
-
-    case MAX:
-      return getMax();
-
-    case MIN:
-      return getMin();
+    case LATEST:
+      return getLatest();
 
     }
     throw new IllegalStateException();
@@ -421,12 +281,8 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     switch (field) {
     case POINTS:
       return isSetPoints();
-    case CURRENT:
-      return isSetCurrent();
-    case MAX:
-      return isSetMax();
-    case MIN:
-      return isSetMin();
+    case LATEST:
+      return isSetLatest();
     }
     throw new IllegalStateException();
   }
@@ -453,30 +309,12 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
         return false;
     }
 
-    boolean this_present_current = true && this.isSetCurrent();
-    boolean that_present_current = true && that.isSetCurrent();
-    if (this_present_current || that_present_current) {
-      if (!(this_present_current && that_present_current))
+    boolean this_present_latest = true && this.isSetLatest();
+    boolean that_present_latest = true && that.isSetLatest();
+    if (this_present_latest || that_present_latest) {
+      if (!(this_present_latest && that_present_latest))
         return false;
-      if (!this.current.equals(that.current))
-        return false;
-    }
-
-    boolean this_present_max = true && this.isSetMax();
-    boolean that_present_max = true && that.isSetMax();
-    if (this_present_max || that_present_max) {
-      if (!(this_present_max && that_present_max))
-        return false;
-      if (!this.max.equals(that.max))
-        return false;
-    }
-
-    boolean this_present_min = true && this.isSetMin();
-    boolean that_present_min = true && that.isSetMin();
-    if (this_present_min || that_present_min) {
-      if (!(this_present_min && that_present_min))
-        return false;
-      if (!this.min.equals(that.min))
+      if (!this.latest.equals(that.latest))
         return false;
     }
 
@@ -492,20 +330,10 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     if (present_points)
       builder.append(points);
 
-    boolean present_current = true && (isSetCurrent());
-    builder.append(present_current);
-    if (present_current)
-      builder.append(current);
-
-    boolean present_max = true && (isSetMax());
-    builder.append(present_max);
-    if (present_max)
-      builder.append(max);
-
-    boolean present_min = true && (isSetMin());
-    builder.append(present_min);
-    if (present_min)
-      builder.append(min);
+    boolean present_latest = true && (isSetLatest());
+    builder.append(present_latest);
+    if (present_latest)
+      builder.append(latest);
 
     return builder.toHashCode();
   }
@@ -528,32 +356,12 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetCurrent()).compareTo(typedOther.isSetCurrent());
+    lastComparison = Boolean.valueOf(isSetLatest()).compareTo(typedOther.isSetLatest());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCurrent()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.current, typedOther.current);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetMax()).compareTo(typedOther.isSetMax());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetMax()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.max, typedOther.max);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetMin()).compareTo(typedOther.isSetMin());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetMin()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.min, typedOther.min);
+    if (isSetLatest()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.latest, typedOther.latest);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -605,56 +413,18 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 2: // CURRENT
+        case 2: // LATEST
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
               org.apache.thrift.protocol.TMap _map11 = iprot.readMapBegin();
-              this.current = new HashMap<String,Double>(2*_map11.size);
+              this.latest = new HashMap<String,Double>(2*_map11.size);
               for (int _i12 = 0; _i12 < _map11.size; ++_i12)
               {
                 String _key13; // required
                 double _val14; // required
                 _key13 = iprot.readString();
                 _val14 = iprot.readDouble();
-                this.current.put(_key13, _val14);
-              }
-              iprot.readMapEnd();
-            }
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 3: // MAX
-          if (field.type == org.apache.thrift.protocol.TType.MAP) {
-            {
-              org.apache.thrift.protocol.TMap _map15 = iprot.readMapBegin();
-              this.max = new HashMap<String,Double>(2*_map15.size);
-              for (int _i16 = 0; _i16 < _map15.size; ++_i16)
-              {
-                String _key17; // required
-                double _val18; // required
-                _key17 = iprot.readString();
-                _val18 = iprot.readDouble();
-                this.max.put(_key17, _val18);
-              }
-              iprot.readMapEnd();
-            }
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 4: // MIN
-          if (field.type == org.apache.thrift.protocol.TType.MAP) {
-            {
-              org.apache.thrift.protocol.TMap _map19 = iprot.readMapBegin();
-              this.min = new HashMap<String,Double>(2*_map19.size);
-              for (int _i20 = 0; _i20 < _map19.size; ++_i20)
-              {
-                String _key21; // required
-                double _val22; // required
-                _key21 = iprot.readString();
-                _val22 = iprot.readDouble();
-                this.min.put(_key21, _val22);
+                this.latest.put(_key13, _val14);
               }
               iprot.readMapEnd();
             }
@@ -679,14 +449,14 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       oprot.writeFieldBegin(POINTS_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.points.size()));
-        for (Map.Entry<String, List<DataPoint>> _iter23 : this.points.entrySet())
+        for (Map.Entry<String, List<DataPoint>> _iter15 : this.points.entrySet())
         {
-          oprot.writeString(_iter23.getKey());
+          oprot.writeString(_iter15.getKey());
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, _iter23.getValue().size()));
-            for (DataPoint _iter24 : _iter23.getValue())
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, _iter15.getValue().size()));
+            for (DataPoint _iter16 : _iter15.getValue())
             {
-              _iter24.write(oprot);
+              _iter16.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -695,45 +465,15 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       }
       oprot.writeFieldEnd();
     }
-    if (this.current != null) {
-      if (isSetCurrent()) {
-        oprot.writeFieldBegin(CURRENT_FIELD_DESC);
+    if (this.latest != null) {
+      if (isSetLatest()) {
+        oprot.writeFieldBegin(LATEST_FIELD_DESC);
         {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.current.size()));
-          for (Map.Entry<String, Double> _iter25 : this.current.entrySet())
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.latest.size()));
+          for (Map.Entry<String, Double> _iter17 : this.latest.entrySet())
           {
-            oprot.writeString(_iter25.getKey());
-            oprot.writeDouble(_iter25.getValue());
-          }
-          oprot.writeMapEnd();
-        }
-        oprot.writeFieldEnd();
-      }
-    }
-    if (this.max != null) {
-      if (isSetMax()) {
-        oprot.writeFieldBegin(MAX_FIELD_DESC);
-        {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.max.size()));
-          for (Map.Entry<String, Double> _iter26 : this.max.entrySet())
-          {
-            oprot.writeString(_iter26.getKey());
-            oprot.writeDouble(_iter26.getValue());
-          }
-          oprot.writeMapEnd();
-        }
-        oprot.writeFieldEnd();
-      }
-    }
-    if (this.min != null) {
-      if (isSetMin()) {
-        oprot.writeFieldBegin(MIN_FIELD_DESC);
-        {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.min.size()));
-          for (Map.Entry<String, Double> _iter27 : this.min.entrySet())
-          {
-            oprot.writeString(_iter27.getKey());
-            oprot.writeDouble(_iter27.getValue());
+            oprot.writeString(_iter17.getKey());
+            oprot.writeDouble(_iter17.getValue());
           }
           oprot.writeMapEnd();
         }
@@ -756,33 +496,13 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       sb.append(this.points);
     }
     first = false;
-    if (isSetCurrent()) {
+    if (isSetLatest()) {
       if (!first) sb.append(", ");
-      sb.append("current:");
-      if (this.current == null) {
+      sb.append("latest:");
+      if (this.latest == null) {
         sb.append("null");
       } else {
-        sb.append(this.current);
-      }
-      first = false;
-    }
-    if (isSetMax()) {
-      if (!first) sb.append(", ");
-      sb.append("max:");
-      if (this.max == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.max);
-      }
-      first = false;
-    }
-    if (isSetMin()) {
-      if (!first) sb.append(", ");
-      sb.append("min:");
-      if (this.min == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.min);
+        sb.append(this.latest);
       }
       first = false;
     }

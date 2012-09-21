@@ -668,13 +668,13 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
         case 2: // METRICS
           if (field.type == org.apache.thrift.protocol.TType.LIST) {
             {
-              org.apache.thrift.protocol.TList _list28 = iprot.readListBegin();
-              this.metrics = new ArrayList<String>(_list28.size);
-              for (int _i29 = 0; _i29 < _list28.size; ++_i29)
+              org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
+              this.metrics = new ArrayList<String>(_list18.size);
+              for (int _i19 = 0; _i19 < _list18.size; ++_i19)
               {
-                String _elem30; // required
-                _elem30 = iprot.readString();
-                this.metrics.add(_elem30);
+                String _elem20; // required
+                _elem20 = iprot.readString();
+                this.metrics.add(_elem20);
               }
               iprot.readListEnd();
             }
@@ -735,9 +735,9 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
       oprot.writeFieldBegin(METRICS_FIELD_DESC);
       {
         oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.metrics.size()));
-        for (String _iter31 : this.metrics)
+        for (String _iter21 : this.metrics)
         {
-          oprot.writeString(_iter31);
+          oprot.writeString(_iter21);
         }
         oprot.writeListEnd();
       }

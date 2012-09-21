@@ -43,17 +43,18 @@ public class FlowMetricsProcessorTest {
     MetricsProcessor processor
       = new FlowMetricsProcessor(configuration);
 
+    long timestamp = System.currentTimeMillis()/1000;
     for(int i = 1; i <= 10; ++i) {
       MetricRequest request = new MetricRequest.Builder(true)
         .setRequestType("put")
         .setMetricName("accountId.applicationId.flowId.runId.flowletId.1.processed")
-        .setTimestamp(System.currentTimeMillis()/1000)
+        .setTimestamp(timestamp+i) // move the time to avoid sleeping for test.
         .setValue(i)
         .setMetricType("FlowSystem")
         .create();
         // Makes a blocking call.
         MetricResponse.Status status = Await.result(processor.process(request),
-                                          Duration.create(5, TimeUnit.SECONDS));
+                                          Duration.create(1, TimeUnit.SECONDS));
         Assert.assertTrue(status == MetricResponse.Status.SUCCESS);
     }
 

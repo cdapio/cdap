@@ -8,4 +8,4 @@ MAIN_CLASS=com.continuuity.runtime.MetricsCollectionServerMain
 EXTRA_CLASSPATH=""
 
 # Specify Heap Size.
-JAVA_HEAPMAX=-Xmx1048m
+JAVA_HEAPMAX=-Xmx2048m

@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,6 +28,9 @@ public class MetricsFrontendServiceImplTest {
   private static CConfiguration configuration;
   private static MetricsProcessor processor = null;
   private static MetricsFrontendService.Iface client = null;
+  private static long timestamp = System.currentTimeMillis()/1000;
+  private static long counter = 0;
+  private static int POINTS = 1000;
 
 
   @BeforeClass
@@ -34,10 +38,132 @@ public class MetricsFrontendServiceImplTest {
     connectionUrl = "jdbc:hsqldb:mem:metrictest?user=sa";
     configuration = CConfiguration.create();
     configuration.set(Constants.CFG_METRICS_CONNECTION_URL, connectionUrl);
+    configuration.set(Constants.CFG_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS,
+                      "processed,acks");
     processor = new FlowMetricsProcessor(configuration);
     Assert.assertNotNull(processor);
     client = new MetricsFrontendServiceImpl(configuration);
     Assert.assertNotNull(client);
+    createDataSet();
+  }
+
+  private static void createDataSet() throws Exception {
+    Random random = new Random();
+    counter = 0; // Initialize time.
+
+    // Add multiple flows, on multiple accounts, with multiple run ids
+    // multiple flowlets, with multiple applications and multiple metrics
+    for(int i = 0; i < POINTS; ++i )  {
+      addMetric("acc0.app1.flow1.runid1.fl1.1.processed", 10);
+      addMetric("acc0.app1.flow1.runid1.fl2.1.processed", 11*i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.processed", 12*(i+1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.processed", 13*(i+2));
+
+      // Another metric
+      addMetric("acc0.app1.flow1.runid1.fl1.1.acks", 1);
+      addMetric("acc0.app1.flow1.runid1.fl2.1.acks", 2*i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.acks", 3*(i+1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.acks", 4*(i+2));
+
+      // Single flow, multiple flowlets
+      addMetric("acc1.app1.flow1.runid1.fl1.1.processed", random.nextInt());
+      addMetric("acc1.app1.flow1.runid1.fl2.1.processed", random.nextInt());
+      addMetric("acc1.app1.flow1.runid1.fl3.1.processed", random.nextInt());
+      addMetric("acc1.app1.flow1.runid1.fl4.1.processed", random.nextInt());
+
+      // Another app within the same account.
+      addMetric("acc1.app2.flow1.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid1.fl16.1.processed", random.nextInt());
+
+      // Another flow within app2
+      addMetric("acc1.app2.flow2.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid1.fl16.1.processed", random.nextInt());
+
+      addMetric("acc1.app2.flow3.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid1.fl16.1.processed", random.nextInt());
+
+      // Multiple run ids for all flows
+      addMetric("acc1.app2.flow1.runid2.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid2.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid2.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid2.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid2.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid2.fl16.1.processed", random.nextInt());
+
+      addMetric("acc1.app2.flow1.runid3.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid3.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid3.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid3.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid3.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow1.runid3.fl16.1.processed", random.nextInt());
+
+      addMetric("acc1.app2.flow2.runid2.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid2.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid2.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid2.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid2.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow2.runid2.fl16.1.processed", random.nextInt());
+
+      addMetric("acc1.app2.flow3.runid2.fl11.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid2.fl12.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid2.fl13.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid2.fl14.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid2.fl15.1.processed", random.nextInt());
+      addMetric("acc1.app2.flow3.runid2.fl16.1.processed", random.nextInt());
+
+      // Flow on different account
+      addMetric("acc2.app1.flow1.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow1.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow1.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow1.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow1.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow1.runid1.fl16.1.processed", random.nextInt());
+
+      // Another flow
+      addMetric("acc2.app1.flow2.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow2.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow2.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow2.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow2.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc2.app1.flow2.runid1.fl16.1.processed", random.nextInt());
+
+      // Another account
+      addMetric("acc3.app1.flow1.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow1.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow1.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow1.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow1.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow1.runid1.fl16.1.processed", random.nextInt());
+
+      // Another flow
+      addMetric("acc3.app1.flow2.runid1.fl11.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid1.fl12.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid1.fl13.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid1.fl14.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid1.fl15.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid1.fl16.1.processed", random.nextInt());
+
+      // multiple run id on
+      addMetric("acc3.app1.flow2.runid2.fl11.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid2.fl12.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid2.fl13.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid2.fl14.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid2.fl15.1.processed", random.nextInt());
+      addMetric("acc3.app1.flow2.runid2.fl16.1.processed", random.nextInt());
+      counter++; // move the time ahead.
+    }
   }
 
   @Test(expected = MetricsServiceException.class)
@@ -62,6 +188,227 @@ public class MetricsFrontendServiceImplTest {
     Assert.assertTrue(counters.get(0).getValue() == 10.0f);
   }
 
+  @Test
+  public void testOneAcctOneFlowOneRunId() throws Exception {
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("processed");
+    FlowArgument argument = new FlowArgument("acc0", "app1", "flow1");
+    argument.setRunId("runid1");
+    argument.setFlowletId("fl1");
+
+    DataPoints dataPointsFlowLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+
+    Assert.assertNotNull(dataPointsFlowLevel);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("processed").size() == POINTS);
+
+    DataPoints dataPointsRunIdLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.RUNID_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsRunIdLevel);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
+  }
+
+  @Test
+  public void testOneAcctOneFlowOneRunIdMultipleMetrics() throws Exception {
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("processed");
+    metrics.add("acks");
+
+    FlowArgument argument = new FlowArgument("acc0", "app1", "flow1");
+    argument.setRunId("runid1");
+    argument.setFlowletId("fl1");
+
+    DataPoints dataPointsFlowLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+
+    Assert.assertNotNull(dataPointsFlowLevel);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("acks").size() == POINTS);
+
+    DataPoints dataPointsRunIdLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.RUNID_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsRunIdLevel);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("acks").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
+  }
+
+  @Test
+  public void testWhatHappensWhenMetricNotFound() throws Exception {
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("p1");
+
+    FlowArgument argument = new FlowArgument("acc0", "app1", "flow1");
+    argument.setRunId("runid1");
+    argument.setFlowletId("fl1");
+
+    DataPoints dataPointsFlowLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+
+    Assert.assertNotNull(dataPointsFlowLevel);
+    Assert.assertNull(dataPointsFlowLevel.getPoints().get("p1"));
+  }
+
+  /**
+   * For a single account the values at different levels should be the same.
+   * Account Level, Application Level, Flow Level, Run Id Level.
+   */
+  @Test
+  public void testOneAcctOneFlowOneRunIdMultipleMetricsAppAccount()
+    throws Exception {
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("processed");
+    metrics.add("acks");
+
+    FlowArgument argument = new FlowArgument("acc0", "app1", "flow1");
+    argument.setRunId("runid1");
+    argument.setFlowletId("fl1");
+
+    DataPoints dataPointsFlowLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+
+    Assert.assertNotNull(dataPointsFlowLevel);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("acks").size() == POINTS);
+
+    DataPoints dataPointsRunIdLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.RUNID_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsRunIdLevel);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("acks").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
+
+    DataPoints dataPointsAppLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.APPLICATION_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsAppLevel);
+    Assert.assertTrue(dataPointsAppLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsAppLevel.getPoints()
+                        .get("acks").size() == POINTS);
+    Assert.assertTrue(dataPointsAppLevel.equals(dataPointsRunIdLevel));
+    Assert.assertTrue(dataPointsAppLevel.equals(dataPointsFlowLevel));
+
+    DataPoints dataPointsAccountLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.ACCOUNT_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsAppLevel);
+    Assert.assertTrue(dataPointsAccountLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsAccountLevel.getPoints()
+                        .get("acks").size() == POINTS);
+    Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsRunIdLevel));
+    Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsFlowLevel));
+    Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsAppLevel));
+
+    DataPoints dataPointsFlowletLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOWLET_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsFlowletLevel);
+    Assert.assertTrue(dataPointsFlowletLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowletLevel.getPoints()
+                        .get("acks").size() == POINTS);
+  }
+
+  @Test
+  public void testWithMultipleAccounts() throws Exception {
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("processed");
+    metrics.add("acks");
+
+    FlowArgument argument = new FlowArgument("acc0", "app1", "flow1");
+    argument.setRunId("runid1");
+    argument.setFlowletId("fl1");
+
+    DataPoints dataPointsFlowLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.FLOW_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+
+    Assert.assertNotNull(dataPointsFlowLevel);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.getPoints()
+                        .get("acks").size() == POINTS);
+
+    DataPoints dataPointsRunIdLevel = getTimeseries(
+      argument,
+      metrics,
+      MetricTimeseriesLevel.RUNID_LEVEL,
+      timestamp,
+      timestamp + counter + 10
+    );
+    Assert.assertNotNull(dataPointsRunIdLevel);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("processed").size() == POINTS);
+    Assert.assertTrue(dataPointsRunIdLevel.getPoints()
+                        .get("acks").size() == POINTS);
+    Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
+  }
+
+
   @Test(timeout = 2000)
   public void testAddingMultipleFlowletsForSingleMetric() throws Exception {
     addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
@@ -73,62 +420,6 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(3));
-  }
-
-  @Test
-  public void testTimeseriesBasic() throws Exception {
-
-    for(int i = 0; i < 10; ++i) {
-      addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
-      addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
-      addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
-      Thread.sleep(1000);
-    }
-
-    List<String> metrics = Lists.newArrayList();
-    metrics.add("processed");
-    long ets = System.currentTimeMillis()/1000;
-    long sts = ets - 30;
-    DataPoints pointsFlowLevel = getTimeseries(
-      new FlowArgument("demo", "myapp", "myflow"),
-      metrics,
-      MetricTimeseriesLevel.FLOW_LEVEL,
-      sts,
-      ets
-    );
-    Assert.assertTrue(pointsFlowLevel.getPoints().get("processed").size() > 1);
-
-    DataPoints pointsAppLevel = getTimeseries(
-      new FlowArgument("demo", "myapp", "myflow"),
-      metrics,
-      MetricTimeseriesLevel.APPLICATION_LEVEL,
-      sts,
-      ets
-    );
-    Assert.assertTrue(pointsAppLevel.equals(pointsFlowLevel));
-
-    DataPoints accountLevel = getTimeseries(
-      new FlowArgument("demo", "myapp", "myflow"),
-      metrics,
-      MetricTimeseriesLevel.ACCOUNT_LEVEL,
-      sts,
-      ets
-    );
-    Assert.assertTrue(accountLevel.equals(pointsFlowLevel));
-    Assert.assertTrue(accountLevel.equals(pointsAppLevel));
-
-    FlowArgument arg = new FlowArgument("demo", "myapp", "myflow");
-    arg.setFlowletId("source");
-    DataPoints pointsFlowletLevel = getTimeseries(
-      arg,
-      metrics,
-      MetricTimeseriesLevel.FLOWLET_LEVEL,
-      sts,
-      ets
-    );
-    Assert.assertTrue(pointsFlowletLevel.getPoints().get("processed").size() >
-                        1);
-
   }
 
 
@@ -164,14 +455,15 @@ public class MetricsFrontendServiceImplTest {
   /**
    * @return Status of adding a metric.
    */
-  private MetricResponse.Status addMetric(String name, float value)
+  private static MetricResponse.Status addMetric(String name, float value)
       throws Exception {
 
     com.continuuity.metrics2.collector.MetricRequest
-      request = new com.continuuity.metrics2.collector.MetricRequest.Builder(true)
+      request =
+      new com.continuuity.metrics2.collector.MetricRequest.Builder(true)
       .setRequestType("put")
       .setMetricName(name)
-      .setTimestamp(System.currentTimeMillis()/1000)
+      .setTimestamp(timestamp + counter)
       .setValue(value)
       .setMetricType("FlowSystem")
       .create();

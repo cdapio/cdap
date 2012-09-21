@@ -900,14 +900,14 @@ public class MetricsFrontendService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
-                this.success = new ArrayList<Counter>(_list32.size);
-                for (int _i33 = 0; _i33 < _list32.size; ++_i33)
+                org.apache.thrift.protocol.TList _list22 = iprot.readListBegin();
+                this.success = new ArrayList<Counter>(_list22.size);
+                for (int _i23 = 0; _i23 < _list22.size; ++_i23)
                 {
-                  Counter _elem34; // required
-                  _elem34 = new Counter();
-                  _elem34.read(iprot);
-                  this.success.add(_elem34);
+                  Counter _elem24; // required
+                  _elem24 = new Counter();
+                  _elem24.read(iprot);
+                  this.success.add(_elem24);
                 }
                 iprot.readListEnd();
               }
@@ -939,9 +939,9 @@ public class MetricsFrontendService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (Counter _iter35 : this.success)
+          for (Counter _iter25 : this.success)
           {
-            _iter35.write(oprot);
+            _iter25.write(oprot);
           }
           oprot.writeListEnd();
         }

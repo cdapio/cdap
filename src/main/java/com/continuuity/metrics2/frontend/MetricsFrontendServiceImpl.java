@@ -16,6 +16,8 @@ import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.thrift.TException;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.sql.*;
@@ -28,6 +30,9 @@ import java.util.Map;
  */
 public class MetricsFrontendServiceImpl
   implements MetricsFrontendService.Iface {
+  private static final Logger Log = LoggerFactory.getLogger(
+    MetricsFrontendServiceImpl.class
+  );
 
   /**
    * Connection string to connect to database.
@@ -240,9 +245,8 @@ public class MetricsFrontendServiceImpl
     PreparedStatement stmt = null;
     ResultSet rs = null;
 
-    long timestamp = System.currentTimeMillis()/1000;
-    Timestamp start = new Timestamp(timestamp);
-    Timestamp stop = new Timestamp(timestamp);
+    long start = System.currentTimeMillis()/1000;;
+    long end = start;
 
     DataPoints results = new DataPoints();
 
@@ -251,14 +255,14 @@ public class MetricsFrontendServiceImpl
       // If start time is specified and end time is negative offset
       // from that start time, then we use that.
       if(request.isSetStartts() && request.getEndts() < 0) {
-        start = new Timestamp(request.getStartts() - (request.getEndts() * 1000));
-        stop = new Timestamp(request.getStartts());
+        start = request.getStartts() - request.getEndts() * 1000;
+        end = request.getStartts();
       }
 
       // If endts is negative and the startts is not set, then we offset it
       // from the current time.
       if(! request.isSetStartts() && request.getEndts() < 0) {
-        start = new Timestamp(request.getStartts() - (request.getEndts() * 1000));
+        start = request.getStartts() - request.getEndts() * 1000;
       }
 
       // if startts is set and endts > 0 then it endts has to be greater than
@@ -267,12 +271,14 @@ public class MetricsFrontendServiceImpl
         if(request.getEndts() < request.getEndts()) {
           throw new MetricsServiceException("End time is less than start time");
         }
-        start = new Timestamp(request.getStartts());
-        stop = new Timestamp(request.getEndts());
+        start = request.getStartts();
+        end = request.getEndts();
       }
 
+      // Get the connection for database.
       connection = getConnection();
 
+      // Generates statement for retrieving metrics at run level.
       if(level == MetricTimeseriesLevel.RUNID_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -294,8 +300,8 @@ public class MetricsFrontendServiceImpl
         stmt.setString(2, request.getArgument().getApplicationId());
         stmt.setString(3, request.getArgument().getFlowId());
         stmt.setString(4, request.getArgument().getRunId());
-        stmt.setTimestamp(5, start);
-        stmt.setTimestamp(6, stop);
+        stmt.setLong(5, start);
+        stmt.setLong(6, end);
       } else if(level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -307,12 +313,10 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
-
-        // Connection
         stmt = connection.prepareStatement(sb.toString());
         stmt.setString(1, request.getArgument().getAccountId());
-        stmt.setTimestamp(2, start);
-        stmt.setTimestamp(3, stop);
+        stmt.setLong(2, start);
+        stmt.setLong(3, end);
       } else if(level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -325,13 +329,11 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
-
-        // Connection
         stmt = connection.prepareStatement(sb.toString());
         stmt.setString(1, request.getArgument().getAccountId());
         stmt.setString(2, request.getArgument().getApplicationId());
-        stmt.setTimestamp(3, start);
-        stmt.setTimestamp(4, stop);
+        stmt.setLong(3, start);
+        stmt.setLong(4, end);
       } else if(level == MetricTimeseriesLevel.FLOW_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -345,14 +347,12 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
-
-        // Connection
         stmt = connection.prepareStatement(sb.toString());
         stmt.setString(1, request.getArgument().getAccountId());
         stmt.setString(2, request.getArgument().getApplicationId());
         stmt.setString(3, request.getArgument().getFlowId());
-        stmt.setTimestamp(4, start);
-        stmt.setTimestamp(5, stop);
+        stmt.setLong(4, start);
+        stmt.setLong(5, end);
       } else if(level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -367,41 +367,46 @@ public class MetricsFrontendServiceImpl
         sb.append(" ").append("metric IN ( ").append(values).append(" )") ;
         sb.append(" ").append("GROUP BY timestamp, metric");
         sb.append(" ").append("ORDER BY timestamp");
-
-        // Connection
         stmt = connection.prepareStatement(sb.toString());
         stmt.setString(1, request.getArgument().getAccountId());
         stmt.setString(2, request.getArgument().getApplicationId());
         stmt.setString(3, request.getArgument().getFlowId());
         stmt.setString(4, request.getArgument().getFlowletId());
-        stmt.setTimestamp(5, start);
-        stmt.setTimestamp(6, stop);
+        stmt.setLong(5, start);
+        stmt.setLong(6, end);
       }
 
+      // Execute the query.
       rs = stmt.executeQuery();
 
       Map<String, List<DataPoint>> points = Maps.newHashMap();
       Map<String, Double> previousPoint = Maps.newHashMap();
-      Map<String, Double> current = Maps.newHashMap();
+      Map<String, Double> latest = Maps.newHashMap();
 
+      // Iterate through the points.
       while(rs.next()) {
         String metric = rs.getString("metric");
-        long ts = rs.getTimestamp("timestamp").getTime();
+        long ts = rs.getLong("timestamp");
         double value = rs.getFloat("aggregate");
         double newValue = value;
 
+        // If summary is set then collect summary stats.
         if(request.isSetSummary() && request.isSetSummary()) {
-          current.put(metric, value);
+          latest.put(metric, value);
         }
 
+        // As the points are counters, we need to compute
+        // them at time intervals.
         if(previousPoint.containsKey(metric)) {
-          newValue = value - previousPoint.get(metric);
+          newValue = Math.abs(value - previousPoint.get(metric));
         } else {
           previousPoint.put(metric, value);
         }
 
+        // Create a data point.
         DataPoint point = new DataPoint(ts, newValue);
 
+        // If already added
         if(points.containsKey(metric)) {
           points.get(metric).add(point);
         } else {
@@ -417,7 +422,7 @@ public class MetricsFrontendServiceImpl
       // If summary was setup, then we need add all the summary
       // data to response.
       if(request.isSetSummary() && request.isSetSummary()) {
-        results.setCurrent(current);
+        results.setLatest(latest);
       }
     } catch (SQLException e) {
       Log.warn("Failed retrieving data for request {}. Reason : {}",

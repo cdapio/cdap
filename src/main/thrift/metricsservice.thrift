@@ -44,9 +44,9 @@ struct DataPoint {
 enum MetricTimeseriesLevel {
   ACCOUNT_LEVEL = 1,
   APPLICATION_LEVEL = 2,
-  FLOW_LEVEL = 4,
-  FLOWLET_LEVEL = 8,
-  RUNID_LEVEL = 16,
+  FLOW_LEVEL = 3,
+  FLOWLET_LEVEL = 4,
+  RUNID_LEVEL = 5,
 }
 
 /**
@@ -54,9 +54,7 @@ enum MetricTimeseriesLevel {
  */
 struct DataPoints {
    1: map<string, list<DataPoint>> points,
-   2: optional map<string, double> current,
-   3: optional map<string, double> max,
-   4: optional map<string, double> min,
+   2: optional map<string, double> latest,
 }
 
 /**

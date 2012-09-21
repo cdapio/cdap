@@ -11,13 +11,16 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.common.DBUtils;
+import com.google.common.collect.Maps;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.sql.*;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,13 +65,34 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    */
   private DBConnectionPoolManager poolManager;
 
+  /**
+   * Allowed time series metrics.
+   */
+  private Map<String, Boolean> allowedTimeseriesMetrics = Maps.newHashMap();
 
+  /**
+   * Constructs and initializes a flow metric processor.
+   *
+   * @param configuration objects
+   * @throws Exception in case of sql errors.
+   */
   public FlowMetricsProcessor(CConfiguration configuration)
     throws Exception {
     // retrieve the connection url specified from configuation.
     this.connectionUrl
       = configuration.get(Constants.CFG_METRICS_CONNECTION_URL,
                           Constants.DEFAULT_METIRCS_CONNECTION_URL);
+
+    String[] allowedMetrics
+      = configuration.getStrings(
+            Constants.CFG_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS,
+            Constants.DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS
+        );
+
+    for(String metric : allowedMetrics) {
+      allowedTimeseriesMetrics.put(metric, true);
+    }
+
     // Load the appropriate driver.
     this.type = DBUtils.loadDriver(connectionUrl);
 
@@ -175,6 +199,12 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         stmt.close();
       }
 
+      // If metric is not present then we don't attempt to
+      // write the time series for that metric.
+      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
+        return true;
+      }
+
       sql =
         "INSERT INTO timeseries (" +
           "   account_id, " +
@@ -187,7 +217,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
           "   timestamp, " +
           "   value " +
           ")" +
-          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ";
       stmt = connection.prepareStatement(sql);
       stmt.setString(1, elements.getAccountId());
       stmt.setString(2, elements.getApplicationId());
@@ -196,14 +226,13 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setString(5, elements.getFlowletId());
       stmt.setInt(6, elements.getInstanceId());
       stmt.setString(7, elements.getMetric());
-      long ts = request.getTimestamp();
-      stmt.setTimestamp(8, new Timestamp(ts));
+      stmt.setLong(8, request.getTimestamp());
       stmt.setFloat(9, request.getValue());
       stmt.executeUpdate();
 
     } catch (SQLException e) {
-      Log.error("Failed writing metric to HSQLDB. Reason : {}",
-                e.getMessage());
+      Log.warn("Failed writing metric to HSQLDB. Elements {},Reason : {}",
+               elements.toString(), e.getMessage());
       return false;
     } finally {
       try {
@@ -258,6 +287,12 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
       if(stmt != null) {
         stmt.close();
+      }
+
+      // If metric is not present then we don't attempt to
+      // write the time series for that metric.
+      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
+        return true;
       }
 
       sql =
