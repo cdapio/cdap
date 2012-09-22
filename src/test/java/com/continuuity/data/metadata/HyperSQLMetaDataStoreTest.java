@@ -1,20 +1,20 @@
-package com.continuuity.data.operation.executor.remote;
+package com.continuuity.data.metadata;
 
-import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
 
-public class HyperSQLOpexServiceTest extends OperationExecutorServiceTest {
+public abstract class HyperSQLMetaDataStoreTest extends MetaDataStoreTest {
 
   @BeforeClass
-  public static void startService() throws Exception {
+  public static void setupOpex() throws Exception {
     Injector injector = Guice.createInjector (
         new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
-    OperationExecutorServiceTest.startService(
-        CConfiguration.create(), injector.getInstance(OperationExecutor.class));
+    opex = injector.getInstance(OperationExecutor.class);
+    opex.execute(new ClearFabric(true, true, true));
   }
 
 }

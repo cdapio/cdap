@@ -12,11 +12,16 @@ public interface MetaDataStore {
   public void update(MetaDataEntry entry) throws MetaDataException;
 
   /** get by name */
-  public MetaDataEntry get(String name) throws MetaDataException;
+  public MetaDataEntry get(String name, String type) throws MetaDataException;
 
   /** list all entries of a given type */
-  public List<MetaDataEntry> list(String type);
+  public List<MetaDataEntry> list(String type) throws MetaDataException;
 
   /** find all entries that match some given fields */
-  public List<MetaDataEntry> find(Map<String, String> fields);
+  public List<MetaDataEntry> list(Map<String, String> fields)
+      throws MetaDataException;
+
+  /** find all entries of a given type that match some given fields */
+  public List<MetaDataEntry> list(String type, Map<String, String> fields)
+      throws MetaDataException;
 }
