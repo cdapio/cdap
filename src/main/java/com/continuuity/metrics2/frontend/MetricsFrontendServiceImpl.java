@@ -399,6 +399,7 @@ public class MetricsFrontendServiceImpl
         // them at time intervals.
         if(previousPoint.containsKey(metric)) {
           newValue = Math.abs(value - previousPoint.get(metric));
+          previousPoint.put(metric, newValue);
         } else {
           previousPoint.put(metric, value);
         }
