@@ -294,6 +294,12 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         stmt.close();
       }
 
+      // If metric is not present then we don't attempt to
+      // write the time series for that metric.
+      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
+        return true;
+      }
+
       sql =
         "INSERT INTO timeseries (" +
           "   account_id, " +
