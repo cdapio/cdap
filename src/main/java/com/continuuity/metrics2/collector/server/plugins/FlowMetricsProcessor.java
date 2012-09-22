@@ -68,7 +68,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   /**
    * Number of points collected.
    */
-  private Map<String, Integer> collectedPoints;
+  private Map<String, Integer> collectedPoints = Maps.newHashMap();
 
   /**
    * Allowed time series metrics.
@@ -210,6 +210,27 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         return true;
       }
 
+      // Collects metrics every one minute. We don't need to
+      // collect timeseries metrics at a resolution lower
+      if(collectedPoints.containsKey(elements.getMetric())) {
+        Integer i = collectedPoints.get(elements.getMetric());
+        collectedPoints.put(elements.getMetric(), i+1);
+      } else {
+        collectedPoints.put(elements.getMetric(), 1);
+      }
+
+      // We have collected metrics for 60 seconds at 1 second interval,
+      // once we have that, we change to collecting the metric to 1 min
+      // interval. This is done for 2 reasons. 1. That we immediately
+      // get the reporting of data points, but once the points are filled
+      // up to the actual resolution we want to collect data we change that
+      // to final resolution. 2. In order to reduce the number of data
+      // points stored in DB.
+      if(collectedPoints.get(elements.getMetric()) > 60 &&
+        request.getTimestamp() % 60 != 0) {
+        return true;
+      }
+
       sql =
         "INSERT INTO timeseries (" +
           "   account_id, " +
@@ -315,8 +336,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       // get the reporting of data points, but once the points are filled
       // up to the actual resolution we want to collect data we change that
       // to final resolution. 2. In order to reduce the number of data
-      // points stored in DB. This method dramatically reduces the number
-      // of data points stored.
+      // points stored in DB.
       if(collectedPoints.get(elements.getMetric()) > 60 &&
           request.getTimestamp() % 60 != 0) {
         return true;
