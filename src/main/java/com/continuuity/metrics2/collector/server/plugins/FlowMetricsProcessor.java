@@ -317,7 +317,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       stmt.setString(5, elements.getFlowletId());
       stmt.setInt(6, elements.getInstanceId());
       stmt.setString(7, elements.getMetric());
-      stmt.setTimestamp(8, new Timestamp(request.getTimestamp()));
+      stmt.setLong(8, request.getTimestamp());
       stmt.setFloat(9, request.getValue());
       stmt.setFloat(10, request.getValue());
       stmt.executeUpdate();
