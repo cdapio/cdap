@@ -3,6 +3,8 @@ package com.continuuity.data.metadata;
 import com.continuuity.api.data.MetaDataEntry;
 import com.continuuity.api.data.MetaDataException;
 import com.continuuity.api.data.MetaDataStore;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import org.junit.Assert;
 import org.junit.Test;
@@ -64,7 +66,9 @@ abstract public class MetaDataStoreTest {
   }
 
   @Test
-  public void testList() throws MetaDataException {
+  public void testList() throws MetaDataException, OperationException {
+    opex.execute(new ClearFabric(true, false, false));
+
     testOneAddGet(false, "t1", "x", "a", "1", null, null);
     testOneAddGet(false, "t2", "x", "a", "2", null, null);
     testOneAddGet(false, "t3", "y", "a", "1", null, null);
