@@ -294,18 +294,6 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         stmt.close();
       }
 
-      // We have collected metrics for 60 seconds at 1 second interval,
-      // once we have that, we change to collecting the metric to 1 min
-      // interval. This is done for 2 reasons. 1. That we immediately
-      // get the reporting of data points, but once the points are filled
-      // up to the actual resolution we want to collect data we change that
-      // to final resolution. 2. In order to reduce the number of data
-      // points stored in DB.
-      if(collectedPoints.get(elements.getMetric()) > 60 &&
-          request.getTimestamp() % 60 != 0) {
-        return true;
-      }
-
       sql =
         "INSERT INTO timeseries (" +
           "   account_id, " +
