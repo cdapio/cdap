@@ -94,7 +94,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   /**
    * Specifies the backoff maximum time.
    */
-  private static int BACKOFF_MAX_TIME = 30;
+  private static int BACKOFF_MAX_TIME = 10;
 
   /**
    * Specifies the exponent for increasing the backoff by.
@@ -116,6 +116,14 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
    */
   public static synchronized void enable(long period, TimeUnit unit,
                             CConfiguration configuration) {
+
+    // In order to prevent from all the hosts checking to see if the
+    // service is backup we add some amount of randomization that allows
+    // the clients to do the check at random max times when max backoff
+    // is reached.
+    BACKOFF_MAX_TIME = BACKOFF_MIN_TIME +
+        (int)(Math.random() * (BACKOFF_MAX_TIME - BACKOFF_MIN_TIME) + 1);
+
     if(reporter == null) {
       reporter = new OverlordMetricsReporter(
         Metrics.defaultRegistry(), configuration

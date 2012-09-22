@@ -399,10 +399,8 @@ public class MetricsFrontendServiceImpl
         // them at time intervals.
         if(previousPoint.containsKey(metric)) {
           newValue = Math.abs(value - previousPoint.get(metric));
-          previousPoint.put(metric, newValue);
-        } else {
-          previousPoint.put(metric, value);
         }
+        previousPoint.put(metric, value);
 
         // Create a data point.
         DataPoint point = new DataPoint(ts, newValue);
