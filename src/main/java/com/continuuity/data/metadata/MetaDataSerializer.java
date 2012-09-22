@@ -48,16 +48,14 @@ public final class MetaDataSerializer {
 	public byte[] serialize(MetaDataEntry meta) throws MetaDataException {
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
     output.setOutputStream(outStream);
-		byte[] bytes = null;
 		try {
 			kryo.writeObject(output, meta);
       output.flush();
-      bytes = outStream.toByteArray();
+      return outStream.toByteArray();
 		} catch (Exception e) {
 			LOG.error("Failed to serialize meta data", e);
       throw new MetaDataException("Failed to serialize meta data", e);
 		}
-		return bytes;
 	}
 
 	/**
@@ -67,16 +65,14 @@ public final class MetaDataSerializer {
    * @throws MetaDataException if deserialization fails
    */
 	public MetaDataEntry deserialize(byte[] bytes) throws MetaDataException {
-		MetaDataEntry event = null;
     ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
     input.setInputStream(inputStream);
 		try {
-      event = kryo.readObject(input, MetaData.class);
+      return kryo.readObject(input, MetaData.class);
 		} catch (Exception e) {
       LOG.error("Failed to deserialize meta data", e);
       throw new MetaDataException("Failed to deserialize meta data", e);
     }
-		return event;
 	}
 
   private static class MetaData extends MetaDataEntry {
