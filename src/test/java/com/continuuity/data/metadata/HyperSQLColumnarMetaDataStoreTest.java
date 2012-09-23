@@ -12,7 +12,12 @@ public class HyperSQLColumnarMetaDataStoreTest extends
     mds = new ColumnarMetaDataStore(opex);
   }
 
+  // TODO remove this once list is implemented
   @Test @Ignore @Override
   public void testList() { }
+
+  // TODO remove this once clear is implemented
+  @Test @Ignore @Override
+  public void testClear() { }
 
 }

@@ -224,6 +224,37 @@ public class ColumnarMetaDataStore implements MetaDataStore {
   }
 
   @Override
+  public void delete(String name, String type) throws MetaDataException {
+
+    byte[] rowkey = makeRowKey(name, type);
+    OperationResult<Map<byte[], byte[]>> result;
+    try {
+      ReadColumnRange read = new ReadColumnRange(rowkey, null, null);
+      result = opex.execute(read);
+    } catch (OperationException e) {
+      String message =
+          String.format("Error reading meta data: %s", e.getMessage());
+      Log.error(message, e);
+      throw new MetaDataException(message, e);
+    }
+
+    if (result.isEmpty()) return; // nothing there to delete
+
+    Set<byte[]> columns = result.getValue().keySet();
+    Delete delete = new Delete(rowkey,
+        columns.toArray(new byte[columns.size()][]));
+
+    try {
+      opex.execute(delete);
+    } catch (OperationException e) {
+      String message =
+          String.format("Error deleting meta data: %s", e.getMessage());
+      Log.error(message, e);
+      throw new MetaDataException(message, e);
+    }
+  }
+
+  @Override
   public List<MetaDataEntry> list(String type) {
     throw new NotImplementedException();
   }
@@ -235,6 +266,11 @@ public class ColumnarMetaDataStore implements MetaDataStore {
 
   @Override
   public List<MetaDataEntry> list(String type, Map<String, String> fields) {
+    throw new NotImplementedException();
+  }
+
+  @Override
+  public void clear() throws MetaDataException {
     throw new NotImplementedException();
   }
 }

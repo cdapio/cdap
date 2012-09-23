@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SerializingMetaDataStore implements MetaDataStore {
 
@@ -155,6 +156,20 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
+  public void delete(String name, String type) throws MetaDataException {
+    byte[] column = makeColumnKey(name, type);
+    Delete delete = new Delete(rowkey, column);
+    try {
+      opex.execute(delete);
+    } catch (OperationException e) {
+      String message =
+          String.format("Error deleting meta data: %s", e.getMessage());
+      Log.error(message, e);
+      throw new MetaDataException(message, e);
+    }
+  }
+
+  @Override
   public List<MetaDataEntry> list(String type, Map<String, String> fields)
       throws MetaDataException {
     try {
@@ -196,6 +211,31 @@ public class SerializingMetaDataStore implements MetaDataStore {
     } catch (OperationException e) {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
+      Log.error(message, e);
+      throw new MetaDataException(message, e);
+    }
+  }
+
+  @Override
+  public void clear() throws MetaDataException {
+    ReadColumnRange read = new ReadColumnRange(rowkey, null, null);
+    OperationResult<Map<byte[], byte[]>> result;
+    try {
+      result = opex.execute(read);
+    } catch (OperationException e) {
+      String message =
+          String.format("Error reading meta data: %s", e.getMessage());
+      Log.error(message, e);
+      throw new MetaDataException(message, e);
+    }
+    Set<byte[]> columns = result.getValue().keySet();
+    Delete delete = new Delete(rowkey,
+        columns.toArray(new byte[columns.size()][]));
+    try {
+      opex.execute(delete);
+    } catch (OperationException e) {
+      String message =
+          String.format("Error deleting all meta data: %s", e.getMessage());
       Log.error(message, e);
       throw new MetaDataException(message, e);
     }
