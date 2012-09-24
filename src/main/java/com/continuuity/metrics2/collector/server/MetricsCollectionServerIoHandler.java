@@ -140,6 +140,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     MetricsProcessor flowMetricsProcessor =
       new FlowMetricsProcessor(configuration);
 
+    add(MetricType.FlowSystem, flowMetricsProcessor);
+
     // Read in the processors to be used for managing system metrics.
     // If there are none defined, then we don't assign defaults. If
     // there any defined, then we create instance of processor and
@@ -149,9 +151,9 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassSystem != null && klassSystem.length > 0) {
       for(String klass : klassSystem) {
-        Log.debug("Adding {} plugin for processing system metrics.",
-                  klass);
         loadCreateAndAddToList(MetricType.System, klass);
+        Log.debug("Added {} plugin for processing system metrics.",
+                  klass);
       }
     }
 
@@ -162,12 +164,10 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
-        Log.debug("Adding {} plugin for processing flow system metrics.",
-                  klass);
         loadCreateAndAddToList(MetricType.FlowUser, klass);
+        Log.debug("Added {} plugin for processing flow system metrics.",
+                  klass);
       }
-    } else {
-      add(MetricType.FlowSystem, flowMetricsProcessor);
     }
 
     // Load processor for handling flow user metrics. If none defined,
@@ -178,9 +178,9 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(klassFlowUser != null && klassFlowUser.length > 0) {
       for(String klass : klassFlowUser) {
-        Log.debug("Adding {} plugin for processing flow user metrics.",
-                  klass);
         loadCreateAndAddToList(MetricType.FlowUser, klass);
+        Log.debug("Added {} plugin for processing flow user metrics.",
+                  klass);
       }
     }
 

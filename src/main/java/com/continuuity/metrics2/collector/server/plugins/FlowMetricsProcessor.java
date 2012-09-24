@@ -383,6 +383,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     // Break down the metric name into it's components.
     // If there are any issue with how it's constructed,
     // send a failure back and log a message on the server.
+    Log.debug("Received flow metric {}", request.toString());
     try {
       final FlowMetricElements elements =
           new FlowMetricElements.Builder(request.getMetricName()).create();
