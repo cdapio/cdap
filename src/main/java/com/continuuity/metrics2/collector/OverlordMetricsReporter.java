@@ -254,7 +254,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
         // dequeing and trying to make space for more stuff to be add
         // later.
         interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT)*1000;
-        Log.error("Failed writing -- waiting for {} ms", interval);
+        Log.warn("Failed writing -- waiting for {} ms", interval);
         try {
           Thread.sleep(interval);
         } catch (InterruptedException e) {

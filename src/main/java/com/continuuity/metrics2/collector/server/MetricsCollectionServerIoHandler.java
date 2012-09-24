@@ -70,21 +70,27 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
      */
     @Override
     protected void runOneIteration() throws Exception {
-      Log.debug("Future reaper iterating through futures. Reaper list size {}.",
-        reapFutures.size());
-      if(reapFutures.size() < 1) {
-        return;
-      }
-      for(Future<MetricResponse.Status> future : reapFutures) {
-        // NOTE: This is a blocking operation.
-        try {
-          Await.ready(future, Duration.parse("5 second"));
-        } catch (TimeoutException e) {
-          future.failed();
+      try {
+        Log.debug("Future reaper iterating through futures. Reaper list size {}.",
+          reapFutures.size());
+        if(reapFutures.size() < 1) {
+          return;
         }
-        reapFutures.remove(future);
+        for(Future<MetricResponse.Status> future : reapFutures) {
+          // NOTE: This is a blocking operation.
+          try {
+            Await.ready(future, Duration.parse("5 second"));
+          } catch (TimeoutException e) {
+            future.failed();
+          }
+          reapFutures.remove(future);
+        }
+        Log.debug("Future reaper done. Reaper list size {}.", reapFutures
+            .size());
+      } catch (Exception e) {
+        Log.warn("There was issue during future reaping. Reason : {}.",
+                 e.getMessage());
       }
-      Log.debug("Future reaper done. Reaper list size {}.", reapFutures.size());
     }
 
     /**

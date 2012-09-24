@@ -41,14 +41,6 @@ public class MetricsClient {
   private static final long CONNECT_TIMEOUT = 100 * 1000L;
 
   /**
-   * Number of attempts after which we fail to send metrics.
-   * Theoritically, we don't have limit on how attempts are there,
-   * but we just want to set a limit, which in future if needed
-   * can be used.
-   */
-  private static final int RECONNECT_ATTEMPTS = 10000;
-
-  /**
    * Specifies the maximum back-off time (in seconds).
    */
   private static final int BACKOFF_MAX_TIME = 30;
@@ -136,7 +128,7 @@ public class MetricsClient {
 
       // While we are not asked to stop and queue
       // is not empty, we keep on going.
-      while(keepRunning || ! queue.isEmpty()) {
+      while(keepRunning) {
         // Try to get a session while session is not created
         // or if created and is not connected.
         while(session == null || !session.isConnected()){
@@ -180,7 +172,10 @@ public class MetricsClient {
         try {
           // blocking call will wait till there is an element in the queue.
           element = queue.take();
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+          Log.warn("Thread has been interrupted.");
+          continue;
+        }
 
         // Make sure we have not received a null object. This is
         // just a precaution.
@@ -217,7 +212,7 @@ public class MetricsClient {
 
     // Creates the queue that holds the metrics to be dispatched
     // to the overlord.
-    this.queue = new LinkedBlockingDeque<String>(10000);
+    this.queue = new LinkedBlockingDeque<String>(50000);
 
     // Prepare the connection.
     connector = new NioSocketConnector();
@@ -299,6 +294,7 @@ public class MetricsClient {
                                        new RandomStrategy<ServicePayload>());
     this.hostname = instance.getAddress();
     this.port = instance.getPort();
+    Log.info("Received service endpoint {}:{}.", this.hostname, this.port);
   }
 
   private boolean connect() throws ServiceDiscoveryClientException {
@@ -315,6 +311,7 @@ public class MetricsClient {
     }
 
     // Connect to the server.
+    Log.info("Connecting to service endpoint {}:{}.", hostname, port);
     ConnectFuture cf = connector.connect(
       new InetSocketAddress(hostname, port)
     );
@@ -324,8 +321,11 @@ public class MetricsClient {
 
     // Check if we are connected.
     if(cf.isConnected()) {
+      Log.info("Successfully connected to endpoint {}:{}", hostname, port);
       session = cf.getSession();
       return true;
+    } else {
+      Log.warn("Unable to connect to endpoint {}:{}", hostname, port);
     }
 
     return false;
