@@ -109,7 +109,7 @@ public class MetricsCollectionServerMainTest {
       OverlordMetricsReporter.enable(1L, TimeUnit.SECONDS, configuration);
 
       // Now create some Flow metrics.
-      CMetrics cmetrics = new CMetrics(MetricType.FlowSystem,
+      CMetrics cmetrics = new CMetrics(MetricType.FlowUser,
                                        "demo.myapp.myflow.myrunid");
 
       // create some metrics.
