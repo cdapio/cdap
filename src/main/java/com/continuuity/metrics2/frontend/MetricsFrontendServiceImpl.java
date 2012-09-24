@@ -218,6 +218,7 @@ public class MetricsFrontendServiceImpl
   public DataPoints getTimeSeries(TimeseriesRequest request)
     throws MetricsServiceException, TException {
 
+
     // Validate the timing request.
     validateTimeseriesRequest(request);
 
@@ -411,6 +412,12 @@ public class MetricsFrontendServiceImpl
           newPoints.add(point);
           points.put(metric, newPoints);
         }
+      }
+
+      // Trim the first point.
+      for(Map.Entry<String, List<DataPoint>> entry : points.entrySet()) {
+        // Remove the first data point as that's an aggregate.
+        entry.getValue().remove(0);
       }
 
       // Sets the points retrieved.

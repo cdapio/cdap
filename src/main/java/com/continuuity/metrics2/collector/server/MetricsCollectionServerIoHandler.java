@@ -140,8 +140,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     MetricsProcessor flowMetricsProcessor =
       new FlowMetricsProcessor(configuration);
 
-    add(MetricType.FlowSystem, flowMetricsProcessor);
-
     // Read in the processors to be used for managing system metrics.
     // If there are none defined, then we don't assign defaults. If
     // there any defined, then we create instance of processor and
@@ -164,7 +162,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
-        loadCreateAndAddToList(MetricType.FlowUser, klass);
+        loadCreateAndAddToList(MetricType.FlowSystem, klass);
         Log.debug("Added {} plugin for processing flow system metrics.",
                   klass);
       }
