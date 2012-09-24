@@ -18,6 +18,7 @@ import org.apache.thrift.TException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +63,8 @@ public class MetricsCollectionServerMainTest {
     OverlordMetricsReporter.disable();
   }
 
-  private void end2endTest() throws Exception {
+  @Test
+  public void end2endTest() throws Exception {
     final Injector injector
         = Guice.createInjector(new MetricsModules().getDistributedModules());
 
