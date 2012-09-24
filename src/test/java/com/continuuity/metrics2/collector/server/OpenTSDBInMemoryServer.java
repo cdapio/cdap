@@ -26,7 +26,7 @@ public final class OpenTSDBInMemoryServer implements Runnable {
   public OpenTSDBInMemoryServer(int port) throws IOException {
     this.server = new ServerSocket(port);
     Log.debug("Starting OpenTSDBinMemoryServer on port {}", port);
-    this.server.setSoTimeout(1000); // set timeout to 100 milliseconds.
+    this.server.setSoTimeout(5000); // set timeout to 100 milliseconds.
     this.running = true;
   }
 
@@ -42,10 +42,14 @@ public final class OpenTSDBInMemoryServer implements Runnable {
   public void run() {
     while(running) {
       try {
+        System.out.println("Waiting for client(s) to connect.");
         Socket connected = server.accept();
         BufferedReader fromClient =
           new BufferedReader(new InputStreamReader(connected.getInputStream()));
+        System.out.println("Connected...");
         String command = fromClient.readLine();
+        System.out.println("Read line : " + command);
+
         connected.close();
         commands.add(command);
       } catch (SocketTimeoutException e) {

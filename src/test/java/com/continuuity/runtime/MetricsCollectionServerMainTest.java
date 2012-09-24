@@ -9,23 +9,17 @@ import com.continuuity.metrics2.api.CMetrics;
 import com.continuuity.metrics2.collector.MetricType;
 import com.continuuity.metrics2.collector.OverlordMetricsReporter;
 import com.continuuity.metrics2.collector.server.MetricsCollectionServerInterface;
-
-import com.continuuity.metrics2.collector.server.OpenTSDBInMemoryServer;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
 import com.continuuity.metrics2.stubs.*;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.thrift.TException;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +46,10 @@ public class MetricsCollectionServerMainTest {
     configuration.set(
       Constants.CFG_ZOOKEEPER_ENSEMBLE,
       zookeeper.getConnectionString()
+    );
+    configuration.set(
+      Constants.CFG_METRICS_CONNECTION_URL,
+      connectionUrl
     );
     // Create a client.
     client = new MetricsFrontendServiceImpl(configuration);
@@ -105,7 +103,7 @@ public class MetricsCollectionServerMainTest {
       OverlordMetricsReporter.enable(1L, TimeUnit.SECONDS, configuration);
 
       // Now create some Flow metrics.
-      CMetrics cmetrics = new CMetrics(MetricType.FlowSystem,
+      CMetrics cmetrics = new CMetrics(MetricType.FlowUser,
                                        "demo.myapp.myflow.myrunid");
 
       // create some metrics.
@@ -145,54 +143,6 @@ public class MetricsCollectionServerMainTest {
       }
     } finally {
       serverInterface.stop(true);
-    }
-  }
-
-  /**
-   * Tests E2E with OpenTSDB forwarding enabled. It's by default
-   * disabled. Also, we use a mocked openTSDB server to test it.
-   */
-  @Test
-  public void testEnd2EndWithOpenTSDB() throws Exception {
-    // Start the openTSDBInMemory mock server on free port available.
-    configuration.set(
-      Constants.CFG_METRICS_COLLECTION_FLOW_SYSTEM_PLUGINS,
-      "com.continuuity.metrics2.collector.server.plugins.OpenTSDBProcessor"
-    );
-    int port = PortDetector.findFreePort();
-    OpenTSDBInMemoryServer server = new OpenTSDBInMemoryServer(port);
-    ExecutorService service = Executors.newFixedThreadPool(1);
-    service.submit(server);
-
-    // Change the port that openTSDB has started on
-    configuration.setInt(
-      Constants.CFG_OPENTSDB_SERVER_PORT,
-      port
-    );
-
-    configuration.set(
-      Constants.CFG_FLOW_MANAGER_SERVER_ADDRESS,
-      "localhost"
-    );
-
-    // Now start the end to end test.
-    try {
-      end2endTest();
-
-      // Wait for some time for thread to die.
-      Thread.sleep(200);
-
-      // Test has completed without any issue.
-      //Assert.assertTrue(server.getCommandCount() > 0);
-    } finally {
-      if(server != null) {
-        server.stop();
-        server = null;
-      }
-      if(service != null) {
-        service.shutdown();
-        service = null;
-      }
     }
   }
 

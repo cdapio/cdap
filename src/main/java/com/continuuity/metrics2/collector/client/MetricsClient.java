@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.continuuity.common.discovery.ServicePayload;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.metrics2.collector.codec.MetricCodecFactory;
 import com.google.common.base.Preconditions;
 import com.netflix.curator.x.discovery.ServiceInstance;
@@ -21,7 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * This client is similar to the NetCat client. It connects
@@ -111,7 +114,7 @@ public class MetricsClient {
    * It runs in a seperate thread dequeuing the commands written by
    * the client metric collector. If it's unable to connect to the
    * server, it implements a exponential backoff to make sure we don't
-   * task the server trying to connect.
+   * tax the server trying to connect.
    */
   private class MetricsDispatcher implements Runnable {
     private volatile boolean keepRunning = true;
@@ -131,49 +134,41 @@ public class MetricsClient {
 
       watcher.start();  // Start the timer.
 
+      // While we are not asked to stop and queue
+      // is not empty, we keep on going.
       while(keepRunning || ! queue.isEmpty()) {
-        // If we have been requested to be stopped and the queue is not
-        // empty, then we wait till the queue can get empty.
-        if(! keepRunning && !queue.isEmpty() &&
-              watcher.getTime() % 10000L == 0) {
-          Log.info("Flushing queue before shutting down. Queue size {}.",
-                   queue.size());
-        }
-
-        // We attempt to connect to the server if possible.
-        int attempts = RECONNECT_ATTEMPTS;
-        while(session == null || !session.isConnected()) {
+        // Try to get a session while session is not created
+        // or if created and is not connected.
+        while(session == null || !session.isConnected()){
           try {
-            if(attempts < 0 || connect()) {
-              // Once, we know we are connected, backoff a little, but
-              // we don't want to reset completely, so we go by exponent.
-              interval = Math.max(BACKOFF_MIN_TIME, interval/BACKOFF_EXPONENT);
+            // Make an attempt to connect, it does so by getting the
+            // latest endpoint from service disocvery and tries to
+            // connect to it.
+            connect();
+
+            if(session == null || (session != null && ! session.isConnected())){
+              // Sleep based on how much ever is interval set to.
+              try {
+                Thread.sleep(interval * 1000L);
+              } catch (InterruptedException e) {
+                Log.debug("Interrupted while sleeping");
+                break; // Go back to check if we have asked to stop.
+              }
+
+              // Exponentially increase the amount of time to sleep,
+              // untill we reach 30 seconds sleep between reconnects.
+              interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
+              continue;
+            } else {
+              // we are conected and now need to send data.
               break;
             }
-            Log.debug("Attempting to connect to overlord. Attempt {}",
-                     RECONNECT_ATTEMPTS - attempts);
-
-            // Sleep based on how much ever is interval set to.
-            Thread.sleep(interval * 1000L);
-
-            // Exponentially increase the amount of time to sleep,
-            // untill we reach 30 seconds sleep between reconnects.
-            interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
+            // If we are here means
           } catch (ServiceDiscoveryClientException e) {
-            Log.error("Failed to retrieve service endpoint. Reason : {}",
-                      e.getMessage());
-          } catch (InterruptedException e) {
-            // We have been interrupted, it's better for us to get out of
-            // this loop and check if we have been asked to stop.
-            break;
+            Log.warn("Issue with service discovery. Reason : {}.",
+              e.getMessage());
+            Log.debug(StackTraceUtil.toStringStackTrace(e));
           }
-          attempts--;
-        }
-
-        if(! session.isConnected()) {
-          Log.error("Unable to connect to overlord server for " +
-                      "sending metrics. terminating.");
-          break;
         }
 
         // We pop the metric to be send from the queue and
@@ -202,18 +197,10 @@ public class MetricsClient {
           public void operationComplete(WriteFuture future) {
             if(! future.isWritten()) {
               Log.warn("Attempted to send metric to overlord, " +
-                         "failed " + "due to session failures. [ {} ]", cmd);
+                "failed " + "due to session failures. [ {} ]", cmd);
             }
           }
         });
-      }
-
-      // Now that we have terminated, we close the service discovery client
-      try {
-        serviceDiscovery.close();
-      } catch (IOException e) {
-        Log.warn("Problem during shutting down of service discovery client. " +
-                   "Reason : {}", e.getMessage());
       }
     }
   }
@@ -272,6 +259,17 @@ public class MetricsClient {
 
         // Shutdown executor service.
         executorService.shutdown();
+
+        // Close service discovery
+        if(serviceDiscovery != null) {
+          try {
+            serviceDiscovery.close();
+          } catch (IOException e) {
+            Log.warn("Failed closing service discovery client. Reason : {}.",
+              e.getMessage());
+            Log.debug(StackTraceUtil.toStringStackTrace(e));
+          }
+        }
 
         // Close the session.
         if(session != null) {

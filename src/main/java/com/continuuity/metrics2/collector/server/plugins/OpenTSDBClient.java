@@ -114,6 +114,8 @@ final class OpenTSDBClient extends IoHandlerAdapter {
     // available that is idle, so we go a head and create one.
     // once, the session is connected it's session opened
     // handler will add it to the idle list.
+    Log.info("Connecting to OpenTSDB server host {} on port {}.",
+      hostname, port);
     ConnectFuture connectFuture =
       connector.connect(new InetSocketAddress(hostname, port));
     connectFuture.awaitUninterruptibly();

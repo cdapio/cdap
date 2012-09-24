@@ -52,18 +52,15 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
             = Lists.newCopyOnWriteArrayList();
 
   /**
-   * List of futures.
-   */
-  private final List<Future<MetricResponse.Status>> futureList =
-    Lists.newArrayList();
-
-  /**
-   * Future monitor is iterating through all the futures and making
+   * Future reaper is iterating through all the futures and making
    * sure that if it's completed, it's removed from the <code>futuresList</code>
    * and also if the future is timed out it's removed from the list and the
    * future is failed.
    */
-  private final class FutureMonitor extends AbstractScheduledService {
+  private final class FutureReaper extends AbstractScheduledService {
+    private final List<Future<MetricResponse.Status>> reapFutures
+       = Lists.newArrayList();
+
     /**
      * Run one iteration of the scheduled task. If any invocation of this
      * method throws an exception,
@@ -73,20 +70,21 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
      */
     @Override
     protected void runOneIteration() throws Exception {
-      for(Future<MetricResponse.Status> future : futureList) {
+      Log.debug("Future reaper iterating through futures. Reaper list size {}.",
+        reapFutures.size());
+      if(reapFutures.size() < 1) {
+        return;
+      }
+      for(Future<MetricResponse.Status> future : reapFutures) {
         // NOTE: This is a blocking operation.
         try {
           Await.ready(future, Duration.parse("5 second"));
         } catch (TimeoutException e) {
           future.failed();
         }
-
-        // Once the future is completed, we remove it from the
-        // the futures list.
-        if(future.isCompleted()) {
-          futureList.remove(future);
-        }
+        reapFutures.remove(future);
       }
+      Log.debug("Future reaper done. Reaper list size {}.", reapFutures.size());
     }
 
     /**
@@ -99,12 +97,16 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     protected Scheduler scheduler() {
       return Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.SECONDS);
     }
+
+    public synchronized void add(Future<MetricResponse.Status> status) {
+      reapFutures.add(status);
+    }
   }
 
   /**
-   * Instance of FutureMonitor.
+   * Instance of FutureReaper.
    */
-  private final FutureMonitor futureMonitor = new FutureMonitor();
+  private final FutureReaper futureReaper = new FutureReaper();
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -128,9 +130,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     // enabled, then we send the flow metrics to both places.
     MetricsProcessor flowMetricsProcessor =
       new FlowMetricsProcessor(configuration);
-
-    add(MetricType.FlowSystem, flowMetricsProcessor);
-    add(MetricType.FlowUser, flowMetricsProcessor);
 
     // Read in the processors to be used for managing system metrics.
     // If there are none defined, then we don't assign defaults. If
@@ -176,8 +175,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       }
     }
 
-    Log.info("Starting future monitor");
-    futureMonitor.start();
+    Log.info("Starting future reaper.");
+    futureReaper.start();
   }
 
   private void loadCreateAndAddToList(MetricType type, String klassName)
@@ -321,8 +320,9 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
               }
             }
           });
-          futureList.add(future);
-          return;
+
+          // Add to future reaper list.
+          futureReaper.add(future);
         }
       }
     } else {
