@@ -13,9 +13,9 @@ import org.apache.thrift.TEnum;
 public enum MetricTimeseriesLevel implements org.apache.thrift.TEnum {
   ACCOUNT_LEVEL(1),
   APPLICATION_LEVEL(2),
-  FLOW_LEVEL(4),
-  FLOWLET_LEVEL(8),
-  RUNID_LEVEL(16);
+  FLOW_LEVEL(3),
+  FLOWLET_LEVEL(4),
+  RUNID_LEVEL(5);
 
   private final int value;
 
@@ -40,11 +40,11 @@ public enum MetricTimeseriesLevel implements org.apache.thrift.TEnum {
         return ACCOUNT_LEVEL;
       case 2:
         return APPLICATION_LEVEL;
-      case 4:
+      case 3:
         return FLOW_LEVEL;
-      case 8:
+      case 4:
         return FLOWLET_LEVEL;
-      case 16:
+      case 5:
         return RUNID_LEVEL;
       default:
         return null;

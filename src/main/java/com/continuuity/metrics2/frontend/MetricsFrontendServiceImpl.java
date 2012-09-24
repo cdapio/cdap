@@ -207,10 +207,6 @@ public class MetricsFrontendServiceImpl
     if(! request.isSetMetrics()) {
       throw new MetricsServiceException("No metrics specified");
     }
-
-    if(! request.isSetLevel()) {
-      throw new MetricsServiceException("Metric timeseries level not set.");
-    }
   }
 
   /**
@@ -222,11 +218,13 @@ public class MetricsFrontendServiceImpl
   public DataPoints getTimeSeries(TimeseriesRequest request)
     throws MetricsServiceException, TException {
 
-
     // Validate the timing request.
     validateTimeseriesRequest(request);
 
-    MetricTimeseriesLevel level = request.getLevel();
+    MetricTimeseriesLevel level = MetricTimeseriesLevel.FLOW_LEVEL;
+    if(request.isSetLevel()) {
+      level = request.getLevel();
+    }
 
     // transform the metric names by adding single quotes around
     // each metric name as they are treated as metric.

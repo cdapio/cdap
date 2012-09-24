@@ -5,7 +5,6 @@
  */
 package com.continuuity.metrics2.stubs;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -457,14 +456,7 @@ public class MetricsFrontendService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_request = true && (isSetRequest());
-      builder.append(present_request);
-      if (present_request)
-        builder.append(request);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getCounters_args other) {
@@ -837,19 +829,7 @@ public class MetricsFrontendService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getCounters_result other) {
@@ -1190,14 +1170,7 @@ public class MetricsFrontendService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_request = true && (isSetRequest());
-      builder.append(present_request);
-      if (present_request)
-        builder.append(request);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getTimeSeries_args other) {
@@ -1550,19 +1523,7 @@ public class MetricsFrontendService {
 
     @Override
     public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
+      return 0;
     }
 
     public int compareTo(getTimeSeries_result other) {

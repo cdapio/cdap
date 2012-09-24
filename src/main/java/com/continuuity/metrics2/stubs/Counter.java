@@ -5,7 +5,6 @@
  */
 package com.continuuity.metrics2.stubs;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -332,24 +331,7 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
 
   @Override
   public int hashCode() {
-    HashCodeBuilder builder = new HashCodeBuilder();
-
-    boolean present_qualifier = true && (isSetQualifier());
-    builder.append(present_qualifier);
-    if (present_qualifier)
-      builder.append(qualifier);
-
-    boolean present_name = true && (isSetName());
-    builder.append(present_name);
-    if (present_name)
-      builder.append(name);
-
-    boolean present_value = true;
-    builder.append(present_value);
-    if (present_value)
-      builder.append(value);
-
-    return builder.toHashCode();
+    return 0;
   }
 
   public int compareTo(Counter other) {

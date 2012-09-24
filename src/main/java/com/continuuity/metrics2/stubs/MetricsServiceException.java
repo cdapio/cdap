@@ -5,7 +5,6 @@
  */
 package com.continuuity.metrics2.stubs;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -213,14 +212,7 @@ public class MetricsServiceException extends Exception implements org.apache.thr
 
   @Override
   public int hashCode() {
-    HashCodeBuilder builder = new HashCodeBuilder();
-
-    boolean present_message = true && (isSetMessage());
-    builder.append(present_message);
-    if (present_message)
-      builder.append(message);
-
-    return builder.toHashCode();
+    return 0;
   }
 
   public int compareTo(MetricsServiceException other) {

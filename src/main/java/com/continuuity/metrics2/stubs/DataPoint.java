@@ -5,7 +5,6 @@
  */
 package com.continuuity.metrics2.stubs;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -274,19 +273,7 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
 
   @Override
   public int hashCode() {
-    HashCodeBuilder builder = new HashCodeBuilder();
-
-    boolean present_timestamp = true;
-    builder.append(present_timestamp);
-    if (present_timestamp)
-      builder.append(timestamp);
-
-    boolean present_value = true;
-    builder.append(present_value);
-    if (present_value)
-      builder.append(value);
-
-    return builder.toHashCode();
+    return 0;
   }
 
   public int compareTo(DataPoint other) {

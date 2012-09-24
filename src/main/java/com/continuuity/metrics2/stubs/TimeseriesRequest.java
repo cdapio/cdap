@@ -5,7 +5,6 @@
  */
 package com.continuuity.metrics2.stubs;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -132,7 +131,7 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
     tmpMap.put(_Fields.METRICS, new org.apache.thrift.meta_data.FieldMetaData("metrics", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
-    tmpMap.put(_Fields.LEVEL, new org.apache.thrift.meta_data.FieldMetaData("level", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.LEVEL, new org.apache.thrift.meta_data.FieldMetaData("level", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, MetricTimeseriesLevel.class)));
     tmpMap.put(_Fields.STARTTS, new org.apache.thrift.meta_data.FieldMetaData("startts", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
@@ -145,8 +144,6 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
   }
 
   public TimeseriesRequest() {
-    this.level = com.continuuity.metrics2.stubs.MetricTimeseriesLevel.FLOW_LEVEL;
-
     this.summary = true;
 
   }
@@ -154,13 +151,11 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
   public TimeseriesRequest(
     FlowArgument argument,
     List<String> metrics,
-    MetricTimeseriesLevel level,
     long endts)
   {
     this();
     this.argument = argument;
     this.metrics = metrics;
-    this.level = level;
     this.endts = endts;
     setEndtsIsSet(true);
   }
@@ -197,8 +192,7 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
   public void clear() {
     this.argument = null;
     this.metrics = null;
-    this.level = com.continuuity.metrics2.stubs.MetricTimeseriesLevel.FLOW_LEVEL;
-
+    this.level = null;
     setStarttsIsSet(false);
     this.startts = 0;
     setEndtsIsSet(false);
@@ -537,39 +531,7 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
 
   @Override
   public int hashCode() {
-    HashCodeBuilder builder = new HashCodeBuilder();
-
-    boolean present_argument = true && (isSetArgument());
-    builder.append(present_argument);
-    if (present_argument)
-      builder.append(argument);
-
-    boolean present_metrics = true && (isSetMetrics());
-    builder.append(present_metrics);
-    if (present_metrics)
-      builder.append(metrics);
-
-    boolean present_level = true && (isSetLevel());
-    builder.append(present_level);
-    if (present_level)
-      builder.append(level.getValue());
-
-    boolean present_startts = true && (isSetStartts());
-    builder.append(present_startts);
-    if (present_startts)
-      builder.append(startts);
-
-    boolean present_endts = true;
-    builder.append(present_endts);
-    if (present_endts)
-      builder.append(endts);
-
-    boolean present_summary = true && (isSetSummary());
-    builder.append(present_summary);
-    if (present_summary)
-      builder.append(summary);
-
-    return builder.toHashCode();
+    return 0;
   }
 
   public int compareTo(TimeseriesRequest other) {
@@ -744,9 +706,11 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
       oprot.writeFieldEnd();
     }
     if (this.level != null) {
-      oprot.writeFieldBegin(LEVEL_FIELD_DESC);
-      oprot.writeI32(this.level.getValue());
-      oprot.writeFieldEnd();
+      if (isSetLevel()) {
+        oprot.writeFieldBegin(LEVEL_FIELD_DESC);
+        oprot.writeI32(this.level.getValue());
+        oprot.writeFieldEnd();
+      }
     }
     if (isSetStartts()) {
       oprot.writeFieldBegin(STARTTS_FIELD_DESC);
@@ -785,14 +749,16 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
       sb.append(this.metrics);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("level:");
-    if (this.level == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.level);
+    if (isSetLevel()) {
+      if (!first) sb.append(", ");
+      sb.append("level:");
+      if (this.level == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.level);
+      }
+      first = false;
     }
-    first = false;
     if (isSetStartts()) {
       if (!first) sb.append(", ");
       sb.append("startts:");
@@ -821,10 +787,6 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
 
     if (!isSetMetrics()) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'metrics' is unset! Struct:" + toString());
-    }
-
-    if (!isSetLevel()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'level' is unset! Struct:" + toString());
     }
 
     if (!isSetEndts()) {
