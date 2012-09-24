@@ -60,7 +60,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
    */
   private final class FutureReaper extends AbstractScheduledService {
     private final List<Future<MetricResponse.Status>> reapFutures
-       = Lists.newArrayList();
+       = Lists.newCopyOnWriteArrayList();
 
     /**
      * Run one iteration of the scheduled task. If any invocation of this
@@ -77,10 +77,11 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
         if(reapFutures.size() < 1) {
           return;
         }
+
         for(Future<MetricResponse.Status> future : reapFutures) {
           // NOTE: This is a blocking operation.
           try {
-            Await.ready(future, Duration.parse("5 second"));
+            Await.ready(future, Duration.parse("2 second"));
           } catch (TimeoutException e) {
             future.failed();
           }
@@ -274,6 +275,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(message instanceof MetricRequest) {
       final MetricRequest request = (MetricRequest) message;
+      Log.debug("Received metric : {}.", request.toString());
 
       // If we have a valid request then we iterate through all the
       // processor attached to the metric type to process the metric.
