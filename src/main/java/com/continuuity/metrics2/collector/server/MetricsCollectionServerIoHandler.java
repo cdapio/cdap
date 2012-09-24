@@ -5,6 +5,7 @@ import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.collector.MetricType;
@@ -90,6 +91,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       } catch (Exception e) {
         Log.warn("There was issue during future reaping. Reason : {}.",
                  e.getMessage());
+        Log.debug(StackTraceUtil.toStringStackTrace(e));
       }
     }
 

@@ -141,6 +141,9 @@ public class MetricsClient {
             if(session == null || (session != null && ! session.isConnected())){
               // Sleep based on how much ever is interval set to.
               try {
+                Log.warn("Backing off after unable to connect to metrics " +
+                           "collector host {}:{} for {}s.",
+                         new Object[] {hostname, port, interval});
                 Thread.sleep(interval * 1000L);
               } catch (InterruptedException e) {
                 Log.debug("Interrupted while sleeping");
