@@ -1,5 +1,6 @@
 package com.continuuity.gateway.consumer;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -89,7 +90,7 @@ public class TupleWritingConsumer extends Consumer {
   protected void single(Event event) throws Exception {
     try {
       QueueEnqueue enqueue = constructOperation(event);
-      this.executor.execute(enqueue);
+      this.executor.execute(OperationContext.DEFAULT, enqueue);
     } catch (Exception e) {
       Exception e1 = new Exception(
           "Failed to enqueue event(s): " + e.getMessage(), e);
@@ -105,7 +106,7 @@ public class TupleWritingConsumer extends Consumer {
       operations.add(constructOperation(event));
     }
     try {
-      this.executor.execute(operations);
+      this.executor.execute(OperationContext.DEFAULT, operations);
     } catch (Exception e) {
       Exception e1 = new Exception(
           "Failed to enqueue event(s): " + e.getMessage(), e);

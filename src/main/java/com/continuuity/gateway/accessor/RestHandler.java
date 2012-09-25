@@ -238,7 +238,8 @@ public class RestHandler extends NettyRestHandler {
         OperationResult<byte[]> result;
         try {
           ReadKey read = new ReadKey(keyBinary);
-          result = this.accessor.getExecutor().execute(read);
+          result = this.accessor.getExecutor().
+              execute(OperationContext.DEFAULT, read);
         } catch (Exception e) {
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           LOG.error("Error during ReadKey: " + e.getMessage(), e);
@@ -297,7 +298,8 @@ public class RestHandler extends NettyRestHandler {
         OperationResult<List<byte[]>> result;
         try {
           ReadAllKeys read = new ReadAllKeys(start, limit);
-          result = this.accessor.getExecutor().execute(read);
+          result = this.accessor.getExecutor().
+              execute(OperationContext.DEFAULT, read);
         } catch (Exception e) {
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
           LOG.error("Error listing keys: " + e.getMessage() + ".", e);
@@ -326,7 +328,8 @@ public class RestHandler extends NettyRestHandler {
         try {
           ReadKey read = new ReadKey(keyBinary);
           OperationResult<byte[]> result =
-              this.accessor.getExecutor().execute(read);
+              this.accessor.getExecutor().
+                  execute(OperationContext.DEFAULT, read);
           if (result.isEmpty()) {
             // key does not exist -> Not Found
             metrics.counter(this.getClass(), Constants.METRIC_NOT_FOUND, 1);
@@ -345,7 +348,8 @@ public class RestHandler extends NettyRestHandler {
         // now that we know the key exists, delete it
         try {
           Delete delete = new Delete(keyBinary);
-          this.accessor.getExecutor().execute(delete);
+          this.accessor.getExecutor().
+              execute(OperationContext.DEFAULT, delete);
           // deleted successfully
           metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
           respondSuccess(message.getChannel(), request);
@@ -374,7 +378,8 @@ public class RestHandler extends NettyRestHandler {
         // create a write and attempt to execute it
         Write write = new Write(keyBinary, bytes);
         try {
-          this.accessor.getExecutor().execute(write);
+          this.accessor.getExecutor().
+              execute(OperationContext.DEFAULT, write);
           // written successfully
           metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
           respondSuccess(message.getChannel(), request);
@@ -414,7 +419,8 @@ public class RestHandler extends NettyRestHandler {
         ClearFabric clearFabric =
             new ClearFabric(clearData, clearQueues, clearStreams);
         try {
-          this.accessor.getExecutor().execute(clearFabric);
+          this.accessor.getExecutor().
+              execute(OperationContext.DEFAULT, clearFabric);
         } catch (Exception e) {
           LOG.error("Exception clearing data fabric: ", e);
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);

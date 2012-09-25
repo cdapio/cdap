@@ -1,9 +1,6 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -63,7 +60,7 @@ public class DataClientTest {
           kv[1].getBytes("ISO8859_1")));
     }
     // execute the batch and ensure it was successful
-    executor.execute(operations);
+    executor.execute(OperationContext.DEFAULT, operations);
 
     // configure a gateway
     port = PortDetector.findFreePort();
@@ -198,7 +195,7 @@ public class DataClientTest {
         "write", "--key", "mycount", "--counter", "--value", "41" },
         configuration));
     Increment increment = new Increment("mycount".getBytes(), 1);
-    this.executor.execute(increment);
+    this.executor.execute(OperationContext.DEFAULT, increment);
     Assert.assertEquals("42", new DataClient().execute(new String[] {
         "read", "--key", "mycount", "--counter" }, configuration));
   }

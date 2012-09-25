@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadKey;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RestAccessorTest {
+
+  static final OperationContext context = OperationContext.DEFAULT;
 
   /**
    * this is the executor for all access to the data fabric
@@ -506,14 +509,14 @@ public class RestAccessorTest {
   void verifyEvent(String stream, int n) throws Exception {
     String streamUri = FlowStream.buildStreamURI(stream).toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
-    long id = this.executor.execute(op);
+    long id = this.executor.execute(context, op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
         new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(streamUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(dequeue);
+    DequeueResult result = this.executor.execute(context, dequeue);
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into an event (tuple)
     TupleSerializer serializer = new TupleSerializer(false);
@@ -525,7 +528,7 @@ public class RestAccessorTest {
     // ack the entry so that the next request can see the next entry
     QueueAck ack = new
         QueueAck(streamUri.getBytes(), result.getEntryPointer(), queueConsumer);
-    this.collector.getExecutor().execute(ack);
+    this.collector.getExecutor().execute(context, ack);
   }
 
   void sendAndVerify(String baseUrl, String stream, int n) throws Exception {
@@ -537,19 +540,19 @@ public class RestAccessorTest {
     Tuple tuple = new TupleBuilder().set("number", n).create();
     byte[] bytes = new TupleSerializer(false).serialize(tuple);
     QueueEnqueue enqueue = new QueueEnqueue(queueUri.getBytes(), bytes);
-    this.executor.execute(enqueue);
+    this.executor.execute(context, enqueue);
   }
 
   void verifyTuple(String queueUri, int n) throws Exception {
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
-    long id = this.executor.execute(op);
+    long id = this.executor.execute(context, op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
         new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(dequeue);
+    DequeueResult result = this.executor.execute(context, dequeue);
     Assert.assertFalse(result.isEmpty());
     // try to deserialize into a tuple
     TupleSerializer serializer = new TupleSerializer(false);
@@ -565,26 +568,26 @@ public class RestAccessorTest {
 
   void verifyKeyGone(String key) throws Exception {
     ReadKey read = new ReadKey(key.getBytes());
-    Assert.assertTrue(this.executor.execute(read).isEmpty());
+    Assert.assertTrue(this.executor.execute(context, read).isEmpty());
   }
 
   void verifyKeyValue(String key, String value) throws Exception {
     ReadKey read = new ReadKey(key.getBytes());
-    OperationResult<byte[]> result = this.executor.execute(read);
+    OperationResult<byte[]> result = this.executor.execute(context, read);
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(value.getBytes(), result.getValue());
   }
 
   void verifyQueueGone(String queueUri) throws Exception {
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(queueUri.getBytes());
-    long id = this.executor.execute(op);
+    long id = this.executor.execute(context, op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
     // singleEntry = true means we must ack before we can see the next entry
     QueueConfig queueConfig =
         new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
     QueueDequeue dequeue =
         new QueueDequeue(queueUri.getBytes(), queueConsumer, queueConfig);
-    DequeueResult result = this.executor.execute(dequeue);
+    DequeueResult result = this.executor.execute(context, dequeue);
     Assert.assertTrue(result.isEmpty());
   }
 

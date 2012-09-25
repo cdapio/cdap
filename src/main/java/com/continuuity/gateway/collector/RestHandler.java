@@ -1,5 +1,6 @@
 package com.continuuity.gateway.collector;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.data.operation.ttqueue.*;
@@ -250,7 +251,8 @@ public class RestHandler extends NettyRestHandler {
             new QueueAdmin.GetGroupID(queueURI.getBytes());
         long id;
         try {
-          id = this.collector.getExecutor().execute(op);
+          id = this.collector.getExecutor().
+              execute(OperationContext.DEFAULT, op);
         } catch (Exception e) {
           LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
@@ -298,7 +300,8 @@ public class RestHandler extends NettyRestHandler {
             queueURI.getBytes(), queueConsumer, queueConfig);
         DequeueResult result;
         try {
-          result = this.collector.getExecutor().execute(dequeue);
+          result = this.collector.getExecutor().
+              execute(OperationContext.DEFAULT, dequeue);
         } catch (Exception e) {
           LOG.error("Error dequeueing from stream " + queueURI +
               " with consumer " + queueConsumer + ": " + e.getMessage(), e);
@@ -332,7 +335,8 @@ public class RestHandler extends NettyRestHandler {
         QueueAck ack = new QueueAck(
             queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
         try {
-          this.collector.getExecutor().execute(ack);
+          this.collector.getExecutor().
+              execute(OperationContext.DEFAULT, ack);
         } catch (Exception e) {
           LOG.error("Ack failed to for queue " + queueURI + ", consumer "
               + queueConsumer + " and pointer " + result.getEntryPointer() +

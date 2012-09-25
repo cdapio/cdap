@@ -1,9 +1,6 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -39,6 +36,8 @@ import java.util.Map;
 public class TestUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
+
+  static final OperationContext context = OperationContext.DEFAULT;
 
   /**
    * Creates a string containing a number
@@ -298,7 +297,7 @@ public class TestUtil {
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = eventsExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
-      DequeueResult result = executor.execute(dequeue);
+      DequeueResult result = executor.execute(context, dequeue);
       Assert.assertTrue(result.isSuccess());
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
@@ -311,7 +310,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      executor.execute(operations);
+      executor.execute(context, operations);
     }
   }
 
@@ -342,7 +341,7 @@ public class TestUtil {
     QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
     for (int remaining = tuplesExpected; remaining > 0; --remaining) {
       // dequeue one event and remember its ack pointer
-      DequeueResult result = executor.execute(dequeue);
+      DequeueResult result = executor.execute(context, dequeue);
       Assert.assertTrue(result.isSuccess());
       QueueEntryPointer ackPointer = result.getEntryPointer();
       // deserialize and verify the event
@@ -356,7 +355,7 @@ public class TestUtil {
       QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
       List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
       operations.add(ack);
-      executor.execute(operations);
+      executor.execute(context, operations);
     }
   }
 
@@ -377,7 +376,7 @@ public class TestUtil {
     Write write = new Write(key, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
-    executor.execute(operations);
+    executor.execute(context, operations);
 
     // make a get URL
     String getUrl = baseUri +
@@ -460,7 +459,7 @@ public class TestUtil {
 
     // read the key/value back from the data fabric
     ReadKey read = new ReadKey(key);
-    OperationResult<byte[]> result = executor.execute(read);
+    OperationResult<byte[]> result = executor.execute(context, read);
 
     // verify the read value is the same as the original value
     Assert.assertFalse(result.isEmpty());
