@@ -8,11 +8,12 @@ import org.junit.Test;
 public class MetaDataSerializerTest {
 
   // test that a serialize followed by deserialize returns identity
-  void testOneSerDe(boolean update, String name, String type, String field,
-                    String text, String binaryField, byte[] binary)
+  void testOneSerDe(boolean update, String account, String application,
+                    String name, String type, String field, String text,
+                    String binaryField, byte[] binary)
       throws MetaDataException {
 
-    MetaDataEntry meta = new MetaDataEntry(name, type);
+    MetaDataEntry meta = new MetaDataEntry(account, application, name, type);
     if (field != null) meta.addField(field, text);
     if (binaryField != null) meta.addField(binaryField, binary);
     MetaDataSerializer serializer = new MetaDataSerializer();
@@ -22,11 +23,13 @@ public class MetaDataSerializerTest {
 
   @Test
   public void testSerializeDeserialize() throws MetaDataException {
-    testOneSerDe(false, "name", "type", "a", "b", "abc", new byte[]{'x'});
+    testOneSerDe(false, "a", "b", "name", "type", "a", "b", "abc",
+        new byte[]{'x'});
     // test names and values with non-Latin characters
-    testOneSerDe(false, "\0", "\u00FC", "\u1234", "", "\uFFFE", new byte[]{});
+    testOneSerDe(false, "\1", null, "\0", "\u00FC", "\u1234", "", "\uFFFE",
+        new byte[]{});
     // test text and binary fields with the same name
-    testOneSerDe(false, "n", "t", "a", "b", "a", new byte[]{'x'});
+    testOneSerDe(false, "a", "b", "n", "t", "a", "b", "a", new byte[]{'x'});
   }
 
 }

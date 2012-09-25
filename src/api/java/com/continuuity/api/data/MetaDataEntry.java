@@ -8,21 +8,32 @@ import java.util.Set;
 
 public class MetaDataEntry {
 
-  private String name;
-  private String type;
+  private String account; // can never be null or empty
+  private String application; // can be null but never empty
+  private String id; // can never be null or empty
+  private String type; // can never be null or empty
   private Map<String, String> textFields;
   private Map<String, byte[]> binaryFields;
 
-  public MetaDataEntry(String name, String type) {
-    if (name == null)
-      throw new IllegalArgumentException("name cannot be null");
-    if (name.isEmpty())
-      throw new IllegalArgumentException("name cannot be empty");
+  public MetaDataEntry(String account, String application,
+                       String type, String id) {
+    if (account == null)
+      throw new IllegalArgumentException("account cannot be null");
+    if (account.isEmpty())
+      throw new IllegalArgumentException("account cannot be empty");
+    if (id == null)
+      throw new IllegalArgumentException("id cannot be null");
+    if (id.isEmpty())
+      throw new IllegalArgumentException("id cannot be empty");
+    if (application != null && application.isEmpty())
+      throw new IllegalArgumentException("application cannot be empty");
     if (type == null)
       throw new IllegalArgumentException("type cannot be null");
     if (type.isEmpty())
       throw new IllegalArgumentException("type cannot be empty");
-    this.name = name;
+    this.account = account;
+    this.application = application;
+    this.id = id;
     this.type = type;
     this.textFields = Maps.newTreeMap();
     this.binaryFields = Maps.newTreeMap();
@@ -48,8 +59,16 @@ public class MetaDataEntry {
     this.binaryFields.put(field, value);
   }
 
-  public String getName() {
-    return this.name;
+  public String getAccount() {
+    return account;
+  }
+
+  public String getApplication() {
+    return application;
+  }
+
+  public String getId() {
+    return this.id;
   }
 
   public String getType() {
@@ -79,7 +98,11 @@ public class MetaDataEntry {
     if (this == o) return true;
     if (!(o instanceof MetaDataEntry)) return false;
     MetaDataEntry other = (MetaDataEntry)o;
-    if (!this.name.equals(other.name)) return false;
+    if (!this.account.equals(other.account)) return false;
+    if (this.application == null && other.application != null) return false;
+    if (this.application != null &&
+        !this.application.equals(other.application)) return false;
+    if (!this.id.equals(other.id)) return false;
     if (!this.type.equals(other.type)) return false;
     if (!this.textFields.equals(other.textFields)) return false;
     // can't use Map.equals for binary fields, because equals() doesn't work

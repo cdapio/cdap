@@ -11,23 +11,22 @@ public interface MetaDataStore {
   /** updates an entry, throws if an entry with that name does not exist */
   public void update(MetaDataEntry entry) throws MetaDataException;
 
-  /** get by name & type */
-  public MetaDataEntry get(String name, String type) throws MetaDataException;
-
   /** delete by name & type */
-  public void delete(String name, String type) throws MetaDataException;
+  public void delete(String account, String application,
+                     String type, String name)
+      throws MetaDataException;
+
+  /** get by name & type */
+  public MetaDataEntry get(String account, String application,
+                           String type, String name)
+      throws MetaDataException;
 
   /** list all entries of a given type */
-  public List<MetaDataEntry> list(String type) throws MetaDataException;
-
-  /** find all entries that match some given fields */
-  public List<MetaDataEntry> list(Map<String, String> fields)
+  public List<MetaDataEntry> list(String account, String application,
+                                  String type, Map<String, String> fields)
       throws MetaDataException;
 
-  /** find all entries of a given type that match some given fields */
-  public List<MetaDataEntry> list(String type, Map<String, String> fields)
+  /** delete all entries for an account or application */
+  public void clear(String account, String application)
       throws MetaDataException;
-
-  /** delete all entries */
-  public void clear() throws MetaDataException;
 }
