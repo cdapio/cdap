@@ -3,18 +3,7 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
@@ -96,7 +85,8 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(ReadKey read)
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey read)
       throws OperationException {
     initialize();
     requestMetric("ReadKey");
@@ -112,7 +102,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException {
     initialize();
     requestMetric("ReadAllKeys");
@@ -124,7 +115,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException {
     initialize();
     requestMetric("Read");
@@ -137,7 +129,8 @@ implements TransactionalOperationExecutor {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) throws OperationException {
+  execute(OperationContext context,
+          ReadColumnRange readColumnRange) throws OperationException {
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
@@ -151,7 +144,8 @@ implements TransactionalOperationExecutor {
   // Administrative calls
 
   @Override
-  public void execute(ClearFabric clearFabric) throws OperationException {
+  public void execute(OperationContext context,
+                      ClearFabric clearFabric) throws OperationException {
     initialize();
     requestMetric("ClearFabric");
     long begin = begin();
@@ -164,7 +158,8 @@ implements TransactionalOperationExecutor {
   // Write batches
 
   @Override
-  public void execute(List<WriteOperation> writes)
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes)
       throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
@@ -174,9 +169,10 @@ implements TransactionalOperationExecutor {
     end("WriteOperationBatch", begin);
   }
 
-  private void executeAsBatch(WriteOperation write)
+  private void executeAsBatch(OperationContext context,
+                              WriteOperation write)
       throws OperationException {
-    execute(Collections.singletonList(write));
+    execute(context, Collections.singletonList(write));
   }
 
   void execute(List<WriteOperation> writes,
@@ -396,7 +392,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue)
+  public DequeueResult execute(OperationContext context,
+                               QueueDequeue dequeue)
       throws OperationException {
     initialize();
     requestMetric("QueueDequeue");
@@ -429,7 +426,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public long execute(GetGroupID getGroupId)
+  public long execute(OperationContext context,
+                      GetGroupID getGroupId)
       throws OperationException {
     initialize();
     requestMetric("GetGroupID");
@@ -441,7 +439,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta)
+  public OperationResult<QueueMeta> execute(OperationContext context,
+                                            GetQueueMeta getQueueMeta)
       throws OperationException {
     initialize();
     requestMetric("GetQueueMeta");
@@ -494,33 +493,39 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void execute(Write write) throws OperationException {
-    executeAsBatch(write);
+  public void execute(OperationContext context,
+                      Write write) throws OperationException {
+    executeAsBatch(context, write);
   }
 
   @Override
-  public void execute(Delete delete) throws OperationException {
-    executeAsBatch(delete);
+  public void execute(OperationContext context,
+                      Delete delete) throws OperationException {
+    executeAsBatch(context, delete);
   }
 
   @Override
-  public void execute(Increment inc) throws OperationException {
-    executeAsBatch(inc);
+  public void execute(OperationContext context,
+                      Increment inc) throws OperationException {
+    executeAsBatch(context, inc);
   }
 
   @Override
-  public void execute(CompareAndSwap cas) throws OperationException {
-    executeAsBatch(cas);
+  public void execute(OperationContext context,
+                      CompareAndSwap cas) throws OperationException {
+    executeAsBatch(context, cas);
   }
 
   @Override
-  public void execute(QueueAck ack) throws OperationException {
-    executeAsBatch(ack);
+  public void execute(OperationContext context,
+                      QueueAck ack) throws OperationException {
+    executeAsBatch(context, ack);
   }
 
   @Override
-  public void execute(QueueEnqueue enqueue) throws OperationException {
-    executeAsBatch(enqueue);
+  public void execute(OperationContext context,
+                      QueueEnqueue enqueue) throws OperationException {
+    executeAsBatch(context, enqueue);
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {

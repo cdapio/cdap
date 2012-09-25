@@ -20,86 +20,101 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public void execute(List<WriteOperation> writes) throws OperationException {
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes) throws OperationException {
     // do nothing
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue) {
+  public DequeueResult execute(OperationContext context,
+                               QueueDequeue dequeue) {
     // pretend the queue is empty
     return new DequeueResult(DequeueResult.DequeueStatus.EMPTY);
   }
 
   @Override
-  public long execute(QueueAdmin.GetGroupID getGroupId) {
+  public long execute(OperationContext context,
+                      QueueAdmin.GetGroupID getGroupId) {
     return 0L;
   }
 
   @Override
   public OperationResult<QueueAdmin.QueueMeta>
-  execute(QueueAdmin.GetQueueMeta getQueueMeta) {
+  execute(OperationContext context,
+          QueueAdmin.GetQueueMeta getQueueMeta) {
     // pretend the queue does not exist
     return new OperationResult<QueueAdmin.QueueMeta>(
         StatusCode.QUEUE_NOT_FOUND);
   }
 
   @Override
-  public void execute(ClearFabric clearFabric) {
+  public void execute(OperationContext context,
+                      ClearFabric clearFabric) {
     // do nothing
   }
 
   @Override
-  public OperationResult<byte[]> execute(ReadKey read) throws OperationException {
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey read)
+      throws OperationException {
     // return empty result, key not found
     return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(Read read) {
+  public OperationResult<Map<byte[], byte[]>>
+  execute(OperationContext context, Read read) {
     // return empty result, key not found
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys) {
+  public OperationResult<List<byte[]>> execute(
+      OperationContext context, ReadAllKeys readKeys) {
     return new OperationResult<List<byte[]>>(StatusCode.KEY_NOT_FOUND);
 
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) {
+  execute(OperationContext context, ReadColumnRange readColumnRange) {
     // pretend the key does not exists
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
-  public void execute(Write write) throws OperationException {
+  public void execute(OperationContext context, Write write)
+      throws OperationException {
     // do nothing
   }
 
   @Override
-  public void execute(Delete delete) throws OperationException {
+  public void execute(OperationContext context,
+                      Delete delete) throws OperationException {
     // do nothing
   }
 
   @Override
-  public void execute(Increment inc) throws OperationException {
+  public void execute(OperationContext context,
+                      Increment inc) throws OperationException {
     // do nothing
   }
 
   @Override
-  public void execute(CompareAndSwap cas) throws OperationException {
+  public void execute(OperationContext context,
+                      CompareAndSwap cas) throws OperationException {
     // do nothing
   }
 
   @Override
-  public void execute(QueueEnqueue enqueue) {
+  public void execute(OperationContext context,
+                      QueueEnqueue enqueue) {
     // do nothing
   }
 
   @Override
-  public void execute(QueueAck ack) {
+  public void execute(OperationContext context,
+                      QueueAck ack) {
     // do nothing
   }
 }

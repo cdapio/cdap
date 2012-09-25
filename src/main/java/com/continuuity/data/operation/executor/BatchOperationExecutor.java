@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.WriteOperation;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 
 import java.util.List;
 
@@ -29,6 +29,7 @@ public interface BatchOperationExecutor {
    * @param writes list of write operations to execute as a batch
    * @throws OperationException if anything goes wrong
    */
-  public void execute(List<WriteOperation> writes)
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes)
       throws OperationException;
 }

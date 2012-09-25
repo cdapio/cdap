@@ -1,5 +1,6 @@
 package com.continuuity.data.metadata;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -14,7 +15,7 @@ public abstract class HyperSQLMetaDataStoreTest extends MetaDataStoreTest {
     Injector injector = Guice.createInjector (
         new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
-    opex.execute(new ClearFabric(true, true, true));
+    opex.execute(OperationContext.DEFAULT, new ClearFabric(true, true, true));
   }
 
 }

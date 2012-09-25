@@ -21,8 +21,8 @@ public interface TTQueue {
    * Inserts an entry into the tail of the queue using the specified write
    * version.
    * @param data the data to be inserted into the queue
-   * @param writeVersion
    * @return return code, and if success, the unique entryId of the queue entry
+   * @throws OperationException if unsuccessful
    */
   public EnqueueResult enqueue(byte [] data, long writeVersion)
       throws OperationException;
@@ -33,6 +33,7 @@ public interface TTQueue {
    * @param entryPointer entry id and shard id of enqueued entry to invalidate
    * @param writeVersion version entry was written with and version invalidated
    *                     entry will be written with
+   * @throws OperationException if unsuccessful
    */
   public void invalidate(QueueEntryPointer entryPointer, long writeVersion) throws OperationException;
 
@@ -40,10 +41,8 @@ public interface TTQueue {
    * Attempts to mark and return an entry from the queue for the specified
    * consumer from the specified group, according to the specified configuration
    * and read pointer.
-   * @param consumer
-   * @param config
-   * @param readPointer
    * @return dequeue result object
+   * @throws OperationException if unsuccessful
    */
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
       ReadPointer readPointer) throws OperationException;
@@ -51,10 +50,7 @@ public interface TTQueue {
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer
    * that is acknowledging is allowed to do so, false if not.
-   *
-   * @param entryPointer
-   * @param consumer
-   * @return true if successful, false if not
+   * @throws OperationException if unsuccessful
    */
   public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
       throws OperationException;
@@ -62,11 +58,9 @@ public interface TTQueue {
   /**
    * Finalizes an ack.
    *
-   * @param entryPointer
-   * @param consumer
    * @param totalNumGroups total number of groups to use when doing evict-on-ack
    *                       or -1 to disable
-   * @return true if successful, false if not
+   * @throws OperationException if unsuccessful
    */
   public void finalize(QueueEntryPointer entryPointer,
                        QueueConsumer consumer, int totalNumGroups) throws OperationException;
@@ -74,9 +68,7 @@ public interface TTQueue {
   /**
    * Unacknowledges a previously acknowledge ack.
    *
-   * @param entryPointer
-   * @param consumer
-   * @return true if successful, false if not
+   * @throws OperationException if unsuccessful
    */
   void unack(QueueEntryPointer entryPointer, QueueConsumer consumer) throws OperationException;
 

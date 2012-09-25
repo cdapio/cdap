@@ -19,7 +19,8 @@ public interface ReadOperationExecutor {
    *      and the status is COLUMN_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<byte[]> execute(ReadKey read)
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey read)
       throws OperationException;
 
   /**
@@ -30,7 +31,8 @@ public interface ReadOperationExecutor {
    *    status code is KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException;
 
   /**
@@ -41,7 +43,8 @@ public interface ReadOperationExecutor {
    * code will be KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException;
 
   /**
@@ -53,6 +56,6 @@ public interface ReadOperationExecutor {
    * then the result is empty with status code COLUMN_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) throws OperationException;
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+          ReadColumnRange readColumnRange) throws OperationException;
 }

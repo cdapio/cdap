@@ -167,87 +167,97 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void execute(final List<WriteOperation> writes)
+  public void execute(final OperationContext context,
+                      final List<WriteOperation> writes)
       throws OperationException {
     this.execute(
         new Operation<Boolean>("Batch") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws OperationException, TException {
-            client.execute(writes);
+            client.execute(context, writes);
             return true;
           }
         });
   }
 
   @Override
-  public DequeueResult execute(final QueueDequeue dequeue)
+  public DequeueResult execute(final OperationContext context,
+                               final QueueDequeue dequeue)
       throws OperationException {
     return this.execute(
         new Operation<DequeueResult>("Dequeue") {
           @Override
           public DequeueResult execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(dequeue);
+            return client.execute(context, dequeue);
           }
         });
   }
 
   @Override
-  public long execute(final QueueAdmin.GetGroupID getGroupID)
+  public long execute(final OperationContext context,
+                      final QueueAdmin.GetGroupID getGroupID)
       throws OperationException {
     return this.execute(
         new Operation<Long>("GetGroupID") {
           @Override
           public Long execute(OperationExecutorClient client)
               throws TException, OperationException {
-            return client.execute(getGroupID);
+            return client.execute(context, getGroupID);
           }
         });
   }
 
   @Override
   public OperationResult<QueueAdmin.QueueMeta>
-  execute(final QueueAdmin.GetQueueMeta getQM) throws OperationException {
+  execute(final OperationContext context,
+          final QueueAdmin.GetQueueMeta getQM)
+      throws OperationException {
     return this.execute(new Operation<
             OperationResult<QueueAdmin.QueueMeta>>("GetQueueMeta") {
           @Override
           public OperationResult<QueueAdmin.QueueMeta>
           execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(getQM);
+            return client.execute(context, getQM);
           }
         });
   }
 
   @Override
-  public void execute(final ClearFabric clearFabric) throws OperationException {
+  public void execute(final OperationContext context,
+                      final ClearFabric clearFabric)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("ClearFabric") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(clearFabric);
+            client.execute(context, clearFabric);
             return true;
           }
         });
   }
 
   @Override
-  public OperationResult<byte[]> execute(final ReadKey readKey)
+  public OperationResult<byte[]> execute(final OperationContext context,
+                                         final ReadKey readKey)
       throws OperationException {
     return this.execute(
         new Operation<OperationResult<byte[]>>("ReadKey") {
           @Override
           public OperationResult<byte[]> execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(readKey);
+            return client.execute(context, readKey);
           }
         });
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(final Read read)
+  public OperationResult<Map<byte[], byte[]>>
+  execute(final OperationContext context,
+          final Read read)
       throws OperationException {
     return this.execute(
         new Operation<OperationResult<Map<byte[],byte[]>>>("Read") {
@@ -255,13 +265,15 @@ public class RemoteOperationExecutor
           public OperationResult<Map<byte[], byte[]>>
           execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(read);
+            return client.execute(context, read);
           }
         });
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(final ReadAllKeys readAllKeys)
+  public OperationResult<List<byte[]>>
+  execute(final OperationContext context,
+          final ReadAllKeys readAllKeys)
       throws OperationException {
     return this.execute(
         new Operation<OperationResult<List<byte[]>>>("ReadAllKeys") {
@@ -269,14 +281,15 @@ public class RemoteOperationExecutor
           public OperationResult<List<byte[]>>
           execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(readAllKeys);
+            return client.execute(context, readAllKeys);
           }
         });
   }
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(final ReadColumnRange readColumnRange)
+  execute(final OperationContext context,
+          final ReadColumnRange readColumnRange)
       throws OperationException {
     return this.execute(new Operation<
             OperationResult<Map<byte[],byte[]>>>("ReadColumnRange") {
@@ -284,85 +297,96 @@ public class RemoteOperationExecutor
           public OperationResult<Map<byte[], byte[]>>
           execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(readColumnRange);
+            return client.execute(context, readColumnRange);
           }
         });
   }
 
   @Override
-  public void execute(final Write write) throws OperationException {
+  public void execute(final OperationContext context,
+                      final Write write)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("Write") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(write);
+            client.execute(context, write);
             return true;
           }
         });
   }
 
   @Override
-  public void execute(final Delete delete) throws OperationException {
+  public void execute(final OperationContext context,
+                      final Delete delete)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("Delete") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(delete);
+            client.execute(context, delete);
             return true;
           }
         });
   }
 
   @Override
-  public void execute(final Increment increment) throws OperationException {
+  public void execute(final OperationContext context,
+                      final Increment increment)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("Increment") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(increment);
+            client.execute(context, increment);
             return true;
           }
         });
   }
 
   @Override
-  public void execute(final CompareAndSwap compareAndSwap)
+  public void execute(final OperationContext context,
+                      final CompareAndSwap compareAndSwap)
       throws OperationException {
     this.execute(
         new Operation<Boolean>("CompareAndSwap") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(compareAndSwap);
+            client.execute(context, compareAndSwap);
             return true;
           }
         });
   }
 
   @Override
-  public void execute(final QueueEnqueue enqueue) throws OperationException {
+  public void execute(final OperationContext context,
+                      final QueueEnqueue enqueue)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("Enqueue") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(enqueue);
+            client.execute(context, enqueue);
             return true;
           }
         });
   }
 
   @Override
-  public void execute(final QueueAck ack) throws OperationException {
+  public void execute(final OperationContext context,
+                      final QueueAck ack)
+      throws OperationException {
     this.execute(
         new Operation<Boolean>("Ack") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
-            client.execute(ack);
+            client.execute(context, ack);
             return true;
           }
         });

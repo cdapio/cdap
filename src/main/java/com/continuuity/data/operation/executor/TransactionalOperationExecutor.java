@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.WriteOperation;
-import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 
 import java.util.List;
 
@@ -25,7 +25,8 @@ public interface TransactionalOperationExecutor extends OperationExecutor {
    * @throws TransactionException
    */
   @Override
-  public void execute(List<WriteOperation> writes)
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes)
       throws OperationException;
 
 }

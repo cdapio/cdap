@@ -137,16 +137,19 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public void add(MetaDataEntry entry) throws MetaDataException {
-    write(entry, false);
+  public void add(OperationContext context,
+                  MetaDataEntry entry) throws MetaDataException {
+    write(context, entry, false);
   }
 
   @Override
-  public void update(MetaDataEntry entry) throws MetaDataException {
-    write(entry, true);
+  public void update(OperationContext context,
+                     MetaDataEntry entry) throws MetaDataException {
+    write(context, entry, true);
   }
 
-  private void write(MetaDataEntry entry, boolean isUpdate)
+  private void write(OperationContext context,
+                     MetaDataEntry entry, boolean isUpdate)
       throws MetaDataException {
 
     if (entry == null)
@@ -159,7 +162,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     OperationResult<Map<byte[], byte[]>> result;
     try {
       Read read = new Read(rowkey, column);
-      result = opex.execute(read);
+      result = opex.execute(context, read);
     } catch (OperationException e) {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
@@ -178,7 +181,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     Write write = new Write(rowkey, column, bytes);
 
     try {
-      opex.execute(write);
+      opex.execute(context, write);
     } catch (OperationException e) {
       String message =
           String.format("Error writing meta data: %s", e.getMessage());
@@ -188,7 +191,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public MetaDataEntry get(String account, String application,
+  public MetaDataEntry get(OperationContext context,
+                           String account, String application,
                            String type, String id) throws MetaDataException {
 
     if (account == null)
@@ -211,7 +215,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
     try {
       Read read = new Read(rowkey, column);
-      OperationResult<Map<byte[], byte[]>> result = opex.execute(read);
+      OperationResult<Map<byte[], byte[]>> result =
+          opex.execute(context, read);
 
       if (result.isEmpty()) return null;
 
@@ -229,7 +234,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public void delete(String account, String application,
+  public void delete(OperationContext context,
+                     String account, String application,
                      String type, String id) throws MetaDataException {
 
     if (account == null)
@@ -251,7 +257,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     byte[] column = makeColumnKey(application, type, id);
 
     try {
-      opex.execute(new Delete(rowkey, column));
+      opex.execute(context, new Delete(rowkey, column));
 
     } catch (OperationException e) {
       String message =
@@ -262,7 +268,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public List<MetaDataEntry> list(String account, String application,
+  public List<MetaDataEntry> list(OperationContext context,
+                                  String account, String application,
                                   String type, Map<String, String> fields)
       throws MetaDataException {
     try {
@@ -281,7 +288,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       byte[] start = startColumnKey(application, type);
       byte[] stop = stopColumnKey(application, type);
       ReadColumnRange read = new ReadColumnRange(rowkey, start, stop);
-      OperationResult<Map<byte[],byte[]>> result = opex.execute(read);
+      OperationResult<Map<byte[],byte[]>> result = opex.execute(context, read);
 
       if (result.isEmpty())
         return Collections.emptyList();
@@ -326,7 +333,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
-  public void clear(String account, String application)
+  public void clear(OperationContext context,
+                    String account, String application)
       throws MetaDataException {
 
     if (account == null)
@@ -340,7 +348,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     ReadColumnRange read = new ReadColumnRange(rowkey, null, null);
     OperationResult<Map<byte[], byte[]>> result;
     try {
-      result = opex.execute(read);
+      result = opex.execute(context, read);
     } catch (OperationException e) {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
@@ -363,7 +371,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
     Delete delete = new Delete(rowkey, columns);
     try {
-      opex.execute(delete);
+      opex.execute(context, delete);
     } catch (OperationException e) {
       String message =
           String.format("Error clearing meta data: %s", e.getMessage());

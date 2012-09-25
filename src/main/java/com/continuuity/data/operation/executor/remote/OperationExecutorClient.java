@@ -62,7 +62,8 @@ public class OperationExecutorClient extends ConverterUtils {
       this.transport.close();
   }
 
-  public void execute(List<WriteOperation> writes)
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes)
       throws OperationException, TException {
 
     MetricsHelper helper = newHelper(
@@ -71,6 +72,8 @@ public class OperationExecutorClient extends ConverterUtils {
 
     if (Log.isDebugEnabled())
       Log.debug("Received Batch of " + writes.size() + "WriteOperations: ");
+
+    TOperationContext tcontext = wrap(context);
 
     List<TWriteOperation> tWrites = Lists.newArrayList();
     for (WriteOperation writeOp : writes) {
@@ -98,7 +101,7 @@ public class OperationExecutorClient extends ConverterUtils {
     }
     try {
       if (Log.isDebugEnabled()) Log.debug("Sending Batch.");
-      client.batch(tWrites);
+      client.batch(tcontext, tWrites);
       if (Log.isDebugEnabled()) Log.debug("Batch successful.");
       helper.success();
 
@@ -112,7 +115,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public DequeueResult execute(QueueDequeue dequeue)
+  public DequeueResult execute(OperationContext context,
+                               QueueDequeue dequeue)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
@@ -121,9 +125,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received " + dequeue);
+      TOperationContext tcontext = wrap(context);
       TQueueDequeue tDequeue = wrap(dequeue);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tDequeue);
-      TDequeueResult tDequeueResult = client.dequeue(tDequeue);
+      TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
       if (Log.isDebugEnabled()) Log.debug("TDequeue successful.");
       DequeueResult dequeueResult = unwrap(tDequeueResult);
       helper.success();
@@ -139,7 +144,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public long execute(QueueAdmin.GetGroupID getGroupId)
+  public long execute(OperationContext context,
+                      QueueAdmin.GetGroupID getGroupId)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
@@ -148,9 +154,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received " + getGroupId);
+      TOperationContext tcontext = wrap(context);
       TGetGroupId tGetGroupId = wrap(getGroupId);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tGetGroupId);
-      long result = client.getGroupId(tGetGroupId);
+      long result = client.getGroupId(tcontext, tGetGroupId);
       if (Log.isDebugEnabled()) Log.debug("Result of TGetGroupId: " + result);
       helper.success();
       return result;
@@ -166,19 +173,20 @@ public class OperationExecutorClient extends ConverterUtils {
   }
 
   public OperationResult<QueueAdmin.QueueMeta>
-  execute(QueueAdmin.GetQueueMeta getQueueMeta)
+  execute(OperationContext context,
+          QueueAdmin.GetQueueMeta getQueueMeta)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_GETQUEUEMETA_REQUESTS,
         Constants.METRIC_GETQUEUEMETA_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received " + getQueueMeta);
-
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + getQueueMeta);
+      TOperationContext tcontext = wrap(context);
       TGetQueueMeta tGetQueueMeta = wrap(getQueueMeta);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tGetQueueMeta);
-      TQueueMeta tQueueMeta = client.getQueueMeta(tGetQueueMeta);
+      TQueueMeta tQueueMeta = client.getQueueMeta(tcontext, tGetQueueMeta);
       if (Log.isDebugEnabled()) Log.debug("TGetQueueMeta successful.");
       OperationResult<QueueAdmin.QueueMeta> queueMeta = unwrap(tQueueMeta);
       helper.success();
@@ -194,19 +202,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(ClearFabric clearFabric)
+  public void execute(OperationContext context,
+                      ClearFabric clearFabric)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_CLEARFABRIC_REQUESTS,
         Constants.METRIC_CLEARFABRIC_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received " + clearFabric);
-
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + clearFabric);
+      TOperationContext tcontext = wrap(context);
       TClearFabric tClearFabric = wrap(clearFabric);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tClearFabric);
-      client.clearFabric(tClearFabric);
+      client.clearFabric(tcontext, tClearFabric);
       if (Log.isDebugEnabled()) Log.debug("ClearFabric successful.");
       helper.success();
 
@@ -220,19 +229,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<byte[]> execute(ReadKey readKey)
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey readKey)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READKEY_REQUESTS,
         Constants.METRIC_READKEY_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received " + readKey);
-
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + readKey);
+      TOperationContext tcontext = wrap(context);
       TReadKey tReadKey = wrap(readKey);
       if (Log.isDebugEnabled()) Log.debug("Sending TReadKey" + tReadKey);
-      TOptionalBinary tResult = client.readKey(tReadKey);
+      TOptionalBinary tResult = client.readKey(tcontext, tReadKey);
       if (Log.isDebugEnabled()) Log.debug("TReadKey successful.");
       OperationResult<byte[]> result = unwrap(tResult);
       helper.success();
@@ -248,19 +258,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException, TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READ_REQUESTS,
         Constants.METRIC_READ_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received " + read);
-
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + read);
+      TOperationContext tcontext = wrap(context);
       TRead tRead = wrap(read);
       if (Log.isDebugEnabled()) Log.debug("Sending TRead." + tRead);
-      TOptionalBinaryMap tResult = client.read(tRead);
+      TOptionalBinaryMap tResult = client.read(tcontext, tRead);
       if (Log.isDebugEnabled()) Log.debug("TRead successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
       helper.success();
@@ -276,18 +287,20 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException, TException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READALLKEYS_REQUESTS,
         Constants.METRIC_READALLKEYS_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received " + readKeys);
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + readKeys);
+      TOperationContext tcontext = wrap(context);
       TReadAllKeys tReadAllKeys = wrap(readKeys);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tReadAllKeys);
-      TOptionalBinaryList tResult = client.readAllKeys(tReadAllKeys);
+      TOptionalBinaryList tResult = client.readAllKeys(tcontext, tReadAllKeys);
       if (Log.isDebugEnabled()) Log.debug("TReadAllKeys successful.");
       OperationResult<List<byte[]>> result = unwrap(tResult);
       helper.success();
@@ -304,19 +317,21 @@ public class OperationExecutorClient extends ConverterUtils {
   }
 
   public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange)
+  execute(OperationContext context,
+          ReadColumnRange readColumnRange)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_READCOLUMNRANGE_REQUESTS,
         Constants.METRIC_READCOLUMNRANGE_LATENCY);
 
-    if (Log.isDebugEnabled()) Log.debug("Received ReadColumnRange.");
-
     try {
+      if (Log.isDebugEnabled()) Log.debug("Received ReadColumnRange.");
+      TOperationContext tcontext = wrap(context);
       TReadColumnRange tReadColumnRange = wrap(readColumnRange);
       if (Log.isDebugEnabled()) Log.debug("Sending TReadColumnRange.");
-      TOptionalBinaryMap tResult = client.readColumnRange(tReadColumnRange);
+      TOptionalBinaryMap tResult =
+          client.readColumnRange(tcontext, tReadColumnRange);
       if (Log.isDebugEnabled()) Log.debug("TReadColumnRange successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
       helper.success();
@@ -332,7 +347,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(Write write) throws TException, OperationException {
+  public void execute(OperationContext context,
+                      Write write) throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_WRITE_REQUESTS,
@@ -340,9 +356,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received Write.");
+      TOperationContext tcontext = wrap(context);
       TWrite tWrite = wrap(write);
       if (Log.isDebugEnabled()) Log.debug("Sending TWrite.");
-      client.write(tWrite);
+      client.write(tcontext, tWrite);
       if (Log.isDebugEnabled()) Log.debug("TWrite successful.");
       helper.success();
 
@@ -356,7 +373,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(Delete delete) throws TException, OperationException {
+  public void execute(OperationContext context,
+                      Delete delete) throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_DELETE_REQUESTS,
@@ -364,9 +382,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received Delete.");
+      TOperationContext tcontext = wrap(context);
       TDelete tDelete = wrap(delete);
       if (Log.isDebugEnabled()) Log.debug("Sending TDelete.");
-      client.delet(tDelete);
+      client.delet(tcontext, tDelete);
       if (Log.isDebugEnabled()) Log.debug("TDelete successful.");
       helper.success();
 
@@ -380,7 +399,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(Increment increment)
+  public void execute(OperationContext context,
+                      Increment increment)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
@@ -389,9 +409,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received Increment.");
+      TOperationContext tcontext = wrap(context);
       TIncrement tIncrement = wrap(increment);
       if (Log.isDebugEnabled()) Log.debug("Sending TIncrement.");
-      client.increment(tIncrement);
+      client.increment(tcontext, tIncrement);
       if (Log.isDebugEnabled()) Log.debug("TIncrement successful.");
       helper.success();
 
@@ -405,7 +426,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(CompareAndSwap compareAndSwap)
+  public void execute(OperationContext context,
+                      CompareAndSwap compareAndSwap)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
@@ -414,9 +436,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received CompareAndSwap.");
+      TOperationContext tcontext = wrap(context);
       TCompareAndSwap tCompareAndSwap = wrap(compareAndSwap);
       if (Log.isDebugEnabled()) Log.debug("Sending TCompareAndSwap.");
-      client.compareAndSwap(tCompareAndSwap);
+      client.compareAndSwap(tcontext, tCompareAndSwap);
       if (Log.isDebugEnabled()) Log.debug("TCompareAndSwap successful.");
       helper.success();
 
@@ -430,7 +453,8 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(QueueEnqueue enqueue)
+  public void execute(OperationContext context,
+                      QueueEnqueue enqueue)
       throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
@@ -439,9 +463,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received Enqueue.");
+      TOperationContext tcontext = wrap(context);
       TQueueEnqueue tQueueEnqueue = wrap(enqueue);
       if (Log.isDebugEnabled()) Log.debug("Sending TQueueEnqueue.");
-      client.queueEnqueue(tQueueEnqueue);
+      client.queueEnqueue(tcontext, tQueueEnqueue);
       if (Log.isDebugEnabled()) Log.debug("TQueueEnqueue successful.");
       helper.success();
 
@@ -455,7 +480,9 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public void execute(QueueAck ack) throws TException, OperationException {
+  public void execute(OperationContext context,
+                      QueueAck ack)
+      throws TException, OperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_ACK_REQUESTS,
@@ -463,9 +490,10 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received " + ack);
+      TOperationContext tcontext = wrap(context);
       TQueueAck tQueueAck = wrap(ack);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tQueueAck);
-      client.queueAck(tQueueAck);
+      client.queueAck(tcontext, tQueueAck);
       if (Log.isDebugEnabled()) Log.debug("TQueueAck successful.");
       helper.success();
 

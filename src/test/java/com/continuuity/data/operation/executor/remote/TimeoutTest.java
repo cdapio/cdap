@@ -12,6 +12,8 @@ import java.util.List;
 
 public class TimeoutTest extends OpexServiceTestBase {
 
+  static OperationContext context = OperationContext.DEFAULT;
+
   @BeforeClass
   public static void startService() throws Exception {
     CConfiguration config = CConfiguration.create();
@@ -25,27 +27,30 @@ public class TimeoutTest extends OpexServiceTestBase {
             return "noop(sleep on write)";
           }
           @Override
-          public void execute(Write write) throws OperationException {
+          public void execute(OperationContext context,
+                              Write write) throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
-            super.execute(write);
+            super.execute(context, write);
           }
           @Override
-          public void execute(List<WriteOperation> batch)
-              throws OperationException {
+          public void execute(OperationContext context,
+                              List<WriteOperation> batch)
+          throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
               // do nothing
             }
-            super.execute(batch);
+            super.execute(context, batch);
           }
           int readCount = 0;
           @Override
-          public OperationResult<byte[]> execute(ReadKey read)
+          public OperationResult<byte[]> execute(
+              OperationContext context, ReadKey read)
               throws OperationException {
             if (++readCount < 3) {
               try {
@@ -53,7 +58,7 @@ public class TimeoutTest extends OpexServiceTestBase {
               } catch (InterruptedException e) {
                 // do nothing
               }
-              return super.execute(read);
+              return super.execute(context, read);
             } else {
               return new OperationResult<byte[]>(
                   new byte[] { (byte)readCount });
@@ -69,7 +74,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @Test(expected = OperationException.class)
   public void testThriftTimeout() throws OperationException {
     Write write = new Write("x".getBytes(), "1".getBytes());
-    remote.execute(write);
+    remote.execute(context, write);
   }
 
   /**
@@ -81,7 +86,7 @@ public class TimeoutTest extends OpexServiceTestBase {
     List<WriteOperation> batch = Lists.newArrayList();
     Write write = new Write("x".getBytes(), "1".getBytes());
     batch.add(write);
-    remote.execute(batch);
+    remote.execute(context, batch);
   }
 
   /**
@@ -90,6 +95,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @Test
   public void testRetry() throws OperationException {
     ReadKey read = new ReadKey("x".getBytes());
-    Assert.assertArrayEquals(new byte[] { 3 }, remote.execute(read).getValue());
+    Assert.assertArrayEquals(new byte[] { 3 },
+        remote.execute(context, read).getValue());
   }
 }
