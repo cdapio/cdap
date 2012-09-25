@@ -17,7 +17,7 @@ public class WriteBenchmark extends OpexBenchmark {
     Write write = new Write(key, value);
 
     try {
-      opex.execute(write);
+      opex.execute(opContext, write);
     } catch (OperationException e) {
       throw new BenchmarkException(
           "Operation " + write + " failed: " + e.getMessage());

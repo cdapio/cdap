@@ -1,5 +1,6 @@
 package com.continuuity.performance.opex;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -11,6 +12,7 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
 
   OpexProvider opexProvider;
   OperationExecutor opex;
+  OperationContext opContext = OperationContext.DEFAULT;
 
   @Override
   public Map<String, String> usage() {

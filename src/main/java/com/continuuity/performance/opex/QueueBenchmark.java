@@ -68,7 +68,7 @@ public class QueueBenchmark extends OpexBenchmark {
     byte[] value = Bytes.toBytes(iteration);
     QueueEnqueue enqueue = new QueueEnqueue(queueBytes, value);
     try {
-      opex.execute(enqueue);
+      opex.execute(opContext, enqueue);
     } catch (OperationException e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
@@ -86,7 +86,7 @@ public class QueueBenchmark extends OpexBenchmark {
     // first dequeue
     DequeueResult result;
     try {
-      result = opex.execute(dequeue);
+      result = opex.execute(opContext, dequeue);
     } catch (OperationException e) {
       Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
@@ -107,7 +107,7 @@ public class QueueBenchmark extends OpexBenchmark {
     // execute the ack operation
     if (ackToExecute != null) {
       try {
-        opex.execute(ackToExecute);
+        opex.execute(opContext, ackToExecute);
       } catch (OperationException e) {
         Log.error("Operation " + dequeue + " failed: " + e.getMessage() +
             "(Ignoring this error)", e);
@@ -137,7 +137,7 @@ public class QueueBenchmark extends OpexBenchmark {
     for (List<QueueAck> pending : pendingAcks) {
       for (QueueAck ack : pending) {
         try {
-          opex.execute(ack);
+          opex.execute(opContext, ack);
         } catch (OperationException e) {
           // ignore success or failure
         }
