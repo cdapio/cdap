@@ -1,10 +1,11 @@
 <configuration debug="true">
     <appender name="loggly" class="com.continuuity.log.appender.loggly.LogglyAppender">
-        <layout>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </layout>
+
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="com.continuuity.log.appender.loggly.LogglyJsonLayout"/>
+        </encoder>
         <queueSize>3</queueSize>
-        <endpoint>https://logs.loggly.com/inputs/541e8e4f-3bf2-4f05-8079-a73a29bd6368</endpoint>
+        <endpoint>https://logs.loggly.com/inputs/71888287-15b4-440f-bbef-07e4649260f6</endpoint>
     </appender>
 
     <root level="ALL">

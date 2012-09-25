@@ -35,9 +35,10 @@ public class LogglyAppenderTest {
     final JoranConfigurator configurator = new JoranConfigurator();
     configurator.setContext(this.context);
     configurator.doConfigure(new File(url.getFile()));
-    final Logger root = context.getLogger(getClass());
-    root.error("Message 1");
-    root.error("Message 2");
-    root.error("Message 3");
+    final Logger log = context.getLogger(getClass());
+    log.error("Message 1");
+    log.error("Message 2");
+    log.error("Message 3");
+    Thread.sleep(10000);
   }
 }

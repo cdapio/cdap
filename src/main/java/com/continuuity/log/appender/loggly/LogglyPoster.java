@@ -91,8 +91,8 @@ public final class LogglyPoster extends Thread {
           if (dir == 0) {
             dir = -1;
           }
-          Log.debug("Sleeping for {} milliseconds.",
-                    (timeoutInMillis + (dir * thresholdOffset)));
+          Log.debug("Sleeping for {} milliseconds.", (timeoutInMillis + (dir
+            * thresholdOffset)));
           Thread.sleep(timeoutInMillis + (dir * thresholdOffset));
         } catch (InterruptedException ie) {
           Thread.currentThread().interrupt();

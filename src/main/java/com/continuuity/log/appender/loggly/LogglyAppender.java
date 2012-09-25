@@ -18,7 +18,8 @@ public final class LogglyAppender extends AppenderBase<ILoggingEvent> {
 
   @Override
   protected void append(final ILoggingEvent event) {
-    this.queue.enqueue(this.layout.doLayout(event));
+    String logMsg = layout.doLayout(event);
+    this.queue.enqueue(logMsg);
   }
 
   @Override
