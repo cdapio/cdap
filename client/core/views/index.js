@@ -1,7 +1,7 @@
 
 define(['views/dashboard', 'views/app', 'views/flows',
-	'views/flow', 'views/flowlet', 
-	'views/payload', 'views/visualizer', 'views/dagnode', 
+	'views/flow', 'views/flowlet',
+	'views/payload', 'views/visualizer', 'views/dagnode',
 	'views/modal', 'views/informer', 'views/sparkline'],
 	function (D, A, Fs, F, Fl, Pl, Vz, Dn, M, I, S) {
 		return {

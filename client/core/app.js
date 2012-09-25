@@ -150,7 +150,7 @@ function(Models, Views, Controllers){
 							
 						this.p.attr("d", line(data));
 					}
-				}
+				};
 			}
 		},
 		Mdl: Models,

@@ -20,12 +20,13 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					connectOutlets: function (router, context) {
 
 						router.transitionTo('flows');
-						return;
-
+						
+						/*
 						router.get('applicationController').connectOutlet({
 							viewClass: C.Vw.Dash,
 							controller: C.Ctl.Dash
 						});
+						*/
 					}
 				}),
 				apps: Ember.Route.extend({

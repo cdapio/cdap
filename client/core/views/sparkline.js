@@ -47,7 +47,7 @@ define([
 					for (var i = 0; content.length; i ++) {
 						if (content[i].get('flowId') === flowId) {
 
-							if (!type in content[i].ts) {
+							if (!(type in content[i].ts)) {
 								content[i].ts[type] = [];
 							}
 							this.set('model', content[i]);

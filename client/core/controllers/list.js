@@ -78,7 +78,7 @@ define([], function () {
 					var j = c.length;
 					while(j--) {
 
-						if(c[j].get('flowId') == params) {
+						if(c[j].get('flowId') === params) {
 							c[j].set('ts', {'processed.count': data});
 							c[j].set('lastProcessed', data[data.length-1]);
 							c[j].set('instances', 3);
