@@ -229,8 +229,6 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         );
         builder.setUrl(libratoUrl);
 
-        Log.debug("Librato request {}", builder.toString());
-
         client.executeRequest(builder.build(),
                               new AsyncCompletionHandler<Response>() {
           @Override

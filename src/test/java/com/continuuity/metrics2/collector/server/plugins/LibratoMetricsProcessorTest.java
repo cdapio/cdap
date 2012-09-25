@@ -79,6 +79,7 @@ public class LibratoMetricsProcessorTest {
       Thread.sleep(1000);
     }
 
+    Thread.sleep(10000);
     Assert.assertThat(handler.getFailed(), CoreMatchers.is(0));
     Assert.assertThat(handler.getSuccess(), CoreMatchers.is(20));
   }
