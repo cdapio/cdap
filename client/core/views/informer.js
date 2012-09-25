@@ -26,7 +26,7 @@ define([], function () {
 
 				setTimeout(function () {
 
-					var el = App.Views.Informer.queue.shift();
+					var el = C.Vw.Informer.queue.shift();
 
 					el.animate({
 						opacity: 0,

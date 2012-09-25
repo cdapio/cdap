@@ -14,20 +14,36 @@
 	<div class="info-box health-box"></div>
 </div>
 
-<div id="informer"></div>
-
-<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
-
 <div id="panels">
 	<div class="panel">
-		<div id="object-list">
-			{{#if App.Controllers.Flows.length}}
-				{{view App.Context.Views.FlowList}}
+			{{#if controller.content.length}}
+				<table class="table">
+				<thead>
+					<th>&nbsp;</th>
+					<th style="width: 32px;">Instances</th>
+					<th colspan="2">Total Processed</th>
+					<th style="width: 300px;" colspan="2">Busyness</th>
+				</thead>
+				{{#each controller tagName="tbody"}}
+				<tr>
+					<td>
+						<div class="list-health-box"></div>
+						<div class="list-health-boxed">
+							<a {{bindAttr href="href"}}><strong>{{flowId}}</strong><br />{{currentState}}</a>
+						</div>
+					</td>
+					<td><div class="info-box sparkline-value" style="height:32px;padding-top:18px;"><strong>{{instances}}</strong></div></td>
+					<td style="width: 250px;" class="blue">{{view C.Vw.Sparkline flowId=flowId height="50" type="processed"}}</td>
+					<td style="width: 50px;"><div class="info-box sparkline-value" style="height:32px;padding-top:18px;"><strong>{{lastProcessed}}</strong><br />tuples/sec</div></td>
+					<td style="width: 250px;" class="blue">{{view C.Vw.Sparkline flowId=flowId height="50" type="busyness"}}</td>
+					<td style="width: 50px;"><div class="info-box sparkline-value" style="height:32px;padding-top:18px;"><strong>{{lastProcessed}}</strong><br />tuples/sec</div></td>
+				</tr>
+				{{/each}}
+				</table>
 			{{else}}
 				<div class="object-list-empty">
 					No flows are currently deployed. Drag-and-drop or browse for a file above.
 				</div>
 			{{/if}}
-		</div>
 	</div>
 </div>

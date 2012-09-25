@@ -14,7 +14,7 @@ require.config({
 
 define(['core/models/index', 'core/views/index', 'core/controllers/index'],
 function(Models, Views, Controllers){
-	
+
 	$.timeago = $.timeago || function () {};
     $.timeago.settings.strings.seconds = '%d seconds';
     $.timeago.settings.strings.minute = 'About a minute';
@@ -41,9 +41,12 @@ function(Models, Views, Controllers){
 
     window.ENV = {};
 
-	console.log('Application loaded.');
-
-	var App = window.App = Ember.Application.create({
+	var C = window.C = Ember.Application.create({
+		debug: function (message) {
+			if (!window.ENV.production) {
+				console.debug(message);
+			}
+		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
 				name: "Don"
@@ -51,20 +54,21 @@ function(Models, Views, Controllers){
 			breadcrumbs: Em.ArrayProxy.create({
 				content: function () {
 					var path;
-					if (App) {
-						path = App.router.location.location.hash.split('/');
+					if (C) {
+						path = C.router.location.location.hash.split('/');
 					} else {
 						path = window.location.hash.split('/');
 					}
-
-					console.log(path);
 
 					var crumbs = [];
 					var href = ['#'];
 
 					var names = {
-						'flows': 'Dashboard',
-						'upload': 'Upload'
+						'flows': 'Flows',
+						'upload': 'Upload',
+						'apps': 'Applications',
+						'streams': 'Streams',
+						'datas': 'Data Sets'
 					};
 
 					for (var i = 1; i < path.length; i ++) {
@@ -76,7 +80,7 @@ function(Models, Views, Controllers){
 					}
 					console.log('RETURNING', crumbs);
 					return crumbs;
-				}.property('App.router.currentState')
+				}.property('C.router.currentState.name')
 			})
 		}),
 		ApplicationView: Ember.View.extend({
@@ -85,7 +89,7 @@ function(Models, Views, Controllers){
 		}),
 		interstitial: {
 			show: function () {
-				$('#interstitial').fadeIn();//show();
+				$('#interstitial').show();
 				return this;
 			},
 			hide: function () {
@@ -104,7 +108,7 @@ function(Models, Views, Controllers){
 		},
 		ready: function () {
 
-			console.log('Application ready.');
+			C.debug('Application ready.');
 
 		},
 		util: {
@@ -129,11 +133,29 @@ function(Models, Views, Controllers){
 					.style("fill", "#000")
 					.style("stroke", "#000")
 					.style("stroke-width", "2px");
+
+				return {
+					p: p,
+					update: function (data) {
+
+						var max = d3.max(data) || 10;
+						var min = d3.min(data) || -10;
+
+						var y = d3.scale.linear().domain([max + 50, min - 50]).range([0 - m, h + m]),
+							x = d3.scale.linear().domain([0, data.length]).range([0 - m, w + m]);
+
+						var line = d3.svg.line().interpolate("basis")
+							.x(function(d,i) { return x(i); })
+							.y(function(d) { return y(d); });
+							
+						this.p.attr("d", line(data));
+					}
+				}
 			}
 		},
-		Models: Models,
-		Views: Views,
-		Controllers: Controllers
+		Mdl: Models,
+		Vw: Views,
+		Ctl: Controllers
 	});
 
 	function connected (env) {
@@ -143,31 +165,31 @@ function(Models, Views, Controllers){
 
 		// This function is called when the socket is (re)connected.
 
-		if (!App.initialized) {
+		if (!C.initialized) {
 
-			console.log('Application connected.');
+			C.debug('Application connected.');
 			
 			// Hack: Keep timestamps updated.
 			var trigger = 0;
 			setInterval( function () {
 				trigger++;
-				App.Controllers.Flows.forEach(function (model) {
+				C.Ctl.Flows.forEach(function (model) {
 					model.set('timeTrigger', trigger);
 				});
-				if (App.Controllers.Flow.current) {
-					App.Controllers.Flow.history.forEach(function (model) {
+				if (C.Ctl.Flow.current) {
+					C.Ctl.Flow.history.forEach(function (model) {
 						model.set('timeTrigger', trigger);
 					});
 				}
 			}, 5000);
 
-			App.initialized = true;
-			console.log('Application initialized.');
+			C.initialized = true;
+			C.debug('Application initialized.');
 
 		} else {
 
 			// Reconnected.
-			App.interstitial.hide();
+			C.interstitial.hide();
 
 		}
 	}
@@ -189,7 +211,7 @@ function(Models, Views, Controllers){
 			}
 			message = message.message;
 		}
-		App.interstitial.label(message).show();
+		C.interstitial.label(message).show();
 		
 	}
 
@@ -197,20 +219,25 @@ function(Models, Views, Controllers){
 	var pending = {};
 	var current_id = 0;
 
-	App.socket = socket;
+	C.socket = socket;
 
 	$.extend(socket, {
-		request: function (service, request, response) {
+		request: function (service, request, response, params) {
 			request.id = current_id ++;
-			pending[request.id] = response;
+			pending[request.id] = [response, params];
 			this.emit(service, request);
 		}
 	});
 
+	C.get = function () {
+		C.socket.request.apply(C.socket, arguments);
+	};
+
 	socket.on('exec', function (error, response) {
 		
-		if (typeof pending[response.id] === 'function') {
-			pending[response.id](error, response);
+		if (pending[response.id] &&
+			typeof pending[response.id][0] === 'function') {
+			pending[response.id][0](error, response, pending[response.id][1]);
 			delete pending[response.id];
 		}
 
@@ -219,7 +246,7 @@ function(Models, Views, Controllers){
 		error(failure);
 	});
 	socket.on('upload', function (response) {
-		App.Controllers.Upload.update(response);
+		C.Ctl.Upload.update(response);
 	});
 	socket.on('connect', function () {
 
@@ -241,13 +268,12 @@ function(Models, Views, Controllers){
 		error('Reconnecting. Attempt ' + attempt + '.', arguments);
 	});
 
-
 	// Some templates depend on specific views.
 	// Compile templates once all views are loaded.
-	App.Views.Flowlet.compile();
+	C.Vw.Flowlet.compile();
 				
-	console.log('Models, Views, Controllers loaded and assigned.');
+	C.debug('Models, Views, Controllers loaded and assigned.');
 
-	return App;
+	return C;
 
 });

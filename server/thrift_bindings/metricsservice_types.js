@@ -5,6 +5,13 @@
 //
 var Thrift = require('thrift').Thrift;
 var ttypes = module.exports = {};
+ttypes.MetricTimeseriesLevel = {
+'ACCOUNT_LEVEL' : 1,
+'APPLICATION_LEVEL' : 2,
+'FLOW_LEVEL' : 3,
+'FLOWLET_LEVEL' : 4,
+'RUNID_LEVEL' : 5
+};
 var Counter = module.exports.Counter = function(args) {
   this.qualifier = null;
   this.name = null;
@@ -147,6 +154,7 @@ var FlowArgument = module.exports.FlowArgument = function(args) {
   this.accountId = null;
   this.applicationId = null;
   this.flowId = null;
+  this.runId = null;
   this.flowletId = null;
   this.instanceId = null;
   if (args) {
@@ -158,6 +166,9 @@ var FlowArgument = module.exports.FlowArgument = function(args) {
     }
     if (args.flowId !== undefined) {
       this.flowId = args.flowId;
+    }
+    if (args.runId !== undefined) {
+      this.runId = args.runId;
     }
     if (args.flowletId !== undefined) {
       this.flowletId = args.flowletId;
@@ -204,12 +215,19 @@ FlowArgument.prototype.read = function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.STRING) {
-        this.flowletId = input.readString();
+        this.runId = input.readString();
       } else {
         input.skip(ftype);
       }
       break;
       case 5:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowletId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 6:
       if (ftype == Thrift.Type.I32) {
         this.instanceId = input.readI32();
       } else {
@@ -242,13 +260,18 @@ FlowArgument.prototype.write = function(output) {
     output.writeString(this.flowId);
     output.writeFieldEnd();
   }
+  if (this.runId) {
+    output.writeFieldBegin('runId', Thrift.Type.STRING, 4);
+    output.writeString(this.runId);
+    output.writeFieldEnd();
+  }
   if (this.flowletId) {
-    output.writeFieldBegin('flowletId', Thrift.Type.STRING, 4);
+    output.writeFieldBegin('flowletId', Thrift.Type.STRING, 5);
     output.writeString(this.flowletId);
     output.writeFieldEnd();
   }
   if (this.instanceId) {
-    output.writeFieldBegin('instanceId', Thrift.Type.I32, 5);
+    output.writeFieldBegin('instanceId', Thrift.Type.I32, 6);
     output.writeI32(this.instanceId);
     output.writeFieldEnd();
   }
@@ -339,6 +362,378 @@ CounterRequest.prototype.write = function(output) {
       }
     }
     output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var DataPoint = module.exports.DataPoint = function(args) {
+  this.timestamp = null;
+  this.value = null;
+  if (args) {
+    if (args.timestamp !== undefined) {
+      this.timestamp = args.timestamp;
+    }
+    if (args.value !== undefined) {
+      this.value = args.value;
+    }
+  }
+};
+DataPoint.prototype = {};
+DataPoint.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.I64) {
+        this.timestamp = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.DOUBLE) {
+        this.value = input.readDouble();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+DataPoint.prototype.write = function(output) {
+  output.writeStructBegin('DataPoint');
+  if (this.timestamp) {
+    output.writeFieldBegin('timestamp', Thrift.Type.I64, 1);
+    output.writeI64(this.timestamp);
+    output.writeFieldEnd();
+  }
+  if (this.value) {
+    output.writeFieldBegin('value', Thrift.Type.DOUBLE, 2);
+    output.writeDouble(this.value);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var DataPoints = module.exports.DataPoints = function(args) {
+  this.points = null;
+  this.latest = null;
+  if (args) {
+    if (args.points !== undefined) {
+      this.points = args.points;
+    }
+    if (args.latest !== undefined) {
+      this.latest = args.latest;
+    }
+  }
+};
+DataPoints.prototype = {};
+DataPoints.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.MAP) {
+        var _size8 = 0;
+        var _rtmp312;
+        this.points = {};
+        var _ktype9 = 0;
+        var _vtype10 = 0;
+        _rtmp312 = input.readMapBegin();
+        _ktype9 = _rtmp312.ktype;
+        _vtype10 = _rtmp312.vtype;
+        _size8 = _rtmp312.size;
+        for (var _i13 = 0; _i13 < _size8; ++_i13)
+        {
+          if (_i13 > 0 ) {
+            if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
+              input.rstack.pop();
+            }
+          }
+          var key14 = null;
+          var val15 = null;
+          key14 = input.readString();
+          var _size16 = 0;
+          var _rtmp320;
+          val15 = [];
+          var _etype19 = 0;
+          _rtmp320 = input.readListBegin();
+          _etype19 = _rtmp320.etype;
+          _size16 = _rtmp320.size;
+          for (var _i21 = 0; _i21 < _size16; ++_i21)
+          {
+            var elem22 = null;
+            elem22 = new ttypes.DataPoint();
+            elem22.read(input);
+            val15.push(elem22);
+          }
+          input.readListEnd();
+          this.points[key14] = val15;
+        }
+        input.readMapEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.MAP) {
+        var _size23 = 0;
+        var _rtmp327;
+        this.latest = {};
+        var _ktype24 = 0;
+        var _vtype25 = 0;
+        _rtmp327 = input.readMapBegin();
+        _ktype24 = _rtmp327.ktype;
+        _vtype25 = _rtmp327.vtype;
+        _size23 = _rtmp327.size;
+        for (var _i28 = 0; _i28 < _size23; ++_i28)
+        {
+          if (_i28 > 0 ) {
+            if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
+              input.rstack.pop();
+            }
+          }
+          var key29 = null;
+          var val30 = null;
+          key29 = input.readString();
+          val30 = input.readDouble();
+          this.latest[key29] = val30;
+        }
+        input.readMapEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+DataPoints.prototype.write = function(output) {
+  output.writeStructBegin('DataPoints');
+  if (this.points) {
+    output.writeFieldBegin('points', Thrift.Type.MAP, 1);
+    output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.LIST, Thrift.objectLength(this.points));
+    for (var kiter31 in this.points)
+    {
+      if (this.points.hasOwnProperty(kiter31))
+      {
+        var viter32 = this.points[kiter31];
+        output.writeString(kiter31);
+        output.writeListBegin(Thrift.Type.STRUCT, viter32.length);
+        for (var iter33 in viter32)
+        {
+          if (viter32.hasOwnProperty(iter33))
+          {
+            iter33 = viter32[iter33];
+            iter33.write(output);
+          }
+        }
+        output.writeListEnd();
+      }
+    }
+    output.writeMapEnd();
+    output.writeFieldEnd();
+  }
+  if (this.latest) {
+    output.writeFieldBegin('latest', Thrift.Type.MAP, 2);
+    output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.DOUBLE, Thrift.objectLength(this.latest));
+    for (var kiter34 in this.latest)
+    {
+      if (this.latest.hasOwnProperty(kiter34))
+      {
+        var viter35 = this.latest[kiter34];
+        output.writeString(kiter34);
+        output.writeDouble(viter35);
+      }
+    }
+    output.writeMapEnd();
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var TimeseriesRequest = module.exports.TimeseriesRequest = function(args) {
+  this.argument = null;
+  this.metrics = null;
+  this.level = 3;
+  this.startts = null;
+  this.endts = null;
+  this.summary = true;
+  if (args) {
+    if (args.argument !== undefined) {
+      this.argument = args.argument;
+    }
+    if (args.metrics !== undefined) {
+      this.metrics = args.metrics;
+    }
+    if (args.level !== undefined) {
+      this.level = args.level;
+    }
+    if (args.startts !== undefined) {
+      this.startts = args.startts;
+    }
+    if (args.endts !== undefined) {
+      this.endts = args.endts;
+    }
+    if (args.summary !== undefined) {
+      this.summary = args.summary;
+    }
+  }
+};
+TimeseriesRequest.prototype = {};
+TimeseriesRequest.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.argument = new ttypes.FlowArgument();
+        this.argument.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.LIST) {
+        var _size36 = 0;
+        var _rtmp340;
+        this.metrics = [];
+        var _etype39 = 0;
+        _rtmp340 = input.readListBegin();
+        _etype39 = _rtmp340.etype;
+        _size36 = _rtmp340.size;
+        for (var _i41 = 0; _i41 < _size36; ++_i41)
+        {
+          var elem42 = null;
+          elem42 = input.readString();
+          this.metrics.push(elem42);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.I32) {
+        this.level = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.I64) {
+        this.startts = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 5:
+      if (ftype == Thrift.Type.I64) {
+        this.endts = input.readI64();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 6:
+      if (ftype == Thrift.Type.BOOL) {
+        this.summary = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+TimeseriesRequest.prototype.write = function(output) {
+  output.writeStructBegin('TimeseriesRequest');
+  if (this.argument) {
+    output.writeFieldBegin('argument', Thrift.Type.STRUCT, 1);
+    this.argument.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.metrics) {
+    output.writeFieldBegin('metrics', Thrift.Type.LIST, 2);
+    output.writeListBegin(Thrift.Type.STRING, this.metrics.length);
+    for (var iter43 in this.metrics)
+    {
+      if (this.metrics.hasOwnProperty(iter43))
+      {
+        iter43 = this.metrics[iter43];
+        output.writeString(iter43);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.level) {
+    output.writeFieldBegin('level', Thrift.Type.I32, 3);
+    output.writeI32(this.level);
+    output.writeFieldEnd();
+  }
+  if (this.startts) {
+    output.writeFieldBegin('startts', Thrift.Type.I64, 4);
+    output.writeI64(this.startts);
+    output.writeFieldEnd();
+  }
+  if (this.endts) {
+    output.writeFieldBegin('endts', Thrift.Type.I64, 5);
+    output.writeI64(this.endts);
+    output.writeFieldEnd();
+  }
+  if (this.summary) {
+    output.writeFieldBegin('summary', Thrift.Type.BOOL, 6);
+    output.writeBool(this.summary);
     output.writeFieldEnd();
   }
   output.writeFieldStop();

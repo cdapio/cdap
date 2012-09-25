@@ -4,11 +4,13 @@
 
 define([], function () {
 	return Em.Object.extend({
+		ts: {}, // Used to store timeseries data, by type. (e.g. busyness)
+		lastProcessed: 0,
 		href: function () {
 			if (this.get('applicationId')) {
-				return '#/flows/' + this.get('applicationId') + '/' + this.get('flowId');
+				return '#/apps/' + this.get('applicationId') + '/' + this.get('flowId');
 			} else {
-				return '#/flows/' + this.get('meta').app + '/' + this.get('meta').name;
+				return '#/apps/' + this.get('meta').app + '/' + this.get('meta').name;
 			}
 		}.property(),
 		undeployHref: function () {

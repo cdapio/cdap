@@ -5,7 +5,7 @@
 define([], function () {
 	return Em.Object.extend({
 		href: function () {
-			var flow = App.Controllers.Flow.get('current');
+			var flow = C.Ctl.Flow.get('current');
 			if (flow) {
 				return '#/flow/' + flow.get('meta').app + '/' + flow.get('meta').name + '/' + this.get('runId');
 			}

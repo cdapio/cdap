@@ -1,17 +1,21 @@
 
-define(['views/flows',
-	'views/flow', 'views/upload', 'views/flowlet', 'views/payload', 'views/visualizer', 'views/dagnode', 'views/modal', 'views/informer'],
-	function (Fs, F, U, Fl, Pl, Vz, Dn, M, I) {
+define(['views/dashboard', 'views/app', 'views/flows',
+	'views/flow', 'views/flowlet', 
+	'views/payload', 'views/visualizer', 'views/dagnode', 
+	'views/modal', 'views/informer', 'views/sparkline'],
+	function (D, A, Fs, F, Fl, Pl, Vz, Dn, M, I, S) {
 		return {
+			Dash: D,
+			App: A,
 			Flows: Fs,
 			Flow: F,
-			Upload: U,
 			Flowlet: Fl,
 			Payload: Pl,
 			Visualizer: Vz,
 			DagNode: Dn,
 			Modal: M,
-			Informer: I
+			Informer: I,
+			Sparkline: S
 		};
 	}
 );

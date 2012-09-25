@@ -33,6 +33,9 @@ try {
 
 		params = params || [];
 
+		// Pushing the accountID into arguments. Comes from the authenticated session.
+		params.unshift('demo');
+
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 
 		var conn = thrift.createConnection(
@@ -49,19 +52,19 @@ try {
 		
 		var Manager = thrift.createClient(FlowService, conn);
 		var identifier = new flowservices_types.FlowIdentifier({
-			app: params[0],
-			flow: params[1],
-			version: params[2] ? parseInt(params[2], 10) : -1,
-			accountId: 'demo'
+			app: params[1],
+			flow: params[2],
+			version: params[3] ? parseInt(params[3], 10) : -1,
+			accountId: params[0]
 		});
 
 		switch (method) {
 			case 'start':
 				identifier = new flowservices_types.FlowDescriptor({
 					identifier: new flowservices_types.FlowIdentifier({
-						app: params[0],
-						flow: params[1],
-						version: parseInt(params[2], 10),
+						app: params[1],
+						flow: params[2],
+						version: parseInt(params[3], 10),
 						accountId: 'demo'
 					}),
 					"arguments": []
@@ -125,7 +128,12 @@ try {
 				break;
 			default:
 				if (method in Manager) {
-					Manager[method].apply(Manager, params.concat(done));
+					try {
+						Manager[method].apply(Manager, params.concat(done));
+					} catch (e) {
+						console.log(e);
+						done(e);
+					}
 				} else {
 					done('Unknown method for service Manager: ' + method, null);
 				}
@@ -209,16 +217,56 @@ try {
 		conn.on('connect', function (response) {
 			var Monitor = thrift.createClient(MetricsFrontendService, conn);
 
-			var flow = new metricsservice_types.FlowArgument({
-				accountId: 'demo',
-				applicationId: params[0],
-				flowId: params[1]
-			});
-			var request = new metricsservice_types.CounterRequest({
-				argument: flow
-			});
+			switch (method) {
+				case 'getCounters':
+					var flow = new metricsservice_types.FlowArgument({
+						accountId: 'demo',
+						applicationId: params[0],
+						flowId: params[1]
+					});
+					var request = new metricsservice_types.CounterRequest({
+						argument: flow
+					});
+					Monitor.getCounters(request, done);
+				break;
+				case 'getTimeSeries':
+					var flow = new metricsservice_types.FlowArgument({
+						accountId: 'demo',
+						applicationId: params[0],
+						flowId: params[1]
+					});
+					var request = new metricsservice_types.TimeseriesRequest({
+						argument: flow,
+						metrics: params[2],
+						level: metricsservice_types.MetricTimeseriesLevel.FLOW_LEVEL,
+						endts: params[4],
+						startts: params[3]
+					});
+					console.log('requested');
+					Monitor.getTimeSeries(request, function (error, response) {
 
-			Monitor.getCounters(request, done);
+						if (error) {
+							done(true, false);
+							return;
+						}
+
+						var res = response.points['processed.count'];
+
+						if (res) {
+							var j = res.length;
+							while(j--) {
+								res[j].timestamp = 0;
+							}
+
+							response.points['processed.count'] = res;
+						}
+
+						done(error, response);
+
+					});
+					console.log('done');
+				break;
+			}
 
 			conn.end();
 			

@@ -5,18 +5,17 @@ define([
 	
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template),
-		upload: function (event) {
-			App.router.transitionTo('upload');
-		},
+
 		didInsertElement: function () {
 
+			/*
 			var data = [3, 6, 2, 7, 5, 2, 1, 3, 8, 9, 2, 5, 7],
 				w = 240,
 				h = 88,
 				margin = 6,
 				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
 
-			App.util.sparkline(widget, data, w, h, margin);
+			C.util.sparkline(widget, data, w, h, margin);
 			$('#info').append('<div class="info-box sparkline-value"><strong>50</strong><br />tuples/sec</div>');
 
 			var data = [10, 11, 12, 20, 10, 30, 20, 25, 35, 45],
@@ -25,8 +24,9 @@ define([
 				margin = 12,
 				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
 
-			App.util.sparkline(widget, data, w, h, margin);
+			C.util.sparkline(widget, data, w, h, margin);
 			$('#info').append('<div class="info-box sparkline-value"><strong>50%</strong><br />busyness</div>');
+			*/
 
 			function ignoreDrag(e) {
 				e.originalEvent.stopPropagation();
@@ -36,10 +36,10 @@ define([
 			function drop (e) {
 				ignoreDrag(e);
 
-				if (!App.Controllers.Upload.processing) {
+				if (!C.Ctl.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
 					
-					App.Controllers.Upload.sendFiles(dt.files);
+					C.Ctl.Upload.sendFiles(dt.files);
 	
 					$('#far-upload-alert').hide();
 				}
@@ -55,7 +55,7 @@ define([
 
 			$('#file-input').change(function () {
 				
-				App.Controllers.Upload.sendFiles(
+				C.Ctl.Upload.sendFiles(
 					$('#file-input')[0].files
 				);
 
@@ -64,9 +64,7 @@ define([
 		},
 		resetUpload: function () {
 			$("#far-upload-status").html('<input type="file" id="file-input" multiple />');
-
-			App.Controllers.Flows.load();
-
+			C.Ctl.Flows.load();
 		}
 	});
 

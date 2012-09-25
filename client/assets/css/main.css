@@ -14,6 +14,26 @@ a, a:visited {
 	color: #555;
 }
 
+.list-health-box {
+	float: left;
+	width: 36px;
+	height: 36px;
+	background-image: url(../img/health-icons-small.png);
+	margin: 12px 0px 0px 12px;
+}
+.list-health-boxed {
+	margin-left: 56px;
+	line-height: normal;
+	margin-top: 10px;
+}
+.list-health-boxed strong {
+	font-size: 18px;
+}
+
+td div {
+	border: 0 !important;
+}
+
 #logo {
 	background-image: url(../img/logo.png);
 	background-position: center center;
@@ -95,7 +115,7 @@ a, a:visited {
 
 #content {
 	max-width: 1600px;
-	min-width: 1068px;
+	min-width: 1200px;
 	margin-left: 224px;
 	background-color: #f0f1f1;
 	position: relative;
@@ -194,7 +214,6 @@ h1 {
 	box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.25);
 	border-radius: 2px;
 	margin-bottom: 20px;
-	padding: 12px;
 }
 .panel-title {
 	font-size: 28px;
@@ -260,6 +279,9 @@ path.sparkline-data {
 	stroke: #eea44c;
 	stroke-width: 3;
 	fill: none;
+}
+.blue path.sparkline-data {
+	stroke: #40AFD0;
 }
 
 line {

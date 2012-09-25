@@ -5,7 +5,6 @@
 
 <div id="info">
 	<div class="info-box" style="float: right; border: 0;">
-		{{#unless run}}
 		<div id="action-buttons" class="btn-group pull-right" style="width:320px;">
 		  	<button class="btn dropdown-toggle" data-toggle="dropdown">
 				<span class="caret"></span>
@@ -29,9 +28,12 @@
 		  	<button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
 		  	<button disabled="true" style="width: 90px;" class="btn">{{current.currentState}}</button>
 		</div>
-		{{/unless}}
 	</div>
 	<div class="info-box health-box"></div>
+	<div class="info-box sparkline-box">{{view C.Vw.Sparkline flowId=flowId height="88" type="processed"}}</div>
+	<div class="info-box sparkline-value"><strong>{{current.lastProcessed}}</strong><br />tuples/sec</div>
+	<div class="info-box sparkline-box">{{view C.Vw.Sparkline flowId=flowId height="88" type="processed"}}</div>
+	<div class="info-box sparkline-value"><strong>{{current.lastProcessed}}</strong><br />tuples/sec</div>
 </div>
 
 <div id="panels">
@@ -40,38 +42,34 @@
 	
 	<div class="panel">
 		<div id="flowviz-container">
-			{{view App.Views.Visualizer viewName="visualizer"}}
+			{{view C.Vw.Visualizer viewName="visualizer"}}
 		</div>
 	</div>
 
 	<div class="panel">
 		<div id="object-list">
-			{{#if run}}
-				<div class="object-list-empty">
-					To view run history, <a {{bindAttr href="current.href"}}>return to the flow.</a>
-				</div>
+			
+			{{#if history.length}}
+			<table class="table table-condensed">
+				<thead>
+					<tr><th style="width: 215px;">Started</th>
+					<th>Ended</th>
+					<th style="width:250px;">Result</th>
+				</tr></thead>
+				{{#each history tagName="tbody"}}
+					<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
+						<td>{{started}}</td>
+						<td>{{ended}}</td>
+						<td>{{detail}}</td>
+					</tr>
+				{{/each}}
+			</table>
 			{{else}}
-				{{#if history.length}}
-				<table class="table table-condensed">
-					<thead>
-						<tr><th style="width: 215px;">Started</th>
-						<th>Ended</th>
-						<th style="width:250px;">Result</th>
-					</tr></thead>
-					{{#each history tagName="tbody"}}
-						<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
-							<td>{{started}}</td>
-							<td>{{ended}}</td>
-							<td>{{detail}}</td>
-						</tr>
-					{{/each}}
-				</table>
-				{{else}}
-				<div class="object-list-empty">
-					This flow has not completed a run yet.
-				</div>
-				{{/if}}
+			<div class="object-list-empty">
+				This flow has not completed a run yet.
+			</div>
 			{{/if}}
+
 		</div>
 	</div>
 

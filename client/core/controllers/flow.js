@@ -65,13 +65,11 @@ define([], function () {
 
 		},
 
-		load: function (app, id, run) {
+		load: function (app, id) {
 
 			var self = this;
 
-			this.set('run', run);
-
-			App.socket.request('manager', {
+			C.get('manager', {
 				method: 'getFlowHistory',
 				params: [app, id]
 			}, function (error, response) {
@@ -86,7 +84,7 @@ define([], function () {
 
 				for (var i = hist.length - 1; i >= length; i --) {
 
-					hist[i] = App.Models.Run.create(hist[i]);
+					hist[i] = C.Mdl.Run.create(hist[i]);
 
 					if (hist[i].endStatus !== 'STOPPED') {
 						continue;
@@ -94,35 +92,29 @@ define([], function () {
 
 					self.history.pushObject(hist[i]);
 
-					if (run && run === hist[i].runId) {
-						App.Views.Informer.show('The following diagram represents a run from ' +
-								new Date(hist[i].startTime * 1000) + ' to ' + new Date(hist[i].endTime * 1000) +
-								'. It finished with a ' + hist[i].endStatus + ' status.', 'alert-info', true);
-					}
-
 				}
 			});
 
-			App.interstitial.loading();
+			C.interstitial.loading();
 
 			//
 			// Request Flow Definition
 			//
-			App.socket.request('manager', {
+			C.get('manager', {
 				method: 'getFlowDefinition',
 				params: [app, id]
 			}, function (error, response) {
 
 				if (error) {
-					App.interstitial.label(error);
+					C.interstitial.label(error);
 					return;
 				}
 
 				if (!response.params) {
-					App.interstitial.label('Flow not found.', {
+					C.interstitial.label('Flow not found.', {
 						action: 'All Flows',
 						click: function () {
-							App.router.set('location', '');
+							C.router.set('location', '');
 						}
 					});
 					return;
@@ -131,11 +123,11 @@ define([], function () {
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;
 
-				self.set('current', App.Models.Flow.create(response.params));
+				self.set('current', C.Mdl.Flow.create(response.params));
 	
 				var flowlets = response.params.flowlets;
 				for (var i = 0; i < flowlets.length; i ++) {
-					self.pushObject(App.Models.Flowlet.create(flowlets[i]));
+					self.pushObject(C.Mdl.Flowlet.create(flowlets[i]));
 				}
 
 				self.drawNodes();
@@ -143,7 +135,7 @@ define([], function () {
 				//
 				// Request Flow Status
 				//
-				App.socket.request('manager', {
+				C.get('manager', {
 					method: 'status',
 					params: [app, id, -1]
 				}, function (error, response) {
@@ -157,10 +149,10 @@ define([], function () {
 
 						self.updateStats(self.get('run'));
 
-						App.interstitial.hide();
+						C.interstitial.hide();
 					
 					} else {
-						App.interstitial.label('Unable to get Flow Status.');
+						C.interstitial.label('Unable to get Flow Status.');
 					}
 
 					self.interval = setInterval(function () {
@@ -178,11 +170,11 @@ define([], function () {
 			var app = this.get('current').get('meta').app;
 			var id = this.get('current').get('meta').name;
 
-			if (App.Controllers.Flows.pending) {
+			if (C.Ctl.Flows.pending) {
 				return;
 			}
 
-			App.socket.request('manager', {
+			C.get('manager', {
 				method: 'status',
 				params: [app, id, -1]
 			}, function (error, response) {
@@ -190,7 +182,7 @@ define([], function () {
 				if (response.params && self.get('current')) {
 					self.get('current').set('currentState', response.params.status);
 					if (response.params.status === 'RUNNING') {
-						App.interstitial.hide();
+						C.interstitial.hide();
 					}
 				}
 			});
@@ -221,12 +213,36 @@ define([], function () {
 				return;
 			}
 
-			App.socket.request('monitor', {
+			var start = Math.round(new Date().getTime() / 1000) - 30;
+			var end = Math.round(new Date().getTime() / 1000);
+			C.get('monitor', {
+				method: 'getTimeSeries',
+				params: [app, id, ['processed.count'], start, end]
+			}, function (error, response) {
+				
+					var data = response.params.points['processed.count'];
+
+					if (!data) {
+						console.debug('No timeseries data!');
+						return;
+					}
+
+					var k = data.length;
+					while(k --) {
+						data[k] = data[k].value;
+					}
+
+					self.get('current').set('lastProcessed', data[data.length-1]);
+					self.get('current').set('ts', {'processed.count': data});
+
+			});
+
+			C.get('monitor', {
 				method: 'getCounters',
 				params: [app, id, run]
 			}, function (error, response) {
 			
-				if (App.router.currentState.name !== "flow") {
+				if (C.router.currentState.name !== "flow") {
 					return;
 				}
 
@@ -249,15 +265,11 @@ define([], function () {
 						fs[j].set('metrics', finish);
 					}
 
-					if (finish > 1000) {
+					if (finish > 10000) {
 
 						var digits = 3 - (Math.round(finish / 1000) + '').length;
-
 						finish = finish / 1000;
-
 						var rounded = Math.round(finish * Math.pow(10, digits)) / Math.pow(10, digits);
-
-						console.log(rounded);
 
 						finish = rounded + 'K';
 					}
@@ -307,7 +319,7 @@ define([], function () {
 
 			$('#flowviz').html('');
 
-			var flowlets = App.Controllers.Flow.content;
+			var flowlets = C.Ctl.Flow.content;
 			var self = this;
 
 			var flowSource;
@@ -320,7 +332,7 @@ define([], function () {
 
 			var hasSource = false;
 
-			var cx = App.Controllers.Flow.current.connections;
+			var cx = C.Ctl.Flow.current.connections;
 			var conns = {};
 			for (var i = 0; i < cx.length; i ++) {
 				if (!cx[i].from.flowlet) {
@@ -339,19 +351,19 @@ define([], function () {
 
 			// Adapt flowstream format
 
-			var fs = App.Controllers.Flow.current.flowletStreams;
+			var fs = C.Ctl.Flow.current.flowletStreams;
 			
 			for (i in fs) {
 
 				var flowlet, streams = [];
-				for (var k = 0; k < App.Controllers.Flow.content.length; k ++) {
-					if (App.Controllers.Flow.content[k].name === i) {
-						flowlet = App.Controllers.Flow.content[k];
+				for (var k = 0; k < C.Ctl.Flow.content.length; k ++) {
+					if (C.Ctl.Flow.content[k].name === i) {
+						flowlet = C.Ctl.Flow.content[k];
 						break;
 					}
 				}
 				for (j in fs[i]) {
-					streams.push(App.Models.Stream.create({
+					streams.push(C.Mdl.Stream.create({
 						id: j,
 						type: fs[i][j].second,
 						url: fs[i][j].first
@@ -376,14 +388,14 @@ define([], function () {
 					});
 
 					// Attach it to and expand the visualizer.
-					var viz = App.router.applicationController.view.get('visualizer');
+					var viz = C.router.applicationController.view.get('visualizer');
 					viz.get('childViews').pushObject(columns[column]);
 					$(viz.get('element')).css({width: (++numColumns * COLUMN_WIDTH) + 'px'});
 
 					rows[column] = 0;
 				}
 
-				columns[column].get('childViews').pushObject(App.Views.DagNode.create({
+				columns[column].get('childViews').pushObject(C.Vw.DagNode.create({
 					current: flowlet
 				}));
 
@@ -505,24 +517,6 @@ define([], function () {
 					connect(conns[i][k], i);
 				}
 			}
-
-			var data = [3, 6, 2, 7, 5, 2, 1, 3, 8, 9, 2, 5, 7],
-				w = 240,
-				h = 88,
-				margin = 6,
-				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
-
-			App.util.sparkline(widget, data, w, h, margin);
-			$('#info').append('<div class="info-box sparkline-value"><strong>50</strong><br />tuples/sec</div>');
-
-			var data = [10, 11, 12, 20, 10, 30, 20, 25, 35, 45],
-				w = 240,
-				h = 88,
-				margin = 12,
-				widget = d3.select('#info').append('div').attr('class', 'info-box sparkline-box');
-
-			App.util.sparkline(widget, data, w, h, margin);
-			$('#info').append('<div class="info-box sparkline-value"><strong>50%</strong><br />busyness</div>');
 
 		}
 	});

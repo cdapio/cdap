@@ -6,9 +6,8 @@
 	<th style="width: 32px;">Runs</th>
 	<th colspan="2">&nbsp;</th>
 </thead>
-{{#each App.Controllers.Flows tagName="tbody"}}
+{{#each controller tagName="tbody"}}
 <tr>
-	
 	<td><a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a></td>
 	<td style="width: 140px;">{{started}}</td>
 	<td style="width: 140px;">{{stopped}}</td>

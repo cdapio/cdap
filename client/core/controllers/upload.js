@@ -75,7 +75,7 @@ define([], function () {
 		update: function (response) {
 
 			if (response.error) {
-				App.Views.Informer.show(response.error, 'alert-error');
+				C.Vw.Informer.show(response.error, 'alert-error');
 				$('#far-upload-status').html(this.welcome_message);
 				this.processing = false;
 
@@ -94,15 +94,15 @@ define([], function () {
 						$('#far-upload-status').html(response.status);
 					break;
 					case 5:
-						App.Views.Informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
+						C.Vw.Informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
 						this.processing = false;
-						App.router.applicationController.view.resetUpload();
+						C.router.applicationController.view.resetUpload();
 						this.sendFile();
 					break;
 					default:
-						App.Views.Informer.show(response.message, 'alert-error');
+						C.Vw.Informer.show(response.message, 'alert-error');
 						this.processing = false;
-						App.router.applicationController.view.resetUpload();
+						C.router.applicationController.view.resetUpload();
 						this.sendFile();
 				}
 			}

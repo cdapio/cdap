@@ -9,15 +9,15 @@ define([], function () {
 			var self = this;
 			this.clear();
 
-			App.interstitial.loading();
+			C.interstitial.loading();
 
-			App.socket.request('manager', {
+			C.socket.request('manager', {
 				method: 'getFlows',
-				params: ['demo']
+				params: []
 			}, function (error, response) {
 
 				if (error) {
-					App.interstitial.label('Unable to connect to FlowMonitor.');
+					C.interstitial.label('Unable to connect to FlowMonitor.');
 					return;
 				}
 
@@ -27,11 +27,11 @@ define([], function () {
 				}
 
 				for (var i = 0; i < flows.length; i ++) {
-					flows[i] = App.Models.Flow.create(flows[i]);
-					App.Controllers.Flows.pushObject(flows[i]);
+					flows[i] = C.Mdl.Flow.create(flows[i]);
+					C.Ctl.Flows.pushObject(flows[i]);
 				}
 
-				App.interstitial.hide();
+				C.interstitial.hide();
 				self.interval = setInterval(function () {
 					self.refresh();
 				}, 1000);
@@ -49,9 +49,9 @@ define([], function () {
 				return;
 			}
 
-			App.socket.request('manager', {
+			C.socket.request('manager', {
 				method: 'getFlows',
-				params: ['demo']
+				params: []
 			}, function (error, response) {
 
 				var flows = response.params;
@@ -59,7 +59,7 @@ define([], function () {
 					return;
 				}
 
-				var content = App.Controllers.Flows.content;
+				var content = C.Ctl.Flows.content;
 
 				for (var i = 0; i < flows.length; i ++) {
 
@@ -96,10 +96,10 @@ define([], function () {
 			$('#flow-alert').hide();
 
 			var thisFlow;
-			if (App.Controllers.Flow.current) {
-				thisFlow = App.Controllers.Flow.current;
+			if (C.Ctl.Flow.current) {
+				thisFlow = C.Ctl.Flow.current;
 			} else {
-				var flows = App.Controllers.Flows.content;
+				var flows = C.Ctl.Flows.content;
 				for (var i = 0; i < flows.length; i ++) {
 					if (flows[i].get('applicationId') === app &&
 						flows[i].get('flowId') === id) {
@@ -109,24 +109,24 @@ define([], function () {
 				}
 			}
 
-			App.Controllers.Flows.pending = true;
+			C.Ctl.Flows.pending = true;
 			thisFlow.set('currentState', 'STARTING');
 
-			App.socket.request('manager', {
+			C.socket.request('manager', {
 				method: 'start',
 				params: [app, id, version]
 			}, function (error, response) {
 
-				App.Controllers.Flows.pending = false;
+				C.Ctl.Flows.pending = false;
 
-				if (App.Controllers.Flow.current) {
-					App.Controllers.Flow.set('currentRun', response.params.id);
+				if (C.Ctl.Flow.current) {
+					C.Ctl.Flow.set('currentRun', response.params.id);
 				}
 
 				thisFlow.set('lastStarted', new Date().getTime() / 1000);
 
-				if (App.Controllers.Flow.current) {
-					App.Controllers.Flow.updateStats();
+				if (C.Ctl.Flow.current) {
+					C.Ctl.Flow.updateStats();
 				}
 
 			});
@@ -137,10 +137,10 @@ define([], function () {
 			$('#flow-alert').hide();
 
 			var thisFlow;
-			if (App.Controllers.Flow.current) {
-				thisFlow = App.Controllers.Flow.current;
+			if (C.Ctl.Flow.current) {
+				thisFlow = C.Ctl.Flow.current;
 			} else {
-				var flows = App.Controllers.Flows.content;
+				var flows = C.Ctl.Flows.content;
 				for (var i = 0; i < flows.length; i ++) {
 					if (flows[i].get('applicationId') === app &&
 						flows[i].get('flowId') === id) {
@@ -150,27 +150,27 @@ define([], function () {
 				}
 			}
 
-			App.Controllers.Flows.pending = true;
+			C.Ctl.Flows.pending = true;
 			thisFlow.set('currentState', 'STOPPING');
 
-			App.socket.request('manager', {
+			C.socket.request('manager', {
 				method: 'stop',
 				params: [app, id, version]
 			}, function (error, response) {
 
-				App.Controllers.Flows.pending = false;
+				C.Ctl.Flows.pending = false;
 
-				if (App.Controllers.Flow.current) {
+				if (C.Ctl.Flow.current) {
 
-					App.Controllers.Flow.history.unshiftObject(App.Models.Run.create({
+					C.Ctl.Flow.history.unshiftObject(C.Mdl.Run.create({
 						"runId": response.params.id,
 						"endStatus": "STOPPED",
 						"startTime": thisFlow.get('lastStarted'),
 						"endTime": new Date().getTime() / 1000
 					}));
-					App.Controllers.Flow.history.popObject();
+					C.Ctl.Flow.history.popObject();
 
-					App.Controllers.Flow.stop_spin();
+					C.Ctl.Flow.stop_spin();
 				}
 
 				thisFlow.set('runs', thisFlow.runs + 1);

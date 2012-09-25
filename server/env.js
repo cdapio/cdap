@@ -123,6 +123,9 @@
 			io.set('transports', ['websocket']);
 		});
 		/*
+			The following were commented out for causing problems. 
+			The file was not served to the client with these on. investigate.
+			
 			io.enable('browser client minification');
 			io.enable('browser client etag');
 			io.enable('browser client gzip');

@@ -23,8 +23,8 @@ define([
 				return 'flowlet';
 			}
 		}.property('current'),
-		currentBinding: 'App.Controllers.Flow.flowlet',
-		currentFlowBinding: 'App.Controllers.Flow.current',
+		currentBinding: 'controller.flowlet',
+		currentFlowBinding: 'controller.current',
 		classNames: 'flowletviz',
 		location: [],
 		modifiable: function () {
@@ -106,7 +106,7 @@ define([
 			var current = this.get('current');
 			var name = current.name;
 
-			App.Views.Modal.show(
+			C.Vw.Modal.show(
 				"Flowlet Instances",
 				message + '"' + name + '" flowlet?',
 				function () {
@@ -120,15 +120,15 @@ define([
 		inject: function () {
 
 			var payload = this.get('payload');
-			var flow = App.Controllers.Flow.current.get('meta').name;
+			var flow = C.Ctl.Flow.current.get('meta').name;
 			var stream = '';
-			if (App.Controllers.Flow.current.get('flowStreams')) {
-				stream = App.Controllers.Flow.current.get('flowStreams')[0].name;
+			if (C.Ctl.Flow.current.get('flowStreams')) {
+				stream = C.Ctl.Flow.current.get('flowStreams')[0].name;
 			}
 
 			this.set('payload', '');
 
-			App.socket.request('gateway', {
+			C.get('gateway', {
 				method: 'POST',
 				params: {
 					name: flow,
@@ -138,8 +138,8 @@ define([
 			}, function (error, response) {
 
 				if (error) {
-					App.Views.Flowlet.hide();
-					App.Views.Informer.show('There was a problem connecting to the gateway.', 'alert-error');
+					C.Vw.Flowlet.hide();
+					C.Vw.Informer.show('There was a problem connecting to the gateway.', 'alert-error');
 				}
 
 			});
