@@ -214,6 +214,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         // Write the body and prepare the request to be sent.
         final RequestBuilder builder = new RequestBuilder("POST");
         String json = mapper.writeValueAsString(measurements);
+        Log.debug("JSON data to librato {}", json);
         builder.setBody(json);
         builder.addHeader("Content-Type", "application/json");
         builder.setHeader("User-Agent", userAgent);
@@ -228,12 +229,16 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         );
         builder.setUrl(libratoUrl);
 
-        client.executeRequest(builder.build(), new AsyncCompletionHandler<Response>() {
+        Log.debug("Librato request {}", builder.toString());
+
+        client.executeRequest(builder.build(),
+                              new AsyncCompletionHandler<Response>() {
           @Override
           public Response onCompleted(Response response) throws Exception {
             if(response.getStatusCode() != 200) {
-              Log.warn("Failed sending metric to librato. Status code {}, status {}",
-                       response.getStatusCode(), response.getStatusText());
+              Log.warn("Failed sending metric to librato. Status code : {}, " +
+                         "status : {}.", response.getStatusCode(),
+                       response.getStatusText());
             } else {
               Log.debug("Successfully sent metric to librato.");
             }
@@ -328,7 +333,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
     // we log an error message and ignore the metric.
     if(request.getMetricName().length() > 64) {
       Log.warn("Metric '{}' is greater than 63 bytes. Librato doesn't accept" +
-                 "metrics that are greater than 63. Ignoring metric",
+                 " metrics that are greater than 63. Ignoring metric",
                request.getMetricName());
       return Futures.future(new Callable<MetricResponse.Status>() {
         @Override

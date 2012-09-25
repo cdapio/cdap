@@ -54,21 +54,32 @@ public class LibratoMetricsProcessorTest {
 
     OnCompleteHandler handler = new OnCompleteHandler();
     for(int i = 0; i < 10; ++i) {
-      MetricRequest request = new MetricRequest.Builder(true)
+      MetricRequest request1 = new MetricRequest.Builder(true)
+        .setRequestType("System")
+        .setMetricName("UNIT_TEST_METRIC.count")
+        .setTimestamp(System.currentTimeMillis()/1000)
+        .addTag("host", "a.b.c")
+        .setValue(i^2).create();
+      Future<MetricResponse.Status> response1 = processor.process(request1);
+      response1.onComplete(handler);
+      while(! response1.isCompleted()) {
+        Thread.sleep(1);
+      }
+      MetricRequest request2 = new MetricRequest.Builder(true)
         .setRequestType("System")
         .setMetricName("UNIT_TEST_METRIC")
         .setTimestamp(System.currentTimeMillis()/1000)
         .addTag("host", "a.b.c")
         .setValue(i^2).create();
-      Future<MetricResponse.Status> response = processor.process(request);
-      response.onComplete(handler);
-      while(! response.isCompleted()) {
+      Future<MetricResponse.Status> response2 = processor.process(request2);
+      response2.onComplete(handler);
+      while(! response2.isCompleted()) {
         Thread.sleep(1);
       }
       Thread.sleep(1000);
     }
 
     Assert.assertThat(handler.getFailed(), CoreMatchers.is(0));
-    Assert.assertThat(handler.getSuccess(), CoreMatchers.is(10));
+    Assert.assertThat(handler.getSuccess(), CoreMatchers.is(20));
   }
 }
