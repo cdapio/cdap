@@ -8,6 +8,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.collector.MetricType;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.ning.http.client.*;
 import com.ning.http.util.Base64;
@@ -156,7 +157,9 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         // Reset the counter.
         attemptCount = 0;
 
-        List<Object> metrics = new ArrayList<Object>();
+        List<Object> gauges = Lists.newArrayList();
+        List<Object> counters = Lists.newArrayList();
+
         int count = Math.min(queue.size(), BATCH_SIZE);
 
 
@@ -183,20 +186,34 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
           metric.put("name", request.getMetricName());
           metric.put("source", request.getTags().get(0).getSecond());
           metric.put("measure_time", request.getTimestamp());
-          if(request.getMetricType() == MetricType.System) {
-            metric.put("period", 60);
-          }
           metric.put("value", request.getValue());
-          metrics.add(metric);
+
+          if(request.getMetricName().contains("count") ||
+            request.getMetricName().contains("cnt")) {
+            metric.put("period", 1);
+            counters.add(metric);
+          } else {
+            metric.put("period", 60);
+            gauges.add(metric);
+          }
           count--;
         }
 
-        Map<String, Object> guages = new HashMap<String, Object>();
-        guages.put("gauges", metrics);
+        Map<String, Object> measurements = new HashMap<String, Object>();
+
+        // If there are guages, then add it.
+        if(gauges.size() > 0) {
+         measurements.put("gauges", gauges);
+        }
+
+        // If there are counters, then add it.
+        if(counters.size() > 0) {
+          measurements.put("counters", counters);
+        }
 
         // Write the body and prepare the request to be sent.
         final RequestBuilder builder = new RequestBuilder("POST");
-        String json = mapper.writeValueAsString(guages);
+        String json = mapper.writeValueAsString(measurements);
         builder.setBody(json);
         builder.addHeader("Content-Type", "application/json");
         builder.setHeader("User-Agent", userAgent);

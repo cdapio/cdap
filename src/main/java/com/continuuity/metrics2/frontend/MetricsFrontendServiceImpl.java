@@ -399,6 +399,7 @@ public class MetricsFrontendServiceImpl
         if(previousPoint.containsKey(metric)) {
           newValue = Math.abs(value - previousPoint.get(metric));
         }
+
         previousPoint.put(metric, value);
 
         // Create a data point.

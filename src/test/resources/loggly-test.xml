@@ -1,0 +1,13 @@
+<configuration debug="true">
+    <appender name="loggly" class="com.continuuity.log.appender.loggly.LogglyAppender">
+        <layout>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </layout>
+        <queueSize>3</queueSize>
+        <endpoint>https://logs.loggly.com/inputs/541e8e4f-3bf2-4f05-8079-a73a29bd6368</endpoint>
+    </appender>
+
+    <root level="ALL">
+        <appender-ref ref="loggly" />
+    </root>
+</configuration>
