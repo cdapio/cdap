@@ -34,10 +34,10 @@ public class WriterFlowlet extends AbstractComputeFlowlet {
     byte [] key = params[0].getBytes();
     byte [] value = params[1].getBytes();
     Write write = new Write(key, value);
-    outputCollector.emit(write);
+    outputCollector.add(write);
     Tuple outputTuple = new TupleBuilder().
           set("key", key).
           create();
-    outputCollector.emit(outputTuple);
+    outputCollector.add(outputTuple);
   }
 }

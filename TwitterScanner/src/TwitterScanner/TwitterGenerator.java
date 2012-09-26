@@ -65,7 +65,7 @@ public class TwitterGenerator extends AbstractSourceFlowlet {
         Tuple theTuple =
           new TupleBuilder().set("Tweet", theStatus).create();
 
-        outputCollector.emit(theTuple);
+        outputCollector.add(theTuple);
       }
 
     } catch (TwitterException e) {

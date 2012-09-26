@@ -9,7 +9,7 @@ public class NumberCounter extends AbstractComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     Integer i = tuple.get("number");
-    outputCollector.emit(new Increment(i.toString().getBytes(), 1L));
+    outputCollector.add(new Increment(i.toString().getBytes(), 1L));
   }
 
   @Override

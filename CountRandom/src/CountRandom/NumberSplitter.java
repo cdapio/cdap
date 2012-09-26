@@ -8,10 +8,18 @@ public class NumberSplitter extends AbstractComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     Integer i = tuple.get("number");
-    outputCollector.emit(new TupleBuilder().set("number", new Integer(i % 10000)).create());
-    outputCollector.emit(new TupleBuilder().set("number", new Integer(i % 1000)).create());
-    outputCollector.emit(new TupleBuilder().set("number", new Integer(i % 100)).create());
-    outputCollector.emit(new TupleBuilder().set("number", new Integer(i % 10)).create());
+    outputCollector.add(new TupleBuilder().
+        set("number", new Integer(i % 10000)).
+        create());
+    outputCollector.add(new TupleBuilder().
+        set("number", new Integer(i % 1000)).
+        create());
+    outputCollector.add(new TupleBuilder().
+        set("number", new Integer(i % 100)).
+        create());
+    outputCollector.add(new TupleBuilder().
+        set("number", new Integer(i % 10)).
+        create());
   }
 
   @Override

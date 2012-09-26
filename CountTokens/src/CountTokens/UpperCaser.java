@@ -31,6 +31,6 @@ public class UpperCaser extends AbstractComputeFlowlet {
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
 
-    outputCollector.emit(output);
+    outputCollector.add(output);
   }
 }

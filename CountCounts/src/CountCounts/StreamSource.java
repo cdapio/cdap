@@ -35,12 +35,12 @@ public class StreamSource extends AbstractComputeFlowlet {
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
 
-    outputCollector.emit(output);
+    outputCollector.add(output);
 
     if (Common.count) {
       // emit an increment for the total number of documents ingested
       Increment increment = new Increment(keyTotal, 1);
-      outputCollector.emit(increment);
+      outputCollector.add(increment);
     }
   }
 }

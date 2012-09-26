@@ -31,12 +31,12 @@ public class Incrementer extends AbstractComputeFlowlet
 
     // emit an increment for the number of words in this document
     Increment increment = new Increment(key.getBytes(), 1);
-    outputCollector.emit(increment);
+    outputCollector.add(increment);
 
     if (Common.count) {
       // emit an increment for the total number of documents counted
       increment = new Increment(keyTotal, 1);
-      outputCollector.emit(increment);
+      outputCollector.add(increment);
     }
   }
 }

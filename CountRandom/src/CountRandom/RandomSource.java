@@ -13,7 +13,7 @@ public class RandomSource extends AbstractSourceFlowlet {
   @Override
   public void generate(OutputCollector outputCollector) {
     Tuple out = new TupleBuilder().set("number", new Integer(this.random.nextInt(10000))).create();
-    outputCollector.emit(out);
+    outputCollector.add(out);
   }
 
   @Override

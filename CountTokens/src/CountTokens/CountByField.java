@@ -27,6 +27,6 @@ public class CountByField extends AbstractComputeFlowlet
 
     if (Common.debug)
       System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
-    outputCollector.emit(new Increment(token.getBytes(), 1));
+    outputCollector.add(new Increment(token.getBytes(), 1));
   }
 }

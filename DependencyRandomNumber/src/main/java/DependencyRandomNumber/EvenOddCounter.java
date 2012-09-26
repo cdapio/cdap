@@ -31,6 +31,6 @@ public class EvenOddCounter extends AbstractComputeFlowlet {
     else increment = new Increment("odd".getBytes(), 1);
     
     // emit the increment operation
-    outputCollector.emit(increment);
+    outputCollector.add(increment);
   }
 }

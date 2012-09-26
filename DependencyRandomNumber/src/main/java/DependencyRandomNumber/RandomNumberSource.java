@@ -35,6 +35,6 @@ public class RandomNumberSource extends AbstractSourceFlowlet {
     Tuple randomNumberTuple = new TupleBuilder()
         .set("randomNumber", randomNumber)
         .create();
-    outputCollector.emit(randomNumberTuple);
+    outputCollector.add(randomNumberTuple);
   }
 }
