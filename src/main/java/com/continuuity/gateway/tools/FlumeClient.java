@@ -2,6 +2,7 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
@@ -54,8 +55,7 @@ public class FlumeClient {
    * an error case). See getValue() for an explanation of the return type.
    *
    * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error, an empty string in case
-   * of success
+   * @throws UsageException in case of error
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -84,7 +84,7 @@ public class FlumeClient {
     out.println("  --verbose               To see more verbose output");
     out.println("  --help                  To print this message");
     if (error) {
-      throw new IllegalArgumentException();
+      throw new UsageException();
     }
   }
 
@@ -263,7 +263,7 @@ public class FlumeClient {
   public String execute(String[] args, CConfiguration config) {
     try {
       return execute0(args, config);
-    } catch (IllegalArgumentException e) {
+    } catch (UsageException e) {
       if (debug) { // this is mainly for debugging the unit test
         System.err.println("Exception for arguments: " +
             Arrays.toString(args) + ". Exception: " + e);
