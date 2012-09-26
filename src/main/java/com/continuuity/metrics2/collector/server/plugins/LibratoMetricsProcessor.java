@@ -184,16 +184,19 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
           // Serialize the metrics into the format needed.
           Map<String, Object> metric = new HashMap<String, Object>();
           metric.put("name", request.getMetricName());
-          metric.put("source", request.getTags().get(0).getSecond());
           metric.put("measure_time", request.getTimestamp());
+          metric.put("source", request.getTags().get(0).getSecond());
           metric.put("value", request.getValue());
+          metric.put("period", 60);
 
+          // Determine the type of metric based on name of the metric.
+          // Hacky, but for now it works.
           if(request.getMetricName().contains("count") ||
-            request.getMetricName().contains("cnt")) {
-            metric.put("period", 1);
+            request.getMetricName().contains("cnt") ||
+            request.getMetricName().contains("Count") ||
+            request.getMetricName().contains("NumOps")) {
             counters.add(metric);
           } else {
-            metric.put("period", 60);
             gauges.add(metric);
           }
           count--;
