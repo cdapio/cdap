@@ -17,9 +17,11 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
   }
 
   @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Tuple tuple, TupleContext tupleContext,
+                      OutputCollector outputCollector) {
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() +
+          ": Received tuple " + tuple);
 
     // perform inline read of key
     byte [] key = tuple.get("key");
@@ -27,16 +29,17 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
     ReadOperationExecutor executor =
       getFlowletLaunchContext().getReadExecutor();
     try {
-      OperationResult<byte []> value = executor.execute(read);
+      OperationResult<byte []> value =
+          executor.execute(OperationContext.DEFAULT, read);
 
       if (Common.debug) {
         if (value.isEmpty()) {
-          System.out.println(this.getClass().getSimpleName() + ": No value " +
-              "read for key (" + new String(key) + ")");
+          System.out.println(this.getClass().getSimpleName() +
+              ": No value read for key (" + new String(key) + ")");
         } else {
-          System.out.println(this.getClass().getSimpleName() + ": Read value (" +
-              new String(value.getValue()) + ") for key (" + new String(key) +
-              ")");
+          System.out.println(this.getClass().getSimpleName() +
+              ": Read value (" + new String(value.getValue()) +
+              ") for key (" + new String(key) + ")");
         }
       }
     } catch (OperationException e) {

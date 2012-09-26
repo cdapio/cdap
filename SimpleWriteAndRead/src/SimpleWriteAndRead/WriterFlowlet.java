@@ -21,9 +21,11 @@ public class WriterFlowlet extends AbstractComputeFlowlet {
   }
 
   @Override
-  public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
+  public void process(Tuple tuple, TupleContext tupleContext,
+                      OutputCollector outputCollector) {
     if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+      System.out.println(this.getClass().getSimpleName() +
+          ": Received tuple " + tuple);
 
     // text should be in the form: key=value
     String text = tuple.get("text");
