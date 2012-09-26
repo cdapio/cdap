@@ -22,7 +22,7 @@ public interface TransactionalOperationExecutor extends OperationExecutor {
    *
    *
    * @param writes write operations to be performed in a transaction
-   * @throws TransactionException
+   * @throws OperationException
    */
   @Override
   public void execute(OperationContext context,
