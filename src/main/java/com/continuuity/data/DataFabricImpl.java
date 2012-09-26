@@ -11,6 +11,11 @@ public class DataFabricImpl implements DataFabric {
   private OperationExecutor opex;
   private OperationContext context;
 
+  public DataFabricImpl(OperationExecutor opex, OperationContext context) {
+    this.opex = opex;
+    this.context = context;
+  }
+
   @Override
   public OperationResult<byte[]> read(ReadKey read) throws OperationException {
     return this.opex.execute(context, read);

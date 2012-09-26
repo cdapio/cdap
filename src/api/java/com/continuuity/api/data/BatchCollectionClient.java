@@ -6,7 +6,7 @@ package com.continuuity.api.data;
  * client must give up all references to its current batch collector
  * and start using the new, provided collector.
  */
-public interface BatchCollectorClient {
+public interface BatchCollectionClient {
 
   public void setCollector(BatchCollector collector);
 
