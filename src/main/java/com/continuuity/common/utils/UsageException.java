@@ -10,7 +10,7 @@ package com.continuuity.common.utils;
  * instead, but we never know whether that was thrown somewhere else,
  * in which case we want to print the exception.
  */
-public class UsageException extends Exception {
+public class UsageException extends RuntimeException {
   // no message, no cause, on purpose, only default constructor
   public UsageException() { }
 }
