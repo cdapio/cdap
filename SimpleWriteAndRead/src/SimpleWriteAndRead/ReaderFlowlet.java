@@ -26,11 +26,10 @@ public class ReaderFlowlet extends AbstractComputeFlowlet {
     // perform inline read of key
     byte [] key = tuple.get("key");
     ReadKey read = new ReadKey(key);
-    ReadOperationExecutor executor =
-      getFlowletLaunchContext().getReadExecutor();
+    DataFabric fabric =
+      getFlowletContext().getDataFabric();
     try {
-      OperationResult<byte []> value =
-          executor.execute(OperationContext.DEFAULT, read);
+      OperationResult<byte []> value = fabric.read(read);
 
       if (Common.debug) {
         if (value.isEmpty()) {
