@@ -33,7 +33,7 @@ public class LogglyAppenderTest {
   }
 
   @Test
-     public void configuredLogbackWithFile() throws Exception {
+  public void configuredLogbackWithFile() throws Exception {
     final URL url = getClass().getClassLoader().getResource("loggly-test.xml");
     context.reset();
     final JoranConfigurator configurator = new JoranConfigurator();
@@ -46,14 +46,14 @@ public class LogglyAppenderTest {
     Thread.sleep(10000);
   }
 
-//  @Test
-//  public void configuredLog4jWithFile() throws Exception {
-//    final URL url = getClass().getClassLoader().getResource("log4j.properties");
-//    PropertyConfigurator.configure(url);
-//    org.apache.log4j.Logger Logger = org.apache.log4j.Logger.
-//    log.error("Message 1");
-//    log.error("Message 2");
-//    log.error("Message 3");
-//    Thread.sleep(10000);
-//  }
+  @Test
+  public void configuredLog4jWithFile() throws Exception {
+    final URL url = getClass().getClassLoader().getResource("log4j.properties");
+    PropertyConfigurator.configure(url);
+    org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger("test");
+    log.error("Log4j Message 1");
+    log.error("Log4j Message 2");
+    log.error("Log4j Message 3");
+    Thread.sleep(10000);
+  }
 }

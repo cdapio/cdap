@@ -72,19 +72,13 @@ public class LogglyAppender extends AppenderSkeleton {
 
   /**
    * Set feeder, option {@code feeder} in config.
-   * @param feeder The feeder to use
+   * @param fdr The feeder to use
    */
-  public void setFeeder(String feeder) {
+  public void setFeeder(Feeder fdr) {
     if (this.feeder != null) {
       throw new IllegalStateException("call #setFeeder() only once");
     }
-    try {
-      this.feeder = (Feeder)Class.forName(feeder).newInstance();
-    } catch (InstantiationException e) {
-
-    } catch (IllegalAccessException e) {
-    } catch (ClassNotFoundException e) {
-    }
+    this.feeder = fdr;
   }
 
   public Feeder getFeeder() {
@@ -110,12 +104,6 @@ public class LogglyAppender extends AppenderSkeleton {
         "Unable to start with no feeder set"
       );
     }
-    System.out.println(
-      String.format(
-        "LogglyAppender started to work with %s...",
-        this.feeder
-      )
-    );
     this.future = this.service.scheduleWithFixedDelay(
         new Runnable() {
           @Override
@@ -138,12 +126,6 @@ public class LogglyAppender extends AppenderSkeleton {
       this.future.cancel(true);
     }
     this.service.shutdown();
-    System.out.println(
-      String.format(
-        "LogglyAppender finished to work with %s.",
-        this.feeder
-      )
-    );
   }
 
   /**
