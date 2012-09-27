@@ -206,6 +206,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
       // If metric is not present then we don't attempt to
       // write the time series for that metric.
+      // If metric has same value, then we don't add the point.
       if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
         return true;
       }

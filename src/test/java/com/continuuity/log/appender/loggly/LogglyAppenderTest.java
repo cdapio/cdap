@@ -2,6 +2,10 @@ package com.continuuity.log.appender.loggly;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
+import com.continuuity.log.appender.log4j.*;
+import com.continuuity.log.appender.log4j.LogglyAppender;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
@@ -29,7 +33,7 @@ public class LogglyAppenderTest {
   }
 
   @Test
-  public void configuredWithFile() throws Exception {
+     public void configuredLogbackWithFile() throws Exception {
     final URL url = getClass().getClassLoader().getResource("loggly-test.xml");
     context.reset();
     final JoranConfigurator configurator = new JoranConfigurator();
@@ -41,4 +45,15 @@ public class LogglyAppenderTest {
     log.error("Message 3");
     Thread.sleep(10000);
   }
+
+//  @Test
+//  public void configuredLog4jWithFile() throws Exception {
+//    final URL url = getClass().getClassLoader().getResource("log4j.properties");
+//    PropertyConfigurator.configure(url);
+//    org.apache.log4j.Logger Logger = org.apache.log4j.Logger.
+//    log.error("Message 1");
+//    log.error("Message 2");
+//    log.error("Message 3");
+//    Thread.sleep(10000);
+//  }
 }

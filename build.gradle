@@ -30,7 +30,6 @@ dependencies {
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
     compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
     compile group: 'org.apache.mina', name:'mina-integration-jmx', version:'2.0.4'
-    //compile group: 'org.rrd4j', name:'rrd4j', version:'2.1'
     compile group: 'com.ning', name: 'async-http-client', version: '1.7.5'
 }
 
