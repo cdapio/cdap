@@ -15,9 +15,6 @@ import java.util.Map;
  *
  */
 public class LogglyJsonLayout extends LayoutBase<ILoggingEvent> {
-  private static final Logger Log = LoggerFactory.getLogger(
-    LogglyJsonLayout.class
-  );
 
   /**
    * Instance of JSON object mapper.
@@ -34,7 +31,7 @@ public class LogglyJsonLayout extends LayoutBase<ILoggingEvent> {
       log.put("loggername", event.getLoggerName());
       json = mapper.writeValueAsString(log);
     } catch (IOException e) {
-      Log.error("Failed writing layout for log message {}", e.getMessage());
+      System.out.println("Failed writing layout for log message " + e.getMessage());
     }
     return json;
   }

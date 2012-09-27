@@ -63,7 +63,8 @@ public class TMultiplexedProcessor implements TProcessor {
    *
    * @throws TException If the message type is not CALL or ONEWAY, if
    * the service name was not found in the message, or if the service
-   * name was not found in the service map.  You called {@link #registerProcessor(String, TProcessor) registerProcessor}
+   * name was not found in the service map.  You called
+   * {@link #registerProcessor(String, TProcessor) registerProcessor}
    * during initialization, right? :)
    */
   public boolean process(TProtocol iprot, TProtocol oprot) throws TException {

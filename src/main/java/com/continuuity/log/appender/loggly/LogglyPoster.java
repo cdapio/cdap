@@ -12,9 +12,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class LogglyPoster extends Thread {
-  private static final Logger Log = LoggerFactory.getLogger(
-    LogglyPoster.class
-  );
   private int numRetries = 3;
   private long timeoutInMillis = 3000l;
   private final SloppyCircularBuffer<String> queue;
@@ -52,7 +49,7 @@ public final class LogglyPoster extends Thread {
         Thread.yield();
       }
     } catch(final InterruptedException e) {
-      Log.error(StackTraceUtil.toStringStackTrace(e));
+      System.out.println(StackTraceUtil.toStringStackTrace(e));
     }
   }
 
@@ -74,14 +71,14 @@ public final class LogglyPoster extends Thread {
         // for any http code not in the 200 range (200..300) print an error
         if((result / 100) != 2) {
           final String message = readResponseBody(connection.getInputStream());
-          Log.warn("Failed with HTTP error code : {}. Reason : {}", result,
-                   message);
+          System.out.println("Failed with HTTP error code " + result +
+            " Reason : " + message);
         } else {
           // success - exit the for loop
           return;
         }
       } catch(final IOException e) {
-        Log.error(StackTraceUtil.toStringStackTrace(e));
+        System.out.println(StackTraceUtil.toStringStackTrace(e));
       }
 
       if (timeoutInMillis > 0) {
@@ -91,14 +88,14 @@ public final class LogglyPoster extends Thread {
           if (dir == 0) {
             dir = -1;
           }
-          Log.debug("Sleeping for {} milliseconds.", (timeoutInMillis + (dir
-            * thresholdOffset)));
+          System.out.println("Sleeping for " + (timeoutInMillis + (dir
+            * thresholdOffset)) + " ms.");
           Thread.sleep(timeoutInMillis + (dir * thresholdOffset));
         } catch (InterruptedException ie) {
           Thread.currentThread().interrupt();
         }
       }
-      Log.debug("Loggly retry {}.", retryNo + 1);
+      System.out.println("Loggly retry " + retryNo + 1);
       retryNo++;
     }
     while (retryNo < numRetries);
