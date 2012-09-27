@@ -24,8 +24,8 @@ public class RandomNumberSource extends AbstractSourceFlowlet {
   }
 
   @Override
-  public void initialize(FlowletLaunchContext launchContext) {
-    super.initialize(launchContext);
+  public void initialize(FlowletContext context) {
+    super.initialize(context);
     this.random = new Random();
   }
   
