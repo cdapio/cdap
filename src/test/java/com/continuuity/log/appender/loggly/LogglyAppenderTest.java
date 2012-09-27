@@ -51,9 +51,11 @@ public class LogglyAppenderTest {
     final URL url = getClass().getClassLoader().getResource("log4j.properties");
     PropertyConfigurator.configure(url);
     org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger("test");
-    log.error("Log4j Message 1");
-    log.error("Log4j Message 2");
-    log.error("Log4j Message 3");
+    for(int i = 0; i <2; ++i) {
+      log.error("Log4j Message error " + i);
+      log.warn("Log4j Message warn " + i);
+      log.info("Log4j Message info " + i);
+    }
     Thread.sleep(10000);
   }
 }

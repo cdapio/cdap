@@ -1,10 +1,8 @@
 package com.continuuity.log.common;
 
-import com.sun.istack.NotNull;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.io.IOUtils;
 import org.mortbay.jetty.HttpHeaders;
-import org.slf4j.Logger;
 
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -56,7 +54,7 @@ public abstract class AbstractHttpFeeder implements Feeder {
    *  will mean that rexsl-test module will become a transitive dependency
    *  of rexsl-core, which is not a good idea..
    */
-  protected final void post(@NotNull final String text) throws IOException {
+  protected final void post(final String text) throws IOException {
     final HttpURLConnection conn =
       (HttpURLConnection) this.getUrl().openConnection();
     try {

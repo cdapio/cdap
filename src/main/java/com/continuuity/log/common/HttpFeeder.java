@@ -30,7 +30,7 @@ public final class HttpFeeder extends AbstractHttpFeeder {
   /**
    * Shall we split lines before POST-ing?
    */
-  private transient boolean split;
+  private transient boolean split = true;
 
   /**
    * Set option {@code split}.

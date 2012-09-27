@@ -1,5 +1,6 @@
 package com.continuuity.log.appender.log4j;
 
+import java.net.MalformedURLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -7,6 +8,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
@@ -65,6 +67,10 @@ public class LogglyAppender extends AppenderSkeleton {
    */
   private transient Feeder feeder;
 
+  private transient String feederKlass;
+  private transient String feederUrl;
+  private transient boolean feederSplit = false;
+
   /**
    * The future we're running in.
    */
@@ -72,17 +78,28 @@ public class LogglyAppender extends AppenderSkeleton {
 
   /**
    * Set feeder, option {@code feeder} in config.
-   * @param fdr The feeder to use
+   * @param feederKlass The feeder to use
    */
-  public void setFeeder(Feeder fdr) {
-    if (this.feeder != null) {
-      throw new IllegalStateException("call #setFeeder() only once");
-    }
-    this.feeder = fdr;
+  public void setFeeder(String feederKlass) {
+    this.feederKlass = feederKlass;
   }
 
-  public Feeder getFeeder() {
-    return feeder;
+  public String getFeeder() {
+    return feederKlass;
+  }
+
+  public void setUrl(String feederUrl) {
+    this.feederUrl = feederUrl;
+  }
+
+  public String getUrl() {
+    return feederUrl;
+  }
+
+  public void setSplit(String split) {
+    if("yes".equals(split) || "YES".equals(split)) {
+      feederSplit = true;
+    }
   }
 
   /**
@@ -100,9 +117,21 @@ public class LogglyAppender extends AppenderSkeleton {
   public void activateOptions() {
     super.activateOptions();
     if (this.feeder == null) {
-      throw new IllegalStateException(
-        "Unable to start with no feeder set"
-      );
+      try {
+        Class<?> feederClass = Class.forName(this.feederKlass);
+        AbstractHttpFeeder abstractHttpFeeder
+          = (AbstractHttpFeeder)feederClass.newInstance();
+        abstractHttpFeeder.setUrl(feederUrl);
+        feeder = abstractHttpFeeder;
+      } catch (ClassNotFoundException e) {
+        throw new IllegalStateException(e);
+      } catch (InstantiationException e) {
+        throw new IllegalStateException(e);
+      } catch (IllegalAccessException e) {
+        throw new IllegalStateException(e);
+      } catch (MalformedURLException e) {
+        throw new IllegalStateException(e);
+      }
     }
     this.future = this.service.scheduleWithFixedDelay(
         new Runnable() {
