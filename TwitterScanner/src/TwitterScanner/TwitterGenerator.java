@@ -13,7 +13,7 @@ import twitter4j.*;
  * public timeline, wraps them in a Tuple and sends them to the next Flowlet
  * in our Flow.
  */
-public class TwitterGenerator extends AbstractSourceFlowlet {
+public class TwitterGenerator extends SourceFlowlet {
 
   /**
    * This is the Twitter Client we will use to generate Tuples

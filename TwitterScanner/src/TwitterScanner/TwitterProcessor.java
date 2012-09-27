@@ -7,7 +7,7 @@ import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import twitter4j.Status;
 
-public class TwitterProcessor extends AbstractComputeFlowlet {
+public class TwitterProcessor extends ComputeFlowlet {
 
   /**
    * Processes a Tuple at a time.

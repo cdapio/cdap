@@ -3,7 +3,7 @@ package CountTokens;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class UpperCaser extends AbstractComputeFlowlet {
+public class UpperCaser extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

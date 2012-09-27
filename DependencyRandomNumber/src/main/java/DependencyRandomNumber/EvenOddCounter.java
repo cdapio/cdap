@@ -4,7 +4,7 @@ import com.continuuity.api.data.*;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class EvenOddCounter extends AbstractComputeFlowlet {
+public class EvenOddCounter extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

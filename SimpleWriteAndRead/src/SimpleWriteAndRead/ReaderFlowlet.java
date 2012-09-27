@@ -6,7 +6,7 @@ import com.continuuity.api.flow.flowlet.builders.*;
 
 import javax.management.OperationsException;
 
-public class ReaderFlowlet extends AbstractComputeFlowlet {
+public class ReaderFlowlet extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

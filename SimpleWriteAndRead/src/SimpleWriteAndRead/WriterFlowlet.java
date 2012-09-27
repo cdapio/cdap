@@ -4,7 +4,7 @@ import com.continuuity.api.data.*;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class WriterFlowlet extends AbstractComputeFlowlet {
+public class WriterFlowlet extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

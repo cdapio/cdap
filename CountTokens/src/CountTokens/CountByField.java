@@ -4,7 +4,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class CountByField extends AbstractComputeFlowlet
+public class CountByField extends ComputeFlowlet
 {
   @Override
   public void configure(StreamsConfigurator configurator) {

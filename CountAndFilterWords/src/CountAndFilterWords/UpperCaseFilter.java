@@ -5,7 +5,7 @@ import java.lang.Character;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class UpperCaseFilter extends AbstractComputeFlowlet {
+public class UpperCaseFilter extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

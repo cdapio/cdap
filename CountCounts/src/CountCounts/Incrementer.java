@@ -4,7 +4,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
-public class Incrementer extends AbstractComputeFlowlet
+public class Incrementer extends ComputeFlowlet
 {
   static byte[] keyTotal = "countSink".getBytes();
 

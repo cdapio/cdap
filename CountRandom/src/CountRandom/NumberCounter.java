@@ -4,7 +4,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
-public class NumberCounter extends AbstractComputeFlowlet {
+public class NumberCounter extends ComputeFlowlet {
 
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {

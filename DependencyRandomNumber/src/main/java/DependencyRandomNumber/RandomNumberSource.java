@@ -2,7 +2,7 @@ package DependencyRandomNumber;
 
 import java.util.Random;
 
-import com.continuuity.api.flow.flowlet.AbstractSourceFlowlet;
+import com.continuuity.api.flow.flowlet.SourceFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletLaunchContext;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.StreamsConfigurator;
@@ -11,7 +11,7 @@ import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
-public class RandomNumberSource extends AbstractSourceFlowlet {
+public class RandomNumberSource extends SourceFlowlet {
   
   private Random random;
 

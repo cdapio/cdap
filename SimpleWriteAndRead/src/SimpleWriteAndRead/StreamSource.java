@@ -5,7 +5,7 @@ import com.continuuity.api.flow.flowlet.builders.*;
 
 import java.util.HashMap;
 
-public class StreamSource extends AbstractComputeFlowlet {
+public class StreamSource extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

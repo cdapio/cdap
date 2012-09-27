@@ -4,7 +4,7 @@ import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
-public class NumberSplitter extends AbstractComputeFlowlet {
+public class NumberSplitter extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     Integer i = tuple.get("number");

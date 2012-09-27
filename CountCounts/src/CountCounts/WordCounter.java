@@ -5,7 +5,7 @@ import com.continuuity.api.flow.flowlet.builders.*;
 
 import java.lang.String;
 
-public class WordCounter extends AbstractComputeFlowlet {
+public class WordCounter extends ComputeFlowlet {
 
   @Override
   public void configure(StreamsConfigurator configurator) {

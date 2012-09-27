@@ -6,7 +6,7 @@ import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 import java.util.Random;
 
-public class RandomSource extends AbstractSourceFlowlet {
+public class RandomSource extends SourceFlowlet {
 
   Random random;
 
