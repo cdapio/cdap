@@ -1,9 +1,5 @@
 <configuration debug="true">
     <appender name="loggly" class="com.continuuity.log.appender.loggly.LogglyAppender">
-
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="com.continuuity.log.appender.loggly.LogglyJsonLayout"/>
-        </encoder>
         <queueSize>3</queueSize>
         <endpoint>https://logs.loggly.com/inputs/71888287-15b4-440f-bbef-07e4649260f6</endpoint>
     </appender>
