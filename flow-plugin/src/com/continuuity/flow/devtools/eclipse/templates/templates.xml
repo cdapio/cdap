@@ -67,7 +67,7 @@ NAME CDATA #REQUIRED
 		<IMPORT>com.continuuity.api.flow.flowlet.AbstractSourceFlowlet</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.AbstractSinkFlowlet</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.Flowlet</IMPORT>
-		<IMPORT>com.continuuity.api.flow.flowlet.FlowletLaunchContext</IMPORT>
+		<IMPORT>com.continuuity.api.flow.flowlet.FlowletContext</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.OutputCollector</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.StreamsConfigurator</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.Tuple</IMPORT>

@@ -106,7 +106,7 @@ class RandomNumberGenerator extends AbstractSourceFlowlet {
   	Tuple randomNumberTuple = new TupleBuilder()
   		.set("randomNumber", randomNumber)
   		.create();
-  	collector.emit(randomNumberTuple);
+  	collector.add(randomNumberTuple);
   }
 }
 
@@ -167,7 +167,7 @@ class RunningAggregate extends AbstractComputeFlowlet {
   		.create();
   		
     // emit the increment operation
-    collector.emit(runningAggregate);
+    collector.add(runningAggregate);
   }
 }
 
@@ -211,7 +211,7 @@ class StoreRunningAggregate extends AbstractComputeFlowlet {
   	Long runningAggregate = tuple.get("runningAggregate");
   	byte[] key = "running-aggregate".getBytes();
   	byte[] value = runningAggregate.toString().getBytes();
-  	collector.emit(new Write(key, value);
+  	collector.add(new Write(key, value);
   }
   
 }
