@@ -1,9 +1,12 @@
-apply plugin: 'continuuity'
-
+// Pull the JS plugin from a Maven Repo
 buildscript {
-    apply from: 'continuuity.gradle'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.eriwen:gradle-js-plugin:1.0.3'
+    }
 }
-
 // Invoke the plugin
 apply plugin: 'js'
 
