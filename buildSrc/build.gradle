@@ -6,4 +6,5 @@ dependencies {
     compile gradleApi()
     groovy localGroovy()
     runtime 'bmuschko:gradle-clover-plugin:0.5.2'
+    runtime 'com.eriwen:gradle-js-plugin:1.0.3'
 }
