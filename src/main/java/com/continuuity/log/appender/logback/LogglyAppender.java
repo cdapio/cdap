@@ -4,8 +4,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.Layout;
-import com.continuuity.log.appender.loggly.LogglyPoster;
-import com.continuuity.log.appender.loggly.SloppyCircularBuffer;
 import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
 
