@@ -1,5 +1,14 @@
 package com.continuuity.data.operation.ttqueue;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
+
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
@@ -9,16 +18,16 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.internal.*;
+import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
+import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
+import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
+import com.continuuity.data.operation.ttqueue.internal.GroupState;
+import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a single {@link TTQueue} on a single
@@ -602,39 +611,61 @@ public class TTQueueOnVCTable implements TTQueue {
         getValue(), newValue, dirty.getFirst(), dirty.getSecond());
 
     // We successfully finalized our ack.  Perform evict-on-ack if possible.
+    Pair<Boolean, Set<byte[]>> groupsFinalizedResult = null;
     if (totalNumGroups == 1 ||
-        (totalNumGroups > 0 && allOtherGroupsFinalized(entryPointer,
-            totalNumGroups, consumer.getGroupId(), dirty))) {
+        (totalNumGroups > 0 && (groupsFinalizedResult =
+            allOtherGroupsFinalized(entryPointer, totalNumGroups,
+                consumer.getGroupId(), dirty)).getFirst())) {
       // Evict!
+      // Set entry metadata to EVICTED state
       byte [] entryMetaColumn =
           makeColumn(entryPointer.getEntryId(), ENTRY_META);
       this.table.put(shardRow, entryMetaColumn, dirty.getSecond(),
           new EntryMeta(EntryState.EVICTED).getBytes());
+      // Delete entry data and group meta entries
+      Set<byte[]> groupColumns = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
+      if (totalNumGroups != 1) {
+        groupColumns.addAll(groupsFinalizedResult.getSecond());
+      }
+      byte [] entryDataColumn =
+          makeColumn(entryPointer.getEntryId(), ENTRY_DATA);
+      groupColumns.add(entryDataColumn);
+      this.table.deleteAll(shardRow,
+          groupColumns.toArray(new byte[groupColumns.size()][]),
+              dirty.getSecond());
     }
   }
 
-  private boolean allOtherGroupsFinalized(QueueEntryPointer entryPointer,
-      int totalNumGroups, long curGroup,
+  private Pair<Boolean, Set<byte[]>> allOtherGroupsFinalized(
+      QueueEntryPointer entryPointer, int totalNumGroups, long curGroup,
       ImmutablePair<ReadPointer,Long> dirtyPointer) throws OperationException {
 
     byte [] shardRow = makeRow(GLOBAL_DATA_HEADER, entryPointer.getShardId());
 
-    for (long groupId = 1; groupId <= totalNumGroups ; groupId++) {
+    byte [] startColumn = makeColumn(entryPointer.getEntryId(),
+        ENTRY_GROUP_META, 0L);
+    byte [] stopColumn = makeColumn(entryPointer.getEntryId(),
+        ENTRY_GROUP_META, Long.MAX_VALUE);
+    
+    Map<byte[],byte[]> groupEntries =
+        this.table.get(shardRow, startColumn, stopColumn,
+            dirtyPointer.getFirst()).getValue();
+    
+    if (groupEntries.size() < totalNumGroups) {
+      return new Pair<Boolean,Set<byte[]>>(false, null);
+    }
+    
+    for (Map.Entry<byte[],byte[]> groupEntry : groupEntries.entrySet()) {
+      byte [] columnBytes = groupEntry.getKey();
+      long groupId = Bytes.toLong(columnBytes, columnBytes.length - 8);
       if (groupId == curGroup) continue;
 
-      byte [] groupColumn = makeColumn(entryPointer.getEntryId(),
-          ENTRY_GROUP_META, groupId);
-      OperationResult<byte[]> existingValue =
-          this.table.get(shardRow, groupColumn, dirtyPointer.getFirst());
-
-      if (existingValue.isEmpty() || existingValue.getValue().length == 0)
-        return false;
       EntryGroupMeta groupMeta =
-          EntryGroupMeta.fromBytes(existingValue.getValue());
+          EntryGroupMeta.fromBytes(groupEntry.getValue());
       if (!groupMeta.isAcked())
-        return false;
+        return new Pair<Boolean,Set<byte[]>>(false, null);
     }
-    return true;
+    return new Pair<Boolean,Set<byte[]>>(true, groupEntries.keySet());
   }
 
   @Override
