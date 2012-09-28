@@ -1,9 +1,6 @@
 package com.continuuity.log.appender.loggly;
 
 import com.continuuity.common.utils.StackTraceUtil;
-import org.codehaus.groovy.runtime.StackTraceUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,6 +59,7 @@ public final class LogglyPoster extends Thread {
         final HttpURLConnection connection =
           (HttpURLConnection)this.endpoint.openConnection();
         connection.setRequestMethod("POST");
+        connection.setRequestProperty("content-type", "text/plain");
         connection.setDoOutput(true);
         connection.connect();
         sendAndClose(event, connection.getOutputStream());

@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  * acceptable behavior of this implementation.
  *
  * @param <Item> The type of items this {@link SloppyCircularBuffer} contains
+ *
+ * NOTE: USELESS REMOVE THIS PIECE OF SHIT.
  */
 public final class SloppyCircularBuffer<Item> {
   private final BlockingQueue<Item> queue;

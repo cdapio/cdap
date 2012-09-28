@@ -58,6 +58,7 @@ public abstract class AbstractHttpFeeder implements Feeder {
     final HttpURLConnection conn =
       (HttpURLConnection) this.getUrl().openConnection();
     try {
+      conn.setRequestProperty("content-type", "text/plain");
       conn.setConnectTimeout((int) TimeUnit.MINUTES.toMillis(1L));
       conn.setReadTimeout((int) TimeUnit.MINUTES.toMillis(1L));
       conn.setDoOutput(true);
