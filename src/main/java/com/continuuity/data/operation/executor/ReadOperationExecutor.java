@@ -1,36 +1,40 @@
-package com.continuuity.api.data;
+package com.continuuity.data.operation.executor;
+
+import com.continuuity.api.data.*;
 
 import java.util.List;
 import java.util.Map;
 
 
 /**
- * Executes a {@link ReadOperation}.
+ * Executes a {@link com.continuuity.api.data.ReadOperation}.
  */
 public interface ReadOperationExecutor {
 
   /**
-   * Executes a {@link ReadKey} operation.
+   * Executes a {@link com.continuuity.api.data.ReadKey} operation.
    * @param read the operation
    * @return a result object containing the value that was stored for
    *      the requested key. If the key is not found, the result will
    *      be empty and the status will be KEY_NOT_FOUND. If the key is
    *      found but does not have the key column, then the result is empty
    *      and the status is COLUMN_NOT_FOUND.
-   * @throws OperationException is something goes wrong
+   * @throws com.continuuity.api.data.OperationException is something goes wrong
    */
-  public OperationResult<byte[]> execute(ReadKey read)
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey read)
       throws OperationException;
 
   /**
-   * Executes a {@link Read} operation.
+   * Executes a {@link com.continuuity.api.data.Read} operation.
    * @param read the operation
    * @return a result object containing a map of columns to values if the key
    *    is found. If the key is not found, the result will be empty and the
    *    status code is KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException;
 
   /**
@@ -41,7 +45,8 @@ public interface ReadOperationExecutor {
    * code will be KEY_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException;
 
   /**
@@ -53,6 +58,6 @@ public interface ReadOperationExecutor {
    * then the result is empty with status code COLUMN_NOT_FOUND.
    * @throws OperationException is something goes wrong
    */
-  public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) throws OperationException;
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+          ReadColumnRange readColumnRange) throws OperationException;
 }

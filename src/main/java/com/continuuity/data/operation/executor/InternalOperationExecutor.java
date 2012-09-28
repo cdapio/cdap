@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
@@ -13,17 +14,21 @@ public interface InternalOperationExecutor {
 
   // TTQueues
 
-  public DequeueResult execute(QueueDequeue dequeue)
+  public DequeueResult execute(OperationContext context,
+                               QueueDequeue dequeue)
       throws OperationException;
 
-  public long execute(GetGroupID getGroupId)
+  public long execute(OperationContext context,
+                      GetGroupID getGroupId)
       throws OperationException;
 
-  public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta)
+  public OperationResult<QueueMeta> execute(OperationContext context,
+                                            GetQueueMeta getQueueMeta)
       throws OperationException;
 
   // Fabric Administration
 
-  public void execute(ClearFabric clearFabric)
+  public void execute(OperationContext context,
+                      ClearFabric clearFabric)
       throws OperationException;
 }

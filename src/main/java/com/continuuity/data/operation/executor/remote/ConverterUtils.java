@@ -1,15 +1,6 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
+import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.remote.stubs.*;
@@ -34,6 +25,20 @@ public class ConverterUtils {
 
   private static final Logger Log =
       LoggerFactory.getLogger(ConverterUtils.class);
+
+  /** wrap an operation context into a thrift object */
+  TOperationContext wrap(OperationContext context) {
+    TOperationContext tcontext = new TOperationContext(context.getAccount());
+    if (context.getApplication() != null) tcontext.setApplication(context
+        .getApplication());
+    return tcontext;
+  }
+
+  /** unwrap an operation context */
+  OperationContext unwrap(TOperationContext tcontext) {
+    return new OperationContext(
+        tcontext.getAccount(), tcontext.getApplication());
+  }
 
   /** wrap an array of longs into a list of Long objects */
   List<Long> wrap(long[] array) {

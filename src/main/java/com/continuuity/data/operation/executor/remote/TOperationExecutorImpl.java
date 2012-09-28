@@ -61,7 +61,9 @@ public class TOperationExecutorImpl
   // always safe to return with Thrift.
 
   @Override
-  public void write(TWrite tWrite) throws TException, TOperationException {
+  public void write(TOperationContext tcontext,
+                    TWrite tWrite)
+      throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_WRITE_REQUESTS,
@@ -71,8 +73,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TWrite: " + tWrite);
 
     try {
+      OperationContext context = unwrap(tcontext);
       Write write = unwrap(tWrite);
-      this.opex.execute(write);
+      this.opex.execute(context, write);
       if (Log.isDebugEnabled()) Log.debug("Write successful.");
       helper.success();
 
@@ -85,7 +88,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public void delet(TDelete tDelete) throws TException, TOperationException {
+  public void delet(TOperationContext tcontext,
+                    TDelete tDelete) throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
         Constants.METRIC_DELETE_REQUESTS,
@@ -95,8 +99,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TDelete: " + tDelete);
 
     try {
+      OperationContext context = unwrap(tcontext);
       Delete delete = unwrap(tDelete);
-      this.opex.execute(delete);
+      this.opex.execute(context, delete);
       if (Log.isDebugEnabled()) Log.debug("Delete successful.");
       helper.success();
 
@@ -108,7 +113,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public void increment(TIncrement tIncrement)
+  public void increment(TOperationContext tcontext,
+                        TIncrement tIncrement)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -119,8 +125,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TIncrement: " + tIncrement);
 
     try {
+      OperationContext context = unwrap(tcontext);
       Increment increment = unwrap(tIncrement);
-      this.opex.execute(increment);
+      this.opex.execute(context, increment);
       if (Log.isDebugEnabled()) Log.debug("Increment successful.");
       helper.success();
 
@@ -132,7 +139,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public void compareAndSwap(TCompareAndSwap tCompareAndSwap)
+  public void compareAndSwap(TOperationContext tcontext,
+                             TCompareAndSwap tCompareAndSwap)
       throws TException, TOperationException  {
 
     MetricsHelper helper = newHelper(
@@ -143,8 +151,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TCompareAndSwap: " + tCompareAndSwap);
 
     try {
+      OperationContext context = unwrap(tcontext);
       CompareAndSwap compareAndSwap = unwrap(tCompareAndSwap);
-      this.opex.execute(compareAndSwap);
+      this.opex.execute(context, compareAndSwap);
       if (Log.isDebugEnabled()) Log.debug("CompareAndSwap successful.");
       helper.success();
 
@@ -156,7 +165,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public void queueEnqueue(TQueueEnqueue tQueueEnqueue)
+  public void queueEnqueue(TOperationContext tcontext,
+                           TQueueEnqueue tQueueEnqueue)
       throws TException, TOperationException  {
 
     MetricsHelper helper = newHelper(
@@ -167,8 +177,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TQueueEnqueue: " + tQueueEnqueue);
 
     try {
+      OperationContext context = unwrap(tcontext);
       QueueEnqueue queueEnqueue = unwrap(tQueueEnqueue);
-      this.opex.execute(queueEnqueue);
+      this.opex.execute(context, queueEnqueue);
       if (Log.isDebugEnabled()) Log.debug("Enqueue successful.");
       helper.success();
 
@@ -180,7 +191,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public void queueAck(TQueueAck tQueueAck)
+  public void queueAck(TOperationContext tcontext,
+                       TQueueAck tQueueAck)
       throws TException, TOperationException  {
 
     MetricsHelper helper = newHelper(
@@ -191,8 +203,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TQueueAck: " + tQueueAck);
 
     try {
+      OperationContext context = unwrap(tcontext);
       QueueAck queueAck = unwrap(tQueueAck);
-      this.opex.execute(queueAck);
+      this.opex.execute(context, queueAck);
       if (Log.isDebugEnabled()) Log.debug("Ack successful.");
       helper.success();
 
@@ -206,7 +219,8 @@ public class TOperationExecutorImpl
   // batch write, return a structure and never null, and is thus safe
 
   @Override
-  public void batch(List<TWriteOperation> batch)
+  public void batch(TOperationContext tcontext,
+                    List<TWriteOperation> batch)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -242,7 +256,8 @@ public class TOperationExecutorImpl
     }
 
     try {
-      this.opex.execute(writes);
+      OperationContext context = unwrap(tcontext);
+      this.opex.execute(context, writes);
       if (Log.isDebugEnabled()) Log.debug("Batch successful.");
       helper.success();
 
@@ -258,7 +273,8 @@ public class TOperationExecutorImpl
   // results into a structure
 
   @Override
-  public TOptionalBinary readKey(TReadKey tReadKey)
+  public TOptionalBinary readKey(TOperationContext tcontext,
+                                 TReadKey tReadKey)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -269,8 +285,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TReadKey: " + tReadKey);
 
     try {
+      OperationContext context = unwrap(tcontext);
       ReadKey readKey = unwrap(tReadKey);
-      OperationResult<byte[]> result = this.opex.execute(readKey);
+      OperationResult<byte[]> result = this.opex.execute(context, readKey);
       TOptionalBinary tResult = wrapBinary(result);
       if (Log.isDebugEnabled()) Log.debug("ReadKey successful.");
       helper.success();
@@ -284,7 +301,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public TOptionalBinaryMap read(TRead tRead)
+  public TOptionalBinaryMap read(TOperationContext tcontext,
+                                 TRead tRead)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -295,8 +313,10 @@ public class TOperationExecutorImpl
       Log.debug("Received TRead: " + tRead);
 
     try {
+      OperationContext context = unwrap(tcontext);
       Read read = unwrap(tRead);
-      OperationResult<Map<byte[], byte[]>> result = this.opex.execute(read);
+      OperationResult<Map<byte[], byte[]>> result =
+          this.opex.execute(context, read);
       TOptionalBinaryMap tResult = wrapMap(result);
       if (Log.isDebugEnabled()) Log.debug("Read successful." );
       helper.success();
@@ -310,7 +330,8 @@ public class TOperationExecutorImpl
   }
 
   @Override
-  public TOptionalBinaryList readAllKeys(TReadAllKeys tReadAllKeys)
+  public TOptionalBinaryList readAllKeys(TOperationContext tcontext,
+                                         TReadAllKeys tReadAllKeys)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -321,8 +342,10 @@ public class TOperationExecutorImpl
       Log.debug("Received TReadAllKeys: " + tReadAllKeys);
 
     try {
+      OperationContext context = unwrap(tcontext);
       ReadAllKeys readAllKeys = unwrap(tReadAllKeys);
-      OperationResult<List<byte[]>> result = this.opex.execute(readAllKeys);
+      OperationResult<List<byte[]>> result =
+          this.opex.execute(context, readAllKeys);
       TOptionalBinaryList tResult = wrapList(result);
       if (Log.isDebugEnabled()) Log.debug("ReadAllKeys successful.");
       helper.success();
@@ -337,7 +360,8 @@ public class TOperationExecutorImpl
 
   @Override
   public TOptionalBinaryMap
-  readColumnRange(TReadColumnRange tReadColumnRange)
+  readColumnRange(TOperationContext tcontext,
+                  TReadColumnRange tReadColumnRange)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -348,9 +372,10 @@ public class TOperationExecutorImpl
       Log.debug("Received TReadColumnRange: " + tReadColumnRange);
 
     try {
+      OperationContext context = unwrap(tcontext);
       ReadColumnRange readColumnRange = unwrap(tReadColumnRange);
       OperationResult<Map<byte[], byte[]>> result =
-          this.opex.execute(readColumnRange);
+          this.opex.execute(context, readColumnRange);
       TOptionalBinaryMap tResult = wrapMap(result);
       if (Log.isDebugEnabled()) Log.debug("ReadColumnRange successful.");
       helper.success();
@@ -366,7 +391,8 @@ public class TOperationExecutorImpl
   // dequeue always return a structure, which does not need extra wrapping
 
   @Override
-  public TDequeueResult dequeue(TQueueDequeue tQueueDequeue)
+  public TDequeueResult dequeue(TOperationContext tcontext,
+                                TQueueDequeue tQueueDequeue)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -377,8 +403,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TQueueDequeue" + tQueueDequeue.toString());
 
     try {
+      OperationContext context = unwrap(tcontext);
       QueueDequeue queueDequeue = unwrap(tQueueDequeue);
-      DequeueResult result = this.opex.execute(queueDequeue);
+      DequeueResult result = this.opex.execute(context, queueDequeue);
       if (Log.isDebugEnabled()) Log.debug("Dequeue successful.");
       TDequeueResult tResult = wrap(result);
       helper.success();
@@ -394,7 +421,8 @@ public class TOperationExecutorImpl
   // getGroupId always returns a long and cannot be null
 
   @Override
-  public long getGroupId(TGetGroupId tGetGroupId)
+  public long getGroupId(TOperationContext tcontext,
+                         TGetGroupId tGetGroupId)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -405,8 +433,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TGetGroupID: " + tGetGroupId);
 
     try {
+      OperationContext context = unwrap(tcontext);
       QueueAdmin.GetGroupID getGroupID = unwrap(tGetGroupId);
-      long groupId = this.opex.execute(getGroupID);
+      long groupId = this.opex.execute(context, getGroupID);
       if (Log.isDebugEnabled()) Log.debug("GetGroupID successful: " + groupId);
       helper.success();
       return groupId;
@@ -421,7 +450,8 @@ public class TOperationExecutorImpl
   // getQueueMeta can return null, if the queue does not exist
 
   @Override
-  public TQueueMeta getQueueMeta(TGetQueueMeta tGetQueueMeta)
+  public TQueueMeta getQueueMeta(TOperationContext tcontext,
+                                 TGetQueueMeta tGetQueueMeta)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -432,9 +462,10 @@ public class TOperationExecutorImpl
       Log.debug("Received TGetQueueMeta: " + tGetQueueMeta);
 
     try {
+      OperationContext context = unwrap(tcontext);
       QueueAdmin.GetQueueMeta getQueueMeta = unwrap(tGetQueueMeta);
       OperationResult<QueueAdmin.QueueMeta> queueMeta =
-          this.opex.execute(getQueueMeta);
+          this.opex.execute(context, getQueueMeta);
       if (Log.isDebugEnabled()) Log.debug("GetQueueMeta successful: " +
           (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
       TQueueMeta tQueueMeta =  wrap(queueMeta);
@@ -451,7 +482,8 @@ public class TOperationExecutorImpl
   // clearFabric is safe as it returns nothing
 
   @Override
-  public void clearFabric(TClearFabric tClearFabric)
+  public void clearFabric(TOperationContext tcontext,
+                          TClearFabric tClearFabric)
       throws TException, TOperationException {
 
     MetricsHelper helper = newHelper(
@@ -462,8 +494,9 @@ public class TOperationExecutorImpl
       Log.debug("Received TClearFabric: " + tClearFabric);
 
     try {
+      OperationContext context = unwrap(tcontext);
       ClearFabric clearFabric = unwrap(tClearFabric);
-      this.opex.execute(clearFabric);
+      this.opex.execute(context, clearFabric);
       if (Log.isDebugEnabled()) Log.debug("Clear successful.");
       helper.success();
 

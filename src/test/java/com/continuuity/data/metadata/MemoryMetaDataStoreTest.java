@@ -1,20 +1,21 @@
-package com.continuuity.data.operation.executor.remote;
+package com.continuuity.data.metadata;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
 
-public class MemoryOpexServiceTest extends OperationExecutorServiceTest {
+public abstract class MemoryMetaDataStoreTest extends MetaDataStoreTest {
 
   @BeforeClass
-  public static void startService() throws Exception {
+  public static void setupOpex() throws Exception {
+
     CConfiguration config = CConfiguration.create();
     Injector injector = Guice.createInjector (
         new DataFabricModules().getInMemoryModules());
-    OperationExecutorServiceTest.startService(
-        config, injector.getInstance(OperationExecutor.class));
+    opex = injector.getInstance(OperationExecutor.class);
   }
+
 }

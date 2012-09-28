@@ -13,40 +13,46 @@ public interface WriteOperationExecutor {
    * @param write the operation
    * @throws OperationException if execution failed
    */
-  public void execute(Write write) throws OperationException;
+  public void execute(OperationContext context,
+                      Write write) throws OperationException;
 
   /**
    * Performs a {@link Delete} operation.
    * @param delete the operation
    * @throws OperationException if execution failed
    */
-  public void execute(Delete delete) throws OperationException;
+  public void execute(OperationContext context,
+                      Delete delete) throws OperationException;
 
   /**
    * Performs an {@link Increment} operation.
    * @param inc the operation
    * @throws OperationException if execution failed
    */
-  public void execute(Increment inc) throws OperationException;
+  public void execute(OperationContext context,
+                      Increment inc) throws OperationException;
 
   /**
    * Performs a {@link CompareAndSwap} operation.
    * @param cas the operation
    * @throws OperationException if execution failed
    */
-  public void execute(CompareAndSwap cas) throws OperationException;
+  public void execute(OperationContext context,
+                      CompareAndSwap cas) throws OperationException;
   
   /**
    * Performs a {@link QueueEnqueue} operation.
    * @param enqueue the operation
    * @throws OperationException if execution failed
    */
-  public void execute(QueueEnqueue enqueue) throws OperationException;
+  public void execute(OperationContext context,
+                      QueueEnqueue enqueue) throws OperationException;
 
   /**
    * Performs a {@link QueueAck} operation.
    * @param ack the operation
    * @throws OperationException if execution failed
    */
-  public void execute(QueueAck ack) throws OperationException;
+  public void execute(OperationContext context,
+                      QueueAck ack) throws OperationException;
 }

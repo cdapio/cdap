@@ -2,6 +2,11 @@ namespace java com.continuuity.data.operation.executor.remote.stubs
 
 // read operations
 
+struct TOperationContext {
+  1: string account,
+  2: optional string application,
+}
+
 struct TReadKey {
   1: binary key,
 }
@@ -183,26 +188,26 @@ exception TOperationException {
 service TOperationExecutor {
 
   // write op ex
-  void write(1: TWrite write) throws (1: TOperationException ex),
-  void delet(1: TDelete delet) throws (1: TOperationException ex),
-  void increment(1: TIncrement increment) throws (1: TOperationException ex),
-  void compareAndSwap(1: TCompareAndSwap compareAndSwap) throws (1: TOperationException ex),
-  void queueEnqueue(1: TQueueEnqueue queueEnqueue) throws (1: TOperationException ex),
-  void queueAck(1: TQueueAck queueAck) throws (1: TOperationException ex),
+  void write(1: TOperationContext context, 2: TWrite write) throws (1: TOperationException ex),
+  void delet(1: TOperationContext context, 2: TDelete delet) throws (1: TOperationException ex),
+  void increment(1: TOperationContext context, 2: TIncrement increment) throws (1: TOperationException ex),
+  void compareAndSwap(1: TOperationContext context, 2: TCompareAndSwap compareAndSwap) throws (1: TOperationException ex),
+  void queueEnqueue(1: TOperationContext context, 2: TQueueEnqueue queueEnqueue) throws (1: TOperationException ex),
+  void queueAck(1: TOperationContext context, 2: TQueueAck queueAck) throws (1: TOperationException ex),
 
   // batch op ex
-  void batch(1: TWriteBatch batch) throws (1: TOperationException ex),
+  void batch(1: TOperationContext context, 2: TWriteBatch batch) throws (1: TOperationException ex),
 
   // read op ex
-  TOptionalBinary readKey(1: TReadKey readKey) throws (1: TOperationException ex),
-  TOptionalBinaryMap read(1: TRead read) throws (1: TOperationException ex),
-  TOptionalBinaryList readAllKeys(1: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
-  TOptionalBinaryMap readColumnRange(1: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
+  TOptionalBinary readKey(1: TOperationContext context, 2: TReadKey readKey) throws (1: TOperationException ex),
+  TOptionalBinaryMap read(1: TOperationContext context, 2: TRead read) throws (1: TOperationException ex),
+  TOptionalBinaryList readAllKeys(1: TOperationContext context, 2: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
+  TOptionalBinaryMap readColumnRange(1: TOperationContext context, 2: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
 
   // internal op ex
-  TDequeueResult dequeue(1: TQueueDequeue dequeue) throws (1: TOperationException ex),
-  i64 getGroupId(1: TGetGroupId getGroupId) throws (1: TOperationException ex),
-  TQueueMeta getQueueMeta(1: TGetQueueMeta getQueueMeta) throws (1: TOperationException ex),
-  void clearFabric(1: TClearFabric clearFabric) throws (1: TOperationException ex),
+  TDequeueResult dequeue(1: TOperationContext context, 2: TQueueDequeue dequeue) throws (1: TOperationException ex),
+  i64 getGroupId(1: TOperationContext context, 2: TGetGroupId getGroupId) throws (1: TOperationException ex),
+  TQueueMeta getQueueMeta(1: TOperationContext context, 2: TGetQueueMeta getQueueMeta) throws (1: TOperationException ex),
+  void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
 
 }

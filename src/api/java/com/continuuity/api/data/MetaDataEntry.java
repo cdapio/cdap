@@ -2,54 +2,115 @@ package com.continuuity.api.data;
 
 import com.google.common.collect.Maps;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
 public class MetaDataEntry {
 
-  private String name;
-  private String type;
-  private Map<String, String> fields;
+  private String account; // can never be null or empty
+  private String application; // can be null but never empty
+  private String id; // can never be null or empty
+  private String type; // can never be null or empty
+  private Map<String, String> textFields;
+  private Map<String, byte[]> binaryFields;
 
-  public MetaDataEntry(String name, String type) {
-    if (name == null)
-      throw new IllegalArgumentException("name cannot be null");
+  public MetaDataEntry(String account, String application,
+                       String type, String id) {
+    if (account == null)
+      throw new IllegalArgumentException("account cannot be null");
+    if (account.isEmpty())
+      throw new IllegalArgumentException("account cannot be empty");
+    if (id == null)
+      throw new IllegalArgumentException("id cannot be null");
+    if (id.isEmpty())
+      throw new IllegalArgumentException("id cannot be empty");
+    if (application != null && application.isEmpty())
+      throw new IllegalArgumentException("application cannot be empty");
     if (type == null)
       throw new IllegalArgumentException("type cannot be null");
-    this.name = name;
+    if (type.isEmpty())
+      throw new IllegalArgumentException("type cannot be empty");
+    this.account = account;
+    this.application = application;
+    this.id = id;
     this.type = type;
-    this.fields = Maps.newTreeMap();
+    this.textFields = Maps.newTreeMap();
+    this.binaryFields = Maps.newTreeMap();
   }
 
   public void addField(String field, String value) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
     if (value == null)
       throw new IllegalArgumentException("value cannot be null");
-    this.fields.put(field, value);
+    this.textFields.put(field, value);
   }
 
-  public void setType(String type) {
-    if (type == null)
-      throw new IllegalArgumentException("type cannot be null");
-    this.type = type;
+  public void addField(String field, byte[] value) {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
+    if (value == null)
+      throw new IllegalArgumentException("value cannot be null");
+    this.binaryFields.put(field, value);
   }
 
-  public String getName() {
-    return this.name;
+  public String getAccount() {
+    return account;
+  }
+
+  public String getApplication() {
+    return application;
+  }
+
+  public String getId() {
+    return this.id;
   }
 
   public String getType() {
     return this.type;
   }
 
-  public String get(String field) {
+  public String getTextField(String field) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
-    return this.fields.get(field);
+    return this.textFields.get(field);
   }
 
-  public Set<Map.Entry<String, String>> getFields() {
-    return this.fields.entrySet();
+  public byte[] getBinaryField(String field) {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    return this.binaryFields.get(field);
+  }
+
+  public Set<String> getTextFields() {
+    return this.textFields.keySet();
+  }
+  public Set<String> getBinaryFields() {
+    return this.binaryFields.keySet();
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof MetaDataEntry)) return false;
+    MetaDataEntry other = (MetaDataEntry)o;
+    if (!this.account.equals(other.account)) return false;
+    if (this.application == null && other.application != null) return false;
+    if (this.application != null &&
+        !this.application.equals(other.application)) return false;
+    if (!this.id.equals(other.id)) return false;
+    if (!this.type.equals(other.type)) return false;
+    if (!this.textFields.equals(other.textFields)) return false;
+    // can't use Map.equals for binary fields, because equals() doesn't work
+    // on byte[]. Iterate over the map and compare fields one by one.
+    if (!this.getBinaryFields().equals(other.getBinaryFields())) return false;
+    for (String key : this.getBinaryFields())
+      if (!Arrays.equals(this.getBinaryField(key), other.getBinaryField(key)))
+        return false;
+    return true;
   }
 }

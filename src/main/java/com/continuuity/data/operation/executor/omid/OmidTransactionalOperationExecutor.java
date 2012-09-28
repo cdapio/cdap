@@ -3,18 +3,7 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
@@ -93,10 +82,50 @@ implements TransactionalOperationExecutor {
         System.currentTimeMillis() - beginning);
   }
   
+  // named table management
+
+  // a map of logical table name to existing <real name, table>, caches
+  // the meta data store and the ovc table handle
+  // there are three possible states for a table:
+  // 1. table does not exist or is not known -> no entry
+  // 2. table is being created -> entry with real name, but null for the table
+  // 3. table is known -> entry with name and table
+  // Map<String,ImmutablePair<byte[],OrderedVersionedColumnarTable>>
+  //    randomTables;
+
+  // method to find - and if necessary create - a table
+  /*
+  OrderedVersionedColumnarTable findRandomTable(String name) {
+    // if name is null, return default random table
+    // look up table in in-memory map.
+    // if (entry, table) return table
+    // (A) if (entry, null) wait until table not null, return table
+    // if null
+    //   (B) read meta data for table
+    //   if (real name, true) return getTable()
+    //   if (real name, false) l
+    //     loop and wait until created
+    //     getTable()
+    //     update in-memory table with table
+    //     return
+    //   if (null)
+    //     generate unique name
+    //     add (unique name, null) to in-memory table
+    //     if fails, then someone else just created -> go back to  (A)
+    //     add (unique name, false) to meta data and
+    //     if fails, then someone else just created -> go back to (B)
+    //     createNewTable(uniqueName) - should never fail
+    //     update meta data (unique name, true)
+    //     update in-memory table
+    //     return table
+  }
+  */
+
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(ReadKey read)
+  public OperationResult<byte[]> execute(OperationContext context,
+                                         ReadKey read)
       throws OperationException {
     initialize();
     requestMetric("ReadKey");
@@ -112,7 +141,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<List<byte[]>> execute(ReadAllKeys readKeys)
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
       throws OperationException {
     initialize();
     requestMetric("ReadAllKeys");
@@ -124,7 +154,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Read read)
       throws OperationException {
     initialize();
     requestMetric("Read");
@@ -137,7 +168,8 @@ implements TransactionalOperationExecutor {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(ReadColumnRange readColumnRange) throws OperationException {
+  execute(OperationContext context,
+          ReadColumnRange readColumnRange) throws OperationException {
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
@@ -151,7 +183,8 @@ implements TransactionalOperationExecutor {
   // Administrative calls
 
   @Override
-  public void execute(ClearFabric clearFabric) throws OperationException {
+  public void execute(OperationContext context,
+                      ClearFabric clearFabric) throws OperationException {
     initialize();
     requestMetric("ClearFabric");
     long begin = begin();
@@ -164,7 +197,8 @@ implements TransactionalOperationExecutor {
   // Write batches
 
   @Override
-  public void execute(List<WriteOperation> writes)
+  public void execute(OperationContext context,
+                      List<WriteOperation> writes)
       throws OperationException {
     initialize();
     requestMetric("WriteOperationBatch");
@@ -174,9 +208,10 @@ implements TransactionalOperationExecutor {
     end("WriteOperationBatch", begin);
   }
 
-  private void executeAsBatch(WriteOperation write)
+  private void executeAsBatch(OperationContext context,
+                              WriteOperation write)
       throws OperationException {
-    execute(Collections.singletonList(write));
+    execute(context, Collections.singletonList(write));
   }
 
   void execute(List<WriteOperation> writes,
@@ -396,7 +431,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public DequeueResult execute(QueueDequeue dequeue)
+  public DequeueResult execute(OperationContext context,
+                               QueueDequeue dequeue)
       throws OperationException {
     initialize();
     requestMetric("QueueDequeue");
@@ -429,7 +465,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public long execute(GetGroupID getGroupId)
+  public long execute(OperationContext context,
+                      GetGroupID getGroupId)
       throws OperationException {
     initialize();
     requestMetric("GetGroupID");
@@ -441,7 +478,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueMeta> execute(GetQueueMeta getQueueMeta)
+  public OperationResult<QueueMeta> execute(OperationContext context,
+                                            GetQueueMeta getQueueMeta)
       throws OperationException {
     initialize();
     requestMetric("GetQueueMeta");
@@ -494,33 +532,39 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void execute(Write write) throws OperationException {
-    executeAsBatch(write);
+  public void execute(OperationContext context,
+                      Write write) throws OperationException {
+    executeAsBatch(context, write);
   }
 
   @Override
-  public void execute(Delete delete) throws OperationException {
-    executeAsBatch(delete);
+  public void execute(OperationContext context,
+                      Delete delete) throws OperationException {
+    executeAsBatch(context, delete);
   }
 
   @Override
-  public void execute(Increment inc) throws OperationException {
-    executeAsBatch(inc);
+  public void execute(OperationContext context,
+                      Increment inc) throws OperationException {
+    executeAsBatch(context, inc);
   }
 
   @Override
-  public void execute(CompareAndSwap cas) throws OperationException {
-    executeAsBatch(cas);
+  public void execute(OperationContext context,
+                      CompareAndSwap cas) throws OperationException {
+    executeAsBatch(context, cas);
   }
 
   @Override
-  public void execute(QueueAck ack) throws OperationException {
-    executeAsBatch(ack);
+  public void execute(OperationContext context,
+                      QueueAck ack) throws OperationException {
+    executeAsBatch(context, ack);
   }
 
   @Override
-  public void execute(QueueEnqueue enqueue) throws OperationException {
-    executeAsBatch(enqueue);
+  public void execute(OperationContext context,
+                      QueueEnqueue enqueue) throws OperationException {
+    executeAsBatch(context, enqueue);
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {

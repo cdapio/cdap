@@ -10,7 +10,7 @@
  * and an asynchronous write path.
  * 
  * Read operations are performed one-at-a-time and inline within a flowlet
- * via the {@link com.continuuity.api.data.ReadOperationExecutor}.  The result
+ * via the {@link com.continuuity.data.operation.executor.ReadOperationExecutor}.  The result
  * of the operation is returned from the executor.
  * 
  * For example, a flowlet might receive a tuple containing the userid of a given
@@ -41,7 +41,7 @@
  *     Read read = new Read(userid, "email".getBytes());
  *     ReadOperationExecutor executor = getFlowletLaunchContext().getReadExecutor();
  *     byte [] email = executor.execute(read).get("email".getBytes());
- *     collector.emit(
+ *     collector.add(
  *         new TupleBuilder()
  *         .set("userid", userid)
  *         .set("email", email)
@@ -52,7 +52,8 @@
  *
  * Write operations are performed within a transaction and as an asynchronous
  * batch at the end of every flowlet process call.  Writes are added to this
- * batch through {@link com.continuuity.api.flow.flowlet.OutputCollector#emit(WriteOperation)}.
+ * batch through {@link com.continuuity.api.flow.flowlet.OutputCollector#add
+ * (WriteOperation)}.
  * 
  * This batch will either completely succeed or completely fail, the database
  * will never be left in an inconsistent state.  If the batch is successful,
@@ -90,8 +91,8 @@
  *     byte [] userid = tuple.get("userid");
  *     byte [] email = tuple.get("email");
  *     Write write = new Write(userid, "email".getBytes(), email);
- *     collector.emit(write);
- *     collector.emit(
+ *     collector.add(write);
+ *     collector.add(
  *         new TupleBuilder()
  *         .set("userid", userid)
  *         .create());
