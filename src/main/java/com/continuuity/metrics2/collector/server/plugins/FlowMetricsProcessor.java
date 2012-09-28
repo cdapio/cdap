@@ -12,6 +12,7 @@ import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
 import com.continuuity.metrics2.common.DBUtils;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Concrete implementation of {@link MetricsProcessor} for processing
@@ -77,6 +79,62 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    */
   private Map<String, Boolean> allowedTimeseriesMetrics = Maps.newHashMap();
 
+
+  /**
+   * TimeseriesCleaner is responsible for making sure the timeseries
+   * data older than certain time is deleted.
+   */
+  private final class TimeseriesCleanser
+      extends AbstractScheduledService {
+
+    private long olderThanTimeInSeconds = 300;
+
+    @Override
+    protected void runOneIteration() throws Exception {
+      Connection connection = null;
+      PreparedStatement stmt = null;
+      StringBuffer sb = new StringBuffer();
+      sb.append("DELETE FROM timeseries")
+        .append(" ").append("WHERE timestamp < ?");
+      try {
+
+        connection = getConnection();
+        stmt = connection.prepareStatement(sb.toString());
+        long oldestStartTime = ((System.currentTimeMillis()/1000)
+          - olderThanTimeInSeconds);
+        stmt.setLong(1, oldestStartTime);
+        stmt.executeUpdate();
+        Log.debug("Cleaning up timeseries DB older than timeperiod {}",
+          oldestStartTime);
+      } catch (SQLException e) {
+        Log.warn("Failed to older timeseries data. Reason : {}",
+          e.getMessage());
+      } finally {
+        try {
+          if(connection != null) {
+            connection.close();
+          }
+          if(stmt != null) {
+            stmt.close();
+          }
+        } catch (SQLException e) {
+          Log.warn("Failed to close connection/stmt. Reason : {}.",
+            e.getMessage());
+        }
+      }
+    }
+
+    @Override
+    protected Scheduler scheduler() {
+      return Scheduler.newFixedRateSchedule(0, 1L, TimeUnit.SECONDS);
+    }
+  }
+
+  /**
+   * Instance of timeseries cleaner.
+   */
+  private static TimeseriesCleanser timeseriesCleanser;
+
   /**
    * Constructs and initializes a flow metric processor.
    *
@@ -114,6 +172,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       jdbcDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
     }
+
+    // Starting the timeseries cleaners.
+    timeseriesCleanser = new TimeseriesCleanser();
+    Log.debug("Starting timeseries db cleaner.");
+    timeseriesCleanser.start();
 
     // Create any tables needed for initializing.
     DBUtils.createMetricsTables(getConnection(), this.type);
