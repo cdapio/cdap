@@ -37,6 +37,13 @@ public class HyperSQLOVCTableHandle extends SimpleOVCTableHandle {
   }
 
   @Override
+  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+    HyperSQLOVCTable table =
+        new HyperSQLOVCTable(Bytes.toString(tableName), this.connection);
+    if (table.openTable()) return table; else return null;
+  }
+
+  @Override
   public String getName() {
     return "hSQL";
   }

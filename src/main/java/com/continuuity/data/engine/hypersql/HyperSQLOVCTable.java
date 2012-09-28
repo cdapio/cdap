@@ -81,6 +81,20 @@ implements OrderedVersionedColumnarTable {
     }
   }
 
+  boolean openTable() throws OperationException {
+    try {
+      DatabaseMetaData md = this.connection.getMetaData();
+      ResultSet rs = md.getTables(null, null, this.tableName, null);
+      if (rs.next()) {
+        return true;
+      }
+      return false;
+    } catch (SQLException e) {
+      handleSQLException(e, "create");
+    }
+    return false;
+  }
+
   void initializeTable() throws OperationException {
     String createStatement = "CREATE CACHED TABLE " + this.tableName + " (" +
         "rowkey " + ROW_TYPE + " NOT NULL, " +

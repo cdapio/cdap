@@ -30,8 +30,9 @@ import org.slf4j.LoggerFactory;
 public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TReadAllKeys._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TReadAllKeys");
 
-  private static final org.apache.thrift.protocol.TField OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("offset", org.apache.thrift.protocol.TType.I32, (short)1);
-  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("offset", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -39,13 +40,15 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     schemes.put(TupleScheme.class, new TReadAllKeysTupleSchemeFactory());
   }
 
+  public String table; // optional
   public int offset; // required
   public int limit; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    OFFSET((short)1, "offset"),
-    LIMIT((short)2, "limit");
+    TABLE((short)1, "table"),
+    OFFSET((short)2, "offset"),
+    LIMIT((short)3, "limit");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -60,9 +63,11 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // OFFSET
+        case 1: // TABLE
+          return TABLE;
+        case 2: // OFFSET
           return OFFSET;
-        case 2: // LIMIT
+        case 3: // LIMIT
           return LIMIT;
         default:
           return null;
@@ -107,9 +112,12 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   private static final int __OFFSET_ISSET_ID = 0;
   private static final int __LIMIT_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
+  private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.OFFSET, new org.apache.thrift.meta_data.FieldMetaData("offset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.LIMIT, new org.apache.thrift.meta_data.FieldMetaData("limit", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -138,6 +146,9 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   public TReadAllKeys(TReadAllKeys other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
+    if (other.isSetTable()) {
+      this.table = other.table;
+    }
     this.offset = other.offset;
     this.limit = other.limit;
   }
@@ -148,10 +159,35 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
 
   @Override
   public void clear() {
+    this.table = null;
     setOffsetIsSet(false);
     this.offset = 0;
     setLimitIsSet(false);
     this.limit = 0;
+  }
+
+  public String getTable() {
+    return this.table;
+  }
+
+  public TReadAllKeys setTable(String table) {
+    this.table = table;
+    return this;
+  }
+
+  public void unsetTable() {
+    this.table = null;
+  }
+
+  /** Returns true if field table is set (has been assigned a value) and false otherwise */
+  public boolean isSetTable() {
+    return this.table != null;
+  }
+
+  public void setTableIsSet(boolean value) {
+    if (!value) {
+      this.table = null;
+    }
   }
 
   public int getOffset() {
@@ -202,6 +238,14 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
+    case TABLE:
+      if (value == null) {
+        unsetTable();
+      } else {
+        setTable((String)value);
+      }
+      break;
+
     case OFFSET:
       if (value == null) {
         unsetOffset();
@@ -223,6 +267,9 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
+    case TABLE:
+      return getTable();
+
     case OFFSET:
       return Integer.valueOf(getOffset());
 
@@ -240,6 +287,8 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     }
 
     switch (field) {
+    case TABLE:
+      return isSetTable();
     case OFFSET:
       return isSetOffset();
     case LIMIT:
@@ -260,6 +309,15 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
   public boolean equals(TReadAllKeys that) {
     if (that == null)
       return false;
+
+    boolean this_present_table = true && this.isSetTable();
+    boolean that_present_table = true && that.isSetTable();
+    if (this_present_table || that_present_table) {
+      if (!(this_present_table && that_present_table))
+        return false;
+      if (!this.table.equals(that.table))
+        return false;
+    }
 
     boolean this_present_offset = true;
     boolean that_present_offset = true;
@@ -295,6 +353,16 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     int lastComparison = 0;
     TReadAllKeys typedOther = (TReadAllKeys)other;
 
+    lastComparison = Boolean.valueOf(isSetTable()).compareTo(typedOther.isSetTable());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTable()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetOffset()).compareTo(typedOther.isSetOffset());
     if (lastComparison != 0) {
       return lastComparison;
@@ -335,6 +403,16 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     StringBuilder sb = new StringBuilder("TReadAllKeys(");
     boolean first = true;
 
+    if (isSetTable()) {
+      sb.append("table:");
+      if (this.table == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table);
+      }
+      first = false;
+    }
+    if (!first) sb.append(", ");
     sb.append("offset:");
     sb.append(this.offset);
     first = false;
@@ -386,7 +464,15 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
           break;
         }
         switch (schemeField.id) {
-          case 1: // OFFSET
+          case 1: // TABLE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.table = iprot.readString();
+              struct.setTableIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 2: // OFFSET
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.offset = iprot.readI32();
               struct.setOffsetIsSet(true);
@@ -394,7 +480,7 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // LIMIT
+          case 3: // LIMIT
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.limit = iprot.readI32();
               struct.setLimitIsSet(true);
@@ -417,6 +503,13 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      if (struct.table != null) {
+        if (struct.isSetTable()) {
+          oprot.writeFieldBegin(TABLE_FIELD_DESC);
+          oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldBegin(OFFSET_FIELD_DESC);
       oprot.writeI32(struct.offset);
       oprot.writeFieldEnd();
@@ -441,13 +534,19 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     public void write(org.apache.thrift.protocol.TProtocol prot, TReadAllKeys struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetOffset()) {
+      if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetLimit()) {
+      if (struct.isSetOffset()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetLimit()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetTable()) {
+        oprot.writeString(struct.table);
+      }
       if (struct.isSetOffset()) {
         oprot.writeI32(struct.offset);
       }
@@ -459,12 +558,16 @@ public class TReadAllKeys implements org.apache.thrift.TBase<TReadAllKeys, TRead
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TReadAllKeys struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
+        struct.table = iprot.readString();
+        struct.setTableIsSet(true);
+      }
+      if (incoming.get(1)) {
         struct.offset = iprot.readI32();
         struct.setOffsetIsSet(true);
       }
-      if (incoming.get(1)) {
+      if (incoming.get(2)) {
         struct.limit = iprot.readI32();
         struct.setLimitIsSet(true);
       }

@@ -8,50 +8,58 @@ struct TOperationContext {
 }
 
 struct TReadKey {
-  1: binary key,
+  1: optional string table,
+  2: binary key,
 }
 
 struct TRead {
-  1: binary key,
-  2: list<binary> columns,
+  1: optional string table,
+  2: binary key,
+  3: list<binary> columns,
 }
 
 struct TReadAllKeys {
-  1: i32 offset,
-  2: i32 limit,
+  1: optional string table,
+  2: i32 offset,
+  3: i32 limit,
 }
 
 struct TReadColumnRange {
-  1: binary key,
-  2: binary startColumn,
-  3: binary stopColumn,
-  4: i32 limit,
+  1: optional string table,
+  2: binary key,
+  3: binary startColumn,
+  4: binary stopColumn,
+  5: i32 limit,
 }
 
 // write operations
 
 struct TWrite {
-  1: binary key,
-  2: list<binary> columns,
-  3: list<binary> values,
+  1: optional string table,
+  2: binary key,
+  3: list<binary> columns,
+  4: list<binary> values,
 }
 
 struct TDelete {
-  1: binary key,
-  2: list<binary> columns,
+  1: optional string table,
+  2: binary key,
+  3: list<binary> columns,
 }
 
 struct TIncrement {
-  1: binary key,
-  2: list<binary> columns,
-  3: list<i64> amounts,
+  1: optional string table,
+  2: binary key,
+  3: list<binary> columns,
+  4: list<i64> amounts,
 }
 
 struct TCompareAndSwap {
-  1: binary key,
-  2: binary column,
-  3: binary expectedValue,
-  4: binary newValue,
+  1: optional string table,
+  2: binary key,
+  3: binary column,
+  4: binary expectedValue,
+  5: binary newValue,
 }
 
 // queue stuff

@@ -30,9 +30,10 @@ import org.slf4j.LoggerFactory;
 public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TWrite");
 
-  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)2);
-  private static final org.apache.thrift.protocol.TField VALUES_FIELD_DESC = new org.apache.thrift.protocol.TField("values", org.apache.thrift.protocol.TType.LIST, (short)3);
+  private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)3);
+  private static final org.apache.thrift.protocol.TField VALUES_FIELD_DESC = new org.apache.thrift.protocol.TField("values", org.apache.thrift.protocol.TType.LIST, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -40,15 +41,17 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     schemes.put(TupleScheme.class, new TWriteTupleSchemeFactory());
   }
 
+  public String table; // optional
   public ByteBuffer key; // required
   public List<ByteBuffer> columns; // required
   public List<ByteBuffer> values; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    KEY((short)1, "key"),
-    COLUMNS((short)2, "columns"),
-    VALUES((short)3, "values");
+    TABLE((short)1, "table"),
+    KEY((short)2, "key"),
+    COLUMNS((short)3, "columns"),
+    VALUES((short)4, "values");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,11 +66,13 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // KEY
+        case 1: // TABLE
+          return TABLE;
+        case 2: // KEY
           return KEY;
-        case 2: // COLUMNS
+        case 3: // COLUMNS
           return COLUMNS;
-        case 3: // VALUES
+        case 4: // VALUES
           return VALUES;
         default:
           return null;
@@ -109,9 +114,12 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.COLUMNS, new org.apache.thrift.meta_data.FieldMetaData("columns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -142,6 +150,9 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
    * Performs a deep copy on <i>other</i>.
    */
   public TWrite(TWrite other) {
+    if (other.isSetTable()) {
+      this.table = other.table;
+    }
     if (other.isSetKey()) {
       this.key = org.apache.thrift.TBaseHelper.copyBinary(other.key);
 ;
@@ -172,9 +183,34 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
 
   @Override
   public void clear() {
+    this.table = null;
     this.key = null;
     this.columns = null;
     this.values = null;
+  }
+
+  public String getTable() {
+    return this.table;
+  }
+
+  public TWrite setTable(String table) {
+    this.table = table;
+    return this;
+  }
+
+  public void unsetTable() {
+    this.table = null;
+  }
+
+  /** Returns true if field table is set (has been assigned a value) and false otherwise */
+  public boolean isSetTable() {
+    return this.table != null;
+  }
+
+  public void setTableIsSet(boolean value) {
+    if (!value) {
+      this.table = null;
+    }
   }
 
   public byte[] getKey() {
@@ -291,6 +327,14 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
+    case TABLE:
+      if (value == null) {
+        unsetTable();
+      } else {
+        setTable((String)value);
+      }
+      break;
+
     case KEY:
       if (value == null) {
         unsetKey();
@@ -320,6 +364,9 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
+    case TABLE:
+      return getTable();
+
     case KEY:
       return getKey();
 
@@ -340,6 +387,8 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     }
 
     switch (field) {
+    case TABLE:
+      return isSetTable();
     case KEY:
       return isSetKey();
     case COLUMNS:
@@ -362,6 +411,15 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
   public boolean equals(TWrite that) {
     if (that == null)
       return false;
+
+    boolean this_present_table = true && this.isSetTable();
+    boolean that_present_table = true && that.isSetTable();
+    if (this_present_table || that_present_table) {
+      if (!(this_present_table && that_present_table))
+        return false;
+      if (!this.table.equals(that.table))
+        return false;
+    }
 
     boolean this_present_key = true && this.isSetKey();
     boolean that_present_key = true && that.isSetKey();
@@ -406,6 +464,16 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     int lastComparison = 0;
     TWrite typedOther = (TWrite)other;
 
+    lastComparison = Boolean.valueOf(isSetTable()).compareTo(typedOther.isSetTable());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTable()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
@@ -456,6 +524,16 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     StringBuilder sb = new StringBuilder("TWrite(");
     boolean first = true;
 
+    if (isSetTable()) {
+      sb.append("table:");
+      if (this.table == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table);
+      }
+      first = false;
+    }
+    if (!first) sb.append(", ");
     sb.append("key:");
     if (this.key == null) {
       sb.append("null");
@@ -521,7 +599,15 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
           break;
         }
         switch (schemeField.id) {
-          case 1: // KEY
+          case 1: // TABLE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.table = iprot.readString();
+              struct.setTableIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 2: // KEY
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.key = iprot.readBinary();
               struct.setKeyIsSet(true);
@@ -529,7 +615,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // COLUMNS
+          case 3: // COLUMNS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
@@ -547,7 +633,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // VALUES
+          case 4: // VALUES
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list11 = iprot.readListBegin();
@@ -580,6 +666,13 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      if (struct.table != null) {
+        if (struct.isSetTable()) {
+          oprot.writeFieldBegin(TABLE_FIELD_DESC);
+          oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
       if (struct.key != null) {
         oprot.writeFieldBegin(KEY_FIELD_DESC);
         oprot.writeBinary(struct.key);
@@ -627,16 +720,22 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     public void write(org.apache.thrift.protocol.TProtocol prot, TWrite struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetKey()) {
+      if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetColumns()) {
+      if (struct.isSetKey()) {
         optionals.set(1);
       }
-      if (struct.isSetValues()) {
+      if (struct.isSetColumns()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetValues()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetTable()) {
+        oprot.writeString(struct.table);
+      }
       if (struct.isSetKey()) {
         oprot.writeBinary(struct.key);
       }
@@ -663,12 +762,16 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TWrite struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
+        struct.table = iprot.readString();
+        struct.setTableIsSet(true);
+      }
+      if (incoming.get(1)) {
         struct.key = iprot.readBinary();
         struct.setKeyIsSet(true);
       }
-      if (incoming.get(1)) {
+      if (incoming.get(2)) {
         {
           org.apache.thrift.protocol.TList _list18 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
           struct.columns = new ArrayList<ByteBuffer>(_list18.size);
@@ -681,7 +784,7 @@ public class TWrite implements org.apache.thrift.TBase<TWrite, TWrite._Fields>, 
         }
         struct.setColumnsIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(3)) {
         {
           org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
           struct.values = new ArrayList<ByteBuffer>(_list21.size);
