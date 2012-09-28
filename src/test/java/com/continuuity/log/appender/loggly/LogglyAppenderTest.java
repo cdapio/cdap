@@ -40,9 +40,11 @@ public class LogglyAppenderTest {
     configurator.setContext(this.context);
     configurator.doConfigure(new File(url.getFile()));
     final Logger log = context.getLogger(getClass());
-    log.error("Logback Message 1");
-    log.error("Logback Message 2");
-    log.error("Logback Message 3");
+    for(int i = 0; i < 2; ++i) {
+      log.error("Logback Message 1" + i);
+      log.error("Logback Message 2" + i);
+      log.error("Logback Message 3" + i);
+    }
     Thread.sleep(10000);
   }
 

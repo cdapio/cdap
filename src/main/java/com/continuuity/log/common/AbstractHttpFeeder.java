@@ -50,15 +50,11 @@ public abstract class AbstractHttpFeeder implements Feeder {
   /**
    * POST one line of text.
    * @param text The text to post
-   * @throws IOException If failed to post
-   *  will mean that rexsl-test module will become a transitive dependency
-   *  of rexsl-core, which is not a good idea..
    */
   protected final void post(final String text) throws IOException {
     final HttpURLConnection conn =
       (HttpURLConnection) this.getUrl().openConnection();
     try {
-      conn.setRequestProperty("content-type", "text/plain");
       conn.setConnectTimeout((int) TimeUnit.MINUTES.toMillis(1L));
       conn.setReadTimeout((int) TimeUnit.MINUTES.toMillis(1L));
       conn.setDoOutput(true);
