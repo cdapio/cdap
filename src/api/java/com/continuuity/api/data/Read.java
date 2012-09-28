@@ -2,8 +2,6 @@ package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
 
-import java.util.Map;
-
 /**
  * Read the value of a key or the values of columns.
  *
@@ -11,43 +9,89 @@ import java.util.Map;
  */
 public class Read implements ReadOperation {
 
+  /** the name of the table */
+  private final String table;
+
   /** The key/row to read */
   private final byte [] key;
 
   /** The columns to read */
   private final byte [][] columns;
 
-  /** The result of the read, a map from columns to their values */
-  private Map<byte[], byte[]> result;
-
   /**
-   * Reads the value of the specified key.
+   * Reads the value of the specified key from the default table.
    *
    * @param key the key to read
    */
   public Read(final byte [] key) {
-    this(key, KV_COL_ARR);
+    this((String)null, key);
   }
 
   /**
-   * Reads the value of the specified column in the specified row.
+   * Reads the value of the specified key from the specified table.
+   *
+   * @param table the name of the table to read from
+   * @param key the key to read
+   */
+  public Read(final String table,
+              final byte [] key) {
+    this(table, key, KV_COL_ARR);
+  }
+
+  /**
+   * Reads the value of the specified column in the specified row,
+   * from the default table.
    *
    * @param row the row to be read
    * @param column the columns to be read
    */
   public Read(final byte [] row, final byte [] column) {
-    this(row, new byte [][] { column } );
+    this(null, row, column);
   }
 
   /**
-   * Reads the values of the specified columns in the specified row.
+   * Reads the value of the specified column in the specified row,
+   * from a specified table.
+   *
+   * @param table the name of the table to read from
+   * @param row the row to be read
+   * @param column the columns to be read
+   */
+  public Read(final String table,
+              final byte [] row,
+              final byte [] column) {
+    this(table, row, new byte [][] { column } );
+  }
+
+  /**
+   * Reads the values of the specified columns in the specified row,
+   * from the default table.
    *
    * @param row the row to be read
    * @param columns the columns to be read
    */
   public Read(final byte [] row, final byte [][] columns) {
+    this(null, row, columns);
+  }
+
+  /**
+   * Reads the values of the specified columns in the specified row,
+   * from a specified table.
+   *
+   * @param table the name of the table to read from
+   * @param row the row to be read
+   * @param columns the columns to be read
+   */
+  public Read(final String table,
+              final byte [] row,
+              final byte [][] columns) {
+    this.table = table;
     this.key = row;
     this.columns = columns;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   public byte [] getKey() {

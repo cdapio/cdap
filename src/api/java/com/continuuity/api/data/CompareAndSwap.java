@@ -21,6 +21,9 @@ import java.util.Arrays;
  */
 public class CompareAndSwap implements ConditionalWriteOperation {
 
+  /** the name of the table */
+  private final String table;
+
   /** The key/row */
   private final byte [] key;
 
@@ -36,15 +39,50 @@ public class CompareAndSwap implements ConditionalWriteOperation {
   /**
    * Compares-and-swaps the value of the specified key by atomically comparing
    * if the current value is the specified expected value and if so, replacing
-   * it with the specified new value.
+   * it with the specified new value. This happens in the default table.
    *
-   * @param key
-   * @param expectedValue
-   * @param newValue
+   * @param key the key of the row to perform the operation on
+   * @param expectedValue the expected value of the column
+   * @param newValue the new value to write
    */
   public CompareAndSwap(final byte [] key, final byte [] expectedValue,
-      final byte [] newValue) {
-    this(key, KV_COL, expectedValue, newValue);
+                        final byte [] newValue) {
+    this((String)null, key, expectedValue, newValue);
+  }
+
+  /**
+   * Compares-and-swaps the value of the specified key by atomically comparing
+   * if the current value is the specified expected value and if so, replacing
+   * it with the specified new value.
+   *
+   * @param table the table to perform the operation on
+   * @param key the key of the row to perform the operation on
+   * @param expectedValue the expected value of the column
+   * @param newValue the new value to write
+   */
+  public CompareAndSwap(final String table,
+                        final byte [] key,
+                        final byte [] expectedValue,
+                        final byte [] newValue) {
+    this(table, key, KV_COL, expectedValue, newValue);
+  }
+
+  /**
+   * Compares-and-swaps the value of the specified column in the specified row
+   * by atomically comparing if the current value is the specified expected
+   * value and if so, replacing it with the specified new value. This happens
+   * in the default table.
+   *
+   * @param row the row to perform the operation on
+   * @param column the column to compare and swap
+   * @param expectedValue the expected value of the column
+   * @param newValue the new value to write
+   */
+  public CompareAndSwap(final byte [] row,
+                        final byte [] column,
+                        final byte [] expectedValue,
+                        final byte [] newValue) {
+    this(null, row, column, expectedValue, newValue);
   }
 
   /**
@@ -52,17 +90,26 @@ public class CompareAndSwap implements ConditionalWriteOperation {
    * by atomically comparing if the current value is the specified expected
    * value and if so, replacing it with the specified new value.
    *
-   * @param row
-   * @param column
-   * @param expectedValue
-   * @param newValue
+   * @param table the table to perform the operation on
+   * @param row the row to perform the operation on
+   * @param column the column to compare and swap
+   * @param expectedValue the expected value of the column
+   * @param newValue the new value to write
    */
-  public CompareAndSwap(final byte [] row, final byte [] column,
-      final byte [] expectedValue, final byte [] newValue) {
+  public CompareAndSwap(final String table,
+                        final byte [] row,
+                        final byte [] column,
+                        final byte [] expectedValue,
+                        final byte [] newValue) {
+    this.table = table;
     this.key = row;
     this.column = column;
     this.expectedValue = expectedValue;
     this.newValue = newValue;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   @Override

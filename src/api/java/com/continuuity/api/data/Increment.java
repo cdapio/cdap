@@ -10,6 +10,9 @@ package com.continuuity.api.data;
  */
 public class Increment implements WriteOperation, ReadOperation {
 
+  /** the name of the table */
+  private final String table;
+
   /** The key/row */
   private final byte [] key;
 
@@ -20,47 +23,106 @@ public class Increment implements WriteOperation, ReadOperation {
   private final long [] amounts;
 
   /**
-   * Increments the specified key by the specified amount.
+   * Increments the specified key by the specified amount, in the default table
    *
    * This is a key-value operation.
    *
-   * @param key
-   * @param amount
+   * @param key the row key to increment for
+   * @param amount the amount to increment by
    */
   public Increment(final byte [] key, long amount) {
-    this(key, KV_COL_ARR, new long [] { amount });
+    this((String)null, key, amount);
+  }
+
+  /**
+   * Increments the specified key by the specified amount in the specified table
+   *
+   * This is a key-value operation.
+   *
+   * @param table the table to increment in
+   * @param key the row key to increment for
+   * @param amount the amount to increment by
+   */
+  public Increment(final String table,
+                   final byte [] key,
+                   long amount) {
+    this(table, key, KV_COL_ARR, new long [] { amount });
   }
 
   /**
    * Increments the specified column in the specified row by the specified
-   * amount.
+   * amount, in the default table
    *
    * This is a columnar operation.
    *
-   * @param row
-   * @param column
-   * @param amount
+   * @param row the row key to increment for
+   * @param column the column to increment
+   * @param amount the amount to increment by
    */
-  public Increment(final byte [] row, final byte [] column, final long amount) {
-    this(row, new byte [][] { column }, new long [] { amount });
+  public Increment(final byte[] row,
+                   final byte [] column,
+                   final long amount) {
+    this(null, row, column, amount);
+  }
+
+  /**
+   * Increments the specified column in the specified row by the specified
+   * amount, in the specified table
+   *
+   * This is a columnar operation.
+   *
+   * @param table the table to increment in
+   * @param row the row key to increment for
+   * @param column the column to increment
+   * @param amount the amount to increment by
+   */
+  public Increment(final String table,
+                   final byte [] row,
+                   final byte [] column,
+                   final long amount) {
+    this(table, row, new byte [][] { column }, new long [] { amount });
   }
 
   /**
    * Increments the specified columns in the specified row by the specified
-   * amounts.
+   * amounts, in the default table
    *
    * This is a columnar operation.
    *
-   * @param row
-   * @param columns
-   * @param amounts
+   * @param row the row key to increment for
+   * @param columns the columns to increment
+   * @param amounts the amounts to increment, in the same order as the columns
    */
-  public Increment(final byte [] row, final byte [][] columns,
-      final long [] amounts) {
+  public Increment(final byte [] row,
+                   final byte [][] columns,
+                   final long [] amounts) {
+    this(null, row, columns, amounts);
+  }
+
+  /**
+   * Increments the specified columns in the specified row by the specified
+   * amounts, in the specified table
+   *
+   * This is a columnar operation.
+   *
+   * @param table the table to increment in
+   * @param row the row key to increment for
+   * @param columns the columns to increment
+   * @param amounts the amounts to increment, in the same order as the columns
+   */
+  public Increment(final String table,
+                   final byte [] row,
+                   final byte [][] columns,
+                   final long [] amounts) {
     checkColumnArgs(columns, amounts);
+    this.table = table;
     this.key = row;
     this.columns = columns;
     this.amounts = amounts;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   @Override
@@ -83,12 +145,10 @@ public class Increment implements WriteOperation, ReadOperation {
 
   /**
    * Checks the specified columns and amounts arguments for validity.
-   * @param columns
-   * @param amounts
-   * @throws IllegalArgumentException if no columns specified
-   * @throws IllegalArgumentException if no amounts specified
-   * @throws IllegalArgumentException if number of columns does not match number
-   *                                  of amounts
+   * @param columns the columns to increment
+   * @param amounts the amounts to increment, in the same order as the columns
+   * @throws IllegalArgumentException if no columns specified, no amounts
+   *    specified, or number of columns does not match number of amounts.
    */
   public static void checkColumnArgs(final Object [] columns,
       final long [] amounts) {

@@ -10,7 +10,7 @@
  * and an asynchronous write path.
  * 
  * Read operations are performed one-at-a-time and inline within a flowlet
- * via the {@link com.continuuity.api.data.ReadOperationExecutor}.  The result
+ * via the {@link com.continuuity.data.operation.executor.ReadOperationExecutor}.  The result
  * of the operation is returned from the executor.
  * 
  * For example, a flowlet might receive a tuple containing the userid of a given
