@@ -97,7 +97,6 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       sb.append("DELETE FROM timeseries")
         .append(" ").append("WHERE timestamp < ?");
       try {
-
         connection = getConnection();
         stmt = connection.prepareStatement(sb.toString());
         long oldestStartTime = ((System.currentTimeMillis()/1000)
