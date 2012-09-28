@@ -11,11 +11,33 @@ import java.net.MalformedURLException;
 import java.util.concurrent.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: nmotgi
- * Date: 9/27/12
- * Time: 8:01 PM
- * To change this template use File | Settings | File Templates.
+ * Log appender, for loggly.
+ *
+ * <p>Configure it in your {@code log4j.properties} like this (just an example,
+ * which uses <a href="http://www.loggly.com">loggly.com</a> HTTP log
+ * consuming interface):
+ *
+ * <pre>
+ *    <configuration debug="true">
+ *      <appender name="loggly" class="com.continuuity.log.appender.logback.LogglyAppender">
+ *        <layout>
+ *           <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+ *        </layout>
+ *        <feeder>com.continuuity.log.common.HttpFeeder</feeder>
+ *        <split>no</split>
+ *        <url>https://logs.loggly.com/inputs/17b645ec-091d-47d3-a2b8-8c2f6c4b45bf</url>
+ *     </appender>
+ *     <root level="ALL">
+ *       <appender-ref ref="loggly" />
+ *     </root>
+ *   </configuration>
+ * </pre>
+ *
+ * <p>You can extend it with your own feeding mechanisms. Just implement
+ * the {@link Feeder} interface and add an instance of the class to the
+ * appender.
+ *
+ * <p>The class is thread-safe.
  */
 public class LogglyAppender extends AppenderBase<ILoggingEvent> {
   /**
@@ -44,9 +66,20 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    */
   private transient Feeder feeder;
 
-  private transient String feederKlass;
-  private transient String feederUrl;
-  private transient boolean feederSplit = false;
+  /**
+   * Class for the feeder.
+   */
+  private transient String klass;
+
+  /**
+   * Url to which the logs are sent to.
+   */
+  private transient String url;
+
+  /**
+   * In a multiline log, should the logs be split.
+   */
+  private transient boolean split = false;
 
   private Layout<ILoggingEvent> layout;
 
@@ -60,43 +93,68 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    * @param feederKlass The feeder to use
    */
   public void setFeeder(String feederKlass) {
-    this.feederKlass = feederKlass;
+    this.klass = feederKlass;
   }
 
+  /**
+   * @return class name for feeder
+   */
   public String getFeeder() {
-    return feederKlass;
+    return klass;
   }
 
-  public void setUrl(String feederUrl) {
-    this.feederUrl = feederUrl;
+  /**
+   * @param url sets the url of loggly to which the logs are sent.
+   */
+  public void setUrl(String url) {
+    this.url = url;
   }
 
+  /**
+   * @return the loggly url.
+   */
   public String getUrl() {
-    return feederUrl;
+    return url;
   }
 
+  /**
+   * Sets whether a multiline log should be split into seperate lines.
+   * @param split YES to split; anything else for not.
+   */
   public void setSplit(String split) {
     if("yes".equals(split) || "YES".equals(split)) {
-      feederSplit = true;
+      this.split = true;
     }
   }
 
+  /**
+   * @return Layout associated with logger.
+   */
   public Layout<ILoggingEvent> getLayout() {
     return this.layout;
   }
 
+  /**
+   * Sets the layout.
+   *
+   * @param layout associated with logger.
+   */
   public void setLayout(final Layout<ILoggingEvent> layout) {
     this.layout = layout;
   }
 
+  /**
+   * Initializes the logger.
+   */
   @Override
   public void start() {
     if (this.feeder == null) {
       try {
-        Class<?> feederClass = Class.forName(this.feederKlass);
+        // Read in the class and construct the feeder.
+        Class<?> feederClass = Class.forName(this.klass);
         AbstractHttpFeeder abstractHttpFeeder
           = (AbstractHttpFeeder)feederClass.newInstance();
-        abstractHttpFeeder.setUrl(feederUrl);
+        abstractHttpFeeder.setUrl(url);
         feeder = abstractHttpFeeder;
       } catch (ClassNotFoundException e) {
         throw new IllegalStateException(e);
@@ -108,6 +166,8 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
         throw new IllegalStateException(e);
       }
     }
+
+    // Start the scheduler that will be flushing queue every second.
     this.future = this.service.scheduleWithFixedDelay(
       new Runnable() {
         @Override
@@ -119,6 +179,7 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
       1L,
       TimeUnit.SECONDS
     );
+
     super.start();
   }
 
@@ -133,6 +194,9 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
     this.service.shutdown();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected void append(ILoggingEvent event) {
     final StringBuilder buf = new StringBuilder();
@@ -161,7 +225,7 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
   /**
    * Method to be executed by a thread in the background.
    *
-   * <p>Takes messages from the queue and feeds the feeder.
+   * <p>Takes messages from the queue and feeds the feeder.</p>
    */
   private void flush() {
     String text;

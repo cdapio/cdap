@@ -1,20 +1,15 @@
 package com.continuuity.log.appender.log4j;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
+import java.net.MalformedURLException;
+import java.util.concurrent.*;
+
 /**
- * Log appender, for cloud loggers.
+ * Log appender, for loggly loggers.
  *
  * <p>Configure it in your {@code log4j.properties} like this (just an example,
  * which uses <a href="http://www.loggly.com">loggly.com</a> HTTP log
