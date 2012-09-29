@@ -397,7 +397,14 @@ public class MetricsFrontendServiceImpl
         // As the points are counters, we need to compute
         // them at time intervals.
         if(previousPoint.containsKey(metric)) {
-          newValue = Math.abs(value - previousPoint.get(metric));
+          double prevValue = previousPoint.get(metric);
+          newValue = value - prevValue;
+          // Sometimes we might not receive data points from all
+          // components and hence will not be aggregated, so we
+          // need to exclude them.
+          if(newValue > prevValue*2) {
+            newValue = prevValue;
+          }
         }
 
         previousPoint.put(metric, value);

@@ -10,7 +10,8 @@ import org.apache.thrift.protocol.TProtocol;
  * that allows a Thrift client to communicate with a multiplexing Thrift server,
  * by prepending the service name to the function name during function calls.
  *
- * <p>NOTE: THIS IS NOT USED BY SERVERS.  On the server, use {@link org.apache.thrift.TMultiplexedProcessor TMultiplexedProcessor} to handle requests
+ * <p>NOTE: THIS IS NOT USED BY SERVERS.  On the server, use
+ * {@link TMultiplexedProcessor TMultiplexedProcessor} to handle requests
  * from a multiplexing client.
  *
  * <p>This example uses a single socket transport to invoke two services:

@@ -76,8 +76,6 @@ public class TMultiplexedProcessor implements TProcessor {
     TMessage message = iprot.readMessageBegin();
 
     if (message.type != TMessageType.CALL && message.type != TMessageType.ONEWAY) {
-      // TODO Apache Guys - Can the server ever get an EXCEPTION or REPLY?
-      // TODO Should we check for this here?
       throw new TException("This should not have happened!?");
     }
 
