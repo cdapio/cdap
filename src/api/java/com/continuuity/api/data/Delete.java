@@ -5,13 +5,11 @@ package com.continuuity.api.data;
  */
 public class Delete implements WriteOperation {
 
-<<<<<<< HEAD
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
-=======
+
   /** the name of the table */
   private final String table;
->>>>>>> ece07590c263001927efb2f963899d04130663f5
 
   /** The key/row */
   private final byte [] key;
