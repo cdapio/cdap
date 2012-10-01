@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationBase;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.ConditionalWriteOperation;
@@ -10,6 +11,9 @@ import com.google.common.base.Objects;
  * consumer that dequeue'd.
  */
 public class QueueAck implements ConditionalWriteOperation {
+
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
 
   private final byte [] queueName;
   private final QueueEntryPointer entryPointer;
@@ -84,5 +88,10 @@ public class QueueAck implements ConditionalWriteOperation {
   @Override
   public int getPriority() {
     return 3;
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

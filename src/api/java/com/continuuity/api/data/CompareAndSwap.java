@@ -21,6 +21,9 @@ import java.util.Arrays;
  */
 public class CompareAndSwap implements ConditionalWriteOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** The key/row */
   private final byte [] key;
 
@@ -97,4 +100,8 @@ public class CompareAndSwap implements ConditionalWriteOperation {
         .toString();
   }
 
+  @Override
+  public long getId() {
+    return id;
+  }
 }

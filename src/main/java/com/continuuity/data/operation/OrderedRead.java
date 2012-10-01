@@ -1,8 +1,12 @@
 package com.continuuity.data.operation;
 
+import com.continuuity.api.data.OperationBase;
 import com.continuuity.api.data.ReadOperation;
 
 public class OrderedRead implements ReadOperation {
+
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
 
   private final byte [] startKey;
   private final byte [] endKey;
@@ -36,5 +40,10 @@ public class OrderedRead implements ReadOperation {
 
   public int getLimit() {
     return this.limit;
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

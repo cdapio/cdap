@@ -7,6 +7,9 @@ package com.continuuity.api.data;
  */
 public class Write implements WriteOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** The key/row being written to */
   private final byte [] key;
   
@@ -114,5 +117,10 @@ public class Write implements WriteOperation {
       throw new IllegalArgumentException("Number of columns (" +
           columns.length + ") does not match number of values (" +
           values.length + ")");
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
+
 /**
  * Atomic increment operation.
  *
@@ -9,6 +11,9 @@ package com.continuuity.api.data;
  * Supports key-value and columnar operations.
  */
 public class Increment implements WriteOperation, ReadOperation {
+
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
 
   /** The key/row */
   private final byte [] key;
@@ -102,6 +107,7 @@ public class Increment implements WriteOperation, ReadOperation {
           amounts.length + ")");
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder("Increment '");
     builder.append(new String(this.getKey()));
@@ -113,5 +119,15 @@ public class Increment implements WriteOperation, ReadOperation {
       builder.append(this.amounts[i]);
     }
     return builder.toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(key, columns, amounts);
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

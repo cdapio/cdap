@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationBase;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.ReadOperation;
@@ -18,6 +19,9 @@ public class QueueAdmin {
    */
   public static class GetGroupID implements ReadOperation {
 
+    /** Unique id for the operation */
+    private final long id = OperationBase.getId();
+
     private final byte [] queueName;
 
     public GetGroupID(final byte [] queueName) {
@@ -35,10 +39,16 @@ public class QueueAdmin {
           .toString();
     }
 
+    @Override
+    public long getId() {
+      return id;
+    }
   }
 
   public static class GetQueueMeta implements ReadOperation {
 
+    /** Unique id for the operation */
+    private final long id = OperationBase.getId();
     private final byte [] queueName;
 
     public GetQueueMeta(byte [] queueName) {
@@ -56,6 +66,10 @@ public class QueueAdmin {
           .toString();
     }
 
+    @Override
+    public long getId() {
+      return id;
+    }
   }
 
   public static class QueueMeta {

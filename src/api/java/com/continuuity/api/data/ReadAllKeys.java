@@ -9,6 +9,9 @@ import com.google.common.base.Objects;
  */
 public class ReadAllKeys implements ReadOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** The number of keys to offset by */
   private final int offset;
 
@@ -39,5 +42,10 @@ public class ReadAllKeys implements ReadOperation {
         .add("offset", Integer.toString(offset))
         .add("limit", Integer.toString(limit))
         .toString();
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }
