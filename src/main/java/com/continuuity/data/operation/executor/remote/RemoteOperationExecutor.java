@@ -186,7 +186,7 @@ public class RemoteOperationExecutor
                                final QueueDequeue dequeue)
       throws OperationException {
     return this.execute(
-        new Operation<DequeueResult>("Dequeue") {
+        new Operation<DequeueResult>("DequeuePayload") {
           @Override
           public DequeueResult execute(OperationExecutorClient client)
               throws OperationException, TException {
@@ -367,7 +367,7 @@ public class RemoteOperationExecutor
                       final QueueEnqueue enqueue)
       throws OperationException {
     this.execute(
-        new Operation<Boolean>("Enqueue") {
+        new Operation<Boolean>("EnqueuePayload") {
           @Override
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {

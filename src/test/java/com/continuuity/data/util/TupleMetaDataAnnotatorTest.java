@@ -20,15 +20,15 @@ public class TupleMetaDataAnnotatorTest {
 
     byte[] data = "SERIALIZED-TUPLE".getBytes();
 
-    byte[]  b = TupleMetaDataAnnotator.Enqueue.write(
+    byte[]  b = TupleMetaDataAnnotator.EnqueuePayload.write(
       locations, data
     );
 
-    TupleMetaDataAnnotator.Enqueue enqueue =
-      TupleMetaDataAnnotator.Enqueue.read(b);
+    TupleMetaDataAnnotator.EnqueuePayload enqueuePayload =
+      TupleMetaDataAnnotator.EnqueuePayload.read(b);
 
-    Assert.assertTrue(Bytes.compareTo(enqueue.getSerializedTuple(), data) == 0);
-    Assert.assertTrue(enqueue.getLocations().get("A") == location);
+    Assert.assertTrue(Bytes.compareTo(enqueuePayload.getSerializedTuple(), data) == 0);
+    Assert.assertTrue(enqueuePayload.getLocations().get("A") == location);
   }
 
   @Test
@@ -39,15 +39,15 @@ public class TupleMetaDataAnnotatorTest {
 
     byte[] data = "SERIALIZED-TUPLE".getBytes();
 
-    byte[]  b = TupleMetaDataAnnotator.Dequeue.write(
+    byte[]  b = TupleMetaDataAnnotator.DequeuePayload.write(
       values, data
     );
 
-    TupleMetaDataAnnotator.Dequeue dequeue =
-      TupleMetaDataAnnotator.Dequeue.read(b);
+    TupleMetaDataAnnotator.DequeuePayload dequeuePayload =
+      TupleMetaDataAnnotator.DequeuePayload.read(b);
 
-    Assert.assertTrue(Bytes.compareTo(dequeue.getSerializedTuple(), data) == 0);
-    Assert.assertTrue(dequeue.getValues().get("A") == value);
+    Assert.assertTrue(Bytes.compareTo(dequeuePayload.getSerializedTuple(), data) == 0);
+    Assert.assertTrue(dequeuePayload.getValues().get("A") == value);
   }
 
 }

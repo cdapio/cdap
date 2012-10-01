@@ -394,7 +394,7 @@ implements TransactionalOperationExecutor {
   // TTQueues
 
   /**
-   * Enqueue operations always succeed but can be rolled back.
+   * EnqueuePayload operations always succeed but can be rolled back.
    *
    * They are rolled back with an invalidate.
    */

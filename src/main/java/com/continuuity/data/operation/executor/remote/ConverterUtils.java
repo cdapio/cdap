@@ -348,27 +348,27 @@ public class ConverterUtils {
         tReadColumnRange.getStopColumn());
   }
 
-  /** wrap an Enqueue operation */
+  /** wrap an EnqueuePayload operation */
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     return new TQueueEnqueue(
         wrap(enqueue.getKey()),
         wrap(enqueue.getData()));
   }
-  /** unwrap an Enqueue operation */
+  /** unwrap an EnqueuePayload operation */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
     return new QueueEnqueue(
         tEnqueue.getQueueName(),
         tEnqueue.getValue());
   }
 
-  /** wrap a Dequeue operation */
+  /** wrap a DequeuePayload operation */
   TQueueDequeue wrap(QueueDequeue dequeue) {
     return new TQueueDequeue(
         wrap(dequeue.getKey()),
         wrap(dequeue.getConsumer()),
         wrap(dequeue.getConfig()));
   }
-  /** unwrap a Dequeue operation */
+  /** unwrap a DequeuePayload operation */
   QueueDequeue unwrap(TQueueDequeue dequeue) {
     return new QueueDequeue(dequeue.getQueueName(),
         unwrap(dequeue.getConsumer()),

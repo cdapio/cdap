@@ -29,10 +29,10 @@ import java.util.Map;
 public class TupleMetaDataAnnotator {
 
   /**
-   * Manages {@code TupleMetaDataAnnotator} during {@link Enqueue} of a
+   * Manages {@code TupleMetaDataAnnotator} during {@link com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload} of a
    * tuple.
    */
-  public static class Enqueue implements Writable {
+  public static class EnqueuePayload implements Writable {
 
     /**
      * Stores the location of tuple fields to the location of
@@ -45,13 +45,13 @@ public class TupleMetaDataAnnotator {
      */
     private byte[] serializedTuple;
 
-    public Enqueue() {
+    public EnqueuePayload() {
       locations = Maps.newHashMap();
       serializedTuple = null;
     }
 
-    public Enqueue(Map<String, Short> locations,
-                   byte[] serializedTuple) {
+    public EnqueuePayload(Map<String, Short> locations,
+                          byte[] serializedTuple) {
       this.locations = locations;
       this.serializedTuple = serializedTuple;
     }
@@ -99,14 +99,14 @@ public class TupleMetaDataAnnotator {
 
     /**
      * Helper static function for reading array of bytes and
-     * returing an Enqueue object.
+     * returing an EnqueuePayload object.
      *
      * @param b array of bytes.
-     * @return instance of Enqueue object.
+     * @return instance of EnqueuePayload object.
      * @throws IOException
      */
-    public static Enqueue read(byte[] b) throws IOException {
-      Enqueue w = new Enqueue();
+    public static EnqueuePayload read(byte[] b) throws IOException {
+      EnqueuePayload w = new EnqueuePayload();
       ByteArrayInputStream bis = new ByteArrayInputStream(b);
       DataInputStream dis = new DataInputStream(bis);
       w.readFields(dis);
@@ -126,17 +126,17 @@ public class TupleMetaDataAnnotator {
                                byte[] serializedTuple) throws IOException {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(bos);
-      Enqueue enqueue = new Enqueue(locations, serializedTuple);
-      enqueue.write(dos);
+      EnqueuePayload enqueuePayload = new EnqueuePayload(locations, serializedTuple);
+      enqueuePayload.write(dos);
       return bos.toByteArray();
     }
   }
 
   /**
-   * Manages {@code TupleMetaDataAnnotator} during {@link Dequeue} of a
+   * Manages {@code TupleMetaDataAnnotator} during {@link com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload} of a
    * tuple.
    */
-  public static class Dequeue implements Writable {
+  public static class DequeuePayload implements Writable {
     /**
      * Mapping of field name to the result of execution an operation.
      */
@@ -147,13 +147,13 @@ public class TupleMetaDataAnnotator {
      */
     private byte[] serializedTuple;
 
-    public Dequeue() {
+    public DequeuePayload() {
       values = Maps.newHashMap();
       serializedTuple = null;
     }
 
-    public Dequeue(Map<String, Long> values,
-                   byte[] serializedTuple) {
+    public DequeuePayload(Map<String, Long> values,
+                          byte[] serializedTuple) {
 
       this.values = values;
       this.serializedTuple = serializedTuple;
@@ -195,15 +195,15 @@ public class TupleMetaDataAnnotator {
     }
 
     /**
-     * Helper static function to create a Dequeue instance from
+     * Helper static function to create a DequeuePayload instance from
      * the bytes.
      *
      * @param b array of bytes to be serialized.
-     * @return instance of Dequeue
+     * @return instance of DequeuePayload
      * @throws IOException
      */
-    public static Dequeue read(byte[] b) throws IOException {
-      Dequeue w = new Dequeue();
+    public static DequeuePayload read(byte[] b) throws IOException {
+      DequeuePayload w = new DequeuePayload();
       ByteArrayInputStream bis = new ByteArrayInputStream(b);
       DataInputStream dis = new DataInputStream(bis);
       w.readFields(dis);
@@ -216,14 +216,14 @@ public class TupleMetaDataAnnotator {
      *
      * @param values map of field name to values.
      * @param serializedTuple array of bytes
-     * @return instance of Dequeue.
+     * @return instance of DequeuePayload.
      * @throws IOException
      */
     public static byte[] write(Map<String, Long> values,
                                byte[] serializedTuple) throws IOException {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(bos);
-      Dequeue enqueue = new Dequeue(values, serializedTuple);
+      DequeuePayload enqueue = new DequeuePayload(values, serializedTuple);
       enqueue.write(dos);
       return bos.toByteArray();
     }

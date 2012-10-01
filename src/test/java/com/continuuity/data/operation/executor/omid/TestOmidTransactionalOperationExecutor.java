@@ -377,10 +377,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testAbortedAck");
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
-    // Enqueue something
+    // EnqueuePayload something
     executor.execute(context, batch(new QueueEnqueue(queueName, queueName)));
 
-    // Dequeue it
+    // DequeuePayload it
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     DequeueResult dequeueResult = executor.execute(context,
@@ -432,7 +432,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(writes, ackPointer);
 
 
-    // Dequeue should now return empty
+    // DequeuePayload should now return empty
     dequeueResult = executor.execute(context,
         new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isEmpty());

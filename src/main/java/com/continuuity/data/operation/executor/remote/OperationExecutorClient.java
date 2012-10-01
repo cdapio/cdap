@@ -462,7 +462,7 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_ENQUEUE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received Enqueue.");
+      if (Log.isDebugEnabled()) Log.debug("Received EnqueuePayload.");
       TOperationContext tcontext = wrap(context);
       TQueueEnqueue tQueueEnqueue = wrap(enqueue);
       if (Log.isDebugEnabled()) Log.debug("Sending TQueueEnqueue.");

@@ -134,7 +134,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     }
     if (dequeueResult.isFailure()) {
       throw new OperationException(StatusCode.ILLEGAL_GROUP_CONFIG_CHANGE,
-          "Dequeue failed (" + dequeueResult.getFailureMessage() + ")");
+          "DequeuePayload failed (" + dequeueResult.getFailureMessage() + ")");
     }
     if (dequeueResult.isSuccess()) dequeueReturns.incrementAndGet();
     return new DequeueResult(this.queueName, dequeueResult);

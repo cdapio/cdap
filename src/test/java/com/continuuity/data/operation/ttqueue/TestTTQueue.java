@@ -1178,7 +1178,7 @@ public abstract class TestTTQueue {
           try {
             result = queue.dequeue(consumer, config, readPointer);
           } catch (OperationException e) {
-            System.out.println("Dequeue failed! " + e.getMessage());
+            System.out.println("DequeuePayload failed! " + e.getMessage());
             return;
           }
           if (result.isSuccess()) {
@@ -1210,7 +1210,7 @@ public abstract class TestTTQueue {
           try {
             queue.enqueue(Bytes.toBytes(i), version);
           } catch (OperationException e) {
-            fail("Enqueue got exception: " + e.getMessage());
+            fail("EnqueuePayload got exception: " + e.getMessage());
           }
         }
       }
@@ -1608,7 +1608,7 @@ public abstract class TestTTQueue {
             result = this.queue.dequeue(this.consumer, this.config,
                 this.readPointer);
           } catch (OperationException e) {
-            fail("Dequeue failed with exception: " + e.getMessage());
+            fail("DequeuePayload failed with exception: " + e.getMessage());
           }
         }
         this.dequeueTrigger.set(false);
