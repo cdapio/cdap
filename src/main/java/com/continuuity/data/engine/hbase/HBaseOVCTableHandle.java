@@ -50,6 +50,19 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     return table;
   }
 
+  @Override
+  public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
+    try {
+      if (this.admin.tableExists(tableName)) {
+        return new HBaseOVCTable(this.conf, tableName, FAMILY,
+            new HBaseIOExceptionHandler());
+      }
+    } catch (IOException e) {
+      exceptionHandler.handle(e);
+    }
+    return null;
+  }
+
   protected HTable createTable(byte [] tableName, byte [] family)
       throws IOException {
     if (this.admin.tableExists(tableName)) {

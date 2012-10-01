@@ -10,6 +10,9 @@ public class Write implements WriteOperation {
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
 
+  /** the name of the table */
+  private final String table;
+
   /** The key/row being written to */
   private final byte [] key;
   
@@ -18,48 +21,107 @@ public class Write implements WriteOperation {
   
   /** The values being written */
   private final byte [][] values;
- 
+
   /**
-   * Writes the specified value for the specified key.
-   * 
+   * Writes the specified value for the specified key to the default table
+   *
    * This is a key-value operation.
-   * 
-   * @param key
-   * @param value
+   *
+   * @param key the row key to write to
+   * @param value the value to write
    */
-  public Write(final byte [] key, final byte [] value) {
-    this(key, KV_COL_ARR, new byte [][] { value });
+  public Write(final byte [] key,
+               final byte [] value) {
+    this((String)null, key, value);
   }
 
   /**
-   * Writes the specified value for the specified column in the specified row.
-   * 
-   * This is a columnar operation.
-   * 
-   * @param row
-   * @param column
-   * @param value
+   * Writes the specified value for the specified key to the specified table
+   *
+   * This is a key-value operation.
+   *
+   * @param table the table to write to
+   * @param key the row key to write to
+   * @param value the value to write
    */
-  public Write(final byte [] row, final byte [] column,
-      final byte [] value) {
-    this(row, new byte [][] { column }, new byte [][] { value } );
+  public Write(final String table,
+               final byte [] key,
+               final byte [] value) {
+    this(table, key, KV_COL_ARR, new byte [][] { value });
+  }
+
+  /**
+   * Writes the specified value for the specified column in the specified row
+   * to the default table.
+   *
+   * This is a columnar operation.
+   *
+   * @param row the row key to write to
+   * @param column the single column to write
+   * @param value the value to write to that column
+   */
+  public Write(final byte [] row,
+               final byte [] column,
+               final byte [] value) {
+    this(null, row, column, value);
+  }
+
+  /**
+   * Writes the specified value for the specified column in the specified row
+   * to the specified table.
+   *
+   * This is a columnar operation.
+   *
+   * @param table the table to write to
+   * @param row the row key to write to
+   * @param column the single column to write
+   * @param value the value to write to that column
+   */
+  public Write(final String table,
+               final byte [] row,
+               final byte [] column,
+               final byte [] value) {
+    this(table, row, new byte [][] { column }, new byte [][] { value } );
   }
 
   /**
    * Writes the specified values for the specified columns in the specified row.
-   * 
+   *
    * This is a columnar operation.
-   * 
-   * @param row
-   * @param columns
-   * @param values
+   *
+   * @param row the row key to write to
+   * @param columns the columns to write
+   * @param values the values to write to the columns, in the same order
    */
-  public Write(final byte [] row, final byte [][] columns,
-      final byte [][] values) {
+  public Write(final byte [] row,
+               final byte [][] columns,
+               final byte [][] values) {
+    this(null, row, columns, values);
+  }
+
+  /**
+   * Writes the specified values for the specified columns in the specified row.
+   *
+   * This is a columnar operation.
+   *
+   * @param table the table to write to
+   * @param row the row key to write to
+   * @param columns the columns to write
+   * @param values the values to write to the columns, in the same order
+   */
+  public Write(final String table,
+               final byte [] row,
+               final byte [][] columns,
+               final byte [][] values) {
     checkColumnArgs(columns, values);
+    this.table = table;
     this.key = row;
     this.columns = columns;
     this.values = values;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   @Override
@@ -100,12 +162,10 @@ public class Write implements WriteOperation {
 
   /**
    * Checks the specified columns and values arguments for validity.
-   * @param columns
-   * @param values
-   * @throws IllegalArgumentException if no columns specified
-   * @throws IllegalArgumentException if no values specified
-   * @throws IllegalArgumentException if number of columns does not match number
-   *                                  of values
+   * @param columns the columns to write to
+   * @param values the values to write
+   * @throws IllegalArgumentException if no columns specified, no values
+   *    specified, or number of columns does not match number of values
    */
   public static void checkColumnArgs(final Object [] columns,
       final Object [] values) {

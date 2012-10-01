@@ -11,12 +11,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public abstract class SimpleOVCTableHandle implements OVCTableHandle {
-  
 
-
-  protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable> tables =
-      new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
-          Bytes.BYTES_COMPARATOR);
+  protected final ConcurrentSkipListMap<byte[], OrderedVersionedColumnarTable>
+      openTables =
+        new ConcurrentSkipListMap<byte[],OrderedVersionedColumnarTable>(
+            Bytes.BYTES_COMPARATOR);
   
   protected final ConcurrentSkipListMap<byte[], TTQueueTable> queueTables =
       new ConcurrentSkipListMap<byte[],TTQueueTable>(
@@ -40,13 +39,23 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
   @Override
   public OrderedVersionedColumnarTable getTable(byte[] tableName)
       throws OperationException {
-    OrderedVersionedColumnarTable table = this.tables.get(tableName);
+    OrderedVersionedColumnarTable table = this.openTables.get(tableName);
 
+    // we currently have an open table for this name
     if (table != null) return table;
+
+    // the table is not open, but it may exist in the data fabric
+    table = openTable(tableName);
+
+    // we successfully opened the table
+    if (table != null) return table;
+
+    // table could not be opened, try to create it
     table = createNewTable(tableName);
 
+    // some other thread may have created/found and added it already
     OrderedVersionedColumnarTable existing =
-        this.tables.putIfAbsent(tableName, table);
+        this.openTables.putIfAbsent(tableName, table);
 
     return existing != null ? existing : table;
   }
@@ -80,7 +89,23 @@ public abstract class SimpleOVCTableHandle implements OVCTableHandle {
     return existing != null ? existing : streamTable;
   }
 
+  /**
+   * attempts to create the table. If the table already exists, attempt
+   * to open it instead.
+   * @param tableName the name of the table
+   * @return the new table
+   * @throws OperationException if an operation fails
+   */
   public abstract OrderedVersionedColumnarTable createNewTable(
+      byte [] tableName) throws OperationException;
+
+  /**
+   * attempts to open an existing table.
+   * @param tableName the name of the table
+   * @return the table if successful, null otherwise
+   * @throws OperationException
+   */
+  public abstract OrderedVersionedColumnarTable openTable(
       byte [] tableName) throws OperationException;
 
 }

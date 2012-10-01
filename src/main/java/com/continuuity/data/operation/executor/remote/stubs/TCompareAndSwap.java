@@ -30,10 +30,11 @@ import org.slf4j.LoggerFactory;
 public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap, TCompareAndSwap._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TCompareAndSwap");
 
-  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("column", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField EXPECTED_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("expectedValue", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("column", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField EXPECTED_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("expectedValue", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -41,6 +42,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     schemes.put(TupleScheme.class, new TCompareAndSwapTupleSchemeFactory());
   }
 
+  public String table; // optional
   public ByteBuffer key; // required
   public ByteBuffer column; // required
   public ByteBuffer expectedValue; // required
@@ -48,10 +50,11 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    KEY((short)1, "key"),
-    COLUMN((short)2, "column"),
-    EXPECTED_VALUE((short)3, "expectedValue"),
-    NEW_VALUE((short)4, "newValue");
+    TABLE((short)1, "table"),
+    KEY((short)2, "key"),
+    COLUMN((short)3, "column"),
+    EXPECTED_VALUE((short)4, "expectedValue"),
+    NEW_VALUE((short)5, "newValue");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -66,13 +69,15 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // KEY
+        case 1: // TABLE
+          return TABLE;
+        case 2: // KEY
           return KEY;
-        case 2: // COLUMN
+        case 3: // COLUMN
           return COLUMN;
-        case 3: // EXPECTED_VALUE
+        case 4: // EXPECTED_VALUE
           return EXPECTED_VALUE;
-        case 4: // NEW_VALUE
+        case 5: // NEW_VALUE
           return NEW_VALUE;
         default:
           return null;
@@ -114,9 +119,12 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.COLUMN, new org.apache.thrift.meta_data.FieldMetaData("column", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -149,6 +157,9 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
    * Performs a deep copy on <i>other</i>.
    */
   public TCompareAndSwap(TCompareAndSwap other) {
+    if (other.isSetTable()) {
+      this.table = other.table;
+    }
     if (other.isSetKey()) {
       this.key = org.apache.thrift.TBaseHelper.copyBinary(other.key);
 ;
@@ -173,10 +184,35 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
   @Override
   public void clear() {
+    this.table = null;
     this.key = null;
     this.column = null;
     this.expectedValue = null;
     this.newValue = null;
+  }
+
+  public String getTable() {
+    return this.table;
+  }
+
+  public TCompareAndSwap setTable(String table) {
+    this.table = table;
+    return this;
+  }
+
+  public void unsetTable() {
+    this.table = null;
+  }
+
+  /** Returns true if field table is set (has been assigned a value) and false otherwise */
+  public boolean isSetTable() {
+    return this.table != null;
+  }
+
+  public void setTableIsSet(boolean value) {
+    if (!value) {
+      this.table = null;
+    }
   }
 
   public byte[] getKey() {
@@ -317,6 +353,14 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
+    case TABLE:
+      if (value == null) {
+        unsetTable();
+      } else {
+        setTable((String)value);
+      }
+      break;
+
     case KEY:
       if (value == null) {
         unsetKey();
@@ -354,6 +398,9 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
+    case TABLE:
+      return getTable();
+
     case KEY:
       return getKey();
 
@@ -377,6 +424,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     }
 
     switch (field) {
+    case TABLE:
+      return isSetTable();
     case KEY:
       return isSetKey();
     case COLUMN:
@@ -401,6 +450,15 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
   public boolean equals(TCompareAndSwap that) {
     if (that == null)
       return false;
+
+    boolean this_present_table = true && this.isSetTable();
+    boolean that_present_table = true && that.isSetTable();
+    if (this_present_table || that_present_table) {
+      if (!(this_present_table && that_present_table))
+        return false;
+      if (!this.table.equals(that.table))
+        return false;
+    }
 
     boolean this_present_key = true && this.isSetKey();
     boolean that_present_key = true && that.isSetKey();
@@ -454,6 +512,16 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     int lastComparison = 0;
     TCompareAndSwap typedOther = (TCompareAndSwap)other;
 
+    lastComparison = Boolean.valueOf(isSetTable()).compareTo(typedOther.isSetTable());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTable()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
@@ -514,6 +582,16 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     StringBuilder sb = new StringBuilder("TCompareAndSwap(");
     boolean first = true;
 
+    if (isSetTable()) {
+      sb.append("table:");
+      if (this.table == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table);
+      }
+      first = false;
+    }
+    if (!first) sb.append(", ");
     sb.append("key:");
     if (this.key == null) {
       sb.append("null");
@@ -587,7 +665,15 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
           break;
         }
         switch (schemeField.id) {
-          case 1: // KEY
+          case 1: // TABLE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.table = iprot.readString();
+              struct.setTableIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 2: // KEY
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.key = iprot.readBinary();
               struct.setKeyIsSet(true);
@@ -595,7 +681,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // COLUMN
+          case 3: // COLUMN
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.column = iprot.readBinary();
               struct.setColumnIsSet(true);
@@ -603,7 +689,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // EXPECTED_VALUE
+          case 4: // EXPECTED_VALUE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.expectedValue = iprot.readBinary();
               struct.setExpectedValueIsSet(true);
@@ -611,7 +697,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // NEW_VALUE
+          case 5: // NEW_VALUE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.newValue = iprot.readBinary();
               struct.setNewValueIsSet(true);
@@ -634,6 +720,13 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      if (struct.table != null) {
+        if (struct.isSetTable()) {
+          oprot.writeFieldBegin(TABLE_FIELD_DESC);
+          oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
       if (struct.key != null) {
         oprot.writeFieldBegin(KEY_FIELD_DESC);
         oprot.writeBinary(struct.key);
@@ -672,19 +765,25 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     public void write(org.apache.thrift.protocol.TProtocol prot, TCompareAndSwap struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetKey()) {
+      if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetColumn()) {
+      if (struct.isSetKey()) {
         optionals.set(1);
       }
-      if (struct.isSetExpectedValue()) {
+      if (struct.isSetColumn()) {
         optionals.set(2);
       }
-      if (struct.isSetNewValue()) {
+      if (struct.isSetExpectedValue()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetNewValue()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
+      if (struct.isSetTable()) {
+        oprot.writeString(struct.table);
+      }
       if (struct.isSetKey()) {
         oprot.writeBinary(struct.key);
       }
@@ -702,20 +801,24 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TCompareAndSwap struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
+        struct.table = iprot.readString();
+        struct.setTableIsSet(true);
+      }
+      if (incoming.get(1)) {
         struct.key = iprot.readBinary();
         struct.setKeyIsSet(true);
       }
-      if (incoming.get(1)) {
+      if (incoming.get(2)) {
         struct.column = iprot.readBinary();
         struct.setColumnIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(3)) {
         struct.expectedValue = iprot.readBinary();
         struct.setExpectedValueIsSet(true);
       }
-      if (incoming.get(3)) {
+      if (incoming.get(4)) {
         struct.newValue = iprot.readBinary();
         struct.setNewValueIsSet(true);
       }

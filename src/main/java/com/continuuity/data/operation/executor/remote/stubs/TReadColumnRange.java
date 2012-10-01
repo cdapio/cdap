@@ -30,10 +30,11 @@ import org.slf4j.LoggerFactory;
 public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRange, TReadColumnRange._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TReadColumnRange");
 
-  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField START_COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("startColumn", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField STOP_COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("stopColumn", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField START_COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("startColumn", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField STOP_COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("stopColumn", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -41,6 +42,7 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     schemes.put(TupleScheme.class, new TReadColumnRangeTupleSchemeFactory());
   }
 
+  public String table; // optional
   public ByteBuffer key; // required
   public ByteBuffer startColumn; // required
   public ByteBuffer stopColumn; // required
@@ -48,10 +50,11 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    KEY((short)1, "key"),
-    START_COLUMN((short)2, "startColumn"),
-    STOP_COLUMN((short)3, "stopColumn"),
-    LIMIT((short)4, "limit");
+    TABLE((short)1, "table"),
+    KEY((short)2, "key"),
+    START_COLUMN((short)3, "startColumn"),
+    STOP_COLUMN((short)4, "stopColumn"),
+    LIMIT((short)5, "limit");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -66,13 +69,15 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // KEY
+        case 1: // TABLE
+          return TABLE;
+        case 2: // KEY
           return KEY;
-        case 2: // START_COLUMN
+        case 3: // START_COLUMN
           return START_COLUMN;
-        case 3: // STOP_COLUMN
+        case 4: // STOP_COLUMN
           return STOP_COLUMN;
-        case 4: // LIMIT
+        case 5: // LIMIT
           return LIMIT;
         default:
           return null;
@@ -116,9 +121,12 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
   // isset id assignments
   private static final int __LIMIT_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.TABLE, new org.apache.thrift.meta_data.FieldMetaData("table", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.START_COLUMN, new org.apache.thrift.meta_data.FieldMetaData("startColumn", org.apache.thrift.TFieldRequirementType.DEFAULT, 
@@ -154,6 +162,9 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
   public TReadColumnRange(TReadColumnRange other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
+    if (other.isSetTable()) {
+      this.table = other.table;
+    }
     if (other.isSetKey()) {
       this.key = org.apache.thrift.TBaseHelper.copyBinary(other.key);
 ;
@@ -175,11 +186,36 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
 
   @Override
   public void clear() {
+    this.table = null;
     this.key = null;
     this.startColumn = null;
     this.stopColumn = null;
     setLimitIsSet(false);
     this.limit = 0;
+  }
+
+  public String getTable() {
+    return this.table;
+  }
+
+  public TReadColumnRange setTable(String table) {
+    this.table = table;
+    return this;
+  }
+
+  public void unsetTable() {
+    this.table = null;
+  }
+
+  /** Returns true if field table is set (has been assigned a value) and false otherwise */
+  public boolean isSetTable() {
+    return this.table != null;
+  }
+
+  public void setTableIsSet(boolean value) {
+    if (!value) {
+      this.table = null;
+    }
   }
 
   public byte[] getKey() {
@@ -309,6 +345,14 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
+    case TABLE:
+      if (value == null) {
+        unsetTable();
+      } else {
+        setTable((String)value);
+      }
+      break;
+
     case KEY:
       if (value == null) {
         unsetKey();
@@ -346,6 +390,9 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
+    case TABLE:
+      return getTable();
+
     case KEY:
       return getKey();
 
@@ -369,6 +416,8 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     }
 
     switch (field) {
+    case TABLE:
+      return isSetTable();
     case KEY:
       return isSetKey();
     case START_COLUMN:
@@ -393,6 +442,15 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
   public boolean equals(TReadColumnRange that) {
     if (that == null)
       return false;
+
+    boolean this_present_table = true && this.isSetTable();
+    boolean that_present_table = true && that.isSetTable();
+    if (this_present_table || that_present_table) {
+      if (!(this_present_table && that_present_table))
+        return false;
+      if (!this.table.equals(that.table))
+        return false;
+    }
 
     boolean this_present_key = true && this.isSetKey();
     boolean that_present_key = true && that.isSetKey();
@@ -446,6 +504,16 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     int lastComparison = 0;
     TReadColumnRange typedOther = (TReadColumnRange)other;
 
+    lastComparison = Boolean.valueOf(isSetTable()).compareTo(typedOther.isSetTable());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTable()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table, typedOther.table);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
@@ -506,6 +574,16 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     StringBuilder sb = new StringBuilder("TReadColumnRange(");
     boolean first = true;
 
+    if (isSetTable()) {
+      sb.append("table:");
+      if (this.table == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table);
+      }
+      first = false;
+    }
+    if (!first) sb.append(", ");
     sb.append("key:");
     if (this.key == null) {
       sb.append("null");
@@ -577,7 +655,15 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
           break;
         }
         switch (schemeField.id) {
-          case 1: // KEY
+          case 1: // TABLE
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.table = iprot.readString();
+              struct.setTableIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 2: // KEY
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.key = iprot.readBinary();
               struct.setKeyIsSet(true);
@@ -585,7 +671,7 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // START_COLUMN
+          case 3: // START_COLUMN
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.startColumn = iprot.readBinary();
               struct.setStartColumnIsSet(true);
@@ -593,7 +679,7 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // STOP_COLUMN
+          case 4: // STOP_COLUMN
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.stopColumn = iprot.readBinary();
               struct.setStopColumnIsSet(true);
@@ -601,7 +687,7 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // LIMIT
+          case 5: // LIMIT
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.limit = iprot.readI32();
               struct.setLimitIsSet(true);
@@ -624,6 +710,13 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      if (struct.table != null) {
+        if (struct.isSetTable()) {
+          oprot.writeFieldBegin(TABLE_FIELD_DESC);
+          oprot.writeString(struct.table);
+          oprot.writeFieldEnd();
+        }
+      }
       if (struct.key != null) {
         oprot.writeFieldBegin(KEY_FIELD_DESC);
         oprot.writeBinary(struct.key);
@@ -660,19 +753,25 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     public void write(org.apache.thrift.protocol.TProtocol prot, TReadColumnRange struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetKey()) {
+      if (struct.isSetTable()) {
         optionals.set(0);
       }
-      if (struct.isSetStartColumn()) {
+      if (struct.isSetKey()) {
         optionals.set(1);
       }
-      if (struct.isSetStopColumn()) {
+      if (struct.isSetStartColumn()) {
         optionals.set(2);
       }
-      if (struct.isSetLimit()) {
+      if (struct.isSetStopColumn()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetLimit()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
+      if (struct.isSetTable()) {
+        oprot.writeString(struct.table);
+      }
       if (struct.isSetKey()) {
         oprot.writeBinary(struct.key);
       }
@@ -690,20 +789,24 @@ public class TReadColumnRange implements org.apache.thrift.TBase<TReadColumnRang
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TReadColumnRange struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
+        struct.table = iprot.readString();
+        struct.setTableIsSet(true);
+      }
+      if (incoming.get(1)) {
         struct.key = iprot.readBinary();
         struct.setKeyIsSet(true);
       }
-      if (incoming.get(1)) {
+      if (incoming.get(2)) {
         struct.startColumn = iprot.readBinary();
         struct.setStartColumnIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(3)) {
         struct.stopColumn = iprot.readBinary();
         struct.setStopColumnIsSet(true);
       }
-      if (incoming.get(3)) {
+      if (incoming.get(4)) {
         struct.limit = iprot.readI32();
         struct.setLimitIsSet(true);
       }

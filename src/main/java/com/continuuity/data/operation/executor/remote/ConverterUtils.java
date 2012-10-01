@@ -205,14 +205,18 @@ public class ConverterUtils {
 
   /** wrap a Write operation */
   TWrite wrap(Write write) {
-    return new TWrite(
+    TWrite tWrite = new TWrite(
         wrap(write.getKey()),
         wrap(write.getColumns()),
         wrap(write.getValues()));
+    if (write.getTable() != null)
+      tWrite.setTable(write.getTable());
+    return tWrite;
   }
   /** unwrap a Write operation */
   Write unwrap(TWrite tWrite) {
     return new Write(
+        tWrite.isSetTable() ? tWrite.getTable() : null,
         tWrite.getKey(),
         unwrap(tWrite.getColumns()),
         unwrap(tWrite.getValues()));
@@ -220,27 +224,35 @@ public class ConverterUtils {
 
   /** wrap a Delete operation */
   TDelete wrap(Delete delete) {
-    return new TDelete(
+    TDelete tDelete = new TDelete(
         wrap(delete.getKey()),
         wrap(delete.getColumns()));
+    if (delete.getTable() != null)
+      tDelete.setTable(delete.getTable());
+    return tDelete;
   }
   /** unwrap a Delete operation */
   Delete unwrap(TDelete tDelete) {
     return new Delete(
+        tDelete.isSetTable() ? tDelete.getTable() : null,
         tDelete.getKey(),
         unwrap(tDelete.getColumns()));
   }
 
   /** wrap an Increment operation */
   TIncrement wrap(Increment increment) {
-    return new TIncrement(
+    TIncrement tIncrement = new TIncrement(
         wrap(increment.getKey()),
         wrap(increment.getColumns()),
         wrap(increment.getAmounts()));
+    if (increment.getTable() != null)
+      tIncrement.setTable(increment.getTable());
+    return tIncrement;
   }
   /** unwrap an Increment operation */
   Increment unwrap(TIncrement tIncrement) {
     return new Increment(
+        tIncrement.isSetTable() ? tIncrement.getTable() : null,
         tIncrement.getKey(),
         unwrap(tIncrement.getColumns()),
         unwrap(tIncrement.getAmounts()));
@@ -248,15 +260,19 @@ public class ConverterUtils {
 
   /** wrap a CompareAndSwap operation */
   TCompareAndSwap wrap(CompareAndSwap compareAndSwap) {
-    return new TCompareAndSwap(
+    TCompareAndSwap tCompareAndSwap = new TCompareAndSwap(
         wrap(compareAndSwap.getKey()),
         wrap(compareAndSwap.getColumn()),
         wrap(compareAndSwap.getExpectedValue()),
         wrap(compareAndSwap.getNewValue()));
+    if (compareAndSwap.getTable() != null)
+      tCompareAndSwap.setTable(compareAndSwap.getTable());
+    return tCompareAndSwap;
   }
   /** unwrap a CompareAndSwap operation */
   CompareAndSwap unwrap(TCompareAndSwap tCompareAndSwap) {
     return new CompareAndSwap(
+        tCompareAndSwap.isSetTable() ? tCompareAndSwap.getTable() : null,
         tCompareAndSwap.getKey(),
         tCompareAndSwap.getColumn(),
         tCompareAndSwap.getExpectedValue(),
@@ -265,52 +281,68 @@ public class ConverterUtils {
 
   /** wrap a Read operation */
   TRead wrap(Read read) {
-    return new TRead(
+    TRead tRead = new TRead(
         wrap(read.getKey()),
         wrap(read.getColumns()));
+    if (read.getTable() != null)
+      tRead.setTable(read.getTable());
+    return tRead;
   }
   /** unwrap a Read operation */
   Read unwrap(TRead tRead) {
     return new Read(
+        tRead.isSetTable() ? tRead.getTable() : null,
         tRead.getKey(),
         unwrap(tRead.getColumns()));
   }
 
   /** wrap a ReadKey operation */
   TReadKey wrap(ReadKey readKey) {
-    return new TReadKey(
+    TReadKey tReadKey = new TReadKey(
         wrap(readKey.getKey()));
+    if (readKey.getTable() != null)
+      tReadKey.setTable(readKey.getTable());
+    return tReadKey;
   }
   /** unwrap a ReadKey operation */
   ReadKey unwrap(TReadKey tReadKey) {
     return new ReadKey(
+        tReadKey.isSetTable() ? tReadKey.getTable() : null,
         tReadKey.getKey());
   }
 
   /** wrap a ReadAllKeys operation */
   TReadAllKeys wrap(ReadAllKeys readAllKeys) {
-    return new TReadAllKeys(
+    TReadAllKeys tReadAllKeys = new TReadAllKeys(
         readAllKeys.getOffset(),
         readAllKeys.getLimit());
+    if (readAllKeys.getTable() != null)
+      tReadAllKeys.setTable(readAllKeys.getTable());
+    return tReadAllKeys;
   }
   /** unwrap a ReadAllKeys operation */
   ReadAllKeys unwrap(TReadAllKeys tReadAllKeys) {
     return new ReadAllKeys(
+        tReadAllKeys.isSetTable() ? tReadAllKeys.getTable() : null,
         tReadAllKeys.getOffset(),
         tReadAllKeys.getLimit());
   }
 
   /** wrap a ReadColumnRange operation */
   TReadColumnRange wrap(ReadColumnRange readColumnRange) {
-    return new TReadColumnRange(
+    TReadColumnRange tReadColumnRange = new TReadColumnRange(
         wrap(readColumnRange.getKey()),
         wrap(readColumnRange.getStartColumn()),
         wrap(readColumnRange.getStopColumn()),
         readColumnRange.getLimit());
+    if (readColumnRange.getTable() != null)
+      tReadColumnRange.setTable(readColumnRange.getTable());
+    return tReadColumnRange;
   }
   /** unwrap a ReadColumnRange operation */
   ReadColumnRange unwrap(TReadColumnRange tReadColumnRange) {
     return new ReadColumnRange(
+        tReadColumnRange.isSetTable() ? tReadColumnRange.getTable() : null,
         tReadColumnRange.getKey(),
         tReadColumnRange.getStartColumn(),
         tReadColumnRange.getStopColumn());

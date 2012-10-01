@@ -82,6 +82,45 @@ implements TransactionalOperationExecutor {
         System.currentTimeMillis() - beginning);
   }
   
+  // named table management
+
+  // a map of logical table name to existing <real name, table>, caches
+  // the meta data store and the ovc table handle
+  // there are three possible states for a table:
+  // 1. table does not exist or is not known -> no entry
+  // 2. table is being created -> entry with real name, but null for the table
+  // 3. table is known -> entry with name and table
+  // Map<String,ImmutablePair<byte[],OrderedVersionedColumnarTable>>
+  //    randomTables;
+
+  // method to find - and if necessary create - a table
+  /*
+  OrderedVersionedColumnarTable findRandomTable(String name) {
+    // if name is null, return default random table
+    // look up table in in-memory map.
+    // if (entry, table) return table
+    // (A) if (entry, null) wait until table not null, return table
+    // if null
+    //   (B) read meta data for table
+    //   if (real name, true) return getTable()
+    //   if (real name, false) l
+    //     loop and wait until created
+    //     getTable()
+    //     update in-memory table with table
+    //     return
+    //   if (null)
+    //     generate unique name
+    //     add (unique name, null) to in-memory table
+    //     if fails, then someone else just created -> go back to  (A)
+    //     add (unique name, false) to meta data and
+    //     if fails, then someone else just created -> go back to (B)
+    //     createNewTable(uniqueName) - should never fail
+    //     update meta data (unique name, true)
+    //     update in-memory table
+    //     return table
+  }
+  */
+
   // Single reads
 
   @Override

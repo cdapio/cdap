@@ -1,8 +1,6 @@
 package com.continuuity.data.operation.executor;
 
 
-import com.continuuity.api.data.ReadOperationExecutor;
-
 /**
  * TODO: Write some docs
  *

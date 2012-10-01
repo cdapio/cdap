@@ -10,6 +10,9 @@ public class ReadKey implements ReadOperation {
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
 
+  /** the name of the table */
+  private final String table;
+
   /** The key to read */
   private final byte [] key;
 
@@ -18,7 +21,23 @@ public class ReadKey implements ReadOperation {
    * @param key the key to read
    */
   public ReadKey(final byte [] key) {
+    this(null, key);
+  }
+
+  /**
+   * Reads the value of the specified key.
+   *
+   * @param table the name of the table to read from
+   * @param key the key to read
+   */
+  public ReadKey(final String table,
+                 final byte [] key) {
+    this.table = table;
     this.key = key;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   public byte [] getKey() {

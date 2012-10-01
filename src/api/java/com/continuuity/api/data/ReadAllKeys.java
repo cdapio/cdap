@@ -12,6 +12,9 @@ public class ReadAllKeys implements ReadOperation {
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
 
+  /** the name of the table */
+  private final String table;
+
   /** The number of keys to offset by */
   private final int offset;
 
@@ -20,13 +23,34 @@ public class ReadAllKeys implements ReadOperation {
 
   /**
    * Reads all of the keys and rows in the range specified by the given offset
-   * and limit.
+   * and limit, from the default table.
+   *
    * @param offset number of keys to offset by
    * @param limit maximum number of keys to return
    */
-  public ReadAllKeys(int offset, int limit) {
+  public ReadAllKeys(int offset,
+                     int limit) {
+    this(null, offset, limit);
+  }
+
+  /**
+   * Reads all of the keys and rows in the range specified by the given offset
+   * and limit, from the specified table.
+   *
+   * @param table the name of the table to read from
+   * @param offset number of keys to offset by
+   * @param limit maximum number of keys to return
+   */
+  public ReadAllKeys(String table,
+                     int offset,
+                     int limit) {
+    this.table = table;
     this.offset = offset;
     this.limit = limit;
+  }
+
+  public String getTable() {
+    return this.table;
   }
 
   public int getOffset() {
