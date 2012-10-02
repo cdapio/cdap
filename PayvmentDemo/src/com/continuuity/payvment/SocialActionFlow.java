@@ -25,13 +25,15 @@ import com.continuuity.payvment.util.Helpers;
 
 public class SocialActionFlow implements Flow {
 
-  static String inputStream = "social-actions";
+  static final String inputStream = "social-actions";
+
+  static final String flowName = "SocialActionProcessor";
 
   @Override
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("SocialActionProcessor");
+    specifier.name(flowName);
     specifier.email("dev@continuuity.com");
     specifier.application("Cluster Activity Feeds");
     specifier.company("Continuuity+Payvment");
@@ -72,6 +74,8 @@ public class SocialActionFlow implements Flow {
   public static class SocialActionProcessorFlowlet extends ComputeFlowlet {
 
     static int numProcessed = 0;
+
+    static int numErrors = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -123,18 +127,14 @@ public class SocialActionFlow implements Flow {
         String msg = "Received social action for unknown product (" +
             action.product_id + ")";
         System.out.println(msg);
+        numErrors++;
         throw new RuntimeException(msg);
       }
       tupleBuilder.set("product-meta", productMeta);
       
-      // Update product action count table
-      try {
-        this.productActionCountTable.incrementCounterSet(
-            Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
-      } catch (OperationException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
+      // Update product action count table async
+      this.productActionCountTable.incrementCounterSet(
+          Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
       
       // Determine score increase
       Long scoreIncrease = action.getSocialActionType().getScore();

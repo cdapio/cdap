@@ -70,7 +70,8 @@ public class TestProductFeedFlow {
     String productMetaJson = productMeta.toJson();
     
     // Write json to input stream
-    writeToStream(ProductFeedFlow.inputStream, Bytes.toBytes(productMetaJson));
+    writeToStream(ProductFeedFlow.flowName, ProductFeedFlow.inputStream,
+        Bytes.toBytes(productMetaJson));
     
     // Wait for parsing flowlet to process the tuple
     while (ProductFeedParserFlowlet.numProcessed < 1) {
@@ -101,7 +102,7 @@ public class TestProductFeedFlow {
     
   }
   
-  private void writeToStream(String streamName, byte[] bytes)
+  private void writeToStream(String flowName, String streamName, byte[] bytes)
       throws OperationException {
     Map<String,String> headers = new HashMap<String,String>();
     TupleSerializer serializer = new TupleSerializer(false);
@@ -109,9 +110,12 @@ public class TestProductFeedFlow {
         .set("headers", headers)
         .set("body", bytes)
         .create();
+    System.out.println("Writing event to stream: " +
+        FlowStream.defaultURI(flowName, streamName).toString());
     executor.execute(OperationContext.DEFAULT,
         new QueueEnqueue(
-            Bytes.toBytes(FlowStream.defaultInputURI(streamName).toString()),
+            Bytes.toBytes(
+                FlowStream.defaultURI(flowName, streamName).toString()),
             serializer.serialize(tuple)));
   }
 

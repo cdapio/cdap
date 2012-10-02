@@ -40,4 +40,9 @@ public class ObjectTable<T extends SimpleSerializable> extends DataLib {
     Write write = new Write(tableName, id, COLUMN, t.toBytes());
     this.getCollector().add(write);
   }
+
+  public void writeObject(byte [] id, T t) throws OperationException {
+    Write write = new Write(tableName, id, COLUMN, t.toBytes());
+    this.context.getDataFabric().execute(write);
+  }
 }

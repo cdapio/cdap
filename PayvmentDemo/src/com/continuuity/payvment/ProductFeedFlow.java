@@ -21,13 +21,15 @@ import com.continuuity.payvment.util.Constants;
 
 public class ProductFeedFlow implements Flow {
 
-  static String inputStream = "product-feed";
+  static final String inputStream = "product-feed";
 
+  static final String flowName = "ProductFeedProcessor";
+  
   @Override
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("ProductFeedProcessor");
+    specifier.name(flowName);
     specifier.email("dev@continuuity.com");
     specifier.application("Cluster Activity Feeds");
     specifier.company("Continuuity+Payvment");

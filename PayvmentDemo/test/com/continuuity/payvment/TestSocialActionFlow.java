@@ -11,11 +11,15 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.continuuity.api.data.BatchCollectionClient;
+import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -25,6 +29,7 @@ import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
+import com.continuuity.payvment.data.ProductTable;
 import com.continuuity.payvment.util.Bytes;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -42,17 +47,35 @@ public class TestSocialActionFlow {
   @SuppressWarnings("unused")
   private static final OVCTableHandle handle = executor.getTableHandle();
   
+  private static FlowletContext flowletContext;
+  
   private static CConfiguration conf;
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     conf = CConfiguration.create();
+    flowletContext = new FlowletContext() {
+
+      @Override
+      public void register(BatchCollectionClient client) {}
+
+      @Override
+      public DataFabric getDataFabric() {
+        return new DataFabricImpl(executor, OperationContext.DEFAULT);
+      }
+
+      @Override
+      public int getInstanceId() {
+        return 0;
+      }
+      
+    };
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {}
 
-  @Test(timeout = 10000)
+  @Test(timeout = 10000000)
   public void testSocialActionFlow_Basic() throws Exception {
     
     // Instantiate product feed flow
@@ -67,37 +90,63 @@ public class TestSocialActionFlow {
     long now = System.currentTimeMillis();
     Long event_id = 1L;
     Long product_id = 2L;
-    Long user_id = 3l;
+    Long user_id = 3L;
     SocialAction socialAction =
         new SocialAction(event_id, now, "yay-exp-action", product_id, user_id);
     String socialActionJson = socialAction.toJson();
     
     // Write json to input stream
-    writeToStream(SocialActionFlow.inputStream,
+    writeToStream(SocialActionFlow.flowName, SocialActionFlow.inputStream,
         Bytes.toBytes(socialActionJson));
     
     // Wait for parsing flowlet to process the tuple
     while (SocialActionParserFlowlet.numProcessed < 1) {
       System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(10);
+      Thread.sleep(100);
+    }
+    
+    // This tuple should error out because it's an unknown product
+    while (SocialActionFlow.SocialActionProcessorFlowlet.numErrors < 1) {
+      System.out.println("Waiting for processor flowlet to error on tuple");
+      Thread.sleep(100);
+    }
+    
+    // Store the product -> category mapping
+    Long store_id = 15L;
+    String category = "Sports";
+    String name = "Tennis Shoes";
+    ProductMeta productMeta = new ProductMeta(product_id, store_id, now,
+        category, name, 1.0);
+    ProductTable productTable = new ProductTable(flowletContext);
+    productTable.writeObject(Bytes.toBytes(productMeta.product_id),
+        productMeta);
+    
+    // Write same json to input stream
+    writeToStream(SocialActionFlow.flowName, SocialActionFlow.inputStream,
+        Bytes.toBytes(socialActionJson));
+    
+    // Wait for parsing flowlet to process the second tuple
+    while (SocialActionParserFlowlet.numProcessed < 2) {
+      System.out.println("Waiting for parsing flowlet to process 2nd tuple");
+      Thread.sleep(100);
     }
     
     // Wait for processor flowlet to process the tuple
     while (SocialActionFlow.SocialActionProcessorFlowlet.numProcessed < 1) {
       System.out.println("Waiting for processor flowlet to process tuple");
-      Thread.sleep(10);
+      Thread.sleep(100);
     }
     
     // Wait for processor flowlet to process the tuple
     while (SocialActionFlow.ActivityFeedUpdaterFlowlet.numProcessed < 1) {
       System.out.println("Waiting for updater flowlet to process tuple");
-      Thread.sleep(10);
+      Thread.sleep(100);
     }
     
     // Wait for processor flowlet to process the tuple
     while (SocialActionFlow.PopularFeedUpdaterFlowlet.numProcessed < 1) {
       System.out.println("Waiting for updater flowlet to process tuple");
-      Thread.sleep(10);
+      Thread.sleep(100);
     }
     
     System.out.println("Tuple processed to the end!");
@@ -116,7 +165,7 @@ public class TestSocialActionFlow {
     
   }
   
-  private void writeToStream(String streamName, byte[] bytes)
+  private void writeToStream(String flowName, String streamName, byte[] bytes)
       throws OperationException {
     Map<String,String> headers = new HashMap<String,String>();
     TupleSerializer serializer = new TupleSerializer(false);
@@ -124,9 +173,12 @@ public class TestSocialActionFlow {
         .set("headers", headers)
         .set("body", bytes)
         .create();
+    System.out.println("Writing event to stream: " +
+        FlowStream.defaultURI(flowName, streamName).toString());
     executor.execute(OperationContext.DEFAULT,
         new QueueEnqueue(
-            Bytes.toBytes(FlowStream.defaultInputURI(streamName).toString()),
+            Bytes.toBytes(
+                FlowStream.defaultURI(flowName, streamName).toString()),
             serializer.serialize(tuple)));
   }
 

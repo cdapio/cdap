@@ -310,10 +310,9 @@ public class CounterTable extends DataLib {
    * @param counterSet counter set name
    * @param counter counter name
    * @param amount amount to increment counter by
-   * @throws OperationException
    */
   public void incrementCounterSet(byte [] counterSet, byte [] counter,
-      long amount) throws OperationException {
+      long amount) {
     this.collector.add(
         generateCounterSetIncrement(counterSet, counter, amount));
   }
