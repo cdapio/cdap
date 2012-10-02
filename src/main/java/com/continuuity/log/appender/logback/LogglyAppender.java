@@ -7,6 +7,7 @@ import ch.qos.logback.core.Layout;
 import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.*;
 
@@ -53,7 +54,7 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    * Queue of messages to send to server.
    */
   private final transient BlockingQueue<String> messages =
-    new LinkedBlockingQueue<String>();
+    new LinkedBlockingQueue<String>(10000);
 
   /**
    * The service to run the background process.
@@ -221,23 +222,27 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
       );
     }
   }
-
   /**
    * Method to be executed by a thread in the background.
    *
    * <p>Takes messages from the queue and feeds the feeder.</p>
    */
   private void flush() {
-    String text;
+    String text = "";
     try {
-      text = this.messages.take();
+      int count = 1000;
+      while(!this.messages.isEmpty()) {
+        text = this.messages.poll(100, TimeUnit.MILLISECONDS);
+        if(text == null || count < 1) {
+          break;
+        }
+        this.feeder.feed(text);
+        --count;
+      }
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
       throw new IllegalStateException(ex);
-    }
-    try {
-      this.feeder.feed(text);
-    } catch (java.io.IOException ex) {
+    } catch (IOException ex) {
       System.out.println(
         String.format(
           "%s LogglyAppender failed to report: %s",
