@@ -66,11 +66,14 @@ define([], function () {
 
 				return;
 
+				/*
 				if (begin === true || this.get('model').__loadingData) {
 					$(this.get('element')).addClass('sparkline-loading');
 				} else {
 					$(this.get('element')).removeClass('sparkline-loading');
 				}
+				*/
+				
 			}.observes('model.__loadingData'),
 			__titles: {
 				'processed.count': 'Processed'
@@ -93,7 +96,7 @@ define([], function () {
 				}
 
 				var height, width = parseInt(this.get('width'), 10) || 200,
-					margin = 8;
+					margin = 8, label, container;
 
 				if (this.get('listMode')) {
 					$(this.get('element')).addClass('blue');

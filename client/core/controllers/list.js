@@ -25,7 +25,7 @@ define([], function () {
 					if (typeof params[1] === 'function') { // For you
 						callback(objects);
 
-					} else { // For me 
+					} else { // For me
 						self.set('types.' + type, Em.ArrayProxy.create({content: objects}));
 						C.interstitial.hide();
 						C.Ctl.List.getStats();

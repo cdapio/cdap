@@ -29,7 +29,7 @@ define([], function () {
 
 			var self = this;
 
-			metrics = ['processed.count'];
+			var metrics = ['processed.count'];
 			var pointCount = 30;
 
 			var end = Math.round(new Date().getTime() / 1000),

@@ -209,7 +209,7 @@ try {
 					errors: 0,
 					id: '5678',
 					name: 'User Data'
-				}])
+				}]);
 
 				break;
 			default:

@@ -1,6 +1,6 @@
 //
 // Flow Model
-// 
+//
 // WARNING: Property values cannot be an object (e.g. Em.Object.create()) or the object will be shared between instances.
 //
 

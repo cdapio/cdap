@@ -27,7 +27,7 @@ define([], function () {
 		__timeout: null,
 		getStats: function () {
 
-			var self = this;
+			var self = this, objects, content;
 
 			if ((objects = this.get('types.App'))) {
 

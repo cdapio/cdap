@@ -28,5 +28,5 @@ define([
 
 		// Automatically appends to the DOM.
 		}).append();
-		// 
+		//
 	});
