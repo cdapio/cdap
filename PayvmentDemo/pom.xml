@@ -126,8 +126,8 @@
     </dependency>
     <dependency>
       <groupId>com.typesafe.akka</groupId>
-      <artifactId>akka-actor_2.10.0-M7</artifactId>
-      <version>2.1-M2</version>
+      <artifactId>akka-actor</artifactId>
+      <version>2.0.3</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
