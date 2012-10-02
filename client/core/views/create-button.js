@@ -1,5 +1,5 @@
 //
-// Time Selector View
+// Create Button View
 //
 
 define([

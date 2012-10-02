@@ -444,45 +444,70 @@ try {
 				} else {
 
 					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
-					FAR.chunk(auth_token, resource_identifier, data, function (error, result) {
-						if (error) {
-							console.log('FARManager chunk', error);
-						} else {
 
-							socket.emit('upload', {'status': 'Delivered...'});
-							FAR.deploy(auth_token, resource_identifier, function (error, result) {
-								if (error) {
-									console.log('FARManager deploy', error);
-								} else {
+					function send_deploy () {
 
-									socket.emit('upload', {'status': 'Verifying...'});
+						socket.emit('upload', {'status': 'Deploying...'});
 
-									var current_status = -1;
+						FAR.deploy(auth_token, resource_identifier, function (error, result) {
+							if (error) {
+								console.log('FARManager deploy', error);
+							} else {
 
-									var status_interval = setInterval(function () {
-										FAR.status(auth_token, resource_identifier, function (error, result) {
-											if (error) {
-												console.log('FARManager verify', error);
-											} else {
+								socket.emit('upload', {'status': 'Verifying...'});
 
-												if (current_status !== result.overall) {
-													socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});
-													current_status = result.overall;
-												}
-												if (result.overall === 0 ||	// Not Found
-													result.overall === 4 || // Failed
-													result.overall === 5 || // Success
-													result.overall === 6 || // Undeployed
-													result.overall === 7) {
-													clearInterval(status_interval);
-												} // Else: 1 (Registered), 2 (Uploading), 3 (Verifying)
+								var current_status = -1;
+
+								var status_interval = setInterval(function () {
+									FAR.status(auth_token, resource_identifier, function (error, result) {
+										if (error) {
+											console.log('FARManager verify', error);
+										} else {
+
+											if (current_status !== result.overall) {
+												socket.emit('upload', {'status': 'verifying', 'step': result.overall, 'message': result.message, 'flows': result.verification});
+												current_status = result.overall;
 											}
-										});
-									}, 500);
+											if (result.overall === 0 ||	// Not Found
+												result.overall === 4 || // Failed
+												result.overall === 5 || // Success
+												result.overall === 6 || // Undeployed
+												result.overall === 7) {
+												clearInterval(status_interval);
+											} // Else: 1 (Registered), 2 (Uploading), 3 (Verifying)
+										}
+									});
+								}, 500);
+							}
+						});
+
+					}
+
+					function send_chunk (index, size) {
+
+						FAR.chunk(auth_token, resource_identifier, data.slice(index, index + size), function () {
+
+							if (error) {
+								socket.emit('Chunk error');
+							} else {
+
+								if (index + size === data.length) {
+									send_deploy();
+
+								} else {
+									var length = size;
+									if (index + (size * 2) > data.length) {
+										length = data.length % size;
+									}
+									send_chunk(index + size, length);
 								}
-							});
-						}
-					});
+							}
+						});
+					}
+
+					var CHUNK_SIZE = 102400;
+					send_chunk(0, CHUNK_SIZE > data.length ? data.length : CHUNK_SIZE);
+
 				}
 			});
 		});

@@ -188,6 +188,15 @@ function(Models, Views, Controllers){
 				}
 
 				return value;
+			},
+			create: function (entityType) {
+
+				var view = C.Vw.Create.create({
+					entityType: entityType
+				});
+
+				view.append();
+
 			}
 		},
 		Mdl: Models,
