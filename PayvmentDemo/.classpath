@@ -9,11 +9,11 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/data-fabric"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/flow"/>
 	<classpathentry kind="lib" path="lib/opencsv-2.1.jar" sourcepath="lib/opencsv-2.1-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/PayvmentDemo/lib/opencsv-2.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/flow2"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
