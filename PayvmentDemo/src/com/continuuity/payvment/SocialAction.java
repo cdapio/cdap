@@ -14,6 +14,30 @@ public class SocialAction {
   
   public Long actor_id;
 
+  public SocialAction() {}
+  
+  public SocialAction(Long id, Long date, String type, Long product_id,
+      Long actor_id) {
+    this.id = id;
+    this.date = date;
+    this.type = type;
+    this.product_id = product_id;
+    this.actor_id = actor_id;
+  }
+
+  /**
+   * Converts this product meta entry to JSON.
+   * @return this product meta as a JSON string
+   */
+  public String toJson() {
+    return
+        "{\"@id\":\"" + this.id + "\"," +
+        "\"type\":\"" + this.type + "\"," +
+        "\"date\":\"" + this.date + "\"," +
+        "\"product_id\":\"" + this.product_id + "\"," +
+        "\"actor_id\":\"" + this.actor_id + "\"}";
+  }
+  
   public SocialActionType getSocialActionType() {
     if (this.socialActionType != null) return this.socialActionType;
     if (this.type == null) return null;

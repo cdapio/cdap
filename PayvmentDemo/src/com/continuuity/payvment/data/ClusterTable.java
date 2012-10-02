@@ -58,8 +58,8 @@ public class ClusterTable extends DataLib {
    * <p>
    * This operation is asynchronous and will be performed as part of the flowlet
    * process batch.
-   * @param clusterid
-   * @param clusterInfo
+   * @param clusterId id of cluster
+   * @param clusterInfo map of category name to weight in cluster
    */
   public void writeCluster(int clusterId, Map<String,Double> clusterInfo) {
     int len = clusterInfo.size();

@@ -67,4 +67,18 @@ public class ProductMeta implements SimpleSerializable {
     this.name = Bytes.toString(bytes, idx, len); idx += len;
     return this;
   }
+
+  /**
+   * Converts this product meta entry to JSON.
+   * @return this product meta as a JSON string
+   */
+  public String toJson() {
+    return
+        "{\"@id\":\"" + this.product_id + "\"," +
+        "\"category\":\"" + this.category + "\"," +
+        "\"name\":\"" + this.name + "\"," +
+        "\"last_modified\":\"" + this.date + "\"," +
+        "\"store_id\":\"" + this.store_id + "\"," +
+        "\"score\":\"" + this.score + "\"}";
+  }
 }

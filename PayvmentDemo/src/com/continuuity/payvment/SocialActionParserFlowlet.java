@@ -11,6 +11,8 @@ import com.google.gson.Gson;
 
 public class SocialActionParserFlowlet extends ComputeFlowlet {
 
+  static int numProcessed = 0;
+
   @Override
   public void configure(StreamsConfigurator configurator) {
     // Apply default stream schema to default tuple input stream
@@ -46,7 +48,12 @@ public class SocialActionParserFlowlet extends ComputeFlowlet {
     collector.add(outputTuple);
   }
 
-  private String preProcessSocialActionJSON(String jsonEventString) {
+  @Override
+  public void onSuccess(Tuple tuple, TupleContext context) {
+    numProcessed++;
+  }
+
+  static String preProcessSocialActionJSON(String jsonEventString) {
     return jsonEventString.replaceFirst("@id", "id");
   }
 

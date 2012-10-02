@@ -33,6 +33,7 @@ import java.util.Iterator;
  * comparisons, hash code generation, manufacturing keys for HashMaps or
  * HashSets, etc.
  */
+@SuppressWarnings("javadoc")
 public class Bytes {
 
   /**

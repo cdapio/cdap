@@ -57,6 +57,8 @@ public class ActivityFeed {
   /**
    * Adds the specified feed entry to this activity feed, utilizing only the
    * first product in the list of the specified feed entry.
+   * @param feedEntry a single activity feed entry (will be aggregated,
+   *                  if possible)
    */
   public void addEntry(ActivityFeedEntry feedEntry) {
     ActivityFeedEntry existingEntry = this.stores.get(feedEntry.store_id);

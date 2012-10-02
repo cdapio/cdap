@@ -294,6 +294,7 @@ public class CounterTable extends DataLib {
    * @param counterSet counter set name
    * @param counter counter name
    * @param amount amount to increment counter by
+   * @throws OperationException
    */
   public void incrementCounterSet(String counterSet, String counter,
       long amount) throws OperationException {
@@ -309,6 +310,7 @@ public class CounterTable extends DataLib {
    * @param counterSet counter set name
    * @param counter counter name
    * @param amount amount to increment counter by
+   * @throws OperationException
    */
   public void incrementCounterSet(byte [] counterSet, byte [] counter,
       long amount) throws OperationException {
@@ -322,8 +324,8 @@ public class CounterTable extends DataLib {
    * <p>
    * Values of counters after increments are not available.
    * @param counterSet counter set name
-   * @param counter counter name
-   * @param amount amount to increment counter by
+   * @param counters counter names
+   * @param amounts amounts to increment counters by
    */
   public void incrementCounterSet(String counterSet,
       String [] counters, long [] amounts) {
@@ -337,8 +339,8 @@ public class CounterTable extends DataLib {
    * <p>
    * Values of counters after increments are not available.
    * @param counterSet counter set name
-   * @param counter counter name
-   * @param amount amount to increment counter by
+   * @param counters counter names
+   * @param amounts amounts to increment counters by
    */
   public void incrementCounterSet(byte [] counterSet,
       byte [][] counters, long [] amounts) {
@@ -396,7 +398,7 @@ public class CounterTable extends DataLib {
    * See ... for more information.
    * @param counterSet counter set name
    * @param counters counter names
-   * @param amount amount to increment counter by
+   * @param amounts amounts to increment counters by
    * @return prepared increment operation
    */
   public Increment generateCounterSetIncrement(String counterSet,
@@ -416,7 +418,7 @@ public class CounterTable extends DataLib {
    * See ... for more information.
    * @param counterSet counter set name
    * @param counters counter names
-   * @param amount amount to increment counter by
+   * @param amounts amounts to increment counters by
    * @return prepared increment operation
    */
   public Increment generateCounterSetIncrement(byte [] counterSet,

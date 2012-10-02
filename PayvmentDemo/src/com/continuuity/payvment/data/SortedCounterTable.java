@@ -41,7 +41,7 @@ import com.continuuity.payvment.util.Bytes;
  *  </li>
  *  <li>
  *   In the next flowlet, perform any necessary secondary counter increments
- *   using {@link #performSecondaryCounterIncrements(byte[], byte[], long)}.
+ *   using {@link #performSecondaryCounterIncrements(byte[], byte[], long, long)}.
  *  </li>
  * </ul>
  */

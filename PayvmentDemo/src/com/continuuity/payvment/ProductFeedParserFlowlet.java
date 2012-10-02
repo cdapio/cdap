@@ -59,19 +59,4 @@ public class ProductFeedParserFlowlet extends ComputeFlowlet {
         "\"last_modified\"", "\"date\"");
     return jsonEventString;
   }
-
-  /**
-   * Test helper for generating JSON product meta events.
-   * @param productMeta
-   * @return
-   */
-  static String generateProductMetaJson(ProductMeta productMeta) {
-    return
-        "{\"@id\":\"" + productMeta.product_id + "\"," +
-        "\"category\":\"" + productMeta.category + "\"," +
-        "\"name\":\"" + productMeta.name + "\"," +
-        "\"last_modified\":\"" + productMeta.date + "\"," +
-        "\"store_id\":\"" + productMeta.store_id + "\"," +
-        "\"score\":\"" + productMeta.score + "\"}";
-  }
 }

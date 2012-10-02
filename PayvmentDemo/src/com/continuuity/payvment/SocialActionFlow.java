@@ -25,11 +25,13 @@ import com.continuuity.payvment.util.Helpers;
 
 public class SocialActionFlow implements Flow {
 
+  static String inputStream = "social-actions";
+
   @Override
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("Social Action Processor");
+    specifier.name("SocialActionProcessor");
     specifier.email("dev@continuuity.com");
     specifier.application("Cluster Activity Feeds");
     specifier.company("Continuuity+Payvment");
@@ -45,8 +47,8 @@ public class SocialActionFlow implements Flow {
         1);
 
     // Define user_follow_events stream and connect to json_source_parser
-    specifier.stream("social_actions");
-    specifier.input("social_actions", "action_parser");
+    specifier.stream(inputStream);
+    specifier.input(inputStream, "action_parser");
 
     // Wire up the remaining flowlet connections
     specifier.connection("action_parser", "action_processor");
@@ -68,6 +70,8 @@ public class SocialActionFlow implements Flow {
           .create();
 
   public static class SocialActionProcessorFlowlet extends ComputeFlowlet {
+
+    static int numProcessed = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -133,7 +137,7 @@ public class SocialActionFlow implements Flow {
       }
       
       // Determine score increase
-      long scoreIncrease = action.getSocialActionType().getScore();
+      Long scoreIncrease = action.getSocialActionType().getScore();
       tupleBuilder.set("score-increase", scoreIncrease);
       
       // Update all-time score, but put increment into tuple for pass-thru
@@ -151,10 +155,16 @@ public class SocialActionFlow implements Flow {
       
       collector.add(tupleBuilder.create());
     }
-    
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
+    }
   }
 
   public static class ActivityFeedUpdaterFlowlet extends ComputeFlowlet {
+
+    static int numProcessed = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -167,9 +177,9 @@ public class SocialActionFlow implements Flow {
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
-      long scoreIncrease = tuple.get("score-increase");
-      long allTimeScore = tuple.get("all-time-score");
-      long hourlyScore = tuple.get("hourly-score");
+      Long scoreIncrease = tuple.get("score-increase");
+      Long allTimeScore = tuple.get("all-time-score");
+      Long hourlyScore = tuple.get("hourly-score");
       if (!shouldInsertFeedEntry(scoreIncrease, allTimeScore, hourlyScore)) {
         return;
       }
@@ -188,9 +198,16 @@ public class SocialActionFlow implements Flow {
         Long allTimeScore, Long hourlyScore) {
       return true;
     }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
+    }
   }
 
   public static class PopularFeedUpdaterFlowlet extends ComputeFlowlet {
+
+    static int numProcessed = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -211,8 +228,8 @@ public class SocialActionFlow implements Flow {
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
-      long scoreIncrease = tuple.get("score-increase");
-      long hourlyScore = tuple.get("hourly-score");
+      Long scoreIncrease = tuple.get("score-increase");
+      Long hourlyScore = tuple.get("hourly-score");
       SocialAction action = tuple.get("action");
       ProductMeta productMeta = tuple.get("product-meta");
       // Let top score perform any additional indexing increments
@@ -220,6 +237,11 @@ public class SocialActionFlow implements Flow {
           Bytes.add(Bytes.toBytes(Helpers.hour(action.date)),
               Bytes.toBytes(productMeta.category)),
           Bytes.toBytes(action.product_id), scoreIncrease, hourlyScore);
+    }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
     }
   }
 }
