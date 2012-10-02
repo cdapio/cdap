@@ -21,11 +21,13 @@ import com.continuuity.payvment.util.Constants;
 
 public class ProductFeedFlow implements Flow {
 
+  static String inputStream = "product-feed";
+
   @Override
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("Product Feed Processor");
+    specifier.name("ProductFeedProcessor");
     specifier.email("dev@continuuity.com");
     specifier.application("Cluster Activity Feeds");
     specifier.company("Continuuity+Payvment");
@@ -37,8 +39,8 @@ public class ProductFeedFlow implements Flow {
         ProductActivityFeedUpdaterFlowlet.class, 1);
 
     // Define user_follow_events stream and connect to json_source_parser
-    specifier.stream("product_feed");
-    specifier.input("product_feed", "product_parser");
+    specifier.stream(inputStream);
+    specifier.input(inputStream, "product_parser");
 
     // Wire up the remaining flowlet connections
     specifier.connection("product_parser", "product_processor");
@@ -57,6 +59,8 @@ public class ProductFeedFlow implements Flow {
 
 
   public static class ProductProcessorFlowlet extends ComputeFlowlet {
+
+    static int numProcessed = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -105,9 +109,16 @@ public class ProductFeedFlow implements Flow {
       tupleBuilder.set("all-time-score", itemScoreInc);
       collector.add(tupleBuilder.create());
     }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
+    }
   }
   
   public static class ProductActivityFeedUpdaterFlowlet extends ComputeFlowlet {
+
+    static int numProcessed = 0;
 
     @Override
     public void configure(StreamsConfigurator configurator) {
@@ -133,6 +144,11 @@ public class ProductFeedFlow implements Flow {
           ActivityFeed.makeActivityFeedRow(productMeta.category),
           feedEntry.getColumn(), feedEntry.getValue());
       collector.add(feedEntryWrite);
+    }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
     }
     
     private static boolean shouldInsertFeedEntry(ProductMeta productMeta,

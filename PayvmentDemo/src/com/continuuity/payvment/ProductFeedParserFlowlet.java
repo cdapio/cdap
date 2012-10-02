@@ -11,6 +11,8 @@ import com.google.gson.Gson;
 
 public class ProductFeedParserFlowlet extends ComputeFlowlet {
 
+  static int numProcessed = 0;
+
   @Override
   public void configure(StreamsConfigurator configurator) {
     // Apply default stream schema to default tuple input stream
@@ -37,17 +39,39 @@ public class ProductFeedParserFlowlet extends ComputeFlowlet {
     // Perform any necessar pre-processing
     jsonEventString = preProcessSocialActionJSON(jsonEventString);
 
-    // Parse social action JSON using GSON
-    SocialAction action =
-        this.gson.fromJson(jsonEventString, SocialAction.class);
+    // Parse product meta JSON using GSON
+    ProductMeta productMeta =
+        this.gson.fromJson(jsonEventString, ProductMeta.class);
 
     // Define and emit output tuple
-    Tuple outputTuple = new TupleBuilder().set("action", action).create();
+    Tuple outputTuple = new TupleBuilder().set("product", productMeta).create();
     collector.add(outputTuple);
   }
 
-  private String preProcessSocialActionJSON(String jsonEventString) {
-    return jsonEventString.replaceFirst("@id", "id");
+  @Override
+  public void onSuccess(Tuple tuple, TupleContext context) {
+    numProcessed++;
   }
 
+  static String preProcessSocialActionJSON(String jsonEventString) {
+    jsonEventString = jsonEventString.replaceFirst("@id", "product_id");
+    jsonEventString = jsonEventString.replaceFirst(
+        "\"last_modified\"", "\"date\"");
+    return jsonEventString;
+  }
+
+  /**
+   * Test helper for generating JSON product meta events.
+   * @param productMeta
+   * @return
+   */
+  static String generateProductMetaJson(ProductMeta productMeta) {
+    return
+        "{\"@id\":\"" + productMeta.product_id + "\"," +
+        "\"category\":\"" + productMeta.category + "\"," +
+        "\"name\":\"" + productMeta.name + "\"," +
+        "\"last_modified\":\"" + productMeta.date + "\"," +
+        "\"store_id\":\"" + productMeta.store_id + "\"," +
+        "\"score\":\"" + productMeta.score + "\"}";
+  }
 }

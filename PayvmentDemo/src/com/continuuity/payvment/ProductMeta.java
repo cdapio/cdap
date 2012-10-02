@@ -4,6 +4,10 @@ package com.continuuity.payvment;
 import com.continuuity.payvment.data.SimpleSerializable;
 import com.continuuity.payvment.util.Bytes;
 
+/**
+ * Stores all data for a product feed event, or just a holder of the metadata
+ * of a single product.
+ */
 public class ProductMeta implements SimpleSerializable {
 
   public Long product_id;
