@@ -3,17 +3,74 @@ package com.continuuity.metrics2.collector.server.plugins;
 import akka.dispatch.Future;
 import akka.dispatch.OnComplete;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.metrics2.collector.MetricRequest;
 import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.collector.MetricType;
 import org.hamcrest.CoreMatchers;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Tests sending metrics to librato.
  */
 public class LibratoMetricsProcessorTest {
+  private static int port;
+  private static Server server;
+  private static LibratoServer libratoServer;
+
+  public static class LibratoServer extends HttpServlet {
+    private int count;
+
+    public LibratoServer() {
+      count = 0;
+    }
+
+    protected void doPost(HttpServletRequest request,
+                         HttpServletResponse response)
+      throws ServletException, IOException {
+      count++;
+      response.setContentType("application/json");
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().println("{response : \"ok\"}");
+    }
+
+    public int getCount() {
+      return count;
+    }
+  }
+
+  @BeforeClass
+  public static void before() throws Exception {
+    port = PortDetector.findFreePort();
+    server = new Server();
+    Connector con = new SelectChannelConnector();
+    con.setPort(port);
+    server.addConnector(con);
+    Context context = new Context(server, "/", Context.SESSIONS);
+    libratoServer = new LibratoServer();
+    context.addServlet(new ServletHolder(libratoServer), "/v1/metrics");
+    server.start();
+  }
+
+  @AfterClass
+  public static void after() throws Exception {
+    if(server != null) {
+      server.stop();
+    }
+  }
 
   @Test
   public void testSendToLibrato() throws Exception {
@@ -24,10 +81,8 @@ public class LibratoMetricsProcessorTest {
       "librato.account.token",
       "6b8ac685e4665f78ba1f8f10b0c509b054fb92f96d711fe8f7505225064f81e1"
     );
-    configuration.set(
-      "librato.url",
-      "https://metrics-api.librato.com/v1/metrics"
-    );
+    String url = String.format("http://localhost:%d/v1/metrics", port);
+    configuration.set("librato.url", url);
 
     MetricsProcessor processor = new LibratoMetricsProcessor(configuration);
 
@@ -76,10 +131,10 @@ public class LibratoMetricsProcessorTest {
       while(! response2.isCompleted()) {
         Thread.sleep(1);
       }
-      Thread.sleep(1000);
+      Thread.sleep(500);
     }
 
-    Thread.sleep(10000);
+    Assert.assertTrue(libratoServer.getCount() > 1);
     Assert.assertThat(handler.getFailed(), CoreMatchers.is(0));
     Assert.assertThat(handler.getSuccess(), CoreMatchers.is(20));
   }
