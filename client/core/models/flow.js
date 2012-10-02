@@ -1,16 +1,93 @@
 //
 // Flow Model
+// 
+// WARNING: Property values cannot be an object (e.g. Em.Object.create()) or the object will be shared between instances.
 //
 
 define([], function () {
 	return Em.Object.extend({
-		ts: {}, // Used to store timeseries data, by type. (e.g. busyness)
-		lastProcessed: 0,
+		metricData: null,
+		metricNames: null,
+		__loadingData: false,
+		init: function() {
+			this._super();
+
+			this.set('metricData', Em.Object.create());
+			this.set('metricNames', {});
+
+			this.set('id', this.get('flowId') || this.get('meta').name);
+			this.set('app', this.get('applicationId') || this.get('meta').app);
+
+		},
+		addMetricName: function (name) {
+
+			this.get('metricNames')[name] = 1;
+			// this.set('__loadingData', true);
+
+		},
+		getUpdateRequest: function () {
+
+			var pointCount = 30;
+			var self = this;
+
+			var app = this.get('app'),
+				id = this.get('id'),
+				end = Math.round(new Date().getTime() / 1000),
+				start = end - pointCount;
+
+			var metrics = [];
+			var metricNames = this.get('metricNames');
+			for (var name in metricNames) {
+				if (metricNames[name] === 1) {
+					metrics.push(name);
+				}
+			}
+			if (!metrics.length) {
+				C.debug('Cannot update. Not tracking any metrics for ' + app + ':' + id);
+				this.set('__loadingData', false);
+				return;
+			}
+
+			return ['monitor', {
+				method: 'getTimeSeries',
+				params: [app, id, metrics, start, end, 'FLOW_LEVEL']
+			}, function (error, response) {
+
+				if (!response.params) {
+					return;
+				}
+
+				var data, points = response.params.points,
+					latest = response.params.latest;
+
+				for (var metric in points) {
+					data = points[metric];
+
+					var k = data.length;
+					while(k --) {
+						data[k] = data[k].value;
+					}
+
+					var a = 0;
+					data = data.splice(0, 25);
+					for (var k = data.length; k < 25; k++) {
+						data.unshift(0);
+						a ++;
+					}
+
+					metric = metric.replace(/\./g, '');
+					self.get('metricData').set(metric, data);
+					this.set('__loadingData', false);
+				}
+
+			}];
+
+		},
 		href: function () {
 			if (this.get('applicationId')) {
-				return '#/apps/' + this.get('applicationId') + '/' + this.get('flowId');
+				return '#/flows/' + this.get('applicationId') + ':' + this.get('flowId');
 			} else {
-				return '#/apps/' + this.get('meta').app + '/' + this.get('meta').name;
+				return '#/flows/' + this.get('meta').app + ':' + this.get('meta').name;
 			}
 		}.property(),
 		undeployHref: function () {
@@ -27,10 +104,10 @@ define([], function () {
 			return arr;
 		}.property('meta'),
 		started: function () {
-			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'Never';
+			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
 		}.property('timeTrigger'),
 		stopped: function () {
-			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'Never';
+			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
 		}.property('timeTrigger'),
 		actionIcon: function () {
 			return {

@@ -4,99 +4,69 @@
 
 define([], function () {
 
-	return Em.ArrayProxy.create({
-		content: [],
-		getObjects: function (type) {
+	return Em.Object.create({
+		types: Em.Object.create(),
+		getObjects: function (type, callback) {
 
 			var self = this;
+			this.set('entityType', type);
 
-			//
-			// FYI: If type is "Flow" the server auto-subscribes to status changes.
-			//
 			C.get('manager', {
 				method: 'get' + type + 's'
-			}, function (error, response) {
-
+			}, function (error, response, params) {
 				if (error) {
 					C.interstitial.label(error);
 				} else {
 					var objects = response.params;
-					var i = objects.length;
+					var i = objects.length, type = params[0];
 					while (i--) {
-						self.pushObject(C.Mdl[type].create(objects[i]));
+						objects[i] = C.Mdl[type].create(objects[i]);
 					}
-					C.interstitial.hide();
+					if (typeof params[1] === 'function') { // For you
+						callback(objects);
 
-					console.log('calling');
-					C.Ctl.List.getStats();
+					} else { // For me 
+						self.set('types.' + type, Em.ArrayProxy.create({content: objects}));
+						C.interstitial.hide();
+						C.Ctl.List.getStats();
 
+					}
 				}
-
-			});
-
+			}, [type, callback]);
 		},
 
+		__timeout: null,
 		getStats: function () {
 
-			var content = this.get('content');
-			var app, id;
+			var objects, content;
 
-			for (var i = 0; i < content.length; i ++) {
+			if ((objects = this.get('types.' + this.get('entityType')))) {
 
-				var app = content[i].get('applicationId');
-				var id = content[i].get('flowId');
+				content = objects.get('content');
 
-				var start = Math.round(new Date().getTime() / 1000) - 30;
-				var end = Math.round(new Date().getTime() / 1000);
-
-				C.get('monitor', {
-					method: 'getTimeSeries',
-					params: [app, id, ['processed.count'], start, end]
-				}, function (error, response, params) {
-
-					if (C.router.currentState.name !== "flows") {
-						return;
+				for (var i = 0; i < content.length; i ++) {
+					if (typeof content[i].getUpdateRequest === 'function') {
+						C.get.apply(C, content[i].getUpdateRequest());
 					}
+				}
 
-					if (!response.params) {
-						console.debug('No response for timeseries');
-						return;
-					}
-					var data = response.params.points['processed.count'];
-
-					if (!data) {
-						console.debug('No timeseries data!');
-						return;
-					}
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					var c = C.Ctl.List.content;
-					var j = c.length;
-					while(j--) {
-
-						if(c[j].get('flowId') === params) {
-							c[j].set('ts', {'processed.count': data});
-							c[j].set('lastProcessed', data[data.length-1]);
-							c[j].set('instances', 3);
-						}
-					}
-
-				}, id);
+				this.__timeout = setTimeout(function () {
+					C.Ctl.List.getStats();
+				}, 1000);
 
 			}
 
-			setTimeout(function () {
-				C.Ctl.List.getStats();
-			}, 1000);
-
 		},
 
+		viewType: function () {
+
+			return Em.get('C.Vw.' + this.get('entityType') + 'List');
+
+		}.property().cacheable(false),
+
 		unload: function () {
-			this.set('content', []);
+			clearTimeout(this.__timeout);
+			this.set('types', Em.Object.create());
 		}
 
 	});

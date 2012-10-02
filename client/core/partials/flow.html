@@ -1,11 +1,12 @@
 
 <div id="title">
-	<h1 id="content-header">{{current.meta.name}} <span>Flow</span></h1>
+	{{view C.Vw.TimeSelector}}
+	<h1>{{current.meta.name}}</h1>
 </div>
 
 <div id="info">
-	<div class="info-box" style="float: right; border: 0;">
-		<div id="action-buttons" class="btn-group pull-right" style="width:320px;">
+	<div class="info-box" style="float: right; border: 0;padding-right: 14px;">
+		<div id="action-buttons" class="btn-group pull-right">
 		  	<button class="btn dropdown-toggle" data-toggle="dropdown">
 				<span class="caret"></span>
 			</button>
@@ -18,22 +19,16 @@
 				<li class="divider"></li>
 				<li><a href="#/upload/new">Upload a New Version</a></li>
 				<li><a {{action "delete" on="click"}}>Remove This Flow</a></li>
-				{{#unless ENV.isCloud}}
-				<li class="divider"></li>
-				<li><a {{action "promote" on="click"}}>Push to the Cloud</a></li>
-				{{/unless}}
 			</ul>
 		 	<button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
 		 	<button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
 		  	<button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-action="current.defaultAction"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
-		  	<button disabled="true" style="width: 90px;" class="btn">{{current.currentState}}</button>
 		</div>
+		<div class="flow-state"><strong>{{current.currentState}}</strong><br /><span>{{current.started}}</span></div>
 	</div>
 	<div class="info-box health-box"></div>
-	<div class="info-box sparkline-box">{{view C.Vw.Sparkline flowId=flowId height="88" type="processed"}}</div>
-	<div class="info-box sparkline-value"><strong>{{current.lastProcessed}}</strong><br />tuples/sec</div>
-	<div class="info-box sparkline-box">{{view C.Vw.Sparkline flowId=flowId height="88" type="processed"}}</div>
-	<div class="info-box sparkline-value"><strong>{{current.lastProcessed}}</strong><br />tuples/sec</div>
+	<div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="180"}}</div>
+	<div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="180"}}</div>
 </div>
 
 <div id="panels">
@@ -42,35 +37,25 @@
 	
 	<div class="panel">
 		<div id="flowviz-container">
+			<div class="btn-group" style="float: left;">
+				<button class="btn" style="width:120px;" disabled>Total Arrivals</button>
+			  	<button class="btn dropdown-toggle" data-toggle="dropdown">
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><a>Current Arrival Rate</a></li>
+					<li><a>Current Queue Depth</a></li>
+					<li><a>Max Queue Depth</a></li>
+					<li><a>Current Processing Rate</a></li>
+				</ul>
+			</div>
 			{{view C.Vw.Visualizer viewName="visualizer"}}
 		</div>
 	</div>
+</div>
 
-	<div class="panel">
-		<div id="object-list">
-			
-			{{#if history.length}}
-			<table class="table table-condensed">
-				<thead>
-					<tr><th style="width: 215px;">Started</th>
-					<th>Ended</th>
-					<th style="width:250px;">Result</th>
-				</tr></thead>
-				{{#each history tagName="tbody"}}
-					<tr style="cursor: pointer;" {{action "loadRun" on="click"}} {{bindAttr href="href"}}>
-						<td>{{started}}</td>
-						<td>{{ended}}</td>
-						<td>{{detail}}</td>
-					</tr>
-				{{/each}}
-			</table>
-			{{else}}
-			<div class="object-list-empty">
-				This flow has not completed a run yet.
-			</div>
-			{{/if}}
-
-		</div>
+<div id="flowlet-container">
+	<div id="flowlet-popup">
+		{{view C.Vw.FlowletDetail viewName="flowlet-detail"}}
 	</div>
-
 </div>

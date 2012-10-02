@@ -1,33 +1,60 @@
 
-<div id="title">
+<div class="gutter">
+	<h2>Helpful Tip!</h2>
+	<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+	<h2>New Release!</h2>
+	<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+	<h2>Mailing List!</h2>
+	<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+</div>
+
+<div id="title" class="guttered">
+	{{view C.Vw.TimeSelector}}
 	<h1>Dashboard</h1>
 </div>
 
-<div id="info">
-	<div class="info-box" style="float: right; border: 0;">
-		<div id="upload-dropzone" class="drop-zone">
-			<div id="far-upload-status">
-				<input type="file" id="file-input" multiple />
-			</div>
-		</div>
-	</div>
-	<div class="info-box health-box"></div>
-</div>
+<div id="panels" class="guttered">
 
-<div id="informer"></div>
-
-<div id="flow-alert" class="alert alert-error" style="display: none;"></div>
-
-<div id="panels">
 	<div class="panel">
-		<div id="object-list">
-			{{#if controller.content.length}}
-				{{view C.Ctx.Vw.FlowList}}
-			{{else}}
-				<div class="object-list-empty">
-					No flows are currently deployed. Drag-and-drop or browse for a file above.
-				</div>
-			{{/if}}
+		<div class="panel-head"><div class="panel-title">Account Summary</div></div>
+		<table class="dash-app-resources">
+			<tbody>
+				<tr>
+					<td class="dash-app-resource dash-app-resource-health"></td>
+					<td class="dash-app-resource">
+						<a href="#/apps" class="dash-app-resource-app">2</a>
+					</td>
+					<td class="dash-app-resource">
+						<a href="#/flows" class="dash-app-resource-flow">1</a>
+					</td>
+					<td class="dash-app-resource">
+						<a href="#/streams" class="dash-app-resource-stream">1</a>
+					</td>
+					<td class="dash-app-resource">
+						<a href="#/data" class="dash-app-resource-dataset">2</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table class="table dash-app-trends">
+			<thead>
+				<tr>
+					<th>Processed Count</th>
+					<th>Storage Trend</th>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{view C.Vw.Chart listMode="true" width="336" metric="processed.count"}}</td>
+					<td>{{view C.Vw.Chart listMode="true" width="336" metric="processed.count"}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="panel">
+		<div class="panel-head">
+			{{view C.Vw.CreateButton type="App"}}
+			<div class="panel-title">Applications</div>
 		</div>
+		{{view C.Vw.AppList}}
 	</div>
 </div>

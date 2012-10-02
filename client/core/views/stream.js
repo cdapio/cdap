@@ -1,9 +1,9 @@
 //
-// App Status View
+// Stream Status View
 //
 
 define([
-	'lib/text!../partials/app.html'
+	'lib/text!../partials/stream.html'
 	], function (Template) {
 	
 	return Em.View.extend({

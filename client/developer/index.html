@@ -15,16 +15,12 @@
 
   <script type="text/javascript" src="/core/lib/jquery.min.js"></script>
   <script type="text/javascript" src="/core/lib/bootstrap.min.js"></script>
-  
   <script type="text/javascript" src="/core/lib/handlebars-1.0.0.beta.6.js"></script>
   <script type="text/javascript" src="/core/lib/ember-1.0.pre.js"></script>
-  
   <script type="text/javascript" src="/socket.io/socket.io.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.timeago.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
-
   <script type="text/javascript" src="http://d3js.org/d3.v2.min.js?2.9.6"></script>
-
   <script data-main="main" src="../core/lib/require.js"></script>
 
 </head>
@@ -36,7 +32,7 @@
       <li><a class="nav-link nav-apps" href="#/apps">Applications</a></li>
       <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
       <li><a class="nav-link nav-streams" href="#/streams">Streams</a></li>
-      <li><a class="nav-link nav-datasets" href="#/datas">Datasets</a></li>    
+      <li><a class="nav-link nav-datasets" href="#/data">Datasets</a></li>    
     </ul>
   </div>
 
@@ -45,7 +41,7 @@
       <div id="global">
         <a class="global-link global-help" href="#"></a>
         <a class="global-link global-user" href="#">{{user.name}}</a>
-        <a class="global-link global-dev" href="#">Dev Center</a>
+        <a class="global-link global-dev" href="#">Dev Lounge</a>
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -62,8 +58,6 @@
       <a style="text-decoration: underline;" href="mailto:support@continuuity.com">Send us Questions &amp; Feedback</a><br />
     </div>
   </script>
-
-<div style="display:none;" id="flowletviz"></div>
 
 </body>
 </html>

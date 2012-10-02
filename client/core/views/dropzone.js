@@ -1,13 +1,11 @@
-//
-// Dashboard View
-//
 
 define([
-	'lib/text!../partials/dashboard.html'
+	'lib/text!../partials/upload.html'
 	], function (Template) {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile(Template),
+		template: Em.Handlebars.compile('<div id="upload-dropzone" class="drop-zone">' +
+			'<div id="far-upload-status">Drop JAR or <a href="#">Browse</a></div></div>'),
 		didInsertElement: function () {
 
 			function ignoreDrag(e) {
@@ -27,7 +25,7 @@ define([
 				}
 			}
 
-			$('#upload-dropzone')
+			$(this.get('element'))
 				.bind('dragenter', ignoreDrag)
 				.bind('dragover', ignoreDrag)
 				.bind('drop', drop);
@@ -35,6 +33,7 @@ define([
 			this.welcome_message = $('#far-upload-status').html();
 			$('#far-upload-alert').hide();
 
+			/*
 			$('#file-input').change(function () {
 				
 				C.Ctl.Upload.sendFiles(
@@ -42,11 +41,18 @@ define([
 				);
 
 			});
+			*/
 
 		},
 		resetUpload: function () {
-			$("#far-upload-status").html('<input type="file" id="file-input" multiple />');
+			$("#far-upload-status").html('Drop JAR or <a href="#">Browse</a>');
 			C.Ctl.Flows.load();
+		},
+		reset: function () {
+			$('#far-upload-status').html(this.welcome_message);
+		},
+		cancel: function () {
+			App.router.transitionTo('home');
 		}
 	});
 

@@ -41,7 +41,7 @@ define([], function () {
 			});
 
 			// Safari does not support nor require FileReader to upload.
-			
+			/*
 			if ($.browser.safari &&
 				/chrome/.test(navigator.userAgent.toLowerCase())) {
 
@@ -65,10 +65,11 @@ define([], function () {
 				reader.readAsArrayBuffer(file);
 
 			} else {
+				*/
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
 				xhr.send(file);
-			}
+			//}
 
 		},
 
@@ -96,13 +97,13 @@ define([], function () {
 					case 5:
 						C.Vw.Informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
 						this.processing = false;
-						C.router.applicationController.view.resetUpload();
+						C.router.applicationController.view.get('dropzone').resetUpload();
 						this.sendFile();
 					break;
 					default:
 						C.Vw.Informer.show(response.message, 'alert-error');
 						this.processing = false;
-						C.router.applicationController.view.resetUpload();
+						C.router.applicationController.view.get('dropzone').resetUpload();
 						this.sendFile();
 				}
 			}

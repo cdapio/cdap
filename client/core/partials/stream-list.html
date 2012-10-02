@@ -1,0 +1,26 @@
+
+{{#if types.Stream.content.length}}
+	<table class="table">
+	<thead>
+		<th colspan="2">&nbsp;</th>
+		<th style="width: 100px;text-align: center;">Storage</th>
+		<th style="width: 420px;">Arrivals vs Consumed</th>
+	</thead>
+	{{#each types.Stream.content tagName="tbody"}}
+	<tr>
+		<td style="width: 36px;padding-right: 0;">
+			<div class="list-health-box"></div>
+		</td>
+		<td class="app-list-name">
+			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a>
+		</td>
+		<td class="app-list-count">256KB</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metric="stream.arrivals" width="420"}}</td>
+	</tr>
+	{{/each}}
+	</table>
+{{else}}
+	<div class="object-list-empty">
+		No streams.
+	</div>
+{{/if}}

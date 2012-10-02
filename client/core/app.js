@@ -49,7 +49,7 @@ function(Models, Views, Controllers){
 		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
-				name: "Don"
+				name: "Demo"
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				content: function () {
@@ -66,10 +66,30 @@ function(Models, Views, Controllers){
 					var names = {
 						'flows': 'Flows',
 						'upload': 'Upload',
-						'apps': 'Applications',
+						'apps': 'Apps',
 						'streams': 'Streams',
 						'datas': 'Data Sets'
 					};
+
+					/** Hax. Deals with AppID:FlowID style IDs for flows. **/
+					if (path.length && path[path.length - 1].indexOf(':') !== -1) {
+						
+						var app = path[path.length - 1].split(':')[0];
+						var flow = path[path.length - 1].split(':')[1];
+						return [
+							{
+								name: 'Flows',
+								href: '#/flows'
+							}, {
+								name: app,
+								href: '#/apps/' + app
+							}, {
+								name: flow,
+								href: '#/flows/' + app + ':' + flow
+							}
+						]
+					}
+					/** End Hax. **/
 
 					for (var i = 1; i < path.length; i ++) {
 						href.push(path[i]);
@@ -78,7 +98,7 @@ function(Models, Views, Controllers){
 							href: href.join('/')
 						});
 					}
-					console.log('RETURNING', crumbs);
+
 					return crumbs;
 				}.property('C.router.currentState.name')
 			})
@@ -93,7 +113,7 @@ function(Models, Views, Controllers){
 				return this;
 			},
 			hide: function () {
-				$('#interstitial').fadeOut();//hide();
+				$('#interstitial').fadeOut();
 				return this;
 			},
 			label: function (message) {
@@ -114,43 +134,60 @@ function(Models, Views, Controllers){
 		util: {
 			sparkline: function (widget, data, w, h, m, color) {
 		
-				var y = d3.scale.linear().domain([d3.max(data), 0]).range([0 + m, h + m]),
-					x = d3.scale.linear().domain([0, data.length]).range([0 + m, w + m]);
+				var y = d3.scale.linear().domain([d3.max(data), 0]).range([0, h - m]),
+					x = d3.scale.linear().domain([0, data.length]).range([0, w]);
 
 				var vis = widget
 					.append("svg:svg")
 					.attr("width", w)
 					.attr("height", h);
+
 				var g = vis.append("svg:g");
 				var line = d3.svg.line().interpolate("basis")
 					.x(function(d,i) { return x(i); })
 					.y(function(d) { return y(d); });
 
-				var p = g.append("svg:path");
-				p.attr('class', 'sparkline-data').attr("d", line(data));
-				p.append("svg:circle")
-					.attr("r", 5)
-					.style("fill", "#000")
-					.style("stroke", "#000")
-					.style("stroke-width", "2px");
+				var p = g.append("svg:path").attr('class', 'sparkline-data').attr("d", line(data));
 
 				return {
-					p: p,
+					g: g,
 					update: function (data) {
 
 						var max = d3.max(data) || 10;
 						var min = d3.min(data) || -10;
 
-						var y = d3.scale.linear().domain([max + 50, min - 50]).range([0 - m, h + m]),
-							x = d3.scale.linear().domain([0, data.length]).range([0 - m, w + m]);
+						var extend = Math.round(w * 0.05)
+
+						var y = d3.scale.linear().domain([max + 50, min - 50]).range([m, h - m]),
+							x = d3.scale.linear().domain([0, data.length]).range([extend*-1, w + extend*2]);
 
 						var line = d3.svg.line().interpolate("basis")
 							.x(function(d,i) { return x(i); })
 							.y(function(d) { return y(d); });
-							
-						this.p.attr("d", line(data));
+
+						this.g.selectAll("path")
+							.data([data])
+							.attr("transform", "translate(" + x(1) + ")")
+							.attr("d", line)
+							.transition()
+							.ease("linear")
+							.duration(1000)
+							.attr("transform", "translate(" + x(0) + ")");
 					}
 				};
+			},
+			number: function (value) {
+
+				value = Math.abs(value);
+
+				if (value > 10000) {
+					var digits = 3 - (Math.round(value / 1000) + '').length;
+					value = value / 1000;
+					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+					value = rounded + 'K';
+				}
+
+				return value;
 			}
 		},
 		Mdl: Models,
@@ -161,7 +198,7 @@ function(Models, Views, Controllers){
 	function connected (env) {
 
 		window.ENV.isCloud = (env !== 'development');
-		console.log('Environment set to "' + env + '"');
+		C.debug('Environment set to "' + env + '"');
 
 		// This function is called when the socket is (re)connected.
 
@@ -177,6 +214,7 @@ function(Models, Views, Controllers){
 					model.set('timeTrigger', trigger);
 				});
 				if (C.Ctl.Flow.current) {
+					C.Ctl.Flow.current.set('timeTrigger', trigger);
 					C.Ctl.Flow.history.forEach(function (model) {
 						model.set('timeTrigger', trigger);
 					});
@@ -223,6 +261,9 @@ function(Models, Views, Controllers){
 
 	$.extend(socket, {
 		request: function (service, request, response, params) {
+			if (!service) {
+				return;
+			}
 			request.id = current_id ++;
 			pending[request.id] = [response, params];
 			this.emit(service, request);
@@ -268,10 +309,6 @@ function(Models, Views, Controllers){
 		error('Reconnecting. Attempt ' + attempt + '.', arguments);
 	});
 
-	// Some templates depend on specific views.
-	// Compile templates once all views are loaded.
-	C.Vw.Flowlet.compile();
-				
 	C.debug('Models, Views, Controllers loaded and assigned.');
 
 	return C;

@@ -160,6 +160,10 @@ define([], function () {
 
 				C.Ctl.Flows.pending = false;
 
+				if (!response.params) {
+					return;
+				}
+
 				if (C.Ctl.Flow.current) {
 
 					C.Ctl.Flow.history.unshiftObject(C.Mdl.Run.create({

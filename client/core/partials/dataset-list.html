@@ -1,0 +1,26 @@
+
+{{#if types.DataSet.content.length}}
+	<table class="table">
+	<thead>
+		<th colspan="2">&nbsp;</th>
+		<th style="width: 100px;text-align: center;">Storage</th>
+		<th style="width: 420px;">Reads &amp; Writes</th>
+	</thead>
+	{{#each types.DataSet.content tagName="tbody"}}
+	<tr>
+		<td style="width: 36px;padding-right: 0;">
+			<div class="list-health-box"></div>
+		</td>
+		<td class="app-list-name">
+			<a {{bindAttr href="href"}}><strong>{{name}}</strong><br /><span>{{currentState}}</span></a>
+		</td>
+		<td class="app-list-count">11.1MB</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="DataSet" metric="dataset.reads" width="420"}}</td>
+	</tr>
+	{{/each}}
+	</table>
+{{else}}
+	<div class="object-list-empty">
+		No data sets.
+	</div>
+{{/if}}

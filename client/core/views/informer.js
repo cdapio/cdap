@@ -19,7 +19,7 @@ define([], function () {
 
 			$('#informer').append(div);
 			div.fadeIn();
-
+			
 			if (!persist) {
 
 				this.queue.push(div);

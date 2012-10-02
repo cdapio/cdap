@@ -8,6 +8,12 @@ define([], function () {
 
 		load: function () {
 
+			C.interstitial.hide();
+
+		},
+
+		unload: function () {
+
 		}
 
 	});

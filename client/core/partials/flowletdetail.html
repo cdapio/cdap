@@ -1,0 +1,57 @@
+
+<div id="flowlet-popup-close" {{action close on="click"}}>×</div>
+<div id="flowlet-popup-icon" />
+<h1 id="flowlet-popup-title"> {{controller.current.name}}</h1>
+<div id="flowlet-popup-tabs">
+	<div class="flowlet-popup-tab"><a href="#" tab-name="input" {{action select on="click"}}>Input</a></div>
+	<div class="flowlet-popup-tab"><a href="#" tab-name="processed" {{action select on="click"}}>Processed</a></div>
+	<div class="flowlet-popup-tab"><a href="#" tab-name="output" {{action select on="click"}}>Output</a></div>
+</div>
+<div id="flowlet-popup-tab-content">
+
+	<div id="flowlet-popup-inputs" class="flowlet-popup-tab-content">
+
+		<div class="flowlet-popup input-contributor">
+
+		</div>
+		<div class="flowlet-popup input-stream">
+
+		</div>
+		<div class="flowlet-popup input-queue">
+			{{view C.Vw.Chart listMode="true" metric="processed.count"}}
+		</div>
+
+	</div>
+
+	<div id="flowlet-popup-processed" class="flowlet-popup-tab-content">
+
+		<div class="flowlet-popup processed-tracker">
+			{{view C.Vw.Chart listMode="true" width="598" metric="processed.count"}}
+		</div>
+		<div class="flowlet-popup processed-tracker">
+			{{view C.Vw.Chart listMode="true" width="598" metric="busyness"}}
+		</div>
+		<div class="flowlet-popup processed-tracker">
+			{{view C.Vw.Chart listMode="true" width="598" metric="flowlet.failure.count"}}
+		</div>
+		<div class="flowlet-popup processed-tracker">
+			{{view C.Vw.Chart listMode="true" width="598" metric="dataops.count"}}
+		</div>
+
+	</div>
+
+	<div id="flowlet-popup-outputs" class="flowlet-popup-tab-content">
+
+		<div class="flowlet-popup input-contributor">
+
+		</div>
+		<div class="flowlet-popup input-stream">
+
+		</div>
+		<div class="flowlet-popup input-queue">
+			{{view C.Vw.Chart metric="processed.count"}}
+		</div>
+
+	</div>
+
+</div>

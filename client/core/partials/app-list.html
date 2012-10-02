@@ -1,0 +1,29 @@
+{{#if types.App.length}}
+	<table class="table">
+	<thead>
+		<th colspan="2"></th>
+		<th style="text-align: center;">Streams</th>
+		<th style="text-align: center;">Flows</th>
+		<th style="text-align: center;">DataSets</th>
+		<th style="width: 264px;">Busyness</th>
+	</thead>
+	{{#each controller.types.App tagName="tbody"}}
+	<tr>
+		<td style="width: 36px;padding-right: 0;">
+			<div class="list-health-box"></div>
+		</td>
+		<td class="app-list-name">
+			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a>
+		</td>
+		<td class="app-list-count">{{counts.streams}}</strong></td>
+		<td class="app-list-count">{{counts.flows}}</strong></td>
+		<td class="app-list-count">{{counts.datasets}}</strong></td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="App" height="50" metric="processed.count" width="264"}}</td>
+	</tr>
+	{{/each}}
+	</table>
+{{else}}
+	<div class="object-list-empty">
+		No Apps. Please create one.
+	</div>
+{{/if}}

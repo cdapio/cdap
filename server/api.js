@@ -126,6 +126,92 @@ try {
 				*/
 
 				break;
+
+			case 'getAccountSummary':
+				done(false, {
+					health: 'OK',
+					errors: 0,
+					counts: {
+						apps: 1,
+						flows: 1,
+						streams: 1,
+						datasets: 2
+					}
+				});
+				break;
+
+			case 'getApp':
+				done(false, {
+					health: 'OK',
+					errors: 0,
+					type: 'App',
+					id: 'CountRandom',
+					name: 'Recommendation Engine',
+					counts: {
+						flows: 2,
+						streams: 1,
+						datasets: 2
+					}
+				});
+				break;
+			case 'getApps':
+
+				done(false, [{
+					health: 'OK',
+					errors: 0,
+					type: 'App',
+					id: 'CountRandom',
+					name: 'Recommendation Engine',
+					counts: {
+						flows: 1,
+						streams: 1,
+						datasets: 2
+					}
+				}, {
+					health: 'OK',
+					errors: 0,
+					type: 'App',
+					id: 'End2End',
+					name: 'Analytics App',
+					counts: {
+						flows: 2,
+						streams: 0,
+						datasets: 4
+					}
+				}]);
+
+				break;
+			case 'getFlows':
+			case 'getFlowsForApp':
+				Manager[method].apply(Manager, params.concat(done));
+				break;
+			case 'getStreams':
+			case 'getStreamsForApp':
+
+				done(false, [{
+					health: 'OK',
+					errors: 0,
+					id: '1234',
+					name: 'User Data Input'
+				}]);
+
+				break;
+			case 'getDataSets':
+			case 'getDataSetsForApp':
+
+				done(false, [{
+					health: 'OK',
+					errors: 0,
+					id: '1234',
+					name: 'Big Data'
+				}, {
+					health: 'OK',
+					errors: 0,
+					id: '5678',
+					name: 'User Data'
+				}])
+
+				break;
 			default:
 				if (method in Manager) {
 					try {
@@ -230,19 +316,22 @@ try {
 					Monitor.getCounters(request, done);
 				break;
 				case 'getTimeSeries':
+
+					var level = params[5] || 'FLOW_LEVEL';
+
 					var flow = new metricsservice_types.FlowArgument({
 						accountId: 'demo',
 						applicationId: params[0],
-						flowId: params[1]
+						flowId: params[1],
+						flowletId: params[6] || null
 					});
 					var request = new metricsservice_types.TimeseriesRequest({
 						argument: flow,
 						metrics: params[2],
-						level: metricsservice_types.MetricTimeseriesLevel.FLOW_LEVEL,
+						level: metricsservice_types.MetricTimeseriesLevel[level],
 						endts: params[4],
 						startts: params[3]
 					});
-					console.log('requested');
 					Monitor.getTimeSeries(request, function (error, response) {
 
 						if (error) {
@@ -250,15 +339,17 @@ try {
 							return;
 						}
 
-						var res = response.points['processed.count'];
+						// Nukes timestamps since they're in Buffer format
+						for (var metric in response.points) {
 
-						if (res) {
-							var j = res.length;
-							while(j--) {
-								res[j].timestamp = 0;
+							var res = response.points[metric];
+							if (res) {
+								var j = res.length;
+								while(j--) {
+									res[j].timestamp = 0;
+								}
+								response.points[metric] = res;
 							}
-
-							response.points['processed.count'] = res;
 						}
 
 						done(error, response);

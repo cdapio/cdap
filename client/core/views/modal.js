@@ -25,5 +25,8 @@ define([
 				var el = $(this.get('element'));
 				el.modal('hide');
 			}
+
+		// Automatically appends to the DOM.
 		}).append();
+		// 
 	});

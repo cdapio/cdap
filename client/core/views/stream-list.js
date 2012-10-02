@@ -1,12 +1,10 @@
-//
-// App Status View
-//
 
 define([
-	'lib/text!../partials/app.html'
+	'lib/text!../partials/stream-list.html'
 	], function (Template) {
 	
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template)
 	});
+
 });

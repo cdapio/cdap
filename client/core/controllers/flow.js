@@ -4,7 +4,7 @@
 
 define([], function () {
 
-	var COLUMN_WIDTH = 216;
+	var COLUMN_WIDTH = 198;
 
 	return Em.ArrayProxy.create({
 		content: [],
@@ -122,7 +122,8 @@ define([], function () {
 
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;
-
+				response.params.type = 'Flow';
+				
 				self.set('current', C.Mdl.Flow.create(response.params));
 	
 				var flowlets = response.params.flowlets;
@@ -213,29 +214,10 @@ define([], function () {
 				return;
 			}
 
-			var start = Math.round(new Date().getTime() / 1000) - 30;
-			var end = Math.round(new Date().getTime() / 1000);
-			C.get('monitor', {
-				method: 'getTimeSeries',
-				params: [app, id, ['processed.count'], start, end]
-			}, function (error, response) {
-				
-					var data = response.params.points['processed.count'];
-
-					if (!data) {
-						console.debug('No timeseries data!');
-						return;
-					}
-
-					var k = data.length;
-					while(k --) {
-						data[k] = data[k].value;
-					}
-
-					self.get('current').set('lastProcessed', data[data.length-1]);
-					self.get('current').set('ts', {'processed.count': data});
-
-			});
+			var end = Math.round(new Date().getTime() / 1000),
+				start = end - 30;
+			
+			C.get.apply(C, this.get('current').getUpdateRequest());
 
 			C.get('monitor', {
 				method: 'getCounters',
@@ -265,15 +247,7 @@ define([], function () {
 						fs[j].set('metrics', finish);
 					}
 
-					if (finish > 10000) {
-
-						var digits = 3 - (Math.round(finish / 1000) + '').length;
-						finish = finish / 1000;
-						var rounded = Math.round(finish * Math.pow(10, digits)) / Math.pow(10, digits);
-
-						finish = rounded + 'K';
-					}
-
+					finish = C.util.number(finish);
 					flowlet.set('processed', finish);
 
 				}

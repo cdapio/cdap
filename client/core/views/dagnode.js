@@ -31,8 +31,8 @@ define([
 				var x = el.offset().left - 56;
 				var y = el.offset().top - 48;
 
-				this.get("controller").set('flowlet', this.get('current'));
-				C.Vw.Flowlet.show(x, y);
+				var viz = C.router.applicationController.view.get('flowlet-detail');
+				viz.show(this.get('current'));
 			}
 		});
 	});

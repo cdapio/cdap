@@ -1,9 +1,6 @@
-//
-// App Status View
-//
 
 define([
-	'lib/text!../partials/app.html'
+	'lib/text!../partials/apps.html'
 	], function (Template) {
 	
 	return Em.View.extend({

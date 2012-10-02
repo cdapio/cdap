@@ -1,9 +1,9 @@
 //
-// App Status View
+// Time Selector View
 //
 
 define([
-	'lib/text!../partials/app.html'
+	'lib/text!../partials/timeselector.html'
 	], function (Template) {
 	
 	return Em.View.extend({
