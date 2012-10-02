@@ -182,7 +182,7 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>2.9.2</version>
+      <version>2.10.0-M3</version>
     </dependency>
   </dependencies>
   <!-- Set the main class and tell maven to include dependencies in the jar -->
