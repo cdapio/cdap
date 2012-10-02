@@ -22,5 +22,25 @@
 	<classpathentry kind="lib" path="lib/guice-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
 	<classpathentry kind="lib" path="lib/flow-0.1.0-tests.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-common-2.0.0-alpha.jar"/>
+	<classpathentry kind="lib" path="lib/javax.inject-1.jar"/>
+	<classpathentry kind="lib" path="lib/aopalliance-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/overlord-0.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/metrics-core-2.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/guava-11.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/hbase-0.94.2.1.3.4.continuuity.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-api-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/libthrift-0.8.0.jar"/>
+	<classpathentry kind="lib" path="lib/akka-actor-2.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/scala-library-2.9.2.jar"/>
+	<classpathentry kind="lib" path="lib/config-0.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/kryo-2.12.jar"/>
+	<classpathentry kind="lib" path="lib/objenesis-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/reflectasm-1.03.jar"/>
+	<classpathentry kind="lib" path="lib/minlog-1.2.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
