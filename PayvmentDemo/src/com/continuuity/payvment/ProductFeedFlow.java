@@ -16,8 +16,10 @@ import com.continuuity.payvment.data.ActivityFeed;
 import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
 import com.continuuity.payvment.data.CounterTable;
 import com.continuuity.payvment.data.ProductTable;
+import com.continuuity.payvment.data.SortedCounterTable;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Constants;
+import com.continuuity.payvment.util.Helpers;
 
 public class ProductFeedFlow implements Flow {
 
@@ -57,6 +59,7 @@ public class ProductFeedFlow implements Flow {
           .add("product", ProductMeta.class)
           .add("update-count", Long.class)
           .add("all-time-score", Long.class)
+          .add("hourly-score", Long.class)
           .create();
 
 
@@ -80,6 +83,8 @@ public class ProductFeedFlow implements Flow {
 
     private CounterTable allTimeScoreTable;
 
+    private SortedCounterTable topScoreTable;
+
     @Override
     public void initialize() {
       this.productTable = new ProductTable(getFlowletContext());
@@ -87,28 +92,40 @@ public class ProductFeedFlow implements Flow {
           getFlowletContext());
       this.allTimeScoreTable = new CounterTable("allTimeScore",
           getFlowletContext());
+      this.topScoreTable = new SortedCounterTable("topScore",
+          getFlowletContext(), new SortedCounterTable.SortedCounterConfig());
     }
 
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
       ProductMeta productMeta = tuple.get("product");
+      
       // Write product meta data
       productTable.updateObject(Bytes.toBytes(productMeta.product_id),
           productMeta);
       TupleBuilder tupleBuilder = new TupleBuilder();
       tupleBuilder.set("product", productMeta);
+      
       // Count number of product updates and pass-thru
       Increment updateCountInc =
           this.productUpdateCountTable.generateSingleKeyIncrement(
               Bytes.toBytes(productMeta.product_id), 1L);
       tupleBuilder.set("update-count", updateCountInc);
+      
       // Add one to item score and pass-thru
       Increment itemScoreInc =
           this.allTimeScoreTable.generateSingleKeyIncrement(
               Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
                   Bytes.toBytes(productMeta.product_id)), 1L);
       tupleBuilder.set("all-time-score", itemScoreInc);
+      
+      // Update time bucketed top-score table, also put increment into tuple
+      Increment topScoreHourly = topScoreTable.generatePrimaryCounterIncrement(
+          Bytes.add(Bytes.toBytes(Helpers.hour(productMeta.date)),
+              Bytes.toBytes(productMeta.category)),
+          Bytes.toBytes(productMeta.product_id), 1L);
+      tupleBuilder.set("hourly-score", topScoreHourly);
       collector.add(tupleBuilder.create());
     }
 
@@ -130,12 +147,21 @@ public class ProductFeedFlow implements Flow {
       // No output
     }
 
+    private SortedCounterTable topScoreTable;
+
+    @Override
+    public void initialize() {
+      this.topScoreTable = new SortedCounterTable("topScore",
+          getFlowletContext(), new SortedCounterTable.SortedCounterConfig());
+    }
+
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
       ProductMeta productMeta = tuple.get("product");
-      long updateCount = tuple.get("update-count");
-      long allTimeScore = tuple.get("all-time-score");
+      Long updateCount = tuple.get("update-count");
+      Long allTimeScore = tuple.get("all-time-score");
+      Long hourlyScore = tuple.get("hourly-score");
       if (!shouldInsertFeedEntry(productMeta, updateCount)) {
         return;
       }
@@ -146,6 +172,12 @@ public class ProductFeedFlow implements Flow {
           ActivityFeed.makeActivityFeedRow(productMeta.category),
           feedEntry.getColumn(), feedEntry.getValue());
       collector.add(feedEntryWrite);
+
+      // Let top score perform any additional indexing increments
+      this.topScoreTable.performSecondaryCounterIncrements(
+          Bytes.add(Bytes.toBytes(Helpers.hour(productMeta.date)),
+              Bytes.toBytes(productMeta.category)),
+          Bytes.toBytes(productMeta.product_id), 1L, hourlyScore);
     }
 
     @Override

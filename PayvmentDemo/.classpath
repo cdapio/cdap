@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="lib" path="lib/asm-4.0.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/data-fabric"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/flow2"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
@@ -16,5 +14,13 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/PayvmentDemo/lib/opencsv-2.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/data-fabric-0.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/data-fabric-0.1.0-api.jar"/>
+	<classpathentry kind="lib" path="lib/flow-0.1.0-api.jar"/>
+	<classpathentry kind="lib" path="lib/flow-0.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/common-0.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/guice-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
+	<classpathentry kind="lib" path="lib/flow-0.1.0-tests.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

@@ -13,7 +13,7 @@ import java.util.TreeSet;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.payvment.util.Bytes;
 
@@ -120,7 +120,8 @@ public class SortedCounterTable extends DataLib {
       byte [] row = makeRow(counterSet, bucket);
       // Read all counters in bucket
       // TODO: This uses Read of all columns not key-value!
-      Read bucketRead = new Read(this.tableName, row);
+      ReadColumnRange bucketRead =
+          new ReadColumnRange(this.tableName, row, null, null);
       OperationResult<Map<byte[],byte[]>> result = this.fabric.read(bucketRead);
       // If nothing in this bucket, go to next bucket
       if (result.isEmpty()) continue;

@@ -1,82 +1,46 @@
 package com.continuuity.payvment;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.continuuity.api.data.BatchCollectionClient;
-import com.continuuity.api.data.DataFabric;
-import com.continuuity.api.data.OperationContext;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
-import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
+import com.continuuity.payvment.SocialAction.SocialActionType;
+import com.continuuity.payvment.data.ActivityFeed;
+import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
+import com.continuuity.payvment.data.CounterTable;
 import com.continuuity.payvment.data.ProductTable;
+import com.continuuity.payvment.data.SortedCounterTable;
+import com.continuuity.payvment.data.SortedCounterTable.Counter;
 import com.continuuity.payvment.util.Bytes;
+import com.continuuity.payvment.util.Constants;
+import com.continuuity.payvment.util.Helpers;
 import com.google.gson.Gson;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 
-public class TestSocialActionFlow {
+public class TestSocialActionFlow extends PayvmentBaseFlowTest {
 
-  private static final Injector injector =
-      Guice.createInjector(new DataFabricModules().getInMemoryModules());
-
-  private static final OmidTransactionalOperationExecutor executor =
-      (OmidTransactionalOperationExecutor)injector.getInstance(
-          OperationExecutor.class);
-
-  @SuppressWarnings("unused")
-  private static final OVCTableHandle handle = executor.getTableHandle();
-  
-  private static FlowletContext flowletContext;
-  
-  private static CConfiguration conf;
-
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    conf = CConfiguration.create();
-    flowletContext = new FlowletContext() {
-
-      @Override
-      public void register(BatchCollectionClient client) {}
-
-      @Override
-      public DataFabric getDataFabric() {
-        return new DataFabricImpl(executor, OperationContext.DEFAULT);
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-      
-    };
-  }
-
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {}
-
-  @Test(timeout = 10000000)
-  public void testSocialActionFlow_Basic() throws Exception {
+  @Test(timeout = 20000)
+  public void testSocialActionFlow() throws Exception {
+    // Get references to tables
+    ProductTable productTable = new ProductTable(flowletContext);
+    CounterTable productActionCountTable = new CounterTable("productActions",
+        flowletContext);
+    CounterTable allTimeScoreTable = new CounterTable("allTimeScore",
+        flowletContext);
+    SortedCounterTable topScoreTable = new SortedCounterTable("topScore",
+        flowletContext, new SortedCounterTable.SortedCounterConfig());
     
     // Instantiate product feed flow
     SocialActionFlow socialActionFlow = new SocialActionFlow();
@@ -87,12 +51,14 @@ public class TestSocialActionFlow {
     assertTrue(flowHandle.isSuccess());
     
     // Generate a single social action event
-    long now = System.currentTimeMillis();
+    Long now = System.currentTimeMillis();
     Long event_id = 1L;
     Long product_id = 2L;
     Long user_id = 3L;
+    String type = "yay-exp-action";
+    Long typeScoreIncrease = SocialActionType.fromString(type).getScore();
     SocialAction socialAction =
-        new SocialAction(event_id, now, "yay-exp-action", product_id, user_id);
+        new SocialAction(event_id, now, type, product_id, user_id);
     String socialActionJson = socialAction.toJson();
     
     // Write json to input stream
@@ -117,9 +83,13 @@ public class TestSocialActionFlow {
     String name = "Tennis Shoes";
     ProductMeta productMeta = new ProductMeta(product_id, store_id, now,
         category, name, 1.0);
-    ProductTable productTable = new ProductTable(flowletContext);
     productTable.writeObject(Bytes.toBytes(productMeta.product_id),
         productMeta);
+    
+    // Verify product can be read back
+    ProductMeta readProductMeta = productTable.readObject(
+        Bytes.toBytes(product_id));
+    assertEqual(productMeta, readProductMeta);
     
     // Write same json to input stream
     writeToStream(SocialActionFlow.flowName, SocialActionFlow.inputStream,
@@ -155,31 +125,39 @@ public class TestSocialActionFlow {
     assertTrue(FlowTestHelper.stopFlow(flowHandle));
     
     // Verify the product action count has been incremented
+    assertEquals(new Long(1),
+        productActionCountTable.readCounterSet(Bytes.toBytes(product_id),
+        Bytes.toBytes(type)));
     
-    // Verify the product total score has incremented
+    // Verify the product total score has increased to type score increase
+    assertEquals(typeScoreIncrease,
+        allTimeScoreTable.readSingleKey(
+            Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
+                Bytes.toBytes(product_id))));
     
-    // Verify the hourly score has been incremented
+    // Verify the hourly score has been incremented to type score increase
+    List<Counter> counters = topScoreTable.readTopCounters(
+        Bytes.add(Bytes.toBytes(Helpers.hour(now)),
+            Bytes.toBytes(productMeta.category)), 10);
+    assertEquals(1, counters.size());
+    assertEquals(typeScoreIncrease, counters.get(0).getCount());
     
     // Verify a new entry has been made in activity feed
-    
-    
-  }
-  
-  private void writeToStream(String flowName, String streamName, byte[] bytes)
-      throws OperationException {
-    Map<String,String> headers = new HashMap<String,String>();
-    TupleSerializer serializer = new TupleSerializer(false);
-    Tuple tuple = new TupleBuilder()
-        .set("headers", headers)
-        .set("body", bytes)
-        .create();
-    System.out.println("Writing event to stream: " +
-        FlowStream.defaultURI(flowName, streamName).toString());
-    executor.execute(OperationContext.DEFAULT,
-        new QueueEnqueue(
-            Bytes.toBytes(
-                FlowStream.defaultURI(flowName, streamName).toString()),
-            serializer.serialize(tuple)));
+    ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
+        ActivityFeed.makeActivityFeedRow(category), null, null);
+    OperationResult<Map<byte[],byte[]>> result =
+        flowletContext.getDataFabric().read(read);
+    assertFalse(result.isEmpty());
+    Map<byte[], byte[]> map = result.getValue();
+    assertEquals(1, map.size());
+    byte [] column = map.keySet().iterator().next();
+    byte [] value = map.values().iterator().next();
+    ActivityFeedEntry feedEntry = new ActivityFeedEntry(column, value);
+    assertEquals(now, feedEntry.timestamp);
+    assertEquals(store_id, feedEntry.store_id);
+    assertEquals(1, feedEntry.products.size());
+    assertEquals(product_id, feedEntry.products.get(0).product_id);
+    assertEquals(typeScoreIncrease, feedEntry.products.get(0).score);
   }
 
   @Test

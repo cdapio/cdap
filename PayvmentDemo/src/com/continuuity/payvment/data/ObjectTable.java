@@ -11,7 +11,7 @@ import com.continuuity.data.operation.StatusCode;
 
 public class ObjectTable<T extends SimpleSerializable> extends DataLib {
 
-  private static final byte [] COLUMN = new byte [] { 'c' };
+  private static final byte [] COLUMN = new byte [] { 'd' };
 
   private final Class<T> storedObjectClass;
 

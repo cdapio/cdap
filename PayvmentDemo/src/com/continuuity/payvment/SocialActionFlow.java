@@ -128,7 +128,7 @@ public class SocialActionFlow implements Flow {
             action.product_id + ")";
         System.out.println(msg);
         numErrors++;
-        throw new RuntimeException(msg);
+        return;
       }
       tupleBuilder.set("product-meta", productMeta);
       
