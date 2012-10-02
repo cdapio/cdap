@@ -173,7 +173,7 @@ public class ClusterWriterFlow implements Flow {
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
-      int maxClusterId = tuple.get("maxClusterId");
+      Integer maxClusterId = tuple.get("maxClusterId");
       String msg = tuple.get("msg");
       System.out.println("Cluster Reset.  Message: " + msg);
       this.clusterTable.resetClusters(maxClusterId);
