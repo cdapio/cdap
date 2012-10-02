@@ -29,16 +29,15 @@ import java.util.Map;
 public class TupleMetaDataAnnotator {
 
   /**
-   * Manages {@code TupleMetaDataAnnotator} during {@link com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload} of a
+   * Manages {@code TupleMetaDataAnnotator} during {@code EnqueuePayload} of a
    * tuple.
    */
   public static class EnqueuePayload implements Writable {
 
     /**
-     * Stores the location of tuple fields to the location of
-     * operations in global operation list.
+     * Stores the ids of operation to tuple field mappings.
      */
-    private final Map<String, Short> locations;
+    private final Map<String, Long> operationIds;
 
     /**
      * Serialized Tuple
@@ -46,23 +45,23 @@ public class TupleMetaDataAnnotator {
     private byte[] serializedTuple;
 
     public EnqueuePayload() {
-      locations = Maps.newHashMap();
+      operationIds = Maps.newHashMap();
       serializedTuple = null;
     }
 
-    public EnqueuePayload(Map<String, Short> locations,
+    public EnqueuePayload(Map<String, Long> operationIds,
                           byte[] serializedTuple) {
-      this.locations = locations;
+      this.operationIds = operationIds;
       this.serializedTuple = serializedTuple;
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-      out.writeShort(locations.size());
-      for(Map.Entry<String, Short> entry : locations.entrySet()) {
+      out.writeShort(operationIds.size());
+      for(Map.Entry<String, Long> entry : operationIds.entrySet()) {
         out.writeShort(entry.getKey().length());
         out.write(entry.getKey().getBytes());
-        out.writeShort(entry.getValue());
+        out.writeLong(entry.getValue());
       }
       out.writeInt(serializedTuple.length);
       out.write(serializedTuple);
@@ -75,8 +74,8 @@ public class TupleMetaDataAnnotator {
         int len = in.readShort();
         byte[] b = new byte[len];
         in.readFully(b, 0, len);
-        short val = in.readShort();
-        locations.put(new String(b), val);
+        long val = in.readLong();
+        operationIds.put(new String(b), val);
       }
       int len = in.readInt();
       serializedTuple = new byte[len];
@@ -86,8 +85,8 @@ public class TupleMetaDataAnnotator {
     /**
      * @return Map of string to location of operation in global list.
      */
-    public Map<String, Short> getLocations() {
-      return locations;
+    public Map<String, Long> getOperationIds() {
+      return operationIds;
     }
 
     /**
@@ -122,7 +121,7 @@ public class TupleMetaDataAnnotator {
      * @return array of bytes serializing the above info.
      * @throws IOException
      */
-    public static byte[] write(Map<String, Short> locations,
+    public static byte[] write(Map<String, Long> locations,
                                byte[] serializedTuple) throws IOException {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(bos);
@@ -133,7 +132,7 @@ public class TupleMetaDataAnnotator {
   }
 
   /**
-   * Manages {@code TupleMetaDataAnnotator} during {@link com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload} of a
+   * Manages {@code TupleMetaDataAnnotator} during {@code DequeuePayload} of a
    * tuple.
    */
   public static class DequeuePayload implements Writable {

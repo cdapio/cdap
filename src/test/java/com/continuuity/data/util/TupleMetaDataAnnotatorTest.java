@@ -14,8 +14,8 @@ public class TupleMetaDataAnnotatorTest {
 
   @Test
   public void EnqueueWithMetaData() throws Exception {
-    short location = 1;
-    Map<String, Short> locations = Maps.newHashMap();
+    long location = 1L;
+    Map<String, Long> locations = Maps.newHashMap();
     locations.put("A", location);
 
     byte[] data = "SERIALIZED-TUPLE".getBytes();
@@ -28,7 +28,7 @@ public class TupleMetaDataAnnotatorTest {
       TupleMetaDataAnnotator.EnqueuePayload.read(b);
 
     Assert.assertTrue(Bytes.compareTo(enqueuePayload.getSerializedTuple(), data) == 0);
-    Assert.assertTrue(enqueuePayload.getLocations().get("A") == location);
+    Assert.assertTrue(enqueuePayload.getOperationIds().get("A") == location);
   }
 
   @Test
