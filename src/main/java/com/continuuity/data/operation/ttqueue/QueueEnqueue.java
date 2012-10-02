@@ -15,7 +15,7 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
   private final byte [] queueName;
-  private final byte [] data;
+  private byte [] data;
 
   public QueueEnqueue(final byte [] queueName, final byte [] data) {
     this.queueName = queueName;
@@ -47,5 +47,13 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   @Override
   public long getId() {
     return id;
+  }
+
+  /**
+   * Sets the data of this enqueue operation to the specified bytes.
+   * @param data bytes to set as data payload of this enqueue
+   */
+  public void setData(byte[] data) {
+    this.data = data;
   }
 }
