@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.continuuity.payvment</groupId>
+  <artifactId>PayvmentDemo</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>PayvmentDemo</name>
+  <dependencies>
+    <!-- Add the internal continuuity-api jar -->
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>bigflow-api</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/../../continuuity-api.jar</systemPath>
+    </dependency>
+    <!-- Add the internal continuuity-flow jar (until tests refactored)  -->
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>bigflow</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/../../lib/flow-0.1.0-SNAPSHOT.jar</systemPath>
+    </dependency>
+    <!-- Add external dependencies -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.2</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+      <version>2.1</version>
+    </dependency>
+  </dependencies>
+  <!-- Set the main class and tell maven to include dependencies in the jar -->
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>${project.name}.Main</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
