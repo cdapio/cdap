@@ -176,9 +176,9 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
           LogglyAppender.this.flush();
         }
       },
-      1L,
-      1L,
-      TimeUnit.SECONDS
+      0L,
+      500L,
+      TimeUnit.MILLISECONDS
     );
 
     super.start();
