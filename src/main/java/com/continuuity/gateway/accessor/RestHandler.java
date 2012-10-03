@@ -396,14 +396,21 @@ public class RestHandler extends NettyRestHandler {
         metrics.meter(this.getClass(), Constants.METRIC_CLEAR_REQUESTS, 1);
         // figure out what to clear
         boolean clearData = false;
+        boolean clearMeta = false;
+        boolean clearTables = false;
         boolean clearQueues = false;
         boolean clearStreams = false;
         for (String param : clearParams) {
           for (String what : param.split(",")) {
             if ("all".equals(what))
-              clearData = clearQueues = clearStreams = true;
+              clearData = clearQueues = clearStreams = clearMeta =
+                  clearTables = true;
             else if ("data".equals(what))
               clearData = true;
+            else if ("meta".equals(what))
+              clearMeta = true;
+            else if ("tables".equals(what))
+              clearTables = true;
             else if ("queues".equals(what))
               clearQueues = true;
             else if ("streams".equals(what))
@@ -416,8 +423,8 @@ public class RestHandler extends NettyRestHandler {
                   HttpResponseStatus.BAD_REQUEST);
               break;
         } } }
-        ClearFabric clearFabric =
-            new ClearFabric(clearData, clearQueues, clearStreams);
+        ClearFabric clearFabric = new ClearFabric(
+            clearData, clearMeta, clearTables, clearQueues, clearStreams);
         try {
           this.accessor.getExecutor().
               execute(OperationContext.DEFAULT, clearFabric);
