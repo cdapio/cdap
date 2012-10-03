@@ -82,12 +82,20 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    */
   private transient boolean split = false;
 
+  /**
+   * Layout handler.
+   */
   private Layout<ILoggingEvent> layout;
 
   /**
    * The future we're running in.
    */
   private transient ScheduledFuture<?> future;
+
+  /**
+   * Specifies whether the logger has been stopped or no.
+   */
+  private boolean stopped = false;
 
   /**
    * Set feeder, option {@code feeder} in config.
@@ -182,6 +190,8 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
     );
 
     super.start();
+
+    stopped = false;
   }
 
   /**
@@ -189,8 +199,13 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    */
   @Override
   public void stop() {
+    stopped = true;
     if (this.future != null) {
       this.future.cancel(true);
+    }
+    while(! messages.isEmpty()) {
+      System.out.println("Loggly appender waiting to flush.");
+      flush();
     }
     this.service.shutdown();
   }
@@ -200,6 +215,13 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
    */
   @Override
   protected void append(ILoggingEvent event) {
+    // if logger has been requested to stop, we don't
+    // take any more logging append requests.
+    if(stopped) {
+      return;
+    }
+
+    // Build the message to be logged and add it to queue.
     final StringBuilder buf = new StringBuilder();
     buf.append(this.getLayout().doLayout(event));
 
