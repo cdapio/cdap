@@ -79,9 +79,6 @@ public class GatewayRestCollectorTest {
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
     theGateway.setConsumer(theConsumer);
-
-    theGateway.start(null, myConfiguration);
-
   } // end of setupGateway
 
 
@@ -110,7 +107,6 @@ public class GatewayRestCollectorTest {
 
     // Stop the Gateway
     theGateway.stop(false);
-
   }
 
   /**
@@ -148,25 +144,6 @@ public class GatewayRestCollectorTest {
 
     // Stop the Gateway
     theGateway.stop(false);
-
-    // now switch the consumer to write the events as tuples
-    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
-    tupleWritingConsumer.setExecutor(this.executor);
-
-    // and restart the gateway
-    theGateway.setConsumer(tupleWritingConsumer);
-    theGateway.start(null, myConfiguration);
-
-    // Send some REST events and verify them
-    TestUtil.sendRestEvents(port, prefix, path, stream, eventsToSend);
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
-
-    // Stop the Gateway
-    theGateway.stop(false);
-
   }
 
 } // end of GatewayRestCollectorTest
