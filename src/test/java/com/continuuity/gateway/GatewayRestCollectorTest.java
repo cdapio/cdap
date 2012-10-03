@@ -86,12 +86,44 @@ public class GatewayRestCollectorTest {
 
 
   /**
-   * Test that we can send simulated REST events to a Queue
+   * Test that we can send simulated REST events to a Queue using
+   * TupleWriteConsumer.
    *
    * @throws Exception If any exceptions happen during the test
    */
   @Test
-  public void testRestToQueue() throws Exception {
+  public void testRestToQueueWithTupleWriteConsumer() throws Exception {
+    // now switch the consumer to write the events as tuples
+    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
+    tupleWritingConsumer.setExecutor(this.executor);
+
+    // and restart the gateway
+    theGateway.setConsumer(tupleWritingConsumer);
+    theGateway.start(null, myConfiguration);
+
+    // Send some REST events and verify them
+    TestUtil.sendRestEvents(port, prefix, path, stream, eventsToSend);
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
+    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
+    TestUtil.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
+
+    // Stop the Gateway
+    theGateway.stop(false);
+
+  }
+
+  /**
+   * Test that we can send simulated REST events to a Queue using
+   * EventWritingConsumer.
+   *
+   * NOTE: This has been seperated out from the above test till we figure
+   * out how OMID can handle multiple write format that gets on queue. No
+   * Ignore is added for test on purpose.
+   *
+   * @throws Exception If any exceptions happen during the test
+   */
+  public void testRestToQueueWithEventWriteConsumer() throws Exception {
 
     // Set up our consumer and queues
     EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
