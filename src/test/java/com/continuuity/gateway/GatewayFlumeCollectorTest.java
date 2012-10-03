@@ -82,12 +82,49 @@ public class GatewayFlumeCollectorTest {
   } // end of setupGateway
 
   /**
-   * Test that we can send simulated Flume events to a Queue
+   * Test that we can send simulated Flume events to a Queue using
+   * TupleWritingConsumer
    *
    * @throws Exception If any exceptions happen during the test
    */
   @Test
-  public void testFlumeToQueue() throws Exception {
+  public void testFlumeToQueueTupleWritingConsumer() throws Exception {
+    // now switch the consumer to write the events as tuples
+    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
+    tupleWritingConsumer.setExecutor(this.executor);
+
+    // and restart the gateway
+    theGateway.setConsumer(tupleWritingConsumer);
+    try {
+      theGateway.start(null, myConfiguration);
+    } catch (ServerException e) {
+      // We don't care about the reconfigure problem in this test
+      LOG.debug(e.getMessage());
+    }
+
+    // Send some events
+    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
+    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
+    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
+    TestUtil.consumeQueueAsTuples(this.executor, destination, name,
+        eventsToSend);
+
+    // Stop the Gateway
+    theGateway.stop(false);
+  }
+
+  /**
+   * Test that we can send simulated Flume events to a Queue using
+   * EventWritingConsumer.
+   *
+   * NOTE: This has been seperated out from the above test till we figure
+   * out how OMID can handle multiple write format that gets on queue. No
+   * Ignore is added for test on purpose.
+   *
+   * @throws Exception If any exceptions happen during the test
+   */
+  public void testFlumeToQueueWithEventWritingConsumer() throws Exception {
 
     // Set up our consumer and queues
     EventWritingConsumer eventWritingConsumer = new EventWritingConsumer();
@@ -109,31 +146,7 @@ public class GatewayFlumeCollectorTest {
     Assert.assertEquals(eventsToSend, eventWritingConsumer.eventsSucceeded());
     Assert.assertEquals(0, eventWritingConsumer.eventsFailed());
     TestUtil.consumeQueueAsEvents(this.executor, destination, name,
-        eventsToSend);
-
-    // Stop the Gateway
-    theGateway.stop(false);
-
-    // now switch the consumer to write the events as tuples
-    TupleWritingConsumer tupleWritingConsumer = new TupleWritingConsumer();
-    tupleWritingConsumer.setExecutor(this.executor);
-
-    // and restart the gateway
-    theGateway.setConsumer(tupleWritingConsumer);
-    try {
-      theGateway.start(null, myConfiguration);
-    } catch (ServerException e) {
-      // We don't care about the reconfigure problem in this test
-      LOG.debug(e.getMessage());
-    }
-
-    // Send some events
-    TestUtil.sendFlumeEvents(port, destination, eventsToSend, batchSize);
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsReceived());
-    Assert.assertEquals(eventsToSend, tupleWritingConsumer.eventsSucceeded());
-    Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
-    TestUtil.consumeQueueAsTuples(this.executor, destination, name,
-        eventsToSend);
+                                  eventsToSend);
 
     // Stop the Gateway
     theGateway.stop(false);
