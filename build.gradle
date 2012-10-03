@@ -41,6 +41,9 @@ dependencies {
     compile group: 'org.apache.hadoop', name: 'hadoop-yarn-api', version:'2.0.0-alpha'
     testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version:'2.0.0-alpha'
 
+    // Thrift dependencies
+    compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
+
 }
 
 /**
