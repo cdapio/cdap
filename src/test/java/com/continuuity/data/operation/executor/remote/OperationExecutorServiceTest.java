@@ -272,7 +272,8 @@ public abstract class OperationExecutorServiceTest extends
   public void testWriteBatchThenReadAllKeys() throws Exception  {
     // clear all tables, otherwise we will get keys from other tests
     // mingled into the responses for ReadAllKeys
-    remote.execute(context, new ClearFabric(true, false, false));
+    remote.execute(context,
+        new ClearFabric(true, false, false, false, false));
 
     // list all keys, verify it is empty (@Before clears the data fabric)
     ReadAllKeys readAllKeys = new ReadAllKeys(0, 1);
@@ -429,7 +430,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new QueueEnqueue(s, x));
 
     // clear everything
-    remote.execute(context, new ClearFabric(true, true, true));
+    remote.execute(context, new ClearFabric(true, false, false, true, true));
 
     // verify that all is gone
     Assert.assertTrue(remote.execute(context, new ReadKey(a)).isEmpty());
@@ -446,7 +447,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new QueueEnqueue(s, x));
 
     // clear only the tables
-    remote.execute(context, new ClearFabric(true, false, false));
+    remote.execute(context, new ClearFabric(true, false, false, false, false));
 
     // verify that the tables are gone, but queues and streams are there
     Assert.assertTrue(remote.execute(context, new ReadKey(a)).isEmpty());
@@ -459,7 +460,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new Write(a, x));
 
     // clear only the queues
-    remote.execute(context, new ClearFabric(false, true, false));
+    remote.execute(context, new ClearFabric(false, false, false, true, false));
 
     // verify that the queues are gone, but tables and streams are there
     Assert.assertArrayEquals(x,
@@ -473,7 +474,7 @@ public abstract class OperationExecutorServiceTest extends
     remote.execute(context, new QueueEnqueue(q, x));
 
     // clear only the streams
-    remote.execute(context, new ClearFabric(false, false, true));
+    remote.execute(context, new ClearFabric(false, false, false, false, true));
 
     // verify that the streams are gone, but tables and queues are there
     Assert.assertArrayEquals(x, remote.execute(

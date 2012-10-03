@@ -31,8 +31,10 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TClearFabric");
 
   private static final org.apache.thrift.protocol.TField CLEAR_DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("clearData", org.apache.thrift.protocol.TType.BOOL, (short)1);
-  private static final org.apache.thrift.protocol.TField CLEAR_QUEUES_FIELD_DESC = new org.apache.thrift.protocol.TField("clearQueues", org.apache.thrift.protocol.TType.BOOL, (short)2);
-  private static final org.apache.thrift.protocol.TField CLEAR_STREAMS_FIELD_DESC = new org.apache.thrift.protocol.TField("clearStreams", org.apache.thrift.protocol.TType.BOOL, (short)3);
+  private static final org.apache.thrift.protocol.TField CLEAR_META_FIELD_DESC = new org.apache.thrift.protocol.TField("clearMeta", org.apache.thrift.protocol.TType.BOOL, (short)2);
+  private static final org.apache.thrift.protocol.TField CLEAR_TABLES_FIELD_DESC = new org.apache.thrift.protocol.TField("clearTables", org.apache.thrift.protocol.TType.BOOL, (short)3);
+  private static final org.apache.thrift.protocol.TField CLEAR_QUEUES_FIELD_DESC = new org.apache.thrift.protocol.TField("clearQueues", org.apache.thrift.protocol.TType.BOOL, (short)4);
+  private static final org.apache.thrift.protocol.TField CLEAR_STREAMS_FIELD_DESC = new org.apache.thrift.protocol.TField("clearStreams", org.apache.thrift.protocol.TType.BOOL, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -41,14 +43,18 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   }
 
   public boolean clearData; // required
+  public boolean clearMeta; // required
+  public boolean clearTables; // required
   public boolean clearQueues; // required
   public boolean clearStreams; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     CLEAR_DATA((short)1, "clearData"),
-    CLEAR_QUEUES((short)2, "clearQueues"),
-    CLEAR_STREAMS((short)3, "clearStreams");
+    CLEAR_META((short)2, "clearMeta"),
+    CLEAR_TABLES((short)3, "clearTables"),
+    CLEAR_QUEUES((short)4, "clearQueues"),
+    CLEAR_STREAMS((short)5, "clearStreams");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -65,9 +71,13 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       switch(fieldId) {
         case 1: // CLEAR_DATA
           return CLEAR_DATA;
-        case 2: // CLEAR_QUEUES
+        case 2: // CLEAR_META
+          return CLEAR_META;
+        case 3: // CLEAR_TABLES
+          return CLEAR_TABLES;
+        case 4: // CLEAR_QUEUES
           return CLEAR_QUEUES;
-        case 3: // CLEAR_STREAMS
+        case 5: // CLEAR_STREAMS
           return CLEAR_STREAMS;
         default:
           return null;
@@ -110,13 +120,19 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
 
   // isset id assignments
   private static final int __CLEARDATA_ISSET_ID = 0;
-  private static final int __CLEARQUEUES_ISSET_ID = 1;
-  private static final int __CLEARSTREAMS_ISSET_ID = 2;
-  private BitSet __isset_bit_vector = new BitSet(3);
+  private static final int __CLEARMETA_ISSET_ID = 1;
+  private static final int __CLEARTABLES_ISSET_ID = 2;
+  private static final int __CLEARQUEUES_ISSET_ID = 3;
+  private static final int __CLEARSTREAMS_ISSET_ID = 4;
+  private BitSet __isset_bit_vector = new BitSet(5);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.CLEAR_DATA, new org.apache.thrift.meta_data.FieldMetaData("clearData", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.CLEAR_META, new org.apache.thrift.meta_data.FieldMetaData("clearMeta", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.CLEAR_TABLES, new org.apache.thrift.meta_data.FieldMetaData("clearTables", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     tmpMap.put(_Fields.CLEAR_QUEUES, new org.apache.thrift.meta_data.FieldMetaData("clearQueues", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
@@ -131,12 +147,18 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
 
   public TClearFabric(
     boolean clearData,
+    boolean clearMeta,
+    boolean clearTables,
     boolean clearQueues,
     boolean clearStreams)
   {
     this();
     this.clearData = clearData;
     setClearDataIsSet(true);
+    this.clearMeta = clearMeta;
+    setClearMetaIsSet(true);
+    this.clearTables = clearTables;
+    setClearTablesIsSet(true);
     this.clearQueues = clearQueues;
     setClearQueuesIsSet(true);
     this.clearStreams = clearStreams;
@@ -150,6 +172,8 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.clearData = other.clearData;
+    this.clearMeta = other.clearMeta;
+    this.clearTables = other.clearTables;
     this.clearQueues = other.clearQueues;
     this.clearStreams = other.clearStreams;
   }
@@ -162,6 +186,10 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
   public void clear() {
     setClearDataIsSet(false);
     this.clearData = false;
+    setClearMetaIsSet(false);
+    this.clearMeta = false;
+    setClearTablesIsSet(false);
+    this.clearTables = false;
     setClearQueuesIsSet(false);
     this.clearQueues = false;
     setClearStreamsIsSet(false);
@@ -189,6 +217,52 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
 
   public void setClearDataIsSet(boolean value) {
     __isset_bit_vector.set(__CLEARDATA_ISSET_ID, value);
+  }
+
+  public boolean isClearMeta() {
+    return this.clearMeta;
+  }
+
+  public TClearFabric setClearMeta(boolean clearMeta) {
+    this.clearMeta = clearMeta;
+    setClearMetaIsSet(true);
+    return this;
+  }
+
+  public void unsetClearMeta() {
+    __isset_bit_vector.clear(__CLEARMETA_ISSET_ID);
+  }
+
+  /** Returns true if field clearMeta is set (has been assigned a value) and false otherwise */
+  public boolean isSetClearMeta() {
+    return __isset_bit_vector.get(__CLEARMETA_ISSET_ID);
+  }
+
+  public void setClearMetaIsSet(boolean value) {
+    __isset_bit_vector.set(__CLEARMETA_ISSET_ID, value);
+  }
+
+  public boolean isClearTables() {
+    return this.clearTables;
+  }
+
+  public TClearFabric setClearTables(boolean clearTables) {
+    this.clearTables = clearTables;
+    setClearTablesIsSet(true);
+    return this;
+  }
+
+  public void unsetClearTables() {
+    __isset_bit_vector.clear(__CLEARTABLES_ISSET_ID);
+  }
+
+  /** Returns true if field clearTables is set (has been assigned a value) and false otherwise */
+  public boolean isSetClearTables() {
+    return __isset_bit_vector.get(__CLEARTABLES_ISSET_ID);
+  }
+
+  public void setClearTablesIsSet(boolean value) {
+    __isset_bit_vector.set(__CLEARTABLES_ISSET_ID, value);
   }
 
   public boolean isClearQueues() {
@@ -247,6 +321,22 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       }
       break;
 
+    case CLEAR_META:
+      if (value == null) {
+        unsetClearMeta();
+      } else {
+        setClearMeta((Boolean)value);
+      }
+      break;
+
+    case CLEAR_TABLES:
+      if (value == null) {
+        unsetClearTables();
+      } else {
+        setClearTables((Boolean)value);
+      }
+      break;
+
     case CLEAR_QUEUES:
       if (value == null) {
         unsetClearQueues();
@@ -271,6 +361,12 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     case CLEAR_DATA:
       return Boolean.valueOf(isClearData());
 
+    case CLEAR_META:
+      return Boolean.valueOf(isClearMeta());
+
+    case CLEAR_TABLES:
+      return Boolean.valueOf(isClearTables());
+
     case CLEAR_QUEUES:
       return Boolean.valueOf(isClearQueues());
 
@@ -290,6 +386,10 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     switch (field) {
     case CLEAR_DATA:
       return isSetClearData();
+    case CLEAR_META:
+      return isSetClearMeta();
+    case CLEAR_TABLES:
+      return isSetClearTables();
     case CLEAR_QUEUES:
       return isSetClearQueues();
     case CLEAR_STREAMS:
@@ -317,6 +417,24 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (!(this_present_clearData && that_present_clearData))
         return false;
       if (this.clearData != that.clearData)
+        return false;
+    }
+
+    boolean this_present_clearMeta = true;
+    boolean that_present_clearMeta = true;
+    if (this_present_clearMeta || that_present_clearMeta) {
+      if (!(this_present_clearMeta && that_present_clearMeta))
+        return false;
+      if (this.clearMeta != that.clearMeta)
+        return false;
+    }
+
+    boolean this_present_clearTables = true;
+    boolean that_present_clearTables = true;
+    if (this_present_clearTables || that_present_clearTables) {
+      if (!(this_present_clearTables && that_present_clearTables))
+        return false;
+      if (this.clearTables != that.clearTables)
         return false;
     }
 
@@ -364,6 +482,26 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetClearMeta()).compareTo(typedOther.isSetClearMeta());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetClearMeta()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.clearMeta, typedOther.clearMeta);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetClearTables()).compareTo(typedOther.isSetClearTables());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetClearTables()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.clearTables, typedOther.clearTables);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     lastComparison = Boolean.valueOf(isSetClearQueues()).compareTo(typedOther.isSetClearQueues());
     if (lastComparison != 0) {
       return lastComparison;
@@ -406,6 +544,14 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
 
     sb.append("clearData:");
     sb.append(this.clearData);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("clearMeta:");
+    sb.append(this.clearMeta);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("clearTables:");
+    sb.append(this.clearTables);
     first = false;
     if (!first) sb.append(", ");
     sb.append("clearQueues:");
@@ -467,7 +613,23 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // CLEAR_QUEUES
+          case 2: // CLEAR_META
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.clearMeta = iprot.readBool();
+              struct.setClearMetaIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // CLEAR_TABLES
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.clearTables = iprot.readBool();
+              struct.setClearTablesIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // CLEAR_QUEUES
             if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
               struct.clearQueues = iprot.readBool();
               struct.setClearQueuesIsSet(true);
@@ -475,7 +637,7 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // CLEAR_STREAMS
+          case 5: // CLEAR_STREAMS
             if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
               struct.clearStreams = iprot.readBool();
               struct.setClearStreamsIsSet(true);
@@ -500,6 +662,12 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       oprot.writeStructBegin(STRUCT_DESC);
       oprot.writeFieldBegin(CLEAR_DATA_FIELD_DESC);
       oprot.writeBool(struct.clearData);
+      oprot.writeFieldEnd();
+      oprot.writeFieldBegin(CLEAR_META_FIELD_DESC);
+      oprot.writeBool(struct.clearMeta);
+      oprot.writeFieldEnd();
+      oprot.writeFieldBegin(CLEAR_TABLES_FIELD_DESC);
+      oprot.writeBool(struct.clearTables);
       oprot.writeFieldEnd();
       oprot.writeFieldBegin(CLEAR_QUEUES_FIELD_DESC);
       oprot.writeBool(struct.clearQueues);
@@ -528,15 +696,27 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
       if (struct.isSetClearData()) {
         optionals.set(0);
       }
-      if (struct.isSetClearQueues()) {
+      if (struct.isSetClearMeta()) {
         optionals.set(1);
       }
-      if (struct.isSetClearStreams()) {
+      if (struct.isSetClearTables()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetClearQueues()) {
+        optionals.set(3);
+      }
+      if (struct.isSetClearStreams()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetClearData()) {
         oprot.writeBool(struct.clearData);
+      }
+      if (struct.isSetClearMeta()) {
+        oprot.writeBool(struct.clearMeta);
+      }
+      if (struct.isSetClearTables()) {
+        oprot.writeBool(struct.clearTables);
       }
       if (struct.isSetClearQueues()) {
         oprot.writeBool(struct.clearQueues);
@@ -549,16 +729,24 @@ public class TClearFabric implements org.apache.thrift.TBase<TClearFabric, TClea
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TClearFabric struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.clearData = iprot.readBool();
         struct.setClearDataIsSet(true);
       }
       if (incoming.get(1)) {
+        struct.clearMeta = iprot.readBool();
+        struct.setClearMetaIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.clearTables = iprot.readBool();
+        struct.setClearTablesIsSet(true);
+      }
+      if (incoming.get(3)) {
         struct.clearQueues = iprot.readBool();
         struct.setClearQueuesIsSet(true);
       }
-      if (incoming.get(2)) {
+      if (incoming.get(4)) {
         struct.clearStreams = iprot.readBool();
         struct.setClearStreamsIsSet(true);
       }

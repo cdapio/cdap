@@ -15,7 +15,8 @@ public abstract class HyperSQLMetaDataStoreTest extends MetaDataStoreTest {
     Injector injector = Guice.createInjector (
         new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
-    opex.execute(OperationContext.DEFAULT, new ClearFabric(true, true, true));
+    opex.execute(OperationContext.DEFAULT,
+        new ClearFabric(true, true, true, true, true));
   }
 
 }

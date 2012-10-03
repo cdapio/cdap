@@ -21,7 +21,7 @@ abstract public class MetaDataStoreTest {
                      String application, String type, String id,
                      String field, String text,
                      String binaryField, byte[] binary)
-      throws MetaDataException {
+      throws OperationException {
 
     MetaDataEntry meta = new MetaDataEntry(account, application, type, id);
     if (field != null) meta.addField(field, text);
@@ -32,7 +32,7 @@ abstract public class MetaDataStoreTest {
   }
 
   @Test
-  public void testAddAndGet() throws MetaDataException {
+  public void testAddAndGet() throws OperationException {
     testOneAddGet(false, "a", "b", "name", "type",
         "a", "b", "abc", new byte[]{'x'});
     // test names and values with non-Latin characters
@@ -58,21 +58,21 @@ abstract public class MetaDataStoreTest {
   }
 
   // test that update fails if not existent
-  @Test(expected = MetaDataException.class)
+  @Test(expected = OperationException.class)
   public void testUpdateNonExisting() throws Exception {
     testOneAddGet(true, "a", null, "z", "1", "a", "c", null, null);
   }
 
   // test that insert fails if existent
-  @Test(expected = MetaDataException.class)
+  @Test(expected = OperationException.class)
   public void testAddExisting() throws Exception {
     testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
     testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
   }
 
   @Test
-  public void testList() throws MetaDataException, OperationException {
-    opex.execute(context, new ClearFabric(true, false, false));
+  public void testList() throws OperationException {
+    opex.execute(context, new ClearFabric(true, false, false, false, false));
 
     testOneAddGet(false, "a", "p", "x", "1", "a", "1", null, null);
     testOneAddGet(false, "a", "p", "y", "2", "a", "2", null, null);
@@ -131,7 +131,7 @@ abstract public class MetaDataStoreTest {
 
   // test delete
   @Test
-  public void testDelete() throws MetaDataException {
+  public void testDelete() throws OperationException {
     // add an entry with a text and binary field
     MetaDataEntry meta = new MetaDataEntry("u", "q", "tbd", "whatever");
     meta.addField("text", "some text");
@@ -155,7 +155,7 @@ abstract public class MetaDataStoreTest {
     try {
       mds.update(context, meta1);
       Assert.fail("update should fail");
-    } catch (MetaDataException e) {
+    } catch (OperationException e) {
       //expected
     }
     mds.add(context, meta1);
@@ -168,7 +168,7 @@ abstract public class MetaDataStoreTest {
 
   // test clear
   @Test
-  public void testClear() throws MetaDataException {
+  public void testClear() throws OperationException {
     testOneAddGet(false, "a", "p", "a", "x", "a", "1", null, null);
     testOneAddGet(false, "a", "q", "b", "y", "a", "2", null, null);
     testOneAddGet(false, "a", null, "c", "z", "a", "1", null, null);

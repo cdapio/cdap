@@ -192,6 +192,8 @@ public class ConverterUtils {
   TClearFabric wrap(ClearFabric clearFabric) {
     return new TClearFabric(
         clearFabric.shouldClearData(),
+        clearFabric.shouldClearMeta(),
+        clearFabric.shouldClearTables(),
         clearFabric.shouldClearQueues(),
         clearFabric.shouldClearStreams());
   }
@@ -199,6 +201,8 @@ public class ConverterUtils {
   ClearFabric unwrap(TClearFabric clearFabric) {
     return new ClearFabric(
         clearFabric.isClearData(),
+        clearFabric.isClearMeta(),
+        clearFabric.isClearTables(),
         clearFabric.isClearQueues(),
         clearFabric.isClearStreams());
   }

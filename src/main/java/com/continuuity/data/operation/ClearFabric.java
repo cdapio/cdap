@@ -10,27 +10,34 @@ import com.google.common.base.Objects;
 public class ClearFabric implements Operation {
 
   private final boolean clearData;
-
+  private final boolean clearMeta;
+  private final boolean clearTables;
   private final boolean clearQueues;
-
   private final boolean clearStreams;
 
   /**
    * clears everything (user data, queues, and streams).
    */
   public ClearFabric() {
-    this(true, true, true);
+    this(true, true, true, true, true);
   }
 
   /**
    * clears data, queues, and streams according to the specified boolean flags.
-   * @param clearData true to clear user data, false to not clear queues
-   * @param clearQueues true to clear queues, false to not clear queues
-   * @param clearStreams true to clear streams, false to not clear streams
+   * @param clearData whether to clear user data
+   * @param clearMeta whether to clear meta data
+   * @param clearTables whether to clear named tables
+   * @param clearQueues whether to clear queues
+   * @param clearStreams whether to clear streams
    */
-  public ClearFabric(final boolean clearData, final boolean clearQueues,
+  public ClearFabric(final boolean clearData,
+                     final boolean clearMeta,
+                     final boolean clearTables,
+                     final boolean clearQueues,
                      final boolean clearStreams) {
     this.clearData = clearData;
+    this.clearMeta = clearMeta;
+    this.clearTables = clearTables;
     this.clearQueues = clearQueues;
     this.clearStreams = clearStreams;
   }
@@ -41,6 +48,22 @@ public class ClearFabric implements Operation {
    */
   public boolean shouldClearData() {
     return this.clearData;
+  }
+
+  /**
+   * Returns true if meta data should be cleared.
+   * @return true if meta data should be cleared, false if not
+   */
+  public boolean shouldClearMeta() {
+    return this.clearMeta;
+  }
+
+  /**
+   * Returns true if named tables should be cleared.
+   * @return true if named tables should be cleared, false if not
+   */
+  public boolean shouldClearTables() {
+    return this.clearTables;
   }
 
   /**
@@ -62,6 +85,7 @@ public class ClearFabric implements Operation {
   public String toString() {
     return Objects.toStringHelper(this)
         .add("clearData", Boolean.toString(clearData))
+        .add("clearMeta", Boolean.toString(clearMeta))
         .add("clearQueues", Boolean.toString(clearQueues))
         .add("clearStreams", Boolean.toString(clearStreams))
         .toString();

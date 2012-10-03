@@ -6,7 +6,19 @@ import com.continuuity.api.data.Delete;
  * Undelete of a Delete.
  */
 public class Undelete extends Delete {
-  
+
+  public Undelete(String table, byte[] key) {
+    super(table, key);
+  }
+
+  public Undelete(String table, byte[] row, byte[] column) {
+    super(table, row, column);
+  }
+
+  public Undelete(String table, byte[] row, byte[][] columns) {
+    super(table, row, columns);
+  }
+
   public Undelete(byte[] key) {
     super(key);
   }

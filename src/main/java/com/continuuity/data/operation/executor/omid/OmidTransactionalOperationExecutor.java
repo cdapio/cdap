@@ -5,6 +5,7 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Undelete;
@@ -23,6 +24,8 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.metrics2.api.CMetrics;
 import com.continuuity.metrics2.collector.MetricType;
+import com.google.common.base.Objects;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -31,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -58,7 +62,10 @@ implements TransactionalOperationExecutor {
   @Inject
   OVCTableHandle tableHandle;
 
+  private OrderedVersionedColumnarTable metaTable;
   private OrderedVersionedColumnarTable randomTable;
+
+  private MetaDataStore metaStore;
 
   private TTQueueTable queueTable;
   private TTQueueTable streamTable;
@@ -90,36 +97,166 @@ implements TransactionalOperationExecutor {
   // 1. table does not exist or is not known -> no entry
   // 2. table is being created -> entry with real name, but null for the table
   // 3. table is known -> entry with name and table
-  // Map<String,ImmutablePair<byte[],OrderedVersionedColumnarTable>>
-  //    randomTables;
+  ConcurrentMap<String,ImmutablePair<byte[],OrderedVersionedColumnarTable>>
+      namedTables;
 
   // method to find - and if necessary create - a table
-  /*
-  OrderedVersionedColumnarTable findRandomTable(String name) {
-    // if name is null, return default random table
-    // look up table in in-memory map.
-    // if (entry, table) return table
-    // (A) if (entry, null) wait until table not null, return table
-    // if null
-    //   (B) read meta data for table
-    //   if (real name, true) return getTable()
-    //   if (real name, false) l
-    //     loop and wait until created
-    //     getTable()
-    //     update in-memory table with table
-    //     return
-    //   if (null)
-    //     generate unique name
-    //     add (unique name, null) to in-memory table
-    //     if fails, then someone else just created -> go back to  (A)
-    //     add (unique name, false) to meta data and
-    //     if fails, then someone else just created -> go back to (B)
-    //     createNewTable(uniqueName) - should never fail
-    //     update meta data (unique name, true)
-    //     update in-memory table
-    //     return table
+  OrderedVersionedColumnarTable findRandomTable(
+      OperationContext context, String name)
+
+      throws OperationException {
+
+    // check whether it is one of the default tables these are always
+    // pre-loaded at initializaton and we can just return them
+    if (null == name)
+      return this.randomTable;
+    if ("meta".equals(name))
+      return this.metaTable;
+
+    // look up table in in-memory map. if this returns:
+    // an actual name and OVCTable, return that OVCTable
+    ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
+        this.namedTables.get(name);
+    if (nameAndTable != null) {
+      if (nameAndTable.getSecond() != null)
+        return nameAndTable.getSecond();
+
+      // an actual name and null for the table, then sleep/repeat until the look
+      // up returns non-null for the table. This is the case when some other
+      // thread in the same process has generated an actual name and is in the
+      // process of creating that table.
+      return waitForTableToMaterialize(name);
+    }
+    // null: then this table has not been opened by any thread in this
+    // process. In this case:
+    // Read the meta data for the logical name from MDS.
+    MetaDataEntry meta = this.metaStore.get(
+        context, context.getAccount(), null, "namedTable", name);
+    if (null != meta) {
+      return waitForTableToMaterializeInMeta(context, name, meta);
+
+    // Null: Nobody has started to create this.
+    } else {
+      // Generate a new actual name, and write that name with status Pending
+      // to MDS in a Compare-and-Swap operation
+      byte[] actualName = generateActualName(context, name);
+      MetaDataEntry newMeta = new MetaDataEntry(context.getAccount(), null,
+          "namedTable", name);
+      newMeta.addField("actual", actualName);
+      newMeta.addField("status", "pending");
+      try {
+        this.metaStore.add(context, newMeta);
+      } catch (OperationException e) {
+        if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+          // If C-a-S failed with write conflict, then some other process (or
+          // thread) has concurrently attempted the same and wins.
+          return waitForTableToMaterializeInMeta(context, name, meta);
+        }
+        else throw e;
+      }
+      //C-a-S succeeded, add <actual name, null> to MEM to inform other threads
+      //in this process to wait (no other thread could have updated in the
+      //    mean-time without updating MDS)
+      this.namedTables.put(name,
+          new ImmutablePair<byte[], OrderedVersionedColumnarTable>(
+              actualName, null));
+
+      //Create a new actual table for the actual name. This should never fail.
+      OrderedVersionedColumnarTable table =
+          getTableHandle().getTable(actualName);
+
+      // Update MDS with the new status Ready. This can be an ordinary Write
+      newMeta.addField("status", "ready");
+      this.metaStore.update(context, newMeta);
+
+      // because all others are waiting.
+      // Update MEM with the actual created OVCTable.
+      this.namedTables.put(name,
+          new ImmutablePair<byte[], OrderedVersionedColumnarTable>(
+              actualName, table));
+      //Return the created table.
+      return table;
+    }
   }
-  */
+
+  private byte[] generateActualName(OperationContext context, String name) {
+    // TODO make this generate a new id every time it is called
+    return ("_" + context.getAccount() + "_" + name).getBytes();
+  }
+
+  private OrderedVersionedColumnarTable waitForTableToMaterialize(String name) {
+    while (true) {
+      ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
+          this.namedTables.get(name);
+      if (nameAndTable == null) {
+        throw new InternalError("In-memory entry went from non-null to null " +
+            "for named table \"" + name + "\"");
+      }
+      if (nameAndTable.getSecond() != null) {
+        return nameAndTable.getSecond();
+      }
+      // sleep a little
+      try {
+        Thread.sleep(50);
+      } catch (InterruptedException e) {
+        // what the heck should I do?
+      }
+    }
+    // TODO should this time out after some time or number of attempts?
+  }
+
+  OrderedVersionedColumnarTable waitForTableToMaterializeInMeta(
+      OperationContext context, String name, MetaDataEntry meta)
+    throws OperationException {
+
+    while(true) {
+      // If this returns: An actual name and status Ready: The table is ready
+      // to use, open the table, add it to MEM and return it
+      if ("ready".equals(meta.getTextField("status"))) {
+        byte[] actualName = meta.getBinaryField("actual");
+        if (actualName == null)
+          throw new InternalError("Encountered meta data entry of type " +
+              "\"namedTable\" without actual name for table name \"" +
+              name +"\".");
+        OrderedVersionedColumnarTable table =
+            getTableHandle().getTable(actualName);
+        if (table == null)
+          throw new InternalError("table handle \"" + getTableHandle()
+              .getName() + "\": getTable returned null for actual table name "
+              + "\"" + new String(actualName) + "\"");
+
+        // update MEM. This can be ordinary put, because even if some other
+        // thread updated it in the meantime, it would have put the same table.
+        this.namedTables.put(name,
+            new ImmutablePair<byte[], OrderedVersionedColumnarTable>(
+                actualName, table));
+        return table;
+      }
+      // An actual name and status Pending: The table is being created. Loop
+      // and repeat MDS read until status is Ready and see previous case
+      else if (!"pending".equals(meta.getTextField("status"))) {
+        throw new InternalError("Found meta data entry with unkown status " +
+            Objects.toStringHelper(meta.getTextField("status")));
+      }
+
+      // sleep a little
+      try {
+        Thread.sleep(50);
+      } catch (InterruptedException e) {
+        // what the heck should I do?
+      }
+
+      // reread the meta data, hopefully it has changed to ready
+      meta = this.metaStore.get(
+          context, context.getAccount(), null, "namedTable", name);
+      if (meta == null)
+        throw new InternalError("Meta data entry went from non-null to null " +
+            "for table \"" + name + "\"");
+
+      // TODO should this time out after some time or number of attempts?
+    }
+  }
+
 
   // Single reads
 
@@ -130,14 +267,18 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("ReadKey");
     long begin = begin();
-    OperationResult<byte[]> result = read(read, this.oracle.getReadPointer());
+    OperationResult<byte[]> result =
+        read(context, read, this.oracle.getReadPointer());
     end("ReadKey", begin);
     return result;
   }
 
-  OperationResult<byte[]> read(ReadKey read, ReadPointer pointer)
+  OperationResult<byte[]> read(OperationContext context,
+                               ReadKey read, ReadPointer pointer)
       throws OperationException {
-    return this.randomTable.get(read.getKey(), Operation.KV_COL, pointer);
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, read.getTable());
+    return table.get(read.getKey(), Operation.KV_COL, pointer);
   }
 
   @Override
@@ -147,7 +288,9 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
-    List<byte[]> result = this.randomTable.getKeys(readKeys.getLimit(),
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, readKeys.getTable());
+    List<byte[]> result = table.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
     end("ReadKey", begin);
     return new OperationResult<List<byte[]>>(result);
@@ -160,7 +303,9 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("Read");
     long begin = begin();
-    OperationResult<Map<byte[], byte[]>> result = this.randomTable.get(
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, read.getTable());
+    OperationResult<Map<byte[], byte[]>> result = table.get(
         read.getKey(), read.getColumns(), this.oracle.getReadPointer());
     end("Read", begin);
     return result;
@@ -173,7 +318,9 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
-    OperationResult<Map<byte[], byte[]>> result = this.randomTable.get(
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, readColumnRange.getTable());
+    OperationResult<Map<byte[], byte[]>> result = table.get(
         readColumnRange.getKey(), readColumnRange.getStartColumn(),
         readColumnRange.getStopColumn(), this.oracle.getReadPointer());
     end("ReadColumnRange", begin);
@@ -189,6 +336,19 @@ implements TransactionalOperationExecutor {
     requestMetric("ClearFabric");
     long begin = begin();
     if (clearFabric.shouldClearData()) this.randomTable.clear();
+    if (clearFabric.shouldClearTables()) {
+      List<MetaDataEntry> entries = this.metaStore.list(
+          context, context.getAccount(), null, "namedTable", null);
+      for (MetaDataEntry entry : entries) {
+        String name = entry.getId();
+        OrderedVersionedColumnarTable table = findRandomTable(context, name);
+        table.clear();
+        this.namedTables.remove(name);
+        this.metaStore.delete(context, entry.getAccount(),
+            entry.getApplication(), entry.getType(), entry.getId());
+      }
+    }
+    if (clearFabric.shouldClearMeta()) this.metaTable.clear();
     if (clearFabric.shouldClearQueues()) this.queueTable.clear();
     if (clearFabric.shouldClearStreams()) this.streamTable.clear();
     end("ClearFabric", begin);
@@ -204,7 +364,7 @@ implements TransactionalOperationExecutor {
     requestMetric("WriteOperationBatch");
     long begin = begin();
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
-    execute(writes, startTransaction());
+    execute(context, writes, startTransaction());
     end("WriteOperationBatch", begin);
   }
 
@@ -214,7 +374,7 @@ implements TransactionalOperationExecutor {
     execute(context, Collections.singletonList(write));
   }
 
-  void execute(List<WriteOperation> writes,
+  void execute(OperationContext context, List<WriteOperation> writes,
                ImmutablePair<ReadPointer,Long> pointer)
       throws OperationException {
 
@@ -230,11 +390,12 @@ implements TransactionalOperationExecutor {
     List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();
 
     for (WriteOperation write : orderedWrites) {
-      WriteTransactionResult writeTxReturn = dispatchWrite(write, pointer);
+      WriteTransactionResult writeTxReturn =
+          dispatchWrite(context, write, pointer);
       if (!writeTxReturn.success) {
         // Write operation failed
         cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
-        abortTransaction(pointer, deletes, invalidates);
+        abortTransaction(context, pointer, deletes, invalidates);
         throw new OmidTransactionException(
             writeTxReturn.statusCode, writeTxReturn.message);
       } else {
@@ -254,7 +415,7 @@ implements TransactionalOperationExecutor {
     if (!commitTransaction(pointer, rows)) {
       // Commit failed, abort
       cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
-      abortTransaction(pointer, deletes, invalidates);
+      abortTransaction(context, pointer, deletes, invalidates);
       throw new OmidTransactionException(StatusCode.WRITE_CONFLICT,
           "Commit of transaction failed, transaction aborted");
     }
@@ -314,15 +475,16 @@ implements TransactionalOperationExecutor {
    * Actually perform the various write operations.
    */
   private WriteTransactionResult dispatchWrite(
-      WriteOperation write, ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+      OperationContext context, WriteOperation write,
+      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     if (write instanceof Write) {
-      return write((Write)write, pointer);
+      return write(context, (Write)write, pointer);
     } else if (write instanceof Delete) {
-      return write((Delete)write, pointer);
+      return write(context, (Delete)write, pointer);
     } else if (write instanceof Increment) {
-      return write((Increment)write, pointer);
+      return write(context, (Increment)write, pointer);
     } else if (write instanceof CompareAndSwap) {
-      return write((CompareAndSwap)write, pointer);
+      return write(context, (CompareAndSwap)write, pointer);
     } else if (write instanceof QueueEnqueue) {
       return write((QueueEnqueue)write, pointer);
     } else if (write instanceof QueueAck) {
@@ -332,38 +494,45 @@ implements TransactionalOperationExecutor {
         "Unknown write operation " + write.getClass().getName());
   }
 
-  WriteTransactionResult write(Write write,
+  WriteTransactionResult write(OperationContext context, Write write,
       ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("Write");
     long begin = begin();
-    this.randomTable.put(write.getKey(), write.getColumns(),
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, write.getTable());
+    table.put(write.getKey(), write.getColumns(),
         pointer.getSecond(), write.getValues());
     end("Write", begin);
     return new WriteTransactionResult(
-        new Delete(write.getKey(), write.getColumns()));
+        new Delete(write.getTable(), write.getKey(), write.getColumns()));
   }
 
-  WriteTransactionResult write(Delete delete,
+  WriteTransactionResult write(OperationContext context, Delete delete,
       ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
     initialize();
     requestMetric("Delete");
     long begin = begin();
-    this.randomTable.deleteAll(delete.getKey(), delete.getColumns(),
+    OrderedVersionedColumnarTable table =
+        this.findRandomTable(context, delete.getTable());
+    table.deleteAll(delete.getKey(), delete.getColumns(),
         pointer.getSecond());
     end("Delete", begin);
     return new WriteTransactionResult(
-        new Undelete(delete.getKey(), delete.getColumns()));
+        new Undelete(delete.getTable(), delete.getKey(), delete.getColumns()));
   }
 
-  WriteTransactionResult write(Increment increment,
+  WriteTransactionResult write(OperationContext context, Increment increment,
       ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("Increment");
     long begin = begin();
     try {
       @SuppressWarnings("unused")
-      Map<byte[],Long> map = this.randomTable.increment(increment.getKey(),
+      OrderedVersionedColumnarTable table =
+          this.findRandomTable(context, increment.getTable());
+      // Map<byte[],Long> map =
+      table.increment(increment.getKey(),
           increment.getColumns(), increment.getAmounts(),
           pointer.getFirst(), pointer.getSecond());
     } catch (OperationException e) {
@@ -371,16 +540,19 @@ implements TransactionalOperationExecutor {
     }
     end("Increment", begin);
     return new WriteTransactionResult(
-        new Delete(increment.getKey(), increment.getColumns()));
+        new Delete(increment.getTable(), increment.getKey(),
+            increment.getColumns()));
   }
 
-  WriteTransactionResult write(CompareAndSwap write,
+  WriteTransactionResult write(OperationContext context, CompareAndSwap write,
       ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
     initialize();
     requestMetric("CompareAndSwap");
     long begin = begin();
     try {
-      this.randomTable.compareAndSwap(write.getKey(),
+      OrderedVersionedColumnarTable table =
+          this.findRandomTable(context, write.getTable());
+      table.compareAndSwap(write.getKey(),
           write.getColumn(), write.getExpectedValue(), write.getNewValue(),
           pointer.getFirst(), pointer.getSecond());
     } catch (OperationException e) {
@@ -388,7 +560,7 @@ implements TransactionalOperationExecutor {
     }
     end("CompareAndSwap", begin);
     return new WriteTransactionResult(
-        new Delete(write.getKey(), write.getColumn()));
+        new Delete(write.getTable(), write.getKey(), write.getColumn()));
   }
 
   // TTQueues
@@ -501,8 +673,10 @@ implements TransactionalOperationExecutor {
     return this.oracle.commit(pointer.getSecond(), rows);
   }
 
-  private void abortTransaction(ImmutablePair<ReadPointer,Long> pointer,
-      List<Delete> deletes, List<QueueInvalidate> invalidates)
+  private void abortTransaction(OperationContext context,
+                                ImmutablePair<ReadPointer, Long> pointer,
+                                List<Delete> deletes,
+                                List<QueueInvalidate> invalidates)
       throws OperationException {
     // Perform queue invalidates
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_AbortedTransactions", 1);
@@ -512,11 +686,13 @@ implements TransactionalOperationExecutor {
     // Perform deletes
     for (Delete delete : deletes) {
       assert(delete != null);
+      OrderedVersionedColumnarTable table =
+          this.findRandomTable(context, delete.getTable());
       if (delete instanceof Undelete) {
-        this.randomTable.undeleteAll(delete.getKey(), delete.getColumns(),
+        table.undeleteAll(delete.getKey(), delete.getColumns(),
             pointer.getSecond());
       } else {
-        this.randomTable.delete(delete.getKey(), delete.getColumns(),
+        table.delete(delete.getKey(), delete.getColumns(),
             pointer.getSecond());
       }
     }
@@ -584,10 +760,12 @@ implements TransactionalOperationExecutor {
   private synchronized void initialize() throws OperationException {
 
     if (this.randomTable == null) {
-
+      this.metaTable = this.tableHandle.getTable(Bytes.toBytes("meta"));
       this.randomTable = this.tableHandle.getTable(Bytes.toBytes("random"));
       this.queueTable = this.tableHandle.getQueueTable(Bytes.toBytes("queues"));
       this.streamTable = this.tableHandle.getStreamTable(Bytes.toBytes("streams"));
+      this.namedTables = Maps.newConcurrentMap();
+      this.metaStore = new SerializingMetaDataStore(this);
     }
   }
 

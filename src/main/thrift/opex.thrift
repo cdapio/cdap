@@ -166,8 +166,10 @@ typedef list<TWriteOperation> TWriteBatch
 
 struct TClearFabric {
   1: bool clearData,
-  2: bool clearQueues,
-  3: bool clearStreams,
+  2: bool clearMeta,
+  3: bool clearTables,
+  4: bool clearQueues,
+  5: bool clearStreams,
 }
 
 struct TOptionalBinary {

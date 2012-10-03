@@ -1,6 +1,7 @@
 package com.continuuity.data.metadata;
 
 import com.continuuity.api.data.*;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -20,8 +21,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
   OperationExecutor opex;
 
   private static final Charset charsetUTF8 = Charset.forName("UTF-8");
-
-  private static String rowkeyPrefix = "_metadata_";
+  private static final String rowkeyPrefix = "_metadata_";
 
   private static byte[] string2Bytes(String string) {
     return string.getBytes(charsetUTF8);
@@ -138,26 +138,33 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
   @Override
   public void add(OperationContext context,
-                  MetaDataEntry entry) throws MetaDataException {
+                  MetaDataEntry entry) throws OperationException {
     write(context, entry, false);
   }
 
   @Override
   public void update(OperationContext context,
-                     MetaDataEntry entry) throws MetaDataException {
+                     MetaDataEntry entry) throws OperationException {
     write(context, entry, true);
   }
 
   private void write(OperationContext context,
                      MetaDataEntry entry, boolean isUpdate)
-      throws MetaDataException {
+      throws OperationException {
 
     if (entry == null)
       throw new IllegalArgumentException("entry cannot be null");
 
     byte[] rowkey = makeRowKey(entry);
     byte[] column = makeColumnKey(entry);
-    byte[] bytes = getSerializer().serialize(entry);
+    byte[] bytes;
+
+    try {
+      bytes = getSerializer().serialize(entry);
+    } catch (MetaDataException e) {
+      throw new OperationException(
+          StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
+    }
 
     OperationResult<Map<byte[], byte[]>> result;
     try {
@@ -167,33 +174,42 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
 
     if (isUpdate && result.isEmpty()) {
-        throw new MetaDataException("Meta data entry does not exist.");
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "Meta data entry does not exist.");
     }
     else if (!isUpdate && !result.isEmpty()) {
-      throw new MetaDataException("Meta data entry already exists.");
+      throw new OperationException(StatusCode.WRITE_CONFLICT,
+          "Meta data entry already exists.");
     }
 
-    // generate a write operation
-    Write write = new Write(rowkey, column, bytes);
-
     try {
-      opex.execute(context, write);
+      if (isUpdate) {
+        // generate a write
+        Write write = new Write(rowkey, column, bytes);
+        opex.execute(context, write);
+      } else {
+        // generate a compare-and-swap operation to make sure there is no add
+        // conflict with some other thread or process
+        CompareAndSwap compareAndSwap =
+            new CompareAndSwap(rowkey, column, null, bytes);
+        opex.execute(context, compareAndSwap);
+      }
     } catch (OperationException e) {
       String message =
           String.format("Error writing meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
   }
 
   @Override
   public MetaDataEntry get(OperationContext context,
                            String account, String application,
-                           String type, String id) throws MetaDataException {
+                           String type, String id) throws OperationException {
 
     if (account == null)
       throw new IllegalArgumentException("account cannot be null");
@@ -229,14 +245,18 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
+
+    } catch (MetaDataException e) {
+      throw new OperationException(
+          StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
   }
 
   @Override
   public void delete(OperationContext context,
                      String account, String application,
-                     String type, String id) throws MetaDataException {
+                     String type, String id) throws OperationException {
 
     if (account == null)
       throw new IllegalArgumentException("account cannot be null");
@@ -263,7 +283,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error deleting meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
   }
 
@@ -271,7 +291,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
   public List<MetaDataEntry> list(OperationContext context,
                                   String account, String application,
                                   String type, Map<String, String> fields)
-      throws MetaDataException {
+      throws OperationException {
     try {
       if (account == null)
         throw new IllegalArgumentException("account cannot be null");
@@ -295,7 +315,14 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
       List<MetaDataEntry> entries = Lists.newArrayList();
       for (byte[] bytes : result.getValue().values()) {
-        MetaDataEntry meta = getSerializer().deserialize(bytes);
+        MetaDataEntry meta;
+        try {
+          meta = getSerializer().deserialize(bytes);
+        } catch (MetaDataException e) {
+          throw new OperationException(
+              StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
+        }
+
 
         if (!type.equals(meta.getType()))
           continue;
@@ -328,14 +355,14 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
   }
 
   @Override
   public void clear(OperationContext context,
                     String account, String application)
-      throws MetaDataException {
+      throws OperationException {
 
     if (account == null)
       throw new IllegalArgumentException("account cannot be null");
@@ -353,7 +380,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error reading meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
 
     byte[][] columns;
@@ -376,7 +403,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       String message =
           String.format("Error clearing meta data: %s", e.getMessage());
       Log.error(message, e);
-      throw new MetaDataException(message, e);
+      throw new OperationException(e.getStatus(), message, e);
     }
   }
 }
