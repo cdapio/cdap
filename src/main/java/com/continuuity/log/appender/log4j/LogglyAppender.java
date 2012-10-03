@@ -55,7 +55,7 @@ public class LogglyAppender extends AppenderSkeleton {
   /**
    * The service to run the background process.
    */
-  private static final ScheduledExecutorService service =
+  private final ScheduledExecutorService service =
     Executors.newScheduledThreadPool(1);
 
   /**
