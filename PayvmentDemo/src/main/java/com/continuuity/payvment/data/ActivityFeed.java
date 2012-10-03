@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.continuuity.payvment.Product;
+import com.continuuity.payvment.entity.Product;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Helpers;
 

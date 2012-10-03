@@ -11,6 +11,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.flow.flowlet.FlowletContext;
+import com.continuuity.payvment.lib.DataLib;
 import com.continuuity.payvment.util.Bytes;
 
 public class ClusterTable extends DataLib {

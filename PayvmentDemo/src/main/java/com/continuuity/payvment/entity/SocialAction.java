@@ -1,4 +1,4 @@
-package com.continuuity.payvment;
+package com.continuuity.payvment.entity;
 
 public class SocialAction {
 
@@ -12,16 +12,22 @@ public class SocialAction {
 
   public Long product_id;
   
+  public Long store_id;
+  
+  public String category;
+  
   public Long actor_id;
 
   public SocialAction() {}
   
   public SocialAction(Long id, Long date, String type, Long product_id,
-      Long actor_id) {
+      Long store_id, String category, Long actor_id) {
     this.id = id;
     this.date = date;
     this.type = type;
     this.product_id = product_id;
+    this.store_id = store_id;
+    this.category = category;
     this.actor_id = actor_id;
   }
 
@@ -35,7 +41,23 @@ public class SocialAction {
         "\"type\":\"" + this.type + "\"," +
         "\"date\":\"" + this.date + "\"," +
         "\"product_id\":\"" + this.product_id + "\"," +
+        "\"store_id\":\"" + this.store_id + "\"," +
+        "\"category\":\"" + this.category + "\"," +
         "\"actor_id\":\"" + this.actor_id + "\"}";
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof SocialAction)) return false;
+    SocialAction oSA = (SocialAction)o;
+    if (id != oSA.id) return false;
+    if (date != oSA.date) return false;
+    if (!type.equals(oSA.type)) return false;
+    if (product_id != oSA.product_id) return false;
+    if (store_id != oSA.store_id) return false;
+    if (actor_id != oSA.actor_id) return false;
+    if (!category.equals(oSA.category)) return false;
+    return true;
   }
   
   public SocialActionType getSocialActionType() {
@@ -45,7 +67,7 @@ public class SocialAction {
   }
   
   public static enum SocialActionType {
-    ORDER, PINIT, COMMENT, LIKE,
+    ORDER, PINIT, COMMENT, LIKE, TWEET,
     YAY, MEH, NAY,
     OWN_ORDER, OWN_PINIT, OWN_COMMENT, OWN_LIKE,
     OWN_YAY, OWN_MEH, OWN_NAY;
@@ -57,6 +79,7 @@ public class SocialAction {
       if (type.equals("pinit-action")) return PINIT;
       if (type.equals("exp-comment-action")) return COMMENT;
       if (type.equals("like-action")) return LIKE;
+      if (type.equals("tweet-action")) return TWEET;
       if (type.equals("yay-exp-action")) return YAY;
       if (type.equals("meh-exp-action")) return MEH;
       if (type.equals("nay-exp-action")) return NAY;
@@ -74,9 +97,11 @@ public class SocialAction {
 
     public long getScore() {
       switch (this) {
-        case ORDER:   return 5L;
+        case ORDER:   return 6L;
         case PINIT:   return 3L;
-        case COMMENT: return 3L;
+        case COMMENT: return 4L;
+        case LIKE:
+        case TWEET:   return 4L;
         case YAY:     return 2L;
         case MEH:     return 1L;
         case NAY:     return 0L;

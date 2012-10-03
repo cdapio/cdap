@@ -7,6 +7,7 @@ import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.payvment.entity.ProductFeedEntry;
 import com.google.gson.Gson;
 
 public class ProductFeedParserFlowlet extends ComputeFlowlet {
@@ -40,8 +41,8 @@ public class ProductFeedParserFlowlet extends ComputeFlowlet {
     jsonEventString = preProcessSocialActionJSON(jsonEventString);
 
     // Parse product meta JSON using GSON
-    ProductMeta productMeta =
-        this.gson.fromJson(jsonEventString, ProductMeta.class);
+    ProductFeedEntry productMeta =
+        this.gson.fromJson(jsonEventString, ProductFeedEntry.class);
 
     // Define and emit output tuple
     Tuple outputTuple = new TupleBuilder().set("product", productMeta).create();

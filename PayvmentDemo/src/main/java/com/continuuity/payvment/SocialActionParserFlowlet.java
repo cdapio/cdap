@@ -7,6 +7,7 @@ import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.payvment.entity.SocialAction;
 import com.google.gson.Gson;
 
 public class SocialActionParserFlowlet extends ComputeFlowlet {

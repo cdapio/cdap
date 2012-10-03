@@ -2,7 +2,6 @@ package com.continuuity.payvment;
 
 
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.Write;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
@@ -16,9 +15,9 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.continuuity.payvment.data.ActivityFeed;
 import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
-import com.continuuity.payvment.data.CounterTable;
-import com.continuuity.payvment.data.ProductTable;
-import com.continuuity.payvment.data.SortedCounterTable;
+import com.continuuity.payvment.entity.SocialAction;
+import com.continuuity.payvment.lib.CounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Constants;
 import com.continuuity.payvment.util.Helpers;
@@ -64,7 +63,6 @@ public class SocialActionFlow implements Flow {
   public static final TupleSchema PROCESSED_ACTION_TUPLE_SCHEMA =
       new TupleSchemaBuilder()
           .add("action", SocialAction.class)
-          .add("product-meta", ProductMeta.class)
           .add("category", String.class)
           .add("score-increase", Long.class)
           .add("all-time-score", Long.class)
@@ -87,8 +85,6 @@ public class SocialActionFlow implements Flow {
           .setSchema(PROCESSED_ACTION_TUPLE_SCHEMA);
     }
 
-    private ProductTable productTable;
-
     private CounterTable productActionCountTable;
 
     private CounterTable allTimeScoreTable;
@@ -97,7 +93,6 @@ public class SocialActionFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.productTable = new ProductTable(getFlowletContext());
       this.productActionCountTable = new CounterTable("productActions",
           getFlowletContext());
       this.allTimeScoreTable = new CounterTable("allTimeScore",
@@ -112,25 +107,6 @@ public class SocialActionFlow implements Flow {
       SocialAction action = tuple.get("action");
       TupleBuilder tupleBuilder = new TupleBuilder();
       tupleBuilder.set("action", action);
-      
-      // Read the category from product table
-      ProductMeta productMeta;
-      try {
-        productMeta = productTable.readObject(
-            Bytes.toBytes(action.product_id));
-      } catch (OperationException e) {
-        e.printStackTrace();
-        throw new RuntimeException("Error reading product metadata");
-      }
-      if (productMeta == null) {
-        // Received social action for unknown item, don't know what to do yet
-        String msg = "Received social action for unknown product (" +
-            action.product_id + ")";
-        System.out.println(msg);
-        numErrors++;
-        return;
-      }
-      tupleBuilder.set("product-meta", productMeta);
       
       // Update product action count table async
       this.productActionCountTable.incrementCounterSet(
@@ -149,7 +125,7 @@ public class SocialActionFlow implements Flow {
       // Update time bucketed top-score table, also put increment into tuple
       Increment topScoreHourly = topScoreTable.generatePrimaryCounterIncrement(
           Bytes.add(Bytes.toBytes(Helpers.hour(action.date)),
-              Bytes.toBytes(productMeta.category)),
+              Bytes.toBytes(action.category)),
           Bytes.toBytes(action.product_id), scoreIncrease);
       tupleBuilder.set("hourly-score", topScoreHourly);
       
@@ -185,11 +161,10 @@ public class SocialActionFlow implements Flow {
       }
       // Insert feed entry
       SocialAction action = tuple.get("action");
-      ProductMeta meta = tuple.get("product-meta");
       ActivityFeedEntry feedEntry = new ActivityFeedEntry(action.date,
-          meta.store_id, meta.product_id, allTimeScore);
+          action.store_id, action.product_id, allTimeScore);
       Write feedEntryWrite = new Write(Constants.ACTIVITY_FEED_TABLE,
-          ActivityFeed.makeActivityFeedRow(meta.category),
+          ActivityFeed.makeActivityFeedRow(action.category),
           feedEntry.getColumn(), feedEntry.getValue());
       collector.add(feedEntryWrite);
     }
@@ -231,11 +206,10 @@ public class SocialActionFlow implements Flow {
       Long scoreIncrease = tuple.get("score-increase");
       Long hourlyScore = tuple.get("hourly-score");
       SocialAction action = tuple.get("action");
-      ProductMeta productMeta = tuple.get("product-meta");
       // Let top score perform any additional indexing increments
       this.topScoreTable.performSecondaryCounterIncrements(
           Bytes.add(Bytes.toBytes(Helpers.hour(action.date)),
-              Bytes.toBytes(productMeta.category)),
+              Bytes.toBytes(action.category)),
           Bytes.toBytes(action.product_id), scoreIncrease, hourlyScore);
     }
 

@@ -26,6 +26,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
+import com.continuuity.payvment.entity.ProductFeedEntry;
+import com.continuuity.payvment.entity.SocialAction;
 import com.continuuity.payvment.util.Bytes;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -70,19 +72,36 @@ public class PayvmentBaseFlowTest {
   public static void tearDownAfterClass() throws Exception {}
   
   /**
-   * Asserts that the specified product meta objects contain all the same
+   * Asserts that the specified product feed entries contain all the same
    * field values.
-   * @param productMeta1
-   * @param productMeta2
+   * @param productEntry1
+   * @param productEntry2
    */
-  protected static void assertEqual(ProductMeta productMeta1,
-      ProductMeta productMeta2) {
-    assertEquals(productMeta1.product_id, productMeta2.product_id);
-    assertEquals(productMeta1.store_id, productMeta2.store_id);
-    assertEquals(productMeta1.date, productMeta2.date);
-    assertEquals(productMeta1.category, productMeta2.category);
-    assertEquals(productMeta1.name, productMeta2.name);
-    assertEquals(productMeta1.score, productMeta2.score);
+  protected static void assertEqual(ProductFeedEntry productEntry1,
+      ProductFeedEntry productEntry2) {
+    assertEquals(productEntry1.product_id, productEntry2.product_id);
+    assertEquals(productEntry1.store_id, productEntry2.store_id);
+    assertEquals(productEntry1.date, productEntry2.date);
+    assertEquals(productEntry1.category, productEntry2.category);
+    assertEquals(productEntry1.name, productEntry2.name);
+    assertEquals(productEntry1.score, productEntry2.score);
+  }
+  
+  /**
+   * Asserts that the specified social actions contain all the same
+   * field values.
+   * @param socialAction1
+   * @param socialAction1
+   */
+  protected static void assertEqual(SocialAction socialAction1,
+      SocialAction socialAction2) {
+    assertEquals(socialAction1.id, socialAction2.id);
+    assertEquals(socialAction1.product_id, socialAction2.product_id);
+    assertEquals(socialAction1.store_id, socialAction2.store_id);
+    assertEquals(socialAction1.actor_id, socialAction2.actor_id);
+    assertEquals(socialAction1.date, socialAction2.date);
+    assertEquals(socialAction1.category, socialAction2.category);
+    assertEquals(socialAction1.type, socialAction2.type);
   }
   
   /**

@@ -19,10 +19,11 @@ import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.payvment.data.ActivityFeed;
 import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
-import com.continuuity.payvment.data.CounterTable;
 import com.continuuity.payvment.data.ProductTable;
-import com.continuuity.payvment.data.SortedCounterTable;
-import com.continuuity.payvment.data.SortedCounterTable.Counter;
+import com.continuuity.payvment.entity.ProductFeedEntry;
+import com.continuuity.payvment.lib.CounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable.Counter;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Constants;
 import com.continuuity.payvment.util.Helpers;
@@ -55,8 +56,8 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     Long store_id = 2L;
     String category = "Housewares";
     String name = "Green Widget";
-    ProductMeta productMeta =
-        new ProductMeta(product_id, store_id, now, category, name, 3.5);
+    ProductFeedEntry productMeta =
+        new ProductFeedEntry(product_id, store_id, now, category, name, 3.5);
     String productMetaJson = productMeta.toJson();
     
     // Write json to input stream
@@ -87,7 +88,7 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     assertTrue(FlowTestHelper.stopFlow(flowHandle));
     
     // Verify the product is stored
-    ProductMeta readProductMeta = productTable.readObject(
+    ProductFeedEntry readProductMeta = productTable.readObject(
         Bytes.toBytes(product_id));
     assertEqual(productMeta, readProductMeta);
     
@@ -142,8 +143,8 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
             exampleProductMetaJson);
     
     Gson gson = new Gson();
-    ProductMeta productMeta =
-        gson.fromJson(processedJsonString, ProductMeta.class);
+    ProductFeedEntry productMeta =
+        gson.fromJson(processedJsonString, ProductFeedEntry.class);
     
     assertEquals(new Long(6709879), productMeta.product_id);
     assertEquals(new Long(164341), productMeta.store_id);
@@ -158,19 +159,19 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     processedJsonString =
         ProductFeedParserFlowlet.preProcessSocialActionJSON(
             exampleProductMetaJson);
-    ProductMeta productMeta2 =
-        gson.fromJson(processedJsonString, ProductMeta.class);
+    ProductFeedEntry productMeta2 =
+        gson.fromJson(processedJsonString, ProductFeedEntry.class);
 
     assertEqual(productMeta, productMeta2);
     
     // Try to serialize/deserialize in a tuple
     TupleSerializer serializer = new TupleSerializer(false);
-    serializer.register(ProductMeta.class);
+    serializer.register(ProductFeedEntry.class);
     Tuple sTuple = new TupleBuilder().set("meta", productMeta).create();
     byte [] bytes = serializer.serialize(sTuple);
     assertNotNull(bytes);
     Tuple dTuple = serializer.deserialize(bytes);
-    ProductMeta productMeta3 = dTuple.get("meta");
+    ProductFeedEntry productMeta3 = dTuple.get("meta");
     assertNotNull(productMeta);
 
     assertEqual(productMeta, productMeta3);

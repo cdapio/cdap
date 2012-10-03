@@ -17,13 +17,13 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
-import com.continuuity.payvment.SocialAction.SocialActionType;
 import com.continuuity.payvment.data.ActivityFeed;
 import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
-import com.continuuity.payvment.data.CounterTable;
-import com.continuuity.payvment.data.ProductTable;
-import com.continuuity.payvment.data.SortedCounterTable;
-import com.continuuity.payvment.data.SortedCounterTable.Counter;
+import com.continuuity.payvment.entity.SocialAction;
+import com.continuuity.payvment.entity.SocialAction.SocialActionType;
+import com.continuuity.payvment.lib.CounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable.Counter;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Constants;
 import com.continuuity.payvment.util.Helpers;
@@ -34,7 +34,6 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
   @Test(timeout = 20000)
   public void testSocialActionFlow() throws Exception {
     // Get references to tables
-    ProductTable productTable = new ProductTable(flowletContext);
     CounterTable productActionCountTable = new CounterTable("productActions",
         flowletContext);
     CounterTable allTimeScoreTable = new CounterTable("allTimeScore",
@@ -55,10 +54,12 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     Long event_id = 1L;
     Long product_id = 2L;
     Long user_id = 3L;
+    Long store_id = 4L;
     String type = "yay-exp-action";
+    String category = "Sports";
     Long typeScoreIncrease = SocialActionType.fromString(type).getScore();
-    SocialAction socialAction =
-        new SocialAction(event_id, now, type, product_id, user_id);
+    SocialAction socialAction = new SocialAction(event_id, now, type,
+        product_id, store_id, category, user_id);
     String socialActionJson = socialAction.toJson();
     
     // Write json to input stream
@@ -68,36 +69,6 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     // Wait for parsing flowlet to process the tuple
     while (SocialActionParserFlowlet.numProcessed < 1) {
       System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(100);
-    }
-    
-    // This tuple should error out because it's an unknown product
-    while (SocialActionFlow.SocialActionProcessorFlowlet.numErrors < 1) {
-      System.out.println("Waiting for processor flowlet to error on tuple");
-      Thread.sleep(100);
-    }
-    
-    // Store the product -> category mapping
-    Long store_id = 15L;
-    String category = "Sports";
-    String name = "Tennis Shoes";
-    ProductMeta productMeta = new ProductMeta(product_id, store_id, now,
-        category, name, 1.0);
-    productTable.writeObject(Bytes.toBytes(productMeta.product_id),
-        productMeta);
-    
-    // Verify product can be read back
-    ProductMeta readProductMeta = productTable.readObject(
-        Bytes.toBytes(product_id));
-    assertEqual(productMeta, readProductMeta);
-    
-    // Write same json to input stream
-    writeToStream(SocialActionFlow.flowName, SocialActionFlow.inputStream,
-        Bytes.toBytes(socialActionJson));
-    
-    // Wait for parsing flowlet to process the second tuple
-    while (SocialActionParserFlowlet.numProcessed < 2) {
-      System.out.println("Waiting for parsing flowlet to process 2nd tuple");
       Thread.sleep(100);
     }
     
@@ -138,7 +109,7 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     // Verify the hourly score has been incremented to type score increase
     List<Counter> counters = topScoreTable.readTopCounters(
         Bytes.add(Bytes.toBytes(Helpers.hour(now)),
-            Bytes.toBytes(productMeta.category)), 10);
+            Bytes.toBytes(category)), 10);
     assertEquals(1, counters.size());
     assertEquals(typeScoreIncrease, counters.get(0).getCount());
     
@@ -168,6 +139,8 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
         "\"type\":\"yay-exp-action\"," +
         "\"date\":\"1348074421000\"," +
         "\"product_id\":\"164341\"," +
+        "\"store_id\":\"312\"," +
+        "\"category\":\"Sports\"," +
         "\"actor_id\":\"54321\"}";
     
     String processedJsonString =
@@ -181,6 +154,8 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     assertEquals(new Long(6709879), socialAction.id);
     assertEquals(new Long(164341), socialAction.product_id);
     assertEquals(new Long(1348074421000L), socialAction.date);
+    assertEquals("Sports", socialAction.category);
+    assertEquals(new Long(312), socialAction.store_id);
     assertEquals("yay-exp-action", socialAction.type);
     assertEquals(new Long(54321), socialAction.actor_id);
     
@@ -193,11 +168,7 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     SocialAction socialAction2 =
         gson.fromJson(processedJsonString, SocialAction.class);
 
-    assertEquals(socialAction.id, socialAction2.id);
-    assertEquals(socialAction.product_id, socialAction2.product_id);
-    assertEquals(socialAction.date, socialAction2.date);
-    assertEquals(socialAction.type, socialAction2.type);
-    assertEquals(socialAction.actor_id, socialAction2.actor_id);
+    assertEqual(socialAction, socialAction2);
     
     // Try to serialize/deserialize in a tuple
     TupleSerializer serializer = new TupleSerializer(false);
@@ -209,11 +180,6 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     SocialAction socialAction3 = dTuple.get("action");
     assertNotNull(socialAction);
 
-    assertEquals(socialAction.id, socialAction3.id);
-    assertEquals(socialAction.product_id, socialAction3.product_id);
-    assertEquals(socialAction.date, socialAction3.date);
-    assertEquals(socialAction.type, socialAction3.type);
-    assertEquals(socialAction.actor_id, socialAction3.actor_id);
-    
+    assertEqual(socialAction, socialAction3);
   }
 }

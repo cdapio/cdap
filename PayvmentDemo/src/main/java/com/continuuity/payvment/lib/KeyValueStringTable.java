@@ -1,4 +1,4 @@
-package com.continuuity.payvment.data;
+package com.continuuity.payvment.lib;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.Write;

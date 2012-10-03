@@ -1,4 +1,4 @@
-package com.continuuity.payvment.data;
+package com.continuuity.payvment.lib;
 
 public interface SimpleSerializable {
 

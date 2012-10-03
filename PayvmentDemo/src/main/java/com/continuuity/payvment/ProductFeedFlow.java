@@ -14,9 +14,10 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.continuuity.payvment.data.ActivityFeed;
 import com.continuuity.payvment.data.ActivityFeed.ActivityFeedEntry;
-import com.continuuity.payvment.data.CounterTable;
 import com.continuuity.payvment.data.ProductTable;
-import com.continuuity.payvment.data.SortedCounterTable;
+import com.continuuity.payvment.entity.ProductFeedEntry;
+import com.continuuity.payvment.lib.CounterTable;
+import com.continuuity.payvment.lib.SortedCounterTable;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Constants;
 import com.continuuity.payvment.util.Helpers;
@@ -52,11 +53,11 @@ public class ProductFeedFlow implements Flow {
   }
 
   public static final TupleSchema PRODUCT_META_TUPLE_SCHEMA =
-      new TupleSchemaBuilder().add("product", ProductMeta.class).create();
+      new TupleSchemaBuilder().add("product", ProductFeedEntry.class).create();
 
   public static final TupleSchema PROCESSED_PRODUCT_TUPLE_SCHEMA =
       new TupleSchemaBuilder()
-          .add("product", ProductMeta.class)
+          .add("product", ProductFeedEntry.class)
           .add("update-count", Long.class)
           .add("all-time-score", Long.class)
           .add("hourly-score", Long.class)
@@ -99,7 +100,7 @@ public class ProductFeedFlow implements Flow {
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
-      ProductMeta productMeta = tuple.get("product");
+      ProductFeedEntry productMeta = tuple.get("product");
       
       // Write product meta data
       productTable.updateObject(Bytes.toBytes(productMeta.product_id),
@@ -158,7 +159,7 @@ public class ProductFeedFlow implements Flow {
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
-      ProductMeta productMeta = tuple.get("product");
+      ProductFeedEntry productMeta = tuple.get("product");
       Long updateCount = tuple.get("update-count");
       Long allTimeScore = tuple.get("all-time-score");
       Long hourlyScore = tuple.get("hourly-score");
@@ -185,7 +186,7 @@ public class ProductFeedFlow implements Flow {
       numProcessed++;
     }
     
-    private static boolean shouldInsertFeedEntry(ProductMeta productMeta,
+    private static boolean shouldInsertFeedEntry(ProductFeedEntry productMeta,
         Long updateCount) {
       return true;
     }

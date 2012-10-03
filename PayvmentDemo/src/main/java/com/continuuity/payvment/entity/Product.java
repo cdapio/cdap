@@ -1,4 +1,4 @@
-package com.continuuity.payvment;
+package com.continuuity.payvment.entity;
 
 public class Product {
 
