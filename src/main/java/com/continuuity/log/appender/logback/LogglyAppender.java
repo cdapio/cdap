@@ -53,13 +53,13 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
   /**
    * Queue of messages to send to server.
    */
-  private final transient BlockingQueue<String> messages =
+  private static final BlockingQueue<String> messages =
     new LinkedBlockingQueue<String>(10000);
 
   /**
    * The service to run the background process.
    */
-  private final transient ScheduledExecutorService service =
+  private static final ScheduledExecutorService service =
     Executors.newScheduledThreadPool(1);
 
   /**
@@ -253,17 +253,14 @@ public class LogglyAppender extends AppenderBase<ILoggingEvent> {
     String text = "";
     try {
       int count = 1000;
-      while(!this.messages.isEmpty()) {
-        text = this.messages.poll(100, TimeUnit.MILLISECONDS);
+      while(! messages.isEmpty()) {
+        text = messages.poll();
         if(text == null || count < 1) {
           break;
         }
         this.feeder.feed(text);
         --count;
       }
-    } catch (InterruptedException ex) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException(ex);
     } catch (IOException ex) {
       System.out.println(
         String.format(
