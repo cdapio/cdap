@@ -223,6 +223,9 @@ public abstract class AbstractRegisteredServer {
    * @param now true specifies non-graceful shutdown; false otherwise.
    */
   public final void stop(boolean now) {
+    // Stop the services started by implementation class.
+    stop();
+
     try {
       if(client != null) {
         client.close();
@@ -233,7 +236,6 @@ public abstract class AbstractRegisteredServer {
     } catch (IOException e) {
       Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
     }
-    stop();
   }
 
   /**

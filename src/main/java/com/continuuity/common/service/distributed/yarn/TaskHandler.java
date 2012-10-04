@@ -122,7 +122,7 @@ public class TaskHandler extends AbstractScheduledService {
       stop();
     } catch (Throwable e) {
       e.printStackTrace();
-      Log.info("Horrible happened. Reason : {}", e.getMessage());
+      Log.info("Horrible thing happened. Reason : {}", e.getMessage());
       stop();
     }
   }

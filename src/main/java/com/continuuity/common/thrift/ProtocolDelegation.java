@@ -6,7 +6,7 @@ import org.apache.thrift.protocol.*;
 import java.nio.ByteBuffer;
 
 /**
- * <code>ProtocolBridge</code> forwards all requests to an enclosed
+ * <code>ProtocolDelegation</code> forwards all requests to an enclosed
  * <code>TProtocol</code> instance, providing a way an author concise
  * concrete decorator subclasses.  While it has no abstract methods, it
  * is marked abstract as a reminder that by itself, it does not modify
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  *
  * @see MuxProtocol
  */
-public abstract class ProtocolBridge extends TProtocol {
+public abstract class ProtocolDelegation extends TProtocol {
 
   private final TProtocol concreteProtocol;
 
@@ -22,7 +22,7 @@ public abstract class ProtocolBridge extends TProtocol {
    * Encloses the specified protocol.
    * @param protocol All operations will be forward to this protocol.  Must be non-null.
    */
-  public ProtocolBridge(TProtocol protocol) {
+  public ProtocolDelegation(TProtocol protocol) {
     super(protocol.getTransport());
     concreteProtocol = protocol;
   }

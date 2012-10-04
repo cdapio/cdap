@@ -34,12 +34,12 @@ import org.apache.thrift.protocol.TProtocol;
  *     System.out.println(mds.getStreams());<br/>
  * </code></blockquote>
  *
- * @see ProtocolBridge
+ * @see ProtocolDelegation
  */
-public class MuxProtocol extends ProtocolBridge {
+public class MuxProtocol extends ProtocolDelegation {
 
   /** Used to delimit the service name from the function name */
-  public static final String SEPARATOR = ":";
+  public static final String SEPARATOR = ".";
 
   private final String SERVICE_NAME;
 

@@ -70,6 +70,7 @@ public class MuxPocessor implements TProcessor {
    * {@link #registerProcessor(String, TProcessor) registerProcessor}
    * during initialization, right? :)
    */
+  @Override
   public boolean process(TProtocol iprot, TProtocol oprot) throws TException {
     // Use the actual underlying protocol (e.g. TBinaryProtocol) to read the
     // message header.  This pulls the message "off the wire", which we'll
@@ -116,7 +117,7 @@ public class MuxPocessor implements TProcessor {
    * In order to work with any protocol, we need to get the TMessage in exactly
    * the standard thrift format without service name to the processor.
    */
-  private class StandardProtocol extends ProtocolBridge {
+  private class StandardProtocol extends ProtocolDelegation {
     TMessage messageBegin;
     public StandardProtocol(TProtocol protocol, TMessage messageBegin) {
       super(protocol);

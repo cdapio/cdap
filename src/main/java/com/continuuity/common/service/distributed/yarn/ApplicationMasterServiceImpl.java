@@ -141,11 +141,15 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     /**
      * Iterate through all container groups.
      */
-    if(! tasksHandler.process()) {
-      stop();
+    try {
+      if(! tasksHandler.process()) {
+        Log.info("ApplicationMaster service is stopping.");
+        stop();
+      }
+    } catch (Exception e) {
+      Log.error("Caught exception. Reason : {}.", e.getMessage());
     }
   }
-
 
   /**
    * Shuts down the Application service.
@@ -409,7 +413,6 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     public boolean process() {
 
       if(shouldProceed()) {
-
         /**
          * We go through the list of entries in <code>readyToRunQueue</code>, if they are
          * not already in the <code>runningTaskQueue</code> we make the request for them.

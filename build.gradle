@@ -56,3 +56,23 @@ task dist(type:  Tar, dependsOn: jar) {
         into('common/bin')
     }
 }
+
+/**
+ * Generate thrift files for test only.
+ */
+//task thrift
+//thrift {
+//    group = 'Continuuity'
+//    description = 'Generates thrift stubs'
+//    files = fileTree(dir: 'src/test/thrift').matching{ include '*.thrift'}
+//    doFirst {
+//      println 'Generating thrift stubs ...'
+//    }
+//    exec {
+//        executable = 'thrift'
+//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/test/java', files.collect { relativePath(it)}. join(",")]
+//    }
+//    doLast {
+//      println 'Thrift stubs generation done ...'
+//    }
+//}

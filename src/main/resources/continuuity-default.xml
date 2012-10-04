@@ -317,7 +317,11 @@
 
     <property>
         <name>overlord.metrics.timeseries.metrics</name>
-        <value>processed.count,tuples.read.count</value>
+        <value>
+            processed.count,busyness.count,dataops.count,
+            emitted.count,stream.count,instance.count,flowlet.failure.count,
+            processed.count
+        </value>
         <description>Specifies a comma seperate list of metrics that
         need to be added to timeseries</description>
     </property>
