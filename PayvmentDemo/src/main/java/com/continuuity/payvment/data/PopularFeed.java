@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import com.google.gson.Gson;
+
 /**
  * A Payvment/Lish Popular Product Feed.
  * <p>
@@ -60,6 +62,18 @@ public class PopularFeed {
       if (++idx == limit) break;
     }
     return entries;
+  }
+
+  private static final Gson gson = new Gson();
+
+  /**
+   * Converts the specified list of popular feed entries to the proper JSON
+   * representation.
+   * @param feedEntries popular feed entries
+   * @return json string representation of popular feed
+   */
+  public static String toJson(List<PopularFeedEntry> feedEntries) {
+    return gson.toJson(feedEntries);
   }
 
   /**

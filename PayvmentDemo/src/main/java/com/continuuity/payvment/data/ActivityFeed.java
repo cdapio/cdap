@@ -8,18 +8,21 @@ import java.util.TreeMap;
 import com.continuuity.payvment.entity.Product;
 import com.continuuity.payvment.util.Bytes;
 import com.continuuity.payvment.util.Helpers;
+import com.google.gson.Gson;
 
 /**
- * A Payvment/Lish Activity Feed.
+ * An in-memory representation of a Payvment/Lish Activity Feed.
  * <p>
  * An activity feed is a descending time-ordered list of
  * {@link ActivityFeedEntry}s.
  * <p>
  * This class is used to build and store an activity feed.  It is feed a stream
- * of activity feed entries and performs any necessary aggregations.
+ * of descending time-ordered activity feed entries and performs any required
+ * aggregations.
  * <p>
  * Currently this will aggregate all products of the same seller into a single
- * activity feed entry.
+ * activity feed entry.  The position and timestamp of that entry will be the
+ * latest for that seller.
  */
 public class ActivityFeed {
 
@@ -31,7 +34,7 @@ public class ActivityFeed {
   /**
    * Map from store_id to it's activity feed entry.
    */
-  public Map<Long,ActivityFeedEntry> stores =
+  public transient Map<Long,ActivityFeedEntry> stores =
       new TreeMap<Long,ActivityFeedEntry>();
 
   /**
@@ -108,6 +111,17 @@ public class ActivityFeed {
     return Bytes.add(Bytes.toBytes("activityFeed"), Bytes.toBytes(category));
   }
 
+  private static final Gson gson = new Gson();
+
+  /**
+   * Converts the specified activity feed to it's JSON representation.
+   * @param af activity feed
+   * @return json string representation of activity feed
+   */
+  public static String toJson(ActivityFeed af) {
+    return gson.toJson(af);
+  }
+
   /**
    * An entry in a Payvment/List Activity Feed.
    * <p>
@@ -147,6 +161,27 @@ public class ActivityFeed {
     public byte [] getValue() {
       return Bytes.add(Bytes.toBytes(this.store_id),
           Bytes.toBytes(this.products.get(0).score));
+    }
+    
+    @Override
+    public String toString() {
+      return gson.toJson(this);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof ActivityFeedEntry)) return false;
+      ActivityFeedEntry afe = (ActivityFeedEntry)o;
+      if (!timestamp.equals(afe.timestamp)) return false;
+      if (!store_id.equals(afe.store_id)) return false;
+      if (products.size() != afe.products.size()) return false;
+      for (int i=0; i<products.size(); i++) {
+        if (!products.get(i).product_id.equals(afe.products.get(i).product_id))
+          return false;
+        if (!products.get(i).score.equals(afe.products.get(i).score))
+          return false;
+      }
+      return true;
     }
   }
 }
