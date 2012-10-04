@@ -180,12 +180,12 @@ public class TOperationExecutorImpl
       OperationContext context = unwrap(tcontext);
       QueueEnqueue queueEnqueue = unwrap(tQueueEnqueue);
       this.opex.execute(context, queueEnqueue);
-      if (Log.isDebugEnabled()) Log.debug("Enqueue successful.");
+      if (Log.isDebugEnabled()) Log.debug("EnqueuePayload successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Enqueue failed: " + e.getMessage());
+      Log.debug("EnqueuePayload failed: " + e.getMessage());
       throw wrap(e);
     }
   }
@@ -406,13 +406,13 @@ public class TOperationExecutorImpl
       OperationContext context = unwrap(tcontext);
       QueueDequeue queueDequeue = unwrap(tQueueDequeue);
       DequeueResult result = this.opex.execute(context, queueDequeue);
-      if (Log.isDebugEnabled()) Log.debug("Dequeue successful.");
+      if (Log.isDebugEnabled()) Log.debug("DequeuePayload successful.");
       TDequeueResult tResult = wrap(result);
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("Dequeue failed: " + e.getMessage());
+      Log.debug("DequeuePayload failed: " + e.getMessage());
       helper.failure();
       throw wrap(e);
     }

@@ -22,6 +22,8 @@ import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
+import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.continuuity.metrics2.api.CMetrics;
 import com.continuuity.metrics2.collector.MetricType;
 import com.google.common.base.Objects;
@@ -30,10 +32,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -69,6 +69,8 @@ implements TransactionalOperationExecutor {
 
   private TTQueueTable queueTable;
   private TTQueueTable streamTable;
+
+  public static boolean DISABLE_QUEUE_PAYLOADS = false;
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
@@ -389,9 +391,18 @@ implements TransactionalOperationExecutor {
     List<Delete> deletes = new ArrayList<Delete>(writes.size());
     List<QueueInvalidate> invalidates = new ArrayList<QueueInvalidate>();
 
+    // Track a map from increment operation ids to post-increment values
+    Map<Long,Long> incrementResults = new TreeMap<Long,Long>();
+
     for (WriteOperation write : orderedWrites) {
+
+      // See if write operation is an enqueue, and if so, update serialized data
+      if (write instanceof QueueEnqueue) {
+        processEnqueue((QueueEnqueue)write, incrementResults);
+      }
       WriteTransactionResult writeTxReturn =
           dispatchWrite(context, write, pointer);
+
       if (!writeTxReturn.success) {
         // Write operation failed
         cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
@@ -407,6 +418,10 @@ implements TransactionalOperationExecutor {
         } else {
           // Normal write operation
           rows.addRow(write.getKey());
+        }
+        // See if write operation was an Increment, and if so, add result to map
+        if (write instanceof Increment) {
+          incrementResults.put(write.getId(), writeTxReturn.incrementValue);
         }
       }
     }
@@ -433,6 +448,53 @@ implements TransactionalOperationExecutor {
         METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
   }
 
+  /**
+   * Deserializes enqueue data into enqueue payload, checks if any fields are
+   * marked to contain increment values, construct a dequeue payload, update any
+   * fields necessary, and finally update the enqueue data to contain a dequeue
+   * payload.
+   */
+  private void processEnqueue(QueueEnqueue enqueue,
+      Map<Long, Long> incrementResults) {
+    if (DISABLE_QUEUE_PAYLOADS) return;
+    // Deserialize enqueue payload
+    byte [] enqueuePayloadBytes = enqueue.getData();
+    EnqueuePayload enqueuePayload;
+    try {
+      enqueuePayload = EnqueuePayload.read(enqueuePayloadBytes);
+    } catch (IOException e) {
+      // Unable to deserialize the enqueue payload, fatal error (if queues are
+      // not using payloads, change DISABLE_QUEUE_PAYLOADS=true
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+    Map<String,Long> fieldsToIds = enqueuePayload.getOperationIds();
+    Map<String,Long> fieldsToValues = new TreeMap<String,Long>();
+
+    // For every field-to-id mapping, find increment result
+    for (Map.Entry<String,Long> fieldAndId : fieldsToIds.entrySet()) {
+      String field = fieldAndId.getKey();
+      Long operationId = fieldAndId.getValue();
+      Long incrementValue = incrementResults.get(operationId);
+      if (incrementValue == null) {
+        throw new RuntimeException("Field specified as containing an " +
+            "increment result but no matching increment operation found");
+      }
+      // Store field-to-value in map for dequeue payload
+      fieldsToValues.put(field, incrementValue);
+    }
+
+    // Serialize dequeue payload and overwrite enqueue data
+    try {
+      enqueue.setData(DequeuePayload.write(fieldsToValues,
+          enqueuePayload.getSerializedTuple()));
+    } catch (IOException e) {
+      // Fatal error serializing dequeue payload
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
   public OVCTableHandle getTableHandle() {
     return this.tableHandle;
   }
@@ -445,6 +507,7 @@ implements TransactionalOperationExecutor {
     final String message;
     final List<Delete> deletes;
     final QueueInvalidate invalidate;
+    Long incrementValue;
 
     WriteTransactionResult(boolean success, int status, String message,
                            List<Delete> deletes, QueueInvalidate invalidate) {
@@ -458,6 +521,12 @@ implements TransactionalOperationExecutor {
     // successful, one delete to undo
     WriteTransactionResult(Delete delete) {
       this(true, StatusCode.OK, null, Collections.singletonList(delete), null);
+    }
+
+    // successful increment, one delete to undo
+    WriteTransactionResult(Delete delete, Long incrementValue) {
+      this(true, StatusCode.OK, null, Collections.singletonList(delete), null);
+      this.incrementValue = incrementValue;
     }
 
     // successful, one queue operation to invalidate
@@ -527,21 +596,23 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("Increment");
     long begin = begin();
+    Long incrementValue;
     try {
       @SuppressWarnings("unused")
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, increment.getTable());
-      // Map<byte[],Long> map =
-      table.increment(increment.getKey(),
-          increment.getColumns(), increment.getAmounts(),
-          pointer.getFirst(), pointer.getSecond());
+      Map<byte[],Long> map =
+          table.increment(increment.getKey(),
+              increment.getColumns(), increment.getAmounts(),
+              pointer.getFirst(), pointer.getSecond());
+      incrementValue = map.values().iterator().next();
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("Increment", begin);
     return new WriteTransactionResult(
         new Delete(increment.getTable(), increment.getKey(),
-            increment.getColumns()));
+            increment.getColumns()), incrementValue);
   }
 
   WriteTransactionResult write(OperationContext context, CompareAndSwap write,
@@ -566,7 +637,7 @@ implements TransactionalOperationExecutor {
   // TTQueues
 
   /**
-   * Enqueue operations always succeed but can be rolled back.
+   * EnqueuePayload operations always succeed but can be rolled back.
    *
    * They are rolled back with an invalidate.
    */
@@ -583,7 +654,6 @@ implements TransactionalOperationExecutor {
   }
 
   WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused")
       ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
     initialize();
     requestMetric("QueueAck");

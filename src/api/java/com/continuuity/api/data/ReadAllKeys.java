@@ -9,6 +9,9 @@ import com.google.common.base.Objects;
  */
 public class ReadAllKeys implements ReadOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** the name of the table */
   private final String table;
 
@@ -63,5 +66,10 @@ public class ReadAllKeys implements ReadOperation {
         .add("offset", Integer.toString(offset))
         .add("limit", Integer.toString(limit))
         .toString();
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

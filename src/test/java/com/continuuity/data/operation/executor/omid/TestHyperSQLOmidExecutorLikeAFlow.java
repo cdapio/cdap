@@ -29,7 +29,7 @@ public class TestHyperSQLOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow
 
   @Override
   protected int getNumIterations() {
-    return 1000;
+    return 100;
   }
 
   

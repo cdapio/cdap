@@ -9,6 +9,9 @@ import com.google.common.base.Objects;
  */
 public class Read implements ReadOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** the name of the table */
   private final String table;
 
@@ -118,4 +121,8 @@ public class Read implements ReadOperation {
         .toString();
   }
 
+  @Override
+  public long getId() {
+    return id;
+  }
 }

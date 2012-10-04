@@ -29,7 +29,7 @@ public class TestMemoryOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   @Override
   protected int getNumIterations() {
-    return 1000;
+    return 100;
   }
 
   

@@ -1,6 +1,7 @@
 package com.continuuity.data.operation;
 
 import com.continuuity.api.data.Operation;
+import com.continuuity.api.data.OperationBase;
 import com.google.common.base.Objects;
 
 /**
@@ -8,6 +9,9 @@ import com.google.common.base.Objects;
  * clearing user data, queues, and/or streams.
  */
 public class ClearFabric implements Operation {
+
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
 
   private final boolean clearData;
   private final boolean clearMeta;
@@ -89,6 +93,11 @@ public class ClearFabric implements Operation {
         .add("clearQueues", Boolean.toString(clearQueues))
         .add("clearStreams", Boolean.toString(clearStreams))
         .toString();
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }
 

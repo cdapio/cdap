@@ -11,4 +11,8 @@ public interface Operation {
 
   public static final byte [][] ALL_COLS = new byte [][] { };
 
+  /**
+   * @return unique Id associated with the operation.
+   */
+  public long getId();
 }

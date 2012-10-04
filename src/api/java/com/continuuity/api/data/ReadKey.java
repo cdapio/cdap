@@ -7,6 +7,9 @@ package com.continuuity.api.data;
  */
 public class ReadKey implements ReadOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** the name of the table */
   private final String table;
 
@@ -48,5 +51,10 @@ public class ReadKey implements ReadOperation {
     sb.append(new String(key));
     sb.append("}");
     return sb.toString();
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

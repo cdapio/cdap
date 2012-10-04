@@ -5,6 +5,9 @@ package com.continuuity.api.data;
  */
 public class Delete implements WriteOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
+
   /** the name of the table */
   private final String table;
 
@@ -111,5 +114,10 @@ public class Delete implements WriteOperation {
   @Override
   public int getPriority() {
     return 1;
+  }
+
+  @Override
+  public long getId() {
+    return id;
   }
 }

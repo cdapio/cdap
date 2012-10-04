@@ -3,24 +3,46 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
+import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 
 public abstract class TestOmidTransactionalOperationExecutor {
 
@@ -64,6 +86,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testClearFabric() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
     byte [] dataKey = Bytes.toBytes("dataKey");
     byte [] queueKey = Bytes.toBytes("queue://queueKey");
     byte [] streamKey = Bytes.toBytes("stream://streamKey");
@@ -142,6 +165,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.execute(context,
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
@@ -384,14 +408,15 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   @Test
   public void testAbortedOperationsWithQueueAck() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     byte [] key = Bytes.toBytes("testAbortedAck");
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
-    // Enqueue something
+    // EnqueuePayload something
     executor.execute(context, batch(new QueueEnqueue(queueName, queueName)));
 
-    // Dequeue it
+    // DequeuePayload it
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     DequeueResult dequeueResult = executor.execute(context,
@@ -443,7 +468,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, writes, ackPointer);
 
 
-    // Dequeue should now return empty
+    // DequeuePayload should now return empty
     dequeueResult = executor.execute(context,
         new QueueDequeue(queueName, consumer, config));
     assertTrue(dequeueResult.isEmpty());
@@ -452,6 +477,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertEquals(5L, Bytes.toLong(
         executor.execute(context, new ReadKey(key)).getValue()));
 
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
@@ -549,6 +575,90 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new ReadKey(key)).getValue());
     assertArrayEquals(valueTwo, executor.read(context,
         new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).getValue());
+  }
+
+  @Test
+  public void testIncrementPassThru() throws Exception {
+
+    byte [] key = Bytes.toBytes("testIncrementPassThru");
+
+    byte [] columnOne = Bytes.toBytes("colOne");
+    byte [] columnTwo = Bytes.toBytes("colTwo");
+
+    byte [] queueOne = Bytes.toBytes("qOne");
+    byte [] queueTwo = Bytes.toBytes("qTwo");
+
+    byte [] queueOneData = Bytes.toBytes("queueOneData");
+    byte [] queueTwoData = Bytes.toBytes("queueTwoData");
+
+    // Generate a list of write operations that contain two increments and
+    // two enqueue operations, one points to one operation, the other points to
+    // both operations
+
+    // Increment one (will tie to field "one/ONE" of first and second enqueues)
+    Increment incrementOne = new Increment(key, columnOne, 1);
+
+    // Increment two (will tie to field "two" of first enqueue)
+    Increment incrementTwo = new Increment(key, columnTwo, 2);
+
+    // Generate first enqueue payload tied to both increments
+    Map<String,Long> enqueueOneMap = new TreeMap<String,Long>();
+    enqueueOneMap.put("one", incrementOne.getId());
+    enqueueOneMap.put("two", incrementTwo.getId());
+
+    // Make the first enqueue operation using an enqueue payload with the map
+    QueueEnqueue enqueueOne = new QueueEnqueue(queueOne,
+        EnqueuePayload.write(enqueueOneMap, queueOneData));
+
+    // Generate second enqueue payload tied to the first increment
+    Map<String,Long> enqueueTwoMap = new TreeMap<String,Long>();
+    enqueueTwoMap.put("ONE", incrementOne.getId());
+
+    // Make the second enqueue operation using an enqueue payload with the map
+    QueueEnqueue enqueueTwo = new QueueEnqueue(queueTwo,
+        EnqueuePayload.write(enqueueTwoMap, queueTwoData));
+
+    // Make a batch of operations, putting enqueues first knowing that these
+    // must be reordered to after the increment operations
+    List<WriteOperation> batch = new ArrayList<WriteOperation>(4);
+    batch.add(enqueueOne);
+    batch.add(enqueueTwo);
+    batch.add(incrementOne);
+    batch.add(incrementTwo);
+
+    // Execute the batch!
+    executor.execute(context, batch);
+
+    // Dequeueing from these queues should yield the post increment values
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, false);
+
+    // Dequeue from queue one, expect two fields, one=1 and two=2
+    QueueDequeue dequeueOne = new QueueDequeue(queueOne, consumer, config);
+    DequeueResult dequeueOneResult = executor.execute(context, dequeueOne);
+    assertTrue(dequeueOneResult.isSuccess());
+    assertFalse(dequeueOneResult.isEmpty());
+    byte [] dequeueOneData = dequeueOneResult.getValue();
+    DequeuePayload dequeueOnePayload = DequeuePayload.read(dequeueOneData);
+    Map<String,Long> dequeueOneValues = dequeueOnePayload.getValues();
+    assertEquals(2, dequeueOneValues.size());
+    assertEquals(new Long(1), dequeueOneValues.get("one"));
+    assertEquals(new Long(2), dequeueOneValues.get("two"));
+    assertTrue(Bytes.equals(queueOneData,
+        dequeueOnePayload.getSerializedTuple()));
+
+    // Dequeue from queue two, expect one field, ONE=1
+    QueueDequeue dequeueTwo = new QueueDequeue(queueTwo, consumer, config);
+    DequeueResult dequeueTwoResult = executor.execute(context, dequeueTwo);
+    assertTrue(dequeueTwoResult.isSuccess());
+    assertFalse(dequeueTwoResult.isEmpty());
+    byte [] dequeueTwoData = dequeueTwoResult.getValue();
+    DequeuePayload dequeueTwoPayload = DequeuePayload.read(dequeueTwoData);
+    Map<String,Long> dequeueTwoValues = dequeueTwoPayload.getValues();
+    assertEquals(1, dequeueTwoValues.size());
+    assertEquals(new Long(1), dequeueTwoValues.get("ONE"));
+    assertTrue(Bytes.equals(queueTwoData,
+        dequeueTwoPayload.getSerializedTuple()));
   }
 
   private static List<WriteOperation> batch(WriteOperation ... ops) {

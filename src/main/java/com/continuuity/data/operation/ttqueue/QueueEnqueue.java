@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
+import com.continuuity.api.data.OperationBase;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.api.data.ReadOperation;
@@ -9,11 +10,12 @@ import com.google.common.base.Objects;
 /**
  * Inserts an entry to the tail of a queue.
  */
-public class QueueEnqueue
-implements WriteOperation, ReadOperation {
+public class QueueEnqueue implements WriteOperation, ReadOperation {
 
+  /** Unique id for the operation */
+  private final long id = OperationBase.getId();
   private final byte [] queueName;
-  private final byte [] data;
+  private byte [] data;
 
   public QueueEnqueue(final byte [] queueName, final byte [] data) {
     this.queueName = queueName;
@@ -40,5 +42,18 @@ implements WriteOperation, ReadOperation {
   @Override
   public int getPriority() {
     return 2;
+  }
+
+  @Override
+  public long getId() {
+    return id;
+  }
+
+  /**
+   * Sets the data of this enqueue operation to the specified bytes.
+   * @param data bytes to set as data payload of this enqueue
+   */
+  public void setData(byte[] data) {
+    this.data = data;
   }
 }

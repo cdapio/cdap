@@ -53,6 +53,7 @@ public abstract class TestOmidExecutorLikeAFlow {
   
   @Test
   public void testGetGroupIdAndGetGroupMeta() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
     byte [] queueName = Bytes.toBytes("testGetGroupIdAndGetGroupMeta");
 
     long groupid = this.executor.execute(context, new GetGroupID(queueName));
@@ -75,10 +76,12 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertEquals(1L, meta.getValue().getGlobalHeadPointer());
     assertEquals(1, meta.getValue().getGroups().length);
     assertEquals(1L, meta.getValue().getGroups()[0].getHead().getEntryId());
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void testClearFabric() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
     byte [] queueName = Bytes.toBytes("queue://testClearFabric_queue");
     byte [] streamName = Bytes.toBytes("stream://testClearFabric_stream");
     byte [] keyAndValue = Bytes.toBytes("testClearFabric");
@@ -124,11 +127,13 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(streamName, consumer, config)).isEmpty());
     assertTrue(this.executor.execute(context,
         new ReadKey(keyAndValue)).isEmpty());
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void testStandaloneSimpleDequeue() throws Exception {
-
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    
     byte [] queueName = Bytes.toBytes("standaloneDequeue");
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
@@ -143,12 +148,12 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(context, Collections.singletonList((WriteOperation)
         new QueueEnqueue(queueName, Bytes.toBytes(1L))));
 
-    // Dequeue entry just written
+    // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
-    // Dequeue again should give same entry back
+    // DequeuePayload again should give same entry back
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
@@ -161,10 +166,12 @@ public abstract class TestOmidExecutorLikeAFlow {
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertTrue(result.isEmpty());
+    
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   private void assertDequeueResultSuccess(DequeueResult result, byte[] bytes) {
-    assertNotNull("Dequeue result was unexpectedly null", result);
+    assertNotNull("DequeuePayload result was unexpectedly null", result);
     assertTrue("Expected dequeue result to be successful but was " + result,
         result.isSuccess());
     assertTrue("Expected value (" + Bytes.toStringBinary(bytes) + ") but got " +
@@ -210,7 +217,8 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @Test
   public void testWriteBatchJustAck() throws Exception {
-
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
     TTQueueOnVCTable.TRACE = true;
@@ -228,7 +236,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(context, batch(new QueueEnqueue(queueName,
         Bytes.toBytes(1L))));
 
-    // Dequeue entry just written
+    // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
@@ -253,11 +261,14 @@ public abstract class TestOmidExecutorLikeAFlow {
     dequeue = new QueueDequeue(queueName, consumer, config);
     result = this.executor.execute(context, dequeue);
     assertTrue(result.isEmpty());
+    
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void testWriteBatchWithMultiWritesMultiEnqueuesPlusSuccessfulAck()
       throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     // Verify operations are re-ordered
     // Verify user write operations are stable sorted
@@ -288,7 +299,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(
         context, new QueueEnqueue(srcQueueName, srcQueueValue));
 
-    // Dequeue one entry from source queue
+    // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
         new QueueDequeue(srcQueueName, consumer, config));
     assertTrue(srcDequeueResult.isSuccess());
@@ -325,7 +336,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertEquals(expectedVal, Bytes.toLong(
         this.executor.execute(context, new ReadKey(dataKey)).getValue()));
 
-    // Dequeue from both dest queues, verify, ack
+    // DequeuePayload from both dest queues, verify, ack
     DequeueResult destDequeueResult = this.executor.execute(context,
         new QueueDequeue(destQueueOne, consumer, config));
     assertDequeueResultSuccess(destDequeueResult, destQueueOneVal);
@@ -345,12 +356,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(destQueueTwo, consumer, config));
     assertTrue(destDequeueResult.isEmpty());
 
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void
   testWriteBatchWithMultiWritesMultiEnqueuesPlusUnsuccessfulAckRollback()
       throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
@@ -380,7 +393,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     this.executor.execute(context,
         new QueueEnqueue(srcQueueName, srcQueueValue));
 
-    // Dequeue one entry from source queue
+    // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
         new QueueDequeue(srcQueueName, consumer, config));
     assertTrue(srcDequeueResult.isSuccess());
@@ -417,7 +430,7 @@ public abstract class TestOmidExecutorLikeAFlow {
           this.executor.execute(context, new ReadKey(dataKeys[i])).getValue()));
     }
 
-    // Dequeue from both dest queues, verify, ack
+    // DequeuePayload from both dest queues, verify, ack
     DequeueResult destDequeueResult = this.executor.execute(context,
         new QueueDequeue(destQueueOne, consumer, config));
     assertTrue(destDequeueResult.isSuccess());
@@ -483,10 +496,13 @@ public abstract class TestOmidExecutorLikeAFlow {
     destDequeueResult = this.executor.execute(context,
         new QueueDequeue(destQueueTwo, consumer, config));
     assertTrue(destDequeueResult.isEmpty());
+
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void testLotsOfEnqueuesThenDequeues() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     byte [] queueName = Bytes.toBytes("queue_testLotsOfEnqueuesThenDequeues");
     int numEntries = getNumIterations();
@@ -552,11 +568,13 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(queueName, consumerOne, configOne)).isEmpty());
     assertTrue(this.executor.execute(context,
         new QueueDequeue(queueName, consumerTwo, configTwo)).isEmpty());
-
+    
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
     final int n = getNumIterations();
@@ -579,7 +597,7 @@ public abstract class TestOmidExecutorLikeAFlow {
             result = executorFinal.execute(context,
                   new QueueDequeue(queueName, consumer, config));
           } catch (OperationException e) {
-            System.out.println("Dequeue failed! " + e.getMessage());
+            System.out.println("DequeuePayload failed! " + e.getMessage());
             return;
           }
           if (result.isSuccess()) {
@@ -643,13 +661,16 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Should have dequeued n entries
     assertEquals(n, dequeued.size());
+    
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   final byte [] threadedQueueName = Bytes.toBytes("threadedQueue");
 
   @Test
   public void testThreadedProducersAndThreadedConsumers() throws Exception {
-
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
+    
     long MAX_TIMEOUT = 30000;
     //    OmidTransactionalOperationExecutor.MAX_DEQUEUE_RETRIES = 100;
     //    OmidTransactionalOperationExecutor.DEQUEUE_RETRY_SLEEP = 1;
@@ -779,6 +800,8 @@ public abstract class TestOmidExecutorLikeAFlow {
                   printQueueInfo(this.threadedQueueName, 1);
                 }
                 assertEquals(expectedDequeues, groupTwoTotal);
+
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
   private TTQueueTable getQueueTable() throws OperationException {
@@ -819,7 +842,7 @@ public abstract class TestOmidExecutorLikeAFlow {
                   entry));
           this.enqueuedMap.put(entry, entry);
         } catch (OperationException e) {
-          fail("OperationException for Enqueue");
+          fail("OperationException for EnqueuePayload");
         }
       }
       System.out.println("Producer " + this.instanceid + " done");
@@ -853,7 +876,7 @@ public abstract class TestOmidExecutorLikeAFlow {
             result = TestOmidExecutorLikeAFlow.this.
                 executor.execute(context, dequeue);
           } catch (OperationException e) {
-            fail("Dequeue failed: " + e.getMessage());
+            fail("DequeuePayload failed: " + e.getMessage());
           }
           if (result.isSuccess() && this.config.isSingleEntry()) {
             try {
