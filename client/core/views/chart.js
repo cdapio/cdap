@@ -104,7 +104,19 @@ define([], function () {
 					container = $('<div class="sparkline-list-container" />').appendTo(this.get('element'));
 					height = 36;
 					width -= 32;
+
+				} else if (this.get('flowletMode')) {
+
+					$(this.get('element')).addClass('white');
+					label = $('<div class="sparkline-flowlet-value" />').appendTo(this.get('element'));
+					$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle(metric) + '</div>');
+					
+					container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
+					width -= 52;
+					height = 70;
+
 				} else {
+					
 					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle(metric) + '</div>');
 					label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 					container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));

@@ -346,6 +346,39 @@ h1 {
 	padding: 0;
 }
 
+.sparkline-flowlet-box {
+	border: 1px solid #83cce1;
+}
+.sparkline-flowlet-container {
+	background-image: url(../img/flowlet-sparkline-bg.png);
+	margin-right: 50px;
+}
+.sparkline-flowlet-title {
+	margin-right: 50px;
+	font-family: "HelveticaNeue-CondensedBold";
+	color: #FFF;
+	text-transform: uppercase;
+	padding: 2px 4px;
+}
+.sparkline-flowlet-value {
+	width: 45px;
+	height: 60px;
+	float: right;
+	border-left: 1px solid #83cce1;
+
+	font-family: "HelveticaNeue-CondensedBold";
+	font-size: 23px;
+	padding-top: 38px;
+	padding-left: 5px;
+	color: #FFF;
+	overflow: hidden;
+	line-height: 12px;
+}
+.sparkline-flowlet-value span {
+	font-size: 10px;
+	color: #a0d8e8;
+}
+
 .sparkline-loading .sparkline-list-value {
 	background-image: url(../img/chart-loading.gif);
 	background-position: center center;
@@ -360,8 +393,8 @@ path.sparkline-data {
 .blue path.sparkline-data {
 	stroke: #40AFD0;
 }
-.green path.sparkline-data {
-	stroke: #66c762;
+.white path.sparkline-data {
+	stroke: #fff;
 }
 .yellow path.sparkline-data {
 	stroke: #e6e450;
@@ -380,17 +413,16 @@ text {
 	line-height: 55px;
 }
 .drop-zone {
-	width: 268px;
-	background-image: url(../img/dropzone-background.png);
+	width: 264px;
 	color: #777;
 	text-align: center;
 	margin: 10px 0px;
 	line-height: 66px;
 	margin-right: 0;
 	padding: 0;
-	box-shadow: inset 1px 1px 8px rgba(0, 0, 0, 0.15), 1px 1px 1px white;
-	border-radius: 3px 0px 0px 3px;
-	border-bottom: 1px solid #BEBEBE;
+	border: 3px dotted #CCC;
+	border-right: 0;
+	border-radius: 3px;
 }
 .drop-zone a {
 	color: #40AFD0;
@@ -676,9 +708,9 @@ a.brand {
 .table-condensed td {
 	line-height: 14px !important;
 }
-td {
+.panel td {
 	line-height: normal !important;
-	padding: 0px 10px;
+	padding: 10px;
 }
 
 .label {
@@ -915,7 +947,6 @@ a strong {
 }
 #flowlet-popup {
 	width: 630px;
-	height: 450px;
 	margin: 32px auto 0;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
@@ -949,24 +980,46 @@ a strong {
 }
 .flowlet-popup-tab {
 	float: left;
-	width: 33%;
+	width: 210px;
 	text-align: center;
 	font-size: 16px;
 	line-height: 28px;
 }
 
+.flowlet-popup-tab {
+	background-color: #b5bfc3;
+}
+.flowlet-popup-tab a {
+	color: #505050;
+}
+.flowlet-popup-tab.tab-selected {
+	background-color: #8b9395;
+}
+.flowlet-popup-tab.tab-selected a {
+	color: #fff;
+}
+
 .flowlet-popup-tab-content {
-	padding: 16px;
+	
+	min-height: 214px;
+}
+.flowlet-popup-tab-content td {
+	padding: 4px;
+}
+.flowlet-popup-tab-content td.flowlet-blue {
+	background-color: #41b0d1;
+	width: 50%;
 }
 
 #flowlet-popup-tab-content {
 	
 }
 #flowlet-popup-inputs {
-	display: none;
+	
 }
 #flowlet-popup-processed {
 	
+	display: none;
 }
 #flowlet-popup-outputs {
 	display: none;

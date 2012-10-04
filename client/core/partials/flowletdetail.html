@@ -3,55 +3,85 @@
 <div id="flowlet-popup-icon" />
 <h1 id="flowlet-popup-title"> {{controller.current.name}}</h1>
 <div id="flowlet-popup-tabs">
-	<div class="flowlet-popup-tab"><a href="#" tab-name="input" {{action select on="click"}}>Input</a></div>
-	<div class="flowlet-popup-tab"><a href="#" tab-name="processed" {{action select on="click"}}>Processed</a></div>
-	<div class="flowlet-popup-tab"><a href="#" tab-name="output" {{action select on="click"}}>Output</a></div>
+	<div id="flowlet-popup-inputs-tab" class="flowlet-popup-tab tab-selected"><a href="#" tab-name="inputs" {{action select on="click"}}>Inputs ({{controller.inputs.length}})</a></div>
+	<div id="flowlet-popup-processed-tab" class="flowlet-popup-tab"><a href="#" tab-name="processed" {{action select on="click"}}>Processed</a></div>
+	<div id="flowlet-popup-outputs-tab" class="flowlet-popup-tab"><a href="#" tab-name="outputs" {{action select on="click"}}>Outputs ({{controller.outputs.length}})</a></div>
 </div>
 <div id="flowlet-popup-tab-content">
 
 	<div id="flowlet-popup-inputs" class="flowlet-popup-tab-content">
 
-		<div class="flowlet-popup input-contributor">
-
+		{{#if controller.inputs.length}}
+		<table style="width: 100%;">
+			{{#each controller.inputs tagName="tbody"}}
+			<tr>
+				<td>
+					{{#each contrib}}
+						{{name}}
+					{{/each}}
+				</td>
+				<td>
+					{{name}}
+				</td>
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="processed.count" classNames="sparkline-flowlet-box"}}
+				</td>
+			</tr>
+			{{/each}}
+		</table>
+		{{else}}
+		<div class="object-list-empty">
+			There are no inputs on this flowlet.
 		</div>
-		<div class="flowlet-popup input-stream">
-
-		</div>
-		<div class="flowlet-popup input-queue">
-			{{view C.Vw.Chart listMode="true" metric="processed.count"}}
-		</div>
+		{{/if}}
 
 	</div>
 
 	<div id="flowlet-popup-processed" class="flowlet-popup-tab-content">
 
-		<div class="flowlet-popup processed-tracker">
-			{{view C.Vw.Chart listMode="true" width="598" metric="processed.count"}}
-		</div>
-		<div class="flowlet-popup processed-tracker">
-			{{view C.Vw.Chart listMode="true" width="598" metric="busyness"}}
-		</div>
-		<div class="flowlet-popup processed-tracker">
-			{{view C.Vw.Chart listMode="true" width="598" metric="flowlet.failure.count"}}
-		</div>
-		<div class="flowlet-popup processed-tracker">
-			{{view C.Vw.Chart listMode="true" width="598" metric="dataops.count"}}
-		</div>
+		<table style="width: 100%">
+			<tr>
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="processed.count" classNames="sparkline-flowlet-box"}}
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="dataops.count" classNames="sparkline-flowlet-box"}}
+				</td>
+			</tr>
+			<tr>
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="busyness" classNames="sparkline-flowlet-box"}}
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="flowlet.failure.count" classNames="sparkline-flowlet-box"}}
+				</td>
+			</tr>
+		</table>
 
 	</div>
 
 	<div id="flowlet-popup-outputs" class="flowlet-popup-tab-content">
-
-		<div class="flowlet-popup input-contributor">
-
+		{{#if controller.outputs.length}}
+		<table style="width: 100%;">
+			{{#each controller.outputs tagName="tbody"}}
+			<tr>
+				<td class="flowlet-blue">
+					{{view C.Vw.Chart flowletMode="true" width="306" metric="processed.count" classNames="sparkline-flowlet-box"}}
+				</td>
+				<td>
+					{{name}}
+				</td>
+				<td>
+					{{#each contrib}}
+						{{name}}
+					{{/each}}
+				</td>
+			</tr>
+			{{/each}}
+		</table>
+		{{else}}
+		<div class="object-list-empty">
+			There are no outputs on this flowlet.
 		</div>
-		<div class="flowlet-popup input-stream">
-
-		</div>
-		<div class="flowlet-popup input-queue">
-			{{view C.Vw.Chart metric="processed.count"}}
-		</div>
-
+		{{/if}}
 	</div>
 
 </div>
