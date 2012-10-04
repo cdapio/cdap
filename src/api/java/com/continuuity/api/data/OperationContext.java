@@ -6,8 +6,20 @@ public class OperationContext {
   private String account;
 
   public OperationContext(String account, String application) {
+
+    if (account == null)
+      throw new IllegalArgumentException("account cannot be null");
+    if (account.isEmpty())
+      throw new IllegalArgumentException("account cannot be empty");
+    if (application != null && application.isEmpty())
+      throw new IllegalArgumentException("application cannot be empty");
+
     this.account = account;
     this.application = application;
+  }
+
+  public OperationContext(String account) {
+    this(account, null);
   }
 
   public String getApplication() {
@@ -19,5 +31,5 @@ public class OperationContext {
   }
 
   public static final OperationContext DEFAULT =
-      new OperationContext("default", "default");
+      new OperationContext("default");
 }
