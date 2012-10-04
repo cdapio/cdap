@@ -445,7 +445,7 @@ try {
 
 					socket.emit('upload', {'status': 'Initialized...', 'resource_identifier': resource_identifier});
 
-					function send_deploy () {
+					var send_deploy = function () {
 
 						socket.emit('upload', {'status': 'Deploying...'});
 
@@ -481,9 +481,9 @@ try {
 							}
 						});
 
-					}
+					};
 
-					function send_chunk (index, size) {
+					var send_chunk = function (index, size) {
 
 						FAR.chunk(auth_token, resource_identifier, data.slice(index, index + size), function () {
 
@@ -503,7 +503,7 @@ try {
 								}
 							}
 						});
-					}
+					};
 
 					var CHUNK_SIZE = 102400;
 					send_chunk(0, CHUNK_SIZE > data.length ? data.length : CHUNK_SIZE);
