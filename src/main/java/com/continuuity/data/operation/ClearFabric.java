@@ -4,26 +4,62 @@ import com.continuuity.api.data.Operation;
 import com.continuuity.api.data.OperationBase;
 import com.google.common.base.Objects;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Administrative operation for clearing the data fabric with options for only
  * clearing user data, queues, and/or streams.
  */
 public class ClearFabric implements Operation {
 
+  public enum ToClear {
+    DATA, META, TABLES, QUEUES, STREAMS, ALL
+  }
+
   /** Unique id for the operation */
   private final long id = OperationBase.getId();
 
-  private final boolean clearData;
-  private final boolean clearMeta;
-  private final boolean clearTables;
-  private final boolean clearQueues;
-  private final boolean clearStreams;
+  private boolean clearData;
+  private boolean clearMeta;
+  private boolean clearTables;
+  private boolean clearQueues;
+  private boolean clearStreams;
 
   /**
-   * clears everything (user data, queues, and streams).
+   * clears everything (user data, tables, meta data, queues, and streams).
    */
   public ClearFabric() {
-    this(true, true, true, true, true);
+    this(ToClear.ALL);
+  }
+
+  /**
+   * clears the given scope (user data, tables, meta data, queues,
+   * streams, or all).
+   */
+  public ClearFabric(ToClear whatToClear) {
+    this(Collections.singletonList(whatToClear));
+  }
+
+  /**
+   * clears the listed scopes (user data, tables, meta data, queues,
+   * streams, or all).
+   */
+  public ClearFabric(List<ToClear> whatToClear) {
+    clearData = clearMeta = clearTables = clearQueues =
+        clearStreams = false;
+    for (ToClear toClear : whatToClear) {
+      switch (toClear) {
+        case ALL: clearData = clearMeta = clearTables = clearQueues =
+            clearStreams = true;
+          break;
+        case DATA: clearData = true; break;
+        case META: clearMeta = true; break;
+        case TABLES: clearTables = true; break;
+        case QUEUES: clearQueues = true; break;
+        case STREAMS: clearStreams = true; break;
+      }
+    }
   }
 
   /**
@@ -34,6 +70,7 @@ public class ClearFabric implements Operation {
    * @param clearQueues whether to clear queues
    * @param clearStreams whether to clear streams
    */
+  @Deprecated
   public ClearFabric(final boolean clearData,
                      final boolean clearMeta,
                      final boolean clearTables,

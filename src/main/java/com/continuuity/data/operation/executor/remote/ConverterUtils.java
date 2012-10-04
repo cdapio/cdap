@@ -199,12 +199,13 @@ public class ConverterUtils {
   }
   /** unwrap a ClearFabric operation */
   ClearFabric unwrap(TClearFabric clearFabric) {
-    return new ClearFabric(
-        clearFabric.isClearData(),
-        clearFabric.isClearMeta(),
-        clearFabric.isClearTables(),
-        clearFabric.isClearQueues(),
-        clearFabric.isClearStreams());
+    ArrayList<ClearFabric.ToClear> toClear = Lists.newArrayList();
+    if (clearFabric.isClearData()) toClear.add(ClearFabric.ToClear.DATA);
+    if (clearFabric.isClearMeta()) toClear.add(ClearFabric.ToClear.META);
+    if (clearFabric.isClearTables()) toClear.add(ClearFabric.ToClear.TABLES);
+    if (clearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
+    if (clearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
+    return new ClearFabric(toClear);
   }
 
   /** wrap a Write operation */

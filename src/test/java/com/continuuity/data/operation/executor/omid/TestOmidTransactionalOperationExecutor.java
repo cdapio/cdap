@@ -3,46 +3,24 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.OperationContext;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public abstract class TestOmidTransactionalOperationExecutor {
 
@@ -108,8 +86,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new QueueDequeue(streamKey, consumer, config)).getValue()));
 
     // clear data only
-    executor.execute(context,
-        new ClearFabric(true, false, false, false, false));
+    executor.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
 
     // data is gone, queues still there
     assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());
@@ -118,9 +95,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
         new QueueDequeue(streamKey, consumer, config)).getValue()));
 
-    // clear queues
-    executor.execute(context,
-        new ClearFabric(false, false, false, true, true));
+    // clear queues and streams
+    executor.execute(context, new ClearFabric(Arrays.asList(
+        ClearFabric.ToClear.QUEUES, ClearFabric.ToClear.STREAMS)));
 
     // everything is gone
     assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());
@@ -143,8 +120,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new QueueDequeue(streamKey, consumer, config)).getValue()));
 
     // wipe just the streams
-    executor.execute(context,
-        new ClearFabric(false, false, false, false, true));
+    executor.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
 
     // streams gone, queues and data remain
     assertArrayEquals(dataKey,
@@ -155,8 +131,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
     // wipe data and queues
-    executor.execute(context,
-        new ClearFabric(true, false, false, true, false));
+    executor.execute(context, new ClearFabric(Arrays.asList(
+        ClearFabric.ToClear.DATA, ClearFabric.ToClear.QUEUES)));
 
     // everything is gone
     assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());

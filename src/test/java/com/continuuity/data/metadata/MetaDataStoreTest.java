@@ -72,7 +72,7 @@ abstract public class MetaDataStoreTest {
 
   @Test
   public void testList() throws OperationException {
-    opex.execute(context, new ClearFabric(true, false, false, false, false));
+    opex.execute(context, new ClearFabric(ClearFabric.ToClear.META));
 
     testOneAddGet(false, "a", "p", "x", "1", "a", "1", null, null);
     testOneAddGet(false, "a", "p", "y", "2", "a", "2", null, null);

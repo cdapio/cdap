@@ -16,7 +16,7 @@ public abstract class HyperSQLMetaDataStoreTest extends MetaDataStoreTest {
         new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     opex = injector.getInstance(OperationExecutor.class);
     opex.execute(OperationContext.DEFAULT,
-        new ClearFabric(true, true, true, true, true));
+        new ClearFabric(ClearFabric.ToClear.ALL));
   }
 
 }
