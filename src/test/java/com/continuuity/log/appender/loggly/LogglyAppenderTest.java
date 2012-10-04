@@ -50,7 +50,7 @@ public class LogglyAppenderTest {
 
   @Test
   public void configuredLog4jWithFile() throws Exception {
-    final URL url = getClass().getClassLoader().getResource("log4j.properties");
+    final URL url = getClass().getClassLoader().getResource("log4j.test.properties");
     PropertyConfigurator.configure(url);
     org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger("test");
     for(int i = 0; i <2; ++i) {
