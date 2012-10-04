@@ -36,8 +36,10 @@ public final class MetaDataSerializer {
     output = new Output(Constants.MAX_SERDE_BUFFER);
     input = new Input(Constants.MAX_SERDE_BUFFER);
 		kryo.register(byte[].class);
-		kryo.register(TreeMap.class);
-	}
+    kryo.register(TreeMap.class);
+    kryo.register(MetaData.class);
+    kryo.register(MetaDataEntry.class);
+  }
 
 	/**
 	 * Serialize a meta data entry

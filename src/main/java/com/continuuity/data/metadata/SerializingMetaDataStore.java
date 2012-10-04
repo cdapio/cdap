@@ -208,6 +208,122 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   @Override
+  public void updateField(OperationContext context,
+                          String account, String application,
+                          String type, String id,
+                          String field, String value,
+                          int retries) throws OperationException {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
+
+    updateField(context, account, application,
+        type, id, field, null, value, null, retries);
+  }
+
+  @Override
+  public void updateField(OperationContext context,
+                          String account, String application,
+                          String type, String id,
+                          String field, byte[] value,
+                          int retries) throws OperationException {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
+
+    updateField(context, account, application,
+        type, id, null, field, null, value, retries);
+  }
+
+  private void updateField(OperationContext context,
+                          String account, String application,
+                          String type, String id,
+                          String textField, String binField,
+                          String textValue, byte[] binValue,
+                          int retryAttempts) throws OperationException {
+    if (account == null)
+      throw new IllegalArgumentException("account cannot be null");
+    if (account.isEmpty())
+      throw new IllegalArgumentException("account cannot be empty");
+    if (id == null)
+      throw new IllegalArgumentException("id cannot be null");
+    if (id.isEmpty())
+      throw new IllegalArgumentException("id cannot be empty");
+    if (application != null && application.isEmpty())
+      throw new IllegalArgumentException("application cannot be empty");
+    if (type == null)
+      throw new IllegalArgumentException("type cannot be null");
+    if (type.isEmpty())
+      throw new IllegalArgumentException("type cannot be empty");
+
+    byte[] rowkey = makeRowKey(account);
+    byte[] column = makeColumnKey(application, type, id);
+
+    int attempts = retryAttempts < 0 ?
+        DEFAULT_RETRIES_ON_CONFLICT : retryAttempts;
+
+    while (attempts >= 0) { // 0 means no retry, but of course a first attempt
+      --attempts;
+
+      // read meta data entry
+      Read read = new Read(tableName, rowkey, column);
+      OperationResult<Map<byte[], byte[]>> result =
+          opex.execute(context, read);
+
+      // throw exception if not existing
+      if (result.isEmpty())
+        throw new OperationException(StatusCode.WRITE_CONFLICT,
+            "Meta data entry does not exist.");
+
+      // get the raw (serialized) bytes of the entry
+      byte[] bytes = result.getValue().get(column);
+      if (bytes == null)
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+            "Meta data entry is null.");
+
+      // de-serialize the entry
+      MetaDataEntry entry;
+      try {
+        entry = getSerializer().deserialize(bytes);
+      } catch (MetaDataException e) {
+        throw new OperationException(
+            StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      }
+
+      // update the field
+      if (textField != null)
+        entry.addField(textField, textValue);
+      else if (binField != null)
+        entry.addField(binField, binValue);
+      else throw new IllegalArgumentException(
+            "Only one of textField or binField may be null");
+
+      // re-serialize
+      byte[] newBytes;
+      try {
+        newBytes = getSerializer().serialize(entry);
+      } catch (MetaDataException e) {
+        throw new OperationException(
+            StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      }
+
+      // write w/ compareAndSwap
+      try {
+        CompareAndSwap compareAndSwap = new CompareAndSwap(
+            tableName, rowkey, column, bytes, newBytes);
+        opex.execute(context, compareAndSwap);
+        return;
+      } catch (OperationException e) {
+        if (e.getStatus() == StatusCode.WRITE_CONFLICT && attempts >= 0)
+          continue;
+        throw e;
+      }
+    }
+  }
+
+  @Override
   public MetaDataEntry get(OperationContext context,
                            String account, String application,
                            String type, String id) throws OperationException {

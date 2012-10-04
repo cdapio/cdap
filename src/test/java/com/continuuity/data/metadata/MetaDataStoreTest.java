@@ -1,14 +1,21 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.MetaDataEntry;
+import com.continuuity.api.data.MetaDataStore;
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 abstract public class MetaDataStoreTest {
 
@@ -187,6 +194,86 @@ abstract public class MetaDataStoreTest {
 
     // make sure account b is still there
     Assert.assertNotNull(mds.get(context, "b", "q", "c", "z"));
+  }
+
+  @Test
+  public void testUpdateField() throws Exception {
+    // create a meta data entry with two fields, one text one bin
+    MetaDataEntry entry = new MetaDataEntry("default", null, "test", "abc");
+    entry.addField("text", "0");
+    entry.addField("bin", Bytes.toBytes(0));
+    mds.add(context, entry);
+
+    // start two threads that loop n times
+    //   - each attempts to update one of the fields
+    //   - each increments the field if successful
+    //   - each counts the number of write conflicts
+
+    final AtomicInteger textConflicts = new AtomicInteger(0);
+    final AtomicInteger binaryConflicts = new AtomicInteger(0);
+
+    Thread textThread = new Thread() {
+      @Override
+      public void run() {
+        int value = 1;
+        for (int i = 1; i <= 1000; i++) {
+          try {
+            mds.updateField(context, "default", null, "test", "abc", "text",
+                Integer.toString(value), 0);
+            value++;
+          } catch (OperationException e) {
+            if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+              // System.out.println("Conflict for text " + i + ": " + value);
+              textConflicts.incrementAndGet();
+            } else {
+              Assert.fail(e.getMessage());
+            }
+          } catch (Exception e) {
+            Assert.fail(e.getMessage());
+          }
+        }
+      }
+    };
+    Thread binaryThread = new Thread() {
+      @Override
+      public void run() {
+        int value = 1;
+        for (int i = 1; i <= 1000; i++) {
+          try {
+            mds.updateField(context, "default", null, "test", "abc", "bin",
+                Bytes.toBytes(value), 0);
+            value++;
+          } catch (OperationException e) {
+            if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+              // System.out.println("Conflict for binary " + i + ": " + value);
+              binaryConflicts.incrementAndGet();
+            } else
+              Assert.fail(e.getMessage());
+          } catch (Exception e) {
+            Assert.fail(e.getMessage());
+          }
+        }
+      }
+    };
+    textThread.start();
+    binaryThread.start();
+
+    // in the end, the values of the two fields must be incremented
+    // (n - #conflicts(field)) times
+    textThread.join();
+    binaryThread.join();
+
+    entry = mds.get(context, "default", null, "test", "abc");
+    Assert.assertNotNull(entry);
+    String text = entry.getTextField("text");
+    byte[] binary = entry.getBinaryField("bin");
+    System.out.println("text: " + text + ", " + textConflicts.get() +
+        " conflicts");
+    System.out.println("binary: " + Arrays.toString(binary) + ", " +
+        "" + binaryConflicts.get() + " conflicts");
+
+    Assert.assertEquals(1000, Integer.parseInt(text) + textConflicts.get());
+    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());
   }
 
 }
