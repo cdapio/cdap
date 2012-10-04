@@ -63,27 +63,6 @@ public class ClearFabric implements Operation {
   }
 
   /**
-   * clears data, queues, and streams according to the specified boolean flags.
-   * @param clearData whether to clear user data
-   * @param clearMeta whether to clear meta data
-   * @param clearTables whether to clear named tables
-   * @param clearQueues whether to clear queues
-   * @param clearStreams whether to clear streams
-   */
-  @Deprecated
-  public ClearFabric(final boolean clearData,
-                     final boolean clearMeta,
-                     final boolean clearTables,
-                     final boolean clearQueues,
-                     final boolean clearStreams) {
-    this.clearData = clearData;
-    this.clearMeta = clearMeta;
-    this.clearTables = clearTables;
-    this.clearQueues = clearQueues;
-    this.clearStreams = clearStreams;
-  }
-
-  /**
    * Returns true if user data should be cleared.
    * @return true if user data should be cleared, false if not
    */
