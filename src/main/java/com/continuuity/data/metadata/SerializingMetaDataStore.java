@@ -22,6 +22,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
   private static final Charset charsetUTF8 = Charset.forName("UTF-8");
   private static final String rowkeyPrefix = "_metadata_";
+  private static final String tableName = "meta";
 
   private static byte[] string2Bytes(String string) {
     return string.getBytes(charsetUTF8);
@@ -168,7 +169,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
     OperationResult<Map<byte[], byte[]>> result;
     try {
-      Read read = new Read(rowkey, column);
+      Read read = new Read(tableName, rowkey, column);
       result = opex.execute(context, read);
     } catch (OperationException e) {
       String message =
@@ -189,13 +190,13 @@ public class SerializingMetaDataStore implements MetaDataStore {
     try {
       if (isUpdate) {
         // generate a write
-        Write write = new Write(rowkey, column, bytes);
+        Write write = new Write(tableName, rowkey, column, bytes);
         opex.execute(context, write);
       } else {
         // generate a compare-and-swap operation to make sure there is no add
         // conflict with some other thread or process
         CompareAndSwap compareAndSwap =
-            new CompareAndSwap(rowkey, column, null, bytes);
+            new CompareAndSwap(tableName, rowkey, column, null, bytes);
         opex.execute(context, compareAndSwap);
       }
     } catch (OperationException e) {
@@ -230,7 +231,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     byte[] column = makeColumnKey(application, type, id);
 
     try {
-      Read read = new Read(rowkey, column);
+      Read read = new Read(tableName, rowkey, column);
       OperationResult<Map<byte[], byte[]>> result =
           opex.execute(context, read);
 
@@ -277,7 +278,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     byte[] column = makeColumnKey(application, type, id);
 
     try {
-      opex.execute(context, new Delete(rowkey, column));
+      opex.execute(context, new Delete(tableName, rowkey, column));
 
     } catch (OperationException e) {
       String message =
@@ -307,7 +308,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
       byte[] rowkey = makeRowKey(account);
       byte[] start = startColumnKey(application, type);
       byte[] stop = stopColumnKey(application, type);
-      ReadColumnRange read = new ReadColumnRange(rowkey, start, stop);
+      ReadColumnRange read =
+          new ReadColumnRange(tableName, rowkey, start, stop);
       OperationResult<Map<byte[],byte[]>> result = opex.execute(context, read);
 
       if (result.isEmpty())
@@ -322,8 +324,6 @@ public class SerializingMetaDataStore implements MetaDataStore {
           throw new OperationException(
               StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
         }
-
-
         if (!type.equals(meta.getType()))
           continue;
         if (application != null && !application.equals(meta.getApplication()))
@@ -372,7 +372,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       throw new IllegalArgumentException("application cannot be empty");
 
     byte[] rowkey = makeRowKey(account);
-    ReadColumnRange read = new ReadColumnRange(rowkey, null, null);
+    ReadColumnRange read = new ReadColumnRange(tableName, rowkey, null, null);
     OperationResult<Map<byte[], byte[]>> result;
     try {
       result = opex.execute(context, read);
@@ -396,7 +396,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       columns = cols.toArray(new byte[cols.size()][]);
     }
 
-    Delete delete = new Delete(rowkey, columns);
+    Delete delete = new Delete(tableName, rowkey, columns);
     try {
       opex.execute(context, delete);
     } catch (OperationException e) {
