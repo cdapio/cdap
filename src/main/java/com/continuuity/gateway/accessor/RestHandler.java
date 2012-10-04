@@ -6,6 +6,7 @@ import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.metrics2.api.CMetrics;
+import com.google.common.collect.Lists;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -395,26 +396,21 @@ public class RestHandler extends NettyRestHandler {
       case CLEAR : {
         metrics.meter(this.getClass(), Constants.METRIC_CLEAR_REQUESTS, 1);
         // figure out what to clear
-        boolean clearData = false;
-        boolean clearMeta = false;
-        boolean clearTables = false;
-        boolean clearQueues = false;
-        boolean clearStreams = false;
+        List<ClearFabric.ToClear> toClear = Lists.newArrayList();
         for (String param : clearParams) {
           for (String what : param.split(",")) {
             if ("all".equals(what))
-              clearData = clearQueues = clearStreams = clearMeta =
-                  clearTables = true;
+              toClear.add(ClearFabric.ToClear.ALL);
             else if ("data".equals(what))
-              clearData = true;
+              toClear.add(ClearFabric.ToClear.DATA);
             else if ("meta".equals(what))
-              clearMeta = true;
+              toClear.add(ClearFabric.ToClear.META);
             else if ("tables".equals(what))
-              clearTables = true;
+              toClear.add(ClearFabric.ToClear.TABLES);
             else if ("queues".equals(what))
-              clearQueues = true;
+              toClear.add(ClearFabric.ToClear.QUEUES);
             else if ("streams".equals(what))
-              clearStreams = true;
+              toClear.add(ClearFabric.ToClear.STREAMS);
             else {
               metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
               LOG.debug("Received invalid clear request with URI " +
@@ -423,8 +419,7 @@ public class RestHandler extends NettyRestHandler {
                   HttpResponseStatus.BAD_REQUEST);
               break;
         } } }
-        ClearFabric clearFabric = new ClearFabric(
-            clearData, clearMeta, clearTables, clearQueues, clearStreams);
+        ClearFabric clearFabric = new ClearFabric(toClear);
         try {
           this.accessor.getExecutor().
               execute(OperationContext.DEFAULT, clearFabric);
