@@ -26,6 +26,7 @@ dependencies {
     else
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
     }
     // Self dependencies.
     compile sourceSets.api.output
