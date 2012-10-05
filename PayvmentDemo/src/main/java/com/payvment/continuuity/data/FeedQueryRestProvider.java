@@ -1,5 +1,6 @@
 package com.payvment.continuuity.data;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -11,7 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.QueryRestProvider;
+import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
+import com.payvment.continuuity.util.Bytes;
 
 /**
  * Exposes Payvment Lish feeds as REST calls in the Gateway.
@@ -21,8 +25,8 @@ import com.continuuity.api.data.QueryRestProvider;
  */
 public class FeedQueryRestProvider extends QueryRestProvider {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(FeedQueryRestProvider.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(FeedQueryRestProvider.class);
 
   private final ClusterFeedReader reader;
   
@@ -112,15 +116,158 @@ public class FeedQueryRestProvider extends QueryRestProvider {
    */
   private void executeQuery(MessageEvent message, String readMethod,
       Map<String, String> args) {
-    HttpRequest request = (HttpRequest)message.getMessage();
-    String str = "Received method " + readMethod + " with args ";
+    String str = "Received method " + readMethod + " with args " +
+        toString(args);
+    LOG.info(str);
+    System.out.println(str);
+    
+    // Determine if the readMethod type and args are valid
+    // If they are valid, call specific method to perform query
+    // Currently only supported methods are 'readactivity' and 'readpopular'
+    
+    if (readMethod.equals("readactivity")) {
+      
+      // Requires clusterid and limit
+      if (!args.containsKey("clusterid") ||
+          !args.containsKey("limit")) {
+        LOG.warn("Received 'readactivity' query but without a required " +
+          "argument (args=" + toString(args) + ")");
+        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      String clusteridStr = args.get("clusterid");
+      String limitStr = args.get("limit");
+      Integer clusterid = null;
+      Integer limit = null;
+      try {
+        clusterid = Integer.valueOf(clusteridStr);
+        limit = Integer.valueOf(limitStr);
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Numeric argument was not in an acceptable format " +
+          "(args=" + toString(args) + ")", nfe);
+        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      
+      // Check for additional arguments (first setting default values)
+      Long maxts = Long.MAX_VALUE;
+      Long mints = 0L;
+      try {
+        if (args.containsKey("maxts")) {
+          maxts = Long.valueOf(args.get("maxts"));
+        }
+        if (args.containsKey("mints")) {
+          mints = Long.valueOf(args.get("mints"));
+        }
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Numeric argument was not in an acceptable format " +
+            "(args=" + toString(args) + ")", nfe);
+          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          return;
+      }
+      
+      // All arguments parsed and verified.  Call activity feed read method.
+      executeActivityFeedRead(message, clusterid, limit, maxts, mints);
+      
+    } else if (readMethod.equals("readpopular")) {
+
+      // Requires clusterid, numhours, and limit
+      if (!args.containsKey("clusterid") ||
+          !args.containsKey("numhours") ||
+          !args.containsKey("limit")) {
+        LOG.warn("Received 'readpopular' query but without a required " +
+          "argument (args=" + toString(args) + ")");
+        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      String clusteridStr = args.get("clusterid");
+      String numhoursStr = args.get("numhours");
+      String limitStr = args.get("limit");
+      Integer clusterid = null;
+      Integer numhours = null;
+      Integer limit = null;
+      try {
+        clusterid = Integer.valueOf(clusteridStr);
+        numhours = Integer.valueOf(numhoursStr);
+        limit = Integer.valueOf(limitStr);
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Numeric argument was not in an acceptable format " +
+          "(args=" + toString(args) + ")", nfe);
+        respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      
+      // Check for additional arguments (first setting default values)
+      Integer offset = 0;
+      try {
+        if (args.containsKey("offset")) {
+          offset = Integer.valueOf(args.get("offset"));
+        }
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Numeric argument was not in an acceptable format " +
+            "(args=" + toString(args) + ")", nfe);
+          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+          return;
+      }
+      
+      // All arguments parsed and verified.  Call popular feed read method.
+      executePopularFeedRead(message, clusterid, numhours, limit, offset);
+      
+    } else {
+      
+      // Invalid method
+      LOG.warn("Invalid read method.  method=" + readMethod + ", args=" +
+          toString(args));
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  private void executeActivityFeedRead(MessageEvent message, Integer clusterid,
+      Integer limit, Long maxts, Long mints) {
+    try {
+      ActivityFeed feed =
+          reader.getActivityFeed(clusterid, limit, maxts, mints);
+      respondSuccess(message.getChannel(), (HttpRequest)message.getMessage(),
+          Bytes.toBytes(ActivityFeed.toJson(feed)));
+    } catch (OperationException e) {
+      LOG.warn("Exception reading activity feed (clusterid= " + clusterid +
+          ", limit=" + limit + ", maxts=" + maxts + ", mints=" + mints + ")",
+          e);
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  private void executePopularFeedRead(MessageEvent message, Integer clusterid,
+      Integer numhours, Integer limit, Integer offset) {
+    try {
+      PopularFeed feed =
+          reader.getPopularFeed(clusterid, numhours, limit, offset);
+      List<PopularFeedEntry> entries = feed.getFeed(limit + offset);
+      String jsonResult = null;
+      if (offset == 0) {
+        jsonResult = PopularFeed.toJson(entries);
+      } else if (offset >= entries.size()) {
+        entries.clear();
+        jsonResult = PopularFeed.toJson(entries);
+      } else {
+        entries = entries.subList(offset, entries.size());
+        jsonResult = PopularFeed.toJson(entries);
+      }
+      respondSuccess(message.getChannel(), (HttpRequest)message.getMessage(),
+          Bytes.toBytes(jsonResult));
+    } catch (OperationException e) {
+      LOG.warn("Exception reading popular feed (clusterid= " + clusterid +
+          ", limit=" + limit + ", numhours=" + numhours + ", offset=" + offset,
+          e);
+      respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+    }
+  }
+
+  private String toString(Map<String, String> args) {
+    String str = "";
     for (Map.Entry<String, String> arg : args.entrySet()) {
       str += arg.getKey() + "=" + arg.getValue() + " ";
     }
-    LOG.info(str);
-    
-    // TODO: Final wiring between REST and ClusterFeedReader
-    
-    super.respondSuccess(message.getChannel(), request);
+    return str.substring(0, str.length() - 1);
   }
 }

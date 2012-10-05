@@ -6,10 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.StatusCode;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.lib.SortedCounterTable;
 import com.payvment.continuuity.lib.SortedCounterTable.Counter;
@@ -18,6 +22,9 @@ import com.payvment.continuuity.util.Constants;
 import com.payvment.continuuity.util.Helpers;
 
 public class ClusterFeedReader {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ClusterFeedReader.class);
 
   private final DataFabric fabric;
 
@@ -52,6 +59,11 @@ public class ClusterFeedReader {
       long maxStamp, long minStamp) throws OperationException {
     // Read cluster info
     Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
+    if (clusterInfo == null || clusterInfo.isEmpty()) {
+      String str = "Cluster not found (id=" + clusterId + ")";
+      LOG.warn(str);
+      throw new OperationException(StatusCode.KEY_NOT_FOUND, str);
+    }
     // For each category, open caching sorted lists on activity feeds
     // starting from max_stamp to min_stamp (but each reversed)
     List<CachingActivityFeedScanner> scanners =
@@ -107,6 +119,11 @@ public class ClusterFeedReader {
     PopularFeed popFeed = new PopularFeed();
     // Read cluster info
     Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
+    if (clusterInfo == null || clusterInfo.isEmpty()) {
+      String str = "Cluster not found (id=" + clusterId + ")";
+      LOG.warn(str);
+      throw new OperationException(StatusCode.KEY_NOT_FOUND, str);
+    }
     // Iterate categories and for each category iterate hours
     // (total iterations = # categories * # hours)
     for (Map.Entry<String,Double> entry : clusterInfo.entrySet()) {
