@@ -1,4 +1,4 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import com.continuuity.common.builder.BuilderException;
 import com.google.common.base.Objects;

@@ -1,4 +1,4 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import akka.dispatch.ExecutionContext;
 import akka.dispatch.ExecutionContexts;
@@ -8,8 +8,8 @@ import com.continuuity.common.builder.BuilderException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.metrics2.collector.MetricRequest;
-import com.continuuity.metrics2.collector.MetricResponse;
+import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.common.metrics.MetricResponse;
 import com.continuuity.metrics2.common.DBUtils;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;

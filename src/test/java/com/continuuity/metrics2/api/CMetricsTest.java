@@ -2,23 +2,21 @@ package com.continuuity.metrics2.api;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
-import com.continuuity.metrics2.collector.MetricType;
-import com.continuuity.metrics2.collector.OverlordMetricsReporter;
-import com.continuuity.metrics2.collector.server
-  .MetricsCollectionServerInterface;
+import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.OverlordMetricsReporter;
+import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.runtime.MetricsModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mortbay.log.Log;
 
-import java.sql.Date;
 import java.util.concurrent.TimeUnit;
 
 /**

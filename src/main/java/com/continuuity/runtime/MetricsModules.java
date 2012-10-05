@@ -1,9 +1,8 @@
 package com.continuuity.runtime;
 
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.metrics2.collector.server.MetricsCollectionServer;
-import com.continuuity.metrics2.collector.server
-  .MetricsCollectionServerInterface;
+import com.continuuity.metrics2.collector.MetricsCollectionServer;
+import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServer;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.google.inject.AbstractModule;

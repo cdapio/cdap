@@ -1,11 +1,11 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import akka.dispatch.Future;
 import akka.dispatch.OnComplete;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.metrics2.collector.MetricRequest;
-import com.continuuity.metrics2.collector.MetricResponse;
+import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.common.metrics.MetricResponse;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;

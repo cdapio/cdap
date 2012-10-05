@@ -1,4 +1,4 @@
-package com.continuuity.metrics2.collector.server;
+package com.continuuity.metrics2.collector;
 
 import com.continuuity.common.service.Server;
 

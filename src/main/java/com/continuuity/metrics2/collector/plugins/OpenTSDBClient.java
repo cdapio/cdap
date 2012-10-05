@@ -1,4 +1,4 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import org.apache.mina.core.RuntimeIoException;
 import org.apache.mina.core.future.CloseFuture;

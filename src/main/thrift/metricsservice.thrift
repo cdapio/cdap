@@ -89,17 +89,3 @@ service MetricsFrontendService {
     throws (1: MetricsServiceException e),
 }
 
-/**
- * Trail
- */
-struct Account {
-   1: string id,
-}
-
-struct Application {
-   1: string id,
-}
-
-service MetaDataService {
-  List<Application> getApplications(1: Account account),
-}

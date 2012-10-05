@@ -1,16 +1,16 @@
-package com.continuuity.metrics2.collector.server;
+package com.continuuity.metrics2.collector;
 
 import akka.dispatch.*;
 import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricRequest;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.metrics2.collector.MetricRequest;
-import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.collector.MetricType;
-import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
-import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
+import com.continuuity.common.metrics.MetricResponse;
+import com.continuuity.common.metrics.MetricType;
+import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
+import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.mina.core.service.IoHandlerAdapter;

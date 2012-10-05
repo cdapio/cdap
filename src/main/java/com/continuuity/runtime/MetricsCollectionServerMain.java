@@ -1,7 +1,7 @@
 package com.continuuity.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.collector.server.MetricsCollectionServerInterface;
+import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;

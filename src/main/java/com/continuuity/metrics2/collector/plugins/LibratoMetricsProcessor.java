@@ -1,13 +1,12 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import akka.dispatch.ExecutionContext;
 import akka.dispatch.ExecutionContexts;
 import akka.dispatch.Future;
 import akka.dispatch.Futures;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.collector.MetricRequest;
-import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.collector.MetricType;
+import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.common.metrics.MetricResponse;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.ning.http.client.*;
@@ -303,7 +302,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
   }
 
   /**
-   * Processes a {@link com.continuuity.metrics2.collector.MetricRequest}.
+   * Processes a {@link com.continuuity.common.metrics.MetricRequest}.
    * <p/>
    * <p>
    * Processing a metric returns a Future (an object holding the future of

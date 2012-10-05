@@ -4,10 +4,10 @@ import akka.dispatch.Await;
 import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.metrics2.collector.MetricRequest;
-import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
-import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
+import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.common.metrics.MetricResponse;
+import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
+import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 

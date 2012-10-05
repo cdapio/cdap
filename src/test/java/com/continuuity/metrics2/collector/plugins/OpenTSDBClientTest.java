@@ -1,9 +1,7 @@
-package com.continuuity.metrics2.collector.server.plugins;
+package com.continuuity.metrics2.collector.plugins;
 
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.metrics2.collector.server.OpenTSDBInMemoryServer;
-import org.apache.mina.core.future.IoFutureListener;
-import org.apache.mina.core.future.WriteFuture;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;

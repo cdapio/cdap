@@ -13,10 +13,15 @@ dependencies {
     if(multiModule && ! buildingRelease)
     {
         compile project(":common")
+        compile project(":data-fabric").sourceSets.api.output
+        apiCompile project(":data-fabric").sourceSets.api.output
+        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     else
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     // External dependencies.
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'

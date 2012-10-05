@@ -4,9 +4,10 @@ import akka.dispatch.Await;
 import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.metrics2.collector.MetricResponse;
-import com.continuuity.metrics2.collector.server.plugins.FlowMetricsProcessor;
-import com.continuuity.metrics2.collector.server.plugins.MetricsProcessor;
+import com.continuuity.common.metrics.*;
+import com.continuuity.common.metrics.MetricRequest;
+import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
+import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.continuuity.metrics2.stubs.*;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
@@ -15,7 +16,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -458,9 +458,9 @@ public class MetricsFrontendServiceImplTest {
   private static MetricResponse.Status addMetric(String name, float value)
       throws Exception {
 
-    com.continuuity.metrics2.collector.MetricRequest
+    com.continuuity.common.metrics.MetricRequest
       request =
-      new com.continuuity.metrics2.collector.MetricRequest.Builder(true)
+      new MetricRequest.Builder(true)
       .setRequestType("put")
       .setMetricName(name)
       .setTimestamp(timestamp + counter)

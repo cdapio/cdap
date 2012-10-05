@@ -1,11 +1,11 @@
-package com.continuuity.metrics2.collector.server;
+package com.continuuity.metrics2.collector;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.metrics2.collector.codec.MetricCodecFactory;
+import com.continuuity.common.metrics.codec.MetricCodecFactory;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.executor.ExecutorFilter;
