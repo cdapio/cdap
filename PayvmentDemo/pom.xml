@@ -10,18 +10,18 @@
   <name>PayvmentDemo</name>
   <dependencies>
     <!-- Add internal continuuity jars (until tests refactored)  -->
-    <dependency>
+    <!--dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
       <version>0.1.0-SNAPSHOT</version>
-    </dependency>
-    <!--dependency>
+    </dependency-->
+    <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
       <version>0.1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/flow-0.1.0.jar</systemPath>
-    </dependency-->
+    </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
