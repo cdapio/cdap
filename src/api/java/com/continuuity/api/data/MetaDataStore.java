@@ -7,11 +7,20 @@ public interface MetaDataStore {
 
   public final int DEFAULT_RETRIES_ON_CONFLICT = 3;
 
-  /** adds a new entry, throws if an entry with that name already exists */
+  /**
+   * adds a new entry.
+   * @throws OperationException with status WRITE_CONFLICT if an entry with
+   * the the name and type already exists for the same account and app,
+   * also throws OperationException for other data fabric problems.
+   */
   public void add(OperationContext context,
                   MetaDataEntry entry) throws OperationException;
 
-  /** updates an entry, throws if an entry with that name does not exist */
+  /** updates an existing entry.
+   * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
+   * the that name and type does not exist for the given account and app.
+   * also throws OperationException for other data fabric problems.
+   */
   public void update(OperationContext context,
                      MetaDataEntry entry) throws OperationException;
 
@@ -28,8 +37,10 @@ public interface MetaDataStore {
    * @param field The name of the field to update, must not be null
    * @param newValue The newValue for that column
    * @param retryAttempts How many times to retry in case of write conflicts
-   * @throws OperationException if an entry with that name does not exist,
-   *    or if the number of retries after write conflict is exhausted
+   * @throws OperationException for data fabric errors. Specifically, if the
+   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   * number of retries after write conflict is exhausted, the status code is
+   * WRITE_CONFLICT.
    */
   public void updateField(OperationContext context,
                           String account, String application,
@@ -51,8 +62,10 @@ public interface MetaDataStore {
    * @param field The name of the field to update, must not be null
    * @param newValue The newValue for that column
    * @param retryAttempts How many times to retry in case of write conflicts
-   * @throws OperationException if an entry with that name does not exist,
-   *    or if the number of retries after write conflict is exhausted
+   * @throws OperationException for data fabric errors. Specifically, if the
+   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   * number of retries after write conflict is exhausted, the status code is
+   * WRITE_CONFLICT.
    */
   public void updateField(OperationContext context,
                           String account, String application,
@@ -61,19 +74,32 @@ public interface MetaDataStore {
                           int retryAttempts)
       throws OperationException;
 
-  /** delete by name & type */
+  /**
+   * Delete by name & type. This silently succeeds if the entry does not exist.
+   * @throws OperationException for data fabric errors.
+   */
   public void delete(OperationContext context,
                      String account, String application,
                      String type, String name)
       throws OperationException;
 
-  /** get by name & type */
+  /**
+   * Get by name & type.
+   * @return the named entry, or null if it does not exist.
+   * @throws OperationException for data fabric errors
+   *
+   */
   public MetaDataEntry get(OperationContext context,
                            String account, String application,
                            String type, String name)
       throws OperationException;
 
-  /** list all entries of a given type */
+  /**
+   * List all entries of a given type
+   * @return the list of matching entries. The list is empty if there are no
+   * matching entries.
+   * @throws OperationException if something goes wrong
+   */
   public List<MetaDataEntry> list(OperationContext context,
                                   String account, String application,
                                   String type, Map<String, String> fields)

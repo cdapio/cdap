@@ -179,7 +179,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
     }
 
     if (isUpdate && result.isEmpty()) {
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
+        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
             "Meta data entry does not exist.");
     }
     else if (!isUpdate && !result.isEmpty()) {
@@ -274,7 +274,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
       // throw exception if not existing
       if (result.isEmpty())
-        throw new OperationException(StatusCode.WRITE_CONFLICT,
+        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
             "Meta data entry does not exist.");
 
       // get the raw (serialized) bytes of the entry

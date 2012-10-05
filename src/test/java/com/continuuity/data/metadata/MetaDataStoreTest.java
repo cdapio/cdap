@@ -65,16 +65,26 @@ abstract public class MetaDataStoreTest {
   }
 
   // test that update fails if not existent
-  @Test(expected = OperationException.class)
+  @Test
   public void testUpdateNonExisting() throws Exception {
-    testOneAddGet(true, "a", null, "z", "1", "a", "c", null, null);
+    try {
+      testOneAddGet(true, "a", null, "z", "1", "a", "c", null, null);
+      Assert.fail("expected an OperationException for updating non-existent.");
+    } catch (OperationException e) {
+      Assert.assertEquals(StatusCode.ENTRY_NOT_FOUND, e.getStatus());
+    }
   }
 
   // test that insert fails if existent
-  @Test(expected = OperationException.class)
+  @Test
   public void testAddExisting() throws Exception {
-    testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
-    testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
+    try {
+      testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
+      testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
+      Assert.fail("expected an OperationException for adding existing entry.");
+    } catch (OperationException e) {
+      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+    }
   }
 
   @Test
