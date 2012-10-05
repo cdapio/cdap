@@ -10,9 +10,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.DataFabricImpl;
 import com.continuuity.gateway.Accessor;
 import com.continuuity.gateway.util.HttpConfig;
 import com.continuuity.gateway.util.NettyHttpPipelineFactory;

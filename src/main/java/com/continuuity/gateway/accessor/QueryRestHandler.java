@@ -8,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.data.QueryRestProvider;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.metrics2.api.CMetrics;
 
 /**
  * This is the http request handler for the data lib rest accessor.
