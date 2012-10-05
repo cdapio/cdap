@@ -116,7 +116,8 @@ public class RestCollector extends Collector
   public void stop() {
     LOG.debug("Stopping " + this);
     // closing the channel stops the service
-    this.serverChannel.close();
+    if (this.serverChannel != null)
+      this.serverChannel.close();
     LOG.debug("Stopped " + this);
   }
 }

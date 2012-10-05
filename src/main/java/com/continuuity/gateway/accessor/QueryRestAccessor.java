@@ -1,8 +1,10 @@
 package com.continuuity.gateway.accessor;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.gateway.Accessor;
+import com.continuuity.gateway.util.HttpConfig;
+import com.continuuity.gateway.util.NettyHttpPipelineFactory;
+import com.continuuity.gateway.util.NettyRequestHandlerFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -10,11 +12,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Accessor;
-import com.continuuity.gateway.util.HttpConfig;
-import com.continuuity.gateway.util.NettyHttpPipelineFactory;
-import com.continuuity.gateway.util.NettyRequestHandlerFactory;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
 public class QueryRestAccessor
 extends Accessor implements NettyRequestHandlerFactory {
@@ -97,7 +96,8 @@ extends Accessor implements NettyRequestHandlerFactory {
   public void stop() {
     LOG.debug("Stopping " + this);
     // closing the channel stops the service
-    this.serverChannel.close();
+    if (this.serverChannel != null)
+      this.serverChannel.close();
     LOG.debug("Stopped " + this);
   }
 }
