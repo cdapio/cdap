@@ -3,7 +3,7 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
-import com.continuuity.metrics2.collector.OverlordMetricsReporter;
+import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 

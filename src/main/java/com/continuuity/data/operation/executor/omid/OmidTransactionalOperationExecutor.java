@@ -4,6 +4,7 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
@@ -24,8 +25,7 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
-import com.continuuity.metrics2.api.CMetrics;
-import com.continuuity.metrics2.collector.MetricType;
+import com.continuuity.common.metrics.MetricType;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
