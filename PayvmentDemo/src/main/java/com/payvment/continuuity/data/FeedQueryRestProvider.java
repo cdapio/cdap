@@ -13,17 +13,20 @@ import org.slf4j.LoggerFactory;
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.QueryRestProvider;
 
+/**
+ * Exposes Payvment Lish feeds as REST calls in the Gateway.
+ * <p>
+ * Implemented as a {@link QueryRestProvider} to bridge between REST calls and
+ * the internal APIs of {@link ClusterFeedReader}.
+ */
 public class FeedQueryRestProvider extends QueryRestProvider {
 
   private static final Logger LOG = LoggerFactory
       .getLogger(FeedQueryRestProvider.class);
 
-  private final DataFabric fabric;
-
   private final ClusterFeedReader reader;
   
   public FeedQueryRestProvider(DataFabric fabric) {
-    this.fabric = fabric;
     this.reader = new ClusterFeedReader(fabric);
   }
   
@@ -93,7 +96,16 @@ public class FeedQueryRestProvider extends QueryRestProvider {
    * parsed.  Further validation of arguments required per-method is performed
    * within this method.
    * <p>
-   * This currently supports two 
+   * This currently supports two methods, <i>readactivity</i> and
+   * <i>readpopular</i>.
+   * <p>
+   * <b><i>readactivity</i></b> performs an ActivityFeed read and has required
+   * arguments of <i>clusterid</i> and <i>limit</i>.  Optionally, can also specify
+   * a <i>maxts</i> and <i>mints</i> for maximum and minimum timestamps.
+   * <p>
+   * <b><i>readpopular</i></b> performs a PopularFeed read and has required
+   * arguments of <i>clusterid</i>, <i>numhours</i>, and <i>limit</i>.
+   * Optionally, can also specify an <i>offset</i>. 
    * @param message
    * @param readMethod
    * @param args
@@ -107,8 +119,8 @@ public class FeedQueryRestProvider extends QueryRestProvider {
     }
     LOG.info(str);
     
-    // 
+    // TODO: Final wiring between REST and ClusterFeedReader
+    
     super.respondSuccess(message.getChannel(), request);
   }
-
 }

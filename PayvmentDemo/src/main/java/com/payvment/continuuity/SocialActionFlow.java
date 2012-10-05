@@ -63,9 +63,9 @@ import com.payvment.continuuity.util.Helpers;
  *   track the scores of each product on an hourly basis and provides score
  *   sorting capabilities to allow retrieving the top-n scored products for a
  *   given hour and category.
- *   <p><i>activityFeeds</i> is an instance of an {@link ActivityFeedTable} used
+ *   <p><i>activityFeeds</i> is an instance of an ActivityFeedTable used
  *   to store descending time-ordered feeds of products. <i>(NOTE: This is not
- *   yet implemented as a separate table)</i>
+ *   yet implemented as a separate table, coming soon)</i>
  *   <p>See the javadoc of each table class for more detailed information.
  */
 public class SocialActionFlow implements Flow {
