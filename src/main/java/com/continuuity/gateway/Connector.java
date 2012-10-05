@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.metrics2.collector.MetricType;
 
 /**
