@@ -3,7 +3,6 @@ package com.continuuity.data.metadata;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -15,13 +14,6 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
 
   @BeforeClass
   public static void setupOpex() throws Exception {
-    Injector injector = Guice.createInjector (
-        new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
-    opex = injector.getInstance(OperationExecutor.class);
-  }
-
-  @BeforeClass
-  public static void startService() throws Exception {
     HBaseTestBase.startHBase();
     DataFabricDistributedModule module =
         new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
