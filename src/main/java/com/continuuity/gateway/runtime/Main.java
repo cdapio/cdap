@@ -1,9 +1,9 @@
 package com.continuuity.gateway.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.metrics2.collector.OverlordMetricsReporter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
