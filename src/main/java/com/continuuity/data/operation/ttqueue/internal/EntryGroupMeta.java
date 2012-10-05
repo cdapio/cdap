@@ -1,7 +1,6 @@
 package com.continuuity.data.operation.ttqueue.internal;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
+import com.continuuity.common.utils.Bytes;
 import com.google.common.base.Objects;
 
 /**

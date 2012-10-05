@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.hbase.ttqueue.HBQConsumer;
 import com.google.common.base.Objects;
 
 /**
@@ -42,9 +41,5 @@ public class QueueConsumer {
         .add("groupid", this.groupId)
         .add("groupsize", this.groupSize)
         .toString();
-  }
-
-  public HBQConsumer toHBQ() {
-    return new HBQConsumer(instanceId, groupId, groupSize);
   }
 }

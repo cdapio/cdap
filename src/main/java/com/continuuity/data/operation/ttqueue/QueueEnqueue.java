@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationBase;
-import org.apache.hadoop.hbase.util.Bytes;
+import com.continuuity.common.utils.Bytes;
 
 import com.continuuity.api.data.ReadOperation;
 import com.continuuity.api.data.WriteOperation;

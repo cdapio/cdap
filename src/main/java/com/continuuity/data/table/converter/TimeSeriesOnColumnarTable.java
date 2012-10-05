@@ -2,9 +2,9 @@ package com.continuuity.data.table.converter;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.TimeSeriesTable;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Map;
 import java.util.TreeMap;

@@ -1,13 +1,13 @@
 package com.continuuity.data.operation.executor.simple;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.ColumnarTableHandle;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.List;
 

@@ -5,13 +5,13 @@ package com.continuuity.data.engine.memory;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
 import com.google.common.base.Objects;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.*;
 import java.util.Map.Entry;

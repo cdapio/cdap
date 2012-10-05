@@ -1,10 +1,15 @@
 package com.continuuity.data.util;
 
-import com.google.common.collect.Maps;
-import org.apache.hadoop.io.Writable;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 /**
  * TupleMetaDataAnnotator is responsible for annotating a tuple
@@ -32,7 +37,7 @@ public class TupleMetaDataAnnotator {
    * Manages {@code TupleMetaDataAnnotator} during {@code EnqueuePayload} of a
    * tuple.
    */
-  public static class EnqueuePayload implements Writable {
+  public static class EnqueuePayload {
 
     /**
      * Stores the ids of operation to tuple field mappings.
@@ -55,7 +60,6 @@ public class TupleMetaDataAnnotator {
       this.serializedTuple = serializedTuple;
     }
 
-    @Override
     public void write(DataOutput out) throws IOException {
       out.writeShort(operationIds.size());
       for(Map.Entry<String, Long> entry : operationIds.entrySet()) {
@@ -67,7 +71,6 @@ public class TupleMetaDataAnnotator {
       out.write(serializedTuple);
     }
 
-    @Override
     public void readFields(DataInput in) throws IOException {
       int size = in.readShort();
       for(int i = 0; i < size; ++i) {
@@ -135,7 +138,7 @@ public class TupleMetaDataAnnotator {
    * Manages {@code TupleMetaDataAnnotator} during {@code DequeuePayload} of a
    * tuple.
    */
-  public static class DequeuePayload implements Writable {
+  public static class DequeuePayload {
     /**
      * Mapping of field name to the result of execution an operation.
      */
@@ -166,7 +169,6 @@ public class TupleMetaDataAnnotator {
       return serializedTuple;
     }
 
-    @Override
     public void write(DataOutput out) throws IOException {
       out.writeShort(values.size());
       for(Map.Entry<String, Long> value : values.entrySet()) {
@@ -178,7 +180,6 @@ public class TupleMetaDataAnnotator {
       out.write(serializedTuple);
     }
 
-    @Override
     public void readFields(DataInput in) throws IOException {
       int count = in.readShort();
       for(int i = 0; i <  count; ++i) {

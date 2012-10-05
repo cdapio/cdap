@@ -2,8 +2,8 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationBase;
 import com.continuuity.api.data.ReadOperation;
+import com.continuuity.common.utils.Bytes;
 import com.google.common.base.Objects;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Marks and retrieves the next entry in the queue for the specified consumer,

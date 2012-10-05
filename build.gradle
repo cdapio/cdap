@@ -7,6 +7,10 @@ buildscript {
    apply from: 'continuuity.gradle'
 }
 
+sourceSets {
+  distributed
+}
+
 test {
 	testLogging.showStandardStreams = false
 	jvmArgs '-Xmx512m'
@@ -21,23 +25,52 @@ dependencies {
     if(multiModule)
     {
         compile project(":common")
-        compile project(":overlord")
     }
     else
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-        compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
     }
     // Self dependencies.
     compile sourceSets.api.output
     
     /// External dependencies.
-    compile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity') { exclude module: 'junit' }
-    testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
-    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+    compile group: 'kryo', name: 'kryo', version: '2.12'
+    
+    // Dependencies for api
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
     apiCompile group: 'org.jboss.netty', name: 'netty', version: '3.2.4.Final'
-    compile group: 'kryo', name: 'kryo', version: '2.12'
+    
+    // Dependencies for tests
+    testCompile group:'org.apache.hbase', name:'hbase', version:'0.94.2.1.3.4.continuuity'
+    testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
+    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+    
+    // Dependencies for distributed
+    distributedCompile group: 'org.apache.hbase', name: 'hbase', version: '0.94.2.1.3.4.continuuity'
+    distributedCompile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
+    distributedCompile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
+    distributedCompile group: 'kryo', name: 'kryo', version: '2.12'
+    distributedCompile sourceSets.api.output
+    distributedCompile sourceSets.main.output
+}
+
+// generate the DIST jar
+
+
+task distributedJar(type: Jar) {
+  from sourceSets.distributed.output
+  classifier = "distributed"
+}
+
+task distributedJavadoc(type: Javadoc, dependsOn:distributedJar) {
+  source sourceSets.distributed.allJava
+  destinationDir = reporting.file("${buildDir}/distributed-docs")
+  classpath = sourceSets.distributed.compileClasspath
+}
+
+task distributedJavadocJar(type: Jar, dependsOn:distributedJavadoc) {
+  classifier = "distributed-javadoc"
+  from distributedJavadoc.destinationDir
 }
 
 /**
@@ -48,4 +81,6 @@ jar.exclude '*.xml'
 artifacts {
   archives apiJavadocJar
   archives apiJar
+  archives distributedJavadocJar
+  archives distributedJar
 }

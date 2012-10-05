@@ -5,12 +5,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -83,7 +81,7 @@ public class TTQueueOnVCTable implements TTQueue {
    */
   public TTQueueOnVCTable(final VersionedColumnarTable table,
       final byte [] queueName, final TimestampOracle timeOracle,
-      final Configuration conf) {
+      final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
     this.timeOracle = timeOracle;
@@ -611,7 +609,7 @@ public class TTQueueOnVCTable implements TTQueue {
         getValue(), newValue, dirty.getFirst(), dirty.getSecond());
 
     // We successfully finalized our ack.  Perform evict-on-ack if possible.
-    Pair<Boolean, Set<byte[]>> groupsFinalizedResult = null;
+    ImmutablePair<Boolean, Set<byte[]>> groupsFinalizedResult = null;
     if (totalNumGroups == 1 ||
         (totalNumGroups > 0 && (groupsFinalizedResult =
             allOtherGroupsFinalized(entryPointer, totalNumGroups,
@@ -636,7 +634,7 @@ public class TTQueueOnVCTable implements TTQueue {
     }
   }
 
-  private Pair<Boolean, Set<byte[]>> allOtherGroupsFinalized(
+  private ImmutablePair<Boolean, Set<byte[]>> allOtherGroupsFinalized(
       QueueEntryPointer entryPointer, int totalNumGroups, long curGroup,
       ImmutablePair<ReadPointer,Long> dirtyPointer) throws OperationException {
 
@@ -652,7 +650,7 @@ public class TTQueueOnVCTable implements TTQueue {
             dirtyPointer.getFirst()).getValue();
     
     if (groupEntries.size() < totalNumGroups) {
-      return new Pair<Boolean,Set<byte[]>>(false, null);
+      return new ImmutablePair<Boolean,Set<byte[]>>(false, null);
     }
     
     for (Map.Entry<byte[],byte[]> groupEntry : groupEntries.entrySet()) {
@@ -663,9 +661,9 @@ public class TTQueueOnVCTable implements TTQueue {
       EntryGroupMeta groupMeta =
           EntryGroupMeta.fromBytes(groupEntry.getValue());
       if (!groupMeta.isAcked())
-        return new Pair<Boolean,Set<byte[]>>(false, null);
+        return new ImmutablePair<Boolean,Set<byte[]>>(false, null);
     }
-    return new Pair<Boolean,Set<byte[]>>(true, groupEntries.keySet());
+    return new ImmutablePair<Boolean,Set<byte[]>>(true, groupEntries.keySet());
   }
 
   @Override

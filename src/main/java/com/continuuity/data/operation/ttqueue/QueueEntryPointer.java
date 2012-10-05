@@ -1,8 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.continuuity.hbase.ttqueue.HBQEntryPointer;
+import com.continuuity.common.utils.Bytes;
 import com.google.common.base.Objects;
 
 /**
@@ -51,9 +49,5 @@ public class QueueEntryPointer {
         .add("entryId", this.entryId)
         .add("shardId", this.shardId)
         .toString();
-  }
-
-  public HBQEntryPointer toHBQ() {
-    return new HBQEntryPointer(entryId, shardId);
   }
 }

@@ -1,12 +1,12 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.utils.Bytes;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -17,13 +17,13 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
 
   private final VersionedColumnarTable table;
   private final TimestampOracle timeOracle;
-  private final Configuration conf;
+  private final CConfiguration conf;
 
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
   public TTQueueTableOnVCTable(VersionedColumnarTable table,
-      TimestampOracle timeOracle, Configuration conf) {
+      TimestampOracle timeOracle, CConfiguration conf) {
     this.table = table;
     this.timeOracle = timeOracle;
     this.conf = conf;
