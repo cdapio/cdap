@@ -1,6 +1,6 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.common.metrics.CMetrics;
 
 public class MetricsHelper {
 

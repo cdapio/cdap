@@ -1,12 +1,12 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.metrics2.api.CMetrics;
-import com.continuuity.metrics2.collector.MetricType;
+import com.continuuity.common.metrics.MetricType;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
