@@ -1,8 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.metrics2.api.CMetrics;
-import com.continuuity.metrics2.collector.MetricType;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 
 /**
  * This is the base class for all the gateway's modules. Regardless of the type

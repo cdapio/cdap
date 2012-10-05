@@ -8,7 +8,7 @@ import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
-import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.common.metrics.CMetrics;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;

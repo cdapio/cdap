@@ -9,7 +9,7 @@ import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.common.metrics.CMetrics;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
