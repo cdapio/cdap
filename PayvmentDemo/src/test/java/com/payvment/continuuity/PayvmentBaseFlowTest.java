@@ -19,6 +19,7 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.ClearFabric.ToClear;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -64,8 +65,7 @@ public class PayvmentBaseFlowTest {
 
   @Before
   public void clearFabricBeforeEachTest() throws Exception {
-    executor.execute(OperationContext.DEFAULT,
-        new ClearFabric(true, true, true));
+    executor.execute(OperationContext.DEFAULT, new ClearFabric(ToClear.ALL));
   }
   
   @AfterClass
