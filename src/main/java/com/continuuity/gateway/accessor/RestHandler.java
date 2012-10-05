@@ -5,7 +5,7 @@ import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
-import com.continuuity.metrics2.api.CMetrics;
+import com.continuuity.common.metrics.CMetrics;
 import com.google.common.collect.Lists;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
