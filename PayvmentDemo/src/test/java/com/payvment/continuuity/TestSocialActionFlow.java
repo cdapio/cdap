@@ -38,9 +38,9 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     // Get references to tables
     CounterTable productActionCountTable = new CounterTable("productActions",
         flowletContext.getDataFabric(), flowletContext);
-    CounterTable allTimeScoreTable = new CounterTable("allTimeScore",
+    CounterTable allTimeScoreTable = new CounterTable("allTimeScores",
         flowletContext.getDataFabric(), flowletContext);
-    SortedCounterTable topScoreTable = new SortedCounterTable("topScore",
+    SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
         flowletContext.getDataFabric(), flowletContext,
         new SortedCounterTable.SortedCounterConfig());
     
