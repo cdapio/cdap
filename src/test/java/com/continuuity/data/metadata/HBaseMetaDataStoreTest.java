@@ -14,13 +14,6 @@ import org.junit.BeforeClass;
 public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
 
   @BeforeClass
-  public static void setupOpex() throws Exception {
-    Injector injector = Guice.createInjector (
-        new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
-    opex = injector.getInstance(OperationExecutor.class);
-  }
-
-  @BeforeClass
   public static void startService() throws Exception {
     HBaseTestBase.startHBase();
     DataFabricDistributedModule module =
