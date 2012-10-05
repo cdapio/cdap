@@ -13,10 +13,15 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+    <!--dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>flow</artifactId>
       <version>0.1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/flow-0.1.0.jar</systemPath>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
@@ -126,8 +131,8 @@
     </dependency>
     <dependency>
       <groupId>com.typesafe.akka</groupId>
-      <artifactId>akka-actor_2.10.0-M7</artifactId>
-      <version>2.1-M2</version>
+      <artifactId>akka-actor</artifactId>
+      <version>2.0.3</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
@@ -182,9 +187,16 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>2.10.0-M3</version>
+      <version>2.9.2</version>
     </dependency>
   </dependencies>
+  <repositories>
+    <repository>
+      <id>typesafe</id>
+      <name>Typesafe Repository</name>
+      <url>http://repo.typesafe.com/typesafe/releases/</url>
+    </repository>
+  </repositories>
   <!-- Set the main class and tell maven to include dependencies in the jar -->
   <build>
     <plugins>

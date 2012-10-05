@@ -26,8 +26,8 @@ public class ClusterFeedReader {
 
   private final SortedCounterTable topScoreTable;
 
-  public ClusterFeedReader(FlowletContext flowletContext) {
-    this.fabric = flowletContext.getDataFabric();
+  public ClusterFeedReader(DataFabric fabric) {
+    this.fabric = fabric;
     this.clusterTable = new ClusterTable(flowletContext);
     this.topScoreTable = new SortedCounterTable("topScore",
         flowletContext, new SortedCounterTable.SortedCounterConfig());
