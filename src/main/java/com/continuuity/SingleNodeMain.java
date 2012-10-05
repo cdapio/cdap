@@ -15,8 +15,7 @@ import com.continuuity.flow.runtime.FARModules;
 import com.continuuity.flow.runtime.FlowManagerModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
-import com.continuuity.metrics2.collector.server
-  .MetricsCollectionServerInterface;
+import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetricsModules;
 import com.google.common.base.Preconditions;
