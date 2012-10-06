@@ -2,6 +2,7 @@ package com.continuuity.log.appender.log4j;
 
 import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -47,16 +48,48 @@ public class  LogglyAppender extends AppenderSkeleton {
   static final String EOL = "\n";
 
   /**
+   * Class implementing a scheduled flush to loggly.
+   */
+  private class ScheduledFlush extends AbstractScheduledService {
+    /**
+     * Run one iteration of the scheduled task. If any invocation of this
+     * method throws an exception,
+     * the service will transition to the {@link com.google.common.util
+     * .concurrent.Service.State#FAILED} state and this method will no
+     * longer be called.
+     */
+    @Override
+    protected void runOneIteration() throws Exception {
+      try {
+        flush();
+      } catch (Exception e) {
+        System.out.println("Problem executing flush. Reason : " +
+          e.getMessage());
+      }
+    }
+
+    /**
+     * Returns the {@link com.google.common.util.concurrent
+     * .AbstractScheduledService.Scheduler} object used to configure this
+     * service.  This method will only be
+     * called once.
+     */
+    @Override
+    protected Scheduler scheduler() {
+      return Scheduler.newFixedDelaySchedule(0L, 500L, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  /**
    * Queue of messages to send to server.
    */
   private static final BlockingQueue<String> messages =
     new LinkedBlockingQueue<String>(10000);
 
   /**
-   * The service to run the background process.
+   * Scheduled flush to loggly.
    */
-  private static final ScheduledExecutorService service =
-    Executors.newScheduledThreadPool(1);
+  private ScheduledFlush scheduleFlush = new ScheduledFlush();
 
   /**
    * The feeder.
@@ -66,11 +99,6 @@ public class  LogglyAppender extends AppenderSkeleton {
   private transient String feederKlass;
   private transient String feederUrl;
   private transient boolean feederSplit = false;
-
-  /**
-   * The future we're running in.
-   */
-  private transient ScheduledFuture<?> future;
 
   /**
    * Set feeder, option {@code feeder} in config.
@@ -129,17 +157,7 @@ public class  LogglyAppender extends AppenderSkeleton {
         throw new IllegalStateException(e);
       }
     }
-    this.future = this.service.scheduleWithFixedDelay(
-        new Runnable() {
-          @Override
-          public void run() {
-            LogglyAppender.this.flush();
-          }
-        },
-      0L,
-      500L,
-      TimeUnit.MILLISECONDS
-    );
+    scheduleFlush.start();
   }
 
   /**
@@ -147,10 +165,7 @@ public class  LogglyAppender extends AppenderSkeleton {
    */
   @Override
   public void close() {
-    if (this.future != null) {
-      this.future.cancel(true);
-    }
-    this.service.shutdown();
+    scheduleFlush.stop();
   }
 
   /**
