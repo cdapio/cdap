@@ -25,7 +25,6 @@ dependencies {
     else
     {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-        compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
     }
     // Self dependencies.
     compile sourceSets.api.output
@@ -37,6 +36,7 @@ dependencies {
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
     apiCompile group: 'org.jboss.netty', name: 'netty', version: '3.2.4.Final'
     compile group: 'kryo', name: 'kryo', version: '2.12'
+    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
 }
 
 /**
