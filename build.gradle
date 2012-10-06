@@ -21,7 +21,6 @@ dependencies {
     if(multiModule)
     {
         compile project(":common")
-        compile project(":overlord")
     }
     else
     {
