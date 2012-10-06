@@ -30,19 +30,23 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField META_FIELD_DESC = new org.apache.thrift.protocol.TField("meta", org.apache.thrift.protocol.TType.MAP, (short)4);
+  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)4);
 
   private String id; // required
   private String name; // required
   private String description; // required
-  private Map<String,String> meta; // required
+  private DatasetType type; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
     DESCRIPTION((short)3, "description"),
-    META((short)4, "meta");
+    /**
+     * 
+     * @see DatasetType
+     */
+    TYPE((short)4, "type");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,8 +67,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
           return NAME;
         case 3: // DESCRIPTION
           return DESCRIPTION;
-        case 4: // META
-          return META;
+        case 4: // TYPE
+          return TYPE;
         default:
           return null;
       }
@@ -109,16 +113,14 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.META, new org.apache.thrift.meta_data.FieldMetaData("meta", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, DatasetType.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Dataset.class, metaDataMap);
   }
@@ -146,20 +148,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (other.isSetDescription()) {
       this.description = other.description;
     }
-    if (other.isSetMeta()) {
-      Map<String,String> __this__meta = new HashMap<String,String>();
-      for (Map.Entry<String, String> other_element : other.meta.entrySet()) {
-
-        String other_element_key = other_element.getKey();
-        String other_element_value = other_element.getValue();
-
-        String __this__meta_copy_key = other_element_key;
-
-        String __this__meta_copy_value = other_element_value;
-
-        __this__meta.put(__this__meta_copy_key, __this__meta_copy_value);
-      }
-      this.meta = __this__meta;
+    if (other.isSetType()) {
+      this.type = other.type;
     }
   }
 
@@ -172,7 +162,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     this.id = null;
     this.name = null;
     this.description = null;
-    this.meta = null;
+    this.type = null;
   }
 
   public String getId() {
@@ -244,37 +234,34 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     }
   }
 
-  public int getMetaSize() {
-    return (this.meta == null) ? 0 : this.meta.size();
+  /**
+   * 
+   * @see DatasetType
+   */
+  public DatasetType getType() {
+    return this.type;
   }
 
-  public void putToMeta(String key, String val) {
-    if (this.meta == null) {
-      this.meta = new HashMap<String,String>();
-    }
-    this.meta.put(key, val);
+  /**
+   * 
+   * @see DatasetType
+   */
+  public void setType(DatasetType type) {
+    this.type = type;
   }
 
-  public Map<String,String> getMeta() {
-    return this.meta;
+  public void unsetType() {
+    this.type = null;
   }
 
-  public void setMeta(Map<String,String> meta) {
-    this.meta = meta;
+  /** Returns true if field type is set (has been assigned a value) and false otherwise */
+  public boolean isSetType() {
+    return this.type != null;
   }
 
-  public void unsetMeta() {
-    this.meta = null;
-  }
-
-  /** Returns true if field meta is set (has been assigned a value) and false otherwise */
-  public boolean isSetMeta() {
-    return this.meta != null;
-  }
-
-  public void setMetaIsSet(boolean value) {
+  public void setTypeIsSet(boolean value) {
     if (!value) {
-      this.meta = null;
+      this.type = null;
     }
   }
 
@@ -304,11 +291,11 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       }
       break;
 
-    case META:
+    case TYPE:
       if (value == null) {
-        unsetMeta();
+        unsetType();
       } else {
-        setMeta((Map<String,String>)value);
+        setType((DatasetType)value);
       }
       break;
 
@@ -326,8 +313,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     case DESCRIPTION:
       return getDescription();
 
-    case META:
-      return getMeta();
+    case TYPE:
+      return getType();
 
     }
     throw new IllegalStateException();
@@ -346,8 +333,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
-    case META:
-      return isSetMeta();
+    case TYPE:
+      return isSetType();
     }
     throw new IllegalStateException();
   }
@@ -392,12 +379,12 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         return false;
     }
 
-    boolean this_present_meta = true && this.isSetMeta();
-    boolean that_present_meta = true && that.isSetMeta();
-    if (this_present_meta || that_present_meta) {
-      if (!(this_present_meta && that_present_meta))
+    boolean this_present_type = true && this.isSetType();
+    boolean that_present_type = true && that.isSetType();
+    if (this_present_type || that_present_type) {
+      if (!(this_present_type && that_present_type))
         return false;
-      if (!this.meta.equals(that.meta))
+      if (!this.type.equals(that.type))
         return false;
     }
 
@@ -423,10 +410,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (present_description)
       builder.append(description);
 
-    boolean present_meta = true && (isSetMeta());
-    builder.append(present_meta);
-    if (present_meta)
-      builder.append(meta);
+    boolean present_type = true && (isSetType());
+    builder.append(present_type);
+    if (present_type)
+      builder.append(type.getValue());
 
     return builder.toHashCode();
   }
@@ -469,12 +456,12 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetMeta()).compareTo(typedOther.isSetMeta());
+    lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMeta()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.meta, typedOther.meta);
+    if (isSetType()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -517,21 +504,9 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // META
-          if (field.type == org.apache.thrift.protocol.TType.MAP) {
-            {
-              org.apache.thrift.protocol.TMap _map5 = iprot.readMapBegin();
-              this.meta = new HashMap<String,String>(2*_map5.size);
-              for (int _i6 = 0; _i6 < _map5.size; ++_i6)
-              {
-                String _key7; // required
-                String _val8; // required
-                _key7 = iprot.readString();
-                _val8 = iprot.readString();
-                this.meta.put(_key7, _val8);
-              }
-              iprot.readMapEnd();
-            }
+        case 4: // TYPE
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
+            this.type = DatasetType.findByValue(iprot.readI32());
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -568,18 +543,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         oprot.writeFieldEnd();
       }
     }
-    if (this.meta != null) {
-      if (isSetMeta()) {
-        oprot.writeFieldBegin(META_FIELD_DESC);
-        {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, this.meta.size()));
-          for (Map.Entry<String, String> _iter9 : this.meta.entrySet())
-          {
-            oprot.writeString(_iter9.getKey());
-            oprot.writeString(_iter9.getValue());
-          }
-          oprot.writeMapEnd();
-        }
+    if (this.type != null) {
+      if (isSetType()) {
+        oprot.writeFieldBegin(TYPE_FIELD_DESC);
+        oprot.writeI32(this.type.getValue());
         oprot.writeFieldEnd();
       }
     }
@@ -619,13 +586,13 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       }
       first = false;
     }
-    if (isSetMeta()) {
+    if (isSetType()) {
       if (!first) sb.append(", ");
-      sb.append("meta:");
-      if (this.meta == null) {
+      sb.append("type:");
+      if (this.type == null) {
         sb.append("null");
       } else {
-        sb.append(this.meta);
+        sb.append(this.type);
       }
       first = false;
     }
@@ -635,6 +602,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
+    if (!isSetId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {

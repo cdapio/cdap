@@ -2868,14 +2868,14 @@ public class MetadataService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
-                this.success = new ArrayList<Stream>(_list10.size);
-                for (int _i11 = 0; _i11 < _list10.size; ++_i11)
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                this.success = new ArrayList<Stream>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  Stream _elem12; // required
-                  _elem12 = new Stream();
-                  _elem12.read(iprot);
-                  this.success.add(_elem12);
+                  Stream _elem2; // required
+                  _elem2 = new Stream();
+                  _elem2.read(iprot);
+                  this.success.add(_elem2);
                 }
                 iprot.readListEnd();
               }
@@ -2907,9 +2907,9 @@ public class MetadataService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (Stream _iter13 : this.success)
+          for (Stream _iter3 : this.success)
           {
-            _iter13.write(oprot);
+            _iter3.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -5179,14 +5179,14 @@ public class MetadataService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list14 = iprot.readListBegin();
-                this.success = new ArrayList<Dataset>(_list14.size);
-                for (int _i15 = 0; _i15 < _list14.size; ++_i15)
+                org.apache.thrift.protocol.TList _list4 = iprot.readListBegin();
+                this.success = new ArrayList<Dataset>(_list4.size);
+                for (int _i5 = 0; _i5 < _list4.size; ++_i5)
                 {
-                  Dataset _elem16; // required
-                  _elem16 = new Dataset();
-                  _elem16.read(iprot);
-                  this.success.add(_elem16);
+                  Dataset _elem6; // required
+                  _elem6 = new Dataset();
+                  _elem6.read(iprot);
+                  this.success.add(_elem6);
                 }
                 iprot.readListEnd();
               }
@@ -5218,9 +5218,9 @@ public class MetadataService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (Dataset _iter17 : this.success)
+          for (Dataset _iter7 : this.success)
           {
-            _iter17.write(oprot);
+            _iter7.write(oprot);
           }
           oprot.writeListEnd();
         }

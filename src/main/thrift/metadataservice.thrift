@@ -18,20 +18,31 @@ struct Application {
  * Defines a Stream
  */
 struct Stream {
-   1: optional string id,
+   1: required string id,
    2: optional string name,
    3: optional string description,
-   4: optional map<string, string> meta,
+   4: optional i64 capacityInBytes,
+   5: optional i64 expiryInSeconds,
+}
+
+/**
+ * Defines a dataset types.
+ */
+enum DatasetType {
+  BASIC,
+  COUNTER,
+  TIME_SERIES,
+  CSV
 }
 
 /**
  * Defines a dataset
  */
 struct Dataset {
-   1: string id,
+   1: required string id,
    2: optional string name,
    3: optional string description,
-   4: optional map<string, string> meta,
+   4: optional DatasetType type,
 }
 
 /**
