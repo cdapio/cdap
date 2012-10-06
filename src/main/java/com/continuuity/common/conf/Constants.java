@@ -10,9 +10,10 @@ public class Constants {
    */
   public static final String
     SERVICE_METRICS_COLLECTION_SERVER = "metricscollection";
-
   public static final String
     SERVICE_METRICS_FRONTEND_SERVER = "metricsfrontend";
+  public static final String
+    SERVICE_METADATA_SERVER = "metadata";
 
   /**
    * Common across components.
@@ -183,4 +184,25 @@ public class Constants {
     DEFAULT_METIRCS_CONNECTION_URL = "jdbc:hsqldb:mem:metricsdb?user=sa";
   public static final String
     DEFAULT_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS = "processed.count";
+
+  /**
+   * Configuration for Metadata service
+   */
+  public static final String
+    CFG_METADATA_SERVER_ADDRESS = "metadata.server.address";
+  public static final String
+    CFG_METADATA_SERVER_PORT = "metadata.server.port";
+  public static final String
+    CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
+
+  /**
+   * Defaults for metadata service
+   */
+  public static final String
+    DEFAULT_METADATA_SERVER_ADDRESS = "localhost";
+  public static final int
+    DEFAULT_METADATA_SERVER_PORT = 45004;
+  public static final int
+    DEFAULT_METADATA_SERVER_THREADS = 2;
+
 }
