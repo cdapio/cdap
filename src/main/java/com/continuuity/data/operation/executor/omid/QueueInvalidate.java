@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
+import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.common.utils.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;

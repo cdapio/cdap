@@ -5,7 +5,6 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.utils.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.ClearFabric;
@@ -31,6 +30,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.*;

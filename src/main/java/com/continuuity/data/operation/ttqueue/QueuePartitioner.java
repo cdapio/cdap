@@ -1,6 +1,8 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.common.utils.Bytes;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.continuuity.hbase.ttqueue.HBQPartitioner.HBQPartitionerType;
 import com.google.common.base.Objects;
 
 /**
@@ -36,6 +38,15 @@ public interface QueuePartitioner {
         case HASH_ON_VALUE: return PARTITIONER_HASH;
         case MODULO_LONG_VALUE: return PARTITIONER_LONG_MOD;
         default: return PARTITIONER_RANDOM;
+      }
+    }
+    
+    public HBQPartitionerType toHBQ() {
+      switch (this) {
+        case RANDOM: return HBQPartitionerType.RANDOM;
+        case HASH_ON_VALUE: return HBQPartitionerType.HASH_ON_VALUE;
+        case MODULO_LONG_VALUE: return HBQPartitionerType.MODULO_LONG_VALUE;
+        default: return HBQPartitionerType.RANDOM;
       }
     }
   }

@@ -100,8 +100,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     long now = this.timeOracle.getTimestamp();
     try {
       this.table.invalidate(new HBQInvalidate(this.queueName,
-          QueueToHBQ.toHBQ(entryPointer),
-          new HBReadPointer(cleanWriteVersion, now)));
+          entryPointer.toHBQ(), new HBReadPointer(cleanWriteVersion, now)));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();
@@ -124,9 +123,9 @@ public class TTQueueOnHBaseNative implements TTQueue {
     HBQDequeueResult dequeueResult;
     try {
       dequeueResult = this.table.dequeue(new HBQDequeue(
-          this.queueName, QueueToHBQ.toHBQ(consumer), QueueToHBQ.toHBQ(config),
-          new HBReadPointer(memoryPointer.getWritePointer(),
-              memoryPointer.getReadPointer(), memoryPointer.getReadExcludes()),
+          this.queueName, consumer.toHBQ(), config.toHBQ(), new HBReadPointer(
+              memoryPointer.getWritePointer(), memoryPointer.getReadPointer(),
+              memoryPointer.getReadExcludes()),
               this.expirationConfig));
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
@@ -138,7 +137,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
           "DequeuePayload failed (" + dequeueResult.getFailureMessage() + ")");
     }
     if (dequeueResult.isSuccess()) dequeueReturns.incrementAndGet();
-    return QueueToHBQ.fromHBQ(this.queueName, dequeueResult);
+    return new DequeueResult(this.queueName, dequeueResult);
   }
 
   @Override
@@ -147,8 +146,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
     if (TRACE) log("Acking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
     try {
-      if (!this.table.ack(new HBQAck(this.queueName, QueueToHBQ.toHBQ(consumer),
-          QueueToHBQ.toHBQ(entryPointer), new HBReadPointer(now, now)))) {
+      if (!this.table.ack(new HBQAck(this.queueName, consumer.toHBQ(),
+          entryPointer.toHBQ(), new HBReadPointer(now, now)))) {
         throw new OperationException(StatusCode.ILLEGAL_ACK, "Ack failed");
       }
     } catch (IOException e) {
@@ -165,9 +164,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
     if (TRACE) log("Finalizing " + entryPointer);
     long now = this.timeOracle.getTimestamp();
     try {
-      if (!this.table.finalize(new HBQFinalize(this.queueName,
-          QueueToHBQ.toHBQ(consumer), QueueToHBQ.toHBQ(entryPointer),
-          new HBReadPointer(now, now), totalNumGroups))) {
+      if (!this.table.finalize(new HBQFinalize(this.queueName, consumer.toHBQ(),
+          entryPointer.toHBQ(), new HBReadPointer(now, now), totalNumGroups))) {
         throw new OperationException(StatusCode.ILLEGAL_FINALIZE,
             "Finalize failed");
       }
@@ -184,9 +182,8 @@ public class TTQueueOnHBaseNative implements TTQueue {
     if (TRACE) log("Unacking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
     try {
-      if (!this.table.unack(new HBQUnack(this.queueName,
-          QueueToHBQ.toHBQ(consumer),QueueToHBQ.toHBQ(entryPointer),
-          new HBReadPointer(now, now)))) {
+      if (!this.table.unack(new HBQUnack(this.queueName, consumer.toHBQ(),
+          entryPointer.toHBQ(), new HBReadPointer(now, now)))) {
         throw new OperationException(StatusCode.ILLEGAL_UNACK, "Unack failed");
       }
     } catch (IOException e) {
@@ -216,7 +213,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
       HBQQueueMeta queueMeta = this.table.getQueueMeta(
           new HBQMetaOperation(this.queueName,
               MetaOperationType.GET_QUEUE_META));
-      return QueueToHBQ.fromHBQ(queueMeta);
+      return new QueueMeta(queueMeta);
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();

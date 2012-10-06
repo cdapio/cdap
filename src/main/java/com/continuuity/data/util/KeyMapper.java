@@ -1,6 +1,6 @@
 package com.continuuity.data.util;
 
-import com.continuuity.common.utils.Bytes;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A simple interface that performs a single map() operation on a byte array.

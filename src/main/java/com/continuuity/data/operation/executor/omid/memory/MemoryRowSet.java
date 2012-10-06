@@ -6,7 +6,8 @@ package com.continuuity.data.operation.executor.omid.memory;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.continuuity.common.utils.Bytes;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.google.common.base.Objects;
 

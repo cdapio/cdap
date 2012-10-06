@@ -1,12 +1,16 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.util.Arrays;
-
 import com.continuuity.api.data.OperationBase;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.continuuity.api.data.ReadOperation;
-import com.continuuity.common.utils.Bytes;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
+import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
+import com.continuuity.hbase.ttqueue.HBQQueueMeta;
 import com.google.common.base.Objects;
+
+import java.util.Arrays;
 
 public class QueueAdmin {
 
@@ -92,6 +96,24 @@ public class QueueAdmin {
       this.globalHeadPointer = globalHeadPointer;
       this.currentWritePointer = currentWritePointer;
       this.groups = groups;
+    }
+
+    public QueueMeta(HBQQueueMeta queueMeta) {
+      this(queueMeta.getGlobalHeadPointer(), queueMeta.getCurrentWritePointer(),
+          convertGroupArray(queueMeta.getGroups()));
+    }
+
+    private static GroupState[] convertGroupArray(
+        com.continuuity.hbase.ttqueue.internal.GroupState[] groups) {
+      GroupState [] convertedGroups = new GroupState[groups.length];
+      for (int i=0; i<groups.length; i++) {
+        convertedGroups[i] = new GroupState(groups[i].getGroupSize(),
+            new EntryPointer(groups[i].getHead().getEntryId(),
+                groups[i].getHead().getShardId()),
+            ExecutionMode.fromHBQ(groups[i].getMode()));
+      }
+      // TODO Auto-generated method stub
+      return null;
     }
 
     @Override
