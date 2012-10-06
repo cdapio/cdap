@@ -13,6 +13,7 @@ dependencies {
     if(multiModule && ! buildingRelease)
     {
         compile project(":common")
+        compile project(":data-fabric")
         compile project(":data-fabric").sourceSets.api.output
         apiCompile project(":data-fabric").sourceSets.api.output
         clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
@@ -22,6 +23,8 @@ dependencies {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        apiCompile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     // External dependencies.
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
@@ -35,11 +38,6 @@ dependencies {
     compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
     compile group: 'org.apache.mina', name:'mina-integration-jmx', version:'2.0.4'
     compile group: 'com.ning', name: 'async-http-client', version: '1.7.5'
- /*
-    compile group: 'com.rexsl', name: 'rexsl-core', version: '0.3.8'
-    compile group: 'com.jcabi', name: 'jcabi-aspects', version: '0.1.10'
-    compile group: 'com.jcabi', name: 'jcabi-log', version: '0.1.10'
-  */
 }
 
 clover {
