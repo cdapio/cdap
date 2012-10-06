@@ -202,6 +202,56 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
+   * Retruns a single stream with more information.
+   *
+   * @param account account to which the stream belongs to.
+   * @param stream Id of the stream for which more information is requested.
+   * @return Stream with additional information like name and description else
+   * return the Stream with just the id.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue reading in the
+   *          information for stream.
+   */
+  @Override
+  public Stream getStream(Account account, Stream stream)
+    throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    String id = stream.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Stream does not have an id.");
+    }
+
+    try {
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry =
+        mds.get(context, accountId, null,
+                FieldTypes.Stream.ID, id);
+
+      // Add description and name to stream and return.
+      if(entry != null) {
+        stream.setName(entry.getTextField(
+          FieldTypes.Stream.NAME
+        ));
+        stream.setDescription(entry.getTextField(
+          FieldTypes.Stream.DESCRIPTION
+        ));
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed to retrieve stream {}. Reason : {}.",
+               stream, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return stream;
+  }
+
+  /**
    * Creates a dataset if not exist.
    *
    * @param dataset
@@ -214,7 +264,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   public boolean createDataset(Account account, Dataset dataset) throws
     MetadataServiceException, TException {
 
-    // Validate all account.
+    // Validate account.
     validateAccount(account);
     String accountId = account.getId();
 
@@ -260,7 +310,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       // If already present, return without applying the new changes.
       MetaDataEntry readEntry =
         mds.get(context, accountId, null,
-                FieldTypes.Stream.ID, id);
+                FieldTypes.Dataset.ID, id);
       if(readEntry != null) {
         return true;
       }
@@ -316,7 +366,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       // If already present, return without applying the new changes.
       MetaDataEntry readEntry =
         mds.get(context, accountId, null,
-                FieldTypes.Stream.ID, id);
+                FieldTypes.Dataset.ID, id);
 
       // If stream does not exist, then no point in deleting it.
       if(readEntry == null) {
@@ -375,6 +425,272 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException(e.getMessage());
     }
     return result;
+  }
+
+  /**
+   * Returns a dataset.
+   *
+   * @param account
+   * @param dataset
+   * @return Dataset
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is an issue with
+   *          retrieving the data set.
+   */
+  @Override
+  public Dataset getDataset(Account account, Dataset dataset)
+    throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    String id = dataset.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Dataset does not have an id.");
+    }
+
+    try {
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry =
+        mds.get(context, accountId, null,
+                FieldTypes.Dataset.ID, id);
+
+      // Add description and name to stream and return.
+      if(entry != null) {
+        dataset.setName(entry.getTextField(
+          FieldTypes.Dataset.NAME
+        ));
+        dataset.setDescription(entry.getTextField(
+          FieldTypes.Dataset.DESCRIPTION
+        ));
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed to retrieve dataset {}. Reason : {}.",
+               dataset, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return dataset;
+  }
+
+  /**
+   * Creates an application if not exists.
+   *
+   * @param account
+   * @param application
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue with creating
+   *          metadata store entry for the application.
+   */
+  @Override
+  public boolean createApplication(Account account, Application application)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = application.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application id is empty or null.");
+    }
+
+    if(! application.isSetName()) {
+      throw new MetadataServiceException("Application name should be set for create");
+    }
+    String name = application.getName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Application name cannot be null or empty");
+    }
+
+    if(! application.isSetDescription()) {
+      throw new MetadataServiceException("Application description should be set " +
+                                           "for create");
+    }
+    String description = application.getDescription();
+    if(description == null || (description != null && description.isEmpty())) {
+      throw new MetadataServiceException("Application description is empty or null");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Application.ID, id);
+      if(readEntry != null) {
+        return true;
+      }
+
+      // Create a new metadata entry.
+      MetaDataEntry entry = new MetaDataEntry(
+        accountId, null, FieldTypes.Application.ID, id
+      );
+
+      // Adding other fields.
+      entry.addField(FieldTypes.Application.NAME, name);
+      entry.addField(FieldTypes.Application.DESCRIPTION, description);
+      entry.addField(FieldTypes.Application.CREATE_DATE,
+                     String.format("%d", System.currentTimeMillis()));
+      // Invoke MDS to add entry.
+      mds.add(context, entry);
+    } catch (OperationException e) {
+      Log.warn("Failed creating application {}. Reason : {}",
+               application, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Deletes an application if exists.
+   *
+   * @param account
+   * @param application
+   * @return true if application was deleted successfully or did not exists to
+   *         be deleted; false otherwise.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue deleting an
+   *          application.
+   */
+  @Override
+  public boolean deleteApplication(Account account, Application application)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = application.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application id is empty or null.");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Application.ID, id);
+
+      // If stream does not exist, then no point in deleting it.
+      if(readEntry == null) {
+        return true;
+      }
+
+      // Invoke MDS to delete entry.
+      mds.delete(context, accountId, null, FieldTypes.Application.ID, id);
+    } catch (OperationException e) {
+      Log.warn("Failed deleting application {}. Reason : {}",
+               application, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Returns a list of application associated with account.
+   *
+   * @param account
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue listing
+   *          applications for a account.
+   * @returns a list of application associated with account; else empty list.
+   */
+  @Override
+  public List<Application> getApplications(Account account)
+    throws MetadataServiceException, TException {
+    List<Application> result = Lists.newArrayList();
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Invoke MDS to list streams for an account.
+      // NOTE: application is null and fields are null.
+      Collection<MetaDataEntry> applications =
+        mds.list(context, accountId, null, FieldTypes.Application.ID, null);
+      for(MetaDataEntry application : applications) {
+        Application rApplication = new Application(application.getId());
+        rApplication.setName(application.getTextField(FieldTypes.Application.NAME));
+        rApplication.setDescription(
+          application.getTextField(FieldTypes.Application.DESCRIPTION)
+        );
+        // More fields can be added later when we need them for now
+        // we just return id, name & description.
+        result.add(rApplication);
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed listing application for account {}. Reason : {}",
+               accountId, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return result;
+  }
+
+  /**
+   * Return more information about an application.
+   *
+   * @param account
+   * @param application
+   * @return application meta data if exists; else the id passed.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue retrieving
+   *          a application from metadata store.
+   */
+  @Override
+  public Application getApplication(Account account, Application application)
+    throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    String id = application.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application does not have an id.");
+    }
+
+    try {
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry =
+        mds.get(context, accountId, null,
+                FieldTypes.Application.ID, id);
+
+      // Add description and name to stream and return.
+      if(entry != null) {
+        application.setName(entry.getTextField(
+          FieldTypes.Application.NAME
+        ));
+        application.setDescription(entry.getTextField(
+          FieldTypes.Application.DESCRIPTION
+        ));
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed to retrieve application {}. Reason : {}.",
+               application, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return application;
   }
 
   /**

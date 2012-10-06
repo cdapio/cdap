@@ -35,7 +35,7 @@ import java.util.concurrent.*;
  *
  * <p>The class is thread-safe.
  */
-public class LogglyAppender extends AppenderSkeleton {
+public class  LogglyAppender extends AppenderSkeleton {
 
   /**
    * End of line, for our own internal presentation.
@@ -55,7 +55,7 @@ public class LogglyAppender extends AppenderSkeleton {
   /**
    * The service to run the background process.
    */
-  private final ScheduledExecutorService service =
+  private static final ScheduledExecutorService service =
     Executors.newScheduledThreadPool(1);
 
   /**

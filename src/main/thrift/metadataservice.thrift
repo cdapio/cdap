@@ -11,7 +11,9 @@ struct Account {
  * Defines a application
  */
 struct Application {
-   1: string id,
+   1: required string id,
+   2: optional string name,
+   3: optional string description,
 }
 
 /**
@@ -57,9 +59,9 @@ exception MetadataServiceException {
  * MetaData services
  */
 service MetadataService {
-
   /**
    * Creates a stream.
+   *
    * @return true if successful; false otherwise
    * @throws MetadataServiceException thrown when there is issue with creating
    * stream.
@@ -69,6 +71,7 @@ service MetadataService {
 
   /**
    * Deletes a stream.
+   *
    * @return true if successfull; false otherwise
    * @throws MetadataServiceException thrown when there is issue with deleting
    * stream.
@@ -77,17 +80,30 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
+   * Returns a list of streams associated with an account.
+   *
    * @return list of stream associated with account.
-   * @throws MetadataServiceException throw when there is issue listing the
+   * @throws MetadataServiceException thrown when there is issue listing the
    * streams for an account.
    */
   list<Stream> getStreams(1: Account account)
     throws (1: MetadataServiceException e),
 
+ /**
+  * Retruns a single stream with more information.
+  *
+  * @return information about a stream.
+  * @throws MetadataServiceException thrown when there is issue reading in the
+  * information for stream.
+  */
+  Stream getStream(1: Account account, 2: Stream stream)
+    throws (1: MetadataServiceException e),
+
   /**
    * Creates a dataset.
+   *
    * @return true if successfull; false otherwise
-   * @throws MetadataServiceException throw when there is issue with creating
+   * @throws MetadataServiceException thrown when there is issue with creating
    * a data set.
    */
   bool createDataset(1: Account account, 2: Dataset dataset)
@@ -95,18 +111,72 @@ service MetadataService {
 
   /**
    * Deletes a dataset.
+   *
    * @return true if successfull; false otherwise.
-   * @throws MetadataServiceException throw when there is issue with creating
+   * @throws MetadataServiceException thrown when there is issue with creating
    * a data set.
    */
   bool deleteDataset(1: Account account, 2: Dataset dataset)
     throws (1: MetadataServiceException e),
 
   /**
+   * Returns a list of data set associated with an account.
+   *
    * @return list of data set associated with account
-   * @throws MetadataServiceException throw when there is issue with listing
+   * @throws MetadataServiceException thrown when there is a issue with listing
    * data set.
    */
   list<Dataset> getDatasets(1: Account account)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Returns a dataset.
+   *
+   * @return Dataset
+   * @throws MetadataServiceException thrown when there is an issue with
+   * retrieving the data set.
+   */
+  Dataset getDataset(1: Account account, 2: Dataset dataset)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Creates an application if not exists.
+   *
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the application.
+   */
+  bool createApplication(1: Account account, 2: Application application)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Deletes an application if exists.
+   *
+   * @return true if application was deleted successfully or did not exists to
+   * be deleted; false otherwise.
+   * @throws MetadataServiceException thrown when there is issue deleting an
+   * application.
+   */
+  bool deleteApplication(1: Account account, 2: Application application)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Returns a list of application associated with account.
+   *
+   * @returns a list of application associated with account; else empty list.
+   * @throws MetadataServiceException thrown when there is issue listing
+   * applications for a account.
+   */
+  list<Application> getApplications(1: Account account)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return more information about an application.
+  *
+  * @return application meta data if exists; else the id passed.
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a application from metadata store.
+  */
+  Application getApplication(1: Account account, 2: Application application)
     throws (1: MetadataServiceException e),
 }

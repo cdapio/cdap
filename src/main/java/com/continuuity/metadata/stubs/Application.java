@@ -28,12 +28,18 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Application");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private String id; // required
+  private String name; // required
+  private String description; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ID((short)1, "id");
+    ID((short)1, "id"),
+    NAME((short)2, "name"),
+    DESCRIPTION((short)3, "description");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -50,6 +56,10 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       switch(fieldId) {
         case 1: // ID
           return ID;
+        case 2: // NAME
+          return NAME;
+        case 3: // DESCRIPTION
+          return DESCRIPTION;
         default:
           return null;
       }
@@ -94,7 +104,11 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Application.class, metaDataMap);
@@ -117,6 +131,12 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     if (other.isSetId()) {
       this.id = other.id;
     }
+    if (other.isSetName()) {
+      this.name = other.name;
+    }
+    if (other.isSetDescription()) {
+      this.description = other.description;
+    }
   }
 
   public Application deepCopy() {
@@ -126,6 +146,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   @Override
   public void clear() {
     this.id = null;
+    this.name = null;
+    this.description = null;
   }
 
   public String getId() {
@@ -151,6 +173,52 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
   }
 
+  public String getName() {
+    return this.name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void unsetName() {
+    this.name = null;
+  }
+
+  /** Returns true if field name is set (has been assigned a value) and false otherwise */
+  public boolean isSetName() {
+    return this.name != null;
+  }
+
+  public void setNameIsSet(boolean value) {
+    if (!value) {
+      this.name = null;
+    }
+  }
+
+  public String getDescription() {
+    return this.description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void unsetDescription() {
+    this.description = null;
+  }
+
+  /** Returns true if field description is set (has been assigned a value) and false otherwise */
+  public boolean isSetDescription() {
+    return this.description != null;
+  }
+
+  public void setDescriptionIsSet(boolean value) {
+    if (!value) {
+      this.description = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ID:
@@ -161,6 +229,22 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       }
       break;
 
+    case NAME:
+      if (value == null) {
+        unsetName();
+      } else {
+        setName((String)value);
+      }
+      break;
+
+    case DESCRIPTION:
+      if (value == null) {
+        unsetDescription();
+      } else {
+        setDescription((String)value);
+      }
+      break;
+
     }
   }
 
@@ -168,6 +252,12 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     switch (field) {
     case ID:
       return getId();
+
+    case NAME:
+      return getName();
+
+    case DESCRIPTION:
+      return getDescription();
 
     }
     throw new IllegalStateException();
@@ -182,6 +272,10 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     switch (field) {
     case ID:
       return isSetId();
+    case NAME:
+      return isSetName();
+    case DESCRIPTION:
+      return isSetDescription();
     }
     throw new IllegalStateException();
   }
@@ -208,6 +302,24 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         return false;
     }
 
+    boolean this_present_name = true && this.isSetName();
+    boolean that_present_name = true && that.isSetName();
+    if (this_present_name || that_present_name) {
+      if (!(this_present_name && that_present_name))
+        return false;
+      if (!this.name.equals(that.name))
+        return false;
+    }
+
+    boolean this_present_description = true && this.isSetDescription();
+    boolean that_present_description = true && that.isSetDescription();
+    if (this_present_description || that_present_description) {
+      if (!(this_present_description && that_present_description))
+        return false;
+      if (!this.description.equals(that.description))
+        return false;
+    }
+
     return true;
   }
 
@@ -219,6 +331,16 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     builder.append(present_id);
     if (present_id)
       builder.append(id);
+
+    boolean present_name = true && (isSetName());
+    builder.append(present_name);
+    if (present_name)
+      builder.append(name);
+
+    boolean present_description = true && (isSetDescription());
+    builder.append(present_description);
+    if (present_description)
+      builder.append(description);
 
     return builder.toHashCode();
   }
@@ -237,6 +359,26 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
     if (isSetId()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetName()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetDescription()).compareTo(typedOther.isSetDescription());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetDescription()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.description, typedOther.description);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -265,6 +407,20 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 2: // NAME
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.name = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // DESCRIPTION
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.description = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
@@ -283,6 +439,20 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       oprot.writeString(this.id);
       oprot.writeFieldEnd();
     }
+    if (this.name != null) {
+      if (isSetName()) {
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(this.name);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (this.description != null) {
+      if (isSetDescription()) {
+        oprot.writeFieldBegin(DESCRIPTION_FIELD_DESC);
+        oprot.writeString(this.description);
+        oprot.writeFieldEnd();
+      }
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -299,12 +469,36 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       sb.append(this.id);
     }
     first = false;
+    if (isSetName()) {
+      if (!first) sb.append(", ");
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
+    }
+    if (isSetDescription()) {
+      if (!first) sb.append(", ");
+      sb.append("description:");
+      if (this.description == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.description);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
+    if (!isSetId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {

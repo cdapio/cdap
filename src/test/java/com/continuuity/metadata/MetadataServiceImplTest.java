@@ -4,6 +4,7 @@ import com.continuuity.api.data.MetaDataException;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metadata.stubs.Account;
+import com.continuuity.metadata.stubs.Application;
 import com.continuuity.metadata.stubs.MetadataServiceException;
 import com.continuuity.metadata.stubs.Stream;
 import com.continuuity.runtime.MetadataModules;
@@ -146,6 +147,39 @@ public class MetadataServiceImplTest {
     }
     Account account1 = new Account("abc");
     Assert.assertTrue(mds.getStreams(account1).size() == 0);
+  }
+
+  /**
+   * Tests creation of a stream.
+   * @throws Exception
+   */
+  @Test
+  public void testCreateApplication() throws Exception {
+    Application application = new Application("app1");
+    application.setName("Application 1");
+    application.setDescription("Test application");
+    Assert.assertTrue(mds.createApplication(account, application));
+    Assert.assertTrue(mds.getApplications(account).size() > 0);
+  }
+
+  /**
+   * Tests deletion of a stream.
+   * @throws Exception
+   */
+  @Test
+  public void testDeleteApplication() throws Exception {
+    int beforeAddCount = mds.getApplications(account).size();
+    Application application = new Application("delapp1");
+    application.setName("Application 1");
+    application.setDescription("Test application");
+    Assert.assertTrue(mds.createApplication(account, application));
+    Assert.assertTrue(mds.getApplications(account).size() > 0);
+    int afterAddCount = mds.getApplications(account).size();
+    Application applicationToDelete = new Application("delapp1");
+    Assert.assertTrue(mds.deleteApplication(account, applicationToDelete));
+    int afterDeleteCount = mds.getApplications(account).size();
+    Assert.assertTrue((beforeAddCount + 1) == afterAddCount);
+    Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
   }
 
 

@@ -27,4 +27,14 @@ public class FieldTypes {
     public static final String CREATE_DATE = "createDate";
     public static final String TYPE = "type";
   }
+
+  /**
+   * Class representing constants for fields stored for Application
+   */
+  public static class Application {
+    public static final String ID = "application";
+    public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
+    public static final String CREATE_DATE = "createDate";
+  }
 }
