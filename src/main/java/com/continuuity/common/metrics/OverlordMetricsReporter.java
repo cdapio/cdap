@@ -323,7 +323,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
   @Override
   public void processCounter(MetricName name, Counter counter,
                              String context) throws Exception {
-    sendLong(name.getType(), name.getGroup(), name.getName(),
+    sendLong(name.getType(), name.getGroup(), name.getName() + ".count",
              name.getScope(), counter.count());
   }
 
