@@ -23,10 +23,9 @@
   <classpathentry kind="var" path="M2_REPO/com/google/guava/guava/11.0.2/guava-11.0.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/4.8.2/junit-4.8.2.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/typesafe/akka/akka-actor/2.0.3/akka-actor-2.0.3.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/scala-lang/scala-library/2.9.2/scala-library-2.9.2.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/typesafe/config/0.4.0/config-0.4.0.jar"/>
+  <classpathentry kind="lib" path="lib/akka-actor-2.0.3.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/typesafe/config/0.4.0/config-0.4.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.8.0/libthrift-0.8.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.5/commons-lang-2.5.jar"/>
@@ -40,5 +39,6 @@
   <classpathentry kind="var" path="M2_REPO/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/objenesis/objenesis/1.2/objenesis-1.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/com/esotericsoftware/reflectasm/reflectasm/1.03/reflectasm-1.03.jar"/>
+  <classpathentry kind="lib" path="lib/scala-library-2.9.1-1.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/jboss/netty/netty/3.2.7.Final/netty-3.2.7.Final.jar"/>
 </classpath>
