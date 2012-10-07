@@ -8,6 +8,7 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 /**
  * A Payvment/Lish Popular Product Feed.
@@ -16,6 +17,11 @@ import com.google.gson.Gson;
  * <p>
  * This class is used to build and store a popular feed.  It is feed a stream
  * of scored products and performs any necessary sorting and aggregations.
+ * <p>
+ * <b>JSON Format<b>
+ * <pre>
+ *    {"popular" : [ { "product_id" : # , "score" : # }, ... ]}
+ * </pre>
  */
 public class PopularFeed {
 
@@ -73,7 +79,9 @@ public class PopularFeed {
    * @return json string representation of popular feed
    */
   public static String toJson(List<PopularFeedEntry> feedEntries) {
-    return gson.toJson(feedEntries);
+    JsonObject obj = new JsonObject();
+    obj.add("popular", gson.toJsonTree(feedEntries));
+    return obj.toString();
   }
 
   /**

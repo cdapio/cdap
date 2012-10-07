@@ -23,13 +23,21 @@ import com.google.gson.Gson;
  * Currently this will aggregate all products of the same seller into a single
  * activity feed entry.  The position and timestamp of that entry will be the
  * latest for that seller.
+ * <p>
+ * <b>JSON Format<b>
+ * <pre>
+ *    {"activity" : [ { "timestamp" : # ,
+ *                     "store_id" : #,
+ *                     "products" : [ { "product_id" : #, "score" : # }, ... ]
+ *                   }, ... ]}
+ * </pre>
  */
 public class ActivityFeed {
 
   /**
    * Descending time-ordered list of activity feed entries.
    */
-  public List<ActivityFeedEntry> entries = new ArrayList<ActivityFeedEntry>();
+  public List<ActivityFeedEntry> activity = new ArrayList<ActivityFeedEntry>();
 
   /**
    * Map from store_id to it's activity feed entry.
@@ -51,7 +59,7 @@ public class ActivityFeed {
     if (entry == null) {
       entry = new ActivityFeedEntry(timestamp, store_id, product_id, score);
       this.stores.put(store_id, entry);
-      this.entries.add(entry);
+      this.activity.add(entry);
     } else {
       entry.addEntry(product_id, score);
     }
@@ -70,7 +78,7 @@ public class ActivityFeed {
           feedEntry.store_id, feedEntry.products.get(0).product_id,
           feedEntry.products.get(0).score);
       this.stores.put(feedEntry.store_id, existingEntry);
-      this.entries.add(existingEntry);
+      this.activity.add(existingEntry);
     } else {
       existingEntry.addEntry(feedEntry.products.get(0).product_id,
           feedEntry.products.get(0).score);
@@ -85,7 +93,7 @@ public class ActivityFeed {
    * @return descending time order list of activity feed entries
    */
   public List<ActivityFeedEntry> getFeed(int limit) {
-    return this.entries.subList(0, Math.min(limit, this.entries.size()));
+    return this.activity.subList(0, Math.min(limit, this.activity.size()));
   }
 
   /**
@@ -95,7 +103,7 @@ public class ActivityFeed {
    * @return descending time order list of activity feed entries
    */
   public List<ActivityFeedEntry> getEntireFeed() {
-    return this.entries;
+    return this.activity;
   }
 
   /**
@@ -104,7 +112,7 @@ public class ActivityFeed {
    * @return current number of entries in this activity feed
    */
   public int size() {
-    return this.entries.size();
+    return this.activity.size();
   }
 
   public static byte [] makeActivityFeedRow(String category) {

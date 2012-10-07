@@ -27,7 +27,15 @@ public class TestActivityFeed {
     feed = new ActivityFeed();
     feed.addEntry(1L, 1L, 1L, 1L);
     feed.addEntry(1L, 1L, 2L, 1L);
-    System.out.println(ActivityFeed.toJson(feed));
+    String feedJson = ActivityFeed.toJson(feed);
+    System.out.println(feedJson);
+    
+    // Verify JSON is exactly what we expect it to be
+    // (NOTE: this needs to change if JSON format of activity feed changes)
+    String expectedJson = "{\"activity\":[{\"timestamp\":1,\"store_id\":1," +
+        "\"products\":[{\"product_id\":1,\"score\":1},{\"product_id\":2," +
+        "\"score\":1}]}]}";
+    assertEquals(expectedJson, feedJson);
   }
 
   @Test

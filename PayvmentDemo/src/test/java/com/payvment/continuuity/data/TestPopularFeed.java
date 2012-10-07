@@ -1,5 +1,7 @@
 package com.payvment.continuuity.data;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Random;
 
 import org.junit.Test;
@@ -23,7 +25,19 @@ public class TestPopularFeed {
     feed = new PopularFeed();
     feed.addEntry(1L, 1L);
     feed.addEntry(1L, 1L);
-    System.out.println(PopularFeed.toJson(feed.getFeed(5)));
+    feed.addEntry(2L, 1L);
+    feed.addEntry(2L, 3L);
+    feed.addEntry(3L, 5L);
+    feed.addEntry(1L, 1L);
+    String popJson = PopularFeed.toJson(feed.getFeed(5));
+    System.out.println(popJson);
+    
+    // Verify JSON is exactly what we expect it to be
+    // (NOTE: this needs to change if JSON format of popular feed changes)
+    String expectedJson = "{\"popular\":[{\"product_id\":3,\"score\":5}," +
+        "{\"product_id\":2,\"score\":4},{\"product_id\":1,\"score\":3}]}";
+    
+    assertEquals(expectedJson, popJson);
   }
   
   // Helper methods

@@ -48,11 +48,13 @@ public class ClusterFeedReader {
    * Reads the activity feed for the specified cluster containing entries with
    * timestamps less than the max stamp and greater than the min stamp, up to
    * the specified limit.
+   * <p>
+   * See {@link ActivityFeed} javadoc for JSON format.
    * @param clusterId cluster id
    * @param limit maximum entries
    * @param maxStamp maximum stamp, exclusive
    * @param minStamp minimum stamp, exclusive
-   * @return activity feed
+   * @return activity feed of product entries in descending time order
    * @throws OperationException
    */
   public ActivityFeed getActivityFeed(int clusterId, int limit,
@@ -112,9 +114,26 @@ public class ClusterFeedReader {
     return activityFeed;
   }
 
+  /**
+   * Reads the popular feed for the specified cluster, determining the most
+   * popular products from the number of hours specified.  Resulting list of
+   * popular products can be paged using limit and offset.
+   * <p>
+   * See {@link PopularFeed} javadoc for JSON format.
+   * @param clusterId cluster id
+   * @param numHours number of hours (must be >= 1)
+   * @param limit maximum number of products to return
+   * @param offset number of products offset from most popular to return
+   * @return feed of products in descending popularity order
+   * @throws OperationException
+   */
   public PopularFeed getPopularFeed(int clusterId, int numHours,
       int limit, int offset) throws OperationException {
     int n = limit + offset;
+    if (numHours < 1 || limit < 1 || offset < 0) {
+      throw new OperationException(StatusCode.KEY_NOT_FOUND,
+          "Invalid input argument");
+    }
     // Construct PopularFeed which handles all aggregation of product scores
     PopularFeed popFeed = new PopularFeed();
     // Read cluster info
