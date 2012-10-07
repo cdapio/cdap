@@ -32,11 +32,10 @@
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>flow</artifactId>
+      <artifactId>gateway</artifactId>
       <version>0.1.0</version>
-      <classifier>tests</classifier>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/flow-0.1.0-tests.jar</systemPath>
+      <systemPath>${project.basedir}/lib/gateway-0.1.0.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>

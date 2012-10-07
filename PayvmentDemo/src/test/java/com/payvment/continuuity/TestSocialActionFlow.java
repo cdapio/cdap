@@ -37,19 +37,18 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
   public void testSocialActionFlow() throws Exception {
     // Get references to tables
     CounterTable productActionCountTable = new CounterTable("productActions",
-        flowletContext.getDataFabric(), flowletContext);
+        getDataFabric(), getRegistry());
     CounterTable allTimeScoreTable = new CounterTable("allTimeScores",
-        flowletContext.getDataFabric(), flowletContext);
+        getDataFabric(), getRegistry());
     SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
-        flowletContext.getDataFabric(), flowletContext,
+        getDataFabric(), getRegistry(),
         new SortedCounterTable.SortedCounterConfig());
     
     // Instantiate product feed flow
     SocialActionFlow socialActionFlow = new SocialActionFlow();
     
     // Start the flow
-    TestFlowHandle flowHandle =
-        FlowTestHelper.startFlow(socialActionFlow, conf, executor);
+    TestFlowHandle flowHandle = startFlow(socialActionFlow);
     assertTrue(flowHandle.isSuccess());
     
     // Generate a single social action event
@@ -120,7 +119,7 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
         ActivityFeed.makeActivityFeedRow(category), null, null);
     OperationResult<Map<byte[],byte[]>> result =
-        flowletContext.getDataFabric().read(read);
+        getDataFabric().read(read);
     assertFalse(result.isEmpty());
     Map<byte[], byte[]> map = result.getValue();
     assertEquals(1, map.size());

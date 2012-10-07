@@ -18,11 +18,9 @@ import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.google.gson.Gson;
-import com.payvment.continuuity.ProductFeedFlow;
-import com.payvment.continuuity.ProductFeedParserFlowlet;
 import com.payvment.continuuity.data.ActivityFeed;
-import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.ProductFeedEntry;
 import com.payvment.continuuity.lib.CounterTable;
 import com.payvment.continuuity.lib.SortedCounterTable;
@@ -36,24 +34,23 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
   @Test(timeout = 20000)
   public void testProductFeedFlow() throws Exception {
     // Get references to tables
-    ProductTable productTable = new ProductTable(flowletContext.getDataFabric(),
-        flowletContext);
+    ProductTable productTable = new ProductTable(getDataFabric(),
+        getRegistry());
     CounterTable productUpdateCountTable = new CounterTable("productUpdates",
-        flowletContext.getDataFabric(), flowletContext);
+        getDataFabric(), getRegistry());
     CounterTable allTimeScoreTable = new CounterTable("allTimeScore",
-        flowletContext.getDataFabric(), flowletContext);
+        getDataFabric(), getRegistry());
     SortedCounterTable topScoreTable = new SortedCounterTable("topScore",
-        flowletContext.getDataFabric(), flowletContext,
+        getDataFabric(), getRegistry(),
         new SortedCounterTable.SortedCounterConfig());
-    
+
     // Instantiate product feed flow
     ProductFeedFlow productFeedFlow = new ProductFeedFlow();
-    
+
     // Start the flow
-    TestFlowHandle flowHandle =
-        FlowTestHelper.startFlow(productFeedFlow, conf, executor);
+    TestFlowHandle flowHandle = startFlow(productFeedFlow);
     assertTrue(flowHandle.isSuccess());
-    
+
     // Generate a single product event
     Long now = System.currentTimeMillis();
     Long product_id = 1L;
@@ -63,61 +60,61 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     ProductFeedEntry productMeta =
         new ProductFeedEntry(product_id, store_id, now, category, name, 3.5);
     String productMetaJson = productMeta.toJson();
-    
+
     // Write json to input stream
     writeToStream(ProductFeedFlow.flowName, ProductFeedFlow.inputStream,
         Bytes.toBytes(productMetaJson));
-    
+
     // Wait for parsing flowlet to process the tuple
     while (ProductFeedParserFlowlet.numProcessed < 1) {
       System.out.println("Waiting for parsing flowlet to process tuple");
       Thread.sleep(1000);
     }
-    
+
     // Wait for processor flowlet to process the tuple
     while (ProductFeedFlow.ProductProcessorFlowlet.numProcessed < 1) {
       System.out.println("Waiting for processor flowlet to process tuple");
       Thread.sleep(10);
     }
-    
+
     // Wait for processor flowlet to process the tuple
     while (ProductFeedFlow.ProductActivityFeedUpdaterFlowlet.numProcessed < 1) {
       System.out.println("Waiting for updater flowlet to process tuple");
       Thread.sleep(10);
     }
-    
+
     System.out.println("Tuple processed to the end!");
 
     // If we are here, flow ran successfully!
     assertTrue(FlowTestHelper.stopFlow(flowHandle));
-    
+
     // Verify the product is stored
     ProductFeedEntry readProductMeta = productTable.readObject(
         Bytes.toBytes(product_id));
     assertEqual(productMeta, readProductMeta);
-    
+
     // Verify the product update count has been incremented
     assertEquals(new Long(1),
         productUpdateCountTable.readSingleKey(Bytes.toBytes(product_id)));
-    
+
     // Verify the product total score has increased to 1
     assertEquals(new Long(1),
         allTimeScoreTable.readSingleKey(
             Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
-                Bytes.toBytes(product_id))));    
-    
+                Bytes.toBytes(product_id))));
+
     // Verify the hourly score has been incremented to type score increase
     List<Counter> counters = topScoreTable.readTopCounters(
         Bytes.add(Bytes.toBytes(Helpers.hour(now)),
             Bytes.toBytes(productMeta.category)), 10);
     assertEquals(1, counters.size());
     assertEquals(new Long(1), counters.get(0).getCount());
-    
+
     // Verify a new entry has been made in activity feed
     ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
         ActivityFeed.makeActivityFeedRow(category), null, null);
     OperationResult<Map<byte[],byte[]>> result =
-        flowletContext.getDataFabric().read(read);
+        getDataFabric().read(read);
     assertFalse(result.isEmpty());
     Map<byte[], byte[]> map = result.getValue();
     assertEquals(1, map.size());
@@ -130,35 +127,35 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     assertEquals(product_id, feedEntry.products.get(0).product_id);
     assertEquals(new Long(1), feedEntry.products.get(0).score);
   }
-  
+
   @Test
   public void testProductMetaSerialization() throws Exception {
 
     String exampleProductMetaJson =
         "{\"@id\":\"6709879\"," +
-        "\"category\":\"Dresses\"," +
-        "\"name\":\"Sleeveless Black Sequin Dress\"," +
-        "\"last_modified\":\"1348074421000\"," +
-        "\"store_id\":\"164341\"," +
-        "\"score\":\"1.3\"}";
-    
+            "\"category\":\"Dresses\"," +
+            "\"name\":\"Sleeveless Black Sequin Dress\"," +
+            "\"last_modified\":\"1348074421000\"," +
+            "\"store_id\":\"164341\"," +
+            "\"score\":\"1.3\"}";
+
     String processedJsonString =
         ProductFeedParserFlowlet.preProcessSocialActionJSON(
             exampleProductMetaJson);
-    
+
     Gson gson = new Gson();
     ProductFeedEntry productMeta =
         gson.fromJson(processedJsonString, ProductFeedEntry.class);
-    
+
     assertEquals(new Long(6709879), productMeta.product_id);
     assertEquals(new Long(164341), productMeta.store_id);
     assertEquals(new Long(1348074421000L), productMeta.date);
     assertEquals("Dresses", productMeta.category);
     assertEquals("Sleeveless Black Sequin Dress", productMeta.name);
     assertEquals(new Double(1.3), productMeta.score);
-    
+
     // Try with JSON generating helper method
-    
+
     exampleProductMetaJson = productMeta.toJson();
     processedJsonString =
         ProductFeedParserFlowlet.preProcessSocialActionJSON(
@@ -167,7 +164,7 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
         gson.fromJson(processedJsonString, ProductFeedEntry.class);
 
     assertEqual(productMeta, productMeta2);
-    
+
     // Try to serialize/deserialize in a tuple
     TupleSerializer serializer = new TupleSerializer(false);
     serializer.register(ProductFeedEntry.class);
@@ -179,6 +176,6 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     assertNotNull(productMeta);
 
     assertEqual(productMeta, productMeta3);
-    
+
   }
 }
