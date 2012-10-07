@@ -110,5 +110,9 @@ public class PopularFeed {
       return 0;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      return this.compareTo((PopularFeedEntry)o) == 0;
+    }
   }
 }
