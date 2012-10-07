@@ -10,6 +10,10 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.google.gson.Gson;
 import com.payvment.continuuity.entity.SocialAction;
 
+/**
+ * Flowlet parses social actions from their JSON format into an internal
+ * {@link SocialAction} object and then into a tuple to the next flowlet.
+ */
 public class SocialActionParserFlowlet extends ComputeFlowlet {
 
   static int numProcessed = 0;

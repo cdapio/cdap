@@ -212,6 +212,11 @@ public class SocialActionFlow implements Flow {
     }
   }
 
+  /**
+   * Flowlet that performs checks of values generated in the primary updates
+   * and determines whether to insert an activity feed entry.  If it does,
+   * then it will write an activity feed entry.
+   */
   public static class ActivityFeedUpdaterFlowlet extends ComputeFlowlet {
 
     static int numProcessed = 0;
@@ -254,6 +259,11 @@ public class SocialActionFlow implements Flow {
     }
   }
 
+  /**
+   * Flowlet that performs checks of values generated in the primary updates
+   * and determines whether to perform any additional insertions for the
+   * popular feed, and if so, performs those operations.
+   */
   public static class PopularFeedUpdaterFlowlet extends ComputeFlowlet {
 
     static int numProcessed = 0;

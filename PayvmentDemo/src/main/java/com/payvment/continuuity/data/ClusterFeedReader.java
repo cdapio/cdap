@@ -21,6 +21,15 @@ import com.payvment.continuuity.util.Bytes;
 import com.payvment.continuuity.util.Constants;
 import com.payvment.continuuity.util.Helpers;
 
+/**
+ * Performs activity feed and popular feed read queries.
+ * <p>
+ * For more information on activity feeds, see
+ * {@link #getActivityFeed(int, int, long, long)} and {@link ActivityFeed}.
+ * <p>
+ * For more information on popular feeds, see
+ * {@link #getPopularFeed(int, int, int, int)} and {@link PopularFeed}.
+ */
 public class ClusterFeedReader {
 
   private static final Logger LOG =
