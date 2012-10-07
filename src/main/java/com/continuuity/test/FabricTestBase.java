@@ -5,14 +5,15 @@ import java.util.Map;
 
 import org.junit.BeforeClass;
 
+import com.continuuity.api.data.BatchCollectionRegistry;
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
+import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.ClearFabric.ToClear;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -23,6 +24,7 @@ import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.definition.api.FlowDefinition;
 import com.continuuity.flow.definition.impl.FlowStream;
+import com.continuuity.flow.flowlet.internal.FlowletContextImpl;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -68,8 +70,10 @@ public abstract class FabricTestBase {
       (OmidTransactionalOperationExecutor)injector.getInstance(
           OperationExecutor.class);
 
-  private static final DataFabric fabric = new DataFabricImpl(executor,
-      OperationContext.DEFAULT);
+  private static final FlowletContext context =
+      new FlowletContextImpl(executor, OperationContext.DEFAULT, 1);
+
+  private static final DataFabric fabric = context.getDataFabric();
 
   private static final CConfiguration conf = CConfiguration.create();
 
@@ -151,5 +155,14 @@ public abstract class FabricTestBase {
         new QueueEnqueue(Bytes.toBytes(
             FlowStream.defaultURI(flowName, streamName).toString()),
             serializer.serialize(tuple)));
+  }
+
+  /**
+   * Returns the batch collection registry, which is often used in instantiating
+   * tables and datalibs.
+   * @return reference to the batch collection registry
+   */
+  protected BatchCollectionRegistry getRegistry() {
+    return context;
   }
 }
