@@ -67,7 +67,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   /**
    * Connection Pool Manager.
    */
-  private static DBConnectionPoolManager poolManager;
+  private DBConnectionPoolManager poolManager;
 
   /**
    * Allowed time series metrics.
@@ -80,6 +80,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    */
   private static final class TimeseriesCleanser
       extends AbstractScheduledService {
+    private final FlowMetricsProcessor processor;
+
+    public TimeseriesCleanser(FlowMetricsProcessor processor) {
+      this.processor = processor;
+    }
 
     private long olderThanTimeInSeconds = 300;
 
@@ -91,7 +96,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       sb.append("DELETE FROM timeseries")
         .append(" ").append("WHERE timestamp < ?");
       try {
-        connection = getConnection();
+        connection = processor.getConnection();
         stmt = connection.prepareStatement(sb.toString());
         long oldestStartTime = ((System.currentTimeMillis()/1000)
           - olderThanTimeInSeconds);
@@ -168,7 +173,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
     // Starting the timeseries cleaners.
     if(timeseriesCleanser == null) {
-      timeseriesCleanser = new TimeseriesCleanser();
+      timeseriesCleanser = new TimeseriesCleanser(this);
       Log.debug("Starting timeseries db cleaner.");
       timeseriesCleanser.start();
     }
@@ -182,7 +187,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    * @return a {@link java.sql.Connection} from the connection pool.
    * @throws SQLException thrown in case of any error.
    */
-  private static Connection getConnection() throws SQLException {
+  private Connection getConnection() throws SQLException {
     if(poolManager != null) {
       return poolManager.getValidConnection();
     }
