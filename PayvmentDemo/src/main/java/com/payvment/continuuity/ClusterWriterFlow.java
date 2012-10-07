@@ -33,6 +33,10 @@ import com.payvment.continuuity.data.ClusterTable;
  *   <pre>
  *      clusterid,category,weight
  *   </pre>
+ *   <blockquote>or when doing a reset, in the format:</blockquote>
+ *   <pre>
+ *      reset_clusters,max_cluster_id,"msg"
+ *   </pre>
  * <p>
  *   <u>Flowlets</u>
  *   <p>This Flow is made up of three Flowlets.

@@ -22,6 +22,13 @@ import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
  * <p>
  * Implemented as a {@link QueryRestProvider} to bridge between REST calls and
  * the internal APIs of {@link ClusterFeedReader}.
+ * <p>
+ * Example queries:
+ * <pre>
+ *   http://localhost:10010/rest-query/feedreader/readactivity?clusterid=3&limit=10
+ *   <p>
+ *   http://localhost:10010/rest-query/feedreader/readpopular?clusterid=3&numhours=24&limit=10
+ * </pre>
  */
 public class FeedQueryRestProvider extends QueryRestProvider {
 
