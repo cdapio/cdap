@@ -1,13 +1,13 @@
 package com.continuuity.common.service;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServiceDiscoveryClientException;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.time.StopWatch;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -18,12 +18,13 @@ import java.net.UnknownHostException;
  * This abstract class makes it easy to build a registered server.
  * <p>
  *   Server provides an ability to register the server with the central
- *   server discovery system and also provides a command port that can be accessed
- *   locally to investigate the server.
+ *   server discovery system and also provides a command port that can be
+ *   accessed locally to investigate the server.
  * </p>
  */
 public abstract class AbstractRegisteredServer {
-  private static final Logger Log = (Logger)LoggerFactory.getLogger(AbstractRegisteredServer.class);
+  private static final Logger Log = LoggerFactory.getLogger
+    (AbstractRegisteredServer.class);
 
   /**
    * Service registration client.
@@ -52,8 +53,9 @@ public abstract class AbstractRegisteredServer {
   private Thread serverThread;
 
   /**
-   * Defines the time start will wait till it's started. if server is not started even after this
-   * time, then there is an issue and will throw a ServerException.
+   * Defines the time start will wait till it's started. if server is not
+   * started even after this time, then there is an issue and will throw a
+   * ServerException.
    */
   private static final long START_WAIT_TIME = 5 * 1000;
 
@@ -81,12 +83,21 @@ public abstract class AbstractRegisteredServer {
    * </p>
    * @param command to be registered.
    * @param description of the command that is being registered.
-   * @param listener to be associated with command, that is invoked when command port sees that.
+   * @param listener to be associated with command, that is invoked when
+   *                 command port sees that.
    */
-  public void addCommandListener(String command, String description, CommandPortServer.CommandListener listener) {
+  public void addCommandListener(String command, String description,
+                                 CommandPortServer.CommandListener listener) {
     cmdPortServer.addListener(command, description, listener);
   }
 
+  public static void setLoggingLevel(Level level) {
+    ch.qos.logback.classic.Logger root =
+      (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(
+        ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME
+      );
+    root.setLevel(level);
+  }
   /**
    * Starts the service
    *
@@ -94,7 +105,8 @@ public abstract class AbstractRegisteredServer {
    * @param conf instance of configuration object.
    * @throws ServerException
    */
-  public final void start(String[] args, CConfiguration conf) throws ServerException {
+  public final void start(String[] args, CConfiguration conf)
+    throws ServerException {
     String zkEnsemble = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE,
                                  Constants.DEFAULT_ZOOKEEPER_ENSEMBLE);
     Log.info("AbstractRegisteredServer using ensemble {}", zkEnsemble);
@@ -113,43 +125,46 @@ public abstract class AbstractRegisteredServer {
         }
       });
 
-      addCommandListener("log-trace", "Change service level log to trace", new CommandPortServer.CommandListener(){
+      addCommandListener("log-trace",
+                         "Change service level log to trace",
+                         new CommandPortServer.CommandListener() {
         @Override
         public String act() {
-          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-          root.setLevel(Level.DEBUG);
-          return "WARNING: Please note that this might fill out the disk space on host. Set log level to debug";
+          setLoggingLevel(Level.TRACE);
+          return "WARNING: Please note that this might fill out the disk " +
+            "space on host. Set log level to debug";
         }
       });
 
-      addCommandListener("log-debug", "Change service level log to debug", new CommandPortServer.CommandListener(){
+      addCommandListener("log-debug", "Change service level log to debug",
+                         new CommandPortServer.CommandListener(){
         @Override
         public String act() {
-          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-          root.setLevel(Level.DEBUG);
+          setLoggingLevel(Level.DEBUG);
           return "Set log level to debug";
         }
       });
 
-      addCommandListener("log-error", "Change service level log to error.", new CommandPortServer.CommandListener() {
+      addCommandListener("log-error", "Change service level log to error.",
+                         new CommandPortServer.CommandListener() {
         @Override
         public String act() {
-          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-          root.setLevel(Level.ERROR);
+          setLoggingLevel(Level.ERROR);
           return "Set log level to error";
         }
       });
 
-      addCommandListener("log-warn", "Change service level log to warn.", new CommandPortServer.CommandListener() {
+      addCommandListener("log-warn", "Change service level log to warn.",
+                         new CommandPortServer.CommandListener() {
         @Override
         public String act() {
-          Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-          root.setLevel(Level.WARN);
+          setLoggingLevel(Level.WARN);
           return "Set log level to warn";
         }
       });
 
-      addCommandListener("ruok", "Checks if service is up", new CommandPortServer.CommandListener() {
+      addCommandListener("ruok", "Checks if service is up",
+                         new CommandPortServer.CommandListener() {
         @Override
         public String act() {
           if(ruok()) {
@@ -165,7 +180,8 @@ public abstract class AbstractRegisteredServer {
       }
 
       client = new ServiceDiscoveryClient(zkEnsemble);
-      client.register(server, serverArgs.getAddress(), serverArgs.getPort(),  serverArgs.getPayload());
+      client.register(server, serverArgs.getAddress(), serverArgs.getPort(),
+                      serverArgs.getPayload());
 
       serverThread = start();
       if(serverThread == null) {
@@ -175,7 +191,8 @@ public abstract class AbstractRegisteredServer {
       serverThread.setName(getServerName() + "-Thread");
       serverThread.start();
 
-      // We wait till we either find that the service has started or reaches timeout.
+      // We wait till we either find that the service has started or reaches
+      // timeout.
       StopWatch watch = new StopWatch();
       watch.start();
       while(watch.getTime() < START_WAIT_TIME) {
@@ -190,7 +207,8 @@ public abstract class AbstractRegisteredServer {
         }
       }
       if(!running) {
-        throw new ServerException("Service not started even after waiting for " + START_WAIT_TIME + "ms.");
+        throw new ServerException("Service not started even after waiting for "
+                                    + START_WAIT_TIME + "ms.");
       }
 
       // If command port has been enabled, then we block else we destroy
@@ -203,17 +221,23 @@ public abstract class AbstractRegisteredServer {
       }
 
     } catch (ServiceDiscoveryClientException e) {
-      Log.error("Unable to register the cmdPortServer with discovery service, shutting down. Reason {}", e.getMessage());
+      Log.error("Unable to register the cmdPortServer with discovery " +
+                  "service, shutting down. Reason {}", e.getMessage());
       stop(true);
-      throw new ServerException("Unable to register the cmdPortServer with discovery service");
+      throw new ServerException("Unable to register the cmdPortServer with " +
+                                  "discovery service");
     } catch (CommandPortServer.CommandPortException e) {
-      Log.warn("Error starting the command port service. Service not started. Reason : {}", e.getMessage());
+      Log.warn("Error starting the command port service. Service not " +
+                 "started. Reason : {}", e.getMessage());
       stop(true);
-      throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
+      throw new ServerException("Could not start command port service. " +
+                                  "Reason : " + e.getMessage());
     } catch (IOException e) {
-      Log.error("Error starting the command port service. Reason : {}", e.getMessage());
+      Log.error("Error starting the command port service. Reason : {}",
+                e.getMessage());
       stop(true);
-      throw new ServerException("Could not start command port service. Reason : " + e.getMessage());
+      throw new ServerException("Could not start command port service. " +
+                                  "Reason : " + e.getMessage());
     }
   }
 
@@ -234,21 +258,23 @@ public abstract class AbstractRegisteredServer {
         cmdPortServer.stop();
       }
     } catch (IOException e) {
-      Log.warn("Issue while closing the service discovery client. Reason : {}", e.getMessage());
+      Log.warn("Issue while closing the service discovery client. " +
+                 "Reason : {}", e.getMessage());
     }
   }
 
   /**
    * Returns the <code>InetAddress</code> on which the server can be started.
    *
-   * <p> A preferredAddress specifies the address to used for create InetAddress, if it's not present then
-   * localhost is returned.</p>
+   * <p> A preferredAddress specifies the address to used for create
+   * InetAddress, if it's not present then localhost is returned.</p>
    *
    * @param preferredAddress address that is preferred to start the server on.
    * @return an instance of {@link InetAddress}
    * @throws UnknownHostException
    */
-  protected final InetAddress getServerInetAddress(String preferredAddress) throws UnknownHostException {
+  protected final InetAddress getServerInetAddress(String preferredAddress)
+    throws UnknownHostException {
     InetAddress listenAddress = null;
     if(preferredAddress == null) {
       listenAddress = InetAddress.getLocalHost();
@@ -273,13 +299,15 @@ public abstract class AbstractRegisteredServer {
   }
 
   /**
-   * Extending class should implement this API. Should do everything to start a service in the Thread.
+   * Extending class should implement this API. Should do everything to start
+   * a service in the Thread.
    * @return Thread instance that will be managed by the service.
    */
   protected abstract Thread start();
 
   /**
-   * Should be implemented by the class extending {@link AbstractRegisteredServer} to stop the service.
+   * Should be implemented by the class extending
+   * {@link AbstractRegisteredServer} to stop the service.
    */
   protected abstract void stop();
 
@@ -294,9 +322,11 @@ public abstract class AbstractRegisteredServer {
    *
    * @param args from command line based for configuring service
    * @param conf Configuration instance passed around.
-   * @return Pair of args for registering the service and the port service is running on.
+   * @return Pair of args for registering the service and the port service
+   * is running on.
    */
-  protected abstract RegisteredServerInfo configure(String[] args, CConfiguration conf);
+  protected abstract RegisteredServerInfo configure(String[] args,
+                                                    CConfiguration conf);
 
 
 }

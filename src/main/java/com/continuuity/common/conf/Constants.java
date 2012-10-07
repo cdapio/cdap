@@ -205,4 +205,26 @@ public class Constants {
   public static final int
     DEFAULT_METADATA_SERVER_THREADS = 2;
 
+  /**
+   * Configuration for consolidated overlord service.
+   */
+  public static final String
+    CFG_OVERLORD_SERVER_ADDRESS = "overlord.server.address";
+  public static final String
+    CFG_OVERLORD_SERVER_PORT = "overlord.server.port";
+  public static final String
+    CFG_OVERLORD_SERVER_THREADS = "overlord.server.threads";
+
+  /**
+   * Defaults for Overlord service
+   */
+  public static final String
+    DEFAULT_OVERLORD_SERVER_ADDRESS = "localhost";
+  public static final int
+    DEFAULT_OVERLORD_SERVER_PORT = 45005;
+  public static final int
+    DEFAULT_OVERLORD_SERVER_THREADS = 10;
+
+
+
 }
