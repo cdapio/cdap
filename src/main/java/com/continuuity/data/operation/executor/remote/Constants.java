@@ -118,6 +118,8 @@ public class Constants {
   public static final String METRIC_GETQUEUEMETA_LATENCY = "getQueueMetaLatency";
   public static final String METRIC_CLEARFABRIC_REQUESTS = "clearFabricRequests";
   public static final String METRIC_CLEARFABRIC_LATENCY = "clearFabricLatency";
+  public static final String METRIC_OPENTABLE_REQUESTS = "openTableRequests";
+  public static final String METRIC_OPENTABLE_LATENCY = "openTableLatency";
   public static final String METRIC_READKEY_REQUESTS = "readKeyRequests";
   public static final String METRIC_READKEY_LATENCY = "readKeyLatency";
   public static final String METRIC_READ_REQUESTS = "readRequests";

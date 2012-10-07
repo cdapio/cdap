@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
@@ -235,6 +236,20 @@ public class RemoteOperationExecutor
           public Boolean execute(OperationExecutorClient client)
               throws TException, OperationException {
             client.execute(context, clearFabric);
+            return true;
+          }
+        });
+  }
+
+  @Override
+  public void execute(final OperationContext context,
+                      final OpenTable openTable) throws OperationException {
+    this.execute(
+        new Operation<Boolean>("OpenTable") {
+          @Override
+          public Boolean execute(OperationExecutorClient client)
+              throws TException, OperationException {
+            client.execute(context, openTable);
             return true;
           }
         });

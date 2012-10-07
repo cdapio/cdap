@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
@@ -206,6 +207,15 @@ public class ConverterUtils {
     if (clearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
     if (clearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
     return new ClearFabric(toClear);
+  }
+
+  /** wrap an OpenTable operation */
+  public TOpenTable wrap(OpenTable openTable) {
+    return new TOpenTable(openTable.getTableName());
+  }
+  /** unwrap an OpenTable operation */
+  public OpenTable unwrap(TOpenTable tOpenTable) {
+    return new OpenTable(tOpenTable.getTable());
   }
 
   /** wrap a Write operation */

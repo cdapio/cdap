@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor.remote;
 import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
@@ -506,4 +507,31 @@ public class TOperationExecutorImpl
       throw wrap(e);
     }
   }
+
+  @Override
+  public void openTable(TOperationContext tcontext,
+                        TOpenTable tOpenTable)
+      throws TException, TOperationException {
+
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_OPENTABLE_REQUESTS,
+        Constants.METRIC_OPENTABLE_LATENCY);
+
+    if (Log.isDebugEnabled())
+      Log.debug("Received TOpenTable: " + tOpenTable);
+
+    try {
+      OperationContext context = unwrap(tcontext);
+      OpenTable openTable = unwrap(tOpenTable);
+      this.opex.execute(context, openTable);
+      if (Log.isDebugEnabled()) Log.debug("Open table successful.");
+      helper.success();
+
+    } catch (OperationException e) {
+      helper.failure();
+      Log.debug("Open table failed: " + e.getMessage());
+      throw wrap(e);
+    }
+  }
+
 }

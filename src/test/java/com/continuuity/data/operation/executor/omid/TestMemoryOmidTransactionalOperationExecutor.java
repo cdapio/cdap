@@ -19,5 +19,6 @@ extends TestOmidTransactionalOperationExecutor {
   protected OmidTransactionalOperationExecutor getOmidExecutor() {
     return executor;
   }
-  
+
+
 }

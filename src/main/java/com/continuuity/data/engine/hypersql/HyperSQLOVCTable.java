@@ -29,10 +29,13 @@ implements OrderedVersionedColumnarTable {
       LoggerFactory.getLogger(HyperSQLOVCTable.class);
 
   private final String tableName;
+  private final String quotedTableName;
   private final Connection connection;
 
   HyperSQLOVCTable(final String tableName, Connection connection) {
+    // quoting the table name to ensure that arbitrary characters are legal
     this.tableName = tableName;
+    this.quotedTableName = "\""+ tableName + "\"";
     this.connection = connection;
   }
 
@@ -86,6 +89,7 @@ implements OrderedVersionedColumnarTable {
       DatabaseMetaData md = this.connection.getMetaData();
       ResultSet rs = md.getTables(null, null, this.tableName, null);
       if (rs.next()) {
+        // System.out.println("Table " + this.tableName + " already exists");
         return true;
       }
       return false;
@@ -96,21 +100,23 @@ implements OrderedVersionedColumnarTable {
   }
 
   void initializeTable() throws OperationException {
-    String createStatement = "CREATE CACHED TABLE " + this.tableName + " (" +
+    String createStatement = "CREATE CACHED TABLE " + this.quotedTableName + " (" +
         "rowkey " + ROW_TYPE + " NOT NULL, " +
         "column " + COLUMN_TYPE + " NOT NULL, " +
         "version " + VERSION_TYPE + " NOT NULL, " +
         "kvtype " + TYPE_TYPE + " NOT NULL, " +
         "id BIGINT IDENTITY, " +
         "value " + VALUE_TYPE + " NOT NULL)";
-    String indexStatement = "CREATE INDEX theBigIndex" +
-      this.tableName + " ON " +
-        this.tableName + " (rowkey, column, version DESC, kvtype, id DESC)";
+    String indexStatement = "CREATE INDEX \"theBigIndex" +
+      this.tableName + "\" ON " +
+        this.quotedTableName + " (rowkey, column, version DESC, kvtype, id DESC)";
 
     Statement stmt = null;
     try {
       stmt = this.connection.createStatement();
+      // System.out.println(createStatement);
       stmt.executeUpdate(createStatement);
+      // System.out.println(indexStatement);
       stmt.executeUpdate(indexStatement);
     } catch (SQLException e) {
       // fail silent if table/index already exists
@@ -136,7 +142,7 @@ implements OrderedVersionedColumnarTable {
   public void clear() throws OperationException {
     PreparedStatement ps = null;
     try {
-      ps = this.connection.prepareStatement("DELETE FROM " + this.tableName);
+      ps = this.connection.prepareStatement("DELETE FROM " + this.quotedTableName);
       ps.executeUpdate();
     } catch (SQLException e) {
       handleSQLException(e, "delete");
@@ -223,7 +229,7 @@ implements OrderedVersionedColumnarTable {
       try {
         ps = this.connection.prepareStatement(
             "SELECT version, kvtype, id, value " +
-                "FROM " + this.tableName + " " +
+                "FROM " + this.quotedTableName + " " +
                 "WHERE rowkey = ? AND column = ? " +
                 "ORDER BY version DESC, kvtype ASC, id DESC");
         ps.setBytes(1, row);
@@ -240,7 +246,7 @@ implements OrderedVersionedColumnarTable {
       }
       try {
         ps = this.connection.prepareStatement(
-            "INSERT INTO " + this.tableName +
+            "INSERT INTO " + this.quotedTableName +
                 " (rowkey, column, version, kvtype, value) " +
                 "VALUES ( ? , ? , ? , ? , ?)");
         ps.setBytes(1, row);
@@ -285,7 +291,7 @@ implements OrderedVersionedColumnarTable {
     try {
       ps = this.connection.prepareStatement(
           "SELECT version, kvtype, id, value " +
-          "FROM " + this.tableName + " " +
+          "FROM " + this.quotedTableName + " " +
           "WHERE rowkey = ? AND column = ? " +
           "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
@@ -324,7 +330,7 @@ implements OrderedVersionedColumnarTable {
 
       // Perform update!
       ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.tableName +
+          "INSERT INTO " + this.quotedTableName +
           " (rowkey, column, version, kvtype, value) VALUES ( ?, ? , ? , ? , ? )");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
@@ -355,7 +361,7 @@ implements OrderedVersionedColumnarTable {
     try {
       ps = this.connection.prepareStatement(
           "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.tableName + " " +
+              "FROM " + this.quotedTableName + " " +
               "WHERE rowkey = ? " +
           "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
@@ -399,7 +405,7 @@ implements OrderedVersionedColumnarTable {
     try {
       ps = this.connection.prepareStatement(
           "SELECT version, kvtype, id, value " +
-              "FROM " + this.tableName + " " +
+              "FROM " + this.quotedTableName + " " +
               "WHERE rowkey = ? AND column = ? " +
           "ORDER BY version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
@@ -441,7 +447,7 @@ implements OrderedVersionedColumnarTable {
       if (stopColumn != null) columnChecks += " AND column < ?";
       ps = this.connection.prepareStatement(
           "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.tableName + " " +
+              "FROM " + this.quotedTableName + " " +
               "WHERE rowkey = ?" + columnChecks + " " +
           "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
@@ -494,7 +500,7 @@ implements OrderedVersionedColumnarTable {
 
       ps = this.connection.prepareStatement(
           "SELECT column, version, kvtype, id, value " +
-              "FROM " + this.tableName + " " +
+              "FROM " + this.quotedTableName + " " +
               "WHERE rowkey = ? AND (" + columnCheck + ") " +
           "ORDER BY column ASC, version DESC, kvtype ASC, id DESC");
       ps.setBytes(1, row);
@@ -538,7 +544,7 @@ implements OrderedVersionedColumnarTable {
     try {
       ps = this.connection.prepareStatement(
           "SELECT rowkey, column, version, kvtype, id " +
-              "FROM " + this.tableName + " " +
+              "FROM " + this.quotedTableName + " " +
           "ORDER BY rowkey ASC, column ASC, version DESC, kvtype ASC, id DESC");
       ResultSet result = ps.executeQuery();
       List<byte[]> keys = new ArrayList<byte[]>(limit > 1024 ? 1024 : limit);
@@ -646,7 +652,7 @@ implements OrderedVersionedColumnarTable {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.tableName +
+          "INSERT INTO " + this.quotedTableName +
           " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
       ps.setBytes(1, row);
       ps.setBytes(2, column);
@@ -672,7 +678,7 @@ implements OrderedVersionedColumnarTable {
     PreparedStatement ps = null;
     try {
       ps = this.connection.prepareStatement(
-          "INSERT INTO " + this.tableName +
+          "INSERT INTO " + this.quotedTableName +
           " (rowkey, column, version, kvtype, value) VALUES ( ?, ?, ?, ?, ? )");
       for (int i=0; i<columns.length; i++) {
         ps.setBytes(1, row);

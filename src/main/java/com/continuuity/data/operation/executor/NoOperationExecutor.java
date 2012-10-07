@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.*;
 
@@ -50,6 +51,12 @@ public class NoOperationExecutor implements OperationExecutor {
   @Override
   public void execute(OperationContext context,
                       ClearFabric clearFabric) {
+    // do nothing
+  }
+
+  @Override
+  public void execute(OperationContext context,
+                      OpenTable openTable) throws OperationException {
     // do nothing
   }
 

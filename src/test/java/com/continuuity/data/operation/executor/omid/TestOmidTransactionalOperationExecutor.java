@@ -6,6 +6,7 @@ package com.continuuity.data.operation.executor.omid;
 import com.continuuity.api.data.*;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
@@ -14,7 +15,9 @@ import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +29,16 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
   private OmidTransactionalOperationExecutor executor;
 
+  /** to get the singleton operation executor, always returns the same */
   protected abstract OmidTransactionalOperationExecutor getOmidExecutor();
+
+  /** to support testing, return a new executor each time */
+  // this would be needed to simulate multi-node opex, for instance to test
+  // that a named table survives a shutdown and a new executor will open it
+  // instead of recreating it, also for testing that multiple executors
+  // will not create the same table multiple times
+  // however, our data fabric modules return singletons.
+  //protected abstract OmidTransactionalOperationExecutor getNewExecutor();
 
   static OperationContext context = OperationContext.DEFAULT;
 
@@ -154,7 +166,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx one
     ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
     RowSet rowsOne = new MemoryRowSet();
-    System.out.println("Started transaction one : " + pointerOne);
+    // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
     executor.write(context, new Write(key, valueOne), pointerOne);
@@ -166,7 +178,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx two
     ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
     RowSet rowsTwo = new MemoryRowSet();
-    System.out.println("Started transaction two : " + pointerTwo);
+    // System.out.println("Started transaction two : " + pointerTwo);
     assertTrue(pointerTwo.getSecond() > pointerOne.getSecond());
 
     // write value two
@@ -203,7 +215,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start txwOne
     ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
     RowSet rowsOne = new MemoryRowSet();
-    System.out.println("Started transaction txwOne : " + pointerOne);
+    //System.out.println("Started transaction txwOne : " + pointerOne);
 
     // write and commit
     executor.write(context, new Write(key, Bytes.toBytes(1)), pointerOne);
@@ -243,7 +255,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start txwOne
     ImmutablePair<ReadPointer, Long> pointerWOne = executor.startTransaction();
     RowSet rowsOne = new MemoryRowSet();
-    System.out.println("Started transaction txwOne : " + pointerWOne);
+    // System.out.println("Started transaction txwOne : " + pointerWOne);
 
     // write 1
     executor.write(context, new Write(key, Bytes.toBytes(1)), pointerWOne);
@@ -266,7 +278,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // write 2 and commit immediately
     ImmutablePair<ReadPointer, Long> pointerWTwo = executor.startTransaction();
     RowSet rowsTwo = new MemoryRowSet();
-    System.out.println("Started transaction txwTwo : " + pointerWTwo);
+    // System.out.println("Started transaction txwTwo : " + pointerWTwo);
     executor.write(context, new Write(key, Bytes.toBytes(2)), pointerWTwo);
     rowsTwo.addRow(key);
     assertTrue(executor.commitTransaction(pointerWTwo, rowsTwo));
@@ -286,7 +298,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     ImmutablePair<ReadPointer, Long> pointerWThree =
         executor.startTransaction();
     RowSet rowsThree = new MemoryRowSet();
-    System.out.println("Started transaction txwThree : " + pointerWThree);
+    // System.out.println("Started transaction txwThree : " + pointerWThree);
     executor.write(context, new Write(key, Bytes.toBytes(3)), pointerWThree);
     rowsThree.addRow(key);
 
@@ -294,7 +306,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     ImmutablePair<ReadPointer, Long> pointerWFour =
         executor.startTransaction();
     RowSet rowsFour = new MemoryRowSet();
-    System.out.println("Started transaction txwFour : " + pointerWFour);
+    // System.out.println("Started transaction txwFour : " + pointerWFour);
     executor.write(context, new Write(key, Bytes.toBytes(4)), pointerWFour);
     rowsFour.addRow(key);
 
@@ -327,7 +339,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     ImmutablePair<ReadPointer, Long> pointerWFive =
         executor.startTransaction();
     RowSet rowsFive = new MemoryRowSet();
-    System.out.println("Started transaction txwFive : " + pointerWFive);
+    // System.out.println("Started transaction txwFive : " + pointerWFive);
     executor.write(context, new Write(key, Bytes.toBytes(5)), pointerWFive);
     rowsFive.addRow(key);
 
@@ -335,7 +347,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     ImmutablePair<ReadPointer, Long> pointerWSix =
         executor.startTransaction();
     RowSet rowsSix = new MemoryRowSet();
-    System.out.println("Started transaction txwSix : " + pointerWSix);
+    // System.out.println("Started transaction txwSix : " + pointerWSix);
     executor.write(context, new Write(key, Bytes.toBytes(6)), pointerWSix);
     rowsSix.addRow(key);
 
@@ -476,7 +488,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx one
     ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
     RowSet rowsOne = new MemoryRowSet();
-    System.out.println("Started transaction one : " + pointerOne);
+    // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
     executor.write(context, new Write(key, valueOne), pointerOne);
@@ -495,7 +507,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start tx two
     ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
     RowSet rowsTwo = new MemoryRowSet();
-    System.out.println("Started transaction two : " + pointerTwo);
+    // System.out.println("Started transaction two : " + pointerTwo);
 
     // delete value one
     executor.write(context, new Delete(key), pointerTwo);
@@ -528,7 +540,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // start tx three
     ImmutablePair<ReadPointer, Long> pointerThree = executor.startTransaction();
-    System.out.println("Started transaction three : " + pointerThree);
+    // System.out.println("Started transaction three : " + pointerThree);
 
     // start and commit a fake transaction which will overlap
     ImmutablePair<ReadPointer, Long> pointerFour = executor.startTransaction();
@@ -640,4 +652,280 @@ public abstract class TestOmidTransactionalOperationExecutor {
   private static List<WriteOperation> batch(WriteOperation ... ops) {
     return Arrays.asList(ops);
   }
+
+  // test table operations on default and named tables: write, read,
+  // readkey, readcolumnrange, increment, delete, compareandswap
+  @Test
+  public void testNamedTableOperations() throws OperationException {
+    testNamedTableOperations(null);
+    testNamedTableOperations("tableA");
+    testNamedTableOperations("tableB");
+  }
+
+  private void assertValueIsNull(byte[] value) {
+    Assert.assertTrue(value == null || value.length == 0);
+  }
+
+  private void testNamedTableOperations(String table)
+      throws OperationException {
+
+    // clear the fabric
+    executor.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
+
+    // open a table (only if name is not null)
+    if (table != null) {
+      executor.execute(context, new OpenTable(table));
+    }
+
+    // write a few columns
+    final byte[] col1 = new byte[] { 1 };
+    final byte[] col2 = new byte[] { 2 };
+    final byte[] col3 = new byte[] { 3 };
+    final byte[] col4 = Operation.KV_COL;
+    final byte[] val1 = new byte[] { 'x' };
+    final byte[] val2 = new byte[] { 'a' };
+    final byte[] val3 = Bytes.toBytes(7L);
+    final byte[] val4 = new byte[] { 'x', 'y', 'z'};
+    final byte[] rowkey = new byte[] { 'r', 'o', 'w', '4', '2' };
+    executor.execute(context, new Write(table, rowkey,
+        new byte[][] { col1, col2, col3, col4 },
+        new byte[][] { val1, val2, val3, val4 }));
+
+    {
+    // read back with single column
+    OperationResult<Map<byte[], byte[]>> result1 = executor.execute(context,
+        new Read(table, rowkey, col1));
+    Assert.assertFalse(result1.isEmpty());
+    Assert.assertNotNull(result1.getValue());
+    Assert.assertEquals(1, result1.getValue().size());
+    Assert.assertArrayEquals(val1, result1.getValue().get(col1));
+    }
+    {
+    // read back with multi column
+    OperationResult<Map<byte[], byte[]>> result2 = executor.execute(context,
+        new Read(table, rowkey, new byte[][] { col2, col3 }));
+    Assert.assertFalse(result2.isEmpty());
+    Assert.assertNotNull(result2.getValue());
+    Assert.assertEquals(2, result2.getValue().size());
+    Assert.assertArrayEquals(val2, result2.getValue().get(col2));
+    Assert.assertArrayEquals(val3, result2.getValue().get(col3));
+    }
+    {
+    // read back with read key
+    OperationResult<byte[]> result3 =
+        executor.execute(context, new ReadKey(table, rowkey));
+    Assert.assertFalse(result3.isEmpty());
+    Assert.assertArrayEquals(val4, result3.getValue());
+    }
+    {
+    // read back with column range
+    OperationResult<Map<byte[], byte[]>> result4 = executor.execute(context,
+        new ReadColumnRange(table, rowkey, col2, null));
+    Assert.assertFalse(result4.isEmpty());
+    Assert.assertNotNull(result4.getValue());
+    Assert.assertEquals(3, result4.getValue().size());
+    Assert.assertArrayEquals(val2, result4.getValue().get(col2));
+    Assert.assertArrayEquals(val3, result4.getValue().get(col3));
+    Assert.assertArrayEquals(val4, result4.getValue().get(col4));
+    }
+    // increment one column
+    executor.execute(context, new Increment(table, rowkey, col3, 1L));
+    {
+    // read back with single column
+    OperationResult<Map<byte[], byte[]>> result5 = executor.execute(context,
+        new Read(table, rowkey, col3));
+    Assert.assertFalse(result5.isEmpty());
+    Assert.assertNotNull(result5.getValue());
+    Assert.assertEquals(1, result5.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(8L), result5.getValue().get(col3));
+    }
+    // delete one column
+    executor.execute(context, new Delete(table, rowkey, col2));
+    {
+    // verify it's gone
+    OperationResult<Map<byte[], byte[]>> result6 = executor.execute(context,
+        new Read(table, rowkey, col2));
+    Assert.assertTrue(result6.isEmpty());
+    Assert.assertEquals(StatusCode.COLUMN_NOT_FOUND, result6.getStatus());
+    }
+    // compare-and-swap with success
+    executor.execute(context, new CompareAndSwap(table, rowkey, col3,
+        Bytes.toBytes(8L), Bytes.toBytes(3L)));
+    {
+    // verify value has changed
+    OperationResult<Map<byte[], byte[]>> result7 = executor.execute(context,
+        new Read(table, rowkey, col3));
+    Assert.assertFalse(result7.isEmpty());
+    Assert.assertNotNull(result7.getValue());
+    Assert.assertEquals(1, result7.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(3L), result7.getValue().get(col3));
+    }
+    // compare-and-swap and fail
+    try {
+      executor.execute(context, new CompareAndSwap(table, rowkey, col3,
+          Bytes.toBytes(8L), Bytes.toBytes(17L)));
+      fail("Write conflict exception expected.");
+    } catch (OperationException e) {
+      // expected write conflict
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+        throw e;
+    }
+    // verify value is still the same
+    {
+    OperationResult<Map<byte[], byte[]>> result8 = executor.execute(context,
+        new Read(table, rowkey, col3));
+    Assert.assertFalse(result8.isEmpty());
+    Assert.assertNotNull(result8.getValue());
+    Assert.assertEquals(1, result8.getValue().size());
+    Assert.assertArrayEquals(Bytes.toBytes(3L), result8.getValue().get(col3));
+    }
+  }
+
+  // test that transactions can be rolled back across tables
+  @Test
+  public void testTransactionsAcrossTables() throws OperationException {
+
+    // some handy constants
+    final String tableA= "tableA", tableB = "tableB";
+    final byte[] rowX = "rowX".getBytes(), rowY = "rowY".getBytes(),
+        rowZ = "rowZ".getBytes();
+    final byte[] colX = "colX".getBytes(), colY = "colY".getBytes(),
+        colZ = "colZ".getBytes();
+    final byte[] valX = "valX".getBytes(), valX1 = "valX1".getBytes(),
+        valZ = "valZ".getBytes(), val42 = Bytes.toBytes(42L);
+
+    // open two tables
+    executor.execute(context, new OpenTable(tableA));
+    executor.execute(context, new OpenTable(tableB));
+
+    // write to default and both tables
+    executor.execute(context, new Write(rowX, colX, valX));
+    executor.execute(context, new Write(tableA, rowY, colY, val42));
+    executor.execute(context, new Write(tableB, rowZ, colZ, valZ));
+
+    // verify the writes went through
+    Assert.assertArrayEquals(valX, executor.execute(
+        context, new Read(rowX, colX)).getValue().get(colX));
+    Assert.assertArrayEquals(val42, executor.execute(
+        context, new Read(tableA, rowY, colY)).getValue().get(colY));
+    Assert.assertArrayEquals(valZ, executor.execute(
+        context, new Read(tableB, rowZ, colZ)).getValue().get(colZ));
+
+    // batch: write to default, increment one, delete from other, c-a-s fails
+    List<WriteOperation> writes = Lists.newArrayList();
+    writes.add(new Write(rowX, colX, valX1));
+    writes.add(new Increment(tableA, rowY, colY, 1L));
+    writes.add(new Delete(tableB, rowZ, colZ));
+    writes.add(new CompareAndSwap(tableA, rowX, colX, valX, null)); // fails
+    try {
+      executor.execute(context, writes);
+      fail("Expected compare-and-swap to fail batch.");
+    } catch (OperationException e) {
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+        throw e; // only write confict is expected
+    }
+
+    // verify all was rolled back
+    Assert.assertArrayEquals(valX, executor.execute(
+        context, new Read(rowX, colX)).getValue().get(colX));
+    Assert.assertArrayEquals(val42, executor.execute(
+        context, new Read(tableA, rowY, colY)).getValue().get(colY));
+    Assert.assertArrayEquals(valZ, executor.execute(
+        context, new Read(tableB, rowZ, colZ)).getValue().get(colZ));
+  }
+
+  // TODO: test concurrent openTable()
+  // how can we test that without opening lots of tables in different threads?
+
+  // TODO: test openTable() works for existing table after shutdown
+  // how can we test that if the opex is a singleton? Otherwise we could
+  // open a new executor and verify that it finds the existing tables
+
+  // test that repeatedly opening a table has no effect
+  @Test
+  public void testSubsequentOpenTable() throws OperationException {
+    // some handy constants
+    final String table = "the-table";
+    final byte[] rowX = "rowX".getBytes(), colX = "colX".getBytes(),
+        valX = "valX".getBytes(), valX1 = "valX1".getBytes();
+
+    // open a table, and write to the table
+    executor.execute(context, new OpenTable(table));
+    executor.execute(context, new Write(table, rowX, colX, valX));
+
+    // verify the write can be read
+    Assert.assertArrayEquals(valX, executor.execute(
+        context, new Read(rowX, colX)).getValue().get(colX));
+
+    // open the table again
+    executor.execute(context, new OpenTable(table));
+
+    // verify it can still be read (if open resulted in a new table,
+    // then it would be empty, and the read would fail)
+    Assert.assertArrayEquals(valX, executor.execute(
+        context, new Read(table, rowX, colX)).getValue().get(colX));
+
+    // write to the table
+    executor.execute(context, new Write(table, rowX, colX, valX1));
+    Assert.assertArrayEquals(valX1, executor.execute(
+        context, new Read(table, rowX, colX)).getValue().get(colX));
+
+    // open a again and verify the write can still be read
+    executor.execute(context, new OpenTable(table));
+    Assert.assertArrayEquals(valX1, executor.execute(
+        context, new Read(table, rowX, colX)).getValue().get(colX));
+  }
+
+  // test that different op contexts get different tables of same name
+  // test that clear fabric deletes all tables for the context and none else
+  @Test
+  public void testTablesWithDifferentContexts() throws OperationException {
+    // some handy constants
+    final String table = "the-table";
+    final byte[] rowX = "rowX".getBytes(),
+        colX = "colX".getBytes(), colY = "colY".getBytes(),
+        valX = "valX".getBytes(), valY = "valY".getBytes();
+
+    // create two contexts
+    OperationContext context1 = new OperationContext("account1");
+    OperationContext context2 = new OperationContext("account2");
+
+    // open a table with the same name for each context
+    executor.execute(context1, new OpenTable(table));
+    executor.execute(context2, new OpenTable(table));
+
+    // write different values to each table
+    executor.execute(context1, new Write(table, rowX, colX, valX));
+    executor.execute(context2, new Write(table, rowX, colY, valY));
+
+    // verify each context see its own writes
+    Assert.assertArrayEquals(valX, executor.execute(
+        context1, new Read(table, rowX, colX)).getValue().get(colX));
+    Assert.assertArrayEquals(valY, executor.execute(
+        context2, new Read(table, rowX, colY)).getValue().get(colY));
+
+    // verify that each context can not see the other's writes
+    OperationResult<Map<byte[],byte[]>> result1 =
+        executor.execute(context1, new Read(table, rowX, colY));
+    OperationResult<Map<byte[],byte[]>> result2 =
+        executor.execute(context2, new Read(table, rowX, colX));
+    Assert.assertTrue(result1.isEmpty()
+        || result1.getValue().get(colY) == null);
+    Assert.assertTrue(result2.isEmpty()
+        || result2.getValue().get(colX) == null);
+
+    // clear the tables for one context
+    executor.execute(context1, new ClearFabric(ClearFabric.ToClear.TABLES));
+
+    // verify the table is gone for that context
+    OperationResult<Map<byte[],byte[]>> result3 =
+        executor.execute(context1, new Read(table, rowX, colX));
+    Assert.assertTrue(result3.isEmpty()
+        || result1.getValue().get(colX) == null);
+
+    // verify the table for the other context is still there
+    Assert.assertArrayEquals(valY, executor.execute(
+        context2, new Read(table, rowX, colY)).getValue().get(colY));
+  }
+
 }

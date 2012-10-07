@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.common.metrics.CMetrics;
@@ -212,11 +213,37 @@ public class OperationExecutorClient extends ConverterUtils {
 
     try {
       if (Log.isDebugEnabled()) Log.debug("Received " + clearFabric);
-      TOperationContext tcontext = wrap(context);
+      TOperationContext tContext = wrap(context);
       TClearFabric tClearFabric = wrap(clearFabric);
       if (Log.isDebugEnabled()) Log.debug("Sending " + tClearFabric);
-      client.clearFabric(tcontext, tClearFabric);
+      client.clearFabric(tContext, tClearFabric);
       if (Log.isDebugEnabled()) Log.debug("ClearFabric successful.");
+      helper.success();
+
+    } catch (TOperationException te) {
+      helper.failure();
+      throw unwrap(te);
+
+    } catch (TException te) {
+      helper.failure();
+      throw te;
+    }
+  }
+
+  public void execute(OperationContext context, OpenTable openTable)
+      throws TException, OperationException {
+
+    MetricsHelper helper = newHelper(
+        Constants.METRIC_OPENTABLE_REQUESTS,
+        Constants.METRIC_OPENTABLE_LATENCY);
+
+    try {
+      if (Log.isDebugEnabled()) Log.debug("Received " + openTable);
+      TOperationContext tContext = wrap(context);
+      TOpenTable tOpenTable = wrap(openTable);
+      if (Log.isDebugEnabled()) Log.debug("Sending " + tOpenTable);
+      client.openTable(tContext, tOpenTable);
+      if (Log.isDebugEnabled()) Log.debug("OpenTable successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -510,4 +537,5 @@ public class OperationExecutorClient extends ConverterUtils {
   public String getName() {
     return "remote-client";
   }
+
 }

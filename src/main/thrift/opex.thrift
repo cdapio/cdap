@@ -172,6 +172,10 @@ struct TClearFabric {
   5: bool clearStreams,
 }
 
+struct TOpenTable {
+  1: string table,
+}
+
 struct TOptionalBinary {
   1: optional binary value,
   2: optional i32 status,
@@ -215,9 +219,10 @@ service TOperationExecutor {
   TOptionalBinaryMap readColumnRange(1: TOperationContext context, 2: TReadColumnRange readColumnRange) throws (1: TOperationException ex),
 
   // internal op ex
-  TDequeueResult dequeuePayload(1: TOperationContext context, 2: TQueueDequeue dequeuePayload) throws (1: TOperationException ex),
+  TDequeueResult dequeue(1: TOperationContext context, 2: TQueueDequeue dequeue) throws (1: TOperationException ex),
   i64 getGroupId(1: TOperationContext context, 2: TGetGroupId getGroupId) throws (1: TOperationException ex),
   TQueueMeta getQueueMeta(1: TOperationContext context, 2: TGetQueueMeta getQueueMeta) throws (1: TOperationException ex),
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
+  void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
 
 }
