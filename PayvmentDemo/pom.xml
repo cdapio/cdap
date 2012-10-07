@@ -205,13 +205,6 @@
       <version>3.2.7.Final</version>
     </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <id>typesafe</id>
-      <name>Typesafe Repository</name>
-      <url>http://repo.typesafe.com/typesafe/releases/</url>
-    </repository>
-  </repositories>
   <!-- Set the main class and tell maven to include dependencies in the jar -->
   <build>
     <plugins>
