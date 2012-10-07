@@ -12,8 +12,8 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.Write;
-import com.payvment.continuuity.lib.DataLib;
-import com.payvment.continuuity.util.Bytes;
+import com.continuuity.api.data.lib.DataLib;
+import com.continuuity.api.data.util.Bytes;
 
 public class ClusterTable extends DataLib {
 

@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.QueryRestProvider;
+import com.continuuity.api.data.util.Bytes;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
-import com.payvment.continuuity.util.Bytes;
 
 /**
  * Exposes Payvment Lish feeds as REST calls in the Gateway.

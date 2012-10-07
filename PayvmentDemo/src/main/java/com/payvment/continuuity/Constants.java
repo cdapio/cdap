@@ -1,4 +1,4 @@
-package com.payvment.continuuity.util;
+package com.payvment.continuuity;
 
 public class Constants {
 

@@ -12,6 +12,11 @@ import org.junit.Test;
 
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.lib.CounterTable;
+import com.continuuity.api.data.lib.SortedCounterTable;
+import com.continuuity.api.data.lib.SortedCounterTable.Counter;
+import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.flow.FlowTestHelper;
@@ -22,12 +27,6 @@ import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.ProductFeedEntry;
-import com.payvment.continuuity.lib.CounterTable;
-import com.payvment.continuuity.lib.SortedCounterTable;
-import com.payvment.continuuity.lib.SortedCounterTable.Counter;
-import com.payvment.continuuity.util.Bytes;
-import com.payvment.continuuity.util.Constants;
-import com.payvment.continuuity.util.Helpers;
 
 public class TestProductFeedFlow extends PayvmentBaseFlowTest {
 

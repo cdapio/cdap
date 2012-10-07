@@ -2,6 +2,10 @@ package com.payvment.continuuity;
 
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.Write;
+import com.continuuity.api.data.lib.CounterTable;
+import com.continuuity.api.data.lib.SortedCounterTable;
+import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
@@ -16,11 +20,6 @@ import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.entity.ProductFeedEntry;
-import com.payvment.continuuity.lib.CounterTable;
-import com.payvment.continuuity.lib.SortedCounterTable;
-import com.payvment.continuuity.util.Bytes;
-import com.payvment.continuuity.util.Constants;
-import com.payvment.continuuity.util.Helpers;
 
 public class ProductFeedFlow implements Flow {
 

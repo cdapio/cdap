@@ -15,7 +15,6 @@ import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.payvment.continuuity.data.ClusterTable;
-import com.payvment.continuuity.util.Constants;
 
 /**
  * Flow application used to process clusters of categories.  These clusters

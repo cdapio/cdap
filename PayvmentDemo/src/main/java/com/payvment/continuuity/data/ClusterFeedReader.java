@@ -14,12 +14,12 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.lib.SortedCounterTable;
+import com.continuuity.api.data.lib.SortedCounterTable.Counter;
+import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.data.util.Helpers;
+import com.payvment.continuuity.Constants;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
-import com.payvment.continuuity.lib.SortedCounterTable;
-import com.payvment.continuuity.lib.SortedCounterTable.Counter;
-import com.payvment.continuuity.util.Bytes;
-import com.payvment.continuuity.util.Constants;
-import com.payvment.continuuity.util.Helpers;
 
 /**
  * Performs activity feed and popular feed read queries.
