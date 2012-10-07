@@ -7,8 +7,8 @@ import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.Read;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.Write;
-import com.continuuity.data.operation.StatusCode;
 
 public class ObjectTable<T extends SimpleSerializable> extends DataLib {
 
@@ -31,7 +31,7 @@ public class ObjectTable<T extends SimpleSerializable> extends DataLib {
     try {
       t = storedObjectClass.newInstance();
     } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage());
+      throw new OperationException(StatusCode.KEY_NOT_FOUND, e.getMessage());
     }
     t.fromBytes(value);
     return t;
