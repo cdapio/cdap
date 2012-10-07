@@ -52,8 +52,8 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   /**
    * List of processor mapping to the type of metric they can process.
    */
-  private final List<ImmutablePair<MetricType, MetricsProcessor>> processors
-            = Lists.newCopyOnWriteArrayList();
+  private final List<ImmutablePair<MetricType, MetricsProcessor>>
+      processors = Lists.newCopyOnWriteArrayList();
 
   /**
    * Future reaper is iterating through all the futures and making

@@ -67,24 +67,18 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   /**
    * Connection Pool Manager.
    */
-  private DBConnectionPoolManager poolManager;
-
-  /**
-   * Number of points collected.
-   */
-  private Map<String, Integer> collectedPoints = Maps.newHashMap();
+  private static DBConnectionPoolManager poolManager;
 
   /**
    * Allowed time series metrics.
    */
   private Map<String, Boolean> allowedTimeseriesMetrics = Maps.newHashMap();
 
-
   /**
    * TimeseriesCleaner is responsible for making sure the timeseries
    * data older than certain time is deleted.
    */
-  private final class TimeseriesCleanser
+  private static final class TimeseriesCleanser
       extends AbstractScheduledService {
 
     private long olderThanTimeInSeconds = 300;
@@ -132,7 +126,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
   /**
    * Instance of timeseries cleaner.
    */
-  private static TimeseriesCleanser timeseriesCleanser;
+  private static TimeseriesCleanser timeseriesCleanser = null;
 
   /**
    * Constructs and initializes a flow metric processor.
@@ -173,9 +167,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     }
 
     // Starting the timeseries cleaners.
-    timeseriesCleanser = new TimeseriesCleanser();
-    Log.debug("Starting timeseries db cleaner.");
-    timeseriesCleanser.start();
+    if(timeseriesCleanser == null) {
+      timeseriesCleanser = new TimeseriesCleanser();
+      Log.debug("Starting timeseries db cleaner.");
+      timeseriesCleanser.start();
+    }
 
     // Create any tables needed for initializing.
     DBUtils.createMetricsTables(getConnection(), this.type);
@@ -186,7 +182,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
    * @return a {@link java.sql.Connection} from the connection pool.
    * @throws SQLException thrown in case of any error.
    */
-  private Connection getConnection() throws SQLException {
+  private static Connection getConnection() throws SQLException {
     if(poolManager != null) {
       return poolManager.getValidConnection();
     }

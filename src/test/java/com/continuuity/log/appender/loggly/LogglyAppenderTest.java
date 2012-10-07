@@ -5,6 +5,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import com.continuuity.log.appender.log4j.*;
 import com.continuuity.log.appender.log4j.LogglyAppender;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.Test;
 import org.junit.Before;
@@ -59,5 +60,6 @@ public class LogglyAppenderTest {
       log.info("Log4j Message info " + i);
     }
     Thread.sleep(10000);
+    org.apache.log4j.Logger.getRootLogger().setLevel(Level.ERROR);
   }
 }

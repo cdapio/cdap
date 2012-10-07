@@ -1,12 +1,10 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.MetaDataException;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metadata.stubs.Account;
 import com.continuuity.metadata.stubs.Application;
 import com.continuuity.metadata.stubs.MetadataServiceException;
-import com.continuuity.metadata.stubs.Stream;
 import com.continuuity.runtime.MetadataModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
