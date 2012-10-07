@@ -19,7 +19,6 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.definition.api.FlowDefinition;
@@ -35,11 +34,17 @@ import com.payvment.continuuity.util.Bytes;
  * To utilize this class, simply create a junit4 class that extends this class:
  * <pre>
  *   public class TestSimpleReadWrite extends FabricTestBase {
- * 
+ *
  *     &#64;Test
- *     public void testWriteThenReadFromFabric() throws Exception {
- *       DataFabric dataFabric = getDataFabric();
- *       fabric.
+ *     public void testMyFlow() throws Exception {
+ *       Flow flow = new MyFlow();
+ *       assertTrue(verifyFlow(flow));
+ *       TestFlowHandle flowHandle = startFlow(flow);
+ *       assertTrue(flowHandle.getReason(), flowHandle.isSuccess());
+ *       // Flow started successfully
+ *       flowHandle.stopFlow();
+ *     }
+ *
  *   }
  * </pre>
  * <p>
@@ -48,8 +53,10 @@ import com.payvment.continuuity.util.Bytes;
  * <ul>
  *    <li>get a global handle to the data fabric to perform operations and
  *        instantiate datalibs with {@link #getDataFabric()}</li>
- *    <li>verify a flow, run a flow, stop a flow</li>
- *    <li>write data to streams</li>
+ *    <li>verify and run flows with {@link #verifyFlow(Flow)} and
+ *        {@link #startFlow(Flow)}</li>
+ *    <li>write data to streams with
+ *        {@link #writeToStream(String, String, byte[])}</li>
  * </ul>
  */
 public abstract class FabricTestBase {
@@ -65,8 +72,6 @@ public abstract class FabricTestBase {
       OperationContext.DEFAULT);
 
   private static final CConfiguration conf = CConfiguration.create();
-
-  private static final OVCTableHandle handle = executor.getTableHandle();
 
   @BeforeClass
   public static void clearFabricBeforeTestClass() throws OperationException {
@@ -137,9 +142,9 @@ public abstract class FabricTestBase {
     Map<String,String> headers = new HashMap<String,String>();
     TupleSerializer serializer = new TupleSerializer(false);
     Tuple tuple = new TupleBuilder()
-        .set("headers", headers)
-        .set("body", bytes)
-        .create();
+    .set("headers", headers)
+    .set("body", bytes)
+    .create();
     System.out.println("Writing event to stream: " +
         FlowStream.defaultURI(flowName, streamName).toString());
     executor.execute(OperationContext.DEFAULT,
