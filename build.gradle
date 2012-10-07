@@ -27,6 +27,7 @@ dependencies {
         clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     // External dependencies.
+    compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
     compile group: 'com.google.guava', name: 'guava', version: '11.+'
     compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'

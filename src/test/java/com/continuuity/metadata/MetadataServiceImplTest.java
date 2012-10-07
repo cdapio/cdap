@@ -182,5 +182,29 @@ public class MetadataServiceImplTest {
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
   }
 
+  /**
+   * Tests listing of applications.
+   * @throws Exception
+   */
+  @Test
+  public void testListApplication() throws Exception {
+    int before = mds.getApplications(account).size();
+    Application application = new Application("tapp1");
+    application.setName("Serious App");
+    application.setDescription("Serious App. Shutup");
+    Assert.assertTrue(mds.createApplication(account, application));
+    Collection<Application> applications = mds.getApplications(account);
+    int after = applications.size();
+    Assert.assertTrue(after == before + 1);
+    for(Application a : applications) {
+      if(a.getId().equals("tapp1")) {
+        Assert.assertTrue("Serious App".equals(a.getName()));
+        Assert.assertTrue("Serious App. Shutup".equals(a.getDescription()));
+      }
+    }
+    Account account1 = new Account("abc");
+    Assert.assertTrue(mds.getApplications(account1).size() == 0);
+  }
+
 
 }

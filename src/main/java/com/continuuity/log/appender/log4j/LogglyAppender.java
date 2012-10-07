@@ -3,6 +3,7 @@ package com.continuuity.log.appender.log4j;
 import com.continuuity.log.common.AbstractHttpFeeder;
 import com.continuuity.log.common.Feeder;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -165,7 +166,8 @@ public class  LogglyAppender extends AppenderSkeleton {
    */
   @Override
   public void close() {
-    scheduleFlush.stop();
+    // Throws no checked exception.
+    scheduleFlush.stopAndWait();
   }
 
   /**

@@ -1,6 +1,9 @@
 package com.continuuity.metrics2.collector;
 
-import akka.dispatch.*;
+import akka.dispatch.Await;
+import akka.dispatch.Future;
+import akka.dispatch.Mapper;
+import akka.dispatch.OnComplete;
 import akka.util.Duration;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
