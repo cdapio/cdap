@@ -18,7 +18,7 @@ import java.util.Map.Entry;
  * Concrete implementation of TemporalDataStore using LevelDB.
  * http://code.google.com/p/leveldb/
  */
-class LevelDBTemporalDataStore implements TemporalDataStore {
+public class LevelDBTemporalDataStore implements TemporalDataStore {
   /**
    * LevelDB Datastore.
    */
@@ -206,11 +206,11 @@ class LevelDBTemporalDataStore implements TemporalDataStore {
                     + dp.getValue();
             points.put(parsedTimestamp,
               new DataPoint.Builder(dp.getMetric()).addTimestamp(parsedTimestamp)
-                  .addValue(value).addTags(query.getTagFilter()).create());
+                  .addValue(value).addTags(dp.getTags()).create());
           } else {
             points.put(parsedTimestamp,
               new DataPoint.Builder(dp.getMetric()).addTimestamp(parsedTimestamp)
-                .addValue(dp.getValue()).addTags(query.getTagFilter()).create());
+                .addValue(dp.getValue()).addTags(dp.getTags()).create());
           }
         }
       } else {

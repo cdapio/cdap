@@ -438,7 +438,9 @@ public class LevelDBDataStoreTest {
   }
 
   /**
-   * Tests how busyness metrics can be computed.
+   * Tests how busyness metrics can be computed. Computing busyness
+   * requires us to get two metrics. 1. tuple.read and 2. tuple.proc.
+   * So, busyness = ( tuple.proc / tuple.read ) * 1000;
    *
    * @throws Exception
    */

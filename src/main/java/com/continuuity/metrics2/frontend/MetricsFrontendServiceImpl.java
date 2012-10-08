@@ -232,6 +232,9 @@ public class MetricsFrontendServiceImpl
       Iterables.transform(request.getMetrics(), new Function<String, String>() {
         @Override
         public String apply(@Nullable String input) {
+          if(input.equals("busyness")) {
+            return "'tuple.read.count','tuple.read.proc'";
+          }
           return "'" + input + "'";
         }
       });
@@ -266,9 +269,6 @@ public class MetricsFrontendServiceImpl
       // if startts is set and endts > 0 then it endts has to be greater than
       // startts.
       if(request.isSetStartts() && request.getEndts() > 0) {
-        if(request.getEndts() < request.getEndts()) {
-          throw new MetricsServiceException("End time is less than start time");
-        }
         start = request.getStartts();
         end = request.getEndts();
       }
@@ -454,6 +454,7 @@ public class MetricsFrontendServiceImpl
                  e.getMessage());
       }
     }
+
     return results;
   }
 
