@@ -63,9 +63,9 @@ public class ClusterWriterFlow implements Flow {
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("Cluster Writer");
+    specifier.name("ClusterWriter");
     specifier.email("dev@continuuity.com");
-    specifier.application("Cluster Activity Feeds");
+    specifier.application("ClusterFeeds");
     specifier.company("Continuuity+Payvment");
 
     // Declare all of the flowlets within the flow
