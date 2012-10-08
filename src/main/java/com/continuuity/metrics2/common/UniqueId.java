@@ -1,10 +1,12 @@
 package com.continuuity.metrics2.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 
 /**
@@ -15,7 +17,7 @@ import java.util.logging.Logger;
  * To change this template use File | Settings | File Templates.
  */
 public class UniqueId {
-  private final Logger logger;
+  private static final Logger Log = LoggerFactory.getLogger(UniqueId.class);
   private final KVStore store;
   private final String prefix;
   private final Map<String, Integer> cache = new ConcurrentHashMap<String, Integer>();
@@ -28,7 +30,6 @@ public class UniqueId {
     this.store = store;
     this.prefix = prefix;
     MAX_ID_KEY = ("current_maxid_" + prefix).getBytes(charset);
-    logger = Logger.getLogger("UniqueID_" + prefix);
   }
 
   public synchronized int getOrCreateId(String name) throws Exception {
@@ -48,11 +49,11 @@ public class UniqueId {
   public int getMaxID() throws Exception {
     byte[] maxId = store.get(MAX_ID_KEY);
     if (maxId == null) {
-      logger.fine("_ maxid=" + ID_START);
+      Log.trace("_ maxid=" + ID_START);
       return ID_START;
     } else if (maxId.length == 4) {
       int maxIdAsInt = Bytes.getInt(maxId);
-      logger.fine("< maxid=" + maxIdAsInt + " [" + Bytes.toHex(maxId)
+      Log.debug("< maxid=" + maxIdAsInt + " [" + Bytes.toHex(maxId)
                     + "]");
       return maxIdAsInt;
     } else {
@@ -63,14 +64,9 @@ public class UniqueId {
   public void setMaxID(int maxID) throws Exception {
     byte[] maxIdAsBytes = Bytes.fromInt(maxID);
     store.put(MAX_ID_KEY, maxIdAsBytes);
-    logger.fine("> maxid=" + maxID + " [" + Bytes.toHex(maxIdAsBytes)
+    Log.trace("> maxid=" + maxID + " [" + Bytes.toHex(maxIdAsBytes)
                   + "] [" + Bytes.toHex(MAX_ID_KEY) + "]");
   }
-
-  // private byte[] createKey(String name) {
-  // String key = prefix + "_" + name;
-  // return key.getBytes(charset);
-  // }
 
   private byte[] createKey(int id) {
     String key = prefix + "_" + id;
@@ -113,7 +109,7 @@ public class UniqueId {
       int id = i + 1;
       // the only purpose is to fill the cache
       String val = getValue(id);
-      logger.fine("Read '" + val + "' from cache using id '" + id + "'");
+      Log.trace("Read '" + val + "' from cache using id '" + id + "'");
     }
   }
 }
