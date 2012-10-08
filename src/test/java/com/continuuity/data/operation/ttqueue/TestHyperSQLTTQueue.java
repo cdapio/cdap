@@ -12,8 +12,9 @@ import java.util.Random;
 
 public class TestHyperSQLTTQueue extends TestTTQueue {
 
-  private static final Injector injector =
-      Guice.createInjector(new DataFabricLocalModule());
+  private static final Injector injector = Guice.createInjector (
+      new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
+  //  Guice.createInjector(new DataFabricLocalModule());
 
   private static final OVCTableHandle handle =
       injector.getInstance(OVCTableHandle.class);

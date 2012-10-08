@@ -21,7 +21,8 @@ public class TestLocalModeTTQueuePerf {
   //  private static final String hsql = "jdbc:hsqldb:mem:membenchdb";
 
   private static final DataFabricLocalModule module =
-      new DataFabricLocalModule();
+      new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null);
+  //  new DataFabricLocalModule();
 
   private static final Injector injector = Guice.createInjector(module);
 
