@@ -218,7 +218,6 @@ public class MetricsFrontendServiceImpl
   public DataPoints getTimeSeries(TimeseriesRequest request)
     throws MetricsServiceException, TException {
 
-
     // Validate the timing request.
     validateTimeseriesRequest(request);
 
