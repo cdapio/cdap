@@ -10,7 +10,7 @@ import com.continuuity.metrics2.temporaldb.Query;
  * Time: 5:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class KeyBasedQueryFilter {
+class KeyBasedQueryFilter {
   private final int metricID;
   private final long startTimestamp;
   private final long endTimestamp;

@@ -16,7 +16,7 @@ import java.util.Map.Entry;
  * Time: 5:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DataPointSerializer {
+class DataPointSerializer {
   private final UniqueId metrics;
   private final UniqueId tags;
   private final UniqueId tagvalues;

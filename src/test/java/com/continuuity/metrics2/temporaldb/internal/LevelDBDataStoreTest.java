@@ -1,9 +1,10 @@
-package com.continuuity.metrics2.temporaldb;
+package com.continuuity.metrics2.temporaldb.internal;
 
 
-import com.continuuity.metrics2.temporaldb.internal.LevelDBTemporalDataStore;
-import com.continuuity.metrics2.temporaldb.internal.UniqueId;
+import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.continuuity.metrics2.temporaldb.Query;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.junit.AfterClass;
@@ -13,14 +14,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class LevelDBDataStoreTest {
   private static LevelDBTemporalDataStore temporalDB;
   private static File dir;
   private static long timestamp = (System.currentTimeMillis()/1000) - 24*60*60;
-  private static int DATAPOINTS = 10;
+  private static int DATAPOINTS = 10000;
 
   public static File createTempDirectory() throws IOException {
     final File temp;
@@ -331,7 +331,7 @@ public class LevelDBDataStoreTest {
       .containTag("flowlet", "flowlet1")
       .containTag("instance", "1")
       .create();
-    ImmutableList<DataPoint> points = temporalDB.getDataPoints(query);
+    ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
     double count = 0;
     for(DataPoint point : points) {
@@ -358,7 +358,7 @@ public class LevelDBDataStoreTest {
       .containTag("runid", "AJKHDKJHDKJAHJS")
       .containTag("flowlet", "flowlet1")
       .create();
-    ImmutableList<DataPoint> points = temporalDB.getDataPoints(query);
+    ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
     double count = 0;
     for(DataPoint point : points) {
@@ -383,7 +383,7 @@ public class LevelDBDataStoreTest {
       .containTag("flow", "flow")
       .containTag("runid", "AJKHDKJHDKJAHJS")
       .create();
-    ImmutableList<DataPoint> points = temporalDB.getDataPoints(query);
+    ImmutableList<DataPoint> points = temporalDB.execute(query);
 
     Assert.assertNotNull(points);
     double count = 0;
@@ -391,5 +391,75 @@ public class LevelDBDataStoreTest {
       Assert.assertTrue(count*4 == point.getValue());
       count++;
     }
+  }
+
+
+  public interface ZipIterator<T,U> {
+    boolean each(T t, U u);
+  }
+
+  public static <T,U> boolean zip(Collection<T> ct, Collection<U> cu,
+                                  ZipIterator<T,U> each) {
+    Iterator<T> it = ct.iterator();
+    Iterator<U> iu = cu.iterator();
+    while (it.hasNext() && iu.hasNext()) {
+      if (!each.each(it.next(), iu.next())) {
+        return false;
+      }
+    }
+    return !it.hasNext() && !iu.hasNext();
+  }
+
+
+  @Test
+  public void testComputingBusynessMetricForAFlowAtFlowletLevel() throws Exception {
+    Query queryA = new Query.Select("tuple.read")
+      .From(timestamp)
+      .To(timestamp + DATAPOINTS)
+      .containTag("acct", "demo")
+      .containTag("app", "abc")
+      .containTag("flow", "flow")
+      .containTag("runid", "AJKHDKJHDKJAHJS")
+      .containTag("flowlet", "flowlet1")
+      .create();
+
+    ImmutableList<DataPoint> pointA = temporalDB.execute(queryA);
+
+    Query queryB = new Query.Select("tuple.proc")
+      .From(timestamp)
+      .To(timestamp + DATAPOINTS)
+      .containTag("acct", "demo")
+      .containTag("app", "abc")
+      .containTag("flow", "flow")
+      .containTag("runid", "AJKHDKJHDKJAHJS")
+      .containTag("flowlet", "flowlet1")
+      .create();
+
+    ImmutableList<DataPoint> pointB = temporalDB.execute(queryB);
+    final List<DataPoint> result = Lists.newArrayList();
+    boolean status =
+      zip(pointA,  pointB, new ZipIterator<DataPoint, DataPoint>() {
+      @Override
+      public boolean each(DataPoint dataPointA, DataPoint dataPointB) {
+        if(dataPointA.getTimestamp() == dataPointB.getTimestamp()) {
+          DataPoint dp = new DataPoint.Builder(dataPointA.getMetric())
+            .addTimestamp(dataPointA.getTimestamp())
+            .addValue(dataPointB.getValue()/dataPointA.getValue())
+            .addTags(dataPointA.getTags())
+            .create();
+          result.add(dp);
+        } else if(dataPointA.getTimestamp() > dataPointB.getTimestamp()) {
+          result.add(dataPointB);
+        } else {
+          result.add(dataPointA);
+        }
+        return true;
+      }
+    });
+
+    Assert.assertTrue(status);
+
+
+
   }
 }

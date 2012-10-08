@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 5:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UniqueId {
+class UniqueId {
   private static final Logger Log = LoggerFactory.getLogger(UniqueId.class);
   private final KVStore store;
   private final String prefix;

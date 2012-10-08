@@ -16,7 +16,7 @@ import java.util.Map.Entry;
  * Concrete implementation of TemporalDataStore using LevelDB.
  * http://code.google.com/p/leveldb/
  */
-public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
+class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
   /**
    * LevelDB Datastore.
    */
@@ -176,7 +176,7 @@ public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    * @throws Exception
    */
   @Override
-  public ImmutableList<DataPoint> getDataPoints(Query query) throws Exception {
+  public ImmutableList<DataPoint> execute(Query query) throws Exception {
     int metricID = metrics.getOrCreateId(query.getMetricName());
     int[][] tagFilter = serializer.convertTags(query.getTagFilter());
     byte[] startKey = serializer.createkey(metricID, query.getStartTime(),

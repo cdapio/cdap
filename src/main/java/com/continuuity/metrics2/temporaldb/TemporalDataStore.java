@@ -27,7 +27,7 @@ public interface TemporalDataStore {
    * @return list of datapoints.
    * @throws Exception
    */
-  public ImmutableList<DataPoint> getDataPoints(Query query) throws Exception;
+  public ImmutableList<DataPoint> execute(Query query) throws Exception;
 
   /**
    * Closes the datastore.

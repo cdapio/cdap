@@ -13,7 +13,7 @@ import java.util.Map.Entry;
  * Time: 5:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class QueryFilter {
+class QueryFilter {
   private final Query query;
 
   public QueryFilter(Query query) {
