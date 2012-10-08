@@ -1,4 +1,7 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
+
+import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.continuuity.metrics2.temporaldb.Query;
 
 import java.util.Map;
 import java.util.Map.Entry;

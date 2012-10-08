@@ -1,23 +1,22 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-
-import com.google.common.base.Function;
+import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.continuuity.metrics2.temporaldb.TemporalDataStore;
+import com.continuuity.metrics2.temporaldb.KVStore;
+import com.continuuity.metrics2.temporaldb.Query;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import org.iq80.leveldb.*;
 
+import java.io.File;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
- * Created with IntelliJ IDEA.
- * User: nmotgi
- * Date: 10/7/12
- * Time: 5:45 PM
- * To change this template use File | Settings | File Templates.
+ * Concrete implementation of TemporalDataStore using LevelDB.
+ * http://code.google.com/p/leveldb/
  */
-public class LevelDBDataStore implements DataStore, KVStore {
+public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
   /**
    * LevelDB Datastore.
    */
@@ -53,7 +52,11 @@ public class LevelDBDataStore implements DataStore, KVStore {
    */
   private final DataPointSerializer serializer;
 
-  public LevelDBDataStore(String levelDBStore) {
+  /**
+   * Constructs a LevelDBTemporalDataStore using the directory.
+   * @param levelDBStore
+   */
+  public LevelDBTemporalDataStore(String levelDBStore) {
     this(new File(levelDBStore));
   }
 
@@ -65,7 +68,7 @@ public class LevelDBDataStore implements DataStore, KVStore {
     this.dbFactory = dbFactory;
   }
 
-  public LevelDBDataStore(File levelDBStore) {
+  public LevelDBTemporalDataStore(File levelDBStore) {
     this.levelDBStore = levelDBStore;
     this.metrics = new UniqueId(this, "metrics");
     this.tags = new UniqueId(this, "tags");
@@ -73,6 +76,21 @@ public class LevelDBDataStore implements DataStore, KVStore {
     this.serializer = new DataPointSerializer(metrics, tags, tagvalues);
   }
 
+  /**
+   * Opens a database.
+   * @throws Exception
+   */
+  public void open() throws Exception {
+    if (database == null) {
+      initEnv();
+    }
+  }
+
+  /**
+   * Closes the leveldb datastore.
+   * @throws Exception
+   */
+  @Override
   public void close() throws Exception {
     try {
       if (database != null) {
@@ -84,7 +102,11 @@ public class LevelDBDataStore implements DataStore, KVStore {
     }
   }
 
-  private DB getDatabase() throws IOException {
+  /**
+   * @return Gets a instance of levelDB database.
+   * @throws Exception throws a checked exception during setup.
+   */
+  private DB getDatabase() throws Exception {
     if (database == null) {
       initEnv();
     }
@@ -94,24 +116,43 @@ public class LevelDBDataStore implements DataStore, KVStore {
     return database;
   }
 
-  private void initEnv() throws IOException {
+  /**
+   * Initializes the levelDB
+   * @throws Exception
+   */
+  private void initEnv() throws Exception {
     Options options = new Options();
     options.createIfMissing(true);
+    options.compressionType(CompressionType.SNAPPY);
     if (dbFactory == null) {
       throw new IllegalStateException("DBFactory is not set");
     }
     database = dbFactory.open(levelDBStore, options);
   }
 
-  public void put(DataPoint dataPoint) throws IOException {
+  /**
+   * Put a datapoint into datastore.
+   *
+   * @param dataPoint to be stored into store.
+   * @throws Exception
+   */
+  @Override
+  public void put(DataPoint dataPoint) throws Exception {
     try {
-      DB database = getDatabase();
       put(null, dataPoint);
     } catch (Exception e) {
-      throw new IOException(e);
+      throw new Exception(e);
     }
   }
 
+  /**
+   * Put a datapoint using the passed transaction Id.
+   * NOTE: We have ignore txn for now to improve performance.
+   *
+   * @param txn transaction instance.
+   * @param dataPoint to be stored into store.
+   * @throws Exception
+   */
   private void put(Object txn, DataPoint dataPoint) throws Exception {
     String metricName = dataPoint.getMetric();
     if (metricName == null || metricName.isEmpty()) {
@@ -127,30 +168,14 @@ public class LevelDBDataStore implements DataStore, KVStore {
     put(txn, key, valueBytes);
   }
 
-  public void putMultiple(List<DataPoint> dataPoints) throws Exception {
-    if (dataPoints == null || dataPoints.isEmpty()) {
-      return;
-    }
-    // Transaction txn = null;
-    try {
-      DB database = getDatabase();
-      WriteBatch batch = database.createWriteBatch();
-      // batch.
-      // txn = env.beginTransaction(null, null);
-      for (DataPoint dataPoint : dataPoints) {
-        Entry<byte[], byte[]> entry = serializer.convert(dataPoint);
-        batch.put(entry.getKey(), entry.getValue());
-      }
-      database.write(batch);
-      // txn.commit();
-    } catch (Exception e) {
-      // if (txn != null) {
-      // txn.abort();
-      // }
-      throw e;
-    }
-  }
-
+  /**
+   * Given a <code>query</code> returns the timeseries associated with metric.
+   *
+   * @param query to be executed to retrieve the datapoints.
+   * @return Immutable list of datapoints.
+   * @throws Exception
+   */
+  @Override
   public ImmutableList<DataPoint> getDataPoints(Query query) throws Exception {
     int metricID = metrics.getOrCreateId(query.getMetricName());
     int[][] tagFilter = serializer.convertTags(query.getTagFilter());
@@ -163,35 +188,62 @@ public class LevelDBDataStore implements DataStore, KVStore {
     // Get handle to DB and set the start key as iterator.
     DB database = getDatabase();
     DBIterator iterator = database.iterator();
+
+    // Set the start key
     iterator.seek(startKey);
-    final List<DataPoint> result = new ArrayList<DataPoint>();
-    Function<DataPoint, Void> callback = query.getCallback();
+
+    Map<Long, DataPoint> points = Maps.newTreeMap();
+
+    // Iterate through all the points.
     while (iterator.hasNext()) {
       Entry<byte[], byte[]> entry = iterator.next();
       byte[] key = entry.getKey();
+
+      // Get timestamp, metric id, tags.
       long parsedTimestamp = DataPointSerializer.parseTimeStamp(key);
       int parsedMetricID = DataPointSerializer.parseMetricID(key);
       int[][] parsedTags = DataPointSerializer.parseProperties(key);
+
       if (parsedMetricID == metricID
         && parsedTimestamp >= query.getStartTime()
         && parsedTimestamp < query.getEndTime()) {
+
         if (keyBasedQueryFilter.apply(parsedMetricID, parsedTimestamp,
                                       parsedTags)) {
+
           final DataPoint dp = serializer
             .convert(parsedMetricID, parsedTimestamp,
                      parsedTags, entry.getValue());
-          if(callback != null) {
-            callback.apply(dp);
+
+          // If there is a point at a given timestamp, then the
+          // metric value are added.
+          if(points.containsKey(parsedTimestamp)) {
+            double value = points.get(parsedTimestamp).getValue()
+                    + dp.getValue();
+            points.put(parsedTimestamp,
+              new DataPoint.Builder(dp.getMetric()).addTimestamp(parsedTimestamp)
+                  .addValue(value).addTags(query.getTagFilter()).create());
+          } else {
+            points.put(parsedTimestamp,
+              new DataPoint.Builder(dp.getMetric()).addTimestamp(parsedTimestamp)
+                .addValue(dp.getValue()).addTags(query.getTagFilter()).create());
           }
-          result.add(dp);
         }
       } else {
         break;
       }
     }
-    return ImmutableList.copyOf(result);
+    return ImmutableList.copyOf(points.values());
   }
 
+  /**
+   * Puts a key and value to store.
+   *
+   * @param key to store the value under.
+   * @param value to be stored under key.
+   * @throws Exception
+   */
+  @Override
   public void put(byte[] key, byte[] value) throws Exception {
     try {
       put(null, key, value);
@@ -200,6 +252,7 @@ public class LevelDBDataStore implements DataStore, KVStore {
     }
   }
 
+  /** Implementation using the transaction */
   private void put(Object txn, byte[] key, byte[] value) throws Exception {
     try {
       DB database = getDatabase();
@@ -209,6 +262,14 @@ public class LevelDBDataStore implements DataStore, KVStore {
     }
   }
 
+  /**
+   * For a given <code>key</code> returns the byte array representation of value.
+   *
+   * @param key for which the value should be retrieved.
+   * @return byte array of value.
+   * @throws Exception
+   */
+  @Override
   public byte[] get(byte[] key) throws Exception {
     try {
       DB database = getDatabase();
@@ -217,12 +278,4 @@ public class LevelDBDataStore implements DataStore, KVStore {
       throw e;
     }
   }
-
-  public void open() throws Exception {
-    if (database == null) {
-      initEnv();
-    }
-
-  }
-
 }

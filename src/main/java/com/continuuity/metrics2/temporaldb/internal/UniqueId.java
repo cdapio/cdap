@@ -1,5 +1,6 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
 
+import com.continuuity.metrics2.temporaldb.KVStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,9 @@ public class UniqueId {
   }
 
   public synchronized int getOrCreateId(String name) throws Exception {
+    if(name == null || name.isEmpty()) {
+      throw new Exception("Metric name is empty or null.");
+    }
     Integer cached = cache.get(name);
     if (cached != null) {
       return cached;

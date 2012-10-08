@@ -1,5 +1,7 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
 
+
+import com.continuuity.metrics2.temporaldb.Query;
 
 /**
  * Created with IntelliJ IDEA.

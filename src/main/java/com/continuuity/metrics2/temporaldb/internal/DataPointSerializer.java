@@ -1,4 +1,7 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
+import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.continuuity.metrics2.temporaldb.Query;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -159,13 +162,11 @@ public class DataPointSerializer {
   public DataPoint convert(Entry<byte[], byte[]> entry) throws Exception {
     byte[] currentKey = entry.getKey();
     byte[] dataValue = entry.getValue();
-    // DatabaseEntry currentKeyEntry = new DatabaseEntry(
-    // firstKeyEntry.getData());
     int parsedMetricID = parseMetricID(currentKey);
     long parsedTimestamp = parseTimeStamp(currentKey);
-    int[][] parsedProperties = parseProperties(currentKey);
+    int[][] parsedTags = parseProperties(currentKey);
 
-    return convert(parsedMetricID, parsedTimestamp, parsedProperties,
+    return convert(parsedMetricID, parsedTimestamp, parsedTags,
                    dataValue);
   }
 
@@ -179,9 +180,10 @@ public class DataPointSerializer {
     }
 
     String metricName = getMetricName(parsedMetricID);
-    Map<String, String> properties = getTags(parsedTags);
-    DataPoint dataPoint = new DataPointImpl(metricName, parsedTimestamp, d,
-                                        properties);
+    Map<String, String> tags = getTags(parsedTags);
+    DataPoint dataPoint =
+      new DataPoint.Builder(metricName).addTimestamp(parsedTimestamp)
+          .addValue(d).addTags(tags).create();
     return dataPoint;
   }
 }

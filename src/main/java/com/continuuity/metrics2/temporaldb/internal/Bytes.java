@@ -1,4 +1,4 @@
-package com.continuuity.metrics2.common;
+package com.continuuity.metrics2.temporaldb.internal;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -10,7 +10,8 @@ import java.nio.ByteBuffer;
  * Time: 5:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Bytes {
+class Bytes {
+
   public static long getLong(byte[] bytes) {
     ByteBuffer bb = ByteBuffer.wrap(bytes);
     return bb.getLong();
