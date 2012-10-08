@@ -1,11 +1,13 @@
 package com.continuuity.metrics2.temporaldb.internal;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.TemporalDataStore;
 import com.continuuity.metrics2.temporaldb.KVStore;
 import com.continuuity.metrics2.temporaldb.Query;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.*;
 
 import java.io.File;
@@ -16,7 +18,7 @@ import java.util.Map.Entry;
  * Concrete implementation of TemporalDataStore using LevelDB.
  * http://code.google.com/p/leveldb/
  */
-class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
+class LevelDBTemporalDataStore implements TemporalDataStore {
   /**
    * LevelDB Datastore.
    */
@@ -52,22 +54,6 @@ class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    */
   private final DataPointSerializer serializer;
 
-  /**
-   * Constructs a LevelDBTemporalDataStore using the directory.
-   * @param levelDBStore
-   */
-  public LevelDBTemporalDataStore(String levelDBStore) {
-    this(new File(levelDBStore));
-  }
-
-  public DBFactory getDbFactory() {
-    return dbFactory;
-  }
-
-  public void setDbFactory(DBFactory dbFactory) {
-    this.dbFactory = dbFactory;
-  }
-
   public LevelDBTemporalDataStore(File levelDBStore) {
     this.levelDBStore = levelDBStore;
     this.metrics = new UniqueId(this, "metrics");
@@ -80,9 +66,10 @@ class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    * Opens a database.
    * @throws Exception
    */
-  public void open() throws Exception {
+  @Override
+  public void open(CConfiguration configuration) throws Exception {
     if (database == null) {
-      initEnv();
+      initialize(configuration);
     }
   }
 
@@ -91,7 +78,7 @@ class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    * @throws Exception
    */
   @Override
-  public void close() throws Exception {
+  public void close() {
     try {
       if (database != null) {
         database.close();
@@ -108,9 +95,6 @@ class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    */
   private DB getDatabase() throws Exception {
     if (database == null) {
-      initEnv();
-    }
-    if (database == null) {
       throw new IllegalStateException();
     }
     return database;
@@ -120,12 +104,12 @@ class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
    * Initializes the levelDB
    * @throws Exception
    */
-  private void initEnv() throws Exception {
+  private void initialize(CConfiguration configuration) throws Exception {
     Options options = new Options();
     options.createIfMissing(true);
     options.compressionType(CompressionType.SNAPPY);
     if (dbFactory == null) {
-      throw new IllegalStateException("DBFactory is not set");
+      dbFactory = new JniDBFactory();
     }
     database = dbFactory.open(levelDBStore, options);
   }

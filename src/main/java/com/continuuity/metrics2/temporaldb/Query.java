@@ -73,38 +73,45 @@ public final class Query {
   }
 
   /**
-   * Query q = Query.Select("processed.count")
-   *                .From(ts)
-   *                .To(ts)
-   *                .containTag("A", "B")
+   * Query q = Query.select("processed.count")
+   *                .from(ts)
+   *                .to(ts)
+   *                .has("A", "B")
    *                .create();
    */
-  public static class Select {
+  public static class select {
     private final String metricName;
     private long endTime = System.currentTimeMillis()/1000;
     private long startTime = endTime - 5; // 5 seconds behind.
-    private Map<String, String> tags = Maps.newHashMap();
+    private Map<String, String> tags = null;
 
-    public Select(String metricName) {
+    public select(String metricName) {
       this.metricName = metricName;
     }
 
-    public Select From(long startTime) {
+    public select from(long startTime) {
       this.startTime = startTime;
       return this;
     }
 
-    public Select To(long endTime) {
+    public select to(long endTime) {
       this.endTime = endTime;
       return this;
     }
 
-    public Select containTag(String tagName, String tagValue) {
+    public select and() {
+      if(tags == null) {
+        tags = Maps.newHashMap();
+      }
+      return this;
+    }
+
+    public select has(String tagName, String tagValue) {
       this.tags.put(tagName, tagValue);
       return this;
     }
 
-    public Select containTags(Map<String, String> tags) {
+    public select has(Map<String, String> tags) {
       this.tags.putAll(tags);
       return this;
     }

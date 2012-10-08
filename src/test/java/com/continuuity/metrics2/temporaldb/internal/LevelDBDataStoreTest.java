@@ -1,12 +1,11 @@
 package com.continuuity.metrics2.temporaldb.internal;
 
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.Query;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,8 +39,7 @@ public class LevelDBDataStoreTest {
   public static void beforeClass() throws Exception {
     dir = LevelDBDataStoreTest.createTempDirectory();
     temporalDB = new LevelDBTemporalDataStore(dir);
-    temporalDB.setDbFactory(Iq80DBFactory.factory);
-    temporalDB.open();
+    temporalDB.open(CConfiguration.create());
     createFakeFlowDataPoints();
   }
 
@@ -321,15 +319,16 @@ public class LevelDBDataStoreTest {
    */
   @Test
   public void testReadSingleFlowletMetricForAFlow() throws Exception {
-    Query query = new Query.Select("tuple.read")
-      .From(timestamp)
-      .To(timestamp + DATAPOINTS)
-      .containTag("acct", "demo")
-      .containTag("app", "abc")
-      .containTag("flow", "flow")
-      .containTag("runid", "AJKHDKJHDKJAHJS")
-      .containTag("flowlet", "flowlet1")
-      .containTag("instance", "1")
+    Query query = new Query.select("tuple.read")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
+      .has("flowlet", "flowlet1")
+      .has("instance", "1")
       .create();
     ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
@@ -349,14 +348,15 @@ public class LevelDBDataStoreTest {
    */
   @Test
   public void testReadMultipleFlowletMetricForAFlow() throws Exception {
-    Query query = new Query.Select("tuple.read")
-      .From(timestamp)
-      .To(timestamp + DATAPOINTS)
-      .containTag("acct", "demo")
-      .containTag("app", "abc")
-      .containTag("flow", "flow")
-      .containTag("runid", "AJKHDKJHDKJAHJS")
-      .containTag("flowlet", "flowlet1")
+    Query query = new Query.select("tuple.read")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
+      .has("flowlet", "flowlet1")
       .create();
     ImmutableList<DataPoint> points = temporalDB.execute(query);
     Assert.assertNotNull(points);
@@ -375,13 +375,15 @@ public class LevelDBDataStoreTest {
    */
   @Test
   public void testQueryAcrossAllFlowletsInAFlow() throws Exception {
-    Query query = new Query.Select("tuple.read")
-      .From(timestamp)
-      .To(timestamp + DATAPOINTS)
-      .containTag("acct", "demo")
-      .containTag("app", "abc")
-      .containTag("flow", "flow")
-      .containTag("runid", "AJKHDKJHDKJAHJS")
+    Query query =
+    new Query.select("tuple.read")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
       .create();
     ImmutableList<DataPoint> points = temporalDB.execute(query);
 
@@ -393,73 +395,89 @@ public class LevelDBDataStoreTest {
     }
   }
 
+  @Test
+  public void testComputingBusynessMetricForAFlowAtFlowletLevel()
+      throws Exception {
+    Query queryA = new Query.select("tuple.read")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
+      .has("flowlet", "flowlet1")
+      .create();
 
-  public interface ZipIterator<T,U> {
-    boolean each(T t, U u);
-  }
+    ImmutableList<DataPoint> a = temporalDB.execute(queryA);
 
-  public static <T,U> boolean zip(Collection<T> ct, Collection<U> cu,
-                                  ZipIterator<T,U> each) {
-    Iterator<T> it = ct.iterator();
-    Iterator<U> iu = cu.iterator();
-    while (it.hasNext() && iu.hasNext()) {
-      if (!each.each(it.next(), iu.next())) {
-        return false;
+    Query queryB = new Query.select("tuple.proc")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
+      .has("flowlet", "flowlet1")
+      .create();
+
+    ImmutableList<DataPoint> b = temporalDB.execute(queryB);
+
+    ImmutableList<DataPoint> busyness =
+      new Timeseries().div(a, b);
+    int idx = 0;
+    for(DataPoint p : busyness) {
+      if(idx == 0) {
+        Assert.assertTrue(p.getValue() == 0);
+        idx = 1;
+      } else {
+        Assert.assertTrue(p.getValue() == 1);
       }
     }
-    return !it.hasNext() && !iu.hasNext();
   }
 
-
+  /**
+   * Tests how busyness metrics can be computed.
+   *
+   * @throws Exception
+   */
   @Test
-  public void testComputingBusynessMetricForAFlowAtFlowletLevel() throws Exception {
-    Query queryA = new Query.Select("tuple.read")
-      .From(timestamp)
-      .To(timestamp + DATAPOINTS)
-      .containTag("acct", "demo")
-      .containTag("app", "abc")
-      .containTag("flow", "flow")
-      .containTag("runid", "AJKHDKJHDKJAHJS")
-      .containTag("flowlet", "flowlet1")
+  public void testComputingBusynessMetricForAFlowAtFlowLevel()
+    throws Exception {
+    Query queryA = new Query.select("tuple.read")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
       .create();
 
-    ImmutableList<DataPoint> pointA = temporalDB.execute(queryA);
+    ImmutableList<DataPoint> a = temporalDB.execute(queryA);
 
-    Query queryB = new Query.Select("tuple.proc")
-      .From(timestamp)
-      .To(timestamp + DATAPOINTS)
-      .containTag("acct", "demo")
-      .containTag("app", "abc")
-      .containTag("flow", "flow")
-      .containTag("runid", "AJKHDKJHDKJAHJS")
-      .containTag("flowlet", "flowlet1")
+    Query queryB = new Query.select("tuple.proc")
+      .from(timestamp)
+      .to(timestamp + DATAPOINTS)
+      .and()
+      .has("acct", "demo")
+      .has("app", "abc")
+      .has("flow", "flow")
+      .has("runid", "AJKHDKJHDKJAHJS")
       .create();
 
-    ImmutableList<DataPoint> pointB = temporalDB.execute(queryB);
-    final List<DataPoint> result = Lists.newArrayList();
-    boolean status =
-      zip(pointA,  pointB, new ZipIterator<DataPoint, DataPoint>() {
-      @Override
-      public boolean each(DataPoint dataPointA, DataPoint dataPointB) {
-        if(dataPointA.getTimestamp() == dataPointB.getTimestamp()) {
-          DataPoint dp = new DataPoint.Builder(dataPointA.getMetric())
-            .addTimestamp(dataPointA.getTimestamp())
-            .addValue(dataPointB.getValue()/dataPointA.getValue())
-            .addTags(dataPointA.getTags())
-            .create();
-          result.add(dp);
-        } else if(dataPointA.getTimestamp() > dataPointB.getTimestamp()) {
-          result.add(dataPointB);
-        } else {
-          result.add(dataPointA);
-        }
-        return true;
+    ImmutableList<DataPoint> b = temporalDB.execute(queryB);
+    ImmutableList<DataPoint> busyness =
+      new Timeseries().div(a, b, new Timeseries.Percentage());
+    int idx = 0;
+    for(DataPoint p : busyness) {
+      if(idx == 0) {
+        Assert.assertTrue(p.getValue() == 0);
+        idx = 1;
+      } else {
+        Assert.assertTrue(p.getValue() == 100);
       }
-    });
-
-    Assert.assertTrue(status);
-
-
-
+    }
   }
 }

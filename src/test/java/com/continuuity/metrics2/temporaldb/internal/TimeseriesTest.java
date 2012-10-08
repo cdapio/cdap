@@ -1,0 +1,151 @@
+package com.continuuity.metrics2.temporaldb.internal;
+
+import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+/**
+ * Tests operations within timeseries.
+ */
+public class TimeseriesTest {
+
+  /** Creates a {@link DataPoint} instance. */
+  private DataPoint create(String name, long timestamp, double value) {
+    return new DataPoint.Builder(name)
+      .addTimestamp(timestamp).addValue(value).create();
+  }
+
+  /**
+   * Tests when we have timeseries of the same size.
+   */
+  @Test
+  public void testSameSizeTimeSeries() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    List<DataPoint> B = Lists.newArrayList();
+    A.add(create("A", 1, 2));
+    A.add(create("A", 2, 2));
+    A.add(create("A", 3, 2));
+    A.add(create("A", 4, 2));
+    A.add(create("A", 5, 2));
+    A.add(create("A", 6, 2));
+    A.add(create("A", 7, 2));
+    B.add(create("A", 1, 4));
+    B.add(create("A", 2, 4));
+    B.add(create("A", 3, 4));
+    B.add(create("A", 4, 4));
+    B.add(create("A", 5, 4));
+    B.add(create("A", 6, 4));
+    B.add(create("A", 7, 4));
+
+    ImmutableList<DataPoint> div =
+      new Timeseries().div(ImmutableList.copyOf(A), ImmutableList.copyOf(B));
+
+    Assert.assertNotNull(div);
+    Assert.assertTrue(div.size() == 7);
+
+    for(DataPoint d : div) {
+      Assert.assertTrue(d.getValue() == 0.5f);
+    }
+  }
+
+  /**
+   * Test when timeseries A has fewer elements than timeseries B. In this
+   * case last value of timeseries A should be used for computing the value.
+   * @throws Exception
+   */
+  @Test
+  public void testSeriesASmallerThanB() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    List<DataPoint> B = Lists.newArrayList();
+    A.add(create("A", 1, 2));
+    A.add(create("A", 2, 2));
+    A.add(create("A", 3, 2));
+
+    B.add(create("A", 1, 4));
+    B.add(create("A", 2, 4));
+    B.add(create("A", 3, 4));
+    B.add(create("A", 4, 4));
+    B.add(create("A", 5, 4));
+    B.add(create("A", 6, 4));
+    B.add(create("A", 7, 4));
+
+    ImmutableList<DataPoint> div =
+      new Timeseries().div(ImmutableList.copyOf(A), ImmutableList.copyOf(B));
+
+    Assert.assertNotNull(div);
+    Assert.assertTrue(div.size() == 7);
+
+    for(DataPoint d : div) {
+      Assert.assertTrue(d.getValue() == 0.5f);
+    }
+  }
+
+  /**
+   * Test when timeseries B has fewer elements than timeseries A. In this
+   * case last value of timeseries B should be used for computing the value.
+   */
+  @Test
+  public void testSeriesBSmallerThanA() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    List<DataPoint> B = Lists.newArrayList();
+    A.add(create("A", 1, 2));
+    A.add(create("A", 2, 2));
+    A.add(create("A", 3, 2));
+    A.add(create("A", 4, 2));
+    A.add(create("A", 5, 2));
+    A.add(create("A", 6, 2));
+    A.add(create("A", 7, 2));
+    B.add(create("A", 1, 4));
+    B.add(create("A", 2, 4));
+
+    ImmutableList<DataPoint> div =
+      new Timeseries().div(ImmutableList.copyOf(A), ImmutableList.copyOf(B));
+
+    Assert.assertNotNull(div);
+    Assert.assertTrue(div.size() == 7);
+
+    for(DataPoint d : div) {
+      Assert.assertTrue(d.getValue() == 0.5f);
+    }
+  }
+
+  /**
+   * Both Series have same number of points the timestamp's don't align.
+   */
+  @Test
+  public void testSeriesWithMismatchTimestamps() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    List<DataPoint> B = Lists.newArrayList();
+    A.add(create("A", 1, 2));
+    A.add(create("A", 2, 2));
+    A.add(create("A", 4, 2));
+    A.add(create("A", 5, 2));
+
+    B.add(create("A", 1, 4));
+    B.add(create("A", 2, 4));
+    B.add(create("A", 3, 4));
+    B.add(create("A", 4, 4));
+
+    ImmutableList<DataPoint> div =
+      new Timeseries().div(ImmutableList.copyOf(A), ImmutableList.copyOf(B),
+                           new Function<Double, Double>() {
+                             @Override
+                             public Double apply(@Nullable Double value) {
+                              return value * 100;
+                             }
+                           });
+
+    Assert.assertNotNull(div);
+    Assert.assertTrue(div.size() == 5);
+
+    for(DataPoint d : div) {
+      Assert.assertTrue(d.getValue() == 50f);
+    }
+  }
+}

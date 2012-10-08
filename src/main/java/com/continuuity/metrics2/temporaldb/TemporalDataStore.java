@@ -1,19 +1,25 @@
 package com.continuuity.metrics2.temporaldb;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.google.common.collect.ImmutableList;
 
+import java.io.Closeable;
+
 /**
- * Interface specifying the datastore.
+ * TemporalDataStore specifies the interface for writing timeseries
+ * data into a store. It supports ability to add a {@code DataPoint}
+ * and execute a {@code Query}. {@code TemporalDataStore}'s underlying
+ * storage is a Key-Value store.
  */
-public interface TemporalDataStore {
+public interface TemporalDataStore extends Closeable, KVStore {
   /**
-   * Opens a datastore.
+   * Opens a temporal datastore.
    * @throws Exception
    */
-  public void open() throws Exception;
+  public void open(CConfiguration configuration) throws Exception;
 
   /**
-   * Puts a {@link DataPoint} into the store.
+   * Puts a {@link DataPoint} into the temporal data store.
    *
    * @param point to be added to store.
    * @throws Exception
@@ -28,10 +34,4 @@ public interface TemporalDataStore {
    * @throws Exception
    */
   public ImmutableList<DataPoint> execute(Query query) throws Exception;
-
-  /**
-   * Closes the datastore.
-   * @throws Exception
-   */
-  public void close() throws Exception;
 }
