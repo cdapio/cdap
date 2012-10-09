@@ -18,7 +18,7 @@ public class ClearFabric implements Operation {
   }
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   private boolean clearData;
   private boolean clearMeta;
@@ -36,16 +36,31 @@ public class ClearFabric implements Operation {
   /**
    * clears the given scope (user data, tables, meta data, queues,
    * streams, or all).
+   * @param whatToClear a scope to clear
    */
   public ClearFabric(ToClear whatToClear) {
     this(Collections.singletonList(whatToClear));
   }
 
+
   /**
    * clears the listed scopes (user data, tables, meta data, queues,
    * streams, or all).
+   * @param whatToClear list of scopes to clear
    */
   public ClearFabric(List<ToClear> whatToClear) {
+    this(OperationBase.getId(), whatToClear);
+  }
+
+  /**
+   * clears the listed scopes (user data, tables, meta data, queues,
+   * streams, or all).
+   * @param id explicit unique id of this operation
+   * @param whatToClear list of scopes to clear
+   *
+   */
+  public ClearFabric(long id, List<ToClear> whatToClear) {
+    this.id = id;
     clearData = clearMeta = clearTables = clearQueues =
         clearStreams = false;
     for (ToClear toClear : whatToClear) {

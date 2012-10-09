@@ -13,11 +13,17 @@ import com.google.common.base.Objects;
 public class QueueEnqueue implements WriteOperation, ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
   private final byte [] queueName;
   private byte [] data;
 
   public QueueEnqueue(final byte [] queueName, final byte [] data) {
+    this(OperationBase.getId(), queueName, data);
+  }
+
+  public QueueEnqueue(final long id,
+                      final byte[] queueName, final byte [] data) {
+    this.id = id;
     this.queueName = queueName;
     this.data = data;
   }

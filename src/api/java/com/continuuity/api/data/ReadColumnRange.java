@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 public class ReadColumnRange implements ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -130,6 +130,32 @@ public class ReadColumnRange implements ReadOperation {
                           final byte [] startColumn,
                           final byte [] stopColumn,
                           int limit) {
+    this(OperationBase.getId(), table, row, startColumn, stopColumn, limit);
+  }
+
+  /**
+   * Reads the range of columns in the specified row that are sorted after the
+   * specified start column, inclusive, and before the specified stop column,
+   * exclusive. Reads from the specified table.
+   *
+   * Currently private because limit is unsupported.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the name of the table to read from
+   * @param row the row
+   * @param startColumn the first column in the range to be read, inclusive,
+   *                    or null to start at the beginning of the range
+   * @param stopColumn the last column in the range to be read, exclusive,
+   *                   or null to stop at the end of the range
+   * @param limit the maximum number of columns to return
+   */
+  public ReadColumnRange(final long id,
+                         final String table,
+                         final byte [] row,
+                         final byte [] startColumn,
+                         final byte [] stopColumn,
+                         int limit) {
+    this.id = id;
     this.table = table;
     this.key = row;
     this.startColumn = startColumn;

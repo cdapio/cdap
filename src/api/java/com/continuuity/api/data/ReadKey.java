@@ -8,7 +8,7 @@ package com.continuuity.api.data;
 public class ReadKey implements ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -32,6 +32,20 @@ public class ReadKey implements ReadOperation {
    */
   public ReadKey(final String table,
                  final byte [] key) {
+    this(OperationBase.getId(), table, key);
+  }
+
+  /**
+   * Reads the value of the specified key.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the name of the table to read from
+   * @param key the key to read
+   */
+  public ReadKey(final long id,
+                 final String table,
+                 final byte [] key) {
+    this.id = id;
     this.table = table;
     this.key = key;
   }

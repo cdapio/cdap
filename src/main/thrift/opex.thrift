@@ -10,18 +10,21 @@ struct TOperationContext {
 struct TReadKey {
   1: optional string table,
   2: binary key,
+  3: i64 id,
 }
 
 struct TRead {
   1: optional string table,
   2: binary key,
   3: list<binary> columns,
+  4: i64 id,
 }
 
 struct TReadAllKeys {
   1: optional string table,
   2: i32 offset,
   3: i32 limit,
+  4: i64 id,
 }
 
 struct TReadColumnRange {
@@ -30,6 +33,7 @@ struct TReadColumnRange {
   3: binary startColumn,
   4: binary stopColumn,
   5: i32 limit,
+  6: i64 id,
 }
 
 // write operations
@@ -39,12 +43,14 @@ struct TWrite {
   2: binary key,
   3: list<binary> columns,
   4: list<binary> values,
+  5: i64 id,
 }
 
 struct TDelete {
   1: optional string table,
   2: binary key,
   3: list<binary> columns,
+  4: i64 id,
 }
 
 struct TIncrement {
@@ -61,6 +67,7 @@ struct TCompareAndSwap {
   3: binary column,
   4: binary expectedValue,
   5: binary newValue,
+  6: i64 id,
 }
 
 // queue stuff
@@ -68,6 +75,7 @@ struct TCompareAndSwap {
 struct TQueueEnqueue {
   1: binary queueName,
   2: binary value,
+  3: i64 id,
 }
 
 struct TQueueConsumer {
@@ -87,6 +95,7 @@ struct TQueueAck {
   2: TQueueEntryPointer entryPointer,
   3: TQueueConsumer consumer,
   4: i32 numGroups,
+  5: i64 id,
 }
 
 enum TQueuePartitioner {
@@ -104,6 +113,7 @@ struct TQueueDequeue {
   1: binary queueName,
   2: TQueueConsumer consumer,
   3: TQueueConfig config,
+  4: i64 id,
 }
 
 enum TDequeueStatus {
@@ -125,6 +135,7 @@ struct TGetGroupId {
 
 struct TGetQueueMeta {
   1: binary queueName,
+  2: i64 id,
 }
 
 typedef TQueueEntryPointer TEntryPointer
@@ -171,10 +182,12 @@ struct TClearFabric {
   3: bool clearTables,
   4: bool clearQueues,
   5: bool clearStreams,
+  6: i64 id,
 }
 
 struct TOpenTable {
   1: string table,
+  2: i64 id,
 }
 
 struct TOptionalBinary {

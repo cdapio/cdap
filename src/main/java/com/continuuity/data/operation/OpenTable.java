@@ -6,7 +6,7 @@ import com.continuuity.api.data.OperationBase;
 public class OpenTable implements Operation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** name of the table to open */
   final String table;
@@ -16,7 +16,21 @@ public class OpenTable implements Operation {
     return id;
   }
 
+  /**
+   * To open the named table
+   * @param tableName the name of the table to open
+   */
   public OpenTable(String tableName) {
+    this(OperationBase.getId(), tableName);
+  }
+
+  /**
+   * To open the named table
+   * @param id explicit unique id of this operation
+   * @param tableName the name of the table to open
+   */
+  public OpenTable(long id, String tableName) {
+    this.id = id;
     this.table = tableName;
   }
 

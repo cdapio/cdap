@@ -32,6 +32,7 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
 
   private static final org.apache.thrift.protocol.TField TABLE_FIELD_DESC = new org.apache.thrift.protocol.TField("table", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -41,11 +42,13 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
 
   public String table; // optional
   public ByteBuffer key; // required
+  public long id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TABLE((short)1, "table"),
-    KEY((short)2, "key");
+    KEY((short)2, "key"),
+    ID((short)3, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -64,6 +67,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
           return TABLE;
         case 2: // KEY
           return KEY;
+        case 3: // ID
+          return ID;
         default:
           return null;
       }
@@ -104,6 +109,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
   }
 
   // isset id assignments
+  private static final int __ID_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
   private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -112,6 +119,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.KEY, new org.apache.thrift.meta_data.FieldMetaData("key", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TReadKey.class, metaDataMap);
   }
@@ -120,16 +129,21 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
   }
 
   public TReadKey(
-    ByteBuffer key)
+    ByteBuffer key,
+    long id)
   {
     this();
     this.key = key;
+    this.id = id;
+    setIdIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TReadKey(TReadKey other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetTable()) {
       this.table = other.table;
     }
@@ -137,6 +151,7 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       this.key = org.apache.thrift.TBaseHelper.copyBinary(other.key);
 ;
     }
+    this.id = other.id;
   }
 
   public TReadKey deepCopy() {
@@ -147,6 +162,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
   public void clear() {
     this.table = null;
     this.key = null;
+    setIdIsSet(false);
+    this.id = 0;
   }
 
   public String getTable() {
@@ -207,6 +224,29 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
     }
   }
 
+  public long getId() {
+    return this.id;
+  }
+
+  public TReadKey setId(long id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TABLE:
@@ -225,6 +265,14 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       }
       break;
 
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -235,6 +283,9 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
 
     case KEY:
       return getKey();
+
+    case ID:
+      return Long.valueOf(getId());
 
     }
     throw new IllegalStateException();
@@ -251,6 +302,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       return isSetTable();
     case KEY:
       return isSetKey();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -286,6 +339,15 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
         return false;
     }
 
+    boolean this_present_id = true;
+    boolean that_present_id = true;
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
+        return false;
+    }
+
     return true;
   }
 
@@ -318,6 +380,16 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
     }
     if (isSetKey()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.key, typedOther.key);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -359,6 +431,10 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       org.apache.thrift.TBaseHelper.toString(this.key, sb);
     }
     first = false;
+    if (!first) sb.append(", ");
+    sb.append("id:");
+    sb.append(this.id);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -377,6 +453,8 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -417,6 +495,14 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 3: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.id = iprot.readI64();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -444,6 +530,9 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
         oprot.writeBinary(struct.key);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeI64(struct.id);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -468,19 +557,25 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       if (struct.isSetKey()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetId()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetTable()) {
         oprot.writeString(struct.table);
       }
       if (struct.isSetKey()) {
         oprot.writeBinary(struct.key);
       }
+      if (struct.isSetId()) {
+        oprot.writeI64(struct.id);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TReadKey struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.table = iprot.readString();
         struct.setTableIsSet(true);
@@ -488,6 +583,10 @@ public class TReadKey implements org.apache.thrift.TBase<TReadKey, TReadKey._Fie
       if (incoming.get(1)) {
         struct.key = iprot.readBinary();
         struct.setKeyIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.id = iprot.readI64();
+        struct.setIdIsSet(true);
       }
     }
   }

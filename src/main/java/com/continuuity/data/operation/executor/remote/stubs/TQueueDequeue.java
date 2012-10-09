@@ -33,6 +33,7 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("consumer", org.apache.thrift.protocol.TType.STRUCT, (short)2);
   private static final org.apache.thrift.protocol.TField CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("config", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +44,14 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
   public ByteBuffer queueName; // required
   public TQueueConsumer consumer; // required
   public TQueueConfig config; // required
+  public long id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
     CONSUMER((short)2, "consumer"),
-    CONFIG((short)3, "config");
+    CONFIG((short)3, "config"),
+    ID((short)4, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -69,6 +72,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
           return CONSUMER;
         case 3: // CONFIG
           return CONFIG;
+        case 4: // ID
+          return ID;
         default:
           return null;
       }
@@ -109,6 +114,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
   }
 
   // isset id assignments
+  private static final int __ID_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -118,6 +125,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConsumer.class)));
     tmpMap.put(_Fields.CONFIG, new org.apache.thrift.meta_data.FieldMetaData("config", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConfig.class)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueDequeue.class, metaDataMap);
   }
@@ -128,18 +137,23 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
   public TQueueDequeue(
     ByteBuffer queueName,
     TQueueConsumer consumer,
-    TQueueConfig config)
+    TQueueConfig config,
+    long id)
   {
     this();
     this.queueName = queueName;
     this.consumer = consumer;
     this.config = config;
+    this.id = id;
+    setIdIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TQueueDequeue(TQueueDequeue other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetQueueName()) {
       this.queueName = org.apache.thrift.TBaseHelper.copyBinary(other.queueName);
 ;
@@ -150,6 +164,7 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
     if (other.isSetConfig()) {
       this.config = new TQueueConfig(other.config);
     }
+    this.id = other.id;
   }
 
   public TQueueDequeue deepCopy() {
@@ -161,6 +176,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
     this.queueName = null;
     this.consumer = null;
     this.config = null;
+    setIdIsSet(false);
+    this.id = 0;
   }
 
   public byte[] getQueueName() {
@@ -245,6 +262,29 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
     }
   }
 
+  public long getId() {
+    return this.id;
+  }
+
+  public TQueueDequeue setId(long id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -271,6 +311,14 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       }
       break;
 
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -284,6 +332,9 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
 
     case CONFIG:
       return getConfig();
+
+    case ID:
+      return Long.valueOf(getId());
 
     }
     throw new IllegalStateException();
@@ -302,6 +353,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       return isSetConsumer();
     case CONFIG:
       return isSetConfig();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -343,6 +396,15 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       if (!(this_present_config && that_present_config))
         return false;
       if (!this.config.equals(that.config))
+        return false;
+    }
+
+    boolean this_present_id = true;
+    boolean that_present_id = true;
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
         return false;
     }
 
@@ -392,6 +454,16 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -435,6 +507,10 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       sb.append(this.config);
     }
     first = false;
+    if (!first) sb.append(", ");
+    sb.append("id:");
+    sb.append(this.id);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -453,6 +529,8 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -503,6 +581,14 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.id = iprot.readI64();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -533,6 +619,9 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
         struct.config.write(oprot);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeI64(struct.id);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -560,7 +649,10 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       if (struct.isSetConfig()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetId()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
@@ -570,12 +662,15 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
       if (struct.isSetConfig()) {
         struct.config.write(oprot);
       }
+      if (struct.isSetId()) {
+        oprot.writeI64(struct.id);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueDequeue struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
@@ -589,6 +684,10 @@ public class TQueueDequeue implements org.apache.thrift.TBase<TQueueDequeue, TQu
         struct.config = new TQueueConfig();
         struct.config.read(iprot);
         struct.setConfigIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.id = iprot.readI64();
+        struct.setIdIsSet(true);
       }
     }
   }

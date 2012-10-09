@@ -6,7 +6,7 @@ package com.continuuity.api.data;
 public class Delete implements WriteOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -93,6 +93,24 @@ public class Delete implements WriteOperation {
   public Delete(final String table,
                 final byte [] row,
                 final byte [][] columns) {
+    this(OperationBase.getId(), table, row, columns);
+  }
+
+  /**
+   * Deletes the specified columns in the specified row from the specified table
+   *
+   * This is a columnar operation.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the name of the table to delete from
+   * @param row the row containing the columns to delete
+   * @param columns the columns to delete
+   */
+  public Delete(final long id,
+                final String table,
+                final byte [] row,
+                final byte [][] columns) {
+    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;

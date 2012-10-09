@@ -13,7 +13,7 @@ import com.google.common.base.Objects;
 public class QueueAck implements ConditionalWriteOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   private final byte [] queueName;
   private final QueueEntryPointer entryPointer;
@@ -31,7 +31,7 @@ public class QueueAck implements ConditionalWriteOperation {
       final QueueConsumer consumer) {
     this(queueName, entryPointer, consumer, -1);
   }
-  
+
   /**
    * Acknowledge the specified queue entry for the specified queue name as the
    * specified queue consumer, and evict this queue entry when the specified
@@ -44,13 +44,34 @@ public class QueueAck implements ConditionalWriteOperation {
    *                  feature
    */
   public QueueAck(final byte [] queueName, final QueueEntryPointer entryPointer,
-      final QueueConsumer consumer, int numGroups) {
+                  final QueueConsumer consumer, int numGroups) {
+    this(OperationBase.getId(), queueName, entryPointer, consumer, numGroups);
+  }
+
+  /**
+   * Acknowledge the specified queue entry for the specified queue name as the
+   * specified queue consumer, and evict this queue entry when the specified
+   * number of groups have acknowledged this queue entry.
+   * @param id explicit unique id of this operation
+   * @param queueName
+   * @param entryPointer
+   * @param consumer
+   * @param numGroups total number of groups that use this queue used to evict
+   *                  queue entries when they are ack'd, or -1 to disable this
+   *                  feature
+   */
+  public QueueAck(final long id,
+                  final byte [] queueName,
+                  final QueueEntryPointer entryPointer,
+                  final QueueConsumer consumer,
+                  int numGroups) {
+    this.id = id;
     this.queueName = queueName;
     this.entryPointer = entryPointer;
     this.consumer = consumer;
     this.numGroups = numGroups;
   }
-  
+
   public QueueEntryPointer getEntryPointer() {
     return this.entryPointer;
   }

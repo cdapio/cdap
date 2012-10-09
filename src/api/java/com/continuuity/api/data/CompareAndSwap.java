@@ -22,7 +22,7 @@ import java.util.Arrays;
 public class CompareAndSwap implements ConditionalWriteOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -104,6 +104,28 @@ public class CompareAndSwap implements ConditionalWriteOperation {
                         final byte [] column,
                         final byte [] expectedValue,
                         final byte [] newValue) {
+    this(OperationBase.getId(), table, row, column, expectedValue, newValue);
+  }
+
+  /**
+   * Compares-and-swaps the value of the specified column in the specified row
+   * by atomically comparing if the current value is the specified expected
+   * value and if so, replacing it with the specified new value.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the table to perform the operation on
+   * @param row the row to perform the operation on
+   * @param column the column to compare and swap
+   * @param expectedValue the expected value of the column
+   * @param newValue the new value to write
+   */
+  public CompareAndSwap(final long id,
+                        final String table,
+                        final byte [] row,
+                        final byte [] column,
+                        final byte [] expectedValue,
+                        final byte [] newValue) {
+    this.id = id;
     this.table = table;
     this.key = row;
     this.column = column;

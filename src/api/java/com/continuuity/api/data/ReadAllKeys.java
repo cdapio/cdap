@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 public class ReadAllKeys implements ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -44,6 +44,23 @@ public class ReadAllKeys implements ReadOperation {
   public ReadAllKeys(String table,
                      int offset,
                      int limit) {
+    this(OperationBase.getId(), table, offset, limit);
+  }
+
+  /**
+   * Reads all of the keys and rows in the range specified by the given offset
+   * and limit, from the specified table.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the name of the table to read from
+   * @param offset number of keys to offset by
+   * @param limit maximum number of keys to return
+   */
+  public ReadAllKeys(final long id,
+                     String table,
+                     int offset,
+                     int limit) {
+    this.id = id;
     this.table = table;
     this.offset = offset;
     this.limit = limit;

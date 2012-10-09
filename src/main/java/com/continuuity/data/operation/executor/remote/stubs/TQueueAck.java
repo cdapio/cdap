@@ -34,6 +34,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   private static final org.apache.thrift.protocol.TField ENTRY_POINTER_FIELD_DESC = new org.apache.thrift.protocol.TField("entryPointer", org.apache.thrift.protocol.TType.STRUCT, (short)2);
   private static final org.apache.thrift.protocol.TField CONSUMER_FIELD_DESC = new org.apache.thrift.protocol.TField("consumer", org.apache.thrift.protocol.TType.STRUCT, (short)3);
   private static final org.apache.thrift.protocol.TField NUM_GROUPS_FIELD_DESC = new org.apache.thrift.protocol.TField("numGroups", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -45,13 +46,15 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
   public TQueueEntryPointer entryPointer; // required
   public TQueueConsumer consumer; // required
   public int numGroups; // required
+  public long id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
     ENTRY_POINTER((short)2, "entryPointer"),
     CONSUMER((short)3, "consumer"),
-    NUM_GROUPS((short)4, "numGroups");
+    NUM_GROUPS((short)4, "numGroups"),
+    ID((short)5, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -74,6 +77,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
           return CONSUMER;
         case 4: // NUM_GROUPS
           return NUM_GROUPS;
+        case 5: // ID
+          return ID;
         default:
           return null;
       }
@@ -115,7 +120,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
 
   // isset id assignments
   private static final int __NUMGROUPS_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private static final int __ID_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -127,6 +133,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConsumer.class)));
     tmpMap.put(_Fields.NUM_GROUPS, new org.apache.thrift.meta_data.FieldMetaData("numGroups", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueAck.class, metaDataMap);
   }
@@ -138,7 +146,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     ByteBuffer queueName,
     TQueueEntryPointer entryPointer,
     TQueueConsumer consumer,
-    int numGroups)
+    int numGroups,
+    long id)
   {
     this();
     this.queueName = queueName;
@@ -146,6 +155,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     this.consumer = consumer;
     this.numGroups = numGroups;
     setNumGroupsIsSet(true);
+    this.id = id;
+    setIdIsSet(true);
   }
 
   /**
@@ -165,6 +176,7 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       this.consumer = new TQueueConsumer(other.consumer);
     }
     this.numGroups = other.numGroups;
+    this.id = other.id;
   }
 
   public TQueueAck deepCopy() {
@@ -178,6 +190,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     this.consumer = null;
     setNumGroupsIsSet(false);
     this.numGroups = 0;
+    setIdIsSet(false);
+    this.id = 0;
   }
 
   public byte[] getQueueName() {
@@ -285,6 +299,29 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     __isset_bit_vector.set(__NUMGROUPS_ISSET_ID, value);
   }
 
+  public long getId() {
+    return this.id;
+  }
+
+  public TQueueAck setId(long id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -319,6 +356,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       }
       break;
 
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -335,6 +380,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
 
     case NUM_GROUPS:
       return Integer.valueOf(getNumGroups());
+
+    case ID:
+      return Long.valueOf(getId());
 
     }
     throw new IllegalStateException();
@@ -355,6 +403,8 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       return isSetConsumer();
     case NUM_GROUPS:
       return isSetNumGroups();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -405,6 +455,15 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (!(this_present_numGroups && that_present_numGroups))
         return false;
       if (this.numGroups != that.numGroups)
+        return false;
+    }
+
+    boolean this_present_id = true;
+    boolean that_present_id = true;
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
         return false;
     }
 
@@ -464,6 +523,16 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -510,6 +579,10 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
     if (!first) sb.append(", ");
     sb.append("numGroups:");
     sb.append(this.numGroups);
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("id:");
+    sb.append(this.id);
     first = false;
     sb.append(")");
     return sb.toString();
@@ -589,6 +662,14 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 5: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.id = iprot.readI64();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -622,6 +703,9 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       oprot.writeFieldBegin(NUM_GROUPS_FIELD_DESC);
       oprot.writeI32(struct.numGroups);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeI64(struct.id);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -652,7 +736,10 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetNumGroups()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetId()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
@@ -665,12 +752,15 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (struct.isSetNumGroups()) {
         oprot.writeI32(struct.numGroups);
       }
+      if (struct.isSetId()) {
+        oprot.writeI64(struct.id);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueAck struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
@@ -688,6 +778,10 @@ public class TQueueAck implements org.apache.thrift.TBase<TQueueAck, TQueueAck._
       if (incoming.get(3)) {
         struct.numGroups = iprot.readI32();
         struct.setNumGroupsIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.id = iprot.readI64();
+        struct.setIdIsSet(true);
       }
     }
   }

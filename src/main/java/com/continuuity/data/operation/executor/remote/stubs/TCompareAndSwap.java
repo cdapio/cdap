@@ -35,6 +35,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
   private static final org.apache.thrift.protocol.TField COLUMN_FIELD_DESC = new org.apache.thrift.protocol.TField("column", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField EXPECTED_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("expectedValue", org.apache.thrift.protocol.TType.STRING, (short)4);
   private static final org.apache.thrift.protocol.TField NEW_VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("newValue", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)6);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,6 +48,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
   public ByteBuffer column; // required
   public ByteBuffer expectedValue; // required
   public ByteBuffer newValue; // required
+  public long id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -54,7 +56,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     KEY((short)2, "key"),
     COLUMN((short)3, "column"),
     EXPECTED_VALUE((short)4, "expectedValue"),
-    NEW_VALUE((short)5, "newValue");
+    NEW_VALUE((short)5, "newValue"),
+    ID((short)6, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -79,6 +82,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
           return EXPECTED_VALUE;
         case 5: // NEW_VALUE
           return NEW_VALUE;
+        case 6: // ID
+          return ID;
         default:
           return null;
       }
@@ -119,6 +124,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
   }
 
   // isset id assignments
+  private static final int __ID_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
   private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -133,6 +140,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.NEW_VALUE, new org.apache.thrift.meta_data.FieldMetaData("newValue", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TCompareAndSwap.class, metaDataMap);
   }
@@ -144,19 +153,24 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     ByteBuffer key,
     ByteBuffer column,
     ByteBuffer expectedValue,
-    ByteBuffer newValue)
+    ByteBuffer newValue,
+    long id)
   {
     this();
     this.key = key;
     this.column = column;
     this.expectedValue = expectedValue;
     this.newValue = newValue;
+    this.id = id;
+    setIdIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TCompareAndSwap(TCompareAndSwap other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetTable()) {
       this.table = other.table;
     }
@@ -176,6 +190,7 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       this.newValue = org.apache.thrift.TBaseHelper.copyBinary(other.newValue);
 ;
     }
+    this.id = other.id;
   }
 
   public TCompareAndSwap deepCopy() {
@@ -189,6 +204,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     this.column = null;
     this.expectedValue = null;
     this.newValue = null;
+    setIdIsSet(false);
+    this.id = 0;
   }
 
   public String getTable() {
@@ -351,6 +368,29 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
     }
   }
 
+  public long getId() {
+    return this.id;
+  }
+
+  public TCompareAndSwap setId(long id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TABLE:
@@ -393,6 +433,14 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       }
       break;
 
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -412,6 +460,9 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
     case NEW_VALUE:
       return getNewValue();
+
+    case ID:
+      return Long.valueOf(getId());
 
     }
     throw new IllegalStateException();
@@ -434,6 +485,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       return isSetExpectedValue();
     case NEW_VALUE:
       return isSetNewValue();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -493,6 +546,15 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       if (!(this_present_newValue && that_present_newValue))
         return false;
       if (!this.newValue.equals(that.newValue))
+        return false;
+    }
+
+    boolean this_present_id = true;
+    boolean that_present_id = true;
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
         return false;
     }
 
@@ -562,6 +624,16 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -623,6 +695,10 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       org.apache.thrift.TBaseHelper.toString(this.newValue, sb);
     }
     first = false;
+    if (!first) sb.append(", ");
+    sb.append("id:");
+    sb.append(this.id);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -641,6 +717,8 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -705,6 +783,14 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 6: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.id = iprot.readI64();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -747,6 +833,9 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
         oprot.writeBinary(struct.newValue);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeI64(struct.id);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -780,7 +869,10 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       if (struct.isSetNewValue()) {
         optionals.set(4);
       }
-      oprot.writeBitSet(optionals, 5);
+      if (struct.isSetId()) {
+        optionals.set(5);
+      }
+      oprot.writeBitSet(optionals, 6);
       if (struct.isSetTable()) {
         oprot.writeString(struct.table);
       }
@@ -796,12 +888,15 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       if (struct.isSetNewValue()) {
         oprot.writeBinary(struct.newValue);
       }
+      if (struct.isSetId()) {
+        oprot.writeI64(struct.id);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TCompareAndSwap struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(5);
+      BitSet incoming = iprot.readBitSet(6);
       if (incoming.get(0)) {
         struct.table = iprot.readString();
         struct.setTableIsSet(true);
@@ -821,6 +916,10 @@ public class TCompareAndSwap implements org.apache.thrift.TBase<TCompareAndSwap,
       if (incoming.get(4)) {
         struct.newValue = iprot.readBinary();
         struct.setNewValueIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.id = iprot.readI64();
+        struct.setIdIsSet(true);
       }
     }
   }

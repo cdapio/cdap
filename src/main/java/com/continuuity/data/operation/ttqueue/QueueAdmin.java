@@ -48,10 +48,16 @@ public class QueueAdmin {
   public static class GetQueueMeta implements ReadOperation {
 
     /** Unique id for the operation */
-    private final long id = OperationBase.getId();
+    private final long id;
     private final byte [] queueName;
 
     public GetQueueMeta(byte [] queueName) {
+      this(OperationBase.getId(), queueName);
+    }
+
+    public GetQueueMeta(final long id,
+                        byte [] queueName) {
+      this.id = id;
       this.queueName = queueName;
     }
 

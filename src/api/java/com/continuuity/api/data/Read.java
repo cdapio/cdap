@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 public class Read implements ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -88,6 +88,23 @@ public class Read implements ReadOperation {
   public Read(final String table,
               final byte [] row,
               final byte [][] columns) {
+    this(OperationBase.getId(), table, row, columns);
+  }
+
+  /**
+   * Reads the values of the specified columns in the specified row,
+   * from a specified table.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the name of the table to read from
+   * @param row the row to be read
+   * @param columns the columns to be read
+   */
+  public Read(final long id,
+              final String table,
+              final byte [] row,
+              final byte [][] columns) {
+    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;

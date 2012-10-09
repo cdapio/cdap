@@ -676,6 +676,7 @@ public abstract class OperationExecutorServiceTest extends
   @Test
   public void testIncrementPassThru() throws Exception {
 
+    // we need to be sure that payloads are enabled
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
 
     byte [] row = Bytes.toBytes("r0w");

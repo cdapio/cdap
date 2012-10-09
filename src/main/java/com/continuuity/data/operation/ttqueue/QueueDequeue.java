@@ -13,13 +13,22 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class QueueDequeue implements ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
   private final byte [] queueName;
   private final QueueConsumer consumer;
   private final QueueConfig config;
 
-  public QueueDequeue(final byte [] queueName, final QueueConsumer consumer,
-      final QueueConfig config) {
+  public QueueDequeue(final byte [] queueName,
+                      final QueueConsumer consumer,
+                      final QueueConfig config) {
+    this(OperationBase.getId(), queueName, consumer, config);
+  }
+
+  public QueueDequeue(final long id,
+                      final byte [] queueName,
+                      final QueueConsumer consumer,
+                      final QueueConfig config) {
+    this.id = id;
     this.queueName = queueName;
     this.consumer = consumer;
     this.config = config;

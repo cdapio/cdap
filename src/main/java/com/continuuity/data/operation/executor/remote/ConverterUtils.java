@@ -196,22 +196,23 @@ public class ConverterUtils {
         clearFabric.shouldClearMeta(),
         clearFabric.shouldClearTables(),
         clearFabric.shouldClearQueues(),
-        clearFabric.shouldClearStreams());
+        clearFabric.shouldClearStreams(),
+        clearFabric.getId());
   }
   /** unwrap a ClearFabric operation */
-  ClearFabric unwrap(TClearFabric clearFabric) {
+  ClearFabric unwrap(TClearFabric tClearFabric) {
     ArrayList<ClearFabric.ToClear> toClear = Lists.newArrayList();
-    if (clearFabric.isClearData()) toClear.add(ClearFabric.ToClear.DATA);
-    if (clearFabric.isClearMeta()) toClear.add(ClearFabric.ToClear.META);
-    if (clearFabric.isClearTables()) toClear.add(ClearFabric.ToClear.TABLES);
-    if (clearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
-    if (clearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
-    return new ClearFabric(toClear);
+    if (tClearFabric.isClearData()) toClear.add(ClearFabric.ToClear.DATA);
+    if (tClearFabric.isClearMeta()) toClear.add(ClearFabric.ToClear.META);
+    if (tClearFabric.isClearTables()) toClear.add(ClearFabric.ToClear.TABLES);
+    if (tClearFabric.isClearQueues()) toClear.add(ClearFabric.ToClear.QUEUES);
+    if (tClearFabric.isClearStreams()) toClear.add(ClearFabric.ToClear.STREAMS);
+    return new ClearFabric(tClearFabric.getId(), toClear);
   }
 
   /** wrap an OpenTable operation */
   public TOpenTable wrap(OpenTable openTable) {
-    return new TOpenTable(openTable.getTableName());
+    return new TOpenTable(openTable.getTableName(), openTable.getId());
   }
   /** unwrap an OpenTable operation */
   public OpenTable unwrap(TOpenTable tOpenTable) {
@@ -223,7 +224,8 @@ public class ConverterUtils {
     TWrite tWrite = new TWrite(
         wrap(write.getKey()),
         wrap(write.getColumns()),
-        wrap(write.getValues()));
+        wrap(write.getValues()),
+        write.getId());
     if (write.getTable() != null)
       tWrite.setTable(write.getTable());
     return tWrite;
@@ -231,6 +233,7 @@ public class ConverterUtils {
   /** unwrap a Write operation */
   Write unwrap(TWrite tWrite) {
     return new Write(
+        tWrite.getId(),
         tWrite.isSetTable() ? tWrite.getTable() : null,
         tWrite.getKey(),
         unwrap(tWrite.getColumns()),
@@ -241,7 +244,8 @@ public class ConverterUtils {
   TDelete wrap(Delete delete) {
     TDelete tDelete = new TDelete(
         wrap(delete.getKey()),
-        wrap(delete.getColumns()));
+        wrap(delete.getColumns()),
+        delete.getId());
     if (delete.getTable() != null)
       tDelete.setTable(delete.getTable());
     return tDelete;
@@ -249,6 +253,7 @@ public class ConverterUtils {
   /** unwrap a Delete operation */
   Delete unwrap(TDelete tDelete) {
     return new Delete(
+        tDelete.getId(),
         tDelete.isSetTable() ? tDelete.getTable() : null,
         tDelete.getKey(),
         unwrap(tDelete.getColumns()));
@@ -281,7 +286,8 @@ public class ConverterUtils {
         wrap(compareAndSwap.getKey()),
         wrap(compareAndSwap.getColumn()),
         wrap(compareAndSwap.getExpectedValue()),
-        wrap(compareAndSwap.getNewValue()));
+        wrap(compareAndSwap.getNewValue()),
+        compareAndSwap.getId());
     if (compareAndSwap.getTable() != null)
       tCompareAndSwap.setTable(compareAndSwap.getTable());
     return tCompareAndSwap;
@@ -289,6 +295,7 @@ public class ConverterUtils {
   /** unwrap a CompareAndSwap operation */
   CompareAndSwap unwrap(TCompareAndSwap tCompareAndSwap) {
     return new CompareAndSwap(
+        tCompareAndSwap.getId(),
         tCompareAndSwap.isSetTable() ? tCompareAndSwap.getTable() : null,
         tCompareAndSwap.getKey(),
         tCompareAndSwap.getColumn(),
@@ -300,7 +307,8 @@ public class ConverterUtils {
   TRead wrap(Read read) {
     TRead tRead = new TRead(
         wrap(read.getKey()),
-        wrap(read.getColumns()));
+        wrap(read.getColumns()),
+        read.getId());
     if (read.getTable() != null)
       tRead.setTable(read.getTable());
     return tRead;
@@ -308,6 +316,7 @@ public class ConverterUtils {
   /** unwrap a Read operation */
   Read unwrap(TRead tRead) {
     return new Read(
+        tRead.getId(),
         tRead.isSetTable() ? tRead.getTable() : null,
         tRead.getKey(),
         unwrap(tRead.getColumns()));
@@ -316,7 +325,7 @@ public class ConverterUtils {
   /** wrap a ReadKey operation */
   TReadKey wrap(ReadKey readKey) {
     TReadKey tReadKey = new TReadKey(
-        wrap(readKey.getKey()));
+        wrap(readKey.getKey()), readKey.getId());
     if (readKey.getTable() != null)
       tReadKey.setTable(readKey.getTable());
     return tReadKey;
@@ -324,6 +333,7 @@ public class ConverterUtils {
   /** unwrap a ReadKey operation */
   ReadKey unwrap(TReadKey tReadKey) {
     return new ReadKey(
+        tReadKey.getId(),
         tReadKey.isSetTable() ? tReadKey.getTable() : null,
         tReadKey.getKey());
   }
@@ -332,7 +342,8 @@ public class ConverterUtils {
   TReadAllKeys wrap(ReadAllKeys readAllKeys) {
     TReadAllKeys tReadAllKeys = new TReadAllKeys(
         readAllKeys.getOffset(),
-        readAllKeys.getLimit());
+        readAllKeys.getLimit(),
+        readAllKeys.getId());
     if (readAllKeys.getTable() != null)
       tReadAllKeys.setTable(readAllKeys.getTable());
     return tReadAllKeys;
@@ -340,6 +351,7 @@ public class ConverterUtils {
   /** unwrap a ReadAllKeys operation */
   ReadAllKeys unwrap(TReadAllKeys tReadAllKeys) {
     return new ReadAllKeys(
+        tReadAllKeys.getId(),
         tReadAllKeys.isSetTable() ? tReadAllKeys.getTable() : null,
         tReadAllKeys.getOffset(),
         tReadAllKeys.getLimit());
@@ -351,7 +363,8 @@ public class ConverterUtils {
         wrap(readColumnRange.getKey()),
         wrap(readColumnRange.getStartColumn()),
         wrap(readColumnRange.getStopColumn()),
-        readColumnRange.getLimit());
+        readColumnRange.getLimit(),
+        readColumnRange.getId());
     if (readColumnRange.getTable() != null)
       tReadColumnRange.setTable(readColumnRange.getTable());
     return tReadColumnRange;
@@ -359,21 +372,25 @@ public class ConverterUtils {
   /** unwrap a ReadColumnRange operation */
   ReadColumnRange unwrap(TReadColumnRange tReadColumnRange) {
     return new ReadColumnRange(
+        tReadColumnRange.getId(),
         tReadColumnRange.isSetTable() ? tReadColumnRange.getTable() : null,
         tReadColumnRange.getKey(),
         tReadColumnRange.getStartColumn(),
-        tReadColumnRange.getStopColumn());
+        tReadColumnRange.getStopColumn(),
+        tReadColumnRange.getLimit());
   }
 
   /** wrap an EnqueuePayload operation */
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
     return new TQueueEnqueue(
         wrap(enqueue.getKey()),
-        wrap(enqueue.getData()));
+        wrap(enqueue.getData()),
+        enqueue.getId());
   }
   /** unwrap an EnqueuePayload operation */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
     return new QueueEnqueue(
+        tEnqueue.getId(),
         tEnqueue.getQueueName(),
         tEnqueue.getValue());
   }
@@ -383,13 +400,16 @@ public class ConverterUtils {
     return new TQueueDequeue(
         wrap(dequeue.getKey()),
         wrap(dequeue.getConsumer()),
-        wrap(dequeue.getConfig()));
+        wrap(dequeue.getConfig()),
+        dequeue.getId());
   }
   /** unwrap a DequeuePayload operation */
-  QueueDequeue unwrap(TQueueDequeue dequeue) {
-    return new QueueDequeue(dequeue.getQueueName(),
-        unwrap(dequeue.getConsumer()),
-        unwrap(dequeue.getConfig()));
+  QueueDequeue unwrap(TQueueDequeue tDequeue) {
+    return new QueueDequeue(
+        tDequeue.getId(),
+        tDequeue.getQueueName(),
+        unwrap(tDequeue.getConsumer()),
+        unwrap(tDequeue.getConfig()));
   }
 
   /** wrap a QueueAck operation */
@@ -398,11 +418,13 @@ public class ConverterUtils {
         wrap(ack.getKey()),
         wrap(ack.getEntryPointer()),
         wrap(ack.getConsumer()),
-        ack.getNumGroups());
+        ack.getNumGroups(),
+        ack.getId());
   }
   /** unwrap a QueueAck operation */
   QueueAck unwrap(TQueueAck tQueueAck) {
     return new QueueAck(
+        tQueueAck.getId(),
         tQueueAck.getQueueName(),
         unwrap(tQueueAck.getEntryPointer()),
         unwrap(tQueueAck.getConsumer()),
@@ -411,11 +433,15 @@ public class ConverterUtils {
 
   /** wrap a GetQueueMeta operation */
   TGetQueueMeta wrap(QueueAdmin.GetQueueMeta getQueueMeta) {
-    return new TGetQueueMeta(wrap(getQueueMeta.getQueueName()));
+    return new TGetQueueMeta(
+        wrap(getQueueMeta.getQueueName()),
+        getQueueMeta.getId());
   }
   /** unwrap a GetQueueMeta operation */
   QueueAdmin.GetQueueMeta unwrap(TGetQueueMeta tGetQueueMeta) {
-    return new QueueAdmin.GetQueueMeta(tGetQueueMeta.getQueueName());
+    return new QueueAdmin.GetQueueMeta(
+        tGetQueueMeta.getId(),
+        tGetQueueMeta.getQueueName());
   }
 
   /** wrap a GetGroupId operation */

@@ -8,7 +8,7 @@ package com.continuuity.api.data;
 public class Write implements WriteOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -113,7 +113,27 @@ public class Write implements WriteOperation {
                final byte [] row,
                final byte [][] columns,
                final byte [][] values) {
+    this(OperationBase.getId(), table, row, columns, values);
+  }
+
+  /**
+   * Writes the specified values for the specified columns in the specified row.
+   *
+   * This is a columnar operation.
+   *
+   * @param id explicit unique id of this operation
+   * @param table the table to write to
+   * @param row the row key to write to
+   * @param columns the columns to write
+   * @param values the values to write to the columns, in the same order
+   */
+  public Write(final long id,
+               final String table,
+               final byte [] row,
+               final byte [][] columns,
+               final byte [][] values) {
     checkColumnArgs(columns, values);
+    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;
