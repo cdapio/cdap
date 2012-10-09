@@ -103,10 +103,10 @@ public class ReadColumnRange implements ReadOperation {
    *                   or null to stop at the end of the range
    * @param limit the maximum number of columns to return
    */
-  private ReadColumnRange(final byte [] row,
-                          final byte [] startColumn,
-                          final byte [] stopColumn,
-                          int limit) {
+  public ReadColumnRange(final byte [] row,
+                         final byte [] startColumn,
+                         final byte [] stopColumn,
+                         int limit) {
     this(null, row, startColumn, stopColumn, limit);
   }
 
@@ -125,11 +125,11 @@ public class ReadColumnRange implements ReadOperation {
    *                   or null to stop at the end of the range
    * @param limit the maximum number of columns to return
    */
-  private ReadColumnRange(final String table,
-                          final byte [] row,
-                          final byte [] startColumn,
-                          final byte [] stopColumn,
-                          int limit) {
+  public ReadColumnRange(final String table,
+                         final byte [] row,
+                         final byte [] startColumn,
+                         final byte [] stopColumn,
+                         int limit) {
     this(OperationBase.getId(), table, row, startColumn, stopColumn, limit);
   }
 

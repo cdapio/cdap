@@ -125,8 +125,8 @@ public abstract class TestOVCTable {
 
     // get(row,startCol,stopCol)
 
-    // get(row,start=null,stop=null)
-    colMap = this.table.get(row, null, null, RP_MAX).getValue();
+    // get(row,start=null,stop=null,unlimited)
+    colMap = this.table.get(row, null, null, -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
     idx=0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
@@ -135,9 +135,9 @@ public abstract class TestOVCTable {
       idx++;
     }
 
-    // get(row,start=0,stop=ncols+1)
+    // get(row,start=0,stop=ncols+1, limit)
     colMap = this.table.get(row, Bytes.toBytes((long)0),
-        Bytes.toBytes((long)ncols+1), RP_MAX).getValue();
+        Bytes.toBytes((long)ncols+1), -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
     idx=0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
@@ -226,9 +226,9 @@ public abstract class TestOVCTable {
     }
 
     // get(row,startCol,stopCol)
-    // get(row,start=null,stop=null)
+    // get(row,start=null,stop=null, unlimited)
     Map<byte[],byte[]> colMap =
-        this.table.get(row, null, null, RP_MAX).getValue();
+        this.table.get(row, null, null, -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
     int idx=0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
@@ -237,9 +237,9 @@ public abstract class TestOVCTable {
       idx++;
     }
 
-    // get(row,start=0,stop=ncols+1)
+    // get(row,start=0,stop=ncols+1, unlimited)
     colMap = this.table.get(row, Bytes.toBytes((long)0),
-        Bytes.toBytes((long)ncols+1), RP_MAX).getValue();
+        Bytes.toBytes((long)ncols+1), -1, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
     idx=0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
@@ -248,9 +248,20 @@ public abstract class TestOVCTable {
       idx++;
     }
 
-    // get(row,start=1,stop=ncols-1) = ncols-2
+    // get(row,start=0,stop=ncols+1,limit=12)
+    colMap = this.table.get(row, Bytes.toBytes((long)0),
+        Bytes.toBytes((long)ncols+1), 12, RP_MAX).getValue();
+    assertEquals(12, colMap.size());
+    idx=0;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+
+    // get(row,start=1,stop=ncols-1, unlimited) = ncols-2
     colMap = this.table.get(row, Bytes.toBytes((long)1),
-        Bytes.toBytes((long)ncols-1), RP_MAX).getValue();
+        Bytes.toBytes((long)ncols-1), -1, RP_MAX).getValue();
     assertEquals(ncols - 2, colMap.size());
     idx=1;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
@@ -259,10 +270,21 @@ public abstract class TestOVCTable {
       idx++;
     }
 
-    // get(row,start=10,stop=20) = 10
+    // get(row,start=10,stop=20, unlimited) = 10
     colMap = this.table.get(row, Bytes.toBytes((long)10),
-        Bytes.toBytes((long)20), RP_MAX).getValue();
+        Bytes.toBytes((long)20), -1, RP_MAX).getValue();
     assertEquals(10, colMap.size());
+    idx=10;
+    for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
+      assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      idx++;
+    }
+
+    // get(row,start=10,stop=20,limit=5) = 5
+    colMap = this.table.get(row, Bytes.toBytes((long)10),
+        Bytes.toBytes((long)20), 5, RP_MAX).getValue();
+    assertEquals(5, colMap.size());
     idx=10;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));

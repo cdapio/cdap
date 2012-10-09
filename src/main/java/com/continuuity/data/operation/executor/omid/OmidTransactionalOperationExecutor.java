@@ -327,7 +327,8 @@ implements TransactionalOperationExecutor {
         this.findRandomTable(context, readColumnRange.getTable());
     OperationResult<Map<byte[], byte[]>> result = table.get(
         readColumnRange.getKey(), readColumnRange.getStartColumn(),
-        readColumnRange.getStopColumn(), this.oracle.getReadPointer());
+        readColumnRange.getStopColumn(), readColumnRange.getLimit(),
+        this.oracle.getReadPointer());
     end("ReadColumnRange", begin);
     return result;
   }

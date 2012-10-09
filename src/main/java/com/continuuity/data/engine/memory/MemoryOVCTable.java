@@ -214,8 +214,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], byte[]>> get(
-      byte[] row, byte[] startColumn, byte[] stopColumn,
+      byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
       ReadPointer readPointer) {
+
+    // negative limit means unlimited results
+    if (limit <= 0) limit = Integer.MAX_VALUE;
 
     Row r = new Row(row);
     ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>
@@ -239,8 +242,11 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         : sub.entrySet()) {
       NavigableMap<Version, Value> columnMap = entry.getValue();
       ImmutablePair<Long, byte[]> latest =  filteredLatest(columnMap, readPointer);
-      if (latest != null)
+      if (latest != null) {
         ret.put(entry.getKey().value, latest.getSecond());
+        // break out if limit reached
+        if (ret.size() >= limit) break;
+      }
     }
     unlockRow(r);
 

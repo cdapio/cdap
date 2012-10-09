@@ -158,6 +158,16 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("2".getBytes(), columns.get("b".getBytes()));
     Assert.assertArrayEquals("3".getBytes(), columns.get("c".getBytes()));
 
+    // read back all columns with remote (from "" ... "")
+    readColumnRange =
+        new ReadColumnRange(row, null, null, 1);
+    columns =
+        remote.execute(context, readColumnRange).getValue();
+    // verify it is complete
+    Assert.assertNotNull(columns);
+    Assert.assertEquals(1, columns.size());
+    Assert.assertArrayEquals("1".getBytes(), columns.get("a".getBytes()));
+
     // read back a sub-range (from aa to bb, should only return b)
     readColumnRange =
         new ReadColumnRange(row, "aa".getBytes(), "bb".getBytes());

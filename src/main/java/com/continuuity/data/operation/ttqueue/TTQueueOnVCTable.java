@@ -1,14 +1,5 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
@@ -18,16 +9,19 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
+import com.continuuity.data.operation.ttqueue.internal.*;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
-import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
-import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
-import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
-import com.continuuity.data.operation.ttqueue.internal.GroupState;
-import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a single {@link TTQueue} on a single
@@ -648,7 +642,7 @@ public class TTQueueOnVCTable implements TTQueue {
         ENTRY_GROUP_META, Long.MAX_VALUE);
     
     Map<byte[],byte[]> groupEntries =
-        this.table.get(shardRow, startColumn, stopColumn,
+        this.table.get(shardRow, startColumn, stopColumn, -1,
             dirtyPointer.getFirst()).getValue();
     
     if (groupEntries.size() < totalNumGroups) {

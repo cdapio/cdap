@@ -54,9 +54,9 @@ public class ColumnarOnVersionedColumnarTable implements ColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn)
+  get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
       throws OperationException {
-    return this.table.get(row, startColumn, stopColumn,
+    return this.table.get(row, startColumn, stopColumn, limit,
         new SimpleReadPointer(this.oracle.getTimestamp()));
   }
 

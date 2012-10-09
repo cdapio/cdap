@@ -30,11 +30,12 @@ public class TimeSeriesOnColumnarTable implements TimeSeriesTable {
   }
 
   @Override
-  public Map<Long, byte[]> getPoints(byte[] key, long startTime, long endTime)
+  public Map<Long, byte[]> getPoints(byte[] key, long startTime,
+                                     long endTime, int limit)
       throws OperationException {
     OperationResult<Map<byte[], byte[]>> columns =
         table.get(key, Bytes.toBytes(reverse(endTime)),
-            Bytes.toBytes(reverse(startTime)));
+            Bytes.toBytes(reverse(startTime)), limit);
     Map<Long,byte[]> ret = new TreeMap<Long,byte[]>();
     for (Map.Entry<byte[], byte[]> entry : columns.getValue().entrySet()) {
       ret.put(Bytes.toLong(entry.getKey()), entry.getValue());

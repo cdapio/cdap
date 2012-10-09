@@ -137,12 +137,13 @@ public interface VersionedColumnarTable {
    * @param row
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
+   * @param limit maximum number of columns to return
    * @param readPointer
    * @return map of columns to values, never null
    */
   public OperationResult<Map<byte [], byte []>> get(
       byte [] row, byte[] startColumn, byte[] stopColumn,
-      ReadPointer readPointer) throws OperationException;
+      int limit, ReadPointer readPointer) throws OperationException;
 
   /**
    * Reads the latest versions of the specified columns in the specified row,

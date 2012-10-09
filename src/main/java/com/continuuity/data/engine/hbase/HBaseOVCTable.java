@@ -279,13 +279,32 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn,
+  get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
       ReadPointer readPointer) throws OperationException {
     try {
+      // prepare a get for hbase
       Get get = new Get(row);
       get.addFamily(this.family);
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
+
+      // for now prepare for post filtering
+      if (limit <= 0) limit = Integer.MAX_VALUE;
+
+      // TODO: enable this push down of filters
+      // push down the limit into the get as a filter, negative means unlimited
+      /*
+      List<Filter> filters = Lists.newArrayList();
+      if (startColumn != null || stopColumn != null) filters.add(
+          new ColumnRangeFilter(startColumn, true, stopColumn, false));
+      if (limit > 0) filters.add(
+          new ColumnCountGetFilter(limit));
+      if (filters.size() > 1)
+        get.setFilter(new FilterList(filters));
+      else if (filters.size() == 1)
+        get.setFilter(filters.get(0));
+      */
+
       Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
@@ -300,6 +319,8 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
         if (stopColumn != null &&
             Bytes.compareTo(column, stopColumn) >= 0) break;
         map.put(column, kv.getValue());
+        // break out if limit is reached
+        if (map.size() >= limit) break;
         last = column;
       }
       if (map.isEmpty()) {

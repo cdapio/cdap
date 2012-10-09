@@ -367,7 +367,7 @@ implements OrderedVersionedColumnarTable {
       ps.setBytes(1, row);
       ResultSet result = ps.executeQuery();
       return new OperationResult<Map<byte[], byte[]>>(
-          filteredLatestColumns(result, readPointer));
+          filteredLatestColumns(result, readPointer, -1));
 
     } catch (SQLException e) {
       handleSQLException(e, "select");
@@ -437,7 +437,7 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, byte[] startColumn, byte[] stopColumn,
+  get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit,
       ReadPointer readPointer) throws OperationException {
 
     PreparedStatement ps = null;
@@ -445,6 +445,8 @@ implements OrderedVersionedColumnarTable {
       String columnChecks = "";
       if (startColumn != null) columnChecks += " AND column >= ?";
       if (stopColumn != null) columnChecks += " AND column < ?";
+      // we cannot push down the limit into the SQL, because we post-filter
+      // by timestamp, hence we can't know the correct limit pre-filtering.
       ps = this.connection.prepareStatement(
           "SELECT column, version, kvtype, id, value " +
               "FROM " + this.quotedTableName + " " +
@@ -465,7 +467,7 @@ implements OrderedVersionedColumnarTable {
             StatusCode.KEY_NOT_FOUND);
       }
       Map<byte[], byte[]> filtered =
-          filteredLatestColumns(result, readPointer);
+          filteredLatestColumns(result, readPointer, limit);
       if (filtered.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(
             StatusCode.COLUMN_NOT_FOUND);
@@ -514,7 +516,7 @@ implements OrderedVersionedColumnarTable {
             StatusCode.KEY_NOT_FOUND);
       }
       Map<byte[], byte[]> filtered =
-          filteredLatestColumns(result, readPointer);
+          filteredLatestColumns(result, readPointer, -1);
       if (filtered.isEmpty()) {
         return new OperationResult<Map<byte[], byte[]>>(
             StatusCode.COLUMN_NOT_FOUND);
@@ -738,7 +740,11 @@ implements OrderedVersionedColumnarTable {
    * @throws SQLException
    */
   private Map<byte[], byte[]> filteredLatestColumns(ResultSet result,
-      ReadPointer readPointer) throws SQLException {
+      ReadPointer readPointer, int limit) throws SQLException {
+
+    // negative limit means unlimited results
+    if (limit <= 0) limit = Integer.MAX_VALUE;
+
     Map<byte[],byte[]> map = new TreeMap<byte[],byte[]>(Bytes.BYTES_COMPARATOR);
     if (result == null) return map;
     byte [] curCol = new byte [0];
@@ -781,6 +787,9 @@ implements OrderedVersionedColumnarTable {
       if (curVersion == lastDelete) continue;
       lastCol = column;
       map.put(column, result.getBytes(5));
+
+      // break out if limit reached
+      if (map.size() >= limit) break;
     }
     return map;
   }
