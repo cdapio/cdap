@@ -225,6 +225,4 @@ public class Constants {
   public static final int
     DEFAULT_OVERLORD_SERVER_THREADS = 10;
 
-
-
 }

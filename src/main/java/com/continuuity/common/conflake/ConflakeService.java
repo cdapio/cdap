@@ -71,8 +71,6 @@ public class ConflakeService {
       Future<Boolean> stopped = Patterns.gracefulStop(ref, Duration.create(5, TimeUnit.SECONDS), system);
       Await.result(stopped, Duration.create(2, TimeUnit.SECONDS));
       conflake.stop();
-    } catch (ActorTimeoutException e) {
-      Log.error("Conflake service wasn't stopped within 5 seconds. Reason : " + e.getMessage());
     } catch (Exception e) {
       Log.error("Conflake service wasn't stopped within 5 second. Reason : " + e.getMessage());
     }
