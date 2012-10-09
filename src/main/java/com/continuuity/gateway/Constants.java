@@ -1,5 +1,7 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.OperationContext;
+
 /**
  * Constants is a utility class that contains a set of universal constants
  * that are used throughout the Gateway project.
@@ -138,5 +140,14 @@ public class Constants {
   public static final String METRIC_INTERNAL_ERRORS = "internalErrors";
   public static final String METRIC_NOT_FOUND = "notFounds";
   public static final String METRIC_SUCCESS = "successful";
+
+  /**
+   * this is a place holder for the account id of events until we have
+   * an actual way to associate an event with an account.
+   */
+  public static final String defaultAccount =
+      OperationContext.DEFAULT_ACCOUNT_ID;
+
+
 
 } // end of Constants class

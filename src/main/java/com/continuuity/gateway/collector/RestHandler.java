@@ -246,7 +246,8 @@ public class RestHandler extends NettyRestHandler {
         metrics.counter(this.getClass(),
             Constants.METRIC_CONSUMER_ID_REQUESTS, 1);
 
-        String queueURI = FlowStream.buildStreamURI(destination).toString();
+        String queueURI = FlowStream.buildStreamURI(
+            Constants.defaultAccount, destination).toString();
         QueueAdmin.GetGroupID op =
             new QueueAdmin.GetGroupID(queueURI.getBytes());
         long id;
@@ -290,7 +291,8 @@ public class RestHandler extends NettyRestHandler {
           return;
         }
         // valid consumer id, dequeue and return it
-        String queueURI = FlowStream.buildStreamURI(destination).toString();
+        String queueURI = FlowStream.buildStreamURI(
+            Constants.defaultAccount, destination).toString();
         // 0th instance of group 'id' of size 1
         QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
         // singleEntry = true means we must ack before we can see the next entry

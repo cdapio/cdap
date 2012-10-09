@@ -6,6 +6,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +110,8 @@ public abstract class Consumer {
    *
    * @param configuration The configuration that has all the options
    */
-  public void configure(CConfiguration configuration) {
+  public void configure(@SuppressWarnings("unused")
+                        CConfiguration configuration) {
   }
 
   /**

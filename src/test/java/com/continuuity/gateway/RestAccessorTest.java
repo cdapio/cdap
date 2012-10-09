@@ -507,7 +507,8 @@ public class RestAccessorTest {
   }
 
   void verifyEvent(String stream, int n) throws Exception {
-    String streamUri = FlowStream.buildStreamURI(stream).toString();
+    String streamUri = FlowStream.buildStreamURI(
+        Constants.defaultAccount, stream).toString();
     QueueAdmin.GetGroupID op = new QueueAdmin.GetGroupID(streamUri.getBytes());
     long id = this.executor.execute(context, op);
     QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
@@ -592,7 +593,8 @@ public class RestAccessorTest {
   }
 
   void verifyStreamGone(String stream) throws Exception {
-    String streamUri = FlowStream.buildStreamURI(stream).toString();
+    String streamUri = FlowStream.buildStreamURI(
+        Constants.defaultAccount, stream).toString();
     verifyQueueGone(streamUri);
   }
 }

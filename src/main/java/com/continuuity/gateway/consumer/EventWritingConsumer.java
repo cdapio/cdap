@@ -70,7 +70,8 @@ public class EventWritingConsumer extends Consumer {
       destination = "default";
     }
     // construct the stream URO to use for the data fabric
-    String queueURI = FlowStream.buildStreamURI(destination).toString();
+    String queueURI = FlowStream.
+        buildStreamURI(Constants.defaultAccount, destination).toString();
     LOG.debug("Sending event to " + queueURI + ", event = " + event);
 
     return new QueueEnqueue(queueURI.getBytes(), bytes);

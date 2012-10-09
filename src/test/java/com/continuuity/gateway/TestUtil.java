@@ -286,8 +286,8 @@ public class TestUtil {
                                    String collectorName,
                                    int eventsExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.
-        buildStreamURI(destination).toString().getBytes();
+    byte[] queueURI = FlowStream.buildStreamURI(
+        Constants.defaultAccount, destination).toString().getBytes();
     // one deserializer to reuse
     EventSerializer deserializer = new EventSerializer();
     // prepare the queue consumer
@@ -330,8 +330,8 @@ public class TestUtil {
                                    String collectorName,
                                    int tuplesExpected) throws Exception {
     // address the correct queue
-    byte[] queueURI = FlowStream.
-        buildStreamURI(destination).toString().getBytes();
+    byte[] queueURI = FlowStream.buildStreamURI(
+        Constants.defaultAccount, destination).toString().getBytes();
     // one deserializer to reuse
     TupleSerializer deserializer = new TupleSerializer(false);
     // prepare the queue consumer

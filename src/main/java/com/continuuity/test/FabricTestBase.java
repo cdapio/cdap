@@ -1,10 +1,5 @@
 package com.continuuity.test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.BeforeClass;
-
 import com.continuuity.api.data.BatchCollectionRegistry;
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationContext;
@@ -29,6 +24,10 @@ import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.payvment.continuuity.util.Bytes;
+import org.junit.BeforeClass;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class for running AppFabric and Data Fabric in-memory unit tests.
@@ -136,12 +135,9 @@ public abstract class FabricTestBase {
 
   /**
    * Writes the specified bytes to the specified stream and flow.
-   * @param flowName
-   * @param streamName
-   * @param bytes
    * @throws OperationException
    */
-  protected void writeToStream(String flowName, String streamName,
+  protected void writeToStream(String accountName, String streamName,
       byte [] bytes) throws OperationException {
     Map<String,String> headers = new HashMap<String,String>();
     TupleSerializer serializer = new TupleSerializer(false);
@@ -149,11 +145,10 @@ public abstract class FabricTestBase {
     .set("headers", headers)
     .set("body", bytes)
     .create();
-    System.out.println("Writing event to stream: " +
-        FlowStream.defaultURI(flowName, streamName).toString());
+    String uri = FlowStream.buildStreamURI(accountName, streamName).toString();
+    System.out.println("Writing event to stream: " + uri);
     executor.execute(OperationContext.DEFAULT,
-        new QueueEnqueue(Bytes.toBytes(
-            FlowStream.defaultURI(flowName, streamName).toString()),
+        new QueueEnqueue(Bytes.toBytes(uri),
             serializer.serialize(tuple)));
   }
 
