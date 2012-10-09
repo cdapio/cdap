@@ -52,6 +52,7 @@ struct TIncrement {
   2: binary key,
   3: list<binary> columns,
   4: list<i64> amounts,
+  5: i64 id,
 }
 
 struct TCompareAndSwap {

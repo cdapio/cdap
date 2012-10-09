@@ -13,7 +13,7 @@ import com.google.common.base.Objects;
 public class Increment implements WriteOperation, ReadOperation {
 
   /** Unique id for the operation */
-  private final long id = OperationBase.getId();
+  private final long id;
 
   /** the name of the table */
   private final String table;
@@ -120,6 +120,32 @@ public class Increment implements WriteOperation, ReadOperation {
                    final byte [][] columns,
                    final long [] amounts) {
     checkColumnArgs(columns, amounts);
+    this.table = table;
+    this.key = row;
+    this.columns = columns;
+    this.amounts = amounts;
+    this.id = OperationBase.getId();
+  }
+
+  /**
+   * Increments the specified columns in the specified row by the specified
+   * amounts, in the specified table
+   *
+   * This is a columnar operation.
+   *
+   * @param id the unique id of this operation
+   * @param table the table to increment in
+   * @param row the row key to increment for
+   * @param columns the columns to increment
+   * @param amounts the amounts to increment, in the same order as the columns
+   */
+  public Increment(final long id,
+                   final String table,
+                   final byte [] row,
+                   final byte [][] columns,
+                   final long [] amounts) {
+    checkColumnArgs(columns, amounts);
+    this.id = id;
     this.table = table;
     this.key = row;
     this.columns = columns;

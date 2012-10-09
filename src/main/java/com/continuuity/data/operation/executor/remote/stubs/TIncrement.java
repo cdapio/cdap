@@ -34,6 +34,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
   private static final org.apache.thrift.protocol.TField KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("key", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)3);
   private static final org.apache.thrift.protocol.TField AMOUNTS_FIELD_DESC = new org.apache.thrift.protocol.TField("amounts", org.apache.thrift.protocol.TType.LIST, (short)4);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -45,13 +46,15 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
   public ByteBuffer key; // required
   public List<ByteBuffer> columns; // required
   public List<Long> amounts; // required
+  public long id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TABLE((short)1, "table"),
     KEY((short)2, "key"),
     COLUMNS((short)3, "columns"),
-    AMOUNTS((short)4, "amounts");
+    AMOUNTS((short)4, "amounts"),
+    ID((short)5, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -74,6 +77,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
           return COLUMNS;
         case 4: // AMOUNTS
           return AMOUNTS;
+        case 5: // ID
+          return ID;
         default:
           return null;
       }
@@ -114,6 +119,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
   }
 
   // isset id assignments
+  private static final int __ID_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
   private _Fields optionals[] = {_Fields.TABLE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -128,6 +135,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
     tmpMap.put(_Fields.AMOUNTS, new org.apache.thrift.meta_data.FieldMetaData("amounts", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TIncrement.class, metaDataMap);
   }
@@ -138,18 +147,23 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
   public TIncrement(
     ByteBuffer key,
     List<ByteBuffer> columns,
-    List<Long> amounts)
+    List<Long> amounts,
+    long id)
   {
     this();
     this.key = key;
     this.columns = columns;
     this.amounts = amounts;
+    this.id = id;
+    setIdIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TIncrement(TIncrement other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetTable()) {
       this.table = other.table;
     }
@@ -173,6 +187,7 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       }
       this.amounts = __this__amounts;
     }
+    this.id = other.id;
   }
 
   public TIncrement deepCopy() {
@@ -185,6 +200,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
     this.key = null;
     this.columns = null;
     this.amounts = null;
+    setIdIsSet(false);
+    this.id = 0;
   }
 
   public String getTable() {
@@ -323,6 +340,29 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
     }
   }
 
+  public long getId() {
+    return this.id;
+  }
+
+  public TIncrement setId(long id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TABLE:
@@ -357,6 +397,14 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       }
       break;
 
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -373,6 +421,9 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
 
     case AMOUNTS:
       return getAmounts();
+
+    case ID:
+      return Long.valueOf(getId());
 
     }
     throw new IllegalStateException();
@@ -393,6 +444,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       return isSetColumns();
     case AMOUNTS:
       return isSetAmounts();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -443,6 +496,15 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       if (!(this_present_amounts && that_present_amounts))
         return false;
       if (!this.amounts.equals(that.amounts))
+        return false;
+    }
+
+    boolean this_present_id = true;
+    boolean that_present_id = true;
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
         return false;
     }
 
@@ -502,6 +564,16 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -555,6 +627,10 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       sb.append(this.amounts);
     }
     first = false;
+    if (!first) sb.append(", ");
+    sb.append("id:");
+    sb.append(this.id);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -573,6 +649,8 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -649,6 +727,14 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 5: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.id = iprot.readI64();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -700,6 +786,9 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
         }
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeI64(struct.id);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -730,7 +819,10 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
       if (struct.isSetAmounts()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetId()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetTable()) {
         oprot.writeString(struct.table);
       }
@@ -755,12 +847,15 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
           }
         }
       }
+      if (struct.isSetId()) {
+        oprot.writeI64(struct.id);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TIncrement struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.table = iprot.readString();
         struct.setTableIsSet(true);
@@ -794,6 +889,10 @@ public class TIncrement implements org.apache.thrift.TBase<TIncrement, TIncremen
           }
         }
         struct.setAmountsIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.id = iprot.readI64();
+        struct.setIdIsSet(true);
       }
     }
   }

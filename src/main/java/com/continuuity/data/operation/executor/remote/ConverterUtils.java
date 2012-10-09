@@ -259,7 +259,8 @@ public class ConverterUtils {
     TIncrement tIncrement = new TIncrement(
         wrap(increment.getKey()),
         wrap(increment.getColumns()),
-        wrap(increment.getAmounts()));
+        wrap(increment.getAmounts()),
+        increment.getId());
     if (increment.getTable() != null)
       tIncrement.setTable(increment.getTable());
     return tIncrement;
@@ -267,6 +268,7 @@ public class ConverterUtils {
   /** unwrap an Increment operation */
   Increment unwrap(TIncrement tIncrement) {
     return new Increment(
+        tIncrement.getId(),
         tIncrement.isSetTable() ? tIncrement.getTable() : null,
         tIncrement.getKey(),
         unwrap(tIncrement.getColumns()),

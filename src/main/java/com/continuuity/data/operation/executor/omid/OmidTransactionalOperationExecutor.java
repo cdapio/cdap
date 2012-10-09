@@ -466,7 +466,7 @@ implements TransactionalOperationExecutor {
    * payload.
    */
   private void processEnqueue(QueueEnqueue enqueue,
-      Map<Long, Long> incrementResults) {
+      Map<Long, Long> incrementResults) throws OperationException {
     if (DISABLE_QUEUE_PAYLOADS) return;
     // Deserialize enqueue payload
     byte [] enqueuePayloadBytes = enqueue.getData();
@@ -488,8 +488,9 @@ implements TransactionalOperationExecutor {
       Long operationId = fieldAndId.getValue();
       Long incrementValue = incrementResults.get(operationId);
       if (incrementValue == null) {
-        throw new RuntimeException("Field specified as containing an " +
-            "increment result but no matching increment operation found");
+        throw new OperationException(StatusCode.INTERNAL_ERROR,
+            "Field specified as containing an increment result but no " +
+                "matching increment operation found");
       }
       // Store field-to-value in map for dequeue payload
       fieldsToValues.put(field, incrementValue);

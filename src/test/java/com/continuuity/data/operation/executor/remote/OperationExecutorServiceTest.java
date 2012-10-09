@@ -2,18 +2,21 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public abstract class OperationExecutorServiceTest extends
     OpexServiceTestBase {
@@ -414,7 +417,6 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertArrayEquals("1".getBytes(), dequeueResult.getValue());
   }
 
-
   /** test clearFabric */
   @Test
   public void testClearFabric() throws Exception {
@@ -669,4 +671,61 @@ public abstract class OperationExecutorServiceTest extends
       }
     }
   }
+
+  // test that post increment enqueue works with remote opex
+  @Test
+  public void testIncrementPassThru() throws Exception {
+
+    OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
+
+    byte [] row = Bytes.toBytes("r0w");
+    byte [] column = Bytes.toBytes("col");
+    byte [] queue = Bytes.toBytes("qu");
+    byte [] data = Bytes.toBytes("data");
+    byte [] val41 = Bytes.toBytes(41L);
+    byte [] val42 = Bytes.toBytes(42L);
+    String field = "field";
+
+    // write a value to a column
+    remote.execute(context, new Write(row, column, val41));
+    // verify it's there
+    Assert.assertArrayEquals(val41,
+        remote.execute(context, new Read(row, column)).getValue().get(column));
+
+    // increment operation for the column
+    Increment increment = new Increment(row, column, 1L);
+
+    // generate an enqueue payload referencing the increment
+    Map<String,Long> map = Collections.singletonMap(field, increment.getId());
+    byte[] payload = TupleMetaDataAnnotator.EnqueuePayload.write(map, data);
+    QueueEnqueue enqueue = new QueueEnqueue(queue,payload);
+
+    // make a batch of the increment and the enqueue and execute
+    List<WriteOperation> batch = Lists.newArrayList(
+        enqueue, (WriteOperation)increment);
+    remote.execute(context, batch);
+
+    // verify that the increment was performed
+    Assert.assertArrayEquals(val42,
+        remote.execute(context, new Read(row, column)).getValue().get(column));
+
+    // dequeue the payload
+    QueueConsumer consumer = new QueueConsumer(0, 1, 1);
+    QueueConfig config = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueDequeue dequeue = new QueueDequeue(queue, consumer, config);
+    DequeueResult result = remote.execute(context, dequeue);
+    assertTrue(result.isSuccess());
+    assertFalse(result.isEmpty());
+
+    // and verify that the incremented value is there
+    TupleMetaDataAnnotator.DequeuePayload dequeuePayload =
+        TupleMetaDataAnnotator.DequeuePayload.read(result.getValue());
+    map = dequeuePayload.getValues();
+    assertEquals(1, map.size());
+    assertEquals(new Long(42), map.get(field));
+    assertArrayEquals(data, dequeuePayload.getSerializedTuple());
+  }
+
 }
+
+
