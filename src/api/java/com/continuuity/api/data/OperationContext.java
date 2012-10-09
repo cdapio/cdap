@@ -30,6 +30,8 @@ public class OperationContext {
     return account;
   }
 
+  /** defaults to be used everywhere until we support true accounts */
+  public static final String DEFAULT_ACCOUNT_ID = "demo";
   public static final OperationContext DEFAULT =
-      new OperationContext("default");
+      new OperationContext(DEFAULT_ACCOUNT_ID);
 }

@@ -209,7 +209,8 @@ abstract public class MetaDataStoreTest {
   @Test
   public void testUpdateField() throws Exception {
     // create a meta data entry with two fields, one text one bin
-    MetaDataEntry entry = new MetaDataEntry("default", null, "test", "abc");
+    MetaDataEntry entry =
+        new MetaDataEntry(context.getAccount(), null, "test", "abc");
     entry.addField("text", "0");
     entry.addField("bin", Bytes.toBytes(0));
     mds.add(context, entry);
@@ -228,8 +229,8 @@ abstract public class MetaDataStoreTest {
         int value = 1;
         for (int i = 1; i <= 1000; i++) {
           try {
-            mds.updateField(context, "default", null, "test", "abc", "text",
-                Integer.toString(value), 0);
+            mds.updateField(context, context.getAccount(), null, "test", "abc",
+                "text", Integer.toString(value), 0);
             value++;
           } catch (OperationException e) {
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
@@ -250,8 +251,8 @@ abstract public class MetaDataStoreTest {
         int value = 1;
         for (int i = 1; i <= 1000; i++) {
           try {
-            mds.updateField(context, "default", null, "test", "abc", "bin",
-                Bytes.toBytes(value), 0);
+            mds.updateField(context, context.getAccount(), null, "test", "abc",
+                "bin", Bytes.toBytes(value), 0);
             value++;
           } catch (OperationException e) {
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
@@ -273,7 +274,7 @@ abstract public class MetaDataStoreTest {
     textThread.join();
     binaryThread.join();
 
-    entry = mds.get(context, "default", null, "test", "abc");
+    entry = mds.get(context, context.getAccount(), null, "test", "abc");
     Assert.assertNotNull(entry);
     String text = entry.getTextField("text");
     byte[] binary = entry.getBinaryField("bin");
