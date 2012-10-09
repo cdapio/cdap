@@ -8,13 +8,13 @@ public class Main implements Flow {
     specifier.name("CountTokens");
     specifier.email("me@continuuity.com");
     specifier.application("End2End");
-    specifier.stream("input");
+    specifier.stream("text");
     specifier.flowlet("source", StreamSource.class, 1);
     specifier.flowlet("split", Tokenizer.class, 1);
     specifier.flowlet("upper", UpperCaser.class, 1);
     specifier.flowlet("count1", CountByField.class, 1);
     specifier.flowlet("count2", CountByField.class, 1);
-    specifier.input("input", "source");
+    specifier.input("text", "source");
     specifier.connection("source", "split");
     specifier.connection("split", "count1");
     specifier.connection("split", "upper");

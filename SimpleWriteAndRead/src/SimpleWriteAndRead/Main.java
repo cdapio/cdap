@@ -8,11 +8,11 @@ public class Main implements Flow {
     specifier.name("SimpleWriteAndRead");
     specifier.email("me@continuuity.com");
     specifier.application("End2End");
-    specifier.stream("input");
+    specifier.stream("text");
     specifier.flowlet("source", StreamSource.class, 1);
     specifier.flowlet("writer", WriterFlowlet.class, 1);
     specifier.flowlet("reader", ReaderFlowlet.class, 1);
-    specifier.input("input", "source");
+    specifier.input("text", "source");
     specifier.connection("source", "writer");
     specifier.connection("writer", "reader");
   }

@@ -11,7 +11,7 @@ public class Main implements Flow {
     specifier.flowlet("source", StreamSource.class, 1);
     specifier.flowlet("count", WordCounter.class, 1);
     specifier.flowlet("tick", Incrementer.class, 1);
-    specifier.input("source");
+    specifier.input("text", "source");
     specifier.connection("source", "count");
     specifier.connection("count", "tick");
   }
