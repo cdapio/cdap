@@ -85,8 +85,8 @@ sonar {
 
 // build a "fat" jar for loggly, containing all dependencies
 task logglyJar(type: Jar) {
-  //classifier = 'loggly'
-  baseName = 'log-appender'
+  classifier = 'loggly'
+  //baseName = 'log-appender'
   from sourceSets.loggly.output
   from { configurations.logglyCompile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
