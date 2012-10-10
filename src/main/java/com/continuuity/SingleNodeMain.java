@@ -15,8 +15,10 @@ import com.continuuity.flow.runtime.FARModules;
 import com.continuuity.flow.runtime.FlowManagerModules;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
+import com.continuuity.runtime.MetadataModules;
 import com.continuuity.runtime.MetricsModules;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
@@ -69,6 +71,12 @@ public class SingleNodeMain {
   private MetricsFrontendServerInterface theOverlordFrontendServer;
 
   /**
+   * This is the Metadata service.
+   */
+  @Inject
+  private MetadataServerInterface theMetadataServer;
+
+  /**
    * This is the FAR server.
    */
   @Inject
@@ -110,6 +118,9 @@ public class SingleNodeMain {
 
     System.out.println(" Starting Zookeeper Service");
     startZookeeper();
+
+    System.out.println(" Starting Metadata Service");
+    theMetadataServer.start(null, myConfiguration);
 
     System.out.println(" Starting Metrics Service");
     theOverlordCollectionServer.start(null, myConfiguration);
@@ -227,6 +238,7 @@ public class SingleNodeMain {
     MetricsModules metricsModules = new MetricsModules();
     GatewayModules gatewayModules = new GatewayModules();
     DataFabricModules dataFabricModules = new DataFabricModules();
+    MetadataModules metadataModules = new MetadataModules();
 
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
@@ -234,7 +246,8 @@ public class SingleNodeMain {
       flowManagerModules.getSingleNodeModules(),
       metricsModules.getSingleNodeModules(),
       gatewayModules.getSingleNodeModules(),
-      dataFabricModules.getSingleNodeModules()
+      dataFabricModules.getSingleNodeModules(),
+      metadataModules.getSingleNodeModules()
     );
 
     // Create our server instance
