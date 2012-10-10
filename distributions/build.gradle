@@ -129,10 +129,10 @@ task singlenode_dist (type: Zip) {
     group = 'Continuuity'
     description = 'Generates the singlenode distribution zip file'
 
-    baseName = "bigflow"
+    baseName = "continuuity"
     appendix = "developer-edition"
     version = releaseVersion
-    classifier = "alpha"
+    classifier = "beta"
 
     from "${buildDir}/singlenode"
     into "${baseName}-${appendix}-${version}-${classifier}"
