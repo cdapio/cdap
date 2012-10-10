@@ -3,7 +3,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.continuuity.bigflow</groupId>
+  <groupId>com.continuuity.appfabric</groupId>
   <artifactId>DependencyRandomNumber</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
@@ -12,7 +12,7 @@
     <!-- Add the internal continuuity-api jar -->
     <dependency>
       <groupId>com.continuuity</groupId>
-      <artifactId>bigflow-api</artifactId>
+      <artifactId>appfabric-api</artifactId>
       <version>1.0.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/../../continuuity-api.jar</systemPath>

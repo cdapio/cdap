@@ -4,7 +4,7 @@ defaultTasks 'build'
 ant.importBuild 'build.xml'
 
 //tell ant where our api jar is
-ant.properties['bigflow.home'] = '../../singlenode/build/libs/'
+ant.properties['appfabric.home'] = '../../singlenode/build/libs/'
 
 //compile tasks depend on existence of api jar 
 examplesCompile.dependsOn ':singlenode:createApiJar'

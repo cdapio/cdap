@@ -2,13 +2,13 @@
 <project name="examples" default="jar">
 
     <property environment="env"/>
-    <property name="bigflow.home" value="${env.BIGFLOW_HOME}"/>
+    <property name="appfabric.home" value="${env.APP_FABRIC_HOME}"/>
 
-    <!-- if BIGFLOW_HOME is set, use it to find the libraries; otherwise use ../.. -->
-    <condition property="bigflow.lib" value="../.." else="${bigflow.home}">
-        <matches string="${bigflow.home}" pattern="..env.BIGFLOW_HOME."/>
+    <!-- if APP_FABRIC_HOME is set, use it to find the libraries; otherwise use ../.. -->
+    <condition property="appfabric.lib" value="../.." else="${appfabric.home}">
+        <matches string="${appfabric.home}" pattern="..env.APP_FABRIC_HOME."/>
     </condition>
-    <echo message="Expecting BigFlow API libraries in ${bigflow.lib}"/>
+    <echo message="Expecting AppFabric API libraries in ${appfabric.lib}"/>
 
     <property name="example.name" value="${ant.project.name}"/>
     <property name="main.class" value="${example.name}.Main"/>
@@ -17,8 +17,8 @@
     <property name="source.dir" value="src"/>
     <property name="manifest.file" value="${build.dir}/META-INF/MANIFEST.MF"/>
 
-    <path id="bigflow.classpath">
-        <fileset dir="${bigflow.lib}">
+    <path id="appfabric.classpath">
+        <fileset dir="${appfabric.lib}">
             <include name="*.jar" />
         </fileset>
 
@@ -35,7 +35,7 @@
 
     <target name="compile" depends="init">
         <javac srcdir="${source.dir}" destdir="${build.dir}"
-               classpathref="bigflow.classpath"  includeantruntime="false" />
+               classpathref="appfabric.classpath"  includeantruntime="false" />
     </target>
 
     <!-- Creates a MANIFEST.MF class automatically -->

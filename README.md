@@ -11,10 +11,10 @@ Building
 ========
 
 Each example comes with ant build file. To build, you need to tell ant where
-the Bigflow API libraries are located (the default is ../.., which only
+the AppFabric API libraries are located (the default is ../.., which only
 works when the examples are built from within the distribution). If the
-BIGFLOW_HOME environment variable is set, then it is expected to contain
-the libraries. Otherwise, specify the libraries with ant -Dbigflow.lib=...
+APP_FABRIC_HOME environment variable is set, then it is expected to contain
+the libraries. Otherwise, specify the libraries with ant -Dappfabric.lib=...
 
 If you want to override the naming convention for your Main class that is
 identified in the MANIFEST.MF file in your Flow's jar, you can do this
