@@ -29,6 +29,12 @@ dependencies {
  */
 jar.exclude '*.xml'
 
+// ideally we would use a name of "continuuity" and classifier of "test"
+// unfortunately there is a known gradle bug that will prevent uploading of
+// the pom if the artifact has a classifier. Tried many ways to work around
+// that and finally gave up. Hence we use "continuuity-test" as the artifact
+// name. The gradle bugs is discussed here with links to the Jiras:
+// http://forums.gradle.org/gradle/topics/pom_doesnt_upload
 
 task testJar(type: Jar) {
     baseName = "continuuity-test"
@@ -38,6 +44,10 @@ task testJar(type: Jar) {
 artifacts {
     archives testJar
 }
+
+// add a filter to the upload task that only passes the test jar. Otherwise
+// we would be uploading test.jar, test-sources.jar, test-javadoc.jar and
+// test.pom, when all we have is really the test jar
 
 uploadArchives {
     repositories.mavenDeployer {
