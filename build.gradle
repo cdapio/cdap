@@ -119,3 +119,7 @@ jar.dependsOn logglyJar
  * Exclude any config xml from jar
  */
 jar.exclude '*.xml'
+
+artifacts {
+  archives logglyJar
+}
