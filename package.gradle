@@ -54,7 +54,7 @@ applicationDistribution.from("$buildDir/conf") {
  * http://issues.gradle.org/browse/GRADLE-2207 may make this easier 
  */
 startScripts {
-    applicationName = "bigFlow"
+    applicationName = "continuuity-app-fabric"
     doLast {
         def scriptFile = file "${outputDir}/${applicationName}"
         scriptFile.text = scriptFile.text.replace('cd "$SAVED"', '')
@@ -76,7 +76,7 @@ startScripts {
  * Configure distZip task
  */
 tasks.distZip {
-    baseName = "bigflow"
+    baseName = "continuuity"
     appendix = "developer-edition"
     version = "1.0.1"
     classifier = "alpha"
@@ -196,40 +196,4 @@ task upload_release (overwrite: true) << {
 task distro (overwrite: true) << {
     //no action for singlenode
 }
-
-/*------------- experimental --------------*/
-
-/*
-// introduces a build -> distZip dependency therefore a circular dependency
-artifacts {
-    archives(distZip.archivePath) {
-        builtBy distZip
-    }
-}
- 
-
-task deploystart << {
-    ant.sshexec(host: 'staging.continuuity.com',
-    username: 'deploy',
-    keyfile: "$System.env.HOME/.ssh/deploy_key",
-    trust: 'true',
-    verbose: 'true',
-    failonerror: 'true',
-    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
-    //command: "cd singleNode && unzip bigFlow-singlenode.zip && cd bigFlow-singlenode/bin && nohup ./bigFlow myprogram > nohup.out 2> nohup.err < /dev/null &")
-    command: "sh -c \"cd singleNode ; unzip bigFlow-singlenode.zip ; cd bigFlow-singlenode/bin ; nohup ./bigFlow > /dev/null 2>&1 &\"")
-
-}
-
-task deployclean << {
-    ant.sshexec(host: 'staging.continuuity.com',
-    username: 'deploy',
-    keyfile: "$System.env.HOME/.ssh/deploy_key",
-    trust: 'true',
-    verbose: 'true',
-    failonerror: 'true',
-    command: "cd singleNode && rm ${distZip.archiveName}")
-
-}
-*/
 

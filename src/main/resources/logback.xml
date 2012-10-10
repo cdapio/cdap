@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--                                                                         -->
-<!-- BigFlow Logging Configuration                                           -->
+<!-- AppFabric Logging Configuration                                         -->
 <!--                                                                         -->
-<!-- We use the LogBack project for logging in Bigflow. The manual for       -->
+<!-- We use the LogBack project for logging in AppFabric. The manual for     -->
 <!-- Logback can be found here: http://logback.qos.ch/manual                 -->
 <!--                                                                         -->
 
@@ -11,7 +11,7 @@
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <file>logs/bigflow.log</file>
+        <file>logs/appfabric.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -20,7 +20,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/bigflow.log.%i</FileNamePattern>
+            <FileNamePattern>logs/appfabric.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>
@@ -28,7 +28,7 @@
     </appender>
 
     <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/bigflow-debug.log</file>
+        <file>logs/appfabric-debug.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -37,7 +37,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/bigflow-debug.log.%i</FileNamePattern>
+            <FileNamePattern>logs/appfabric-debug.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>

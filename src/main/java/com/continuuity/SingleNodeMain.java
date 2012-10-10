@@ -129,8 +129,8 @@ public class SingleNodeMain {
     theWebApp.start(null, myConfiguration);
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println(" Bigflow started successfully. Connect to UI @ http://"
-      + hostname + ":9999");
+    System.out.println(" AppFabric started successfully. Connect to UI @ " +
+        "http://" + hostname + ":9999");
 
   } // end of bootStrapServices
 
@@ -193,7 +193,7 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    out.println("  ./bigFlow [options]");
+    out.println("  ./continuuity-app-fabric [options]");
     out.println("");
     out.println("Additional options:");
     out.println("  --help      To print this message");

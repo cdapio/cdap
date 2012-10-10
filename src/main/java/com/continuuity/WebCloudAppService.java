@@ -49,7 +49,7 @@ public class WebCloudAppService implements Server {
     try {
 
       // Now try to launch the app
-      logger.info("Launching BigFlow User Interface Web Application");
+      logger.info("Launching AppFabric User Interface Web Application");
       webAppProcess = builder.start();
 
       // Keep running..

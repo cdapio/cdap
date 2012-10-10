@@ -36,7 +36,9 @@ public class DataFormat {
         PrintStream out = (error ? System.err : System.out);
         Copyright.print(out);
         out.println("data-format utility:");
-        out.println("  This utility will reformat the continuuity data-store, wiping out any existing user data.  The bigFlow application must first be stopped before reformatting.");
+        out.println("  This utility will reformat the continuuity data-store," +
+            " wiping out any existing user data.  The continuuity-app-fabric " +
+            "application must be stopped before reformatting.");
         out.println("");
         out.println("Usage: ");
         out.println("  ./data-format [options]");
@@ -145,7 +147,8 @@ public class DataFormat {
 
         //String datadirpath = myConfiguration.get(dataDirPropName);
         if(datadirpath == null) {
-            System.out.println("Error: cannot read data-fabric configuration. Aborting...");
+            System.out.println("Error: cannot read data-fabric configuration." +
+                " Aborting...");
             System.exit(-1);
         }
 
@@ -157,18 +160,21 @@ public class DataFormat {
         }
         // determine if singleNode is already running
         if(checkIfRunning(Integer.parseInt(port))) {
-            System.out.println("Error: bigFlow must first be stopped.");
+            System.out.println("Error: continuuity-app-fabric must first be " +
+                "stopped.");
             System.exit(-1);
         }
 
         // check if directory exists and process the delete
         File datadir = new File(datadirpath);
         if(!datadir.exists()) {
-            System.out.println("No existing data found. Format operation unnecessary.");
+            System.out.println("No existing data found. Format operation " +
+                "unnecessary.");
             System.exit(0);
         } else {
             try {
-                //System.out.println("deleting contents of " + datadir.toString());
+                //System.out.println("deleting contents of " +  datadir
+                // .toString());
                 DirUtils.deleteDirectoryContents(datadir);
                 System.out.println("Success");
             } catch(Exception e) {
