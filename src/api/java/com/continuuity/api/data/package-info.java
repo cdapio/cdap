@@ -56,12 +56,12 @@
  * 
  * This batch will either completely succeed or completely fail, the database
  * will never be left in an inconsistent state.  If the batch is successful,
- * all the changes are committed permanently and the flowlet will receive a
- * Callback.onSuccess() callback.  If
+ * all the changes are committed permanently and the flowlet will receive an
+ * onSuccess() callback.  If
  * the batch is not successfully transacted (a conditional operation could fail
  * or some other kind of non-retryable error may occur), all operations in the
  * batch are aborted, the database remains unchanged, and the flowlet will
- * receive an {@link Callback.onFailure()} callback.
+ * receive an onFailure() callback.
  * 
  * As an example of performing a write operation, we will create a flowlet
  * which does the opposite of the previous example.  It will receive a tuple
