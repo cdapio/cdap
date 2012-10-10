@@ -54,7 +54,7 @@ enum MetricTimeseriesLevel {
  */
 struct DataPoints {
    1: map<string, list<DataPoint>> points,
-   2: optional map<string, double> latest,
+   2: map<string, double> latest,
 }
 
 /**
