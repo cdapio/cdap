@@ -12,7 +12,8 @@ public class Copyright {
 
   private static final String[] lines = {
       StringUtils.repeat("=", 80),
-      " Continuuity BigFlow - Copyright 2012 Continuuity, Inc. All Rights Reserved.",
+      "Continuuity AppFabric (tm) - Copyright 2012 Continuuity, " +
+          "Inc. All Rights Reserved.",
       ""
   };
 
