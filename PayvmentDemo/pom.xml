@@ -8,6 +8,9 @@
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>PayvmentDemo</name>
+  <properties>
+    <main>com.payvment.continuuity.SocialActionFlow</main>
+  </properties>
   <dependencies>
     <!-- Add internal continuuity jars (until tests refactored)  -->
     <!--dependency>
@@ -213,7 +216,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>${project.name}.Main</mainClass>
+              <mainClass>${main}</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
