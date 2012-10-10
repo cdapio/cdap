@@ -27,6 +27,7 @@ dependencies {
         compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: '0.1.0-SNAPSHOT'
 
     }
 }
