@@ -5,6 +5,7 @@
  */
 package com.continuuity.metrics2.stubs;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -288,7 +289,19 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_argument = true && (isSetArgument());
+    builder.append(present_argument);
+    if (present_argument)
+      builder.append(argument);
+
+    boolean present_name = true && (isSetName());
+    builder.append(present_name);
+    if (present_name)
+      builder.append(name);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(CounterRequest other) {
