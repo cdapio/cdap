@@ -30,13 +30,15 @@ dependencies {
     compile sourceSets.api.output
     
     /// External dependencies.
-    compile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity') { exclude module: 'junit' }
-    testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
-    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
     apiCompile group: 'org.jboss.netty', name: 'netty', version: '3.2.4.Final'
+
     compile group: 'kryo', name: 'kryo', version: '2.12'
     compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
+    compile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity') { exclude module: 'junit' }
+
+    testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
+    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
 }
 
 /**

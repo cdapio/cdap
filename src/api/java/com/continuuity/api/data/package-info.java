@@ -6,18 +6,18 @@
  * types, {@link com.continuuity.api.data.ReadOperation} and
  * {@link com.continuuity.api.data.WriteOperation}.
  * 
- * Operations are executed through two primary pathways: a synchronous read path
- * and an asynchronous write path.
+ * Operations are executed through two primary pathways: a synchronous read
+ * path and an asynchronous write path.
  * 
  * Read operations are performed one-at-a-time and inline within a flowlet
- * via the {@link com.continuuity.data.operation.executor.ReadOperationExecutor}.  The result
- * of the operation is returned from the executor.
+ * via the {@link com.continuuity.api.data.DataFabric}. The result of the
+ * operation is returned from the executor.
  * 
- * For example, a flowlet might receive a tuple containing the userid of a given
- * user and we want to read the e-mail address for this user from the data
- * fabric.  The below example, JoinUserEmailFlowlet, performs this join inline
- * using the read operation executor and adds the email address of the user to
- * a tuple and emits it.
+ * For example, a flowlet might receive a tuple containing the user id of a
+ * given user and we want to read the e-mail address for this user from the
+ * data fabric. The below example, JoinUserEmailFlowlet, performs this join
+ * inline using the read operation executor and adds the email address of
+ * the user to a tuple and emits it.
  * 
  * <pre>
  * public class JoinUserEmailFlowlet extends AbstractComputeFlowlet {
@@ -52,23 +52,21 @@
  *
  * Write operations are performed within a transaction and as an asynchronous
  * batch at the end of every flowlet process call.  Writes are added to this
- * batch through {@link com.continuuity.api.flow.flowlet.OutputCollector#add
- * (WriteOperation)}.
+ * batch through OutputCollector.add(WriteOperation).
  * 
  * This batch will either completely succeed or completely fail, the database
  * will never be left in an inconsistent state.  If the batch is successful,
- * all the changes are committed permanently and the flowlet will receive an
- * {@link com.continuuity.api.flow.flowlet.Callback#onSuccess()} callback.  If
+ * all the changes are committed permanently and the flowlet will receive a
+ * Callback.onSuccess() callback.  If
  * the batch is not successfully transacted (a conditional operation could fail
  * or some other kind of non-retryable error may occur), all operations in the
  * batch are aborted, the database remains unchanged, and the flowlet will
- * receive an {@link com.continuuity.api.flow.flowlet.Callback#onFailure()}
- * callback.
+ * receive an {@link Callback.onFailure()} callback.
  * 
  * As an example of performing a write operation, we will create a flowlet
  * which does the opposite of the previous example.  It will receive a tuple
- * containing a userid and email, store the email into the data fabric, and then
- * pass along a tuple containing only the userid.
+ * containing a userid and email, store the email into the data fabric,
+ * and then pass along a tuple containing only the userid.
  * 
  * <pre>
  * public class StoreUserEmailFlowlet extends AbstractComputeFlowlet {

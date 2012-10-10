@@ -16,6 +16,7 @@ public interface TTQueueTable {
    * @param data the data to be inserted into the queue
    * @param writeVersion
    * @return return code, and if success, the unique entryId of the queue entry
+   * @throws OperationException if something goes wrong
    */
   public EnqueueResult enqueue(byte [] queueName, byte [] data,
       long writeVersion) throws OperationException;
@@ -27,6 +28,7 @@ public interface TTQueueTable {
    * @param entryPointer entry id and shard id of enqueued entry to invalidate
    * @param writeVersion version entry was written with and version invalidated
    *                     entry will be written with
+   * @throws OperationException if something goes wrong
    */
   public void invalidate(byte [] queueName, QueueEntryPointer entryPointer,
       long writeVersion) throws OperationException;
@@ -40,6 +42,7 @@ public interface TTQueueTable {
    * @param config
    * @param readPointer
    * @return dequeue result object
+   * @throws OperationException if something goes wrong
    */
   public DequeueResult dequeue(byte [] queueName, QueueConsumer consumer,
       QueueConfig config, ReadPointer readPointer) throws OperationException;
@@ -51,7 +54,7 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @return true if successful, false if not
+   * @throws OperationException if something goes wrong
    */
   public void ack(byte[] queueName, QueueEntryPointer entryPointer,
                   QueueConsumer consumer) throws OperationException;
@@ -64,7 +67,7 @@ public interface TTQueueTable {
    * @param consumer
    * @param totalNumGroups total number of groups to use when doing evict-on-ack
    *                       or -1 to disable
-   * @return true if successful, false if not
+   * @throws OperationException if something goes wrong
    */
   public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
                        QueueConsumer consumer, int totalNumGroups) throws OperationException;
@@ -75,7 +78,7 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @return true if successful, false if not
+   * @throws OperationException if something goes wrong
    */
   void unack(byte[] queueName, QueueEntryPointer entryPointer,
              QueueConsumer consumer) throws OperationException;

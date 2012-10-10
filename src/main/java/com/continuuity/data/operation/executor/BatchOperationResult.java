@@ -4,7 +4,9 @@ import com.google.common.base.Objects;
 
 
 /**
- * Result of a {@link BatchOperationExecutor#execute(java.util.List)}.
+ * Result of a {@link
+ * BatchOperationExecutor#execute(com.continuuity.api.data.OperationContext,
+ * java.util.List)}.
  */
 public class BatchOperationResult {
 
