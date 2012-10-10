@@ -1,0 +1,48 @@
+apply plugin: 'continuuity'
+
+buildscript {
+  apply from: 'continuuity.gradle'
+}
+
+/**
+ * Specify all the dependencies
+ */
+dependencies {
+
+    /// Internal dependencies.
+    if(multiModule && ! buildingRelease)
+    {
+        compile project(":flow")
+        compile project(":data-fabric")
+    }
+    else
+    {
+        compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
+    }
+}
+
+/**
+ * Exclude any config xml from singlenode jar
+ */
+jar.exclude '*.xml'
+
+
+task testJar(type: Jar) {
+    baseName = "continuuity-test"
+    from sourceSets.test.output
+}
+
+artifacts {
+    archives testJar
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        addFilter('test') {artifact, file ->
+            artifact.name == 'continuuity-test'
+        }
+    }
+}

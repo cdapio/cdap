@@ -33,6 +33,7 @@ project(':singlenode').buildFileName = 'package.gradle'
 /// Adds subprojects included in the master repository.
 try {
     settings.include('distributions')
+    settings.include('test')
 }
 catch (MissingPropertyException e)
 {
