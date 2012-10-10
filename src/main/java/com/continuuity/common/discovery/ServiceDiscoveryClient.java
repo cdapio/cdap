@@ -10,6 +10,7 @@ import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryNTimes;
 import com.netflix.curator.x.discovery.*;
 import com.netflix.curator.x.discovery.details.InstanceProvider;
+import org.mortbay.log.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -23,12 +24,12 @@ import java.util.*;
  */
 public class ServiceDiscoveryClient implements Closeable {
   private final String connectionString;
-  private final List<Closeable> closeables;
   private static ServiceDiscovery<ServicePayload> discovery = null;
   public static final String SERVICE_PATH = "/continuuity/system/services";
   private static final int numberOfRetry = 100;
   private static final int timeBetweenRetries = 1000;
   private static boolean started = false;
+  private CuratorFramework client;
 
   /**
    * Constructs a service registration using an connection string.
@@ -39,7 +40,6 @@ public class ServiceDiscoveryClient implements Closeable {
   public ServiceDiscoveryClient(String connectionString) throws ServiceDiscoveryClientException {
     connectionString = Preconditions.checkNotNull(connectionString);
     this.connectionString = connectionString;
-    closeables = Lists.newArrayList();
     start();
   }
 
@@ -48,7 +48,6 @@ public class ServiceDiscoveryClient implements Closeable {
    * @throws ServiceDiscoveryClientException
    */
   private void start() throws ServiceDiscoveryClientException {
-    CuratorFramework client;
     try {
       // Create a curator client.
       client = ZookeeperClientProvider.getClient(
@@ -56,7 +55,6 @@ public class ServiceDiscoveryClient implements Closeable {
         numberOfRetry,
         timeBetweenRetries
       );
-      closeables.add(client);
 
       // Create a service discovery that allocated ServiceProviders.
       discovery = ServiceDiscoveryBuilder.builder(ServicePayload.class)
@@ -65,7 +63,6 @@ public class ServiceDiscoveryClient implements Closeable {
           .serializer(new ServicePayloadSerializer())
           .build();
       discovery.start();
-      closeables.add(discovery);
     } catch (IOException e) {
       throw new ServiceDiscoveryClientException(e);
     } catch (Exception e) {
@@ -195,9 +192,11 @@ public class ServiceDiscoveryClient implements Closeable {
    * @throws IOException
    */
   public void close() throws IOException {
-    Collections.reverse(closeables);
-    for(Closeable c : closeables) {
-      Closeables.close(c, false);
+    if(client != null) {
+      client.close();
+    }
+    if(discovery != null) {
+      discovery.close();
     }
   }
 
@@ -208,11 +207,13 @@ public class ServiceDiscoveryClient implements Closeable {
    * @return ServiceProvider instance.
    * @throws ServiceDiscoveryClientException
    */
-  public ServiceProvider getServiceProvider(String name) throws ServiceDiscoveryClientException {
+  public ServiceProvider getServiceProvider(String name)
+    throws ServiceDiscoveryClientException {
     return new ServiceProvider(name);
   }
 
-  public static class ServiceProvider implements InstanceProvider<ServicePayload> {
+  public static class ServiceProvider
+    implements InstanceProvider<ServicePayload> {
     Collection<ServiceInstance<ServicePayload>> instances;
 
     public ServiceProvider(final String name)
@@ -224,7 +225,8 @@ public class ServiceDiscoveryClient implements Closeable {
       }
     }
     @Override
-    public List<ServiceInstance<ServicePayload>> getInstances() throws Exception {
+    public List<ServiceInstance<ServicePayload>> getInstances()
+      throws Exception {
       return new ArrayList<ServiceInstance<ServicePayload>>(instances);
     }
   }
