@@ -24,6 +24,11 @@ dependencies {
     }
 }
 
+// skip the main java tasks - we only build the test jar in this module
+jar.onlyIf { }
+sourcesJar.onlyIf { }
+javadocJar.onlyIf { }
+
 /**
  * Exclude any config xml from singlenode jar
  */
