@@ -21,11 +21,11 @@ dependencies {
 //    }
 //    else
 //    {
-        //runtime group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-        //runtime group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
-        //runtime group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
-        //runtime group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
-        //runtime group: 'com.continuuity', name: 'overlord', version: '0.1.0-SNAPSHOT'
+        //runtime group: 'com.continuuity', name: 'common', version: "${version}", changing: true
+        //runtime group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
+        //runtime group: 'com.continuuity', name: 'flow', version: "${version}", changing: true
+        //runtime group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true
+        //runtime group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true
 //    }
 }
 
@@ -41,7 +41,7 @@ if(! project.hasProperty('releaseVersion')) {
 gradle.taskGraph.whenReady {taskGraph ->
     if (taskGraph.hasTask(cloud_dist)) {
         dependencies {
-            runtime group: 'com.continuuity', name: 'performance', version: '0.1.0-SNAPSHOT'
+            runtime group: 'com.continuuity', name: 'performance', version: "${version}", changing: true
         }
     }
 }
