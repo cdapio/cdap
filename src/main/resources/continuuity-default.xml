@@ -323,33 +323,6 @@
     </property>
 
     <!--
-      Librato plugin configuration
-    -->
-    <property>
-        <name>librato.account.name</name>
-        <value>nitin@continuuity.com</value>
-        <description>Specifies the account to be used for librato</description>
-    </property>
-
-    <property>
-        <name>librato.account.token</name>
-        <value>6b8ac685e4665f78ba1f8f10b0c509b054fb92f96d711fe8f7505225064f81e1</value>
-        <description>Specifies the API token to be used for librato</description>
-    </property>
-
-    <property>
-        <name>librato.url</name>
-        <value>https://metrics-api.librato.com/v1/metrics</value>
-        <description>Specifies the url for librato API</description>
-    </property>
-
-    <property>
-        <name>librato.request.timeout</name>
-        <value>5000</value>
-        <description>Specifies the request timeout for librato</description>
-    </property>
-
-    <!--
         Web UI configuration
     -->
     <property>
