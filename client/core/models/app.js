@@ -23,7 +23,7 @@ define([], function () {
 			Dataset: 0
 		},
 		addMetricName: function (name) {
-			console.log('addng', name);
+
 			this.get('metricNames')[name] = 1;
 
 		},

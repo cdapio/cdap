@@ -307,7 +307,7 @@ h1 span {
 
 .sparkline-list-value {
 	float: right;
-	width: 31px;
+	width: 44px;
 	height: 26px;
 	border: 1px solid #EEE;
 	border-left: 0;
@@ -326,7 +326,7 @@ h1 span {
 	border: 1px solid #EEE;
 	height: 34px;
 	background-color: #FAFAFA;
-	margin-right: 32px;
+	margin-right: 45px;
 }
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);

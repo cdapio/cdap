@@ -33,6 +33,10 @@ define([
 			console.log(arguments);
 			this.get('parentView').__idWasModified = true;
 		},
+		init: function () {
+			this._super();
+			C.Ctl.Upload.set('warningMessage', '');
+		},
 		didInsertElement: function () {
 			var el = $(this.get('element'));
 			el.modal('show');
@@ -49,7 +53,7 @@ define([
 				return 'display:block;';
 			}
 			return 'display:none;';
-		}.property('warningMessage'),
+		}.property('warningMessage').cacheable(false),
 		confirmed: function () {
 
 			var self = this;

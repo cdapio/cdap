@@ -10,9 +10,12 @@ define([], function () {
 
 			var self = this;
 
-			self.set('types.Application', Em.ArrayProxy.create({content: []}));
-
-			self.set('current', Em.Object.create({
+			this.set('types.Application', Em.ArrayProxy.create({content: []}));
+			this.set('current', Em.Object.create({
+				addMetricName: function (metric) {
+					this.get('metricNames')[metric] = 1;
+				},
+				metricNames: {},
 				metricData: Em.Object.create()
 			}));
 
