@@ -14,7 +14,6 @@ buildscript {
 
 // The versions of our dependencies
 def avroVersion = '1.6.2'
-def continuuityVersion = '0.1.0-SNAPSHOT'
 def flumeVersion = '1.2+'
 
 
@@ -31,17 +30,18 @@ dependencies {
         compile project(":flow").sourceSets.api.output
         compile project(":data-fabric")
         compile project(":data-fabric").sourceSets.api.output
-        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
-        clover group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     else
     {
-        compile group: 'com.continuuity', name: 'overlord', version: "${continuuityVersion}"
-        compile group: 'com.continuuity', name: 'data-fabric', version: "${continuuityVersion}"
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${continuuityVersion}", changing: true
-        compile group: 'com.continuuity', name: 'flow', version: "${continuuityVersion}"
-        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${continuuityVersion}", changing: true
+        compile group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'flow', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
     }
+
+    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
 
     // External dependencies.
     compile "org.apache.avro:avro:$avroVersion"
