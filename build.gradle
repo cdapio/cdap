@@ -20,14 +20,14 @@ dependencies {
     }
     else
     {
-        compile group: 'com.continuuity', name: 'common', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'flow', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'gateway', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'overlord', version: "$version", changing: true
-        compile group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: "$version", changing: true
+        compile group: 'com.continuuity', name: 'common', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'flow', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'gateway', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'overlord', version: "${version} ", changing: true
+        compile group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: "${version} ", changing: true
 
     }
 }
