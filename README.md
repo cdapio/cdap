@@ -40,8 +40,8 @@ List of Example Projects
 
 CountTokens:
 ------------
-- Reads events (= byte[] body, Map<String,String> headers) from its input
-  stream 'input' (note that is not the default name, which would be 'in').
+- Reads events (= byte[] body, Map<String,String> headers) from input
+  stream 'text'.
 - Tokenizes the text in the body and in the header named 'title', ignores
   all other headers.
 - Each token is cloned into two tokens:
@@ -56,3 +56,29 @@ CountRandom:
 - For each number i, spits out i%10000, i%1000, i%100, i%10
 - For each number increment its counter.
  
+CountAndFilterWords:
+--------------------
+- A variation of CountTokens that illustrates that a flowlet's output can
+  be consumed by multiple downstream flowlets.
+- In addition to counting all tokens, also sends all tokens to a filter that
+  drops all tokens that are not upper case
+- The upper case tokens are then counted by a separately flowlet
+
+CountCounts:
+------------
+- A very simple flow that counts counts.
+- Reads input stream 'text' and tokenizes it. Instead of counting words, it
+  counts the number of inputs with the same number of tokens.
+
+SimpleWriteAndRead:
+-------------------
+- A simple example to illustrate how to read and write key/values in a flow.
+
+TwitterScanner:
+---------------
+- A simple flow with a source flowlet that reads tweets.
+
+DependencyRandomNumber:
+-----------------------
+- This flow is built with Maven rather than Ant and includes an external
+  dependency.
