@@ -188,6 +188,11 @@ public class GatewayQueryAccessorTest {
         response.getStatusLine().getStatusCode());
 
     // verify the response is as expected
+    String contentType = response.getEntity().getContentType().getValue();
+    // returned content type contains a charset ("text/plain; charset=...");
+    Assert.assertTrue(contentType.startsWith("text/plain"));
+    int pos = contentType.indexOf("charset=");
+    String charset = pos > 0 ? contentType.substring(pos+8) : "UTF-8";
     int length = (int) response.getEntity().getContentLength();
     InputStream content = response.getEntity().getContent();
     if (length > 0) {
@@ -196,7 +201,8 @@ public class GatewayQueryAccessorTest {
       // verify that the entire content was read
       Assert.assertEquals(-1, content.read(new byte[1]));
       Assert.assertEquals(length, bytesRead);
-      Assert.assertEquals("method : A [ p2=v2p1=v1 ] ", new String(bytes));
+      Assert.assertEquals("method : A [ p2=v2p1=v1 ] ",
+          new String(bytes, charset));
     }
 
     // Now stop the query processor.
