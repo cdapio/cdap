@@ -1,4 +1,4 @@
-package com.continuuity.test;
+package com.conntinuuity.test;
 
 import com.continuuity.api.data.BatchCollectionRegistry;
 import com.continuuity.api.data.DataFabric;
