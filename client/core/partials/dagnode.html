@@ -1,7 +1,7 @@
 {{#unless view.current.isSource}}
-<div class="window-input">{{view.current.processed}}</div>
+<div class="window-input">{{view.current.label}}</div>
 {{else}}
-<div class="window-input">0</div>
+<div class="window-input">{{view.current.arrived}}</div>
 {{/unless}}
 <div class="window-icon"></div>
 <div class="window-title">{{view.current.name}}</div>

@@ -13,7 +13,7 @@ define([
 				this.set('body', body);
 
 				this.set('confirmed', function () {
-					App.Views.Modal.hide();
+					C.Vw.Modal.hide();
 					callback();
 				});
 

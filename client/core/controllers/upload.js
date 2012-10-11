@@ -7,7 +7,7 @@ define([], function () {
 	return Em.ArrayProxy.create({
 		content: [],
 		resource_identifier: null,
-
+		message: 'Drop a JAR File to Deploy',
 		fileQueue: [],
 		sendFiles: function (files) {
 			
@@ -25,6 +25,7 @@ define([], function () {
 
 			var file = this.fileQueue.shift();
 			if (file === undefined) {
+				window.location.reload();
 				return;
 			}
 
@@ -40,44 +41,16 @@ define([], function () {
 
 			});
 
-			// Safari does not support nor require FileReader to upload.
-			/*
-			if ($.browser.safari &&
-				/chrome/.test(navigator.userAgent.toLowerCase())) {
-
-				var reader = new FileReader();
-
-				reader.onload = function (evt) {
-
-					$('#far-upload-status').html('Loaded file.');
-
-					xhr.open('POST', '/upload/' + file.name, true);
-					xhr.setRequestHeader("Content-type", "application/octet-stream");
-					xhr.send(evt.target.result);
-
-					$('#far-upload-status').html('Uploading...');
-
-					this.processing = true;
-
-				};
-
-				$('#far-upload-status').html('Reading file...');
-				reader.readAsArrayBuffer(file);
-
-			} else {
-				*/
-				xhr.open('POST', '/upload/' + file.name, true);
-				xhr.setRequestHeader("Content-type", "application/octet-stream");
-				xhr.send(file);
-			//}
+			xhr.open('POST', '/upload/' + file.name, true);
+			xhr.setRequestHeader("Content-type", "application/octet-stream");
+			xhr.send(file);
 
 		},
-
+		warningMessage: '',
 		update: function (response) {
 
 			if (response.error) {
 				C.Vw.Informer.show(response.error, 'alert-error');
-				$('#far-upload-status').html(this.welcome_message);
 				this.processing = false;
 
 			} else {
@@ -86,25 +59,23 @@ define([], function () {
 					case 1:
 					case 2:
 					case 3:
-						$('#far-upload-status').html(response.message);
+						this.set('message', response.message);
 						break;
 					case undefined:
 						if (response.status === 'initialized') {
 							this.resource_identifier = response.resource_identifier;
 						}
-						$('#far-upload-status').html(response.status);
+						this.set('message', response.status);
 					break;
 					case 5:
-						C.Vw.Informer.show('Success! The FAR was uploaded, and flows deployed.', 'alert-success');
+						this.set('message', 'Drop JAR or Click to Browse');
 						this.processing = false;
-						C.router.applicationController.view.get('dropzone').resetUpload();
 						this.sendFile();
 					break;
 					default:
-						C.Vw.Informer.show(response.message, 'alert-error');
+						this.set('message', 'Drop JAR or Click to Browse');
 						this.processing = false;
-						C.router.applicationController.view.get('dropzone').resetUpload();
-						this.sendFile();
+						this.set('warningMessage', response.message);
 				}
 			}
 		}

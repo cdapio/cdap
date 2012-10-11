@@ -1,6 +1,6 @@
 
 define([
-	'lib/text!../partials/dataset-list.html'
+	'lib/text!../../partials/list/stream-list.html'
 	], function (Template) {
 	
 	return Em.View.extend({

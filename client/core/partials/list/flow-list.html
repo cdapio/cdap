@@ -13,16 +13,16 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{flowId}}</a><br /><span>{{currentState}}</span>
+			<a {{bindAttr href="href"}}>{{flowId}}</a><br /><span class="app-list-status">{{currentState}}</span>
 		</td>
-		<td class="app-list-count">4</td>
+		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="busyness.count"}}</td>
 	</tr>
 	{{/each}}
 	</table>
 {{else}}
 	<div class="object-list-empty">
-		No flows are currently deployed. Upload a file from within an Application. <a href="#/apps">Go to Apps</a>
+		No Flows. Create a Flow by clicking the [+] button above.
 	</div>
 {{/if}}

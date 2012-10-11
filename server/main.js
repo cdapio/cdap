@@ -34,6 +34,17 @@ io.sockets.on('connection', function (socket) {
 
 	socket.emit('env', process.env.NODE_ENV || 'development');
 
+	socket.on('metadata', function (request) {
+		console.log('MetaData Request', request);
+		Env.api.metadata(request.method, request.params, function (error, response) {
+			socket.emit('exec', error, {
+				method: request.method,
+				params: typeof response === "string" ? JSON.parse(response) : response,
+				id: request.id
+			});
+		});
+	});
+
 	socket.on('manager', function (request) {
 		console.log('Manager Request', request);
 		Env.api.manager(request.method, request.params, function (error, response) {

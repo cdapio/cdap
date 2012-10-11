@@ -1,6 +1,6 @@
 
 define([
-	'lib/text!../partials/list-page.html'
+	'lib/text!../../partials/list/list-page.html'
 	], function (Template) {
 	
 	return Em.View.extend({

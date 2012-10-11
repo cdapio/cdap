@@ -1,12 +1,50 @@
 
 define([
-	'lib/text!../partials/flow.html'
-	], function (Template) {
+	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile(Template),
+		templateName: 'flow',
 		currentBinding: 'controller.current',
-		historyBinding: 'controller.history',
+
+		setFlowletLabel: function (event) {
+
+			var label = $(event.target).html();
+			this.get('controller').set('__currentFlowletLabel', {
+				'Arrival Rate': 'arrival.count',
+				'Queue Depth': 'queue.depth',
+				'Max Queue Depth': 'queue.maxdepth',
+				'Processing Rate': 'processed.count'
+			}[label]);
+
+		},
+		flowletLabelName: function () {
+
+			return {
+				'arrival.count': 'Arrival Rate',
+				'queue.depth': 'Queue Depth',
+				'queue.maxdepth': 'Max Queue Depth',
+				'processed.count': 'Processing Rate'
+			}[this.get('controller').__currentFlowletLabel];
+
+		}.property('controller.__currentFlowletLabel'),
+
+		goToHistory: function () {
+
+			C.router.transitionTo('flows.history', {
+				id: this.get('current').app + ':' + this.get('current').id
+			});
+
+		},
+
+		upload: function (event) {
+
+			var view = C.Vw.Create.create({
+				entityType: 'Flow'
+			});
+			view.append();
+
+		},
+
 		exec: function (event) {
 			
 			var control = $(event.target);
@@ -18,8 +56,8 @@ define([
 			var app = control.attr('flow-app');
 			var action = control.attr('flow-action');
 
-			if (action.toLowerCase() in C.Ctl.Flows) {
-				C.Ctl.Flows[action.toLowerCase()](app, id, -1);
+			if (action.toLowerCase() in C.Ctl.Flow) {
+				C.Ctl.Flow[action.toLowerCase()](app, id, -1);
 			}
 		},
 		promote: function () {
@@ -51,7 +89,7 @@ define([
 			} else {
 				C.Vw.Modal.show(
 					"Delete Flow",
-					"You are about to remove a flow, which is irreversible. You can upload this flow again if you'd like. Do you want to proceed?",
+					"You are about to remove a Flow, which is irreversible. You can upload this flow again if you'd like. Do you want to proceed?",
 					$.proxy(this.confirmed, this));
 			}
 		},

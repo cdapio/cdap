@@ -3,11 +3,10 @@
 //
 
 define([
-	'lib/text!../partials/dashboard.html'
-	], function (Template) {
+	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile(Template),
+		templateName: 'dashboard',
 		didInsertElement: function () {
 
 			function ignoreDrag(e) {

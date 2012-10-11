@@ -4,7 +4,7 @@ define([], function () {
 		return Em.View.extend({
 
 			updateData: function () {
-
+console.log('updating');
 				var metric = this.get('metric');
 				if (metric && this.get('model') && this.get('model').metricData) {
 
@@ -20,10 +20,6 @@ define([], function () {
 			},
 
 			updateModel: function () {
-
-				if (this.get('model')) {
-					return this.get('model');
-				}
 
 				var id = this.get('entity-id');
 				var type = this.get('entity-type');
@@ -52,8 +48,10 @@ define([], function () {
 
 					var metric = this.get('metric');
 					this.get('model').addMetricName(metric);
-
+				
 					metric = metric.replace(/\./g, '');
+
+					console.log('Observing', 'model.metricData.' + metric);
 
 					this.addObserver('model.metricData.' + metric, this, this.updateData);
 
@@ -76,7 +74,12 @@ define([], function () {
 				
 			}.observes('model.__loadingData'),
 			__titles: {
-				'processed.count': 'Processed'
+				'processed.count': 'Processed',
+				'tuples.read.count': 'Tuples Read',
+				'emitted.count': 'Tuples Emitted',
+				'dataops.count': 'Data Operations',
+				'busyness.count': 'Busyness',
+				'flowlet.failure.count': 'Failures'
 			},
 			__getTitle: function (metric) {
 				return (this.__titles[metric] || metric);
@@ -85,27 +88,16 @@ define([], function () {
 				return C.util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
 			},
 			didInsertElement: function () {
-				
+
 				var entityId = this.get('entity-id');
 				var entityType = this.get('entity-type');
 				var metric = this.get('metric');
 				var color = this.get('color');
 
-				if (entityType) {
-					this.set('listMode', true);
-				}
-
 				var height, width = parseInt(this.get('width'), 10) || 200,
 					margin = 8, label, container;
 
-				if (this.get('listMode')) {
-					$(this.get('element')).addClass('blue');
-					label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
-					container = $('<div class="sparkline-list-container" />').appendTo(this.get('element'));
-					height = 36;
-					width -= 32;
-
-				} else if (this.get('flowletMode')) {
+				if (entityType === "Flowlet") {
 
 					$(this.get('element')).addClass('white');
 					label = $('<div class="sparkline-flowlet-value" />').appendTo(this.get('element'));
@@ -115,8 +107,18 @@ define([], function () {
 					width -= 52;
 					height = 70;
 
+				} else if (this.get('listMode') || entityType) {
+
+					this.set('listMode', true);
+
+					$(this.get('element')).addClass('blue');
+					label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
+					container = $('<div class="sparkline-list-container" />').appendTo(this.get('element'));
+					height = 34;
+					width -= 30;
+
 				} else {
-					
+
 					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle(metric) + '</div>');
 					label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 					container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));
@@ -125,14 +127,13 @@ define([], function () {
 
 				this.set('label', label);
 
-				//$(this.get('element')).addClass('sparkline-loading');
-
 				var widget = d3.select(container[0]);
 				var sparkline = C.util.sparkline(widget, [], width, height, margin);
 				this.set('sparkline', sparkline);
 
 				if (!metric) {
 					C.debug('NO METRIC FOR sparkline', this);
+
 				} else {
 					metric = metric.replace(/\./g, '');
 					if (this.get('listMode')) {

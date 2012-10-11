@@ -1,9 +1,10 @@
 
 define([
-	'lib/text!../partials/apps.html'
+	'lib/text!../../partials/list/app-list.html'
 	], function (Template) {
 	
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template)
 	});
+
 });

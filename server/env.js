@@ -38,15 +38,18 @@
 					// Upload
 					config['resource.manager.server.port'] = 45000;
 					config['resource.manager.server.address'] = '127.0.0.1';
+					// MetaData
+					config['metadata.server.port'] = 45004;
+					config['metadata.server.address'] = '127.0.0.1';
 					// Manager
 					config['flow.manager.server.port'] = 45001;
 					config['flow.manager.server.address'] = '127.0.0.1';
 					// Monitor
 					config['flow.monitor.server.port'] = 45002;
-					config['gateway.hostname'] = '127.0.0.1';
+					config['flow.monitor.server.address'] = '127.0.0.1';
 					// Gateway
 					config['gateway.port'] = 10000;
-					config['flow.monitor.server.address'] = '127.0.0.1';
+					config['gateway.hostname'] = '127.0.0.1';
 
 					api.configure(config);
 					done(true);

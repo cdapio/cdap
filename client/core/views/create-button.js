@@ -2,11 +2,22 @@
 // Create Button View
 //
 
-define([
-	'lib/text!../partials/create-button.html'
-	], function (Template) {
+define([], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile(Template)
+		tagName: 'button',
+		classNames: ['btn', 'create-btn', 'pull-right'],
+		template: Em.Handlebars.compile('+'),
+		click: function () {
+
+			var view = C.Vw.Create.create({
+				entityType: this.get('entityType')
+			});
+			view.append();
+
+		},
+		didInsertElement: function () {
+
+		}
 	});
 });

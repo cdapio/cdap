@@ -1,18 +1,19 @@
 
-define(['views/dashboard', 'views/app', 'views/apps',
-	'views/flow', 'views/flowletdetail',
-	'views/payload', 'views/visualizer', 'views/dagnode',
-	'views/modal', 'views/informer', 'views/chart', 'views/list-page', 'views/flow-list',
-	'views/app-list', 'views/stream-list', 'views/dataset-list', 'views/dropzone',
-	'views/dataset', 'views/stream', 'views/timeselector', 'views/create-button', 'views/create-dialogue'],
-	function (D, A, As, F, Fd, Pl, Vz, Dn, M, I, C, Lp, Fl, Al, Sl, Dsl, Dz, Ds, S, Ts, Cb, Cr) {
+define(['views/dashboard', 'views/app',
+	'views/flow', 'views/flow-history', 'views/flowletdetail',
+	'views/injector', 'views/visualizer', 'views/dagnode',
+	'views/modal', 'views/informer', 'views/chart', 'views/list/list-page', 'views/list/flow-list',
+	'views/list/app-list', 'views/list/stream-list', 'views/list/dataset-list', 'views/dropzone',
+	'views/dataset', 'views/stream', 'views/timeselector', 'views/create-button', 'views/create-dialogue',
+	'views/streamdetail'],
+	function (D, A, F, Fh, Fd, Pl, Vz, Dn, M, I, C, Lp, Fl, Al, Sl, Dsl, Dz, Ds, S, Ts, Cb, Cr, Sd) {
 		return {
 			Dash: D,
-			App: A,
-			Apps: As,
-			Flow: F,
+			Application: A,
+			FlowStatus: F,
+			FlowHistory: Fh,
 			FlowletDetail: Fd,
-			Payload: Pl,
+			Injector: Pl,
 			Visualizer: Vz,
 			DagNode: Dn,
 			Modal: M,
@@ -20,15 +21,16 @@ define(['views/dashboard', 'views/app', 'views/apps',
 			Chart: C,
 			ListPage: Lp,
 			FlowList: Fl,
-			AppList: Al,
+			ApplicationList: Al,
 			StreamList: Sl,
-			DataSetList: Dsl,
+			DatasetList: Dsl,
 			DropZone: Dz,
-			DataSet: Ds,
+			Dataset: Ds,
 			Stream: S,
 			TimeSelector: Ts,
 			CreateButton: Cb,
-			Create: Cr
+			Create: Cr,
+			StreamDetail: Sd
 		};
 	}
 );

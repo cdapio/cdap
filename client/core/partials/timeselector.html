@@ -3,10 +3,10 @@
 		<span class="caret"></span>
 	</button>
 	<ul class="dropdown-menu">
-		<li><a>Last 6 Hour</a></li>
-		<li><a>Last 1 Hour</a></li>
-		<li><a>Last 10 Minute</a></li>
-		<li><a>Last 1 Minute</a></li>
+		<li><a {{action setTime on="click"}}>24 Hours</a></li>
+		<li><a {{action setTime on="click"}}>1 Hour</a></li>
+		<li><a {{action setTime on="click"}}>10 Minutes</a></li>
+		<li><a {{action setTime on="click"}}>1 Minute</a></li>
 	</ul>
-	<button class="btn" style="width:120px;" disabled>Last 24 Hours</button>
+	<button class="btn" style="width:120px;" disabled>{{C.__timeLabel}}</button>
 </div>

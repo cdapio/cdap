@@ -12,10 +12,10 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 	};
 
 	$.extend(C, {
-		Router: Ember.Router.extend({
+		Router: Em.Router.extend({
 			enableLogging: true,
-			root: Ember.Route.extend({
-				home: Ember.Route.extend({
+			root: Em.Route.extend({
+				home: Em.Route.extend({
 					route: '/',
 					connectOutlets: function (router, context) {
 						C.Ctl.Dashboard.load();
@@ -29,14 +29,14 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					},
 					navigateAway: function () {
 						C.Ctl.Dashboard.unload();
-					},
+					}
 				}),
-				apps: Ember.Route.extend({
+				apps: Em.Route.extend({
 					route: '/apps',
-					index: Ember.Route.extend({
+					index: Em.Route.extend({
 						route: '/',
 						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("App");
+							C.Ctl.List.getObjects("Application");
 							router.get('applicationController').connectOutlet({
 								viewClass: C.Vw.ListPage,
 								controller: C.Ctl.List
@@ -49,23 +49,23 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					enter: function () {
 						C.interstitial.show();
 					},
-					app: Ember.Route.extend({
+					app: Em.Route.extend({
 						route: '/:appId',
 						connectOutlets: function (router, context) {
-							C.Ctl.App.load(context.appId);
+							C.Ctl.Application.load(context.appId);
 							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.App,
-								controller: C.Ctl.App
+								viewClass: C.Vw.Application,
+								controller: C.Ctl.Application
 							});
 						},
 						navigateAway: function () {
-							C.Ctl.App.unload();
+							C.Ctl.Application.unload();
 						}
 					})
 				}),
-				flows: Ember.Route.extend({
+				flows: Em.Route.extend({
 					route: '/flows',
-					index: Ember.Route.extend({
+					index: Em.Route.extend({
 						route: '/',
 						connectOutlets: function (router, context) {
 							C.Ctl.List.getObjects("Flow");
@@ -79,13 +79,16 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 							C.Ctl.List.unload();
 						}
 					}),
-					flow: Ember.Route.extend({
-						route: '/:id',
+					flow: Em.Route.extend({
+						route: '/status/:id',
 						connectOutlets: function (router, context) {
+
+							C.Ctl.FlowHistory.unload();
+
 							var id = context.id.split(':');
 							C.Ctl.Flow.load(id[0], id[1]);
 							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.Flow,
+								viewClass: C.Vw.FlowStatus,
 								controller: C.Ctl.Flow
 							});
 						},
@@ -93,13 +96,30 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 							C.Ctl.Flow.unload();
 						}
 					}),
+					history: Em.Route.extend({
+						route: '/history/:id',
+						connectOutlets: function (router, context) {
+
+							C.Ctl.Flow.unload();
+
+							var id = context.id.split(':');
+							C.Ctl.FlowHistory.load(id[0], id[1]);
+							router.get('applicationController').connectOutlet({
+								viewClass: C.Vw.FlowHistory,
+								controller: C.Ctl.FlowHistory
+							});
+						},
+						navigateAway: function () {
+							C.Ctl.FlowHistory.unload();
+						}
+					}),
 					enter: function () {
 						C.interstitial.show();
 					}
 				}),
-				streams: Ember.Route.extend({
+				streams: Em.Route.extend({
 					route: '/streams',
-					index: Ember.Route.extend({
+					index: Em.Route.extend({
 						route: '/',
 						connectOutlets: function (router, context) {
 							C.Ctl.List.getObjects("Stream");
@@ -112,7 +132,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 							C.Ctl.List.unload();
 						}
 					}),
-					stream: Ember.Route.extend({
+					stream: Em.Route.extend({
 						route: '/:id',
 						connectOutlets: function (router, context) {
 							C.Ctl.Stream.load(context.id);
@@ -129,12 +149,12 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						C.interstitial.show();
 					}
 				}),
-				datas: Ember.Route.extend({
+				datas: Em.Route.extend({
 					route: '/data',
-					index: Ember.Route.extend({
+					index: Em.Route.extend({
 						route: '/',
 						connectOutlets: function (router, context) {
-							C.Ctl.List.getObjects("DataSet");
+							C.Ctl.List.getObjects("Dataset");
 							router.get('applicationController').connectOutlet({
 								viewClass: C.Vw.ListPage,
 								controller: C.Ctl.List
@@ -144,17 +164,17 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 							C.Ctl.List.unload();
 						}
 					}),
-					data: Ember.Route.extend({
+					data: Em.Route.extend({
 						route: '/:id',
 						connectOutlets: function (router, context) {
-							C.Ctl.DataSet.load(context.id);
+							C.Ctl.Dataset.load(context.id);
 							router.get('applicationController').connectOutlet({
-								viewClass: C.Vw.DataSet,
-								controller: C.Ctl.DataSet
+								viewClass: C.Vw.Dataset,
+								controller: C.Ctl.Dataset
 							});
 						},
 						navigateAway: function () {
-							C.Ctl.DataSet.unload();
+							C.Ctl.Dataset.unload();
 						}
 					}),
 					enter: function () {

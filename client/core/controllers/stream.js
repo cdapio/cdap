@@ -6,9 +6,21 @@ define([], function () {
 	
 	return Em.ArrayProxy.create({
 
-		load: function () {
+		load: function (id) {
 
-			C.interstitial.hide();
+			var self = this;
+
+			C.get('metadata', {
+				method: 'getStream',
+				params: ['Stream', {
+					id: id
+				}]
+			}, function (error, response) {
+
+				self.set('current', C.Mdl.Stream.create(response.params));
+				C.interstitial.hide();
+				
+			});
 
 		},
 

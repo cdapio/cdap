@@ -11,11 +11,19 @@ define([], function () {
 			var self = this;
 			this.set('entityType', type);
 
-			C.get('manager', {
-				method: 'get' + type + 's'
+			//** Hax: Remove special case for Flow when ready **//
+			
+			C.get(type === 'Flow' ? 'manager' : 'metadata', {
+				method: 'get' + type + 's',
+				params: []
 			}, function (error, response, params) {
+
 				if (error) {
-					C.interstitial.label(error);
+					if (typeof callback === 'function') {
+						callback([]);
+					} else {
+						C.interstitial.label(error);
+					}
 				} else {
 					var objects = response.params;
 					var i = objects.length, type = params[0];
@@ -29,7 +37,6 @@ define([], function () {
 						self.set('types.' + type, Em.ArrayProxy.create({content: objects}));
 						C.interstitial.hide();
 						C.Ctl.List.getStats();
-
 					}
 				}
 			}, [type, callback]);

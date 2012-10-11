@@ -7,6 +7,11 @@ define([], function () {
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
+		elementId: function () {
+
+			return 'flowlet' + this.get('id');
+
+		}.property().cacheable(),
 		init: function() {
 			this._super();
 
@@ -18,6 +23,8 @@ define([], function () {
 		},
 		addMetricName: function (name) {
 
+			console.log('adding', name, this.get('id'));
+
 			this.get('metricNames')[name] = 1;
 			// this.set('__loadingData', true);
 
@@ -28,12 +35,15 @@ define([], function () {
 			var app = C.Ctl.Flow.current.app;
 
 			var self = this;
-
-			var metrics = ['processed.count'];
 			var pointCount = 30;
 
+			var metrics = [];
+			for (var name in this.get('metricNames')) {
+				metrics.push(name);
+			}
+
 			var end = Math.round(new Date().getTime() / 1000),
-				start = end - pointCount;
+				start = end - C.__timeRange;
 
 			return ['monitor', {
 				method: 'getTimeSeries',
@@ -55,12 +65,15 @@ define([], function () {
 						data[k] = data[k].value;
 					}
 
+					/*
 					data = data.splice(0, 25);
 					for (var k = data.length; k < 25; k++) {
 						data.unshift(0);
 					}
+					*/
 
 					metric = metric.replace(/\./g, '');
+
 					self.get('metricData').set(metric, data);
 					this.set('__loadingData', false);
 
@@ -69,7 +82,7 @@ define([], function () {
 			}];
 
 		},
-		processed: 0,
+		label: 0,
 		plural: function () {
 			return this.instances === 1 ? '' : 's';
 		}.property('instances'),
@@ -88,7 +101,7 @@ define([], function () {
 			} else {
 
 				var current = this;
-				var currentFlow = App.Controllers.Flow.get('current');
+				var currentFlow = C.Ctl.Flow.get('current');
 
 				var app = currentFlow.meta.app;
 				var flow = currentFlow.meta.name;
@@ -96,20 +109,20 @@ define([], function () {
 
 				var flowlet = current.name;
 
-				App.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.');
-				App.Views.Flowlet.hide();
+				C.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.');
+				$('#flowlet-container').hide();
 
-				App.socket.request('manager', {
+				C.get('manager', {
 					method: 'setInstances',
 					params: [app, flow, version, flowlet, instances]
 				}, function (error, response) {
 
 					if (error) {
-						App.Views.Informer.show(error, 'alert-error');
-						App.interstitial.hide();
+						C.Vw.Informer.show(error, 'alert-error');
+						C.interstitial.hide();
 					} else {
 						current.set('instances', instances);
-						App.Views.Informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
+						C.Vw.Informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
 						
 					}
 

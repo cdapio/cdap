@@ -1,6 +1,6 @@
 
 define([
-	'lib/text!../partials/flow-list.html'
+	'lib/text!../../partials/list/flow-list.html'
 	], function (Template) {
 	
 	return Em.View.extend({

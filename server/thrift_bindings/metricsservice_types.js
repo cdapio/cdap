@@ -474,11 +474,13 @@ DataPoints.prototype.read = function(input) {
         _size8 = _rtmp312.size;
         for (var _i13 = 0; _i13 < _size8; ++_i13)
         {
+          /*
           if (_i13 > 0 ) {
             if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
               input.rstack.pop();
             }
           }
+          */
           var key14 = null;
           var val15 = null;
           key14 = input.readString();
@@ -517,11 +519,13 @@ DataPoints.prototype.read = function(input) {
         _size23 = _rtmp327.size;
         for (var _i28 = 0; _i28 < _size23; ++_i28)
         {
+          /*
           if (_i28 > 0 ) {
             if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
               input.rstack.pop();
             }
           }
+          */
           var key29 = null;
           var val30 = null;
           key29 = input.readString();
@@ -591,7 +595,7 @@ DataPoints.prototype.write = function(output) {
 var TimeseriesRequest = module.exports.TimeseriesRequest = function(args) {
   this.argument = null;
   this.metrics = null;
-  this.level = 3;
+  this.level = null;
   this.startts = null;
   this.endts = null;
   this.summary = true;

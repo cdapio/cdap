@@ -6,31 +6,32 @@ define([
 	], function (Template) {
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template),
+		classNames: ['popup-modal'],
 		__timeout: null,
+		controller: Em.Object.create({
+			current: null,
+			inputs: [],
+			outputs: [],
+			getStats: function (self) {
+
+				C.get.apply(this.get('current'), this.get('current').getUpdateRequest());
+
+				self.__timeout = setTimeout(function () {
+					if (self.get('controller')) {
+						self.get('controller').getStats(self);
+					}
+				}, 1000);
+
+			}
+		}),
 		show: function (current) {
 
 			var self = this;
-			var controller;
+			var controller = this.get('controller');
 
-			this.set('controller', controller = Em.Object.create({
-				current: current,
-				inputs: [],
-				outputs: [],
-				getStats: function () {
-
-					C.get.apply(this.get('current'), this.get('current').getUpdateRequest());
-
-					self.__timeout = setTimeout(function () {
-						if (self.get('controller')) {
-							self.get('controller').getStats();
-						}
-					}, 1000);
-
-				}
-			}));
-
-			this.get('controller').getStats();
-			$('#flowlet-container').show();
+			controller.set('current', current);
+			controller.getStats(self);
+			$(this.get('element')).show();
 
 			var cx = C.Ctl.Flow.current.connections;
 			function find_contributors(direction, flowlet, input) {
@@ -48,25 +49,30 @@ define([
 				return res;
 			}
 
-			var streams = C.Ctl.Flow.current.flowletStreams[current.name];
+			var streams = C.Ctl.Flow.current.flowletStreams[current.name],
+				inputs = [], outputs = [];
+
 			for (var i in streams) {
 				if (streams[i].second === 'IN') {
-					controller.inputs.push({
+					inputs.push({
 						'name': i,
 						'contrib': find_contributors('to', current.name, i)
 					});
 				}
 			}
+			controller.set('inputs', inputs);
+
 			for (var i in streams) {
 				if (streams[i].second === 'OUT') {
-					controller.outputs.push({
+					outputs.push({
 						'name': i,
 						'contrib': find_contributors('from', current.name, i)
 					});
 				}
 			}
+			controller.set('outputs', outputs);
 
-			this.select('processed');
+			this.select('inputs');
 
 		},
 		select: function (event) {
@@ -91,10 +97,31 @@ define([
 
 		},
 		close: function () {
-			$('#flowlet-container').hide();
-			this.set('current', null);
 
+			this.set('current', null);
+			$(this.get('element')).hide();
 			clearTimeout(this.__timeout);
+
+		},
+		addOneInstance: function () {
+			this.confirm('Add 1 instance to ', +1);
+		},
+		removeOneInstance: function () {
+			this.confirm('Remove 1 instance from ', -1);
+		},
+		confirm: function (message, value) {
+
+			var current = this.get('controller.current');
+			var name = current.name;
+
+			C.Vw.Modal.show(
+				"Flowlet Instances",
+				message + '"' + name + '" flowlet?',
+				function () {
+					current.addInstances(value, function () {
+					
+					});
+				});
 
 		}
 	});

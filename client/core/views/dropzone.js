@@ -1,11 +1,14 @@
 
 define([
-	'lib/text!../partials/upload.html'
-	], function (Template) {
+	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile('<div id="upload-dropzone" class="drop-zone">' +
-			'<div id="far-upload-status">Drop JAR or <a href="#">Browse</a></div></div>'),
+		template: Em.Handlebars.compile('{{controller.message}}'),
+		classNames: ['drop-zone'],
+		init: function () {
+			this._super();
+			this.set('controller', C.Ctl.Upload);
+		},
 		didInsertElement: function () {
 
 			function ignoreDrag(e) {
@@ -18,9 +21,7 @@ define([
 
 				if (!C.Ctl.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
-					
 					C.Ctl.Upload.sendFiles(dt.files);
-	
 					$('#far-upload-alert').hide();
 				}
 			}
@@ -30,29 +31,17 @@ define([
 				.bind('dragover', ignoreDrag)
 				.bind('drop', drop);
 
-			this.welcome_message = $('#far-upload-status').html();
-			$('#far-upload-alert').hide();
+			var self = this;
+			var file = $(this.get('element')).parent().parent().parent().find('input[type=file]');
 
-			/*
-			$('#file-input').change(function () {
+			file.change(function () {
 				
 				C.Ctl.Upload.sendFiles(
-					$('#file-input')[0].files
+					file[0].files
 				);
 
 			});
-			*/
-
-		},
-		resetUpload: function () {
-			$("#far-upload-status").html('Drop JAR or <a href="#">Browse</a>');
-			C.Ctl.Flows.load();
-		},
-		reset: function () {
-			$('#far-upload-status').html(this.welcome_message);
-		},
-		cancel: function () {
-			App.router.transitionTo('home');
+			
 		}
 	});
 

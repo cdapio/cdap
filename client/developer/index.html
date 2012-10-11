@@ -36,12 +36,12 @@
     </ul>
   </div>
 
-  <script type="text/x-handlebars" data-template-name="application">
+  <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a class="global-link global-help" href="#"></a>
+        <a class="global-link global-help" href="http://www.continuuity.com/" target="_blank"></a>
         <a class="global-link global-user" href="#">{{user.name}}</a>
-        <a class="global-link global-dev" href="#">Dev Lounge</a>
+        <a class="global-link global-dev" href="http://www.continuuity.com/" target="_blank">Dev Lounge</a>
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -54,8 +54,314 @@
       {{outlet}}
     </div>
     <div id="footer">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
-      <i class="icon-question-sign"></i>
-      <a style="text-decoration: underline;" href="mailto:support@continuuity.com">Send us Questions &amp; Feedback</a><br />
+    <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
+    Send us Questions &amp; Feedback</a><br /></div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="dashboard">
+    <div class="gutter">
+      <h2>Helpful Tip!</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+      <h2>New Release!</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+      <h2>Mailing List!</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
+    </div>
+
+    <div id="title" class="guttered">
+      {{view C.Vw.TimeSelector}}
+      <h1>Dashboard</h1>
+    </div>
+
+    <div id="panels" class="guttered">
+
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Account Summary</div></div>
+        <table class="dash-app-resources">
+          <tbody>
+            <tr>
+              <td class="dash-app-resource dash-app-resource-health"></td>
+              <td class="dash-app-resource">
+                <a href="#/apps" class="dash-app-resource-app">0</a>
+              </td>
+              <td class="dash-app-resource">
+                <a href="#/flows" class="dash-app-resource-flow">0</a>
+              </td>
+              <td class="dash-app-resource">
+                <a href="#/streams" class="dash-app-resource-stream">0</a>
+              </td>
+              <td class="dash-app-resource">
+                <a href="#/data" class="dash-app-resource-dataset">0</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="table dash-app-trends">
+          <thead>
+            <tr>
+              <th>Processed Count</th>
+              <th>Storage Trend</th>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{view C.Vw.Chart listMode="true" width="336" metric="processed.count"}}</td>
+              <td>{{view C.Vw.Chart listMode="true" width="336" metric="processed.count"}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          {{view C.Vw.CreateButton entityType="Application"}}
+          <div class="panel-title">Applications</div>
+        </div>
+        {{view C.Vw.ApplicationList}}
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="application">
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <h1>{{current.name}} <span>Application</span></h1>
+    </div>
+
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
+        <div id="action-buttons" class="btn-group pull-right">
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box" style="float: right;border: 0;padding-right: 0;">
+        {{view C.Vw.DropZone viewName="dropzone"}}
+      </div>
+      <div class="info-box health-box"></div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness.count" width="170"}}</div>
+      <div class="info-box" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Storage</div>
+        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+      </div>
+    </div>
+
+    <div id="panels">
+      <div class="panel">
+        <div class="panel-head">{{view C.Vw.CreateButton entityType="Stream"}}<div class="panel-title">Streams</div></div>
+        {{view C.Vw.StreamList}}
+      </div>
+      <div class="panel">
+        <div class="panel-head">{{view C.Vw.CreateButton entityType="Flow"}}<div class="panel-title">Flows</div></div>
+        {{view C.Vw.FlowList}}
+      </div>
+      <div class="panel">
+        <div class="panel-head">{{view C.Vw.CreateButton entityType="Dataset"}}<div class="panel-title">Datasets</div></div>
+        {{view C.Vw.DatasetList}}
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="stream">
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <h1>{{current.name}} <span>Stream</span></h1>
+    </div>
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div id="action-buttons">
+            <button class="btn dropdown-toggle" data-toggle="dropdown" style="width:50px;">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "delete" on="click"}}>Delete This Stream</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box health-box"></div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="Arrivas Vs. Consumed" width="180"}}</div>
+      <div class="info-box" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Storage</div>
+        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+      </div>
+    </div>
+    <div id="panels">
+      <div class="panel">
+        <div class="object-list-empty"></div>
+      </div>
+      <div class="panel">
+        <div class="object-list-empty"></div>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="flow">
+
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 0px 14px;">
+        <li class="active"><a href="#">Status</a></li>
+        <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
+      </ul>
+      <h1>{{current.meta.name}} <span>Flow Status</span></h1>
+    </div>
+
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;padding-right: 14px;">
+        <div id="action-buttons" class="btn-group pull-right">
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li style="min-width:200px; padding:4px 16px 2px;">
+              {{#each current.getMeta}}
+                <div><strong>{{k}}</strong>: {{v}}
+              {{/each}}
+            </li>
+            <li class="divider"></li>
+            <li><a {{action "upload" on="click"}}>Upload a New Version</a></li>
+            <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
+          </ul>
+
+          <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
+          
+          <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
+          
+          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+
+        </div>
+        <div class="flow-state"><strong>{{current.currentState}}</strong><br /><span>{{current.started}}</span></div>
+      </div>
+      <div class="info-box health-box"></div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness.count" width="170"}}</div>
+    </div>
+
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="flowviz-container">
+          <div class="btn-group" style="float: left;">
+            <button class="btn" style="width:150px;" disabled>{{view.flowletLabelName}}</button>
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Max Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Processing Rate</a></li>
+            </ul>
+          </div>
+          {{view C.Vw.Visualizer viewName="visualizer"}}
+        </div>
+      </div>
+    </div>
+
+    {{view C.Vw.StreamDetail viewName="stream-detail"}}
+    {{view C.Vw.FlowletDetail viewName="flowlet-detail"}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="flow-history">
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+       <ul class="nav nav-pills pull-right" style="margin: 0px 14px;">
+        <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li class="active"><a href="#">History</a></li>
+      </ul>
+      <h1>{{current.meta.name}} <span>Flow History</span></h1>
+    </div>
+
+    <div id="info">
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="180"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="180"}}</div>
+    </div>
+
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="flowviz-container" class="flowviz-fade">
+          <div class="btn-group" style="float: left;">
+            <button class="btn" style="width:150px;" disabled>{{view.flowletLabelName}}</button>
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Max Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Processing Rate</a></li>
+            </ul>
+          </div>
+          {{view C.Vw.Visualizer viewName="visualizer"}}
+        </div>
+      </div>
+      <div class="panel">
+      <div id="object-list">
+        {{#if content.length}}
+          <table class="table table-condensed">
+          <thead>
+            <tr><th style="width: 215px;">Started</th>
+            <th>Ended</th>
+            <th style="width:250px;">Result</th>
+            </tr>
+          </thead>
+          {{#each content tagName="tbody"}}
+            <tr class="run-list" {{action "loadRun" on="click"}} {{bindAttr id="runId"}}>
+              <td>{{started}}</td>
+              <td>{{ended}}</td>
+              <td>{{detail}}</td>
+            </tr>
+          {{/each}}
+          </table>
+        {{else}}
+          <div class="object-list-empty">
+            This flow has not completed a run yet.
+          </div>
+        {{/if}}
+        </div></div></div>
+    </div>
+    <div id="flowlet-container">
+      <div id="flowlet-popup">
+        {{view C.Vw.FlowletDetail viewName="flowlet-detail"}}
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="dataset">
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <h1>{{current.name}} <span>{{current.typeName}}</span></h1>
+    </div>
+    <div id="info">
+      <div class="info-box" style="float: right; border: 0;">
+        <div id="action-buttons">
+            <button class="btn dropdown-toggle" data-toggle="dropdown" style="width:50px;">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a {{action "delete" on="click"}}>Delete This Dataset</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="info-box health-box"></div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="Reads Vs. Writes" width="180"}}</div>
+      <div class="info-box" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Storage</div>
+        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+      </div>
+    </div>
+    <div id="panels">
+      <div class="panel">
+        <div class="object-list-empty"></div>
+      </div>
+      <div class="panel">
+        <div class="object-list-empty"></div>
+      </div>
     </div>
   </script>
 

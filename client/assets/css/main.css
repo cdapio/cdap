@@ -13,6 +13,13 @@ body {
 	padding: 14px;
 }
 
+.modal.fade.in {
+	top: 40%;
+}
+.modal.narrow {
+	width: 400px;
+	margin: -250px 0 0 -200px;
+}
 
 a, a:visited {
 	color: #555;
@@ -197,6 +204,14 @@ h1 {
 	font-size: 25px;
 	font-weight: 500;
 	color: #505050;
+	line-height: 32px;
+	padding-bottom: 4px;
+}
+h1 span {
+	color: #333;
+	font-weight: 100;
+	letter-spacing: 0.08em;
+	margin-left: 4px;
 }
 .page-tabs {
 	float: right;
@@ -316,7 +331,7 @@ h1 {
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
 	height: 70px;
-	margin-right: 70px;
+	margin-right: 80px;
 	border-right: 1px solid #F7F7F7;
 }
 .sparkline-box-title {
@@ -326,7 +341,7 @@ h1 {
 }
 .sparkline-box-value {
 	float: right;
-	width: 65px;
+	width: 75px;
 	height: 50px;
 	font-weight: 300;
 	font-size: 26px;
@@ -352,6 +367,7 @@ h1 {
 .sparkline-flowlet-container {
 	background-image: url(../img/flowlet-sparkline-bg.png);
 	margin-right: 50px;
+	height: 76px;
 }
 .sparkline-flowlet-title {
 	margin-right: 50px;
@@ -408,21 +424,19 @@ text {
 	font-family: Arial;
 	font-size: 9pt;
 }
-#upload-dropzone {
-	margin: 16px 0;
-	line-height: 55px;
+.info-box .drop-zone {
+	margin: 17px 0px;
 }
 .drop-zone {
-	width: 264px;
+	width: 260px;
 	color: #777;
 	text-align: center;
-	margin: 10px 0px;
-	line-height: 66px;
+	line-height: 49px;
 	margin-right: 0;
 	padding: 0;
 	border: 3px dotted #CCC;
-	border-right: 0;
 	border-radius: 3px;
+	background-color: #eaeaea;
 }
 .drop-zone a {
 	color: #40AFD0;
@@ -430,51 +444,6 @@ text {
 
 input {
 	margin: 0 !important;
-}
-
-input[type="file"] {
-	margin-bottom: 0 !important;
-	line-height: normal;
-	width: 208px;
-}
-
-input[type="file"]::-webkit-file-upload-button {
-  visibility: hidden;
-}
-input[type="file"]:before {
-
-  content: 'Drop a JAR or Click to Browse';
-  display: inline-block;
-  background: -webkit-linear-gradient(top, #F9F9F9, #E3E3E3);
-  background: -moz-linear-gradient(top, #F9F9F9, #E3E3E3);
-  background: -ms-linear-gradient(top, #F9F9F9, #E3E3E3);
-  background: -o-linear-gradient(top, #F9F9F9, #E3E3E3);
-  background: linear-gradient(top, #F9F9F9, #E3E3E3);
-  border: 1px solid #999;
-  border-radius: 3px;
-  padding: 5px 8px;
-  outline: none;
-  white-space: nowrap;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
-  cursor: pointer;
-  text-shadow: 1px 1px #fff;
-  font-weight: 700;
-  font-size: 10pt;
-  color: #777;
-}
-input[type="file"]:hover:before {
-  border-color: black;
-}
-input[type="file"]:active:before {
-  background: -webkit-linear-gradient(top, #E3E3E3, #F9F9F9);
-  background: -moz-linear-gradient(top, #E3E3E3, #F9F9F9);
-  background: -ms-linear-gradient(top, #E3E3E3, #F9F9F9);
-  background: -o-linear-gradient(top, #E3E3E3, #F9F9F9);
-  background: linear-gradient(top, #E3E3E3, #F9F9F9);
 }
 
 .guttered {
@@ -667,8 +636,13 @@ input[type="file"]:active:before {
 	font-weight: bold;
 }
 .app-list-name span {
+	color: #333;
+	font-size: 16px;
+}
+.app-list-name > .app-list-status {
 	color: #40AFD0;
 	font-size: 12px;
+	text-transform: uppercase;
 }
 /*
  * Bootstrap Overrides
@@ -680,6 +654,23 @@ input[type="file"]:active:before {
 }
 .navbar .nav > li > a {
 	color: #b8c0cc;
+}
+.nav-pills > li > a {
+	font-family: "HelveticaNeue-CondensedBold";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+}
+.nav-pills > .active > a, .nav-pills > .active > a:hover{
+	background-color: #8C9495;
+}
+.nav-pills > li > a:hover {
+	background-color: #41B0D1;
+	color: #fff;
+}
+.nav-pills > li > a {
+	padding: 7px 12px;
+	margin: 2px 4px;
 }
 
 li a {
@@ -731,6 +722,7 @@ a strong {
 	margin-top: 16px;
 	padding-right: 0;
 	line-height: normal;
+	position: relative;
 }
 
 .btn {
@@ -739,6 +731,13 @@ a strong {
 	color: #77878B;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
+}
+.btn-success, .btn-danger {
+	color: #fff;
+}
+
+.create-btn {
+	margin: 2px 0px 0px 8px;
 }
 
 #action-buttons .btn {
@@ -926,9 +925,11 @@ a strong {
 #flowviz {
 	margin: 0 auto;
 	position: relative;
-
-	padding: 48px 0px;
-
+	padding: 24px 0px 48px;
+	clear: left;
+}
+.flowviz-fade {
+	opacity: 0.15;
 }
 #flowviz-container {
 	margin-bottom: 12px;
@@ -936,7 +937,7 @@ a strong {
 	overflow-y: hidden;
 	padding: 16px 0px 16px 16px;
 }
-#flowlet-container {
+.popup-modal {
 	position: absolute;
 	top: 160px;
 	left: 0px;
@@ -944,35 +945,46 @@ a strong {
 	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
 	display: none;
+	min-height: 600px;
 }
-#flowlet-popup {
+.popup-container {
 	width: 630px;
 	margin: 32px auto 0;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
 }
-#flowlet-popup-close {
+.popup-close {
 	float: right;
 	cursor: pointer;
 	font-size: 28px;
 	width: 28px;
 	height: 28px;
 	text-align: center;
-	margin: 18px 18px 0px 0px;
+	margin: 20px 18px 0px 0px;
 }
-#flowlet-popup-icon {
+.popup-icon {
 	float: left;
 	width: 32px;
 	height: 32px;
 	background-image: url(../img/flowlet-types-white.png);
 	margin: 16px 0px 0px 16px;
 }
-#flowlet-popup-title {
+.popup-title {
 	line-height: 36px;
 	padding: 12px 0px 12px 56px;
 }
-#flowlet-popup-title span {
-	color: #aaa;
+.popup-title span {
+	color: #AAA;
+	font-weight: 100;
+}
+.popup-white-label {
+	border-top: 0;
+	font-family: "HelveticaNeue-CondensedBold";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	padding: 2px 0px;
 }
 #flowlet-popup-tabs {
 	height: 28px;
@@ -991,6 +1003,7 @@ a strong {
 }
 .flowlet-popup-tab a {
 	color: #505050;
+	display: block;
 }
 .flowlet-popup-tab.tab-selected {
 	background-color: #8b9395;
@@ -1011,11 +1024,20 @@ a strong {
 	width: 50%;
 }
 
+.flowlet-popup-empty {
+	background-color: rgba(255, 255, 255, 0.9);
+	line-height: 215px;
+	text-align: center;
+
+}
+
 #flowlet-popup-tab-content {
 	
 }
 #flowlet-popup-inputs {
-	
+	background-image: url(../img/flowlet-background-input.png);
+	background-position: top right;
+	background-repeat: no-repeat;
 }
 #flowlet-popup-processed {
 	
@@ -1023,6 +1045,33 @@ a strong {
 }
 #flowlet-popup-outputs {
 	display: none;
+	background-image: url(../img/flowlet-background-output.png);
+	background-position: top left;
+	background-repeat: no-repeat;
+}
+.flowlet-popup-input {
+	background-image: url(../img/flowlet-popup-input.png);
+	line-height: 56px;
+	color: white;
+	text-align: center;
+	width: 114px;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+.flowlet-popup-input-contrib {
+	background-image: url(../img/contrib-background.png);
+	background-position: center left;
+	font-family: "HelveticaNeue-CondensedBold";
+	font-size: 12px;
+	color: #505050;
+	padding: 0px 16px;
+	text-transform: uppercase;
+}
+.flowlet-popup-output {
+	background-image: url(../img/flowlet-popup-input.png);
+	line-height: 56px;
+	color: white;
+	text-align: center;
 }
 #flowlet-popup-tab-content .input-contributor {
 	float: left;
@@ -1106,6 +1155,10 @@ a strong {
 	padding: 4px 12px;
 	margin: 0;
 }
+.alert {
+	margin: 0;
+	overflow: hidden;
+}
 #object-list {
 	margin: 0 auto 12px;
 	padding: 8px;
@@ -1132,6 +1185,14 @@ ol {
 }
 #run-info {
 	display: none;
+}
+.run-list {
+	cursor: pointer;
+	color: #8C9495;
+}
+.run-list-active {
+	background-color: #F0F1F1;
+	color: #505050;
 }
 /*
  * jsplumb
@@ -1199,6 +1260,9 @@ ol {
 	vertical-align: center;
 	padding: 0px 8px 0px;
 	font-family: "HelveticaNeue-CondensedBold";
+	max-height: 32px;
+	overflow: hidden;
+	line-height: 16px;
 }
 .window-value {
 	font-size: 14px;
@@ -1226,7 +1290,7 @@ ol {
 	background-image: url(../img/stream-input.png);
 }
 .window.source .window-icon {
-	background-position: 0px 128px;
+	background-position: 0px 32px;
 }
 
 ._jsPlumb_connector { z-index:1; }

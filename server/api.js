@@ -5,9 +5,13 @@ var http = require('http'),
 
 var FARService = require('./thrift_bindings/FARService.js'),
 	MetricsFrontendService = require('./thrift_bindings/MetricsFrontendService.js'),
-	metricsservice_types = require('./thrift_bindings/metricsservice_types.js');
-var FlowService = require('./thrift_bindings/FlowService.js'),
+	MetadataService = require('./thrift_bindings/MetadataService.js'),
+	FlowService = require('./thrift_bindings/FlowService.js')
+
+var metadataservice_types = require('./thrift_bindings/metadataservice_types.js'),
+	metricsservice_types = require('./thrift_bindings/metricsservice_types.js'),
 	flowservices_types = require('./thrift_bindings/flowservices_types.js');
+
 var SubscriptionService;
 var ttransport, tprotocol;
 
@@ -28,6 +32,50 @@ try {
 	this.configure = function (config) {
 		this.config = config;
 	};
+
+	this.metadata = function (method, params, done) {
+
+		params = params || [];
+
+		var conn = thrift.createConnection(
+			this.config['metadata.server.address'],
+			this.config['metadata.server.port'], {
+			transport: ttransport.TFramedTransport,
+			protocol: tprotocol.TBinaryProtocol
+		});
+		conn.on('error', function (error) {
+			console.log('MetadataService: ', error);
+			done('Could not connect to MetadataService.');
+		});
+
+		var MetaData = thrift.createClient(MetadataService, conn);
+
+		if (params.length === 2) {
+			var entitType = params.shift();
+			params[0] = new metadataservice_types[entitType](params[0]);
+		}
+
+		// Pushing the accountID into arguments. Comes from the authenticated session.
+		params.unshift(new metadataservice_types.Account({
+			id: 'demo'
+		}));
+
+		switch (method) {
+			default:
+
+			if (method in MetaData) {
+				try {
+					MetaData[method].apply(MetaData, params.concat(done));
+				} catch (e) {
+					console.log(e);
+					done(e);
+				}
+			} else {
+				done('Unknown method for MetadataService: ' + method, null);
+			}
+		}
+
+	},
 
 	this.manager = function (method, params, done) {
 
@@ -124,94 +172,8 @@ try {
 
 				});
 				*/
+			break;
 
-				break;
-
-			case 'getAccountSummary':
-				done(false, {
-					health: 'OK',
-					errors: 0,
-					counts: {
-						apps: 1,
-						flows: 1,
-						streams: 1,
-						datasets: 2
-					}
-				});
-				break;
-
-			case 'getApp':
-				done(false, {
-					health: 'OK',
-					errors: 0,
-					type: 'App',
-					id: 'CountRandom',
-					name: 'Recommendation Engine',
-					counts: {
-						flows: 2,
-						streams: 1,
-						datasets: 2
-					}
-				});
-				break;
-			case 'getApps':
-
-				done(false, [{
-					health: 'OK',
-					errors: 0,
-					type: 'App',
-					id: 'CountRandom',
-					name: 'Recommendation Engine',
-					counts: {
-						flows: 1,
-						streams: 1,
-						datasets: 2
-					}
-				}, {
-					health: 'OK',
-					errors: 0,
-					type: 'App',
-					id: 'End2End',
-					name: 'Analytics App',
-					counts: {
-						flows: 2,
-						streams: 0,
-						datasets: 4
-					}
-				}]);
-
-				break;
-			case 'getFlows':
-			case 'getFlowsForApp':
-				Manager[method].apply(Manager, params.concat(done));
-				break;
-			case 'getStreams':
-			case 'getStreamsForApp':
-
-				done(false, [{
-					health: 'OK',
-					errors: 0,
-					id: '1234',
-					name: 'User Data Input'
-				}]);
-
-				break;
-			case 'getDataSets':
-			case 'getDataSetsForApp':
-
-				done(false, [{
-					health: 'OK',
-					errors: 0,
-					id: '1234',
-					name: 'Big Data'
-				}, {
-					health: 'OK',
-					errors: 0,
-					id: '5678',
-					name: 'User Data'
-				}]);
-
-				break;
 			default:
 				if (method in Manager) {
 					try {
@@ -332,6 +294,9 @@ try {
 						endts: params[4],
 						startts: params[3]
 					});
+
+					console.log(request);
+
 					Monitor.getTimeSeries(request, function (error, response) {
 
 						if (error) {
@@ -355,7 +320,7 @@ try {
 						done(error, response);
 
 					});
-					console.log('done');
+
 				break;
 			}
 

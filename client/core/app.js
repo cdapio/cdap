@@ -66,9 +66,9 @@ function(Models, Views, Controllers){
 					var names = {
 						'flows': 'Flows',
 						'upload': 'Upload',
-						'apps': 'Apps',
+						'apps': 'Applications',
 						'streams': 'Streams',
-						'datas': 'Data Sets'
+						'data': 'Datasets'
 					};
 
 					/** Hax. Deals with AppID:FlowID style IDs for flows. **/
@@ -78,20 +78,17 @@ function(Models, Views, Controllers){
 						var flow = path[path.length - 1].split(':')[1];
 						return [
 							{
-								name: 'Flows',
-								href: '#/flows'
+								name: 'Applications',
+								href: '#/apps'
 							}, {
 								name: app,
 								href: '#/apps/' + app
-							}, {
-								name: flow,
-								href: '#/flows/' + app + ':' + flow
 							}
 						];
 					}
 					/** End Hax. **/
 
-					for (var i = 1; i < path.length; i ++) {
+					for (var i = 1; i < path.length - 1; i ++) {
 						href.push(path[i]);
 						crumbs.push({
 							name: names[path[i]] || path[i],
@@ -104,7 +101,7 @@ function(Models, Views, Controllers){
 			})
 		}),
 		ApplicationView: Ember.View.extend({
-			templateName: 'application',
+			templateName: 'main',
 			elementId: 'content'
 		}),
 		interstitial: {
@@ -180,7 +177,12 @@ function(Models, Views, Controllers){
 
 				value = Math.abs(value);
 
-				if (value > 10000) {
+				if (value > 1000000) {
+					var digits = 3 - (Math.round(value / 1000000) + '').length;
+					value = value / 1000000;
+					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+					value = rounded + 'M';
+				} else if (value > 10000) {
 					var digits = 3 - (Math.round(value / 1000) + '').length;
 					value = value / 1000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
@@ -188,17 +190,19 @@ function(Models, Views, Controllers){
 				}
 
 				return value;
-			},
-			create: function (entityType) {
-
-				var view = C.Vw.Create.create({
-					entityType: entityType
-				});
-
-				view.append();
-
 			}
 		},
+		setTimeRange: function (millis) {
+			this.set('__timeRange', millis);
+			this.set('__timeLabel', {
+				86400: '24 Hours',
+				3600: '1 Hour',
+				600: '10 Minutes',
+				60: '1 Minute'
+			}[millis]);
+		},
+		__timeRange: 86400,
+		__timeLabel: '24 Hours',
 		Mdl: Models,
 		Vw: Views,
 		Ctl: Controllers
@@ -219,14 +223,8 @@ function(Models, Views, Controllers){
 			var trigger = 0;
 			setInterval( function () {
 				trigger++;
-				C.Ctl.Flows.forEach(function (model) {
-					model.set('timeTrigger', trigger);
-				});
 				if (C.Ctl.Flow.current) {
 					C.Ctl.Flow.current.set('timeTrigger', trigger);
-					C.Ctl.Flow.history.forEach(function (model) {
-						model.set('timeTrigger', trigger);
-					});
 				}
 			}, 5000);
 

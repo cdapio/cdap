@@ -10,26 +10,59 @@ define([], function () {
 
 			var self = this;
 
-			self.set('types.App', Em.ArrayProxy.create({content: []}));
+			self.set('types.Application', Em.ArrayProxy.create({content: []}));
 
-			C.Ctl.List.getObjects('App', function (objects) {
+			self.set('current', Em.Object.create({
+				metricData: Em.Object.create()
+			}));
+
+			C.Ctl.List.getObjects('Application', function (objects) {
 				var i = objects.length;
 				while (i--) {
-					objects[i] = C.Mdl['App'].create(objects[i]);
+					objects[i] = C.Mdl['Application'].create(objects[i]);
 				}
-				self.get('types.App').pushObjects(objects);
+				self.get('types.Application').pushObjects(objects);
 				self.getStats();
 
 				C.interstitial.hide();
 			});
 		},
-
+		testing: function () {
+			console.log('trigg');
+		}.property('current.metricData.processedcount'),
 		__timeout: null,
 		getStats: function () {
 
-			var self = this, objects, content;
+			var self = this, objects, content,
+				end = Math.round(new Date().getTime() / 1000),
+				start = end - C.__timeRange;
 
-			if ((objects = this.get('types.App'))) {
+			C.get('monitor', {
+				method: 'getTimeSeries',
+				params: [null, null, ['processed.count', 'storage.trend'], start, end, 'ACCOUNT_LEVEL']
+			}, function (error, response) {
+				
+				var points = response.params.points;
+
+				for (var metric in points) {
+					data = points[metric];
+
+					var k = data.length;
+					while(k --) {
+						data[k] = data[k].value;
+					}
+
+					metric = metric.replace(/\./g, '');
+					self.get('current').get('metricData').set(metric, data);
+
+					//console.log('Set', metric);
+
+				}
+
+
+			});
+
+			if ((objects = this.get('types.Application'))) {
 
 				content = objects.get('content');
 

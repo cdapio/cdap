@@ -19,20 +19,23 @@ define([
 			className: function () {
 				var current;
 				if ((current = this.get('current'))) {
-					return (current.isSource ? ' source' : '');
+					return (current.get('type') === 'Stream' ? ' source' : '');
 				}
 				else {
 					return 'unknown';
 				}
 			}.property(),
 			click: function (event) {
+				var viz;
 
-				var el = $(event.target.parentNode);
-				var x = el.offset().left - 56;
-				var y = el.offset().top - 48;
-
-				var viz = C.router.applicationController.view.get('flowlet-detail');
+				if (this.get('current').get('type') === 'Stream') {
+					viz = C.router.applicationController.view.get('stream-detail');
+				} else {
+					viz = C.router.applicationController.view.get('flowlet-detail');
+				}
+				
 				viz.show(this.get('current'));
+
 			}
 		});
 	});

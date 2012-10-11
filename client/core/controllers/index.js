@@ -1,18 +1,18 @@
 
-define(['core/controllers/app', 'core/controllers/flows', 'core/controllers/flow',
+define(['core/controllers/app', 'core/controllers/flow',
 	'core/controllers/upload', 'core/controllers/list',
 	'core/controllers/stream', 'core/controllers/dataset',
-	'core/controllers/dashboard'],
-	function (A, Fs, F, U, L, St, Ds, Da) {
+	'core/controllers/dashboard', 'core/controllers/flow-history'],
+	function (A, F, U, L, St, Ds, Da, Fh) {
 		return {
-			App: A,
-			Flows: Fs,
+			Application: A,
 			Flow: F,
 			Upload: U,
 			List: L,
 			Stream: St,
-			DataSet: Ds,
-			Dashboard: Da
+			Dataset: Ds,
+			Dashboard: Da,
+			FlowHistory: Fh
 		};
 	}
 );

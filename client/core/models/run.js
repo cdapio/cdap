@@ -10,6 +10,9 @@ define([], function () {
 				return '#/flow/' + flow.get('meta').app + '/' + flow.get('meta').name + '/' + this.get('runId');
 			}
 		}.property(),
+		elementId: function () {
+			return 'run-' + this.get('rid');
+		}.property(),
 		started: function () {
 			return this.startTime >= 0 ? $.timeago(this.startTime) : 'Never';
 		}.property('timeTrigger'),

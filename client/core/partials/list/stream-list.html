@@ -14,13 +14,13 @@
 		<td class="app-list-name">
 			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a>
 		</td>
-		<td class="app-list-count">256KB</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metric="stream.arrivals" width="420"}}</td>
+		<td class="app-list-count">{{storage}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metric="stream.arrivals,stream.consumed" width="420"}}</td>
 	</tr>
 	{{/each}}
 	</table>
 {{else}}
 	<div class="object-list-empty">
-		No streams.
+		No Streams. Create a Stream by clicking the [+] button above.
 	</div>
 {{/if}}
