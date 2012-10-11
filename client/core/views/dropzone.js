@@ -26,9 +26,21 @@ define([
 				}
 			}
 
+			var element = $(this.get('element'));
+
 			$(this.get('element'))
-				.bind('dragenter', ignoreDrag)
+				.bind('dragenter', function (e) {
+
+					element.addClass('drop-zone-hover');
+					ignoreDrag(e);
+
+				})
 				.bind('dragover', ignoreDrag)
+				.bind('dragleave', function (e) {
+
+					element.removeClass('drop-zone-hover');
+
+				})
 				.bind('drop', drop);
 
 			var self = this;

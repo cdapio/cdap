@@ -177,7 +177,12 @@ function(Models, Views, Controllers){
 
 				value = Math.abs(value);
 
-				if (value > 1000000) {
+				if (value > 1000000000) {
+					var digits = 3 - (Math.round(value / 1000000000) + '').length;
+					value = value / 1000000000;
+					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+					value = rounded + 'B';
+				} else if (value > 1000000) {
 					var digits = 3 - (Math.round(value / 1000000) + '').length;
 					value = value / 1000000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);

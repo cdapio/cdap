@@ -442,6 +442,10 @@ text {
 	color: #40AFD0;
 }
 
+.drop-zone.drop-zone-hover {
+	background-color: #FCF8E3;
+}
+
 input {
 	margin: 0 !important;
 }
