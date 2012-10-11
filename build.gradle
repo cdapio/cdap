@@ -134,10 +134,10 @@ task gitBranchAll {
 
 task gitPushBranchAll {
     group = 'ReleaseAdmin'
-    description = 'Pushes a local branch to remote repo for all continuuity master and subproject repos.  Must specify -PbranchName=<tag>'
+    description = 'Pushes a local branch to remote repo for all continuuity master and subproject repos.  Must specify -PbranchName=<branch>'
     doLast {
         if (! project.hasProperty('branchName')) {
-            throw new InvalidUserDataException("you are trying to push a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<tag>\"")
+            throw new InvalidUserDataException("you are trying to push a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
         }
         masterRepo.pushBranch(branchName)
         for (g in gitRepos) {
@@ -148,6 +148,8 @@ task gitPushBranchAll {
 
 
 task gitCheckoutBranch {
+    group = 'ReleaseAdmin'
+    description = 'Checkouts specified branch on continuuity and all subproject repos.  Must specify -PbranchName=<branch>'    
     doLast {
         if (! project.hasProperty('branchName')) {
             throw new InvalidUserDataException("you are trying to checkout a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
