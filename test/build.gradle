@@ -14,11 +14,13 @@ dependencies {
     {
         compile project(":flow")
         compile project(":data-fabric")
+        compile project(":gateway")
     }
     else
     {
         compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'flow', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'gateway', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
         compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
