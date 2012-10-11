@@ -36,16 +36,16 @@ dependencies {
         compile project(":data-fabric")
         compile project(":data-fabric").sourceSets.api.output
         apiCompile project(":data-fabric").sourceSets.api.output
-        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
     }
     else
     {
-        compile group: 'com.continuuity', name: 'common', version: '0.1.0-SNAPSHOT'
-        compile group: 'com.continuuity', name: 'data-fabric', version: '0.1.0-SNAPSHOT'
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
-        apiCompile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
-        clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: '0.1.0-SNAPSHOT'
+        compile group: 'com.continuuity', name: 'common', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
+        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+        apiCompile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     }
+    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+
     // External dependencies.
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
