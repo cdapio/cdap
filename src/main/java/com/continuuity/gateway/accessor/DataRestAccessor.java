@@ -20,11 +20,11 @@ import java.util.concurrent.Executors;
  * of values by key, but eventually it will expose more opretaions such as puts
  * and deletes, retrieve by secondary key etc.
  */
-public class RestAccessor
+public class DataRestAccessor
     extends Accessor implements NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(RestAccessor.class);
+      .getLogger(DataRestAccessor.class);
 
   /**
    * this will provide defaults for the HTTP service, such as port and paths
@@ -62,7 +62,7 @@ public class RestAccessor
 
   @Override
   public SimpleChannelUpstreamHandler newHandler() {
-    return new RestHandler(this);
+    return new DataRestHandler(this);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class RestAccessor
               Executors.newCachedThreadPool(),
               Executors.newCachedThreadPool(),
               this.httpConfig.getThreads()));
-      // and use a pipeline factory that uses this to cnfigure itself
+      // and use a pipeline factory that uses this to configure itself
       // and to create a request handler for each client request.
       bootstrap.setPipelineFactory(
           new NettyHttpPipelineFactory(this.httpConfig, this));

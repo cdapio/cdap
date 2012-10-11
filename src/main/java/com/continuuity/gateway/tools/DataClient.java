@@ -3,7 +3,7 @@ package com.continuuity.gateway.tools;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.RestAccessor;
+import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.util.Util;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -439,7 +439,7 @@ public class DataClient {
 
     // determine the base url for the GET request
     if (baseUrl == null) baseUrl =
-        Util.findBaseUrl(config, RestAccessor.class, connector, hostname);
+        Util.findBaseUrl(config, DataRestAccessor.class, connector, hostname);
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +
           "Please use --base or --connector to specify.");

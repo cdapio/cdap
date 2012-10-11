@@ -43,6 +43,14 @@ extends Accessor implements NettyRequestHandlerFactory {
     return this.httpConfig;
   }
 
+  /** this is used to discover the query providers */
+  QueryProviderDiscovery providerDiscovery;
+
+  /** return the provider discovery */
+  public QueryProviderDiscovery getProviderDiscovery() {
+    return this.providerDiscovery;
+  }
+
   /**
    * this is the active Netty server channel
    */
@@ -53,13 +61,13 @@ extends Accessor implements NettyRequestHandlerFactory {
     super.configure(configuration);
     this.httpConfig = HttpConfig.configure(
         this.name, configuration, defaultHttpConfig);
+    this.providerDiscovery = new QueryProviderDiscovery(configuration);
+    this.providerDiscovery.initialize();
   }
 
   @Override
   public SimpleChannelUpstreamHandler newHandler() {
-    return null;
-    //return new QueryRestHandler(this, new PayvmentQueryRestProvider(
-    //    new DataFabricImpl(super.getExecutor(), OperationContext.DEFAULT)));
+    return new QueryRestHandler(this);
   }
 
   @Override
@@ -75,7 +83,7 @@ extends Accessor implements NettyRequestHandlerFactory {
               Executors.newCachedThreadPool(),
               Executors.newCachedThreadPool(),
               this.httpConfig.getThreads()));
-      // and use a pipeline factory that uses this to cnfigure itself
+      // and use a pipeline factory that uses this to configure itself
       // and to create a request handler for each client request.
       bootstrap.setPipelineFactory(
           new NettyHttpPipelineFactory(this.httpConfig, this));

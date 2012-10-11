@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 
 /**
  * This collector that provides a RESTful interface to push events to an event
- * stream. It uses Netty to start up the service, and the RestHandler to
+ * stream. It uses Netty to start up the service, and the DataRestHandler to
  * implement the handling of a request.
  */
 public class RestCollector extends Collector

@@ -27,10 +27,10 @@ import java.util.Map;
  * This is the http request handler for the rest accessor. At this time it
  * only accepts GET requests to retrieve a value for a key from a named table.
  */
-public class RestHandler extends NettyRestHandler {
+public class DataRestHandler extends NettyRestHandler {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(RestHandler.class);
+      .getLogger(DataRestHandler.class);
 
   /**
    * The allowed methods for this handler
@@ -46,7 +46,7 @@ public class RestHandler extends NettyRestHandler {
    * Will help validate URL paths, and also has the name of the connector and
    * the data fabric executor.
    */
-  private RestAccessor accessor;
+  private DataRestAccessor accessor;
 
   /**
    * The metrics object of the rest accessor
@@ -63,17 +63,11 @@ public class RestHandler extends NettyRestHandler {
   private String pathPrefix;
 
   /**
-   * Disallow default constructor
-   */
-  @SuppressWarnings("unused")
-  private RestHandler() {  }
-
-  /**
    * Constructor requires the accessor that created this
    *
    * @param accessor the accessor that created this
    */
-  RestHandler(RestAccessor accessor) {
+  DataRestHandler(DataRestAccessor accessor) {
     this.accessor = accessor;
     this.metrics = accessor.getMetricsClient();
     this.pathPrefix =

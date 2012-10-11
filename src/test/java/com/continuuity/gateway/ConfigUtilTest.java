@@ -1,7 +1,7 @@
 package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.accessor.RestAccessor;
+import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.collector.RestCollector;
@@ -39,7 +39,7 @@ public class ConfigUtilTest {
         Util.findConnector(configuration, FlumeCollector.class));
 
     // 2. test the case where none matches
-    Assert.assertNull(Util.findConnector(configuration, RestAccessor.class));
+    Assert.assertNull(Util.findConnector(configuration, DataRestAccessor.class));
 
     // 3. test the case where more than one match
     Assert.assertNull(Util.findConnector(configuration, Collector.class));
@@ -48,7 +48,7 @@ public class ConfigUtilTest {
     configuration.set(Constants.CONFIG_CONNECTORS, "first,second,third,fourth");
     Assert.assertEquals("first",
         Util.findConnector(configuration, FlumeCollector.class));
-    Assert.assertNull(Util.findConnector(configuration, RestAccessor.class));
+    Assert.assertNull(Util.findConnector(configuration, DataRestAccessor.class));
     Assert.assertNull(Util.findConnector(configuration, Collector.class));
   }
 

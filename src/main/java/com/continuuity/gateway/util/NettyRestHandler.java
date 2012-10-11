@@ -69,7 +69,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    *                the connection alive)
    */
   protected void respondSuccess(Channel channel, HttpRequest request) {
-    respondSuccess(channel, request, null, null, null);
+    respond(channel, request, null, null, null);
   }
 
   /**
@@ -83,7 +83,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    */
   protected void respondSuccess(Channel channel, HttpRequest request,
                                 byte[] content) {
-    respondSuccess(channel, request, null, null, content);
+    respond(channel, request, null, null, content);
   }
 
   /**
@@ -97,7 +97,7 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    */
   protected void respondSuccess(Channel channel, HttpRequest request,
                                 HttpResponseStatus status) {
-    respondSuccess(channel, request, status, null, null);
+    respond(channel, request, status, null, null);
   }
 
   /**
@@ -111,9 +111,9 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
    * @param headers additional headers to send with the response. May be null.
    * @param content the content of the response to send
    */
-  protected void respondSuccess(Channel channel, HttpRequest request,
-                                HttpResponseStatus status,
-                                Map<String, String> headers, byte[] content) {
+  protected void respond(Channel channel, HttpRequest request,
+                         HttpResponseStatus status,
+                         Map<String, String> headers, byte[] content) {
     HttpResponse response = new DefaultHttpResponse(
         HttpVersion.HTTP_1_1, status != null ? status : HttpResponseStatus.OK);
     boolean keepAlive = HttpHeaders.isKeepAlive(request);

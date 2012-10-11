@@ -13,7 +13,7 @@ import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
-import com.continuuity.gateway.accessor.RestAccessor;
+import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.consumer.TupleWritingConsumer;
 import com.google.inject.Guice;
@@ -47,7 +47,7 @@ public class RestAccessorTest {
   /**
    * the rest accessor we will use in the tests
    */
-  private RestAccessor accessor;
+  private DataRestAccessor accessor;
 
   /**
    * the rest collector we will use in the clear test
@@ -78,7 +78,7 @@ public class RestAccessorTest {
   String setupAccessor(String name, String prefix, String middle)
       throws Exception {
     // bring up a new accessor
-    RestAccessor restAccessor = new RestAccessor();
+    DataRestAccessor restAccessor = new DataRestAccessor();
     restAccessor.setName(name);
     // find a free port
     int port = PortDetector.findFreePort();

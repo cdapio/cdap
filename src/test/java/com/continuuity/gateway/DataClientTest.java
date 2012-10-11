@@ -5,7 +5,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.accessor.RestAccessor;
+import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.tools.DataClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -67,7 +67,7 @@ public class DataClientTest {
     configuration = new CConfiguration();
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
-        Constants.CONFIG_CLASSNAME), RestAccessor.class.getCanonicalName());
+        Constants.CONFIG_CLASSNAME), DataRestAccessor.class.getCanonicalName());
     configuration.setInt(Constants.buildConnectorPropertyName(name,
         Constants.CONFIG_PORT), port);
     configuration.set(Constants.buildConnectorPropertyName(name,

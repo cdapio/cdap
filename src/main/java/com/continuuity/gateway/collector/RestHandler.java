@@ -266,7 +266,7 @@ public class RestHandler extends NettyRestHandler {
         headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
 
         metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-        respondSuccess(message.getChannel(), request,
+        respond(message.getChannel(), request,
             HttpResponseStatus.CREATED, headers, responseBody);
         break;
       }
@@ -357,7 +357,7 @@ public class RestHandler extends NettyRestHandler {
                 header.getValue());
         // now the headers and body are ready to be sent back
         metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-        respondSuccess(message.getChannel(), request,
+        respond(message.getChannel(), request,
             HttpResponseStatus.OK, prefixedHeaders, body);
         break;
       }
