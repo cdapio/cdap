@@ -80,8 +80,8 @@ startScripts {
 tasks.distZip {
     baseName = "continuuity"
     appendix = "developer-edition"
-    version = "1.0.1"
-    classifier = "alpha"
+    version = "1.2.0"
+    classifier = "beta"
 }
 
 run.dependsOn build, ':web-cloud-app:build', ':flow:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build'
