@@ -6,7 +6,7 @@ var http = require('http'),
 var FARService = require('./thrift_bindings/FARService.js'),
 	MetricsFrontendService = require('./thrift_bindings/MetricsFrontendService.js'),
 	MetadataService = require('./thrift_bindings/MetadataService.js'),
-	FlowService = require('./thrift_bindings/FlowService.js')
+	FlowService = require('./thrift_bindings/FlowService.js');
 
 var metadataservice_types = require('./thrift_bindings/metadataservice_types.js'),
 	metricsservice_types = require('./thrift_bindings/metricsservice_types.js'),
@@ -60,21 +60,17 @@ try {
 			id: 'demo'
 		}));
 
-		switch (method) {
-			default:
-
-			if (method in MetaData) {
-				try {
-					MetaData[method].apply(MetaData, params.concat(done));
-				} catch (e) {
-					console.log(e);
-					done(e);
-				}
-			} else {
-				done('Unknown method for MetadataService: ' + method, null);
+		if (method in MetaData) {
+			try {
+				MetaData[method].apply(MetaData, params.concat(done));
+			} catch (e) {
+				console.log(e);
+				done(e);
 			}
+		} else {
+			done('Unknown method for MetadataService: ' + method, null);
 		}
-
+		
 	},
 
 	this.manager = function (method, params, done) {

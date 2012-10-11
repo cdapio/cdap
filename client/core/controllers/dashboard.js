@@ -42,7 +42,7 @@ define([], function () {
 				params: [null, null, ['processed.count', 'storage.trend'], start, end, 'ACCOUNT_LEVEL']
 			}, function (error, response) {
 				
-				var points = response.params.points;
+				var data, points = response.params.points;
 
 				for (var metric in points) {
 					data = points[metric];
@@ -54,8 +54,6 @@ define([], function () {
 
 					metric = metric.replace(/\./g, '');
 					self.get('current').get('metricData').set(metric, data);
-
-					//console.log('Set', metric);
 
 				}
 

@@ -6,7 +6,7 @@ define([], function () {
 	//** Begin Hax
 	function ___fixConnections (flowSource) {
 		// Adapt connection format
-		var hasSource = false, 
+		var hasSource = false,
 			cx = this.get('controller').current.connections,
 			conns = {};
 		for (var i = 0; i < cx.length; i ++) {
@@ -30,7 +30,7 @@ define([], function () {
 	function ___fixStreams () {
 
 		var flowlets = this.get('controller').types.Flowlet;
-		var i, k, fs = this.get('controller').current.flowletStreams;
+		var i, k, j, fs = this.get('controller').current.flowletStreams;
 		for (i in fs) {
 
 			var flowlet = this.get('controller').get_flowlet(i), streams = [];
@@ -42,7 +42,7 @@ define([], function () {
 					url: fs[i][j].first
 				}));
 			}
-			flowlet.streams = streams;	
+			flowlet.streams = streams;
 		}
 	}
 	//** End Hax
@@ -98,7 +98,7 @@ define([], function () {
 
 			// Vertically center nodes
 			var maxHeight = 0, childViews, num, diff, el,
-				columns = this.get('childViews');
+				id, k, columns = this.get('childViews');
 
 			var i = columns.length;
 			while (i--) {

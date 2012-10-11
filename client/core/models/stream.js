@@ -23,6 +23,8 @@ define([], function () {
 
 			return [];
 
+			/*
+
 			var id = C.Ctl.Flow.current.id;
 			var app = C.Ctl.Flow.current.app;
 
@@ -70,6 +72,8 @@ define([], function () {
 				}
 
 			}];
+
+			*/
 
 		}
 	});
