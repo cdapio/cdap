@@ -4,7 +4,7 @@ define([], function () {
 		return Em.View.extend({
 
 			updateData: function () {
-console.log('updating');
+
 				var metric = this.get('metric');
 				if (metric && this.get('model') && this.get('model').metricData) {
 
@@ -50,8 +50,6 @@ console.log('updating');
 					this.get('model').addMetricName(metric);
 				
 					metric = metric.replace(/\./g, '');
-
-					console.log('Observing', 'model.metricData.' + metric);
 
 					this.addObserver('model.metricData.' + metric, this, this.updateData);
 

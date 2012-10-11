@@ -23,10 +23,7 @@ define([], function () {
 		},
 		addMetricName: function (name) {
 
-			console.log('adding', name, this.get('id'));
-
 			this.get('metricNames')[name] = 1;
-			// this.set('__loadingData', true);
 
 		},
 		getUpdateRequest: function () {
