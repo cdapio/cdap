@@ -1,0 +1,14 @@
+Payvment Lish Feeds on the Continuuity AppFabric
+
+This project contains all of the code, build files, dependencies,
+documentation, and command-line tools for the implementation of processing
+Lish activity and generating activity and popular feeds.
+
+GETTING STARTED
+
+To use the command-line tools, just set the environment variable
+CONTINUUITY_HOME to point to the root directory of your Continuuity Developer
+Suite.
+
+export CONTINUUITY_HOME=~/continuuity-developer-suite/
+
