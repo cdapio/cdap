@@ -2,9 +2,7 @@ package com.continuuity.metadata;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metadata.stubs.Account;
-import com.continuuity.metadata.stubs.Application;
-import com.continuuity.metadata.stubs.MetadataServiceException;
+import com.continuuity.metadata.stubs.*;
 import com.continuuity.runtime.MetadataModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -14,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Tests metadata service functionality.
@@ -73,7 +72,7 @@ public class MetadataServiceImplTest {
    * throw MetadataServiceException.
    * @throws Exception
    */
-  @Test(expected = MetadataServiceException.class)
+  @Test
   public void testCreateStreamWithIdAndName() throws Exception {
     com.continuuity.metadata.stubs.Stream
       stream = new com.continuuity.metadata.stubs.Stream("id1");
@@ -145,6 +144,30 @@ public class MetadataServiceImplTest {
     }
     Account account1 = new Account("abc");
     Assert.assertTrue(mds.getStreams(account1).size() == 0);
+  }
+
+  @Test
+  public void testCreateDataset() throws Exception {
+    Dataset dataset = new Dataset("dataset1");
+    dataset.setName("Data Set1");
+    dataset.setType(DatasetType.COUNTER);
+    dataset.setDescription("test dataset");
+    Assert.assertTrue(mds.createDataset(account, dataset));
+    List<Dataset> dlist = mds.getDatasets(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListDataSet() throws Exception {
+    testCreateDataset(); // creates a dataset.
+    // Now delete it.
+    Dataset dataset = new Dataset("dataset1");
+    Assert.assertNotNull(mds.deleteDataset(account, dataset));
+    List<Dataset> dlist = mds.getDatasets(account);
+    Assert.assertTrue(dlist.size() == 0);
+    Dataset dataset1 = mds.getDataset(account, dataset);
+    Assert.assertNotNull(dataset1);
   }
 
   /**

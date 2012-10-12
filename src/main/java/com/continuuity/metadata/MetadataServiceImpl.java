@@ -61,13 +61,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Stream name cannot be null or empty");
     }
 
-    if(! stream.isSetDescription()) {
-      throw new MetadataServiceException("Stream description should be set " +
-                                           "for create");
-    }
-    String description = stream.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Stream description is empty or null");
+    String description = "";
+    if(stream.isSetDescription()) {
+      description = stream.getDescription();
     }
 
     try {
@@ -114,7 +110,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes a stream if exists.
    *
-   * @param stream
+   * @param stream to be deleted.
    * @return true if successfull; false otherwise
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          thrown when there is issue with deleting
@@ -159,7 +155,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
-   * @param account
+   * Retrieve streams associated with account.
+   *
+   * @param account for which streams need to be retrieved.
    * @return list of stream associated with account.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          throw when there is issue listing the
@@ -254,7 +252,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Creates a dataset if not exist.
    *
-   * @param dataset
+   * @param dataset to be created.
    * @return true if successfull; false otherwise
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          throw when there is issue with creating
@@ -283,14 +281,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Dataset name cannot be null or empty");
     }
 
-    if(! dataset.isSetDescription()) {
-      throw new MetadataServiceException("Dataset description should be set " +
-                                           "for create");
-    }
-
-    String description = dataset.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Stream description is empty or null");
+    String description = "";
+    if(dataset.isSetDescription()) {
+      description = dataset.getDescription();
     }
 
     if(! dataset.isSetType()) {
@@ -339,7 +332,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes a dataset.
    *
-   * @param dataset
+   * @param dataset to be deleted.
    * @return true if successfull; false otherwise.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          throw when there is issue with creating
@@ -372,9 +365,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       if(readEntry == null) {
         return true;
       }
-
       // Invoke MDS to delete entry.
-      mds.delete(context, accountId, null, FieldTypes.Stream.ID, id);
+      mds.delete(context, accountId, null, FieldTypes.Dataset.ID, id);
     } catch (OperationException e) {
       Log.warn("Failed deleting dataset {}. Reason : {}", dataset, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
@@ -383,7 +375,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
-   * @param account
+   * Return all metdata about datasets associated with the account.
+   *
+   * @param account for which metadata for datasets need to be retrieved.
    * @return list of data set associated with account
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          throw when there is issue with listing
@@ -430,9 +424,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Returns a dataset.
    *
-   * @param account
-   * @param dataset
-   * @return Dataset
+   * @param account to which the dataset belongs to.
+   * @param dataset of for which metdata is request.
+   * @return Dataset associated with account and dataset.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          thrown when there is an issue with
    *          retrieving the data set.
@@ -479,8 +473,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Creates an application if not exists.
    *
-   * @param account
-   * @param application
+   * @param account under which the application is created.
+   * @param application to be created.
    * @return true if created successfully or already exists, false otherwise.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          thrown when there is issue with creating
@@ -500,21 +494,17 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Application id is empty or null.");
     }
 
+    String description = "";
+    if(application.isSetDescription()) {
+      description = application.getDescription();
+    }
+
     if(! application.isSetName()) {
       throw new MetadataServiceException("Application name should be set for create");
     }
     String name = application.getName();
     if(name == null || (name != null && name.isEmpty())) {
       throw new MetadataServiceException("Application name cannot be null or empty");
-    }
-
-    if(! application.isSetDescription()) {
-      throw new MetadataServiceException("Application description should be set " +
-                                           "for create");
-    }
-    String description = application.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Application description is empty or null");
     }
 
     try {
@@ -553,8 +543,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes an application if exists.
    *
-   * @param account
-   * @param application
+   * @param account the application belongs to.
+   * @param application to be deleted.
    * @return true if application was deleted successfully or did not exists to
    *         be deleted; false otherwise.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
@@ -603,7 +593,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Returns a list of application associated with account.
    *
-   * @param account
+   * @param account for which list of applications need to be retrieved.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          thrown when there is issue listing
    *          applications for a account.
@@ -647,8 +637,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Return more information about an application.
    *
-   * @param account
-   * @param application
+   * @param account to the application belongs to.
+   * @param application requested for meta data.
    * @return application meta data if exists; else the id passed.
    * @throws com.continuuity.metadata.stubs.MetadataServiceException
    *          thrown when there is issue retrieving
@@ -708,7 +698,6 @@ public class MetadataServiceImpl implements MetadataService.Iface {
     }
 
     String accountId = account.getId();
-
     if(accountId == null || accountId.isEmpty()) {
       throw new
         MetadataServiceException("Account Id cannot be null or empty");
