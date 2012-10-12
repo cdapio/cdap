@@ -367,7 +367,7 @@ h1 span {
 }
 .sparkline-flowlet-container {
 	background-image: url(../img/flowlet-sparkline-bg.png);
-	margin-right: 64px;
+	margin-right: 66px;
 	height: 76px;
 }
 .sparkline-flowlet-title {
@@ -1072,6 +1072,7 @@ a strong {
 	color: #505050;
 	padding: 0px 16px;
 	text-transform: uppercase;
+	margin: 4px 0px;
 }
 .flowlet-popup-output {
 	background-image: url(../img/flowlet-popup-input.png);
@@ -1258,17 +1259,17 @@ ol {
 .window-icon {
 	height: 32px;
 	width: 32px;
-	margin: 24px auto 4px;
+	margin: 24px auto 6px;
 	background-image: url(../img/flowlet-types.png);
 	background-position: 0px 0px;
 }
 .window-title {
 	vertical-align: center;
-	padding: 0px 8px 0px;
+	margin: 0px 10px;
 	font-family: "HelveticaNeue-CondensedBold";
 	max-height: 32px;
 	overflow: hidden;
-	line-height: 16px;
+	line-height: 12px;
 }
 .window-value {
 	font-size: 14px;

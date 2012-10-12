@@ -78,6 +78,11 @@ define([], function () {
 						this.set('message', 'Drop a JAR File to Deploy');
 						this.processing = false;
 						this.set('warningMessage', response.message);
+
+						C.Vw.Modal.show(
+							"Deployment Error",
+							response.message);
+
 				}
 			}
 		}

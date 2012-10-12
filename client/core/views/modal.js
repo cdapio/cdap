@@ -14,7 +14,9 @@ define([
 
 				this.set('confirmed', function () {
 					C.Vw.Modal.hide();
-					callback();
+					if (typeof callback === 'function') {
+						callback();
+					}
 				});
 
 				var el = $(this.get('element'));

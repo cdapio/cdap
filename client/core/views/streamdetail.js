@@ -60,7 +60,7 @@ define([
 				stream = C.Ctl.Flow.current.get('flowStreams')[0].name;
 			}
 
-			this.set('payload', '');
+			this.set('injectValue', '');
 
 			C.get('gateway', {
 				method: 'POST',

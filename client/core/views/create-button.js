@@ -18,6 +18,10 @@ define([], function () {
 		},
 		didInsertElement: function () {
 
+			if (this.get('entityType') === 'Flow') {
+				$(this.get('element')).hide();
+			}
+
 		}
 	});
 });

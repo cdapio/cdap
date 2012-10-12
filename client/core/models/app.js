@@ -20,7 +20,8 @@ define([], function () {
 		counts: {
 			Stream: 0,
 			Flow: 0,
-			Dataset: 0
+			Dataset: 0,
+			Query: 0
 		},
 		addMetricName: function (name) {
 
