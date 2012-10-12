@@ -44,7 +44,7 @@ struct Dataset {
    1: required string id,
    2: optional string name,
    3: optional string description,
-   4: optional DatasetType type,
+   4: optional i32 type,
 }
 
 /**

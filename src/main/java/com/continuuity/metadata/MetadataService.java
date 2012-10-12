@@ -290,11 +290,8 @@ public class MetadataService implements
     if(! dataset.isSetType()) {
       throw new MetadataServiceException("Dataset type should be set for create");
     }
-    DatasetType type = dataset.getType();
 
-    if(type == null) {
-      throw new MetadataServiceException("Dataset type cannot be null");
-    }
+    int type = dataset.getType();
 
     try {
       // Create a context.
@@ -319,7 +316,7 @@ public class MetadataService implements
       entry.addField(FieldTypes.Dataset.DESCRIPTION, description);
       entry.addField(FieldTypes.Dataset.CREATE_DATE,
                      String.format("%d", System.currentTimeMillis()));
-      entry.addField(FieldTypes.Dataset.TYPE, type.name());
+      entry.addField(FieldTypes.Dataset.TYPE, String.valueOf(type));
       // Invoke MDS to add entry.
       mds.add(context, entry);
     } catch (OperationException e) {
@@ -407,9 +404,15 @@ public class MetadataService implements
         rDataset.setDescription(
           dataset.getTextField(FieldTypes.Dataset.DESCRIPTION)
         );
-        rDataset.setType(DatasetType.valueOf(
-          dataset.getTextField(FieldTypes.Dataset.TYPE)
-        ));
+        try {
+          int type = Integer.valueOf(dataset.getTextField(FieldTypes.Dataset
+                                                            .TYPE));
+          rDataset.setType(type);
+        } catch (NumberFormatException e) {
+          Log.warn("Dataset {} has type that is not an integer",
+                   rDataset.getName());
+        }
+
         // More fields can be added later when we need them for now
         // we just return id, name & description.
         result.add(rDataset);

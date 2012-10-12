@@ -35,17 +35,13 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   private String id; // required
   private String name; // required
   private String description; // required
-  private DatasetType type; // required
+  private int type; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
     DESCRIPTION((short)3, "description"),
-    /**
-     * 
-     * @see DatasetType
-     */
     TYPE((short)4, "type");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -109,6 +105,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   }
 
   // isset id assignments
+  private static final int __TYPE_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -120,7 +118,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, DatasetType.class)));
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Dataset.class, metaDataMap);
   }
@@ -139,6 +137,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
    * Performs a deep copy on <i>other</i>.
    */
   public Dataset(Dataset other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetId()) {
       this.id = other.id;
     }
@@ -148,9 +148,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (other.isSetDescription()) {
       this.description = other.description;
     }
-    if (other.isSetType()) {
-      this.type = other.type;
-    }
+    this.type = other.type;
   }
 
   public Dataset deepCopy() {
@@ -162,7 +160,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     this.id = null;
     this.name = null;
     this.description = null;
-    this.type = null;
+    setTypeIsSet(false);
+    this.type = 0;
   }
 
   public String getId() {
@@ -234,35 +233,26 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     }
   }
 
-  /**
-   * 
-   * @see DatasetType
-   */
-  public DatasetType getType() {
+  public int getType() {
     return this.type;
   }
 
-  /**
-   * 
-   * @see DatasetType
-   */
-  public void setType(DatasetType type) {
+  public void setType(int type) {
     this.type = type;
+    setTypeIsSet(true);
   }
 
   public void unsetType() {
-    this.type = null;
+    __isset_bit_vector.clear(__TYPE_ISSET_ID);
   }
 
   /** Returns true if field type is set (has been assigned a value) and false otherwise */
   public boolean isSetType() {
-    return this.type != null;
+    return __isset_bit_vector.get(__TYPE_ISSET_ID);
   }
 
   public void setTypeIsSet(boolean value) {
-    if (!value) {
-      this.type = null;
-    }
+    __isset_bit_vector.set(__TYPE_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -295,7 +285,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       if (value == null) {
         unsetType();
       } else {
-        setType((DatasetType)value);
+        setType((Integer)value);
       }
       break;
 
@@ -314,7 +304,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       return getDescription();
 
     case TYPE:
-      return getType();
+      return Integer.valueOf(getType());
 
     }
     throw new IllegalStateException();
@@ -384,7 +374,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (this_present_type || that_present_type) {
       if (!(this_present_type && that_present_type))
         return false;
-      if (!this.type.equals(that.type))
+      if (this.type != that.type)
         return false;
     }
 
@@ -413,7 +403,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     boolean present_type = true && (isSetType());
     builder.append(present_type);
     if (present_type)
-      builder.append(type.getValue());
+      builder.append(type);
 
     return builder.toHashCode();
   }
@@ -506,7 +496,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
           break;
         case 4: // TYPE
           if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.type = DatasetType.findByValue(iprot.readI32());
+            this.type = iprot.readI32();
+            setTypeIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -543,12 +534,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         oprot.writeFieldEnd();
       }
     }
-    if (this.type != null) {
-      if (isSetType()) {
-        oprot.writeFieldBegin(TYPE_FIELD_DESC);
-        oprot.writeI32(this.type.getValue());
-        oprot.writeFieldEnd();
-      }
+    if (isSetType()) {
+      oprot.writeFieldBegin(TYPE_FIELD_DESC);
+      oprot.writeI32(this.type);
+      oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -589,11 +578,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (isSetType()) {
       if (!first) sb.append(", ");
       sb.append("type:");
-      if (this.type == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.type);
-      }
+      sb.append(this.type);
       first = false;
     }
     sb.append(")");
@@ -618,6 +603,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
