@@ -4,72 +4,73 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.continuuity.payvment</groupId>
-  <artifactId>PayvmentDemo</artifactId>
+  <artifactId>lish.feeds</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>PayvmentDemo</name>
+  <name>LishFeeds</name>
   <properties>
     <main>com.payvment.continuuity.SocialActionFlow</main>
+    <continuuityVersion>1.2.0-SNAPSHOT</continuuityVersion>
   </properties>
   <dependencies>
     <!-- Add internal continuuity jars (until tests refactored)  -->
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>test</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/continuuity-test-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/continuuity-test-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/flow-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/flow-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>flow</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <classifier>api</classifier>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/flow-0.1.0-api.jar</systemPath>
+      <systemPath>${project.basedir}/lib/flow-${continuuityVersion}-api.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>gateway</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/gateway-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/gateway-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/data-fabric-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/data-fabric-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>data-fabric</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <classifier>api</classifier>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/data-fabric-0.1.0-api.jar</systemPath>
+      <systemPath>${project.basedir}/lib/data-fabric-${continuuityVersion}-api.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>common</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/common-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/common-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>overlord</artifactId>
-      <version>0.1.0</version>
+      <version>${continuuityVersion}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/overlord-0.1.0.jar</systemPath>
+      <systemPath>${project.basedir}/lib/overlord-${continuuityVersion}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -228,4 +229,75 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>social-action</id>
+      <properties>
+        <main>com.payvment.continuuity.SocialActionFlow</main>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <classifier>social-action</classifier>
+              <finalName>LishSocialActionFlow-${project.version}</finalName>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+              <finalName>LishSocialActionFlow-${project.version}</finalName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>cluster-writer</id>
+      <properties>
+        <main>com.payvment.continuuity.ClusterWriterFlow</main>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <classifier>cluster-writer</classifier>
+              <finalName>LishClusterWriterFlow-${project.version}</finalName>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+              <finalName>LishClusterWriterFlow-${project.version}</finalName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>feed-reader</id>
+      <properties>
+        <main>com.payvment.continuuity.ClusterFeedQueryProvider</main>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <classifier>feed-reader</classifier>
+              <finalName>LishFeedReaderQueryProvider-${project.version}</finalName>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+              <finalName>LishFeedReaderQueryProvider-${project.version}</finalName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

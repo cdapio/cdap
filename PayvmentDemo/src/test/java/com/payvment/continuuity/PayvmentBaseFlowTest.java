@@ -24,7 +24,7 @@ public class PayvmentBaseFlowTest extends FabricTestBase {
    * @param productEntry1
    * @param productEntry2
    */
-  protected static void assertEqual(ProductFeedEntry productEntry1,
+  public static void assertEqual(ProductFeedEntry productEntry1,
       ProductFeedEntry productEntry2) {
     assertEquals(productEntry1.product_id, productEntry2.product_id);
     assertEquals(productEntry1.store_id, productEntry2.store_id);
@@ -40,7 +40,7 @@ public class PayvmentBaseFlowTest extends FabricTestBase {
    * @param socialAction1
    * @param socialAction1
    */
-  protected static void assertEqual(SocialAction socialAction1,
+  public static void assertEqual(SocialAction socialAction1,
       SocialAction socialAction2) {
     assertEquals(socialAction1.id, socialAction2.id);
     assertEquals(socialAction1.product_id, socialAction2.product_id);

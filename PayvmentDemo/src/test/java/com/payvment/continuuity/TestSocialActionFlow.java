@@ -64,13 +64,12 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     String socialActionJson = socialAction.toJson();
     
     // Write json to input stream
-    writeToStream(SocialActionFlow.flowName, SocialActionFlow.inputStream,
-        Bytes.toBytes(socialActionJson));
+    writeToStream(SocialActionFlow.inputStream, Bytes.toBytes(socialActionJson));
     
     // Wait for parsing flowlet to process the tuple
     while (SocialActionParserFlowlet.numProcessed < 1) {
       System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(100);
+      Thread.sleep(1000);
     }
     
     // Wait for processor flowlet to process the tuple

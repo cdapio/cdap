@@ -42,7 +42,7 @@ public class ProductFeedFlow implements Flow {
     specifier.flowlet("activity_feed_updater",
         ProductActivityFeedUpdaterFlowlet.class, 1);
 
-    // Define user_follow_events stream and connect to json_source_parser
+    // Define the input stream and connect to parser
     specifier.stream(inputStream);
     specifier.input(inputStream, "product_parser");
 

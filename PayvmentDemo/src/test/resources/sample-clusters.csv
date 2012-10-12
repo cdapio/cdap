@@ -4,6 +4,4 @@ cluster,category,t1.count/t2.count
 2,"Fashion",0.001
 3,"Sports",0.001
 3,"Home Improvement",0.001
-4,"Sports",0.001
-4,"Home Improvement",0.001
-4,"Fashion",0.001
+3,"Fashion",0.001
