@@ -45,7 +45,7 @@ define([], function () {
 
 			});
 
-			xhr.open('POST', '/upload/' + this.get('entityType') + '/' + 
+			xhr.open('POST', '/upload/' + this.get('entityType') + '/' +
 				applicationId + '/' + file.name, true);
 			xhr.setRequestHeader("Content-type", "application/octet-stream");
 			xhr.send(file);
