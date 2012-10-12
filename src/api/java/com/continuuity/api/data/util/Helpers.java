@@ -15,7 +15,7 @@ public class Helpers {
 
   /**
    * Returns the time-bucketed timestamp of the specified timestamp in
-   * milliseconds (timestamp modulo 60*60*1000).
+   * milliseconds: timestamp - (timestamp modulo 60*60*1000).
    * @param timestamp stamp in milliseconds
    * @return hour time bucket of specified timestamp in milliseconds
    */
