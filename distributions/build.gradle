@@ -30,6 +30,7 @@ dependencies {
 }
 
 evaluationDependsOn(':singlenode')
+evaluationDependsOn(':test')
 
 if(! multiModule) {
     throw new InvalidUserDataException("Invalid invocation: This is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
@@ -69,6 +70,7 @@ task singlenode_stage_lib (type: Copy) {
     //from project(':singlenode').configurations.getByName('compile')
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
+    from project(':test').tasks.getByName('testJar').outputs
     into "${buildDir}/singlenode/lib"
 }
 
