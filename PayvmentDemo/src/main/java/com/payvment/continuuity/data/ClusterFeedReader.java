@@ -98,6 +98,7 @@ public class ClusterFeedReader {
     // Initialize priority queue with top entries in each scanner
     for (CachingActivityFeedScanner scanner : scanners) {
       ActivityFeedEntry activityFeedEntry = scanner.next();
+      if (activityFeedEntry == null) continue;
       headMerge.add(new ActivityFeedMergeEntry(activityFeedEntry, scanner));
     }
     // Initialize activity feed
@@ -138,6 +139,27 @@ public class ClusterFeedReader {
    */
   public PopularFeed getPopularFeed(int clusterId, int numHours,
       int limit, int offset) throws OperationException {
+    return getPopularFeed(clusterId, Helpers.hour(System.currentTimeMillis()),
+        numHours, limit, offset);
+  }
+
+  /**
+   * Reads the popular feed for the specified cluster, determining the most
+   * popular products from the number of hours specified.  Resulting list of
+   * popular products can be paged using limit and offset.  Uses the specified
+   * currentHour rather than actual currentHour.
+   * <p>
+   * See {@link PopularFeed} javadoc for JSON format.
+   * @param clusterId cluster id
+   * @param currentHour the current hour, in epoch millis
+   * @param numHours number of hours (must be >= 1)
+   * @param limit maximum number of products to return
+   * @param offset number of products offset from most popular to return
+   * @return feed of products in descending popularity order
+   * @throws OperationException
+   */
+  public PopularFeed getPopularFeed(int clusterId, long currentHour,
+      int numHours, int limit, int offset) throws OperationException {
     int n = limit + offset;
     if (numHours < 1 || limit < 1 || offset < 0) {
       throw new OperationException(StatusCode.KEY_NOT_FOUND,
@@ -158,11 +180,11 @@ public class ClusterFeedReader {
       String category = entry.getKey();
       @SuppressWarnings("unused")
       Double weight = entry.getValue(); // TODO: Do something with weight
-      Long currentHour = Helpers.hour(System.currentTimeMillis());
-      List<Long> hours = new ArrayList<Long>(numHours + 1);
-      hours.add(currentHour);
+      List<Long> hours = new ArrayList<Long>(numHours);
       for (int i=0; i<numHours; i++) {
-        hours.add(currentHour + ((i + 1) * 3600000));
+        Long hour = currentHour - (i * 3600000);
+        hours.add(hour);
+        System.out.println("\nFEED READER LOOKING AT HOUR " + hour + "\n");
       }
       // Iterate hours
       for (Long hour : hours) {

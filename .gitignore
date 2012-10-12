@@ -15,6 +15,7 @@ out/
 # build output
 build/
 classes/
+target/
 
 #MacOS files
 .DS_Store

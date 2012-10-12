@@ -7,6 +7,8 @@ import au.com.bytecode.opencsv.CSVParser;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -59,11 +61,21 @@ import com.payvment.continuuity.data.ClusterTable;
  */
 public class ClusterWriterFlow implements Flow {
 
+  /**
+   * Name of the input stream carrying CSV Payvment generated clusters.
+   */
+  public static final String inputStream = "clusters";
+
+  /**
+   * Name of this Flow.
+   */
+  public static final String flowName = "ClusterWriter";
+
   @Override
   public void configure(FlowSpecifier specifier) {
 
     // Set metadata fields
-    specifier.name("ClusterWriter");
+    specifier.name(flowName);
     specifier.email("dev@continuuity.com");
     specifier.application("ClusterFeeds");
     specifier.company("Continuuity+Payvment");
@@ -73,9 +85,9 @@ public class ClusterWriterFlow implements Flow {
     specifier.flowlet("cluster_writer", ClusterWriter.class, 1);
     specifier.flowlet("cluster_reset", ClusterReset.class, 1);
 
-    // Define user_follow_events stream and connect to json_source_parser
-    specifier.stream("clusters");
-    specifier.input("clusters", "cluster_source_parser");
+    // Define clusters stream and connect to cluster_source_parser
+    specifier.stream(inputStream);
+    specifier.input(inputStream, "cluster_source_parser");
 
     // Wire up the remaining flowlet connections
     specifier.connection("cluster_source_parser", "writer_output",
@@ -90,23 +102,27 @@ public class ClusterWriterFlow implements Flow {
    */
   public static class ClusterSourceParser extends ComputeFlowlet {
 
+    static int numProcessed = 0;
+
+    static int numFailures = 0;
+
     @Override
     public void configure(StreamsConfigurator configurator) {
 
       // Apply default stream schema to default tuple input stream
       configurator
-      .getDefaultTupleInputStream()
-      .setSchema(TupleSchema.EVENT_SCHEMA);
+          .getDefaultTupleInputStream()
+          .setSchema(TupleSchema.EVENT_SCHEMA);
 
       // Apply internal cluster tuple schema to writer output stream
       configurator
-      .addTupleOutputStream("writer_output")
-      .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
+          .addTupleOutputStream("writer_output")
+          .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
 
       // Apply simple reset tuple schema to reset output stream
       configurator
-      .addTupleOutputStream("reset_output")
-      .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
+          .addTupleOutputStream("reset_output")
+          .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
 
     }
 
@@ -132,48 +148,64 @@ public class ClusterWriterFlow implements Flow {
       if (parsed[0].equals(Constants.CLUSTER_RESET_FLAG)) {
         // CSV = reset_clusters,max_cluster_id,"msg"
         Tuple resetTuple = new TupleBuilder()
-        .set("maxClusterId", parsed[1])
-        .set("msg", parsed[2])
-        .create();
+            .set("maxClusterId", Integer.valueOf(parsed[1]))
+            .set("msg", parsed[2])
+            .create();
         collector.add("reset_output", resetTuple);
         return;
       }
 
       // Format of CSV string is: clusterid,category,weight
       Tuple clusterTuple = new TupleBuilder()
-      .set("clusterId", Integer.valueOf(parsed[0]))
-      .set("category", parsed[1])
-      .set("weight", Double.valueOf(parsed[2]))
-      .create();
-      collector.add(clusterTuple);
+          .set("clusterId", Integer.valueOf(parsed[0]))
+          .set("category", parsed[1])
+          .set("weight", Double.valueOf(parsed[2]))
+          .create();
+      System.out.println("Generated tuple: " + clusterTuple.toString());
+      collector.add("writer_output", clusterTuple);
+    }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      numFailures++;
+      System.out.println("Flowet Failed : " + reason.toString() + ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
 
   }
 
   public static final TupleSchema CLUSTER_PARSER_TO_WRITER_SCHEMA =
       new TupleSchemaBuilder()
-  .add("clusterId", Integer.class)
-  .add("category", String.class)
-  .add("weight", Double.class)
-  .create();
+          .add("clusterId", Integer.class)
+          .add("category", String.class)
+          .add("weight", Double.class)
+          .create();
 
   public static final TupleSchema CLUSTER_PARSER_TO_RESET_SCHEMA =
       new TupleSchemaBuilder()
-  .add("maxClusterId", Integer.class)
-  .add("msg", String.class)
-  .create();
+          .add("maxClusterId", Integer.class)
+          .add("msg", String.class)
+          .create();
 
   /**
    * Flowlet that writes cluster entries to the cluster table in the data fabric.
    */
   public static class ClusterWriter extends ComputeFlowlet {
 
+    static int numProcessed = 0;
+
     @Override
     public void configure(StreamsConfigurator configurator) {
       // Apply cluster tuple schema to default tuple input stream
       configurator
-      .getDefaultTupleInputStream()
-      .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
+          .getDefaultTupleInputStream()
+          .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
       // No output stream
     }
 
@@ -194,6 +226,11 @@ public class ClusterWriterFlow implements Flow {
       this.clusterTable.writeCluster(clusterId, category, weight);
     }
 
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
+    }
+
   }
 
   /**
@@ -201,12 +238,14 @@ public class ClusterWriterFlow implements Flow {
    */
   public static class ClusterReset extends ComputeFlowlet {
 
+    static int numProcessed = 0;
+
     @Override
     public void configure(StreamsConfigurator configurator) {
       // Apply cluster tuple schema to default tuple input stream
       configurator
-      .getDefaultTupleInputStream()
-      .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
+          .getDefaultTupleInputStream()
+          .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
       // No output stream
     }
 
@@ -225,6 +264,11 @@ public class ClusterWriterFlow implements Flow {
       String msg = tuple.get("msg");
       System.out.println("Cluster Reset.  Message: " + msg);
       this.clusterTable.resetClusters(maxClusterId);
+    }
+
+    @Override
+    public void onSuccess(Tuple tuple, TupleContext context) {
+      numProcessed++;
     }
 
   }

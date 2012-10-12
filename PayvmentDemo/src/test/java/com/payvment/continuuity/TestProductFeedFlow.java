@@ -61,8 +61,7 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     String productMetaJson = productMeta.toJson();
 
     // Write json to input stream
-    writeToStream(ProductFeedFlow.flowName, ProductFeedFlow.inputStream,
-        Bytes.toBytes(productMetaJson));
+    writeToStream(ProductFeedFlow.inputStream, Bytes.toBytes(productMetaJson));
 
     // Wait for parsing flowlet to process the tuple
     while (ProductFeedParserFlowlet.numProcessed < 1) {
