@@ -64,11 +64,12 @@ startScripts {
         //scriptFileWin.delete()
         scriptFileWin.text = scriptFileWin.text.replaceFirst('set CLASSPATH=(.*)', 'set CLASSPATH=%APP_HOME%\\\\conf\\\\;%APP_HOME%\\\\lib\\\\*')
     }
-    ext.jvmOpts = "-Xmx1024m" 
+    ext.jvmOpts = "-Xmx1024m"
+    ext.hadoopOpts = "-Djava.security.krb5.realm= -Djava.security.krb5.kdc="
     inputs.property("jvmOpts", { jvmOpts }) // for incremental build to work properly
     doLast { 
         def optsEnvVar = "DEFAULT_JVM_OPTS" 
-        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}", "$optsEnvVar=${'"'}$jvmOpts${'"'}") 
+        unixScript.text = unixScript.text.replace("$optsEnvVar=${'""'}","""$optsEnvVar=${'"'}$jvmOpts${'"'}\nCONTINUUITY_APP_FABRIC_OPTS=${'"'}$hadoopOpts${'"'}""")
         windowsScript.text = windowsScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts") 
         windowsScript.delete()
     }
