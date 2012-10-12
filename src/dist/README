@@ -35,32 +35,31 @@ Directory Structure
 The directory structure for AppFabric is shown below.
 
 continuuity-developer-edition-1.2.0-beta
-  |
-  |-- README                                         (this file)
-  |-- LICENSE
-  |-- continuuity-api.jar                            (the API jar for AppFabric)
-  |-- bin                                            (execution/tools scripts)
-    |     |-- continuuity-app-fabric
-    |     |-- data-format
-    |     |-- stream-client
-    |     |-- data-client
-    |     |-- flow-client
-  |-- lib
-  |-- docs
-  |     |-- api                                      (api javadocs)
-  |-- conf                                           (configuration files)
-  |     |-- logback.xml
-  |     |-- continuuity-webapp.xml
-  |     |-- continuuity-overlord.xml
-  |     |-- continuuity-gateway.xml
-  |     |-- continuuity-flow.xm
-  |     |-- continuuity-data-fabric.xml
-  |-- web-app                                         (AppFabric UI application)
-  |-- examples                                        (example applications)
-  |     |-- CountTokens
-  |     |-- CountRandom
-  |     |-- build.xml
-
+ |-- README                                                          (this file)
+ |-- LICENSE                                     (the Developer Edition license)
+ |-- continuuity-api.jar                             (the API jar for AppFabric)
+ |-- bin                                               (execution/tools scripts)
+ | |-- continuuity-app-fabric
+ | |-- data-format
+ | |-- stream-client
+ | |-- data-client
+ | |-- flow-client
+ | |-- query-client
+ |-- lib
+ |-- docs
+ | |-- api                                                        (api javadocs)
+ |-- conf                                                  (configuration files)
+ | |-- logback.xml
+ | |-- continuuity-site.xml
+ |-- web-app                                          (AppFabric UI application)
+ |-- examples                                             (example applications)
+ | |-- CountTokens
+ | |-- CountAndFilterWords
+ | |-- CountRandom
+ | |-- CountCounts
+ | |-- DependencyRandomNumber
+ | |-- SimpleWriteAndRead
+ | |-- build.xml
 
 Further Information
 ===================
