@@ -55,7 +55,7 @@ task singlenode_stage_lib (type: Copy) {
     from project(':singlenode').tasks.getByName('jar').outputs
     from project(':test').tasks.getByName('testJar').outputs
     into "${buildDir}/singlenode/lib"
-    exclude 'overlord-0.1.0-SNAPSHOT-loggly.jar'
+    exclude 'overlord-*-loggly.jar'
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
