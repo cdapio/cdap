@@ -1,6 +1,7 @@
 
-define(['models/app', 'models/definition', 'models/flow', 'models/flowlet', 'models/run', 'models/stream', 'models/dataset'],
-	function (A, D, F, Fl, R, S, Ds) {
+define(['models/app', 'models/definition', 'models/flow', 'models/flowlet', 
+	'models/run', 'models/stream', 'models/dataset', 'models/query'],
+	function (A, D, F, Fl, R, S, Ds, Q) {
 		return {
 			Application: A,
 			Definition: D,
@@ -8,7 +9,8 @@ define(['models/app', 'models/definition', 'models/flow', 'models/flowlet', 'mod
 			Flowlet: Fl,
 			Run: R,
 			Stream: S,
-			Dataset: Ds
+			Dataset: Ds,
+			Query: Q
 		};
 	}
 );

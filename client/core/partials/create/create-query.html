@@ -1,0 +1,46 @@
+<div class="modal-header">
+	<a {{action "hide" on="click"}} class="close">&times;</a>
+	<h2>Create a Query</h2>
+</div>
+<div class="modal-loading"></div>
+<div class="modal-body">
+	<table style="width: 100%">
+		<tr>
+			<td style="width: 150px;">
+				Display Name
+			</td>
+			<td>
+				{{view Ember.TextField valueBinding="form.name" }}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Identifier
+			</td>
+			<td>
+				{{view Ember.TextField valueBinding="form.id" change=idChanged}}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Description
+			</td>
+			<td>
+				{{view Ember.TextArea valueBinding="form.description"}}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Type
+			</td>
+			<td>
+				{{view Ember.Select valueBinding="form.type" contentBinding="datasetTypes"}}
+			</td>
+		</tr>
+	</table>
+	<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
+</div>
+<div class="modal-footer">
+	<button {{action "hide" on="click"}} class="btn">Cancel</a>
+	<button {{action "confirmed" on="click"}} class="btn btn-success">Okay</a>
+</div>

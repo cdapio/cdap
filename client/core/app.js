@@ -154,7 +154,7 @@ function(Models, Views, Controllers){
 						var max = d3.max(data) || 10;
 						var min = d3.min(data) || -10;
 
-						var extend = Math.round(w * 0.05);
+						var extend = Math.round(w * 0.08);
 
 						var y = d3.scale.linear().domain([max + 50, min - 50]).range([m, h - m]),
 							x = d3.scale.linear().domain([0, data.length]).range([extend*-1, w + extend*2]);

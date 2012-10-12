@@ -6,6 +6,13 @@ define([], function () {
 
 	return Em.Object.create({
 		types: Em.Object.create(),
+		__methodNames: {
+			'Application': 'getApplications',
+			'Flow': 'getFlows',
+			'Stream': 'getStreams',
+			'Query': 'getQueries',
+			'Dataset': 'getDatasets'
+		},
 		getObjects: function (type, callback) {
 
 			var self = this;
@@ -14,7 +21,7 @@ define([], function () {
 			//** Hax: Remove special case for Flow when ready **//
 			
 			C.get(type === 'Flow' ? 'manager' : 'metadata', {
-				method: 'get' + type + 's',
+				method: this.__methodNames[type],
 				params: []
 			}, function (error, response, params) {
 

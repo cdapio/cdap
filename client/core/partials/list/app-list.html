@@ -4,8 +4,8 @@
 		<th colspan="2"></th>
 		<th style="text-align: center;">Streams</th>
 		<th style="text-align: center;">Flows</th>
-		<th style="text-align: center;">DataSets</th>
 		<th style="text-align: center;">Queries</th>
+		<th style="text-align: center;">DataSets</th>
 		<th style="width: 264px;">Busyness</th>
 	</thead>
 	{{#each controller.types.Application tagName="tbody"}}
@@ -18,8 +18,8 @@
 		</td>
 		<td class="app-list-count">{{counts.Stream}}</strong></td>
 		<td class="app-list-count">{{counts.Flow}}</strong></td>
-		<td class="app-list-count">{{counts.Dataset}}</strong></td>
 		<td class="app-list-count">{{counts.Query}}</strong></td>
+		<td class="app-list-count">{{counts.Dataset}}</strong></td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Application" height="50" metric="processed.count" width="264"}}</td>
 	</tr>
 	{{/each}}

@@ -5,6 +5,7 @@
 define([], function () {
 	return Em.Object.extend({
 		type: 'Stream',
+		plural: 'Streams',
 		href: function () {
 			return '#/streams/' + this.get('id');
 		}.property().cacheable(),

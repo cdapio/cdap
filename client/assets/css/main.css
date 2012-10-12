@@ -10,6 +10,20 @@ body {
 	cursor: default;
 }
 
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Orbitron-Light'), local('Orbitron-Regular'), url(http://themes.googleusercontent.com/static/fonts/orbitron/v3/94ug0rEgQO_WuI_xKJMFc3YhjbSpvc47ee6xR_80Hnw.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'Condensed';
+  font-style: normal;
+  font-weight: 400;
+  src: local('HelveticaNeue-Condensed'), url(../fonts/HelveticaNeueLTStd-Cn.otf) format('opentype');
+}
+
 .table th, .table td {
 	padding: 14px;
 }
@@ -278,12 +292,15 @@ h1 span {
 }
 .panel table th, .sparkline-box-title, .drop-zone {
 	border-top: 0;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #77878b;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
-	padding: 2px 12px;
+	padding: 2px 4px;
+}
+.panel table th {
+	padding: 2px 10px 0px;
 }
 #info {
 	border: 2px solid #fff;
@@ -336,9 +353,9 @@ h1 span {
 	border-right: 1px solid #F7F7F7;
 }
 .sparkline-box-title {
-	border-bottom: 1px solid #fff;
+	border-bottom: 1px solid white;
 	line-height: 14px;
-	height: 13px;
+	height: 11px;
 }
 .sparkline-box-value {
 	float: right;
@@ -372,10 +389,12 @@ h1 span {
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	color: #FFF;
 	text-transform: uppercase;
-	padding: 2px 4px;
+	padding: 4px;
+	height: 14px;
+	letter-spacing: 0.08em;
 }
 .sparkline-flowlet-value {
 	width: 60px;
@@ -383,7 +402,7 @@ h1 span {
 	float: right;
 	border-left: 1px solid #83cce1;
 
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 23px;
 	padding-top: 38px;
 	padding-left: 5px;
@@ -413,8 +432,8 @@ path.sparkline-data {
 .white path.sparkline-data {
 	stroke: #fff;
 }
-.yellow path.sparkline-data {
-	stroke: #e6e450;
+.orange path.sparkline-data {
+	stroke: #eea44c;
 }
 
 line {
@@ -427,12 +446,14 @@ text {
 }
 .info-box .drop-zone {
 	margin: 17px 0px;
+	width: 120px;
 }
 .drop-zone {
 	width: 260px;
 	color: #777;
 	text-align: center;
-	line-height: 49px;
+	line-height: 52px;
+	height: 50px;
 	margin-right: 0;
 	padding: 0;
 	border: 3px dotted #CCC;
@@ -446,7 +467,11 @@ text {
 .drop-zone.drop-zone-hover {
 	background-color: #FCF8E3;
 }
-
+.drop-zone.drop-zone-loading {
+	background-image: url(../img/deploy-loading.gif);
+	background-repeat: no-repeat;
+	background-position: center center;
+}
 input {
 	margin: 0 !important;
 }
@@ -552,7 +577,7 @@ input {
 }
 
 .dash-app-resource-usage {
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	color: #505050;
 	font-size: 32px;
 	text-align: center;
@@ -576,7 +601,7 @@ input {
 }
 
 .dash-app-sub-title {
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #5c696c;
 	text-transform: uppercase;
@@ -607,7 +632,7 @@ input {
 	line-height: 64px;
 	font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	
 }
 .dash-app-sub-health-value span {
@@ -621,7 +646,7 @@ input {
 	line-height: 64px;
 		font-size: 32px;
 	letter-spacing: 0.04em;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	color: #505050;
 }
 
@@ -661,10 +686,13 @@ input {
 	color: #b8c0cc;
 }
 .nav-pills > li > a {
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
+	line-height: 18px;
+	height: 14px;
+	letter-spacing: 0.1em;
 }
 .nav-pills > .active > a, .nav-pills > .active > a:hover{
 	background-color: #8C9495;
@@ -731,11 +759,13 @@ a strong {
 }
 
 .btn {
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
+	line-height: 22px;
+	height: 28px;
 }
 .btn-success, .btn-danger {
 	color: #fff;
@@ -748,7 +778,7 @@ a strong {
 #action-buttons .btn {
 	margin-right:0;
 	height: 56px;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	text-transform: uppercase;
 	padding-top: 8px;
 }
@@ -911,7 +941,7 @@ a strong {
 
 .flow-state {
 	float: right;
-	padding-top: 36px;
+	padding-top: 32px;
 	padding-right: 16px;
 	width: 120px;
 	text-align: right;
@@ -920,7 +950,8 @@ a strong {
 	color: #40AFD0;
 	font-size: 30px;
 	font-weight: 500;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
+	line-height: normal;
 }
 .flow-state span {
 	font-size: 11px;
@@ -985,12 +1016,12 @@ a strong {
 }
 .popup-white-label {
 	border-top: 0;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
-	padding: 2px 0px;
+	padding: 2px;
 }
 #flowlet-popup-tabs {
 	height: 28px;
@@ -1067,7 +1098,7 @@ a strong {
 .flowlet-popup-input-contrib {
 	background-image: url(../img/contrib-background.png);
 	background-position: center left;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-family: "Condensed";
 	font-size: 12px;
 	color: #505050;
 	padding: 0px 16px;
@@ -1249,12 +1280,12 @@ ol {
 	background-image: url(../img/flowlet-input.png);
 	top: 22px;
 	left: -64px;
-	line-height: 56px;
+	line-height: 64px;
 	text-align: center;
 	padding-right: 20px;
 	padding-left: 12px;
-	font-size: 20px;
-	font-family: "HelveticaNeue-CondensedBold";
+	font-size: 24px;
+	font-family: "Condensed";
 }
 .window-icon {
 	height: 32px;
@@ -1265,8 +1296,8 @@ ol {
 }
 .window-title {
 	vertical-align: center;
-	margin: 0px 10px;
-	font-family: "HelveticaNeue-CondensedBold";
+	margin: 0px 12px;
+	font-family: "Condensed";
 	max-height: 32px;
 	overflow: hidden;
 	line-height: 12px;

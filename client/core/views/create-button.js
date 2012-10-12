@@ -18,7 +18,8 @@ define([], function () {
 		},
 		didInsertElement: function () {
 
-			if (this.get('entityType') === 'Flow') {
+			if (this.get('entityType') === 'Flow' ||
+				this.get('entityType') === 'Query') {
 				$(this.get('element')).hide();
 			}
 

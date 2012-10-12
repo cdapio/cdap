@@ -361,7 +361,7 @@ try {
 
 	};
 
-	this.upload = function (req, res, app, file, socket) {
+	this.upload = function (req, res, type, app, file, socket) {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
@@ -392,11 +392,12 @@ try {
 				console.log('FARService: ', error);
 				socket.emit('upload', {'error': 'Could not connect to FARService'});
 			});
-			
+
 			var FAR = thrift.createClient(FARService, conn);
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
 				'accountId': accountId,
 				'applicationId': app,
+				'type': flowservices_types.EntityType[type.toUpperCase()],
 				'filename': file,
 				'size': data.length,
 				'modtime': new Date().getTime()

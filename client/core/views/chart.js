@@ -92,7 +92,8 @@ define([], function () {
 				var metric = this.get('metric');
 				var color = this.get('color');
 
-				var height, width = parseInt(this.get('width'), 10) || 200,
+				var height = parseInt(this.get('height'), 10) || 70,
+					width = parseInt(this.get('width'), 10) || 200,
 					margin = 8, label, container;
 
 				if (entityType === "Flowlet") {
@@ -103,13 +104,12 @@ define([], function () {
 					
 					container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
 					width -= 52;
-					height = 70;
 
 				} else if (this.get('listMode') || entityType) {
 
 					this.set('listMode', true);
 
-					$(this.get('element')).addClass('blue');
+					$(this.get('element')).addClass(color || 'blue');
 					label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 					container = $('<div class="sparkline-list-container" />').appendTo(this.get('element'));
 					height = 34;
@@ -120,7 +120,7 @@ define([], function () {
 					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle(metric) + '</div>');
 					label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 					container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));
-					height = 70;
+
 				}
 
 				this.set('label', label);

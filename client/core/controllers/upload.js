@@ -7,10 +7,12 @@ define([], function () {
 	return Em.ArrayProxy.create({
 		content: [],
 		resource_identifier: null,
-		message: 'Drop a JAR File to Deploy',
 		fileQueue: [],
-		sendFiles: function (files) {
+		entityType: null,
+		sendFiles: function (files, type) {
 			
+			this.set('entityType', type);
+
 			this.fileQueue = [];
 			for (var i = 0; i < files.length; i ++) {
 				this.fileQueue.push(files[i]);
@@ -43,12 +45,13 @@ define([], function () {
 
 			});
 
-			xhr.open('POST', '/upload/' + applicationId + '/' + file.name, true);
+			xhr.open('POST', '/upload/' + this.get('entityType') + '/' + 
+				applicationId + '/' + file.name, true);
 			xhr.setRequestHeader("Content-type", "application/octet-stream");
 			xhr.send(file);
 
 		},
-		warningMessage: '',
+		message: '',
 		update: function (response) {
 
 			if (response.error) {
@@ -70,18 +73,20 @@ define([], function () {
 						this.set('message', response.status);
 					break;
 					case 5:
-						this.set('message', 'Drop a JAR File to Deploy');
+						this.set('message', '');
 						this.processing = false;
 						this.sendFile();
 					break;
 					default:
-						this.set('message', 'Drop a JAR File to Deploy');
+						this.set('message', '');
 						this.processing = false;
 						this.set('warningMessage', response.message);
 
 						C.Vw.Modal.show(
 							"Deployment Error",
-							response.message);
+							response.message, function () {
+								window.location.reload();
+							});
 
 				}
 			}

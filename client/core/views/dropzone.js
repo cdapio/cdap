@@ -3,12 +3,15 @@ define([
 	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile('{{controller.message}}'),
+		template: Em.Handlebars.compile('{{view.message}}'),
 		classNames: ['drop-zone'],
 		init: function () {
 			this._super();
 			this.set('controller', C.Ctl.Upload);
 		},
+		message: function () {
+			return 'Drop a ' + this.get('entityType');
+		}.property(),
 		didInsertElement: function () {
 
 			function ignoreDrag(e) {
@@ -16,16 +19,19 @@ define([
 				e.originalEvent.preventDefault();
 			}
 
+			var self = this;
 			var element = $(this.get('element'));
 
 			function drop (e) {
 				ignoreDrag(e);
 
 				element.removeClass('drop-zone-hover');
+				element.addClass('drop-zone-loading');
+				element.html('');
 
 				if (!C.Ctl.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
-					C.Ctl.Upload.sendFiles(dt.files);
+					C.Ctl.Upload.sendFiles(dt.files, self.get('entityType'));
 					$('#far-upload-alert').hide();
 				}
 			}
@@ -45,14 +51,11 @@ define([
 				})
 				.bind('drop', drop);
 
-			var self = this;
 			var file = $(this.get('element')).parent().parent().parent().find('input[type=file]');
 
 			file.change(function () {
 				
-				C.Ctl.Upload.sendFiles(
-					file[0].files
-				);
+				C.Ctl.Upload.sendFiles(file[0].files, self.get('entityType'));
 
 			});
 			

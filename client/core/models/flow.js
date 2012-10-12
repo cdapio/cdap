@@ -8,6 +8,8 @@ define([], function () {
 		metricNames: null,
 		__loadingData: false,
 		instances: 0,
+		type: 'Flow',
+		plural: 'Flows',
 		init: function() {
 			this._super();
 

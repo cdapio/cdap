@@ -9,7 +9,7 @@ define([], function () {
 		load: function (app) {
 
 			var self = this;
-			this.__remain = 3;
+			this.__remain = 4;
 
 			C.get('metadata', {
 				method: 'getApplication',
@@ -43,6 +43,14 @@ define([], function () {
 				self.__loaded();
 			});
 
+			C.Ctl.List.getObjects('Query', function (objects) {
+				if (!self.get('types.Query')) {
+					self.set('types.Query', Em.ArrayProxy.create({content: []}));
+				}
+				self.get('types.Query').pushObjects(objects);
+				self.__loaded();
+			});
+
 			C.Ctl.List.getObjects('Dataset', function (objects) {
 				if (!self.get('types.Dataset')) {
 					self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
@@ -65,7 +73,7 @@ define([], function () {
 		__timeout: null,
 		getStats: function () {
 
-			var self = this, types = ['Flow', 'Stream', 'Dataset'];
+			var self = this, types = ['Flow', 'Stream', 'Query', 'Dataset'];
 
 			if (this.get('current')) {
 

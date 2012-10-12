@@ -52,6 +52,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					app: Em.Route.extend({
 						route: '/:appId',
 						connectOutlets: function (router, context) {
+							console.log(context);
 							C.Ctl.Application.load(context.appId);
 							router.get('applicationController').connectOutlet({
 								viewClass: C.Vw.Application,
@@ -148,6 +149,39 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					enter: function () {
 						C.interstitial.show();
 					}
+				}),
+				queries: Em.Route.extend({
+					route: '/queries',
+					index: Em.Route.extend({
+						route: '/',
+						connectOutlets: function (router, context) {
+							C.Ctl.List.getObjects("Query");
+							router.get('applicationController').connectOutlet({
+								viewClass: C.Vw.ListPage,
+								controller: C.Ctl.List
+							});
+						},
+						navigateAway: function () {
+							C.Ctl.List.unload();
+						}
+					}),
+					query: Em.Route.extend({
+						route: '/:id',
+						connectOutlets: function (router, context) {
+							C.Ctl.Query.load(context.id);
+							router.get('applicationController').connectOutlet({
+								viewClass: C.Vw.Query,
+								controller: C.Ctl.Query
+							});
+						},
+						navigateAway: function () {
+							C.Ctl.Query.unload();
+						}
+					}),
+					enter: function () {
+						C.interstitial.show();
+					},
+
 				}),
 				datas: Em.Route.extend({
 					route: '/data',

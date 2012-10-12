@@ -7,8 +7,6 @@
   <meta name="description" content="">
   <meta name="author" content="Continuuity, Inc.">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-  
-  <link href='http://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="../assets/css/main.css">
@@ -30,10 +28,10 @@
     <ul>
       <li><a class="nav-link nav-dash" href="#">Dashboard</a></li>
       <li><a class="nav-link nav-apps" href="#/apps">Applications</a></li>
-      <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
       <li><a class="nav-link nav-streams" href="#/streams">Streams</a></li>
+      <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
+      <li><a class="nav-link nav-flows" href="#/queries">Queries</a></li>
       <li><a class="nav-link nav-datasets" href="#/data">Datasets</a></li>
-      <li><a class="nav-link nav-apps" href="#/queries">Queries</a></li>
     </ul>
   </div>
 
@@ -92,10 +90,10 @@
                 <a href="#/streams" class="dash-app-resource-stream">0</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/data" class="dash-app-resource-dataset">0</a>
+                <a href="#/queries" class="dash-app-resource-flow">0</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/data" class="dash-app-resource-app">0</a>
+                <a href="#/data" class="dash-app-resource-dataset">0</a>
               </td>
             </tr>
           </tbody>
@@ -108,8 +106,8 @@
           </thead>
           <tbody>
             <tr>
-              <td>{{view C.Vw.Chart listMode="true" width="335" metric="processed.count"}}</td>
-              <td>{{view C.Vw.Chart listMode="true" width="335" metric="storage.trend"}}</td>
+              <td>{{view C.Vw.Chart listMode="true" width="335" color="orange" metric="processed.count"}}</td>
+              <td>{{view C.Vw.Chart listMode="true" width="335" color="orange" metric="storage.trend"}}</td>
             </tr>
           </tbody>
         </table>
@@ -142,7 +140,10 @@
         </div>
       </div>
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Vw.DropZone viewName="dropzone"}}
+        {{view C.Vw.DropZone entityType="Flow"}}
+      </div>
+      <div class="info-box" style="float: right;border: 0;padding-right: 0;">
+        {{view C.Vw.DropZone entityType="Query"}}
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>
@@ -161,6 +162,10 @@
       <div class="panel">
         <div class="panel-head">{{view C.Vw.CreateButton entityType="Flow"}}<div class="panel-title">Flows</div></div>
         {{view C.Vw.FlowList}}
+      </div>
+      <div class="panel">
+        <div class="panel-head">{{view C.Vw.CreateButton entityType="Query"}}<div class="panel-title">Queries</div></div>
+        {{view C.Vw.QueryList}}
       </div>
       <div class="panel">
         <div class="panel-head">{{view C.Vw.CreateButton entityType="Dataset"}}<div class="panel-title">Datasets</div></div>

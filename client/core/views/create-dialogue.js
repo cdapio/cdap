@@ -6,12 +6,14 @@ define([
 	'lib/text!../partials/create/create-app.html',
 	'lib/text!../partials/create/create-stream.html',
 	'lib/text!../partials/create/create-flow.html',
+	'lib/text!../partials/create/create-query.html',
 	'lib/text!../partials/create/create-dataset.html'
-	], function (App, Stream, Flow, Dataset) {
+	], function (App, Stream, Flow, Query, Dataset) {
 	
 		Em.TEMPLATES['create-application'] = Em.Handlebars.compile(App);
 		Em.TEMPLATES['create-stream'] = Em.Handlebars.compile(Stream);
 		Em.TEMPLATES['create-flow'] = Em.Handlebars.compile(Flow);
+		Em.TEMPLATES['create-query'] = Em.Handlebars.compile(Query);
 		Em.TEMPLATES['create-dataset'] = Em.Handlebars.compile(Dataset);
 
 	return Em.View.extend({
