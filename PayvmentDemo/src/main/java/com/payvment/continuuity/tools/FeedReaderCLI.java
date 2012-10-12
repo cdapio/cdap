@@ -83,7 +83,7 @@ public class FeedReaderCLI {
     // Rest of args depends on method.  Check for clusterid first, then branch
     // on different feed types and do further parsing and call the exec method
 
-    String baseUrl = "http://" + args[0] + "/rest-query/feedreader/";
+    String baseUrl = "http://" + args[0] + "/query/feedreader/";
     int clusterid = parseInt(args[2]);
 
     if (args[1].equals("activity")) {

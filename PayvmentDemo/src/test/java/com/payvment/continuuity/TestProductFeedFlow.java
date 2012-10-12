@@ -37,9 +37,9 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
         getRegistry());
     CounterTable productUpdateCountTable = new CounterTable("productUpdates",
         getDataFabric(), getRegistry());
-    CounterTable allTimeScoreTable = new CounterTable("allTimeScore",
+    CounterTable allTimeScoreTable = new CounterTable("allTimeScores",
         getDataFabric(), getRegistry());
-    SortedCounterTable topScoreTable = new SortedCounterTable("topScore",
+    SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
         getDataFabric(), getRegistry(),
         new SortedCounterTable.SortedCounterConfig());
 

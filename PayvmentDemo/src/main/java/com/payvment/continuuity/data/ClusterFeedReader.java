@@ -44,7 +44,7 @@ public class ClusterFeedReader {
   public ClusterFeedReader(DataFabric fabric) {
     this.fabric = fabric;
     this.clusterTable = new ClusterTable(fabric, null);
-    this.topScoreTable = new SortedCounterTable("topScore", fabric, null,
+    this.topScoreTable = new SortedCounterTable("topScores", fabric, null,
         new SortedCounterTable.SortedCounterConfig());
   }
 
@@ -184,7 +184,6 @@ public class ClusterFeedReader {
       for (int i=0; i<numHours; i++) {
         Long hour = currentHour - (i * 3600000);
         hours.add(hour);
-        System.out.println("\nFEED READER LOOKING AT HOUR " + hour + "\n");
       }
       // Iterate hours
       for (Long hour : hours) {

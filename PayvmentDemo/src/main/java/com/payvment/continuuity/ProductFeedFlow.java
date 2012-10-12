@@ -91,9 +91,9 @@ public class ProductFeedFlow implements Flow {
           getFlowletContext());
       this.productUpdateCountTable = new CounterTable("productUpdates",
           getFlowletContext().getDataFabric(), getFlowletContext());
-      this.allTimeScoreTable = new CounterTable("allTimeScore",
+      this.allTimeScoreTable = new CounterTable("allTimeScores",
           getFlowletContext().getDataFabric(), getFlowletContext());
-      this.topScoreTable = new SortedCounterTable("topScore",
+      this.topScoreTable = new SortedCounterTable("topScores",
           getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
     }
@@ -153,7 +153,7 @@ public class ProductFeedFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.topScoreTable = new SortedCounterTable("topScore",
+      this.topScoreTable = new SortedCounterTable("topScores",
           getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
     }

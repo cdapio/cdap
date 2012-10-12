@@ -25,8 +25,6 @@ import com.payvment.continuuity.entity.SocialAction;
  */
 public class TestClusterFeeds extends FabricTestBase {
 
-  private static boolean skipCorrectnessTest = true;
-
   @Test
   public void testStreamsFlowsQueries() throws Exception {
 
@@ -70,8 +68,6 @@ public class TestClusterFeeds extends FabricTestBase {
     
     // Verify flow processing results using feed reader queries
     ClusterFeedReader feedReader = new ClusterFeedReader(getDataFabric());
-    
-    if (skipCorrectnessTest) return;
 
     // FIRST HOUR
     Long firstHour = 1349125200000L;
@@ -123,17 +119,18 @@ public class TestClusterFeeds extends FabricTestBase {
     // Every product has been liked N times where N is id.
     
     Long likeScore = SocialAction.SocialActionType.LIKE.getScore();
-    popFeed = feedReader.getPopularFeed(1, firstHour, 2, 15, 0);
+    popFeed = feedReader.getPopularFeed(1, secondHour, 2, 15, 0);
     popEntries = popFeed.getFeed(15);
     assertEquals(10, popEntries.size());
     Long product_id = 10L;
     for (PopularFeedEntry entry : popEntries) {
       assertEquals(product_id, entry.product_id);
       Long score = expectedScore + (product_id * likeScore);
-      assertEquals(score, entry.score);
+      assertEquals("For product_id " + product_id + ", expected score " + score
+          + " but found score " + entry.score, score, entry.score);
       product_id--;
     }
-    popFeed = feedReader.getPopularFeed(3, firstHour, 2, 15, 0);
+    popFeed = feedReader.getPopularFeed(3, secondHour, 2, 15, 0);
     popEntries = popFeed.getFeed(15);
     assertEquals(10, popEntries.size());
     product_id = 10L;
@@ -157,7 +154,7 @@ public class TestClusterFeeds extends FabricTestBase {
     assertDescendingTime(activityEntries);
     
     // Cluster 2 should still be empty
-    popFeed = feedReader.getPopularFeed(2, firstHour, 2, 15, 0);
+    popFeed = feedReader.getPopularFeed(2, secondHour, 2, 15, 0);
     popEntries = popFeed.getFeed(15);
     assertEquals(0, popEntries.size());
     activityFeed = feedReader.getActivityFeed(2, 15, thirdHour, firstHour);
@@ -168,7 +165,7 @@ public class TestClusterFeeds extends FabricTestBase {
     // Cluster 1 should not change at all, cluster 2 and 3 will have full checks
     
     // Verify cluster 1 is the same
-    popFeed = feedReader.getPopularFeed(1, firstHour, 2, 15, 0);
+    popFeed = feedReader.getPopularFeed(1, thirdHour, 3, 15, 0);
     popEntries = popFeed.getFeed(15);
     assertEquals(10, popEntries.size());
     product_id = 10L;
@@ -217,7 +214,7 @@ public class TestClusterFeeds extends FabricTestBase {
     activityFeed =
         feedReader.getActivityFeed(3, 15, Long.MAX_VALUE, firstHour);
     activityEntries = activityFeed.getEntireFeed();
-    assertEquals(14, activityEntries.size());
+    assertEquals(12, activityEntries.size());
     assertDescendingTime(activityEntries);
   }
 

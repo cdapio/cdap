@@ -29,7 +29,9 @@ import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
  *   <p>
  *   http://localhost:10010/rest-query/feedreader/readpopular?clusterid=3&numhours=24&limit=10
  * </pre>
+ * @Deprecated This has been replaced by {@link ClusterFeedQueryProvider}.
  */
+@Deprecated
 public class FeedQueryRestProvider extends QueryRestProvider {
 
   private static final Logger LOG =
