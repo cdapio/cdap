@@ -14,14 +14,15 @@ import java.util.List;
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataServiceImpl implements MetadataService.Iface {
+public class MetadataService implements
+    com.continuuity.metadata.stubs.MetadataService.Iface {
   private final MetaDataStore mds;
 
   /**
    * Construction of metadata service handler
    * @param opex instance of opex.
    */
-  public MetadataServiceImpl(OperationExecutor opex) {
+  public MetadataService(OperationExecutor opex) {
     this.mds = new SerializingMetaDataStore(opex);
   }
 
@@ -683,6 +684,233 @@ public class MetadataServiceImpl implements MetadataService.Iface {
     return application;
   }
 
+  /**
+   * Creates an query if not exists.
+   *
+   * @param account under which the query is created.
+   * @param query to be created.
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue with creating
+   *          metadata store entry for the query.
+   */
+  @Override
+  public boolean createQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Query id is empty or null.");
+    }
+
+    String description = "";
+    if(query.isSetDescription()) {
+      description = query.getDescription();
+    }
+
+    if(! query.isSetName()) {
+      throw new MetadataServiceException("Query name should be set for create");
+    }
+    String name = query.getName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Query name cannot be null or empty");
+    }
+
+    if(! query.isSetServiceName()) {
+      throw new MetadataServiceException("Query service name should be set for create");
+    }
+    String serviceName = query.getServiceName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Query service name cannot be null or empty");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Query.ID, id);
+      if(readEntry != null) {
+        return true;
+      }
+
+      // Create a new metadata entry.
+      MetaDataEntry entry = new MetaDataEntry(
+        accountId, null, FieldTypes.Query.ID, id
+      );
+
+      // Adding other fields.
+      entry.addField(FieldTypes.Query.NAME, name);
+      entry.addField(FieldTypes.Query.DESCRIPTION, description);
+      entry.addField(FieldTypes.Query.SERVICE_NAME, serviceName);
+      entry.addField(FieldTypes.Query.CREATE_DATE,
+                     String.format("%d", System.currentTimeMillis()));
+      // Invoke MDS to add entry.
+      mds.add(context, entry);
+    } catch (OperationException e) {
+      Log.warn("Failed creating query {}. Reason : {}",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Deletes an query if exists.
+   *
+   * @param account the query belongs to.
+   * @param query to be deleted.
+   * @return true if query was deleted successfully or did not exists to
+   *         be deleted; false otherwise.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue deleting an
+   *          query.
+   */
+  @Override
+  public boolean deleteQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application id is empty or null.");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Query.ID, id);
+
+      // If stream does not exist, then no point in deleting it.
+      if(readEntry == null) {
+        return true;
+      }
+
+      // Invoke MDS to delete entry.
+      mds.delete(context, accountId, null, FieldTypes.Query.ID, id);
+    } catch (OperationException e) {
+      Log.warn("Failed deleting query {}. Reason : {}",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Returns a list of query associated with account.
+   *
+   * @param account for which list of queries need to be retrieved.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue listing
+   *          queries for a account.
+   * @returns a list of queries associated with account; else empty list.
+   */
+  @Override
+  public List<Query> getQueries(Account account)
+    throws MetadataServiceException, TException {
+    List<Query> result = Lists.newArrayList();
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Invoke MDS to list streams for an account.
+      // NOTE: application is null and fields are null.
+      Collection<MetaDataEntry> queries =
+        mds.list(context, accountId, null, FieldTypes.Query.ID, null);
+      for(MetaDataEntry query : queries) {
+        Query rQuery = new Query(query.getId());
+        rQuery.setName(query.getTextField(FieldTypes.Query.NAME));
+        rQuery.setDescription(
+          query.getTextField(FieldTypes.Query.DESCRIPTION)
+        );
+        rQuery.setServiceName(
+          query.getTextField(FieldTypes.Query.SERVICE_NAME)
+        );
+        // More fields can be added later when we need them for now
+        // we just return id, name & description.
+        result.add(rQuery);
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed listing query for account {}. Reason : {}",
+               accountId, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return result;
+  }
+
+  /**
+   * Return more information about an query.
+   *
+   * @param account to the query belongs to.
+   * @param query requested for meta data.
+   * @return query meta data if exists; else the id passed.
+   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   *          thrown when there is issue retrieving
+   *          a queries from metadata store.
+   */
+  @Override
+  public Query getQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application does not have an id.");
+    }
+
+    try {
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry =
+        mds.get(context, accountId, null,
+                FieldTypes.Application.ID, id);
+
+      // Add description and name to stream and return.
+      if(entry != null) {
+        query.setName(entry.getTextField(
+          FieldTypes.Query.NAME
+        ));
+        query.setDescription(entry.getTextField(
+          FieldTypes.Query.DESCRIPTION
+        ));
+        query.setServiceName(entry.getTextField(
+          FieldTypes.Query.SERVICE_NAME
+        ));
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed to retrieve query {}. Reason : {}.",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return query;
+  }
   /**
    * Validates the account passed.
    *

@@ -37,4 +37,15 @@ public class FieldTypes {
     public static final String DESCRIPTION = "description";
     public static final String CREATE_DATE = "createDate";
   }
+
+  /**
+   * Class representing constants for fields stored for Query
+   */
+  public static class Query {
+    public static final String ID = "query";
+    public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
+    public static final String CREATE_DATE = "createDate";
+    public static final String SERVICE_NAME = "serviceName";
+  }
 }

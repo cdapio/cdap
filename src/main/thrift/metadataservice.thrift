@@ -48,6 +48,16 @@ struct Dataset {
 }
 
 /**
+ * Defines a query dataset.
+ */
+struct Query {
+   1: required string id,
+   2: optional string name,
+   3: optional string description,
+   4: optional string serviceName,
+}
+
+/**
  * Thrown when there is any issue that client should know about in
  * MetadataService.
  */
@@ -178,5 +188,46 @@ service MetadataService {
   * a application from metadata store.
   */
   Application getApplication(1: Account account, 2: Application application)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Creates an query if not exists.
+   *
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the query.
+   */
+  bool createQuery(1: Account account, 2: Query query)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Deletes an query if exists.
+   *
+   * @return true if query was deleted successfully or did not exists to
+   * be deleted; false otherwise.
+   * @throws MetadataServiceException thrown when there is issue deleting an
+   * query.
+   */
+  bool deleteQuery(1: Account account, 2: Query query)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Returns a list of query associated with account.
+   *
+   * @returns a list of query associated with account; else empty list.
+   * @throws MetadataServiceException thrown when there is issue listing
+   * query for a account.
+   */
+  list<Query> getQueries(1: Account account)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return more information about an query.
+  *
+  * @return query meta data if exists; else the id passed.
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a query from metadata store.
+  */
+  Query getQuery(1: Account account, 2: Query query)
     throws (1: MetadataServiceException e),
 }

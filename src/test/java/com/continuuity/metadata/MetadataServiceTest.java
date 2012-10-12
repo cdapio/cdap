@@ -17,12 +17,12 @@ import java.util.List;
 /**
  * Tests metadata service functionality.
  */
-public class MetadataServiceImplTest {
+public class MetadataServiceTest {
   /** Instance of operation executor */
   private static OperationExecutor opex;
 
   /** Instance of metadata service. */
-  private static MetadataServiceImpl mds;
+  private static MetadataService mds;
 
   /** Instance of account used for tests. */
   private static Account account;
@@ -34,7 +34,7 @@ public class MetadataServiceImplTest {
       new DataFabricModules().getInMemoryModules()
     );
     opex = injector.getInstance(OperationExecutor.class);
-    mds = new MetadataServiceImpl(opex);
+    mds = new MetadataService(opex);
     account = new Account("demo");
   }
 
@@ -168,6 +168,30 @@ public class MetadataServiceImplTest {
     Assert.assertTrue(dlist.size() == 0);
     Dataset dataset1 = mds.getDataset(account, dataset);
     Assert.assertNotNull(dataset1);
+  }
+
+  @Test
+  public void testCreateQuery() throws Exception {
+    Query query = new Query("query1");
+    query.setName("Query 1");
+    query.setServiceName("myname");
+    query.setDescription("test dataset");
+    Assert.assertTrue(mds.createQuery(account, query));
+    List<Query> dlist = mds.getQueries(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListQuery() throws Exception {
+    testCreateQuery(); // creates a dataset.
+    // Now delete it.
+    Query query = new Query("query1");
+    Assert.assertNotNull(mds.deleteQuery(account, query));
+    List<Query> qlist = mds.getQueries(account);
+    Assert.assertTrue(qlist.size() == 0);
+    Query query1 = mds.getQuery(account, query);
+    Assert.assertNotNull(query1);
   }
 
   /**
