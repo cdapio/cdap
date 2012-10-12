@@ -20,7 +20,7 @@ public class Helpers {
    * @return hour time bucket of specified timestamp in milliseconds
    */
   public static Long hour(Long timestamp) {
-    return timestamp % 3600000;
+    return timestamp - (timestamp % 3600000);
   }
 
   /**
