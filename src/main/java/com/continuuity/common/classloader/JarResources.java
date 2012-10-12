@@ -89,8 +89,10 @@ public final class JarResources {
         }
 
         // add to internal resource hashtable
-        htJarContents.put(ze.getName(),b);
-        LOG.debug(ze.getName() + " rb=" + rb + ",size=" + size + ",csize=" + ze.getCompressedSize());
+        String zename = ze.getName();
+        String rze = zename.replace("/", ".");
+        htJarContents.put(rze,b);
+        LOG.debug(rze + " rb=" + rb + ",size=" + size + ",csize=" + ze.getCompressedSize());
       }
     } catch (NullPointerException e){
       LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
