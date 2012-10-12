@@ -48,7 +48,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					}),
 					enter: function () {
 						C.interstitial.show();
-					},
+					}
 					app: Em.Route.extend({
 						route: '/:appId',
 						connectOutlets: function (router, context) {
