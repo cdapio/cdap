@@ -108,6 +108,67 @@ class GitRepo {
     }
 
     /**
+     * Tags a repo locally
+     */
+    void tag (String tag)
+    {
+        init();
+        File destination = new File(baseDir, dir);
+        if(destination.exists())
+        {
+            String cmd = "git tag " + tag;
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    /**
+     * Pushes a local tag to remote 
+     */
+    void pushTag (String tag)
+    {
+        init();
+        File destination = new File(baseDir, dir);
+        if(destination.exists())
+        {
+            String cmd = "git push origin " + tag;
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    /**
+     * Creates a branch from head locally
+     */
+    void branch (String branchName)
+    {
+        init();
+        File destination = new File(baseDir, dir);
+        if(destination.exists())
+        {
+            String cmd = "git checkout -b " + branchName;
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+    /**
+     * Pushes a local branch to remote 
+     */
+    void pushBranch (String branchName)
+    {
+        init();
+        File destination = new File(baseDir, dir);
+        if(destination.exists())
+        {
+            String cmd = "git push origin " + branchName;
+            println "$name: $cmd";
+            runCommand(cmd, destination);
+        }
+    }
+
+
+    /**
      * Runs a shell command.
      * @param cmd   the command to run.
      * @param dir   the working directory to use.
@@ -122,14 +183,19 @@ class GitRepo {
         processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
         BufferedReader cmdOut = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line = ""
-        while((line = cmdOut.readLine()) != null)
+        String errline = ""
+        while((errline = cmdOut.readLine()) != null)
         {
-            println line;
+            println errline;
         }
         if(p.waitFor() != 0)
         {
             println "Command failed: $cmd";
+            BufferedReader stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            String line = null;
+            while ((line = stderr.readLine()) != null) {
+                println line;
+            }
             throw new Exception("Command failed: $cmd");
         }
     }

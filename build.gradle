@@ -88,6 +88,84 @@ subprojects {
 }
 
 
+task gitTagAll {
+    group = 'ReleaseAdmin'
+    description = 'Tags continuuity master and all subproject repos locally with provided tag.  Must specify -PtagName=<tag>'
+    doLast {
+        if (! project.hasProperty('tagName')) {
+            throw new InvalidUserDataException("you are trying to tag all subproject repos, but tagName property is null.  You must supply argument \"-PtagName=<tag>\"")
+        }
+        masterRepo.tag(tagName)
+        for (g in gitRepos) {
+            g.tag(tagName)
+        }
+    }
+}
 
 
+task gitPushTagAll {
+    group = 'ReleaseAdmin'
+    description = 'Pushes a local tag to remote repo for all continuuity master and subproject repos.  Must specify -PtagName=<tag>'
+    doLast {
+        if (! project.hasProperty('tagName')) {
+            throw new InvalidUserDataException("you are trying to push a tag for all subproject repos, but tagName property is null.  You must supply argument \"-PtagName=<tag>\"")
+        }
+        masterRepo.pushTag(tagName)
+        for (g in gitRepos) {
+            g.pushTag(tagName)
+        }
+    }
+}
+
+
+task gitBranchAll {
+    group = 'ReleaseAdmin'
+    description = 'Branch continuuity master and all subproject repos locally with provided branch.  Must specify -PbranchName=<branch>'
+    doLast {
+        if (! project.hasProperty('branchName')) {
+            throw new InvalidUserDataException("you are trying to branch all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+        }
+        masterRepo.branch(branchName)
+        for (g in gitRepos) {
+            g.branch(branchName)
+        }
+    }
+}
+
+task gitPushBranchAll {
+    group = 'ReleaseAdmin'
+    description = 'Pushes a local branch to remote repo for all continuuity master and subproject repos.  Must specify -PbranchName=<branch>'
+    doLast {
+        if (! project.hasProperty('branchName')) {
+            throw new InvalidUserDataException("you are trying to push a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+        }
+        masterRepo.pushBranch(branchName)
+        for (g in gitRepos) {
+            g.pushBranch(branchName)
+        }
+    }
+}
+
+
+task gitCheckoutBranch {
+    group = 'ReleaseAdmin'
+    description = 'Checkouts specified branch on continuuity and all subproject repos.  Must specify -PbranchName=<branch>'    
+    doLast {
+        if (! project.hasProperty('branchName')) {
+            throw new InvalidUserDataException("you are trying to checkout a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+        }
+
+        ext.gitReposBranch = []
+        ext.masterRepoBranch = new GitRepo(name: "continuuity", dir: ".", branch: branchName)
+        subprojects.each {project ->
+            print project.name + "\n"
+            gitReposBranch << new GitRepo(name: project.name, branch: branchName)
+        }
+        masterRepoBranch.checkout();
+        for (g in gitReposBranch) {
+            g.checkout();
+        }
+
+    }
+}
 
