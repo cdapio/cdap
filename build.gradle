@@ -48,7 +48,6 @@ dependencies {
     compile "org.apache.avro:avro-ipc:$avroVersion"
     compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
     compile "org.apache.flume:flume-ng-core:$flumeVersion"
-    compile "com.payvment.continuuity:payvment:1.0-SNAPSHOT"
 }
 
 /**
