@@ -45,6 +45,8 @@ define([], function () {
 				params: [app, id]
 			}, function (error, response) {
 
+				response.params.applicationId = app;
+
 				self.set('current', C.Mdl.Flow.create(response.params));
 
 				var flowlets = response.params.flowlets;
@@ -57,7 +59,6 @@ define([], function () {
 				self.set('types.Flowlet', Em.ArrayProxy.create({content: objects}));
 				
 				C.router.applicationController.view.visualizer.drawGraph();
-
 
 				C.get('manager', {
 					method: 'getFlowHistory',

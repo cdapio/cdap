@@ -72,7 +72,7 @@ define([], function () {
 				
 			}.observes('model.__loadingData'),
 			__titles: {
-				'processed.count': 'Processed',
+				'processed.count': 'Processing Rate',
 				'tuples.read.count': 'Tuples Read',
 				'emitted.count': 'Tuples Emitted',
 				'dataops.count': 'Data Operations',

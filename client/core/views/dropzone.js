@@ -16,8 +16,12 @@ define([
 				e.originalEvent.preventDefault();
 			}
 
+			var element = $(this.get('element'));
+
 			function drop (e) {
 				ignoreDrag(e);
+
+				element.removeClass('drop-zone-hover');
 
 				if (!C.Ctl.Upload.processing) {
 					var dt = e.originalEvent.dataTransfer;
@@ -25,8 +29,6 @@ define([
 					$('#far-upload-alert').hide();
 				}
 			}
-
-			var element = $(this.get('element'));
 
 			$(this.get('element'))
 				.bind('dragenter', function (e) {

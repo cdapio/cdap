@@ -96,8 +96,8 @@ try {
 		
 		var Manager = thrift.createClient(FlowService, conn);
 		var identifier = new flowservices_types.FlowIdentifier({
-			app: params[1],
-			flow: params[2],
+			applicationId: params[1],
+			flowId: params[2],
 			version: params[3] ? parseInt(params[3], 10) : -1,
 			accountId: params[0]
 		});
@@ -106,8 +106,8 @@ try {
 			case 'start':
 				identifier = new flowservices_types.FlowDescriptor({
 					identifier: new flowservices_types.FlowIdentifier({
-						app: params[1],
-						flow: params[2],
+						applicationId: params[1],
+						flowId: params[2],
 						version: parseInt(params[3], 10),
 						accountId: 'demo'
 					}),
@@ -266,7 +266,8 @@ try {
 					var flow = new metricsservice_types.FlowArgument({
 						accountId: 'demo',
 						applicationId: params[0],
-						flowId: params[1]
+						flowId: params[1],
+						runId: params[2]
 					});
 					var request = new metricsservice_types.CounterRequest({
 						argument: flow
@@ -360,7 +361,7 @@ try {
 
 	};
 
-	this.upload = function (req, res, file, socket) {
+	this.upload = function (req, res, app, file, socket) {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
@@ -369,14 +370,12 @@ try {
 		var data = new Buffer(parseInt(length, 10));
 		var idx = 0;
 
-		console.log('Receiving file upload of length', length);
-
 		req.on('data', function(raw) {
 			raw.copy(data, idx);
 			idx += raw.length;
 		});
 
-		console.log(file);
+		var accountId = 'demo';
 
 		req.on('end', function() {
 
@@ -396,6 +395,8 @@ try {
 			
 			var FAR = thrift.createClient(FARService, conn);
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
+				'accountId': accountId,
+				'applicationId': app,
 				'filename': file,
 				'size': data.length,
 				'modtime': new Date().getTime()

@@ -226,14 +226,14 @@
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
-          <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
+          <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
           
-          <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
+          <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
-          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.meta.app"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
+          <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
 
         </div>
-        <div class="flow-state"><strong>{{current.currentState}}</strong><br /><span>{{current.started}}</span></div>
+        <div class="flow-state"><strong>{{current.currentState}}</strong></div>
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>

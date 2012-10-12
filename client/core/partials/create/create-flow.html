@@ -5,6 +5,14 @@
 <div class="modal-body">
 	<table style="width: 100%">
 		<tr>
+			<td>
+				Select an App
+			</td>
+			<td>
+				{{view Ember.Select valueBinding="form.app" contentBinding="availableApps"}}
+			</td>
+		</tr>
+		<tr>
 			<td style="width:100px;">
 				Drop a File
 			</td>

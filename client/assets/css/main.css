@@ -7,6 +7,7 @@ body {
 	background-color: #fff;
 	height: 100%;
 	font-family: "Helvetica Neue";
+	cursor: default;
 }
 
 .table th, .table td {
@@ -366,18 +367,18 @@ h1 span {
 }
 .sparkline-flowlet-container {
 	background-image: url(../img/flowlet-sparkline-bg.png);
-	margin-right: 50px;
+	margin-right: 64px;
 	height: 76px;
 }
 .sparkline-flowlet-title {
-	margin-right: 50px;
+	margin-right: 64px;
 	font-family: "HelveticaNeue-CondensedBold";
 	color: #FFF;
 	text-transform: uppercase;
 	padding: 2px 4px;
 }
 .sparkline-flowlet-value {
-	width: 45px;
+	width: 60px;
 	height: 60px;
 	float: right;
 	border-left: 1px solid #83cce1;
@@ -841,6 +842,7 @@ a strong {
 	text-align: center;
 	z-index: 40;
 	margin-top: 36px;
+	padding-top: 100px;
 }
 #interstitial * {
 	padding-top: 24px;
@@ -909,14 +911,14 @@ a strong {
 
 .flow-state {
 	float: right;
-	padding-top: 26px;
+	padding-top: 36px;
 	padding-right: 16px;
-	width: 100px;
+	width: 120px;
 	text-align: right;
 }
 .flow-state strong {
 	color: #40AFD0;
-	font-size: 24px;
+	font-size: 30px;
 	font-weight: 500;
 	font-family: "HelveticaNeue-CondensedBold";
 }

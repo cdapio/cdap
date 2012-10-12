@@ -358,6 +358,104 @@ Dataset.prototype.write = function(output) {
   return;
 };
 
+var Query = module.exports.Query = function(args) {
+  this.id = null;
+  this.name = null;
+  this.description = null;
+  this.serviceName = null;
+  if (args) {
+    if (args.id !== undefined) {
+      this.id = args.id;
+    }
+    if (args.name !== undefined) {
+      this.name = args.name;
+    }
+    if (args.description !== undefined) {
+      this.description = args.description;
+    }
+    if (args.serviceName !== undefined) {
+      this.serviceName = args.serviceName;
+    }
+  }
+};
+Query.prototype = {};
+Query.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.id = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.name = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.description = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.STRING) {
+        this.serviceName = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Query.prototype.write = function(output) {
+  output.writeStructBegin('Query');
+  if (this.id) {
+    output.writeFieldBegin('id', Thrift.Type.STRING, 1);
+    output.writeString(this.id);
+    output.writeFieldEnd();
+  }
+  if (this.name) {
+    output.writeFieldBegin('name', Thrift.Type.STRING, 2);
+    output.writeString(this.name);
+    output.writeFieldEnd();
+  }
+  if (this.description) {
+    output.writeFieldBegin('description', Thrift.Type.STRING, 3);
+    output.writeString(this.description);
+    output.writeFieldEnd();
+  }
+  if (this.serviceName) {
+    output.writeFieldBegin('serviceName', Thrift.Type.STRING, 4);
+    output.writeString(this.serviceName);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var MetadataServiceException = module.exports.MetadataServiceException = function(args) {
   Thrift.TException.call(this, "MetadataServiceException")
   this.name = "MetadataServiceException"

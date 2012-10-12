@@ -23,6 +23,8 @@ define([], function () {
 
 		sendFile: function () {
 
+			var applicationId = C.Ctl.Application.current.id;
+
 			var file = this.fileQueue.shift();
 			if (file === undefined) {
 				window.location.reload();
@@ -41,7 +43,7 @@ define([], function () {
 
 			});
 
-			xhr.open('POST', '/upload/' + file.name, true);
+			xhr.open('POST', '/upload/' + applicationId + '/' + file.name, true);
 			xhr.setRequestHeader("Content-type", "application/octet-stream");
 			xhr.send(file);
 
@@ -68,12 +70,12 @@ define([], function () {
 						this.set('message', response.status);
 					break;
 					case 5:
-						this.set('message', 'Drop JAR or Click to Browse');
+						this.set('message', 'Drop a JAR File to Deploy');
 						this.processing = false;
 						this.sendFile();
 					break;
 					default:
-						this.set('message', 'Drop JAR or Click to Browse');
+						this.set('message', 'Drop a JAR File to Deploy');
 						this.processing = false;
 						this.set('warningMessage', response.message);
 				}

@@ -67,7 +67,8 @@ define([], function () {
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;
 				response.params.type = 'Flow';
-				
+				response.params.applicationId = app;
+
 				self.set('current', C.Mdl.Flow.create(response.params));
 	
 				var flowlets = response.params.flowlets;
@@ -114,7 +115,7 @@ define([], function () {
 		refresh: function () {
 
 			var self = this;
-			var app = this.get('current').get('meta').app;
+			var app = this.get('current').applicationId;
 			var id = this.get('current').get('meta').name;
 
 			if (this.__pending) {
@@ -153,7 +154,7 @@ define([], function () {
 				return;
 			}
 
-			var app = this.get('current').get('meta').app;
+			var app = this.get('current').applicationId;
 			var id = this.get('current').get('meta').name;
 
 			if (self.get('current').get('currentState') !== 'RUNNING') {

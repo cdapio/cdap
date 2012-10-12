@@ -1658,6 +1658,556 @@ MetadataService_getApplication_result.prototype.write = function(output) {
   return;
 };
 
+var MetadataService_createQuery_args = function(args) {
+  this.account = null;
+  this.query = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.query !== undefined) {
+      this.query = args.query;
+    }
+  }
+};
+MetadataService_createQuery_args.prototype = {};
+MetadataService_createQuery_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.query = new ttypes.Query();
+        this.query.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_createQuery_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_createQuery_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.query) {
+    output.writeFieldBegin('query', Thrift.Type.STRUCT, 2);
+    this.query.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_createQuery_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_createQuery_result.prototype = {};
+MetadataService_createQuery_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_createQuery_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_createQuery_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_deleteQuery_args = function(args) {
+  this.account = null;
+  this.query = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.query !== undefined) {
+      this.query = args.query;
+    }
+  }
+};
+MetadataService_deleteQuery_args.prototype = {};
+MetadataService_deleteQuery_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.query = new ttypes.Query();
+        this.query.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteQuery_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteQuery_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.query) {
+    output.writeFieldBegin('query', Thrift.Type.STRUCT, 2);
+    this.query.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_deleteQuery_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_deleteQuery_result.prototype = {};
+MetadataService_deleteQuery_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteQuery_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteQuery_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getQueries_args = function(args) {
+  this.account = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+  }
+};
+MetadataService_getQueries_args.prototype = {};
+MetadataService_getQueries_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getQueries_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getQueries_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getQueries_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getQueries_result.prototype = {};
+MetadataService_getQueries_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size24 = 0;
+        var _rtmp328;
+        this.success = [];
+        var _etype27 = 0;
+        _rtmp328 = input.readListBegin();
+        _etype27 = _rtmp328.etype;
+        _size24 = _rtmp328.size;
+        for (var _i29 = 0; _i29 < _size24; ++_i29)
+        {
+          var elem30 = null;
+          elem30 = new ttypes.Query();
+          elem30.read(input);
+          this.success.push(elem30);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getQueries_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getQueries_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter31 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter31))
+      {
+        iter31 = this.success[iter31];
+        iter31.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getQuery_args = function(args) {
+  this.account = null;
+  this.query = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.query !== undefined) {
+      this.query = args.query;
+    }
+  }
+};
+MetadataService_getQuery_args.prototype = {};
+MetadataService_getQuery_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.query = new ttypes.Query();
+        this.query.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getQuery_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getQuery_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.query) {
+    output.writeFieldBegin('query', Thrift.Type.STRUCT, 2);
+    this.query.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getQuery_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getQuery_result.prototype = {};
+MetadataService_getQuery_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.Query();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getQuery_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getQuery_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var MetadataServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -2118,6 +2668,157 @@ MetadataServiceClient.prototype.recv_getApplication = function(input,mtype,rseqi
   }
   return callback('getApplication failed: unknown result');
 };
+MetadataServiceClient.prototype.createQuery = function(account, query, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_createQuery(account, query);
+};
+
+MetadataServiceClient.prototype.send_createQuery = function(account, query) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('createQuery', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_createQuery_args();
+  args.account = account;
+  args.query = query;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_createQuery = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_createQuery_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('createQuery failed: unknown result');
+};
+MetadataServiceClient.prototype.deleteQuery = function(account, query, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_deleteQuery(account, query);
+};
+
+MetadataServiceClient.prototype.send_deleteQuery = function(account, query) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('deleteQuery', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_deleteQuery_args();
+  args.account = account;
+  args.query = query;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_deleteQuery = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_deleteQuery_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('deleteQuery failed: unknown result');
+};
+MetadataServiceClient.prototype.getQueries = function(account, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getQueries(account);
+};
+
+MetadataServiceClient.prototype.send_getQueries = function(account) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getQueries', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getQueries_args();
+  args.account = account;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getQueries = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getQueries_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getQueries failed: unknown result');
+};
+MetadataServiceClient.prototype.getQuery = function(account, query, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getQuery(account, query);
+};
+
+MetadataServiceClient.prototype.send_getQuery = function(account, query) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getQuery', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getQuery_args();
+  args.account = account;
+  args.query = query;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getQuery = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getQuery_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getQuery failed: unknown result');
+};
 var MetadataServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -2298,6 +2999,62 @@ MetadataServiceProcessor.prototype.process_getApplication = function(seqid, inpu
   this._handler.getApplication(args.account, args.application, function (success) {
     result.success = success;
     output.writeMessageBegin("getApplication", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_createQuery = function(seqid, input, output) {
+  var args = new MetadataService_createQuery_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_createQuery_result();
+  this._handler.createQuery(args.account, args.query, function (success) {
+    result.success = success;
+    output.writeMessageBegin("createQuery", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_deleteQuery = function(seqid, input, output) {
+  var args = new MetadataService_deleteQuery_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_deleteQuery_result();
+  this._handler.deleteQuery(args.account, args.query, function (success) {
+    result.success = success;
+    output.writeMessageBegin("deleteQuery", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getQueries = function(seqid, input, output) {
+  var args = new MetadataService_getQueries_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getQueries_result();
+  this._handler.getQueries(args.account, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getQueries", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getQuery = function(seqid, input, output) {
+  var args = new MetadataService_getQuery_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getQuery_result();
+  this._handler.getQuery(args.account, args.query, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getQuery", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

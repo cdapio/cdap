@@ -22,6 +22,9 @@ define([
 		entityType: null,
 		form: {type: null},
 		datasetTypes: ['BASIC', 'TIME_SERIES', 'COUNTER', 'CSV'],
+		availableApps: function () {
+
+		},
 		__idWasModified: false,
 		__idHelper: function () {
 			var id = this.form.name.toLowerCase().replace(/'/g, '').replace(/\W/g, '-');
