@@ -22,7 +22,7 @@ dependencies {
         compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
         compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
         compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'gateway', version: '${version}'
+        compile group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true
     }
 }
 
