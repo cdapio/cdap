@@ -150,7 +150,7 @@ public class MetadataServiceTest {
   public void testCreateDataset() throws Exception {
     Dataset dataset = new Dataset("dataset1");
     dataset.setName("Data Set1");
-    dataset.setType(DatasetType.COUNTER);
+    dataset.setType(DatasetType.COUNTER.getValue());
     dataset.setDescription("test dataset");
     Assert.assertTrue(mds.createDataset(account, dataset));
     List<Dataset> dlist = mds.getDatasets(account);
