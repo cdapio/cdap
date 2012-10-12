@@ -10,23 +10,6 @@ buildscript {
  */
 dependencies {
 
-    // Internal dependencies.
-//    if(multiModule && ! buildingRelease)
-//    {
-//        compile project(":common")
-//        compile project(":gateway")
-//        compile project(":overlord")
-//        compile fileTree(dir: '../flow/build/libs', excludes:['**/*source*', '**/*javadoc**'])
-//        compile fileTree(dir: '../data-fabric/build/libs', excludes:['**/*source*', '**/*javadoc**'])
-//    }
-//    else
-//    {
-        //runtime group: 'com.continuuity', name: 'common', version: "${version}", changing: true
-        //runtime group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
-        //runtime group: 'com.continuuity', name: 'flow', version: "${version}", changing: true
-        //runtime group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true
-        //runtime group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true
-//    }
 }
 
 evaluationDependsOn(':singlenode')
@@ -88,9 +71,10 @@ task singlenode_stage_bin (type: Copy) {
     exclude 'far-server'
     exclude 'run-java'
     exclude 'flow-config.sh'
-    exclude 'flow-client'
     exclude 'service'
     exclude 'dfbench'
+    exclude 'event-gen'
+    exclude 'flume-client'
     exclude 'common*'
     def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
     cp += ":\$APP_HOME/conf/"
