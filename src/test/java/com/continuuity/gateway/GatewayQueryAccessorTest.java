@@ -1,6 +1,8 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.query.QueryProvider;
+import com.continuuity.api.query.QueryProviderContentType;
+import com.continuuity.api.query.QueryProviderResponse;
 import com.continuuity.api.query.QuerySpecifier;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
@@ -113,19 +115,19 @@ public class GatewayQueryAccessorTest {
     @Override
     public void configure(QuerySpecifier specifier) {
       specifier.service("HelloWorld");
-      specifier.contentType("text/plain");
+      specifier.type(QueryProviderContentType.TEXT);
       specifier.provider(HelloWorldQueryProvider.class);
     }
 
     @Override
-    public String process(String method, Map<String, String> arguments) {
+    public QueryProviderResponse process(String method, Map<String, String> arguments) {
       StringBuffer sb = new StringBuffer();
       sb.append("method : ").append(method).append(" [ ");
       for(Map.Entry<String, String> argument : arguments.entrySet()) {
         sb.append(argument.getKey()).append("=").append(argument.getValue());
       }
       sb.append(" ] ");
-      return sb.toString();
+      return new QueryProviderResponse(sb.toString());
     }
   }
 
