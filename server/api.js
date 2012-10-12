@@ -333,7 +333,7 @@ try {
 		var post_options = {
 		host: this.config['gateway.hostname'],
 		port: this.config['gateway.port'],
-		path: '/rest-stream/' + params.name + (params.stream ? '/' + params.stream : ''),
+		path: '/rest-stream' + (params.stream ? '/' + params.stream : ''),
 		method: 'POST',
 		headers: {
 			'com.continuuity.token': 'TOKEN',

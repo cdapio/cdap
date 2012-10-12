@@ -136,8 +136,9 @@ function(Models, Views, Controllers){
 
 				var vis = widget
 					.append("svg:svg")
-					.attr("width", w)
-					.attr("height", h);
+					.attr('width', '100%')
+					.attr('height', '100%')
+					.attr('preserveAspectRatio', 'none');
 
 				var g = vis.append("svg:g");
 				var line = d3.svg.line().interpolate("basis")
