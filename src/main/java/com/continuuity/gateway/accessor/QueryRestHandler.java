@@ -133,32 +133,37 @@ public class QueryRestHandler extends NettyRestHandler {
 
     // decompose the response
     int status = response.getStatusLine().getStatusCode();
-    HttpEntity entity = response.getEntity();
-    int contentLength = (int)entity.getContentLength();
-    String contentType = entity.getContentType().getValue();
     byte[] content = null;
-    if (contentLength > 0) {
-      InputStream contentStream = entity.getContent();
-      byte[] bytes = new byte[contentLength];
-      int bytesRead;
-      for (bytesRead = 0; bytesRead < contentLength; ) {
-        int numBytes = contentStream.read(bytes, bytesRead,
-            contentLength - bytesRead);
-        if (numBytes < 0) break;
-        bytesRead += numBytes;
+    String contentType = null;
+    HttpEntity entity = response.getEntity();
+    if (entity != null) {
+      if (entity.getContentType() != null)
+          contentType = entity.getContentType().getValue();
+      int contentLength = (int)entity.getContentLength();
+      if (contentLength > 0) {
+        InputStream contentStream = entity.getContent();
+        byte[] bytes = new byte[contentLength];
+        int bytesRead;
+        for (bytesRead = 0; bytesRead < contentLength; ) {
+          int numBytes = contentStream.read(bytes, bytesRead,
+              contentLength - bytesRead);
+          if (numBytes < 0) break;
+          bytesRead += numBytes;
+        }
+        contentStream.close();
+        if (bytesRead == contentLength)
+          content = bytes;
+        else
+          content = Arrays.copyOf(bytes, bytesRead);
       }
-      contentStream.close();
-      if (bytesRead == contentLength)
-        content = bytes;
-      else
-        content = Arrays.copyOf(bytes, bytesRead);
     }
     client.getConnectionManager().shutdown();
 
     // return result from provider
     respond(message.getChannel(), request,
         HttpResponseStatus.valueOf(status),
-        Collections.singletonMap(HttpHeaders.Names.CONTENT_TYPE, contentType),
+        contentType == null ? null : Collections.
+            singletonMap(HttpHeaders.Names.CONTENT_TYPE, contentType),
         content);
   }
 
@@ -168,6 +173,7 @@ public class QueryRestHandler extends NettyRestHandler {
     metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
     LOG.error("Exception caught for connector '" +
         this.accessor.getName() + "'. ", e.getCause());
+    respondError(ctx.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
     e.getChannel().close();
   }
 }

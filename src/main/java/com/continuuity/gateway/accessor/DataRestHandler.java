@@ -444,6 +444,7 @@ public class DataRestHandler extends NettyRestHandler {
     metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
     LOG.error("Exception caught for connector '" +
         this.accessor.getName() + "'. ", e.getCause());
+    respondError(ctx.getChannel(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
     e.getChannel().close();
   }
 }
