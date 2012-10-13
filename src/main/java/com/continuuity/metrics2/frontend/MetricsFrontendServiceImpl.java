@@ -133,21 +133,21 @@ public class MetricsFrontendServiceImpl
       String runIdInclusion = null;
       if(request.getArgument() != null &&
         request.getArgument().isSetRunId()) {
-        runIdInclusion = String.format("runid = '%s'",
+        runIdInclusion = String.format("run_id = '%s'",
           request.getArgument().getRunId());
       }
 
       // If metric name list is zero, then we return all the metrics.
       StringBuffer sql = new StringBuffer();
       if(request.getName() == null || request.getName().size() == 0) {
-        sql.append("SELECT flowlet_id, metric, SUM(values) AS aggr_value");
+        sql.append("SELECT flowlet_id, metric, SUM(value) AS aggr_value");
         sql.append(" ");
         sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
         sql.append(" ");
-        sql.append("AND flow = ?");
+        sql.append("AND flow_id = ?");
         sql.append(" ");
         if(runIdInclusion != null) {
-          sql.append(runIdInclusion).append(" ");
+          sql.append("AND").append(" ").append(runIdInclusion).append(" ");
         }
         sql.append("GROUP BY flowlet_id, metric");
       } else {
@@ -163,14 +163,14 @@ public class MetricsFrontendServiceImpl
 
         // Join each with comma (,) as seperator.
         String values = Joiner.on(",").join(iterator);
-        sql.append("SELECT flowlet_id, metric, SUM(values) AS aggr_value");
+        sql.append("SELECT flowlet_id, metric, SUM(value) AS aggr_value");
         sql.append(" ");
         sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
         sql.append(" ");
-        sql.append("AND flow = ?");
+        sql.append("AND flow_id = ?");
         sql.append(" ");
         if(runIdInclusion != null) {
-          sql.append(runIdInclusion).append(" ");
+          sql.append("AND").append(" ").append(runIdInclusion).append(" ");
         }
         sql.append("metric in (").append(values).append(")").append(" ");
         sql.append("GROUP BY flowlet_id, metric");
