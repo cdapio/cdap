@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metrics2.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -495,7 +496,39 @@ public class FlowArgument implements org.apache.thrift.TBase<FlowArgument, FlowA
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_accountId = true && (isSetAccountId());
+    builder.append(present_accountId);
+    if (present_accountId)
+      builder.append(accountId);
+
+    boolean present_applicationId = true && (isSetApplicationId());
+    builder.append(present_applicationId);
+    if (present_applicationId)
+      builder.append(applicationId);
+
+    boolean present_flowId = true && (isSetFlowId());
+    builder.append(present_flowId);
+    if (present_flowId)
+      builder.append(flowId);
+
+    boolean present_runId = true && (isSetRunId());
+    builder.append(present_runId);
+    if (present_runId)
+      builder.append(runId);
+
+    boolean present_flowletId = true && (isSetFlowletId());
+    builder.append(present_flowletId);
+    if (present_flowletId)
+      builder.append(flowletId);
+
+    boolean present_instanceId = true && (isSetInstanceId());
+    builder.append(present_instanceId);
+    if (present_instanceId)
+      builder.append(instanceId);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(FlowArgument other) {

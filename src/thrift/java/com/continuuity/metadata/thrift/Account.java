@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metadata.stubs;
+package com.continuuity.metadata.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
@@ -22,19 +22,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Thrown when there is any issue that client should know about in
- * MetadataService.
+ * Defines a account
  */
-public class MetadataServiceException extends Exception implements org.apache.thrift.TBase<MetadataServiceException, MetadataServiceException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MetadataServiceException");
+public class Account implements org.apache.thrift.TBase<Account, Account._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Account");
 
-  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
 
-  private String message; // required
+  private String id; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    MESSAGE((short)1, "message");
+    ID((short)1, "id");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -49,8 +48,8 @@ public class MetadataServiceException extends Exception implements org.apache.th
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // MESSAGE
-          return MESSAGE;
+        case 1: // ID
+          return ID;
         default:
           return null;
       }
@@ -95,70 +94,70 @@ public class MetadataServiceException extends Exception implements org.apache.th
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MetadataServiceException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Account.class, metaDataMap);
   }
 
-  public MetadataServiceException() {
+  public Account() {
   }
 
-  public MetadataServiceException(
-    String message)
+  public Account(
+    String id)
   {
     this();
-    this.message = message;
+    this.id = id;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public MetadataServiceException(MetadataServiceException other) {
-    if (other.isSetMessage()) {
-      this.message = other.message;
+  public Account(Account other) {
+    if (other.isSetId()) {
+      this.id = other.id;
     }
   }
 
-  public MetadataServiceException deepCopy() {
-    return new MetadataServiceException(this);
+  public Account deepCopy() {
+    return new Account(this);
   }
 
   @Override
   public void clear() {
-    this.message = null;
+    this.id = null;
   }
 
-  public String getMessage() {
-    return this.message;
+  public String getId() {
+    return this.id;
   }
 
-  public void setMessage(String message) {
-    this.message = message;
+  public void setId(String id) {
+    this.id = id;
   }
 
-  public void unsetMessage() {
-    this.message = null;
+  public void unsetId() {
+    this.id = null;
   }
 
-  /** Returns true if field message is set (has been assigned a value) and false otherwise */
-  public boolean isSetMessage() {
-    return this.message != null;
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return this.id != null;
   }
 
-  public void setMessageIsSet(boolean value) {
+  public void setIdIsSet(boolean value) {
     if (!value) {
-      this.message = null;
+      this.id = null;
     }
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case MESSAGE:
+    case ID:
       if (value == null) {
-        unsetMessage();
+        unsetId();
       } else {
-        setMessage((String)value);
+        setId((String)value);
       }
       break;
 
@@ -167,8 +166,8 @@ public class MetadataServiceException extends Exception implements org.apache.th
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case MESSAGE:
-      return getMessage();
+    case ID:
+      return getId();
 
     }
     throw new IllegalStateException();
@@ -181,8 +180,8 @@ public class MetadataServiceException extends Exception implements org.apache.th
     }
 
     switch (field) {
-    case MESSAGE:
-      return isSetMessage();
+    case ID:
+      return isSetId();
     }
     throw new IllegalStateException();
   }
@@ -191,21 +190,21 @@ public class MetadataServiceException extends Exception implements org.apache.th
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof MetadataServiceException)
-      return this.equals((MetadataServiceException)that);
+    if (that instanceof Account)
+      return this.equals((Account)that);
     return false;
   }
 
-  public boolean equals(MetadataServiceException that) {
+  public boolean equals(Account that) {
     if (that == null)
       return false;
 
-    boolean this_present_message = true && this.isSetMessage();
-    boolean that_present_message = true && that.isSetMessage();
-    if (this_present_message || that_present_message) {
-      if (!(this_present_message && that_present_message))
+    boolean this_present_id = true && this.isSetId();
+    boolean that_present_id = true && that.isSetId();
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
         return false;
-      if (!this.message.equals(that.message))
+      if (!this.id.equals(that.id))
         return false;
     }
 
@@ -216,28 +215,28 @@ public class MetadataServiceException extends Exception implements org.apache.th
   public int hashCode() {
     HashCodeBuilder builder = new HashCodeBuilder();
 
-    boolean present_message = true && (isSetMessage());
-    builder.append(present_message);
-    if (present_message)
-      builder.append(message);
+    boolean present_id = true && (isSetId());
+    builder.append(present_id);
+    if (present_id)
+      builder.append(id);
 
     return builder.toHashCode();
   }
 
-  public int compareTo(MetadataServiceException other) {
+  public int compareTo(Account other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    MetadataServiceException typedOther = (MetadataServiceException)other;
+    Account typedOther = (Account)other;
 
-    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMessage()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -259,9 +258,9 @@ public class MetadataServiceException extends Exception implements org.apache.th
         break;
       }
       switch (field.id) {
-        case 1: // MESSAGE
+        case 1: // ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.message = iprot.readString();
+            this.id = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -279,9 +278,9 @@ public class MetadataServiceException extends Exception implements org.apache.th
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.message != null) {
-      oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
-      oprot.writeString(this.message);
+    if (this.id != null) {
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeString(this.id);
       oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
@@ -290,14 +289,14 @@ public class MetadataServiceException extends Exception implements org.apache.th
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("MetadataServiceException(");
+    StringBuilder sb = new StringBuilder("Account(");
     boolean first = true;
 
-    sb.append("message:");
-    if (this.message == null) {
+    sb.append("id:");
+    if (this.id == null) {
       sb.append("null");
     } else {
-      sb.append(this.message);
+      sb.append(this.id);
     }
     first = false;
     sb.append(")");

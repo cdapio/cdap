@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metadata.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -21,10 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Thrown when there is any issue that client should know about in MetricsService.
+ * Thrown when there is any issue that client should know about in
+ * MetadataService.
  */
-public class MetricsServiceException extends Exception implements org.apache.thrift.TBase<MetricsServiceException, MetricsServiceException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MetricsServiceException");
+public class MetadataServiceException extends Exception implements org.apache.thrift.TBase<MetadataServiceException, MetadataServiceException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MetadataServiceException");
 
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
 
@@ -96,13 +98,13 @@ public class MetricsServiceException extends Exception implements org.apache.thr
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MetricsServiceException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MetadataServiceException.class, metaDataMap);
   }
 
-  public MetricsServiceException() {
+  public MetadataServiceException() {
   }
 
-  public MetricsServiceException(
+  public MetadataServiceException(
     String message)
   {
     this();
@@ -112,14 +114,14 @@ public class MetricsServiceException extends Exception implements org.apache.thr
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public MetricsServiceException(MetricsServiceException other) {
+  public MetadataServiceException(MetadataServiceException other) {
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  public MetricsServiceException deepCopy() {
-    return new MetricsServiceException(this);
+  public MetadataServiceException deepCopy() {
+    return new MetadataServiceException(this);
   }
 
   @Override
@@ -189,12 +191,12 @@ public class MetricsServiceException extends Exception implements org.apache.thr
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof MetricsServiceException)
-      return this.equals((MetricsServiceException)that);
+    if (that instanceof MetadataServiceException)
+      return this.equals((MetadataServiceException)that);
     return false;
   }
 
-  public boolean equals(MetricsServiceException that) {
+  public boolean equals(MetadataServiceException that) {
     if (that == null)
       return false;
 
@@ -212,16 +214,23 @@ public class MetricsServiceException extends Exception implements org.apache.thr
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_message = true && (isSetMessage());
+    builder.append(present_message);
+    if (present_message)
+      builder.append(message);
+
+    return builder.toHashCode();
   }
 
-  public int compareTo(MetricsServiceException other) {
+  public int compareTo(MetadataServiceException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    MetricsServiceException typedOther = (MetricsServiceException)other;
+    MetadataServiceException typedOther = (MetadataServiceException)other;
 
     lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
@@ -281,7 +290,7 @@ public class MetricsServiceException extends Exception implements org.apache.thr
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("MetricsServiceException(");
+    StringBuilder sb = new StringBuilder("MetadataServiceException(");
     boolean first = true;
 
     sb.append("message:");

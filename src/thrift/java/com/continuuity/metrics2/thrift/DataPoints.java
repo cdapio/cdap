@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metrics2.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
                 new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataPoint.class)))));
-    tmpMap.put(_Fields.LATEST, new org.apache.thrift.meta_data.FieldMetaData("latest", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.LATEST, new org.apache.thrift.meta_data.FieldMetaData("latest", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE))));
@@ -115,10 +116,12 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
   }
 
   public DataPoints(
-    Map<String,List<DataPoint>> points)
+    Map<String,List<DataPoint>> points,
+    Map<String,Double> latest)
   {
     this();
     this.points = points;
+    this.latest = latest;
   }
 
   /**
@@ -322,7 +325,19 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_points = true && (isSetPoints());
+    builder.append(present_points);
+    if (present_points)
+      builder.append(points);
+
+    boolean present_latest = true && (isSetLatest());
+    builder.append(present_latest);
+    if (present_latest)
+      builder.append(latest);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(DataPoints other) {
@@ -453,19 +468,17 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       oprot.writeFieldEnd();
     }
     if (this.latest != null) {
-      if (isSetLatest()) {
-        oprot.writeFieldBegin(LATEST_FIELD_DESC);
+      oprot.writeFieldBegin(LATEST_FIELD_DESC);
+      {
+        oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.latest.size()));
+        for (Map.Entry<String, Double> _iter17 : this.latest.entrySet())
         {
-          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.latest.size()));
-          for (Map.Entry<String, Double> _iter17 : this.latest.entrySet())
-          {
-            oprot.writeString(_iter17.getKey());
-            oprot.writeDouble(_iter17.getValue());
-          }
-          oprot.writeMapEnd();
+          oprot.writeString(_iter17.getKey());
+          oprot.writeDouble(_iter17.getValue());
         }
-        oprot.writeFieldEnd();
+        oprot.writeMapEnd();
       }
+      oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -483,16 +496,14 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       sb.append(this.points);
     }
     first = false;
-    if (isSetLatest()) {
-      if (!first) sb.append(", ");
-      sb.append("latest:");
-      if (this.latest == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.latest);
-      }
-      first = false;
+    if (!first) sb.append(", ");
+    sb.append("latest:");
+    if (this.latest == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.latest);
     }
+    first = false;
     sb.append(")");
     return sb.toString();
   }

@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metrics2.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -531,7 +532,39 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_argument = true && (isSetArgument());
+    builder.append(present_argument);
+    if (present_argument)
+      builder.append(argument);
+
+    boolean present_metrics = true && (isSetMetrics());
+    builder.append(present_metrics);
+    if (present_metrics)
+      builder.append(metrics);
+
+    boolean present_level = true && (isSetLevel());
+    builder.append(present_level);
+    if (present_level)
+      builder.append(level.getValue());
+
+    boolean present_startts = true && (isSetStartts());
+    builder.append(present_startts);
+    if (present_startts)
+      builder.append(startts);
+
+    boolean present_endts = true;
+    builder.append(present_endts);
+    if (present_endts)
+      builder.append(endts);
+
+    boolean present_summary = true && (isSetSummary());
+    builder.append(present_summary);
+    if (present_summary)
+      builder.append(summary);
+
+    return builder.toHashCode();
   }
 
   public int compareTo(TimeseriesRequest other) {

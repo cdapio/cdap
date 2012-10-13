@@ -10,7 +10,7 @@ import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.OverlordMetricsReporter;
 import com.continuuity.metrics2.collector.MetricsCollectionServerInterface;
 import com.continuuity.metrics2.frontend.MetricsFrontendServiceImpl;
-import com.continuuity.metrics2.stubs.*;
+import com.continuuity.metrics2.thrift.*;
 import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

@@ -4,18 +4,15 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.metrics2.common.DBUtils;
-import com.continuuity.metrics2.stubs.*;
-import com.continuuity.metrics2.stubs.MetricsFrontendService;
+import com.continuuity.metrics2.thrift.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.thrift.TException;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,7 +110,7 @@ public class MetricsFrontendServiceImpl
   }
 
   /**
-   * Retrieves the counters as per the {@link CounterRequest} specification.
+   * Retrieves the counters as per the {@link com.continuuity.metrics2.thrift.CounterRequest} specification.
    *
    * @param request for counters.
    * @return list of {@link Counter}

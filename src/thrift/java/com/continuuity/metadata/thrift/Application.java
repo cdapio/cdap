@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metadata.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -21,21 +22,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Defines a request to be made to server.
+ * Defines a application
  */
-public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, CounterRequest._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("CounterRequest");
+public class Application implements org.apache.thrift.TBase<Application, Application._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Application");
 
-  private static final org.apache.thrift.protocol.TField ARGUMENT_FIELD_DESC = new org.apache.thrift.protocol.TField("argument", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.LIST, (short)2);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
 
-  private FlowArgument argument; // required
-  private List<String> name; // required
+  private String id; // required
+  private String name; // required
+  private String description; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ARGUMENT((short)1, "argument"),
-    NAME((short)2, "name");
+    ID((short)1, "id"),
+    NAME((short)2, "name"),
+    DESCRIPTION((short)3, "description");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -50,10 +54,12 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // ARGUMENT
-          return ARGUMENT;
+        case 1: // ID
+          return ID;
         case 2: // NAME
           return NAME;
+        case 3: // DESCRIPTION
+          return DESCRIPTION;
         default:
           return null;
       }
@@ -98,94 +104,80 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ARGUMENT, new org.apache.thrift.meta_data.FieldMetaData("argument", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowArgument.class)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(CounterRequest.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Application.class, metaDataMap);
   }
 
-  public CounterRequest() {
+  public Application() {
   }
 
-  public CounterRequest(
-    FlowArgument argument)
+  public Application(
+    String id)
   {
     this();
-    this.argument = argument;
+    this.id = id;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public CounterRequest(CounterRequest other) {
-    if (other.isSetArgument()) {
-      this.argument = new FlowArgument(other.argument);
+  public Application(Application other) {
+    if (other.isSetId()) {
+      this.id = other.id;
     }
     if (other.isSetName()) {
-      List<String> __this__name = new ArrayList<String>();
-      for (String other_element : other.name) {
-        __this__name.add(other_element);
-      }
-      this.name = __this__name;
+      this.name = other.name;
+    }
+    if (other.isSetDescription()) {
+      this.description = other.description;
     }
   }
 
-  public CounterRequest deepCopy() {
-    return new CounterRequest(this);
+  public Application deepCopy() {
+    return new Application(this);
   }
 
   @Override
   public void clear() {
-    this.argument = null;
+    this.id = null;
     this.name = null;
+    this.description = null;
   }
 
-  public FlowArgument getArgument() {
-    return this.argument;
+  public String getId() {
+    return this.id;
   }
 
-  public void setArgument(FlowArgument argument) {
-    this.argument = argument;
+  public void setId(String id) {
+    this.id = id;
   }
 
-  public void unsetArgument() {
-    this.argument = null;
+  public void unsetId() {
+    this.id = null;
   }
 
-  /** Returns true if field argument is set (has been assigned a value) and false otherwise */
-  public boolean isSetArgument() {
-    return this.argument != null;
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return this.id != null;
   }
 
-  public void setArgumentIsSet(boolean value) {
+  public void setIdIsSet(boolean value) {
     if (!value) {
-      this.argument = null;
+      this.id = null;
     }
   }
 
-  public int getNameSize() {
-    return (this.name == null) ? 0 : this.name.size();
-  }
-
-  public java.util.Iterator<String> getNameIterator() {
-    return (this.name == null) ? null : this.name.iterator();
-  }
-
-  public void addToName(String elem) {
-    if (this.name == null) {
-      this.name = new ArrayList<String>();
-    }
-    this.name.add(elem);
-  }
-
-  public List<String> getName() {
+  public String getName() {
     return this.name;
   }
 
-  public void setName(List<String> name) {
+  public void setName(String name) {
     this.name = name;
   }
 
@@ -204,13 +196,36 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
     }
   }
 
+  public String getDescription() {
+    return this.description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void unsetDescription() {
+    this.description = null;
+  }
+
+  /** Returns true if field description is set (has been assigned a value) and false otherwise */
+  public boolean isSetDescription() {
+    return this.description != null;
+  }
+
+  public void setDescriptionIsSet(boolean value) {
+    if (!value) {
+      this.description = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case ARGUMENT:
+    case ID:
       if (value == null) {
-        unsetArgument();
+        unsetId();
       } else {
-        setArgument((FlowArgument)value);
+        setId((String)value);
       }
       break;
 
@@ -218,7 +233,15 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
       if (value == null) {
         unsetName();
       } else {
-        setName((List<String>)value);
+        setName((String)value);
+      }
+      break;
+
+    case DESCRIPTION:
+      if (value == null) {
+        unsetDescription();
+      } else {
+        setDescription((String)value);
       }
       break;
 
@@ -227,11 +250,14 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case ARGUMENT:
-      return getArgument();
+    case ID:
+      return getId();
 
     case NAME:
       return getName();
+
+    case DESCRIPTION:
+      return getDescription();
 
     }
     throw new IllegalStateException();
@@ -244,10 +270,12 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
     }
 
     switch (field) {
-    case ARGUMENT:
-      return isSetArgument();
+    case ID:
+      return isSetId();
     case NAME:
       return isSetName();
+    case DESCRIPTION:
+      return isSetDescription();
     }
     throw new IllegalStateException();
   }
@@ -256,21 +284,21 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof CounterRequest)
-      return this.equals((CounterRequest)that);
+    if (that instanceof Application)
+      return this.equals((Application)that);
     return false;
   }
 
-  public boolean equals(CounterRequest that) {
+  public boolean equals(Application that) {
     if (that == null)
       return false;
 
-    boolean this_present_argument = true && this.isSetArgument();
-    boolean that_present_argument = true && that.isSetArgument();
-    if (this_present_argument || that_present_argument) {
-      if (!(this_present_argument && that_present_argument))
+    boolean this_present_id = true && this.isSetId();
+    boolean that_present_id = true && that.isSetId();
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
         return false;
-      if (!this.argument.equals(that.argument))
+      if (!this.id.equals(that.id))
         return false;
     }
 
@@ -283,28 +311,54 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
         return false;
     }
 
+    boolean this_present_description = true && this.isSetDescription();
+    boolean that_present_description = true && that.isSetDescription();
+    if (this_present_description || that_present_description) {
+      if (!(this_present_description && that_present_description))
+        return false;
+      if (!this.description.equals(that.description))
+        return false;
+    }
+
     return true;
   }
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_id = true && (isSetId());
+    builder.append(present_id);
+    if (present_id)
+      builder.append(id);
+
+    boolean present_name = true && (isSetName());
+    builder.append(present_name);
+    if (present_name)
+      builder.append(name);
+
+    boolean present_description = true && (isSetDescription());
+    builder.append(present_description);
+    if (present_description)
+      builder.append(description);
+
+    return builder.toHashCode();
   }
 
-  public int compareTo(CounterRequest other) {
+  public int compareTo(Application other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    CounterRequest typedOther = (CounterRequest)other;
+    Application typedOther = (Application)other;
 
-    lastComparison = Boolean.valueOf(isSetArgument()).compareTo(typedOther.isSetArgument());
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetArgument()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.argument, typedOther.argument);
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -315,6 +369,16 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
     }
     if (isSetName()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetDescription()).compareTo(typedOther.isSetDescription());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetDescription()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.description, typedOther.description);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -336,27 +400,23 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
         break;
       }
       switch (field.id) {
-        case 1: // ARGUMENT
-          if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
-            this.argument = new FlowArgument();
-            this.argument.read(iprot);
+        case 1: // ID
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.id = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // NAME
-          if (field.type == org.apache.thrift.protocol.TType.LIST) {
-            {
-              org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-              this.name = new ArrayList<String>(_list0.size);
-              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-              {
-                String _elem2; // required
-                _elem2 = iprot.readString();
-                this.name.add(_elem2);
-              }
-              iprot.readListEnd();
-            }
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.name = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // DESCRIPTION
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.description = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -374,22 +434,22 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.argument != null) {
-      oprot.writeFieldBegin(ARGUMENT_FIELD_DESC);
-      this.argument.write(oprot);
+    if (this.id != null) {
+      oprot.writeFieldBegin(ID_FIELD_DESC);
+      oprot.writeString(this.id);
       oprot.writeFieldEnd();
     }
     if (this.name != null) {
       if (isSetName()) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.name.size()));
-          for (String _iter3 : this.name)
-          {
-            oprot.writeString(_iter3);
-          }
-          oprot.writeListEnd();
-        }
+        oprot.writeString(this.name);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (this.description != null) {
+      if (isSetDescription()) {
+        oprot.writeFieldBegin(DESCRIPTION_FIELD_DESC);
+        oprot.writeString(this.description);
         oprot.writeFieldEnd();
       }
     }
@@ -399,14 +459,14 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("CounterRequest(");
+    StringBuilder sb = new StringBuilder("Application(");
     boolean first = true;
 
-    sb.append("argument:");
-    if (this.argument == null) {
+    sb.append("id:");
+    if (this.id == null) {
       sb.append("null");
     } else {
-      sb.append(this.argument);
+      sb.append(this.id);
     }
     first = false;
     if (isSetName()) {
@@ -419,12 +479,26 @@ public class CounterRequest implements org.apache.thrift.TBase<CounterRequest, C
       }
       first = false;
     }
+    if (isSetDescription()) {
+      if (!first) sb.append(", ");
+      sb.append("description:");
+      if (this.description == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.description);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
+    if (!isSetId()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' is unset! Struct:" + toString());
+    }
+
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {

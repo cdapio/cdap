@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metadata.stubs;
+package com.continuuity.metadata.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
@@ -22,31 +22,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Defines a dataset
+ * Defines a Stream
  */
-public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Dataset");
+public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Stream");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField CAPACITY_IN_BYTES_FIELD_DESC = new org.apache.thrift.protocol.TField("capacityInBytes", org.apache.thrift.protocol.TType.I64, (short)4);
+  private static final org.apache.thrift.protocol.TField EXPIRY_IN_SECONDS_FIELD_DESC = new org.apache.thrift.protocol.TField("expiryInSeconds", org.apache.thrift.protocol.TType.I64, (short)5);
 
   private String id; // required
   private String name; // required
   private String description; // required
-  private DatasetType type; // required
+  private long capacityInBytes; // required
+  private long expiryInSeconds; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
     DESCRIPTION((short)3, "description"),
-    /**
-     * 
-     * @see DatasetType
-     */
-    TYPE((short)4, "type");
+    CAPACITY_IN_BYTES((short)4, "capacityInBytes"),
+    EXPIRY_IN_SECONDS((short)5, "expiryInSeconds");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -67,8 +66,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
           return NAME;
         case 3: // DESCRIPTION
           return DESCRIPTION;
-        case 4: // TYPE
-          return TYPE;
+        case 4: // CAPACITY_IN_BYTES
+          return CAPACITY_IN_BYTES;
+        case 5: // EXPIRY_IN_SECONDS
+          return EXPIRY_IN_SECONDS;
         default:
           return null;
       }
@@ -109,6 +110,9 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   }
 
   // isset id assignments
+  private static final int __CAPACITYINBYTES_ISSET_ID = 0;
+  private static final int __EXPIRYINSECONDS_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -119,16 +123,18 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, DatasetType.class)));
+    tmpMap.put(_Fields.CAPACITY_IN_BYTES, new org.apache.thrift.meta_data.FieldMetaData("capacityInBytes", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.EXPIRY_IN_SECONDS, new org.apache.thrift.meta_data.FieldMetaData("expiryInSeconds", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Dataset.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Stream.class, metaDataMap);
   }
 
-  public Dataset() {
+  public Stream() {
   }
 
-  public Dataset(
+  public Stream(
     String id)
   {
     this();
@@ -138,7 +144,9 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Dataset(Dataset other) {
+  public Stream(Stream other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetId()) {
       this.id = other.id;
     }
@@ -148,13 +156,12 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (other.isSetDescription()) {
       this.description = other.description;
     }
-    if (other.isSetType()) {
-      this.type = other.type;
-    }
+    this.capacityInBytes = other.capacityInBytes;
+    this.expiryInSeconds = other.expiryInSeconds;
   }
 
-  public Dataset deepCopy() {
-    return new Dataset(this);
+  public Stream deepCopy() {
+    return new Stream(this);
   }
 
   @Override
@@ -162,7 +169,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     this.id = null;
     this.name = null;
     this.description = null;
-    this.type = null;
+    setCapacityInBytesIsSet(false);
+    this.capacityInBytes = 0;
+    setExpiryInSecondsIsSet(false);
+    this.expiryInSeconds = 0;
   }
 
   public String getId() {
@@ -234,35 +244,48 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     }
   }
 
-  /**
-   * 
-   * @see DatasetType
-   */
-  public DatasetType getType() {
-    return this.type;
+  public long getCapacityInBytes() {
+    return this.capacityInBytes;
   }
 
-  /**
-   * 
-   * @see DatasetType
-   */
-  public void setType(DatasetType type) {
-    this.type = type;
+  public void setCapacityInBytes(long capacityInBytes) {
+    this.capacityInBytes = capacityInBytes;
+    setCapacityInBytesIsSet(true);
   }
 
-  public void unsetType() {
-    this.type = null;
+  public void unsetCapacityInBytes() {
+    __isset_bit_vector.clear(__CAPACITYINBYTES_ISSET_ID);
   }
 
-  /** Returns true if field type is set (has been assigned a value) and false otherwise */
-  public boolean isSetType() {
-    return this.type != null;
+  /** Returns true if field capacityInBytes is set (has been assigned a value) and false otherwise */
+  public boolean isSetCapacityInBytes() {
+    return __isset_bit_vector.get(__CAPACITYINBYTES_ISSET_ID);
   }
 
-  public void setTypeIsSet(boolean value) {
-    if (!value) {
-      this.type = null;
-    }
+  public void setCapacityInBytesIsSet(boolean value) {
+    __isset_bit_vector.set(__CAPACITYINBYTES_ISSET_ID, value);
+  }
+
+  public long getExpiryInSeconds() {
+    return this.expiryInSeconds;
+  }
+
+  public void setExpiryInSeconds(long expiryInSeconds) {
+    this.expiryInSeconds = expiryInSeconds;
+    setExpiryInSecondsIsSet(true);
+  }
+
+  public void unsetExpiryInSeconds() {
+    __isset_bit_vector.clear(__EXPIRYINSECONDS_ISSET_ID);
+  }
+
+  /** Returns true if field expiryInSeconds is set (has been assigned a value) and false otherwise */
+  public boolean isSetExpiryInSeconds() {
+    return __isset_bit_vector.get(__EXPIRYINSECONDS_ISSET_ID);
+  }
+
+  public void setExpiryInSecondsIsSet(boolean value) {
+    __isset_bit_vector.set(__EXPIRYINSECONDS_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -291,11 +314,19 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       }
       break;
 
-    case TYPE:
+    case CAPACITY_IN_BYTES:
       if (value == null) {
-        unsetType();
+        unsetCapacityInBytes();
       } else {
-        setType((DatasetType)value);
+        setCapacityInBytes((Long)value);
+      }
+      break;
+
+    case EXPIRY_IN_SECONDS:
+      if (value == null) {
+        unsetExpiryInSeconds();
+      } else {
+        setExpiryInSeconds((Long)value);
       }
       break;
 
@@ -313,8 +344,11 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     case DESCRIPTION:
       return getDescription();
 
-    case TYPE:
-      return getType();
+    case CAPACITY_IN_BYTES:
+      return Long.valueOf(getCapacityInBytes());
+
+    case EXPIRY_IN_SECONDS:
+      return Long.valueOf(getExpiryInSeconds());
 
     }
     throw new IllegalStateException();
@@ -333,8 +367,10 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
-    case TYPE:
-      return isSetType();
+    case CAPACITY_IN_BYTES:
+      return isSetCapacityInBytes();
+    case EXPIRY_IN_SECONDS:
+      return isSetExpiryInSeconds();
     }
     throw new IllegalStateException();
   }
@@ -343,12 +379,12 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Dataset)
-      return this.equals((Dataset)that);
+    if (that instanceof Stream)
+      return this.equals((Stream)that);
     return false;
   }
 
-  public boolean equals(Dataset that) {
+  public boolean equals(Stream that) {
     if (that == null)
       return false;
 
@@ -379,12 +415,21 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         return false;
     }
 
-    boolean this_present_type = true && this.isSetType();
-    boolean that_present_type = true && that.isSetType();
-    if (this_present_type || that_present_type) {
-      if (!(this_present_type && that_present_type))
+    boolean this_present_capacityInBytes = true && this.isSetCapacityInBytes();
+    boolean that_present_capacityInBytes = true && that.isSetCapacityInBytes();
+    if (this_present_capacityInBytes || that_present_capacityInBytes) {
+      if (!(this_present_capacityInBytes && that_present_capacityInBytes))
         return false;
-      if (!this.type.equals(that.type))
+      if (this.capacityInBytes != that.capacityInBytes)
+        return false;
+    }
+
+    boolean this_present_expiryInSeconds = true && this.isSetExpiryInSeconds();
+    boolean that_present_expiryInSeconds = true && that.isSetExpiryInSeconds();
+    if (this_present_expiryInSeconds || that_present_expiryInSeconds) {
+      if (!(this_present_expiryInSeconds && that_present_expiryInSeconds))
+        return false;
+      if (this.expiryInSeconds != that.expiryInSeconds)
         return false;
     }
 
@@ -410,21 +455,26 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
     if (present_description)
       builder.append(description);
 
-    boolean present_type = true && (isSetType());
-    builder.append(present_type);
-    if (present_type)
-      builder.append(type.getValue());
+    boolean present_capacityInBytes = true && (isSetCapacityInBytes());
+    builder.append(present_capacityInBytes);
+    if (present_capacityInBytes)
+      builder.append(capacityInBytes);
+
+    boolean present_expiryInSeconds = true && (isSetExpiryInSeconds());
+    builder.append(present_expiryInSeconds);
+    if (present_expiryInSeconds)
+      builder.append(expiryInSeconds);
 
     return builder.toHashCode();
   }
 
-  public int compareTo(Dataset other) {
+  public int compareTo(Stream other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Dataset typedOther = (Dataset)other;
+    Stream typedOther = (Stream)other;
 
     lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
@@ -456,12 +506,22 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
+    lastComparison = Boolean.valueOf(isSetCapacityInBytes()).compareTo(typedOther.isSetCapacityInBytes());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetType()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
+    if (isSetCapacityInBytes()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.capacityInBytes, typedOther.capacityInBytes);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetExpiryInSeconds()).compareTo(typedOther.isSetExpiryInSeconds());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetExpiryInSeconds()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.expiryInSeconds, typedOther.expiryInSeconds);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -504,9 +564,18 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // TYPE
-          if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.type = DatasetType.findByValue(iprot.readI32());
+        case 4: // CAPACITY_IN_BYTES
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
+            this.capacityInBytes = iprot.readI64();
+            setCapacityInBytesIsSet(true);
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // EXPIRY_IN_SECONDS
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
+            this.expiryInSeconds = iprot.readI64();
+            setExpiryInSecondsIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -543,12 +612,15 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
         oprot.writeFieldEnd();
       }
     }
-    if (this.type != null) {
-      if (isSetType()) {
-        oprot.writeFieldBegin(TYPE_FIELD_DESC);
-        oprot.writeI32(this.type.getValue());
-        oprot.writeFieldEnd();
-      }
+    if (isSetCapacityInBytes()) {
+      oprot.writeFieldBegin(CAPACITY_IN_BYTES_FIELD_DESC);
+      oprot.writeI64(this.capacityInBytes);
+      oprot.writeFieldEnd();
+    }
+    if (isSetExpiryInSeconds()) {
+      oprot.writeFieldBegin(EXPIRY_IN_SECONDS_FIELD_DESC);
+      oprot.writeI64(this.expiryInSeconds);
+      oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -556,7 +628,7 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Dataset(");
+    StringBuilder sb = new StringBuilder("Stream(");
     boolean first = true;
 
     sb.append("id:");
@@ -586,14 +658,16 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
       }
       first = false;
     }
-    if (isSetType()) {
+    if (isSetCapacityInBytes()) {
       if (!first) sb.append(", ");
-      sb.append("type:");
-      if (this.type == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.type);
-      }
+      sb.append("capacityInBytes:");
+      sb.append(this.capacityInBytes);
+      first = false;
+    }
+    if (isSetExpiryInSeconds()) {
+      if (!first) sb.append(", ");
+      sb.append("expiryInSeconds:");
+      sb.append(this.expiryInSeconds);
       first = false;
     }
     sb.append(")");
@@ -618,6 +692,8 @@ public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);

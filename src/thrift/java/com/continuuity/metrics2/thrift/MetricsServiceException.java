@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metadata.stubs;
+package com.continuuity.metrics2.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
@@ -22,18 +22,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Defines a account
+ * Thrown when there is any issue that client should know about in MetricsService.
  */
-public class Account implements org.apache.thrift.TBase<Account, Account._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Account");
+public class MetricsServiceException extends Exception implements org.apache.thrift.TBase<MetricsServiceException, MetricsServiceException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("MetricsServiceException");
 
-  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
 
-  private String id; // required
+  private String message; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    ID((short)1, "id");
+    MESSAGE((short)1, "message");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -48,8 +48,8 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // ID
-          return ID;
+        case 1: // MESSAGE
+          return MESSAGE;
         default:
           return null;
       }
@@ -94,70 +94,70 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Account.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(MetricsServiceException.class, metaDataMap);
   }
 
-  public Account() {
+  public MetricsServiceException() {
   }
 
-  public Account(
-    String id)
+  public MetricsServiceException(
+    String message)
   {
     this();
-    this.id = id;
+    this.message = message;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Account(Account other) {
-    if (other.isSetId()) {
-      this.id = other.id;
+  public MetricsServiceException(MetricsServiceException other) {
+    if (other.isSetMessage()) {
+      this.message = other.message;
     }
   }
 
-  public Account deepCopy() {
-    return new Account(this);
+  public MetricsServiceException deepCopy() {
+    return new MetricsServiceException(this);
   }
 
   @Override
   public void clear() {
-    this.id = null;
+    this.message = null;
   }
 
-  public String getId() {
-    return this.id;
+  public String getMessage() {
+    return this.message;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setMessage(String message) {
+    this.message = message;
   }
 
-  public void unsetId() {
-    this.id = null;
+  public void unsetMessage() {
+    this.message = null;
   }
 
-  /** Returns true if field id is set (has been assigned a value) and false otherwise */
-  public boolean isSetId() {
-    return this.id != null;
+  /** Returns true if field message is set (has been assigned a value) and false otherwise */
+  public boolean isSetMessage() {
+    return this.message != null;
   }
 
-  public void setIdIsSet(boolean value) {
+  public void setMessageIsSet(boolean value) {
     if (!value) {
-      this.id = null;
+      this.message = null;
     }
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case ID:
+    case MESSAGE:
       if (value == null) {
-        unsetId();
+        unsetMessage();
       } else {
-        setId((String)value);
+        setMessage((String)value);
       }
       break;
 
@@ -166,8 +166,8 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case ID:
-      return getId();
+    case MESSAGE:
+      return getMessage();
 
     }
     throw new IllegalStateException();
@@ -180,8 +180,8 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
     }
 
     switch (field) {
-    case ID:
-      return isSetId();
+    case MESSAGE:
+      return isSetMessage();
     }
     throw new IllegalStateException();
   }
@@ -190,21 +190,21 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Account)
-      return this.equals((Account)that);
+    if (that instanceof MetricsServiceException)
+      return this.equals((MetricsServiceException)that);
     return false;
   }
 
-  public boolean equals(Account that) {
+  public boolean equals(MetricsServiceException that) {
     if (that == null)
       return false;
 
-    boolean this_present_id = true && this.isSetId();
-    boolean that_present_id = true && that.isSetId();
-    if (this_present_id || that_present_id) {
-      if (!(this_present_id && that_present_id))
+    boolean this_present_message = true && this.isSetMessage();
+    boolean that_present_message = true && that.isSetMessage();
+    if (this_present_message || that_present_message) {
+      if (!(this_present_message && that_present_message))
         return false;
-      if (!this.id.equals(that.id))
+      if (!this.message.equals(that.message))
         return false;
     }
 
@@ -215,28 +215,28 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
   public int hashCode() {
     HashCodeBuilder builder = new HashCodeBuilder();
 
-    boolean present_id = true && (isSetId());
-    builder.append(present_id);
-    if (present_id)
-      builder.append(id);
+    boolean present_message = true && (isSetMessage());
+    builder.append(present_message);
+    if (present_message)
+      builder.append(message);
 
     return builder.toHashCode();
   }
 
-  public int compareTo(Account other) {
+  public int compareTo(MetricsServiceException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Account typedOther = (Account)other;
+    MetricsServiceException typedOther = (MetricsServiceException)other;
 
-    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetId()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+    if (isSetMessage()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -258,9 +258,9 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
         break;
       }
       switch (field.id) {
-        case 1: // ID
+        case 1: // MESSAGE
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.id = iprot.readString();
+            this.message = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -278,9 +278,9 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.id != null) {
-      oprot.writeFieldBegin(ID_FIELD_DESC);
-      oprot.writeString(this.id);
+    if (this.message != null) {
+      oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
+      oprot.writeString(this.message);
       oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
@@ -289,14 +289,14 @@ public class Account implements org.apache.thrift.TBase<Account, Account._Fields
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Account(");
+    StringBuilder sb = new StringBuilder("MetricsServiceException(");
     boolean first = true;
 
-    sb.append("id:");
-    if (this.id == null) {
+    sb.append("message:");
+    if (this.message == null) {
       sb.append("null");
     } else {
-      sb.append(this.id);
+      sb.append(this.message);
     }
     first = false;
     sb.append(")");

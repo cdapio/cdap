@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metadata.stubs;
+package com.continuuity.metadata.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
@@ -22,24 +22,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Defines a application
+ * Defines a dataset
  */
-public class Application implements org.apache.thrift.TBase<Application, Application._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Application");
+public class Dataset implements org.apache.thrift.TBase<Dataset, Dataset._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Dataset");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)4);
 
   private String id; // required
   private String name; // required
   private String description; // required
+  private int type; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
-    DESCRIPTION((short)3, "description");
+    DESCRIPTION((short)3, "description"),
+    TYPE((short)4, "type");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -60,6 +63,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
           return NAME;
         case 3: // DESCRIPTION
           return DESCRIPTION;
+        case 4: // TYPE
+          return TYPE;
         default:
           return null;
       }
@@ -100,6 +105,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   }
 
   // isset id assignments
+  private static final int __TYPE_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -110,14 +117,16 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Application.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Dataset.class, metaDataMap);
   }
 
-  public Application() {
+  public Dataset() {
   }
 
-  public Application(
+  public Dataset(
     String id)
   {
     this();
@@ -127,7 +136,9 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Application(Application other) {
+  public Dataset(Dataset other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetId()) {
       this.id = other.id;
     }
@@ -137,10 +148,11 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     if (other.isSetDescription()) {
       this.description = other.description;
     }
+    this.type = other.type;
   }
 
-  public Application deepCopy() {
-    return new Application(this);
+  public Dataset deepCopy() {
+    return new Dataset(this);
   }
 
   @Override
@@ -148,6 +160,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     this.id = null;
     this.name = null;
     this.description = null;
+    setTypeIsSet(false);
+    this.type = 0;
   }
 
   public String getId() {
@@ -219,6 +233,28 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
   }
 
+  public int getType() {
+    return this.type;
+  }
+
+  public void setType(int type) {
+    this.type = type;
+    setTypeIsSet(true);
+  }
+
+  public void unsetType() {
+    __isset_bit_vector.clear(__TYPE_ISSET_ID);
+  }
+
+  /** Returns true if field type is set (has been assigned a value) and false otherwise */
+  public boolean isSetType() {
+    return __isset_bit_vector.get(__TYPE_ISSET_ID);
+  }
+
+  public void setTypeIsSet(boolean value) {
+    __isset_bit_vector.set(__TYPE_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ID:
@@ -245,6 +281,14 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       }
       break;
 
+    case TYPE:
+      if (value == null) {
+        unsetType();
+      } else {
+        setType((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -258,6 +302,9 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
 
     case DESCRIPTION:
       return getDescription();
+
+    case TYPE:
+      return Integer.valueOf(getType());
 
     }
     throw new IllegalStateException();
@@ -276,6 +323,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
+    case TYPE:
+      return isSetType();
     }
     throw new IllegalStateException();
   }
@@ -284,12 +333,12 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Application)
-      return this.equals((Application)that);
+    if (that instanceof Dataset)
+      return this.equals((Dataset)that);
     return false;
   }
 
-  public boolean equals(Application that) {
+  public boolean equals(Dataset that) {
     if (that == null)
       return false;
 
@@ -320,6 +369,15 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         return false;
     }
 
+    boolean this_present_type = true && this.isSetType();
+    boolean that_present_type = true && that.isSetType();
+    if (this_present_type || that_present_type) {
+      if (!(this_present_type && that_present_type))
+        return false;
+      if (this.type != that.type)
+        return false;
+    }
+
     return true;
   }
 
@@ -342,16 +400,21 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     if (present_description)
       builder.append(description);
 
+    boolean present_type = true && (isSetType());
+    builder.append(present_type);
+    if (present_type)
+      builder.append(type);
+
     return builder.toHashCode();
   }
 
-  public int compareTo(Application other) {
+  public int compareTo(Dataset other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Application typedOther = (Application)other;
+    Dataset typedOther = (Dataset)other;
 
     lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
@@ -379,6 +442,16 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
     if (isSetDescription()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.description, typedOther.description);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetType()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -421,6 +494,14 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 4: // TYPE
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
+            this.type = iprot.readI32();
+            setTypeIsSet(true);
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
@@ -453,13 +534,18 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         oprot.writeFieldEnd();
       }
     }
+    if (isSetType()) {
+      oprot.writeFieldBegin(TYPE_FIELD_DESC);
+      oprot.writeI32(this.type);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Application(");
+    StringBuilder sb = new StringBuilder("Dataset(");
     boolean first = true;
 
     sb.append("id:");
@@ -489,6 +575,12 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       }
       first = false;
     }
+    if (isSetType()) {
+      if (!first) sb.append(", ");
+      sb.append("type:");
+      sb.append(this.type);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -511,6 +603,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);

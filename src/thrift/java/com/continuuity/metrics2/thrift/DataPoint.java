@@ -3,8 +3,9 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metrics2.thrift;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -21,24 +22,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Specifies the counter by it's name and it's value.
+ * Point in time.
  */
-public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Counter");
+public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataPoint");
 
-  private static final org.apache.thrift.protocol.TField QUALIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("qualifier", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.DOUBLE, (short)3);
+  private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)1);
+  private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.DOUBLE, (short)2);
 
-  private String qualifier; // required
-  private String name; // required
+  private long timestamp; // required
   private double value; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    QUALIFIER((short)1, "qualifier"),
-    NAME((short)2, "name"),
-    VALUE((short)3, "value");
+    TIMESTAMP((short)1, "timestamp"),
+    VALUE((short)2, "value");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -53,11 +51,9 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // QUALIFIER
-          return QUALIFIER;
-        case 2: // NAME
-          return NAME;
-        case 3: // VALUE
+        case 1: // TIMESTAMP
+          return TIMESTAMP;
+        case 2: // VALUE
           return VALUE;
         default:
           return null;
@@ -99,33 +95,31 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
   }
 
   // isset id assignments
-  private static final int __VALUE_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
+  private static final int __TIMESTAMP_ISSET_ID = 0;
+  private static final int __VALUE_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.QUALIFIER, new org.apache.thrift.meta_data.FieldMetaData("qualifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.TIMESTAMP, new org.apache.thrift.meta_data.FieldMetaData("timestamp", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Counter.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataPoint.class, metaDataMap);
   }
 
-  public Counter() {
+  public DataPoint() {
   }
 
-  public Counter(
-    String qualifier,
-    String name,
+  public DataPoint(
+    long timestamp,
     double value)
   {
     this();
-    this.qualifier = qualifier;
-    this.name = name;
+    this.timestamp = timestamp;
+    setTimestampIsSet(true);
     this.value = value;
     setValueIsSet(true);
   }
@@ -133,74 +127,45 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Counter(Counter other) {
+  public DataPoint(DataPoint other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetQualifier()) {
-      this.qualifier = other.qualifier;
-    }
-    if (other.isSetName()) {
-      this.name = other.name;
-    }
+    this.timestamp = other.timestamp;
     this.value = other.value;
   }
 
-  public Counter deepCopy() {
-    return new Counter(this);
+  public DataPoint deepCopy() {
+    return new DataPoint(this);
   }
 
   @Override
   public void clear() {
-    this.qualifier = null;
-    this.name = null;
+    setTimestampIsSet(false);
+    this.timestamp = 0;
     setValueIsSet(false);
     this.value = 0.0;
   }
 
-  public String getQualifier() {
-    return this.qualifier;
+  public long getTimestamp() {
+    return this.timestamp;
   }
 
-  public void setQualifier(String qualifier) {
-    this.qualifier = qualifier;
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+    setTimestampIsSet(true);
   }
 
-  public void unsetQualifier() {
-    this.qualifier = null;
+  public void unsetTimestamp() {
+    __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
   }
 
-  /** Returns true if field qualifier is set (has been assigned a value) and false otherwise */
-  public boolean isSetQualifier() {
-    return this.qualifier != null;
+  /** Returns true if field timestamp is set (has been assigned a value) and false otherwise */
+  public boolean isSetTimestamp() {
+    return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
   }
 
-  public void setQualifierIsSet(boolean value) {
-    if (!value) {
-      this.qualifier = null;
-    }
-  }
-
-  public String getName() {
-    return this.name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public void unsetName() {
-    this.name = null;
-  }
-
-  /** Returns true if field name is set (has been assigned a value) and false otherwise */
-  public boolean isSetName() {
-    return this.name != null;
-  }
-
-  public void setNameIsSet(boolean value) {
-    if (!value) {
-      this.name = null;
-    }
+  public void setTimestampIsSet(boolean value) {
+    __isset_bit_vector.set(__TIMESTAMP_ISSET_ID, value);
   }
 
   public double getValue() {
@@ -227,19 +192,11 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case QUALIFIER:
+    case TIMESTAMP:
       if (value == null) {
-        unsetQualifier();
+        unsetTimestamp();
       } else {
-        setQualifier((String)value);
-      }
-      break;
-
-    case NAME:
-      if (value == null) {
-        unsetName();
-      } else {
-        setName((String)value);
+        setTimestamp((Long)value);
       }
       break;
 
@@ -256,11 +213,8 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case QUALIFIER:
-      return getQualifier();
-
-    case NAME:
-      return getName();
+    case TIMESTAMP:
+      return Long.valueOf(getTimestamp());
 
     case VALUE:
       return Double.valueOf(getValue());
@@ -276,10 +230,8 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
     }
 
     switch (field) {
-    case QUALIFIER:
-      return isSetQualifier();
-    case NAME:
-      return isSetName();
+    case TIMESTAMP:
+      return isSetTimestamp();
     case VALUE:
       return isSetValue();
     }
@@ -290,30 +242,21 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Counter)
-      return this.equals((Counter)that);
+    if (that instanceof DataPoint)
+      return this.equals((DataPoint)that);
     return false;
   }
 
-  public boolean equals(Counter that) {
+  public boolean equals(DataPoint that) {
     if (that == null)
       return false;
 
-    boolean this_present_qualifier = true && this.isSetQualifier();
-    boolean that_present_qualifier = true && that.isSetQualifier();
-    if (this_present_qualifier || that_present_qualifier) {
-      if (!(this_present_qualifier && that_present_qualifier))
+    boolean this_present_timestamp = true;
+    boolean that_present_timestamp = true;
+    if (this_present_timestamp || that_present_timestamp) {
+      if (!(this_present_timestamp && that_present_timestamp))
         return false;
-      if (!this.qualifier.equals(that.qualifier))
-        return false;
-    }
-
-    boolean this_present_name = true && this.isSetName();
-    boolean that_present_name = true && that.isSetName();
-    if (this_present_name || that_present_name) {
-      if (!(this_present_name && that_present_name))
-        return false;
-      if (!this.name.equals(that.name))
+      if (this.timestamp != that.timestamp)
         return false;
     }
 
@@ -331,33 +274,35 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
 
   @Override
   public int hashCode() {
-    return 0;
+    HashCodeBuilder builder = new HashCodeBuilder();
+
+    boolean present_timestamp = true;
+    builder.append(present_timestamp);
+    if (present_timestamp)
+      builder.append(timestamp);
+
+    boolean present_value = true;
+    builder.append(present_value);
+    if (present_value)
+      builder.append(value);
+
+    return builder.toHashCode();
   }
 
-  public int compareTo(Counter other) {
+  public int compareTo(DataPoint other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Counter typedOther = (Counter)other;
+    DataPoint typedOther = (DataPoint)other;
 
-    lastComparison = Boolean.valueOf(isSetQualifier()).compareTo(typedOther.isSetQualifier());
+    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetQualifier()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.qualifier, typedOther.qualifier);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetName()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
+    if (isSetTimestamp()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -389,21 +334,15 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
         break;
       }
       switch (field.id) {
-        case 1: // QUALIFIER
-          if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.qualifier = iprot.readString();
+        case 1: // TIMESTAMP
+          if (field.type == org.apache.thrift.protocol.TType.I64) {
+            this.timestamp = iprot.readI64();
+            setTimestampIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 2: // NAME
-          if (field.type == org.apache.thrift.protocol.TType.STRING) {
-            this.name = iprot.readString();
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 3: // VALUE
+        case 2: // VALUE
           if (field.type == org.apache.thrift.protocol.TType.DOUBLE) {
             this.value = iprot.readDouble();
             setValueIsSet(true);
@@ -424,16 +363,9 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.qualifier != null) {
-      oprot.writeFieldBegin(QUALIFIER_FIELD_DESC);
-      oprot.writeString(this.qualifier);
-      oprot.writeFieldEnd();
-    }
-    if (this.name != null) {
-      oprot.writeFieldBegin(NAME_FIELD_DESC);
-      oprot.writeString(this.name);
-      oprot.writeFieldEnd();
-    }
+    oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
+    oprot.writeI64(this.timestamp);
+    oprot.writeFieldEnd();
     oprot.writeFieldBegin(VALUE_FIELD_DESC);
     oprot.writeDouble(this.value);
     oprot.writeFieldEnd();
@@ -443,23 +375,11 @@ public class Counter implements org.apache.thrift.TBase<Counter, Counter._Fields
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Counter(");
+    StringBuilder sb = new StringBuilder("DataPoint(");
     boolean first = true;
 
-    sb.append("qualifier:");
-    if (this.qualifier == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.qualifier);
-    }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("name:");
-    if (this.name == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.name);
-    }
+    sb.append("timestamp:");
+    sb.append(this.timestamp);
     first = false;
     if (!first) sb.append(", ");
     sb.append("value:");

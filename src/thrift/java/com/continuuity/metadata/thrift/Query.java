@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metadata.stubs;
+package com.continuuity.metadata.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import java.util.List;
@@ -22,30 +22,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Defines a Stream
+ * Defines a query dataset.
  */
-public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Stream");
+public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Query");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField CAPACITY_IN_BYTES_FIELD_DESC = new org.apache.thrift.protocol.TField("capacityInBytes", org.apache.thrift.protocol.TType.I64, (short)4);
-  private static final org.apache.thrift.protocol.TField EXPIRY_IN_SECONDS_FIELD_DESC = new org.apache.thrift.protocol.TField("expiryInSeconds", org.apache.thrift.protocol.TType.I64, (short)5);
+  private static final org.apache.thrift.protocol.TField SERVICE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("serviceName", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private String id; // required
   private String name; // required
   private String description; // required
-  private long capacityInBytes; // required
-  private long expiryInSeconds; // required
+  private String serviceName; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
     DESCRIPTION((short)3, "description"),
-    CAPACITY_IN_BYTES((short)4, "capacityInBytes"),
-    EXPIRY_IN_SECONDS((short)5, "expiryInSeconds");
+    SERVICE_NAME((short)4, "serviceName");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -66,10 +63,8 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
           return NAME;
         case 3: // DESCRIPTION
           return DESCRIPTION;
-        case 4: // CAPACITY_IN_BYTES
-          return CAPACITY_IN_BYTES;
-        case 5: // EXPIRY_IN_SECONDS
-          return EXPIRY_IN_SECONDS;
+        case 4: // SERVICE_NAME
+          return SERVICE_NAME;
         default:
           return null;
       }
@@ -110,9 +105,6 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
   }
 
   // isset id assignments
-  private static final int __CAPACITYINBYTES_ISSET_ID = 0;
-  private static final int __EXPIRYINSECONDS_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -123,18 +115,16 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.CAPACITY_IN_BYTES, new org.apache.thrift.meta_data.FieldMetaData("capacityInBytes", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.EXPIRY_IN_SECONDS, new org.apache.thrift.meta_data.FieldMetaData("expiryInSeconds", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.SERVICE_NAME, new org.apache.thrift.meta_data.FieldMetaData("serviceName", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Stream.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Query.class, metaDataMap);
   }
 
-  public Stream() {
+  public Query() {
   }
 
-  public Stream(
+  public Query(
     String id)
   {
     this();
@@ -144,9 +134,7 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public Stream(Stream other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
+  public Query(Query other) {
     if (other.isSetId()) {
       this.id = other.id;
     }
@@ -156,12 +144,13 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
     if (other.isSetDescription()) {
       this.description = other.description;
     }
-    this.capacityInBytes = other.capacityInBytes;
-    this.expiryInSeconds = other.expiryInSeconds;
+    if (other.isSetServiceName()) {
+      this.serviceName = other.serviceName;
+    }
   }
 
-  public Stream deepCopy() {
-    return new Stream(this);
+  public Query deepCopy() {
+    return new Query(this);
   }
 
   @Override
@@ -169,10 +158,7 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
     this.id = null;
     this.name = null;
     this.description = null;
-    setCapacityInBytesIsSet(false);
-    this.capacityInBytes = 0;
-    setExpiryInSecondsIsSet(false);
-    this.expiryInSeconds = 0;
+    this.serviceName = null;
   }
 
   public String getId() {
@@ -244,48 +230,27 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
     }
   }
 
-  public long getCapacityInBytes() {
-    return this.capacityInBytes;
+  public String getServiceName() {
+    return this.serviceName;
   }
 
-  public void setCapacityInBytes(long capacityInBytes) {
-    this.capacityInBytes = capacityInBytes;
-    setCapacityInBytesIsSet(true);
+  public void setServiceName(String serviceName) {
+    this.serviceName = serviceName;
   }
 
-  public void unsetCapacityInBytes() {
-    __isset_bit_vector.clear(__CAPACITYINBYTES_ISSET_ID);
+  public void unsetServiceName() {
+    this.serviceName = null;
   }
 
-  /** Returns true if field capacityInBytes is set (has been assigned a value) and false otherwise */
-  public boolean isSetCapacityInBytes() {
-    return __isset_bit_vector.get(__CAPACITYINBYTES_ISSET_ID);
+  /** Returns true if field serviceName is set (has been assigned a value) and false otherwise */
+  public boolean isSetServiceName() {
+    return this.serviceName != null;
   }
 
-  public void setCapacityInBytesIsSet(boolean value) {
-    __isset_bit_vector.set(__CAPACITYINBYTES_ISSET_ID, value);
-  }
-
-  public long getExpiryInSeconds() {
-    return this.expiryInSeconds;
-  }
-
-  public void setExpiryInSeconds(long expiryInSeconds) {
-    this.expiryInSeconds = expiryInSeconds;
-    setExpiryInSecondsIsSet(true);
-  }
-
-  public void unsetExpiryInSeconds() {
-    __isset_bit_vector.clear(__EXPIRYINSECONDS_ISSET_ID);
-  }
-
-  /** Returns true if field expiryInSeconds is set (has been assigned a value) and false otherwise */
-  public boolean isSetExpiryInSeconds() {
-    return __isset_bit_vector.get(__EXPIRYINSECONDS_ISSET_ID);
-  }
-
-  public void setExpiryInSecondsIsSet(boolean value) {
-    __isset_bit_vector.set(__EXPIRYINSECONDS_ISSET_ID, value);
+  public void setServiceNameIsSet(boolean value) {
+    if (!value) {
+      this.serviceName = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -314,19 +279,11 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
       }
       break;
 
-    case CAPACITY_IN_BYTES:
+    case SERVICE_NAME:
       if (value == null) {
-        unsetCapacityInBytes();
+        unsetServiceName();
       } else {
-        setCapacityInBytes((Long)value);
-      }
-      break;
-
-    case EXPIRY_IN_SECONDS:
-      if (value == null) {
-        unsetExpiryInSeconds();
-      } else {
-        setExpiryInSeconds((Long)value);
+        setServiceName((String)value);
       }
       break;
 
@@ -344,11 +301,8 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
     case DESCRIPTION:
       return getDescription();
 
-    case CAPACITY_IN_BYTES:
-      return Long.valueOf(getCapacityInBytes());
-
-    case EXPIRY_IN_SECONDS:
-      return Long.valueOf(getExpiryInSeconds());
+    case SERVICE_NAME:
+      return getServiceName();
 
     }
     throw new IllegalStateException();
@@ -367,10 +321,8 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
-    case CAPACITY_IN_BYTES:
-      return isSetCapacityInBytes();
-    case EXPIRY_IN_SECONDS:
-      return isSetExpiryInSeconds();
+    case SERVICE_NAME:
+      return isSetServiceName();
     }
     throw new IllegalStateException();
   }
@@ -379,12 +331,12 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof Stream)
-      return this.equals((Stream)that);
+    if (that instanceof Query)
+      return this.equals((Query)that);
     return false;
   }
 
-  public boolean equals(Stream that) {
+  public boolean equals(Query that) {
     if (that == null)
       return false;
 
@@ -415,21 +367,12 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
         return false;
     }
 
-    boolean this_present_capacityInBytes = true && this.isSetCapacityInBytes();
-    boolean that_present_capacityInBytes = true && that.isSetCapacityInBytes();
-    if (this_present_capacityInBytes || that_present_capacityInBytes) {
-      if (!(this_present_capacityInBytes && that_present_capacityInBytes))
+    boolean this_present_serviceName = true && this.isSetServiceName();
+    boolean that_present_serviceName = true && that.isSetServiceName();
+    if (this_present_serviceName || that_present_serviceName) {
+      if (!(this_present_serviceName && that_present_serviceName))
         return false;
-      if (this.capacityInBytes != that.capacityInBytes)
-        return false;
-    }
-
-    boolean this_present_expiryInSeconds = true && this.isSetExpiryInSeconds();
-    boolean that_present_expiryInSeconds = true && that.isSetExpiryInSeconds();
-    if (this_present_expiryInSeconds || that_present_expiryInSeconds) {
-      if (!(this_present_expiryInSeconds && that_present_expiryInSeconds))
-        return false;
-      if (this.expiryInSeconds != that.expiryInSeconds)
+      if (!this.serviceName.equals(that.serviceName))
         return false;
     }
 
@@ -455,26 +398,21 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
     if (present_description)
       builder.append(description);
 
-    boolean present_capacityInBytes = true && (isSetCapacityInBytes());
-    builder.append(present_capacityInBytes);
-    if (present_capacityInBytes)
-      builder.append(capacityInBytes);
-
-    boolean present_expiryInSeconds = true && (isSetExpiryInSeconds());
-    builder.append(present_expiryInSeconds);
-    if (present_expiryInSeconds)
-      builder.append(expiryInSeconds);
+    boolean present_serviceName = true && (isSetServiceName());
+    builder.append(present_serviceName);
+    if (present_serviceName)
+      builder.append(serviceName);
 
     return builder.toHashCode();
   }
 
-  public int compareTo(Stream other) {
+  public int compareTo(Query other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    Stream typedOther = (Stream)other;
+    Query typedOther = (Query)other;
 
     lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
     if (lastComparison != 0) {
@@ -506,22 +444,12 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetCapacityInBytes()).compareTo(typedOther.isSetCapacityInBytes());
+    lastComparison = Boolean.valueOf(isSetServiceName()).compareTo(typedOther.isSetServiceName());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCapacityInBytes()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.capacityInBytes, typedOther.capacityInBytes);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(isSetExpiryInSeconds()).compareTo(typedOther.isSetExpiryInSeconds());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetExpiryInSeconds()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.expiryInSeconds, typedOther.expiryInSeconds);
+    if (isSetServiceName()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.serviceName, typedOther.serviceName);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -564,18 +492,9 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // CAPACITY_IN_BYTES
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.capacityInBytes = iprot.readI64();
-            setCapacityInBytesIsSet(true);
-          } else { 
-            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case 5: // EXPIRY_IN_SECONDS
-          if (field.type == org.apache.thrift.protocol.TType.I64) {
-            this.expiryInSeconds = iprot.readI64();
-            setExpiryInSecondsIsSet(true);
+        case 4: // SERVICE_NAME
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.serviceName = iprot.readString();
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -612,15 +531,12 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
         oprot.writeFieldEnd();
       }
     }
-    if (isSetCapacityInBytes()) {
-      oprot.writeFieldBegin(CAPACITY_IN_BYTES_FIELD_DESC);
-      oprot.writeI64(this.capacityInBytes);
-      oprot.writeFieldEnd();
-    }
-    if (isSetExpiryInSeconds()) {
-      oprot.writeFieldBegin(EXPIRY_IN_SECONDS_FIELD_DESC);
-      oprot.writeI64(this.expiryInSeconds);
-      oprot.writeFieldEnd();
+    if (this.serviceName != null) {
+      if (isSetServiceName()) {
+        oprot.writeFieldBegin(SERVICE_NAME_FIELD_DESC);
+        oprot.writeString(this.serviceName);
+        oprot.writeFieldEnd();
+      }
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -628,7 +544,7 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("Stream(");
+    StringBuilder sb = new StringBuilder("Query(");
     boolean first = true;
 
     sb.append("id:");
@@ -658,16 +574,14 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
       }
       first = false;
     }
-    if (isSetCapacityInBytes()) {
+    if (isSetServiceName()) {
       if (!first) sb.append(", ");
-      sb.append("capacityInBytes:");
-      sb.append(this.capacityInBytes);
-      first = false;
-    }
-    if (isSetExpiryInSeconds()) {
-      if (!first) sb.append(", ");
-      sb.append("expiryInSeconds:");
-      sb.append(this.expiryInSeconds);
+      sb.append("serviceName:");
+      if (this.serviceName == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.serviceName);
+      }
       first = false;
     }
     sb.append(")");
@@ -692,8 +606,6 @@ public class Stream implements org.apache.thrift.TBase<Stream, Stream._Fields>, 
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);

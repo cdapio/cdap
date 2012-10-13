@@ -8,7 +8,7 @@ import com.continuuity.common.metrics.*;
 import com.continuuity.common.metrics.MetricRequest;
 import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
-import com.continuuity.metrics2.stubs.*;
+import com.continuuity.metrics2.thrift.*;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.hamcrest.CoreMatchers;

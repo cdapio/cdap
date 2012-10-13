@@ -3,7 +3,12 @@ package com.continuuity.metadata;
 import com.continuuity.api.data.*;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.stubs.*;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.mortbay.log.Log;
@@ -14,14 +19,14 @@ import java.util.List;
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataServiceImpl implements MetadataService.Iface {
+public class MetadataService implements com.continuuity.metadata.thrift.MetadataService.Iface {
   private final MetaDataStore mds;
 
   /**
    * Construction of metadata service handler
    * @param opex instance of opex.
    */
-  public MetadataServiceImpl(OperationExecutor opex) {
+  public MetadataService(OperationExecutor opex) {
     this.mds = new SerializingMetaDataStore(opex);
   }
 
@@ -35,7 +40,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
    *
    * @param stream information about stream.
    * @return true if successful; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with creating
    *          stream.
    */
@@ -61,13 +66,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Stream name cannot be null or empty");
     }
 
-    if(! stream.isSetDescription()) {
-      throw new MetadataServiceException("Stream description should be set " +
-                                           "for create");
-    }
-    String description = stream.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Stream description is empty or null");
+    String description = "";
+    if(stream.isSetDescription()) {
+      description = stream.getDescription();
     }
 
     try {
@@ -114,9 +115,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes a stream if exists.
    *
-   * @param stream
+   * @param stream to be deleted.
    * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with deleting
    *          stream.
    */
@@ -159,9 +160,11 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
-   * @param account
+   * Retrieve streams associated with account.
+   *
+   * @param account for which streams need to be retrieved.
    * @return list of stream associated with account.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue listing the
    *          streams for an account.
    */
@@ -208,7 +211,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
    * @param stream Id of the stream for which more information is requested.
    * @return Stream with additional information like name and description else
    * return the Stream with just the id.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue reading in the
    *          information for stream.
    */
@@ -254,9 +257,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Creates a dataset if not exist.
    *
-   * @param dataset
+   * @param dataset to be created.
    * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with creating
    *          a data set.
    */
@@ -283,24 +286,16 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Dataset name cannot be null or empty");
     }
 
-    if(! dataset.isSetDescription()) {
-      throw new MetadataServiceException("Dataset description should be set " +
-                                           "for create");
-    }
-
-    String description = dataset.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Stream description is empty or null");
+    String description = "";
+    if(dataset.isSetDescription()) {
+      description = dataset.getDescription();
     }
 
     if(! dataset.isSetType()) {
       throw new MetadataServiceException("Dataset type should be set for create");
     }
-    DatasetType type = dataset.getType();
 
-    if(type == null) {
-      throw new MetadataServiceException("Dataset type cannot be null");
-    }
+    int type = dataset.getType();
 
     try {
       // Create a context.
@@ -325,7 +320,7 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       entry.addField(FieldTypes.Dataset.DESCRIPTION, description);
       entry.addField(FieldTypes.Dataset.CREATE_DATE,
                      String.format("%d", System.currentTimeMillis()));
-      entry.addField(FieldTypes.Dataset.TYPE, type.name());
+      entry.addField(FieldTypes.Dataset.TYPE, String.valueOf(type));
       // Invoke MDS to add entry.
       mds.add(context, entry);
     } catch (OperationException e) {
@@ -339,9 +334,9 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes a dataset.
    *
-   * @param dataset
+   * @param dataset to be deleted.
    * @return true if successfull; false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with creating
    *          a data set.
    */
@@ -372,9 +367,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       if(readEntry == null) {
         return true;
       }
-
       // Invoke MDS to delete entry.
-      mds.delete(context, accountId, null, FieldTypes.Stream.ID, id);
+      mds.delete(context, accountId, null, FieldTypes.Dataset.ID, id);
     } catch (OperationException e) {
       Log.warn("Failed deleting dataset {}. Reason : {}", dataset, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
@@ -383,9 +377,11 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
-   * @param account
+   * Return all metdata about datasets associated with the account.
+   *
+   * @param account for which metadata for datasets need to be retrieved.
    * @return list of data set associated with account
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with listing
    *          data set.
    */
@@ -412,9 +408,15 @@ public class MetadataServiceImpl implements MetadataService.Iface {
         rDataset.setDescription(
           dataset.getTextField(FieldTypes.Dataset.DESCRIPTION)
         );
-        rDataset.setType(DatasetType.valueOf(
-          dataset.getTextField(FieldTypes.Dataset.TYPE)
-        ));
+        try {
+          int type = Integer.valueOf(dataset.getTextField(FieldTypes.Dataset
+                                                            .TYPE));
+          rDataset.setType(type);
+        } catch (NumberFormatException e) {
+          Log.warn("Dataset {} has type that is not an integer",
+                   rDataset.getName());
+        }
+
         // More fields can be added later when we need them for now
         // we just return id, name & description.
         result.add(rDataset);
@@ -430,10 +432,10 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Returns a dataset.
    *
-   * @param account
-   * @param dataset
-   * @return Dataset
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @param account to which the dataset belongs to.
+   * @param dataset of for which metdata is request.
+   * @return Dataset associated with account and dataset.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is an issue with
    *          retrieving the data set.
    */
@@ -479,10 +481,10 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Creates an application if not exists.
    *
-   * @param account
-   * @param application
+   * @param account under which the application is created.
+   * @param application to be created.
    * @return true if created successfully or already exists, false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with creating
    *          metadata store entry for the application.
    */
@@ -500,21 +502,17 @@ public class MetadataServiceImpl implements MetadataService.Iface {
       throw new MetadataServiceException("Application id is empty or null.");
     }
 
+    String description = "";
+    if(application.isSetDescription()) {
+      description = application.getDescription();
+    }
+
     if(! application.isSetName()) {
       throw new MetadataServiceException("Application name should be set for create");
     }
     String name = application.getName();
     if(name == null || (name != null && name.isEmpty())) {
       throw new MetadataServiceException("Application name cannot be null or empty");
-    }
-
-    if(! application.isSetDescription()) {
-      throw new MetadataServiceException("Application description should be set " +
-                                           "for create");
-    }
-    String description = application.getDescription();
-    if(description == null || (description != null && description.isEmpty())) {
-      throw new MetadataServiceException("Application description is empty or null");
     }
 
     try {
@@ -553,11 +551,11 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Deletes an application if exists.
    *
-   * @param account
-   * @param application
+   * @param account the application belongs to.
+   * @param application to be deleted.
    * @return true if application was deleted successfully or did not exists to
    *         be deleted; false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue deleting an
    *          application.
    */
@@ -603,8 +601,8 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Returns a list of application associated with account.
    *
-   * @param account
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @param account for which list of applications need to be retrieved.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue listing
    *          applications for a account.
    * @returns a list of application associated with account; else empty list.
@@ -647,10 +645,10 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   /**
    * Return more information about an application.
    *
-   * @param account
-   * @param application
+   * @param account to the application belongs to.
+   * @param application requested for meta data.
    * @return application meta data if exists; else the id passed.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue retrieving
    *          a application from metadata store.
    */
@@ -694,6 +692,233 @@ public class MetadataServiceImpl implements MetadataService.Iface {
   }
 
   /**
+   * Creates an query if not exists.
+   *
+   * @param account under which the query is created.
+   * @param query to be created.
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
+   *          thrown when there is issue with creating
+   *          metadata store entry for the query.
+   */
+  @Override
+  public boolean createQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Query id is empty or null.");
+    }
+
+    String description = "";
+    if(query.isSetDescription()) {
+      description = query.getDescription();
+    }
+
+    if(! query.isSetName()) {
+      throw new MetadataServiceException("Query name should be set for create");
+    }
+    String name = query.getName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Query name cannot be null or empty");
+    }
+
+    if(! query.isSetServiceName()) {
+      throw new MetadataServiceException("Query service name should be set for create");
+    }
+    String serviceName = query.getServiceName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Query service name cannot be null or empty");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Query.ID, id);
+      if(readEntry != null) {
+        return true;
+      }
+
+      // Create a new metadata entry.
+      MetaDataEntry entry = new MetaDataEntry(
+        accountId, null, FieldTypes.Query.ID, id
+      );
+
+      // Adding other fields.
+      entry.addField(FieldTypes.Query.NAME, name);
+      entry.addField(FieldTypes.Query.DESCRIPTION, description);
+      entry.addField(FieldTypes.Query.SERVICE_NAME, serviceName);
+      entry.addField(FieldTypes.Query.CREATE_DATE,
+                     String.format("%d", System.currentTimeMillis()));
+      // Invoke MDS to add entry.
+      mds.add(context, entry);
+    } catch (OperationException e) {
+      Log.warn("Failed creating query {}. Reason : {}",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Deletes an query if exists.
+   *
+   * @param account the query belongs to.
+   * @param query to be deleted.
+   * @return true if query was deleted successfully or did not exists to
+   *         be deleted; false otherwise.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
+   *          thrown when there is issue deleting an
+   *          query.
+   */
+  @Override
+  public boolean deleteQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    // When creating a stream, you need to have id, name and description
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application id is empty or null.");
+    }
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry =
+        mds.get(context, accountId, null,
+                FieldTypes.Query.ID, id);
+
+      // If stream does not exist, then no point in deleting it.
+      if(readEntry == null) {
+        return true;
+      }
+
+      // Invoke MDS to delete entry.
+      mds.delete(context, accountId, null, FieldTypes.Query.ID, id);
+    } catch (OperationException e) {
+      Log.warn("Failed deleting query {}. Reason : {}",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  /**
+   * Returns a list of query associated with account.
+   *
+   * @param account for which list of queries need to be retrieved.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
+   *          thrown when there is issue listing
+   *          queries for a account.
+   * @returns a list of queries associated with account; else empty list.
+   */
+  @Override
+  public List<Query> getQueries(Account account)
+    throws MetadataServiceException, TException {
+    List<Query> result = Lists.newArrayList();
+
+    // Validate all account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    try {
+      // Create a context.
+      OperationContext context = new OperationContext(accountId);
+
+      // Invoke MDS to list streams for an account.
+      // NOTE: application is null and fields are null.
+      Collection<MetaDataEntry> queries =
+        mds.list(context, accountId, null, FieldTypes.Query.ID, null);
+      for(MetaDataEntry query : queries) {
+        Query rQuery = new Query(query.getId());
+        rQuery.setName(query.getTextField(FieldTypes.Query.NAME));
+        rQuery.setDescription(
+          query.getTextField(FieldTypes.Query.DESCRIPTION)
+        );
+        rQuery.setServiceName(
+          query.getTextField(FieldTypes.Query.SERVICE_NAME)
+        );
+        // More fields can be added later when we need them for now
+        // we just return id, name & description.
+        result.add(rQuery);
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed listing query for account {}. Reason : {}",
+               accountId, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return result;
+  }
+
+  /**
+   * Return more information about an query.
+   *
+   * @param account to the query belongs to.
+   * @param query requested for meta data.
+   * @return query meta data if exists; else the id passed.
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
+   *          thrown when there is issue retrieving
+   *          a queries from metadata store.
+   */
+  @Override
+  public Query getQuery(Account account, Query query)
+    throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(account);
+    String accountId = account.getId();
+
+    String id = query.getId();
+    if(id == null || (id != null && id.isEmpty())) {
+      throw new MetadataServiceException("Application does not have an id.");
+    }
+
+    try {
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry =
+        mds.get(context, accountId, null,
+                FieldTypes.Application.ID, id);
+
+      // Add description and name to stream and return.
+      if(entry != null) {
+        query.setName(entry.getTextField(
+          FieldTypes.Query.NAME
+        ));
+        query.setDescription(entry.getTextField(
+          FieldTypes.Query.DESCRIPTION
+        ));
+        query.setServiceName(entry.getTextField(
+          FieldTypes.Query.SERVICE_NAME
+        ));
+      }
+    } catch (OperationException e) {
+      Log.warn("Failed to retrieve query {}. Reason : {}.",
+               query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return query;
+  }
+  /**
    * Validates the account passed.
    *
    * @param account to be validated.
@@ -708,7 +933,6 @@ public class MetadataServiceImpl implements MetadataService.Iface {
     }
 
     String accountId = account.getId();
-
     if(accountId == null || accountId.isEmpty()) {
       throw new
         MetadataServiceException("Account Id cannot be null or empty");

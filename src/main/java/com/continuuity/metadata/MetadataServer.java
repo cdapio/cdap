@@ -5,7 +5,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.AbstractRegisteredServer;
 import com.continuuity.common.service.RegisteredServerInfo;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.stubs.MetadataService;
 import com.google.inject.Inject;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
@@ -114,8 +113,8 @@ public class MetadataServer extends AbstractRegisteredServer
       );
 
       // Attach and handler to the metadata service thrift interface.
-      MetadataServiceImpl serviceImpl
-        = new MetadataServiceImpl(opex);
+      MetadataService service
+        = new MetadataService(opex);
 
       // configure the server
       THsHaServer.Args serverArgs =
@@ -125,7 +124,7 @@ public class MetadataServer extends AbstractRegisteredServer
           serverPort
         )))
         .executorService(executorService)
-        .processor(new MetadataService.Processor(serviceImpl))
+        .processor(new com.continuuity.metadata.thrift.MetadataService.Processor(service))
         .workerThreads(threads);
 
       // ENG-443 - Set the max read buffer size. This is important as this will

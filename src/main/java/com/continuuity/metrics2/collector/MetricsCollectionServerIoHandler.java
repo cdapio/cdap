@@ -75,7 +75,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     @Override
     protected void runOneIteration() throws Exception {
       try {
-        Log.debug("Future reaper iterating through futures. Reaper list size {}.",
+        Log.trace("Future reaper iterating through futures. Reaper list size {}.",
           reapFutures.size());
         if(reapFutures.size() < 1) {
           return;
@@ -90,7 +90,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
           }
           reapFutures.remove(future);
         }
-        Log.debug("Future reaper done. Reaper list size {}.", reapFutures
+        Log.trace("Future reaper done. Reaper list size {}.", reapFutures
             .size());
       } catch (Exception e) {
         Log.warn("There was issue during future reaping. Reason : {}.",

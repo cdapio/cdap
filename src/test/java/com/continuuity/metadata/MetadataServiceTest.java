@@ -2,9 +2,7 @@ package com.continuuity.metadata;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metadata.stubs.Account;
-import com.continuuity.metadata.stubs.Application;
-import com.continuuity.metadata.stubs.MetadataServiceException;
+import com.continuuity.metadata.thrift.*;
 import com.continuuity.runtime.MetadataModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -14,16 +12,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Tests metadata service functionality.
  */
-public class MetadataServiceImplTest {
+public class MetadataServiceTest {
   /** Instance of operation executor */
   private static OperationExecutor opex;
 
   /** Instance of metadata service. */
-  private static MetadataServiceImpl mds;
+  private static MetadataService mds;
 
   /** Instance of account used for tests. */
   private static Account account;
@@ -35,7 +34,7 @@ public class MetadataServiceImplTest {
       new DataFabricModules().getInMemoryModules()
     );
     opex = injector.getInstance(OperationExecutor.class);
-    mds = new MetadataServiceImpl(opex);
+    mds = new MetadataService(opex);
     account = new Account("demo");
   }
 
@@ -50,8 +49,8 @@ public class MetadataServiceImplTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithOnlyId() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-        stream = new com.continuuity.metadata.stubs.Stream("id1");
+    com.continuuity.metadata.thrift.Stream
+        stream = new com.continuuity.metadata.thrift.Stream("id1");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
   }
@@ -62,8 +61,8 @@ public class MetadataServiceImplTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithEmptyId() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("");
+    com.continuuity.metadata.thrift.Stream
+      stream = new com.continuuity.metadata.thrift.Stream("");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
   }
@@ -73,10 +72,10 @@ public class MetadataServiceImplTest {
    * throw MetadataServiceException.
    * @throws Exception
    */
-  @Test(expected = MetadataServiceException.class)
+  @Test
   public void testCreateStreamWithIdAndName() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id1");
+    Stream
+      stream = new Stream("id1");
     stream.setName("Funny stream");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
@@ -89,8 +88,7 @@ public class MetadataServiceImplTest {
    */
   @Test
   public void testCreateStreamCorrect() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id1");
+    Stream stream = new Stream("id1");
     stream.setName("Funny stream");
     stream.setDescription("Funny stream that is so funny. You laugh it out");
     Assert.assertTrue(mds.createStream(account, stream));
@@ -107,8 +105,7 @@ public class MetadataServiceImplTest {
   public void testDeleteStream() throws Exception {
     int count = mds.getStreams(account).size();
 
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id2");
+    Stream stream = new Stream("id2");
     stream.setName("Serious stream");
     stream.setDescription("Serious stream. Shutup");
     Assert.assertTrue(mds.createStream(account, stream));
@@ -128,16 +125,15 @@ public class MetadataServiceImplTest {
   @Test
   public void testListStream() throws Exception {
     int before = mds.getStreams(account).size();
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id3");
+    Stream stream = new Stream("id3");
     stream.setName("Serious stream");
     stream.setDescription("Serious stream. Shutup");
     Assert.assertTrue(mds.createStream(account, stream));
-    Collection<com.continuuity.metadata.stubs.Stream> streams
+    Collection<Stream> streams
       = mds.getStreams(account);
     int after = streams.size();
     Assert.assertTrue(after == before + 1);
-    for(com.continuuity.metadata.stubs.Stream s : streams) {
+    for(Stream s : streams) {
       if(s.getId().equals("id3")) {
         Assert.assertTrue("Serious stream".equals(s.getName()));
         Assert.assertTrue("Serious stream. Shutup".equals(s.getDescription()));
@@ -145,6 +141,54 @@ public class MetadataServiceImplTest {
     }
     Account account1 = new Account("abc");
     Assert.assertTrue(mds.getStreams(account1).size() == 0);
+  }
+
+  @Test
+  public void testCreateDataset() throws Exception {
+    Dataset dataset = new Dataset("dataset1");
+    dataset.setName("Data Set1");
+    dataset.setType(DatasetType.COUNTER.getValue());
+    dataset.setDescription("test dataset");
+    Assert.assertTrue(mds.createDataset(account, dataset));
+    List<Dataset> dlist = mds.getDatasets(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListDataSet() throws Exception {
+    testCreateDataset(); // creates a dataset.
+    // Now delete it.
+    Dataset dataset = new Dataset("dataset1");
+    Assert.assertNotNull(mds.deleteDataset(account, dataset));
+    List<Dataset> dlist = mds.getDatasets(account);
+    Assert.assertTrue(dlist.size() == 0);
+    Dataset dataset1 = mds.getDataset(account, dataset);
+    Assert.assertNotNull(dataset1);
+  }
+
+  @Test
+  public void testCreateQuery() throws Exception {
+    Query query = new Query("query1");
+    query.setName("Query 1");
+    query.setServiceName("myname");
+    query.setDescription("test dataset");
+    Assert.assertTrue(mds.createQuery(account, query));
+    List<Query> dlist = mds.getQueries(account);
+    Assert.assertNotNull(dlist);
+    Assert.assertTrue(dlist.size() > 0);
+  }
+
+  @Test
+  public void testCreateDeleteListQuery() throws Exception {
+    testCreateQuery(); // creates a dataset.
+    // Now delete it.
+    Query query = new Query("query1");
+    Assert.assertNotNull(mds.deleteQuery(account, query));
+    List<Query> qlist = mds.getQueries(account);
+    Assert.assertTrue(qlist.size() == 0);
+    Query query1 = mds.getQuery(account, query);
+    Assert.assertNotNull(query1);
   }
 
   /**

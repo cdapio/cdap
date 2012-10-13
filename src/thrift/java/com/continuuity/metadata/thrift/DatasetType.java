@@ -3,23 +3,25 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package com.continuuity.metrics2.stubs;
+package com.continuuity.metadata.thrift;
 
 
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
-public enum MetricTimeseriesLevel implements org.apache.thrift.TEnum {
-  ACCOUNT_LEVEL(1),
-  APPLICATION_LEVEL(2),
-  FLOW_LEVEL(3),
-  FLOWLET_LEVEL(4),
-  RUNID_LEVEL(5);
+/**
+ * Defines a dataset types.
+ */
+public enum DatasetType implements org.apache.thrift.TEnum {
+  BASIC(0),
+  COUNTER(1),
+  TIME_SERIES(2),
+  CSV(3);
 
   private final int value;
 
-  private MetricTimeseriesLevel(int value) {
+  private DatasetType(int value) {
     this.value = value;
   }
 
@@ -34,18 +36,16 @@ public enum MetricTimeseriesLevel implements org.apache.thrift.TEnum {
    * Find a the enum type by its integer value, as defined in the Thrift IDL.
    * @return null if the value is not found.
    */
-  public static MetricTimeseriesLevel findByValue(int value) { 
+  public static DatasetType findByValue(int value) { 
     switch (value) {
+      case 0:
+        return BASIC;
       case 1:
-        return ACCOUNT_LEVEL;
+        return COUNTER;
       case 2:
-        return APPLICATION_LEVEL;
+        return TIME_SERIES;
       case 3:
-        return FLOW_LEVEL;
-      case 4:
-        return FLOWLET_LEVEL;
-      case 5:
-        return RUNID_LEVEL;
+        return CSV;
       default:
         return null;
     }
