@@ -118,10 +118,10 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     // Gets all container group parameters
     List<TaskSpecification> tasks = specification.getTaskSpecifications();
 
-    if(tasks.size() < 1) {
-      Log.info("No containers have been configured to be started. Stopping now");
-      stop();
-    }
+//    if(tasks.size() < 1) {
+//      Log.info("No containers have been configured to be started. Stopping now");
+//      stop();
+//    }
 
     // Initial list of tasks provided.
     tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
@@ -350,7 +350,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     /**
      * Sample Task specification for creating empty requests.
      */
-    private final TaskSpecification sampleSpecification;
+    private TaskSpecification sampleSpecification = null;
 
 
     /**
@@ -363,7 +363,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       containerLaunchContextFactory =
         new ContainerLaunchContextFactory(minClusterResource, maxClusterResource);
 
-      sampleSpecification = specifications.get(0);
+      if(specifications.size() > 0) {
+        sampleSpecification = specifications.get(0);
+      }
 
       /** Add the initial task specification to ready to run queue. */
       for(TaskSpecification specification : specifications) {
@@ -662,9 +664,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
         /** Create a zero allocation request with all the release requests to RM */
         List<ResourceRequest> resourceRequests = Lists.newArrayList();
-        ResourceRequest req = containerLaunchContextFactory.createResourceRequest(sampleSpecification);
-        req.setNumContainers(0);
-        resourceRequests.add(req);
+        if(sampleSpecification != null) {
+          ResourceRequest req = containerLaunchContextFactory.createResourceRequest(sampleSpecification);
+          req.setNumContainers(0);
+          resourceRequests.add(req);
+        }
 
         /** Make a request to RM */
         AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, toRelease);
