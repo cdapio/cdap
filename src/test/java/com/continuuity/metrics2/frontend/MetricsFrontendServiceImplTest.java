@@ -168,7 +168,7 @@ public class MetricsFrontendServiceImplTest {
 
   @Test(expected = MetricsServiceException.class)
   public void testBadRequestArguments() throws Exception {
-    getMetric(new FlowArgument(), null);
+    getCounters(new FlowArgument(), null);
   }
 
   /**
@@ -179,10 +179,33 @@ public class MetricsFrontendServiceImplTest {
     Assert.assertTrue(
       addMetric("accountId.applicationId.flowId.runId.flowletId.1.processed",
                 10) == MetricResponse.Status.SUCCESS);
-    List<Counter> counters = getMetric(
+    List<Counter> counters = getCounters(
       new FlowArgument("accountId", "applicationId", "flowId"),
       null
     );
+    Assert.assertNotNull(counters);
+    Assert.assertThat(counters.size(), CoreMatchers.is(1));
+    Assert.assertTrue(counters.get(0).getValue() == 10.0f);
+  }
+
+  /**
+   * Tests writing and reading a metric at runid level.
+   */
+  @Test
+  public void testAddingSingleMetricAndReadingItBackAtRunIdLevel()
+    throws Exception {
+    Assert.assertTrue(
+      addMetric("accountId.applicationId.flowId.runId.flowletId.1.processed",
+        10) == MetricResponse.Status.SUCCESS
+    );
+    Assert.assertTrue(
+    addMetric("accountId.applicationId.flowId.runId2.flowletId.1.processed",
+      11) == MetricResponse.Status.SUCCESS
+    );
+    FlowArgument argument =
+      new FlowArgument("accountId", "applicationId", "flowId");
+    argument.setRunId("runId");
+    List<Counter> counters = getCounters(argument,null);
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(1));
     Assert.assertTrue(counters.get(0).getValue() == 10.0f);
@@ -414,7 +437,7 @@ public class MetricsFrontendServiceImplTest {
     addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
     addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
     addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
-    List<Counter> counters = getMetric(
+    List<Counter> counters = getCounters(
       new FlowArgument("demo", "myapp", "myflow"),
       null
     );
@@ -444,7 +467,7 @@ public class MetricsFrontendServiceImplTest {
 
     // Expectation is that all instance counts are aggregated into
     // the flowlet.
-    List<Counter> counters = getMetric(
+    List<Counter> counters = getCounters(
       new FlowArgument("demo", "myapp", "myflow"),
       null
     );
@@ -473,7 +496,7 @@ public class MetricsFrontendServiceImplTest {
                         Duration.create(2, TimeUnit.SECONDS));
   }
 
-  private List<Counter> getMetric(FlowArgument argument, List<String> names)
+  private List<Counter> getCounters(FlowArgument argument, List<String> names)
     throws TException, MetricsServiceException {
     CounterRequest request = new CounterRequest(argument);
     if(names != null) {

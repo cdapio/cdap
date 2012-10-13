@@ -17,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -120,74 +123,96 @@ public class MetricsFrontendServiceImpl
   @Override
   public List<Counter> getCounters(CounterRequest request)
     throws MetricsServiceException, TException {
-    List<Counter> results = Lists.newArrayList();
+      List<Counter> results = Lists.newArrayList();
 
-    // Validate all the fields passed, if any problem return an exception
-    // back to client.
-    validateArguments(request.getArgument());
+      // Validate all the fields passed, if any problem return an exception
+      // back to client.
+      validateArguments(request.getArgument());
 
-    // If metric name list is zero, then we return all the metrics.
-    String sql = null;
-    if(request.getName() == null || request.getName().size() == 0) {
-      sql = "SELECT flowlet_id, metric, SUM(value) AS aggr_value FROM metrics " +
-      "WHERE account_id = ? AND application_id = ? AND flow_id = ?" +
-      "GROUP BY flowlet_id, metric";
-    } else {
-      // transform the metric names by adding single quotes around
-      // each metric name as they are treated as metric.
-      Iterable<String> iterator =
-        Iterables.transform(request.getName(), new Function<String, String>() {
-        @Override
-        public String apply(@Nullable String input) {
-          return "'" + input + "'";
-        }
-      });
-
-      // Join each with comma (,) as seperator.
-      String values = Joiner.on(",").join(iterator);
-
-      sql = "SELECT flowlet_id, metric, SUM(value) AS aggr_value FROM " +
-        "metrics WHERE account_id = ? AND application_id = ? AND flow_id = ? " +
-        " AND metric in (" + values + ") GROUP BY flowlet_id, metric";
-    }
-
-    Connection connection = null;
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      connection = getConnection();
-      stmt = connection.prepareStatement(sql);
-      stmt.setString(1, request.getArgument().getAccountId());
-      stmt.setString(2, request.getArgument().getApplicationId());
-      stmt.setString(3, request.getArgument().getFlowId());
-      rs = stmt.executeQuery();
-      while(rs.next()) {
-        results.add(new Counter(
-          rs.getString("flowlet_id"),
-          rs.getString("metric"),
-          rs.getFloat("aggr_value")
-        ));
+      // If run id is passed, then use it.
+      String runIdInclusion = null;
+      if(request.getArgument() != null &&
+        request.getArgument().isSetRunId()) {
+        runIdInclusion = String.format("run_id = '%s'",
+          request.getArgument().getRunId());
       }
-    } catch (SQLException e) {
-      Log.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
-    } finally {
+
+      // If metric name list is zero, then we return all the metrics.
+      StringBuffer sql = new StringBuffer();
+      if(request.getName() == null || request.getName().size() == 0) {
+        sql.append("SELECT flowlet_id, metric, SUM(value) AS aggr_value");
+        sql.append(" ");
+        sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
+        sql.append(" ");
+        sql.append("AND flow_id = ?");
+        sql.append(" ");
+        if(runIdInclusion != null) {
+          sql.append("AND").append(" ").append(runIdInclusion).append(" ");
+        }
+        sql.append("GROUP BY flowlet_id, metric");
+      } else {
+        // transform the metric names by adding single quotes around
+        // each metric name as they are treated as metric.
+        Iterable<String> iterator =
+          Iterables.transform(request.getName(), new Function<String, String>() {
+            @Override
+            public String apply(@Nullable String input) {
+              return "'" + input + "'";
+            }
+          });
+
+        // Join each with comma (,) as seperator.
+        String values = Joiner.on(",").join(iterator);
+        sql.append("SELECT flowlet_id, metric, SUM(value) AS aggr_value");
+        sql.append(" ");
+        sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
+        sql.append(" ");
+        sql.append("AND flow_id = ?");
+        sql.append(" ");
+        if(runIdInclusion != null) {
+          sql.append("AND").append(" ").append(runIdInclusion).append(" ");
+        }
+        sql.append("metric in (").append(values).append(")").append(" ");
+        sql.append("GROUP BY flowlet_id, metric");
+      }
+
+      Connection connection = null;
+      PreparedStatement stmt = null;
+      ResultSet rs = null;
       try {
-        if(rs != null) {
-          rs.close();
+        connection = getConnection();
+        stmt = connection.prepareStatement(sql.toString());
+        stmt.setString(1, request.getArgument().getAccountId());
+        stmt.setString(2, request.getArgument().getApplicationId());
+        stmt.setString(3, request.getArgument().getFlowId());
+        rs = stmt.executeQuery();
+        while(rs.next()) {
+          results.add(new Counter(
+            rs.getString("flowlet_id"),
+            rs.getString("metric"),
+            rs.getFloat("aggr_value")
+          ));
         }
-        if(stmt != null) {
-          stmt.close();
+      } catch (SQLException e) {
+        Log.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
+      } finally {
+        try {
+          if(rs != null) {
+            rs.close();
+          }
+          if(stmt != null) {
+            stmt.close();
+          }
+          if(connection != null) {
+            connection.close();
+          }
+        } catch(SQLException e) {
+          Log.warn("Failed to close connection/statement/record. Reason : {}",
+            e.getMessage());
         }
-        if(connection != null) {
-          connection.close();
-        }
-      } catch(SQLException e) {
-        Log.warn("Failed to close connection/statement/record. Reason : {}",
-                 e.getMessage());
       }
-    }
 
-    return results;
+      return results;
   }
 
   private void validateTimeseriesRequest(TimeseriesRequest request)
@@ -230,7 +255,7 @@ public class MetricsFrontendServiceImpl
         @Override
         public String apply(@Nullable String input) {
           if(input.equals("busyness")) {
-            return "'tuple.read.count','tuple.read.proc'";
+            return "'tuple.read.count','tuple.proc.count'";
           }
           return "'" + input + "'";
         }
@@ -269,6 +294,11 @@ public class MetricsFrontendServiceImpl
         start = request.getStartts();
         end = request.getEndts();
       }
+
+      // Move the window of start and end. This is to prevent the bumpyness
+      // in datapoints as they are being collected from multiple sources.
+      start = start - 5 ;
+      end = end - 5;
 
       // Get the connection for database.
       connection = getConnection();
