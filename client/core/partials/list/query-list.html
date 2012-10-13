@@ -12,7 +12,7 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a><br /><span class="app-list-status">{{typeName}}</span>
+			<strong>{{name}}</strong><br /><span class="app-list-status">{{typeName}}</span>
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.reads" width="420"}}</td>

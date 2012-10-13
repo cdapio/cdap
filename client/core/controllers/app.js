@@ -9,7 +9,7 @@ define([], function () {
 		load: function (app) {
 
 			var self = this;
-			this.__remain = 4;
+			this.__remain = 3;
 
 			C.get('metadata', {
 				method: 'getApplication',
@@ -24,13 +24,31 @@ define([], function () {
 
 			self.set('types.Flow', Em.ArrayProxy.create({content: []}));
 			self.set('types.Stream', Em.ArrayProxy.create({content: []}));
+			self.set('types.Query', Em.ArrayProxy.create({content: []}));
 			self.set('types.Dataset', Em.ArrayProxy.create({content: []}));
 
 			C.Ctl.List.getObjects('Flow', function (objects) {
 				if (!self.get('types.Flow')) {
 					self.set('types.Flow', Em.ArrayProxy.create({content: []}));
 				}
-				self.get('types.Flow').pushObjects(objects);
+
+				// ** HAX ** //
+				var i = objects.length;
+				var flows = [], queries = [];
+				while(i--) {
+
+					if (objects[i].type === 1) {
+						queries.push(objects[i]);
+					} else {
+						flows.push(objects[i]);
+					}
+					console.log(objects[i]);
+				}
+
+				self.get('types.Flow').pushObjects(flows);
+				self.get('types.Query').pushObjects(queries);
+
+				// self.get('types.Flow').pushObjects(objects);
 				self.__loaded();
 
 			});
@@ -40,14 +58,6 @@ define([], function () {
 					self.set('types.Stream', Em.ArrayProxy.create({content: []}));
 				}
 				self.get('types.Stream').pushObjects(objects);
-				self.__loaded();
-			});
-
-			C.Ctl.List.getObjects('Query', function (objects) {
-				if (!self.get('types.Query')) {
-					self.set('types.Query', Em.ArrayProxy.create({content: []}));
-				}
-				self.get('types.Query').pushObjects(objects);
 				self.__loaded();
 			});
 

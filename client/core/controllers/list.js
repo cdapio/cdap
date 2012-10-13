@@ -10,9 +10,19 @@ define([], function () {
 			'Application': 'getApplications',
 			'Flow': 'getFlows',
 			'Stream': 'getStreams',
-			'Query': 'getQueries',
+			'Query': 'getFlows',
 			'Dataset': 'getDatasets'
 		},
+		__plurals: {
+			'Application': 'Applications',
+			'Flow': 'Flows',
+			'Stream': 'Streams',
+			'Query': 'Queries',
+			'Dataset': 'Datasets'	
+		},
+		title: function () {
+			return this.__plurals[this.get('entityType')];
+		}.property('entityType'),
 		getObjects: function (type, callback) {
 
 			var self = this;
@@ -20,7 +30,7 @@ define([], function () {
 
 			//** Hax: Remove special case for Flow when ready **//
 			
-			C.get(type === 'Flow' ? 'manager' : 'metadata', {
+			C.get(type === 'Flow' || type === 'Query' ? 'manager' : 'metadata', {
 				method: this.__methodNames[type],
 				params: []
 			}, function (error, response, params) {
@@ -35,12 +45,26 @@ define([], function () {
 					var objects = response.params;
 					var i = objects.length, type = params[0];
 					while (i--) {
-						objects[i] = C.Mdl[type].create(objects[i]);
+						if (objects[i].type === 1) {
+							objects[i] = C.Mdl['Query'].create(objects[i]);
+						} else {
+							objects[i] = C.Mdl[type].create(objects[i]);
+						}
 					}
 					if (typeof params[1] === 'function') { // For you
 						callback(objects);
 
 					} else { // For me
+
+						var i = objects.length;
+						while (i--) {
+							if (type === 'Query' && objects[i].type === 0) {
+								objects.splice(i, 1);
+							} else if (type === 'Flow' && objects[i].type === 1) {
+								objects.splice(i, 1);
+							}
+						}
+
 						self.set('types.' + type, Em.ArrayProxy.create({content: objects}));
 						C.interstitial.hide();
 						C.Ctl.List.getStats();

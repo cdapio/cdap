@@ -30,8 +30,8 @@
       <li><a class="nav-link nav-apps" href="#/apps">Applications</a></li>
       <li><a class="nav-link nav-streams" href="#/streams">Streams</a></li>
       <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
-      <li><a class="nav-link nav-flows" href="#/queries">Queries</a></li>
       <li><a class="nav-link nav-datasets" href="#/data">Datasets</a></li>
+      <li><a class="nav-link nav-queries" href="#/queries">Queries</a></li>
     </ul>
   </div>
 
@@ -90,10 +90,10 @@
                 <a href="#/streams" class="dash-app-resource-stream">0</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/queries" class="dash-app-resource-flow">0</a>
+                <a href="#/data" class="dash-app-resource-dataset">0</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/data" class="dash-app-resource-dataset">0</a>
+                <a href="#/queries" class="dash-app-resource-query">0</a>
               </td>
             </tr>
           </tbody>
@@ -164,12 +164,12 @@
         {{view C.Vw.FlowList}}
       </div>
       <div class="panel">
-        <div class="panel-head">{{view C.Vw.CreateButton entityType="Query"}}<div class="panel-title">Queries</div></div>
-        {{view C.Vw.QueryList}}
-      </div>
-      <div class="panel">
         <div class="panel-head">{{view C.Vw.CreateButton entityType="Dataset"}}<div class="panel-title">Datasets</div></div>
         {{view C.Vw.DatasetList}}
+      </div>
+      <div class="panel">
+        <div class="panel-head">{{view C.Vw.CreateButton entityType="Query"}}<div class="panel-title">Queries</div></div>
+        {{view C.Vw.QueryList}}
       </div>
     </div>
   </script>

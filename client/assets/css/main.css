@@ -103,7 +103,7 @@ a, a:visited {
 	background-image: url(../img/icons-large-hover.png);
 }
 
-.nav-favorites-list a {
+.nav-queries-list a {
 	font-size: 11px;
 	display: block;
 	color: #fff;
@@ -112,7 +112,7 @@ a, a:visited {
 	font-weight: 100;
 	letter-spacing: 0.1em;
 }
-.nav-favorites-list a:hover {
+.nav-queries-list a:hover {
 	text-decoration: underline;
 }
 
@@ -131,7 +131,7 @@ a, a:visited {
 .nav-datasets {
 	background-position: 0px -120px;
 }
-.nav-favorites {
+.nav-queries {
 	background-position: 0px -150px;
 	margin-bottom: 8px;
 }
@@ -575,6 +575,9 @@ input {
 .dash-app-resource-app {
 	background-position: 0px -156px;
 }
+.dash-app-resource-query {
+	background-position: 0px -204px;
+}
 
 .dash-app-resource-usage {
 	font-family: "Condensed";
@@ -660,7 +663,7 @@ input {
 .app-list-name {
 	overflow: hidden;
 }
-.app-list-name a {
+.app-list-name strong {
 	line-height: 18px;
 	font-size: 16px;
 	font-weight: bold;

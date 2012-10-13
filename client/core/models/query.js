@@ -13,11 +13,8 @@ define([], function () {
 		init: function() {
 			this._super();
 
-			this.set('metricData', Em.Object.create());
-			this.set('metricNames', {});
+			this.set('name', this.get('flowId'));
 
-			this.set('id', this.get('flowId') || this.get('meta').name);
-			this.set('app', this.get('applicationId') || this.get('meta').app);
 		}
 	});
 });
