@@ -22,9 +22,9 @@ app.use(express.bodyParser());
 var id = "default";
 var sockets = {};
 
-app.post('/upload/:type/:app/:file', function (req, res) {
+app.post('/upload/:app/:file', function (req, res) {
 
-	Env.api.upload(req, res, req.params.type, req.params.app, req.params.file, sockets[id]);
+	Env.api.upload(req, res, req.params.app, req.params.file, sockets[id]);
 
 });
 

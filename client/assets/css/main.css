@@ -446,7 +446,6 @@ text {
 }
 .info-box .drop-zone {
 	margin: 17px 0px;
-	width: 120px;
 }
 .drop-zone {
 	width: 260px;
@@ -1285,8 +1284,8 @@ ol {
 	left: -64px;
 	line-height: 64px;
 	text-align: center;
-	padding-right: 20px;
-	padding-left: 12px;
+	padding-right: 6px;
+	width: 76px;
 	font-size: 24px;
 	font-family: "Condensed";
 }

@@ -24,9 +24,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 							controller: C.Ctl.Dashboard
 						});
 					},
-					enter: function () {
-						C.interstitial.show();
-					},
+					enter: C.interstitial.show,
 					navigateAway: function () {
 						C.Ctl.Dashboard.unload();
 					}
@@ -44,11 +42,9 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.List.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
-					enter: function () {
-						C.interstitial.show();
-					},
 					app: Em.Route.extend({
 						route: '/:appId',
 						connectOutlets: function (router, context) {
@@ -61,7 +57,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Application.unload();
-						}
+						},
+						enter: C.interstitial.show
 					})
 				}),
 				flows: Em.Route.extend({
@@ -78,7 +75,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.List.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
 					flow: Em.Route.extend({
 						route: '/status/:id',
@@ -95,7 +93,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Flow.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
 					history: Em.Route.extend({
 						route: '/history/:id',
@@ -112,11 +111,9 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.FlowHistory.unload();
-						}
-					}),
-					enter: function () {
-						C.interstitial.show();
-					}
+						},
+						enter: C.interstitial.show
+					})
 				}),
 				streams: Em.Route.extend({
 					route: '/streams',
@@ -131,7 +128,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.List.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
 					stream: Em.Route.extend({
 						route: '/:id',
@@ -144,11 +142,9 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Stream.unload();
-						}
-					}),
-					enter: function () {
-						C.interstitial.show();
-					}
+						},
+						enter: C.interstitial.show
+					})
 				}),
 				queries: Em.Route.extend({
 					route: '/queries',
@@ -163,7 +159,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.List.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
 					query: Em.Route.extend({
 						route: '/:id',
@@ -176,12 +173,9 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Query.unload();
-						}
-					}),
-					enter: function () {
-						C.interstitial.show();
-					},
-
+						},
+						enter: C.interstitial.show
+					})
 				}),
 				datas: Em.Route.extend({
 					route: '/data',
@@ -196,7 +190,8 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.List.unload();
-						}
+						},
+						enter: C.interstitial.show
 					}),
 					data: Em.Route.extend({
 						route: '/:id',
@@ -209,12 +204,9 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Dataset.unload();
-						}
-					}),
-					enter: function () {
-						C.interstitial.show();
-					},
-
+						},
+						enter: C.interstitial.show
+					})
 				})
 			})
 		})

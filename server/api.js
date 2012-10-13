@@ -216,8 +216,8 @@ try {
 			case 'remove':
 
 				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
+					applicationId: params[0],
+					flowId: params[1],
 					version: params[2],
 					accountId: 'demo'
 				});
@@ -227,8 +227,8 @@ try {
 			case 'promote':
 
 				identifier = new flowservices_types.FlowIdentifier({
-					app: params[0],
-					flow: params[1],
+					applicationId: params[0],
+					flowId: params[1],
 					version: params[2],
 					accountId: 'demo'
 				});
@@ -361,7 +361,7 @@ try {
 
 	};
 
-	this.upload = function (req, res, type, app, file, socket) {
+	this.upload = function (req, res, app, file, socket) {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
@@ -397,7 +397,6 @@ try {
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
 				'accountId': accountId,
 				'applicationId': app,
-				'type': flowservices_types.EntityType[type.toUpperCase()],
 				'filename': file,
 				'size': data.length,
 				'modtime': new Date().getTime()

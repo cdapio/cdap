@@ -97,15 +97,15 @@ define([
 
 			var flow = this.current;
 			
-			App.socket.request('far', {
+			C.get('far', {
 				method: 'remove',
-				params: [flow.meta.app, flow.meta.name, flow.version]
+				params: [flow.applicationId, flow.id, flow.version]
 			}, function (error, response) {
 
 				if (error) {
 					C.Vw.Informer.show(error.message, 'alert-error');
 				} else {
-					App.router.transitionTo('home');
+					C.router.transitionTo('home');
 				}
 
 			});

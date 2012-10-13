@@ -45,13 +45,12 @@ define([], function () {
 
 			});
 
-			xhr.open('POST', '/upload/' + this.get('entityType') + '/' +
-				applicationId + '/' + file.name, true);
+			xhr.open('POST', '/upload/' + applicationId + '/' + file.name, true);
 			xhr.setRequestHeader("Content-type", "application/octet-stream");
 			xhr.send(file);
 
 		},
-		message: '',
+		message: 'Drop a JAR to Deploy',
 		update: function (response) {
 
 			if (response.error) {
@@ -73,12 +72,12 @@ define([], function () {
 						this.set('message', response.status);
 					break;
 					case 5:
-						this.set('message', '');
+						this.set('message', 'Drop a JAR to Deploy');
 						this.processing = false;
 						this.sendFile();
 					break;
 					default:
-						this.set('message', '');
+						this.set('message', 'Drop a JAR to Deploy');
 						this.processing = false;
 						this.set('warningMessage', response.message);
 

@@ -18,7 +18,7 @@ define([], function () {
 			'Flow': 'Flows',
 			'Stream': 'Streams',
 			'Query': 'Queries',
-			'Dataset': 'Datasets'	
+			'Dataset': 'Datasets'
 		},
 		title: function () {
 			return this.__plurals[this.get('entityType')];

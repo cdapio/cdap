@@ -58,22 +58,11 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="dashboard">
-    <div class="gutter">
-      <h2>Helpful Tip!</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
-      <h2>New Release!</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
-      <h2>Mailing List!</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. <a href="#">Read More</a></p>
-    </div>
-
-    <div id="title" class="guttered">
+    <div id="title">
       {{view C.Vw.TimeSelector}}
       <h1>Dashboard</h1>
     </div>
-
-    <div id="panels" class="guttered">
-
+    <div id="panels">
       <div class="panel">
         <div class="panel-head"><div class="panel-title">Account Summary</div></div>
         <table class="dash-app-resources">
@@ -92,7 +81,7 @@
               <td class="dash-app-resource">
                 <a href="#/data" class="dash-app-resource-dataset">0</a>
               </td>
-              <td class="dash-app-resource">
+              <td class="dash-app-resource" style="padding-right: 16px !important;">
                 <a href="#/queries" class="dash-app-resource-query">0</a>
               </td>
             </tr>
@@ -106,8 +95,8 @@
           </thead>
           <tbody>
             <tr>
-              <td>{{view C.Vw.Chart listMode="true" width="335" color="orange" metric="processed.count"}}</td>
-              <td>{{view C.Vw.Chart listMode="true" width="335" color="orange" metric="storage.trend"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart listMode="true" width="480" color="orange" metric="processed.count"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart listMode="true" width="480" color="orange" metric="storage.trend"}}</td>
             </tr>
           </tbody>
         </table>
@@ -140,10 +129,7 @@
         </div>
       </div>
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Vw.DropZone entityType="Flow"}}
-      </div>
-      <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Vw.DropZone entityType="Query"}}
+        {{view C.Vw.DropZone}}
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>

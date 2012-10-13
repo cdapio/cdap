@@ -3,15 +3,12 @@ define([
 	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile('{{view.message}}'),
+		template: Em.Handlebars.compile('Drop a JAR to Deploy'),
 		classNames: ['drop-zone'],
 		init: function () {
 			this._super();
 			this.set('controller', C.Ctl.Upload);
 		},
-		message: function () {
-			return 'Drop a ' + this.get('entityType');
-		}.property(),
 		didInsertElement: function () {
 
 			function ignoreDrag(e) {
