@@ -286,7 +286,7 @@ public class MetricsFrontendServiceImpl
           List<DataPoint> n = null;
           results.put(metric, convertDataPointToPoint(n));
         } else {
-          List<DataPoint> busyness = new Timeseries().div(
+          ImmutableList<DataPoint> busyness = new Timeseries().div(
             timeseries.rate(ImmutableList.copyOf(processed)),
             timeseries.rate(ImmutableList.copyOf(read)),
             new Function<Double, Double>() {
