@@ -40,6 +40,10 @@ a, a:visited {
 	color: #555;
 }
 
+.list-health-cell {
+	width: 36px;
+	padding: 10px 0px 10px 14px !important;
+}
 .list-health-box {
 	float: left;
 	width: 36px;
@@ -142,14 +146,18 @@ a, a:visited {
 	background-color: #f0f1f1;
 	position: relative;
 	min-height: 100%;
+	border-right: 4px solid #FAFAFA;
+
 }
 #content-body {
 	padding: 16px 0px;
 	position: relative;
+	border-top: 1px solid #fff;
 }
 #header {
 	height: 36px;
 	background-color: #8c9495;
+	border-bottom: 1px solid #616a6b;
 }
 #global {
 	float: right;
@@ -175,6 +183,8 @@ a, a:visited {
 }
 .global-user {
 	background-position: 8px 0px;
+	background-image: none;
+	padding-left: 14px;
 }
 .global-help {
 	background-position: 8px -30px;
@@ -195,16 +205,18 @@ a, a:visited {
 }
 #breadcrumb li a {
 	display: block;
-	color: #fff;
-	
-	text-shadow: 0px 1px rgba(0, 0, 0, .25);
+	color: white;
 	padding-right: 24px;
 	padding-left: 14px;
 	background-image: url(../img/breadcrumb-split.png);
-	background-position: center right;
+	background-position-y: 0px;
 	background-repeat: no-repeat;
 	text-decoration: none;
-	font-size: 14px;
+	font-family: condensed;
+	text-transform: uppercase;
+	line-height: 42px;
+	background-position-x: right;
+	letter-spacing: 0.08em;
 }
 
 #title {
@@ -253,9 +265,10 @@ h1 span {
 }
 .panel {
 	background-color: #fff;
-	box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.10);
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.10);
 	border-radius: 2px;
 	margin-bottom: 20px;
+	padding: 5px 0px;
 }
 .panel-title {
 	font-size: 28px;
@@ -264,8 +277,9 @@ h1 span {
 	line-height: normal;
 }
 .panel-head {
-	padding: 12px 14px;
+	padding: 10px 14px 5px;
 	border: 1px solid #eee;
+	border-top: 0;
 }
 .panel-control {
 	float: right;
@@ -282,7 +296,7 @@ h1 span {
 }
 .panel table td, .panel table th {
 	border: 1px solid #EEE;
-	border-top: 0;
+	border-bottom: 0;
 	vertical-align: middle;
 	border-width: 1px 0px;
 }
@@ -345,12 +359,14 @@ h1 span {
 	height: 34px;
 	background-color: #FAFAFA;
 	margin-right: 45px;
+	box-shadow: inset 0px 0px 8px rgba(0, 0, 0, .05);
 }
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
-	height: 70px;
+	height: 72px;
 	margin-right: 80px;
-	border-right: 1px solid #F7F7F7;
+	border-right: 1px solid #fff;
+	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
 }
 .sparkline-box-title {
 	border-bottom: 1px solid white;
@@ -533,6 +549,7 @@ input {
 
 .dash-app-resource {
 	text-align: center;
+	border-top: 0 !important;
 }
 .dash-app-resource a {
 	background-image: url(../img/dash-entity-icons.png);
@@ -662,10 +679,9 @@ input {
 .app-list-name {
 	overflow: hidden;
 }
-.app-list-name strong {
+.app-list-name {
 	line-height: 18px;
 	font-size: 16px;
-	font-weight: bold;
 }
 .app-list-name span {
 	color: #333;
@@ -692,12 +708,16 @@ input {
 	font-size: 12px;
 	color: #77878B;
 	text-transform: uppercase;
-	line-height: 18px;
-	height: 14px;
+	line-height: 14px;
+	height: 10px;
 	letter-spacing: 0.1em;
 }
 .nav-pills > .active > a, .nav-pills > .active > a:hover{
 	background-color: #8C9495;
+	border: 2px solid #A7B0B1;
+	box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.2);
+	margin: 0px 2px;
+	border-radius: 3px;
 }
 .nav-pills > li > a:hover {
 	background-color: #41B0D1;
@@ -873,7 +893,7 @@ a strong {
 	height: 100%;
 	text-align: center;
 	z-index: 40;
-	margin-top: 36px;
+	margin-top: 37px;
 	padding-top: 100px;
 }
 #interstitial * {
@@ -954,6 +974,7 @@ a strong {
 	font-weight: 500;
 	font-family: "Condensed";
 	line-height: normal;
+	text-shadow: 0px 1px 0px white;
 }
 .flow-state span {
 	font-size: 11px;
@@ -975,6 +996,11 @@ a strong {
 	overflow: auto;
 	overflow-y: hidden;
 	padding: 16px 0px 16px 16px;
+}
+#flowviz path {
+	stroke-dasharray: 2px, 2px;
+	stroke: #8C9495;
+	stroke-width: 2px;
 }
 .popup-modal {
 	position: absolute;
@@ -1238,7 +1264,7 @@ ol {
  * jsplumb
  */
 .column {
-	padding: 42px 30px 0px 64px;
+	padding: 42px 36px 0px 70px;
 	float: left;
 }
 .window { 
@@ -1247,10 +1273,10 @@ ol {
 	text-transform: uppercase;
 
 	border: 2px solid #fff;
-	background-color: #41b0d1;
-	border-radius:50px;
-	width: 100px;
-	height: 100px;
+	background-image: url(../img/flowlet-node-background.png);
+
+	width: 108px;
+	height: 108px;
 	text-align:center;
 	z-index:20; 
 
@@ -1276,23 +1302,22 @@ ol {
 	margin-top: 216px;
 }
 .window-input {
-	width: 50px;
-	height: 56px;
+	height: 54px;
 	position: absolute;
 	background-image: url(../img/flowlet-input.png);
-	top: 22px;
+	top: 26px;
 	left: -64px;
-	line-height: 64px;
+	line-height: 62px;
 	text-align: center;
-	padding-right: 6px;
-	width: 76px;
-	font-size: 24px;
+	padding-right: 10px;
+	width: 72px;
+	font-size: 20px;
 	font-family: "Condensed";
 }
 .window-icon {
 	height: 32px;
 	width: 32px;
-	margin: 24px auto 6px;
+	margin: 27px auto 5px;
 	background-image: url(../img/flowlet-types.png);
 	background-position: 0px 0px;
 }
@@ -1318,13 +1343,12 @@ ol {
 }
 .window.source {
 	background-image: url(../img/stream-shape.png) !important;
-	background-color: #fff;
+	background-color: white;
 	border-radius: 0px;
 	padding: 0;
-	width: 100px;
-	height: 100px;
-	padding-right: 25px;
-	width: 75px;
+	height: 108px;
+	padding-right: 22px;
+	width: 86px;
 }
 .window.source .window-input {
 	background-image: url(../img/stream-input.png);

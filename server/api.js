@@ -44,7 +44,6 @@ try {
 			protocol: tprotocol.TBinaryProtocol
 		});
 		conn.on('error', function (error) {
-			console.log('MetadataService: ', error);
 			done('Could not connect to MetadataService.');
 		});
 
@@ -64,7 +63,6 @@ try {
 			try {
 				MetaData[method].apply(MetaData, params.concat(done));
 			} catch (e) {
-				console.log(e);
 				done(e);
 			}
 		} else {
@@ -90,7 +88,6 @@ try {
 		});
 
 		conn.on('error', function (error) {
-			console.log('FlowManager: ', error);
 			done('Could not connect to FlowMonitor.');
 		});
 		
@@ -175,7 +172,6 @@ try {
 					try {
 						Manager[method].apply(Manager, params.concat(done));
 					} catch (e) {
-						console.log(e);
 						done(e);
 					}
 				} else {
@@ -201,12 +197,7 @@ try {
 		});
 
 		conn.on('error', function (error) {
-			console.log('FARService: ', error);
 			done('Could not connect to FARService');
-		});
-
-		conn.on('connect', function (error) {
-			console.log(arguments);
 		});
 		
 		var FAR = thrift.createClient(FARService, conn);
@@ -254,7 +245,6 @@ try {
 		});
 
 		conn.on('error', function (error) {
-			console.log('FlowMonitor: ', error);
 			done('Could not connect to FlowMonitor.');
 		});
 		
@@ -291,8 +281,6 @@ try {
 						endts: params[4],
 						startts: params[3]
 					});
-
-					console.log(request);
 
 					Monitor.getTimeSeries(request, function (error, response) {
 
@@ -344,11 +332,9 @@ try {
 		var post_req = http.request(post_options, function(res) {
 			res.setEncoding('utf8');
 			res.on('data', function (chunk) {
-				console.log('Response: ' + chunk);
 			});
 			res.on('end', function () {
-				console.log(res.statusCode);
-				console.log(post_options, post_data);
+				done(res.statusCode);
 			});
 		});
 
@@ -389,7 +375,6 @@ try {
 				protocol: tprotocol.TBinaryProtocol
 			});
 			conn.on('error', function (error) {
-				console.log('FARService: ', error);
 				socket.emit('upload', {'error': 'Could not connect to FARService'});
 			});
 

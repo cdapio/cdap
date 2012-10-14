@@ -20,6 +20,7 @@ define([], function () {
 		isSource: true,
 		arrived: 0,
 		storage: '0B',
+		unconsumed: 0,
 		getUpdateRequest: function () {
 
 			return [];

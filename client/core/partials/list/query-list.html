@@ -4,15 +4,15 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 448px;">Queries per Second</th>
+		<th style="width: 448px;">Requests per Second (HTTP)</th>
 	</thead>
 	{{#each types.Query.content tagName="tbody"}}
 	<tr>
-		<td style="width: 36px;padding-right: 0;">
+		<td class="list-health-cell">
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<strong>{{name}}</strong><br /><span class="app-list-status">{{typeName}}</span>
+			{{name}}<br /><span class="app-list-status">{{typeName}}</span>
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.reads" width="420"}}</td>

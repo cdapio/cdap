@@ -4,17 +4,19 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 448px;">Arrivals vs Consumed</th>
+		<th style="width: 100px;text-align: center;">Unconsumed</th>
+		<th style="width: 324px;">Arrivals vs Consumed</th>
 	</thead>
 	{{#each types.Stream.content tagName="tbody"}}
 	<tr>
-		<td style="width: 36px;padding-right: 0;">
+		<td class="list-health-cell">
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a>
+			<a {{bindAttr href="href"}}>{{name}}</a>
 		</td>
 		<td class="app-list-count">{{storage}}</td>
+		<td class="app-list-count">{{unconsumed}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metric="stream.arrivals,stream.consumed" width="420"}}</td>
 	</tr>
 	{{/each}}

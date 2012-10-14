@@ -36,13 +36,11 @@ define([], function () {
 				var i = objects.length;
 				var flows = [], queries = [];
 				while(i--) {
-
 					if (objects[i].type === 1) {
 						queries.push(objects[i]);
 					} else {
 						flows.push(objects[i]);
 					}
-					console.log(objects[i]);
 				}
 
 				self.get('types.Flow').pushObjects(flows);

@@ -9,11 +9,11 @@
 	</thead>
 	{{#each types.Flow.content tagName="tbody"}}
 	<tr>
-		<td style="width: 36px;padding-right: 0;">
+		<td class="list-health-cell">
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}><strong>{{flowId}}</strong></a><br /><span class="app-list-status">{{currentState}}</span>
+			<a {{bindAttr href="href"}}>{{flowId}}</a><br /><span class="app-list-status">{{currentState}}</span>
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>

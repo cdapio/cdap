@@ -35,7 +35,6 @@ io.sockets.on('connection', function (socket) {
 	socket.emit('env', process.env.NODE_ENV || 'development');
 
 	socket.on('metadata', function (request) {
-		console.log('MetaData Request', request);
 		Env.api.metadata(request.method, request.params, function (error, response) {
 			socket.emit('exec', error, {
 				method: request.method,
@@ -46,7 +45,6 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('manager', function (request) {
-		console.log('Manager Request', request);
 		Env.api.manager(request.method, request.params, function (error, response) {
 			
 			if (response && response.length) {
@@ -77,7 +75,6 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('far', function (request) {
-		console.log('FAR Request', request);
 		Env.api.far(request.method, request.params, function (error, response) {
 			
 			socket.emit('exec', error, {
@@ -90,7 +87,6 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('gateway', function (request) {
-		console.log('Gateway Request');
 		Env.api.gateway(request.method, request.params, function (error, response) {
 			
 			socket.emit('exec', error, {
@@ -103,7 +99,6 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('monitor', function (request) {
-		console.log('Monitor Request', request);
 		Env.api.monitor(request.method, request.params, function (error, response) {
 
 

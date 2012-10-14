@@ -10,11 +10,11 @@
 	</thead>
 	{{#each controller.types.Application tagName="tbody"}}
 	<tr>
-		<td style="width: 36px;padding-right: 0;">
+		<td class="list-health-cell">
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a>
+			<a {{bindAttr href="href"}}>{{name}}</a>
 		</td>
 		<td class="app-list-count">{{counts.Stream}}</strong></td>
 		<td class="app-list-count">{{counts.Flow}}</strong></td>

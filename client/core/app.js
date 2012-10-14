@@ -49,7 +49,7 @@ function(Models, Views, Controllers){
 		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
-				name: "Demo"
+				name: "Demo User"
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				content: function () {

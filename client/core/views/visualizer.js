@@ -1,7 +1,7 @@
 
 define([], function () {
 
-	var COLUMN_WIDTH = 198;
+	var COLUMN_WIDTH = 226;
 
 	//** Begin Hax
 	function ___fixConnections (flowSource) {
@@ -209,7 +209,7 @@ define([], function () {
 
 			Ember.run.next(this, function () {
 
-				var connector = [ "Bezier", { gap: -5, curviness: 75 } ];
+				var connector = [ "Bezier", { gap: 0, curviness: 70 } ];
 
 				// If drawing a straight line from LTR, use flowchart renderer
 				if (this.__location[from].row === this.__location[to].row) {
@@ -225,7 +225,7 @@ define([], function () {
 
 				var color = '#CCC';
 				self.plumber.connect({
-					paintStyle: { strokeStyle:color, lineWidth:6 },
+					paintStyle: { strokeStyle:color, lineWidth:4 },
 					uuids:['flowlet' + from + 'RightMiddle',
 						'flowlet' + to + 'LeftMiddle'],
 					

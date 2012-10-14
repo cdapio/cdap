@@ -40,7 +40,6 @@
       <div id="global">
         <a class="global-link global-help" href="http://www.continuuity.com/" target="_blank"></a>
         <a class="global-link global-user" href="#">{{user.name}}</a>
-        <a class="global-link global-dev" href="http://www.continuuity.com/" target="_blank">Dev Lounge</a>
       </div>
       <ul id="breadcrumb">
       {{#each breadcrumbs}}
@@ -197,11 +196,11 @@
 
     <div id="title">
       {{view C.Vw.TimeSelector}}
-      <ul class="nav nav-pills pull-right" style="margin: 0px 14px;">
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li class="active"><a href="#">Status</a></li>
         <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
       </ul>
-      <h1>{{current.meta.name}} <span>Flow Status</span></h1>
+      <h1>{{current.meta.name}} <span>Flow</span></h1>
     </div>
 
     <div id="info">
@@ -264,11 +263,11 @@
   <script type="text/x-handlebars" data-template-name="flow-history">
     <div id="title">
       {{view C.Vw.TimeSelector}}
-       <ul class="nav nav-pills pull-right" style="margin: 0px 14px;">
+       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
         <li class="active"><a href="#">History</a></li>
       </ul>
-      <h1>{{current.meta.name}} <span>Flow History</span></h1>
+      <h1>{{current.meta.name}} <span>Flow</span></h1>
     </div>
 
     <div id="info">

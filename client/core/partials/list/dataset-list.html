@@ -8,11 +8,11 @@
 	</thead>
 	{{#each types.Dataset.content tagName="tbody"}}
 	<tr>
-		<td style="width: 36px;padding-right: 0;">
+		<td class="list-health-cell">
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}><strong>{{name}}</strong></a><br /><span class="app-list-status">{{typeName}}</span>
+			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
 		</td>
 		<td class="app-list-count">{{storage}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Dataset" metric="dataset.reads" width="420"}}</td>
