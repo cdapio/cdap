@@ -18,7 +18,7 @@ import java.util.Map.Entry;
  * Concrete implementation of TemporalDataStore using LevelDB.
  * http://code.google.com/p/leveldb/
  */
-public class LevelDBTemporalDataStore implements TemporalDataStore {
+public class LevelDBTemporalDataStore implements TemporalDataStore, KVStore {
   /**
    * LevelDB Datastore.
    */

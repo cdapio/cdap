@@ -9,7 +9,6 @@ import com.continuuity.metrics2.temporaldb.internal.Timeseries;
 import com.continuuity.metrics2.thrift.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -281,8 +280,8 @@ public class MetricsFrontendServiceImpl
       // and hence we retrieve the tuple.read.count and tuples.proc.count
       // and divide one by the other. This is done on the rate.
       if(metric.equals("busyness")) {
-        List<DataPoint> read = dataPoints.get("tuples.read.count");
         List<DataPoint> processed = dataPoints.get("tuples.proc.count");
+        List<DataPoint> read = dataPoints.get("tuples.read.count");
         if(read == null || processed == null) {
           List<DataPoint> n = null;
           results.put(metric, convertDataPointToPoint(n));

@@ -11,7 +11,7 @@ import java.io.Closeable;
  * and execute a {@code Query}. {@code TemporalDataStore}'s underlying
  * storage is a Key-Value store.
  */
-public interface TemporalDataStore extends Closeable, KVStore {
+public interface TemporalDataStore extends Closeable {
   /**
    * Opens a temporal datastore.
    * @throws Exception
