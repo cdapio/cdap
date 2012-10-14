@@ -129,6 +129,13 @@ try {
 				var flowlet_id = params[3];
 				var instances = params[4];
 
+				var identifier = new flowservices_types.FlowIdentifier({
+					applicationId: params[0],
+					flowId: params[1],
+					version: params[2] ? parseInt(params[2], 10) : -1,
+					accountId: 'demo'
+				});
+
 				Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
 
 				/*
