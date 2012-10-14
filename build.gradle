@@ -66,6 +66,10 @@ dependencies {
         thriftCompile group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
         apiCompile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     }
+
+    // Self dependencies.
+    compile sourceSets.thrift.output
+
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
 
     // External dependencies.
