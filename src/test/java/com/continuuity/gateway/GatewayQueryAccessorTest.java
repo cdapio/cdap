@@ -137,9 +137,11 @@ public class GatewayQueryAccessorTest {
     /** This sucks, but it is what it is. */
     FlowletExecutionContext ctx
         = new FlowletExecutionContext("fid", "flid", false);
-    ctx.setFlowIdentifier(
-        new FlowIdentifier("demo", "demo", "test", -1, EntityType.QUERY)
-    );
+    FlowIdentifier identifier =
+      new FlowIdentifier("demo", "demo", "test", -1);
+    identifier.setType(EntityType.QUERY);
+    ctx.setFlowIdentifier(identifier);
+
     ctx.setConfiguration(configuration);
     ctx.setInstanceId(1);
     ctx.setOperationExecutor(new NoOperationExecutor());
