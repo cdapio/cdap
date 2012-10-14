@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Point in time.
  */
-public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataPoint");
+public class Point implements org.apache.thrift.TBase<Point, Point._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Point");
 
   private static final org.apache.thrift.protocol.TField TIMESTAMP_FIELD_DESC = new org.apache.thrift.protocol.TField("timestamp", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.DOUBLE, (short)2);
@@ -107,13 +107,13 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataPoint.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Point.class, metaDataMap);
   }
 
-  public DataPoint() {
+  public Point() {
   }
 
-  public DataPoint(
+  public Point(
     long timestamp,
     double value)
   {
@@ -127,15 +127,15 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataPoint(DataPoint other) {
+  public Point(Point other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
     this.timestamp = other.timestamp;
     this.value = other.value;
   }
 
-  public DataPoint deepCopy() {
-    return new DataPoint(this);
+  public Point deepCopy() {
+    return new Point(this);
   }
 
   @Override
@@ -242,12 +242,12 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataPoint)
-      return this.equals((DataPoint)that);
+    if (that instanceof Point)
+      return this.equals((Point)that);
     return false;
   }
 
-  public boolean equals(DataPoint that) {
+  public boolean equals(Point that) {
     if (that == null)
       return false;
 
@@ -289,13 +289,13 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
     return builder.toHashCode();
   }
 
-  public int compareTo(DataPoint other) {
+  public int compareTo(Point other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataPoint typedOther = (DataPoint)other;
+    Point typedOther = (Point)other;
 
     lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
@@ -375,7 +375,7 @@ public class DataPoint implements org.apache.thrift.TBase<DataPoint, DataPoint._
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataPoint(");
+    StringBuilder sb = new StringBuilder("Point(");
     boolean first = true;
 
     sb.append("timestamp:");

@@ -86,7 +86,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       this.processor = processor;
     }
 
-    private long olderThanTimeInSeconds = 300;
+    private long olderThanTimeInSeconds = 60*10;
 
     @Override
     protected void runOneIteration() throws Exception {
@@ -102,7 +102,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
           - olderThanTimeInSeconds);
         stmt.setLong(1, oldestStartTime);
         stmt.executeUpdate();
-        Log.debug("Cleaning up timeseries DB older than timeperiod {}",
+        Log.trace("Cleaning up timeseries DB older than timeperiod {}",
           oldestStartTime);
       } catch (SQLException e) {
         Log.warn("Failed to older timeseries data. Reason : {}",
@@ -272,7 +272,9 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       // If metric is not present then we don't attempt to
       // write the time series for that metric.
       // If metric has same value, then we don't add the point.
-      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
+      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
+         && !elements.getMetric().contains(".stream.out")
+         && !elements.getMetric().contains(".stream.in")) {
         return true;
       }
 
@@ -415,7 +417,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
   private boolean insertUpdateCounters(FlowMetricElements elements,
                                        MetricRequest request) {
-    Log.debug("Active connections {}, InActive connections {}",
+    Log.trace("Active connections {}, InActive connections {}",
               poolManager.getActiveConnections(),
               poolManager.getInactiveConnections());
     if(type == DBUtils.DBType.HSQLDB) {
@@ -449,7 +451,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
     // Break down the metric name into it's components.
     // If there are any issue with how it's constructed,
     // send a failure back and log a message on the server.
-    Log.debug("Received flow metric {}", request.toString());
+    Log.trace("Received flow metric {}", request.toString());
     try {
       final FlowMetricElements elements =
           new FlowMetricElements.Builder(request.getMetricName()).create();
@@ -457,14 +459,14 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
         return Futures.future(new Callable<MetricResponse.Status>() {
           public MetricResponse.Status call() {
             if (insertUpdateCounters(elements, request)) {
-              Log.debug("Successfully processed metric {}.", request.toString());
+              Log.trace("Successfully processed metric {}.", request.toString());
               return MetricResponse.Status.SUCCESS;
             }
             return MetricResponse.Status.FAILED;
           }
         }, ec);
       } else {
-        Log.debug("Invalid flow metric elements for request {}",
+        Log.warn("Invalid flow metric elements for request {}",
                   request.toString());
       }
     } catch (BuilderException e) {

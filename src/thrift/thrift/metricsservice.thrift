@@ -36,7 +36,7 @@ struct CounterRequest {
 /**
  * Point in time.
  */
-struct DataPoint {
+struct Point {
   1: i64 timestamp,
   2: double value
 }
@@ -52,8 +52,8 @@ enum MetricTimeseriesLevel {
 /**
  * Collection of data points for a given metric.
  */
-struct DataPoints {
-   1: map<string, list<DataPoint>> points,
+struct Points {
+   1: map<string, list<Point>> points,
    2: map<string, double> latest,
 }
 
@@ -85,7 +85,7 @@ service MetricsFrontendService {
  /**
   * API to request time series data for a set of metrics.
   */
-  DataPoints getTimeSeries(1: TimeseriesRequest request)
+  Points getTimeSeries(1: TimeseriesRequest request)
     throws (1: MetricsServiceException e),
 }
 

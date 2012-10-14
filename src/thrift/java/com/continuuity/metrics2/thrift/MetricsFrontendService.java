@@ -42,7 +42,7 @@ public class MetricsFrontendService {
      * 
      * @param request
      */
-    public DataPoints getTimeSeries(TimeseriesRequest request) throws MetricsServiceException, org.apache.thrift.TException;
+    public Points getTimeSeries(TimeseriesRequest request) throws MetricsServiceException, org.apache.thrift.TException;
 
   }
 
@@ -100,7 +100,7 @@ public class MetricsFrontendService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getCounters failed: unknown result");
     }
 
-    public DataPoints getTimeSeries(TimeseriesRequest request) throws MetricsServiceException, org.apache.thrift.TException
+    public Points getTimeSeries(TimeseriesRequest request) throws MetricsServiceException, org.apache.thrift.TException
     {
       send_getTimeSeries(request);
       return recv_getTimeSeries();
@@ -113,7 +113,7 @@ public class MetricsFrontendService {
       sendBase("getTimeSeries", args);
     }
 
-    public DataPoints recv_getTimeSeries() throws MetricsServiceException, org.apache.thrift.TException
+    public Points recv_getTimeSeries() throws MetricsServiceException, org.apache.thrift.TException
     {
       getTimeSeries_result result = new getTimeSeries_result();
       receiveBase(result, "getTimeSeries");
@@ -198,7 +198,7 @@ public class MetricsFrontendService {
         prot.writeMessageEnd();
       }
 
-      public DataPoints getResult() throws MetricsServiceException, org.apache.thrift.TException {
+      public Points getResult() throws MetricsServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -1309,7 +1309,7 @@ public class MetricsFrontendService {
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
-    private DataPoints success; // required
+    private Points success; // required
     private MetricsServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -1379,7 +1379,7 @@ public class MetricsFrontendService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataPoints.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Points.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -1390,7 +1390,7 @@ public class MetricsFrontendService {
     }
 
     public getTimeSeries_result(
-      DataPoints success,
+      Points success,
       MetricsServiceException e)
     {
       this();
@@ -1403,7 +1403,7 @@ public class MetricsFrontendService {
      */
     public getTimeSeries_result(getTimeSeries_result other) {
       if (other.isSetSuccess()) {
-        this.success = new DataPoints(other.success);
+        this.success = new Points(other.success);
       }
       if (other.isSetE()) {
         this.e = new MetricsServiceException(other.e);
@@ -1420,11 +1420,11 @@ public class MetricsFrontendService {
       this.e = null;
     }
 
-    public DataPoints getSuccess() {
+    public Points getSuccess() {
       return this.success;
     }
 
-    public void setSuccess(DataPoints success) {
+    public void setSuccess(Points success) {
       this.success = success;
     }
 
@@ -1472,7 +1472,7 @@ public class MetricsFrontendService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((DataPoints)value);
+          setSuccess((Points)value);
         }
         break;
 
@@ -1612,7 +1612,7 @@ public class MetricsFrontendService {
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
-              this.success = new DataPoints();
+              this.success = new Points();
               this.success.read(iprot);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);

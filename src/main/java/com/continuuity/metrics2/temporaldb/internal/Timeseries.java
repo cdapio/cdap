@@ -87,7 +87,7 @@ public final class Timeseries {
 
     // If any of the timeseries is less than 1, then we return result.
     // No point in proceeding with this.
-    if(a.size() < 1 || b.size() < 1) {
+    if(a == null || b == null || a.size() < 1 || b.size() < 1) {
       return ImmutableList.copyOf(result);
     }
 
@@ -134,7 +134,7 @@ public final class Timeseries {
       return ImmutableList.copyOf(result);
     }
 
-    // Iterate through list in parallel based on timestamp and make
+    // Iterate through list in parallel based on timestamp and
     // compute addition of a to b.
     Zip.zip(a, b, new TimeseriesParallelZipIterator() {
       @Override
@@ -156,5 +156,36 @@ public final class Timeseries {
     return ImmutableList.copyOf(result);
   }
 
+  /**
+   * Converts a list of data point to rate.
+   *
+   * @param a immutable list of datapoint
+   * @return immutable list of datapoint converted to rate.
+   */
+  public ImmutableList<DataPoint> rate(List<DataPoint> a) {
+    List<DataPoint> result = new ArrayList<DataPoint>();
+    if(a == null) {
+      return ImmutableList.copyOf(result);
+    }
+    DataPoint prev = null;
+
+    for(DataPoint dataPoint : a) {
+      if(prev == null) {
+        prev = dataPoint;
+      }
+      DataPoint.Builder dpb = new DataPoint.Builder(dataPoint.getMetric());
+      dpb.addTags(dataPoint.getTags());
+      dpb.addTimestamp(dataPoint.getTimestamp());
+      dpb.addValue(Math.abs(prev.getValue() - dataPoint.getValue()));
+      result.add(dpb.create());
+      prev = dataPoint;
+    }
+    if(result.size() > 1) {
+      DataPoint p = result.get(1);
+      result.remove(0);
+      result.add(0, p);
+    }
+    return ImmutableList.copyOf(result);
+  }
 
 }

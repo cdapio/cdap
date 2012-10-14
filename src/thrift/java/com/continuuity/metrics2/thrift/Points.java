@@ -24,13 +24,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Collection of data points for a given metric.
  */
-public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoints._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DataPoints");
+public class Points implements org.apache.thrift.TBase<Points, Points._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Points");
 
   private static final org.apache.thrift.protocol.TField POINTS_FIELD_DESC = new org.apache.thrift.protocol.TField("points", org.apache.thrift.protocol.TType.MAP, (short)1);
   private static final org.apache.thrift.protocol.TField LATEST_FIELD_DESC = new org.apache.thrift.protocol.TField("latest", org.apache.thrift.protocol.TType.MAP, (short)2);
 
-  private Map<String,List<DataPoint>> points; // required
+  private Map<String,List<Point>> points; // required
   private Map<String,Double> latest; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -103,20 +103,20 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-                new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DataPoint.class)))));
+                new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Point.class)))));
     tmpMap.put(_Fields.LATEST, new org.apache.thrift.meta_data.FieldMetaData("latest", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE))));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DataPoints.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Points.class, metaDataMap);
   }
 
-  public DataPoints() {
+  public Points() {
   }
 
-  public DataPoints(
-    Map<String,List<DataPoint>> points,
+  public Points(
+    Map<String,List<Point>> points,
     Map<String,Double> latest)
   {
     this();
@@ -127,19 +127,19 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public DataPoints(DataPoints other) {
+  public Points(Points other) {
     if (other.isSetPoints()) {
-      Map<String,List<DataPoint>> __this__points = new HashMap<String,List<DataPoint>>();
-      for (Map.Entry<String, List<DataPoint>> other_element : other.points.entrySet()) {
+      Map<String,List<Point>> __this__points = new HashMap<String,List<Point>>();
+      for (Map.Entry<String, List<Point>> other_element : other.points.entrySet()) {
 
         String other_element_key = other_element.getKey();
-        List<DataPoint> other_element_value = other_element.getValue();
+        List<Point> other_element_value = other_element.getValue();
 
         String __this__points_copy_key = other_element_key;
 
-        List<DataPoint> __this__points_copy_value = new ArrayList<DataPoint>();
-        for (DataPoint other_element_value_element : other_element_value) {
-          __this__points_copy_value.add(new DataPoint(other_element_value_element));
+        List<Point> __this__points_copy_value = new ArrayList<Point>();
+        for (Point other_element_value_element : other_element_value) {
+          __this__points_copy_value.add(new Point(other_element_value_element));
         }
 
         __this__points.put(__this__points_copy_key, __this__points_copy_value);
@@ -163,8 +163,8 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     }
   }
 
-  public DataPoints deepCopy() {
-    return new DataPoints(this);
+  public Points deepCopy() {
+    return new Points(this);
   }
 
   @Override
@@ -177,18 +177,18 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     return (this.points == null) ? 0 : this.points.size();
   }
 
-  public void putToPoints(String key, List<DataPoint> val) {
+  public void putToPoints(String key, List<Point> val) {
     if (this.points == null) {
-      this.points = new HashMap<String,List<DataPoint>>();
+      this.points = new HashMap<String,List<Point>>();
     }
     this.points.put(key, val);
   }
 
-  public Map<String,List<DataPoint>> getPoints() {
+  public Map<String,List<Point>> getPoints() {
     return this.points;
   }
 
-  public void setPoints(Map<String,List<DataPoint>> points) {
+  public void setPoints(Map<String,List<Point>> points) {
     this.points = points;
   }
 
@@ -247,7 +247,7 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       if (value == null) {
         unsetPoints();
       } else {
-        setPoints((Map<String,List<DataPoint>>)value);
+        setPoints((Map<String,List<Point>>)value);
       }
       break;
 
@@ -293,12 +293,12 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof DataPoints)
-      return this.equals((DataPoints)that);
+    if (that instanceof Points)
+      return this.equals((Points)that);
     return false;
   }
 
-  public boolean equals(DataPoints that) {
+  public boolean equals(Points that) {
     if (that == null)
       return false;
 
@@ -340,13 +340,13 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
     return builder.toHashCode();
   }
 
-  public int compareTo(DataPoints other) {
+  public int compareTo(Points other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    DataPoints typedOther = (DataPoints)other;
+    Points typedOther = (Points)other;
 
     lastComparison = Boolean.valueOf(isSetPoints()).compareTo(typedOther.isSetPoints());
     if (lastComparison != 0) {
@@ -389,19 +389,19 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
               org.apache.thrift.protocol.TMap _map4 = iprot.readMapBegin();
-              this.points = new HashMap<String,List<DataPoint>>(2*_map4.size);
+              this.points = new HashMap<String,List<Point>>(2*_map4.size);
               for (int _i5 = 0; _i5 < _map4.size; ++_i5)
               {
                 String _key6; // required
-                List<DataPoint> _val7; // required
+                List<Point> _val7; // required
                 _key6 = iprot.readString();
                 {
                   org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
-                  _val7 = new ArrayList<DataPoint>(_list8.size);
+                  _val7 = new ArrayList<Point>(_list8.size);
                   for (int _i9 = 0; _i9 < _list8.size; ++_i9)
                   {
-                    DataPoint _elem10; // required
-                    _elem10 = new DataPoint();
+                    Point _elem10; // required
+                    _elem10 = new Point();
                     _elem10.read(iprot);
                     _val7.add(_elem10);
                   }
@@ -451,12 +451,12 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
       oprot.writeFieldBegin(POINTS_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.points.size()));
-        for (Map.Entry<String, List<DataPoint>> _iter15 : this.points.entrySet())
+        for (Map.Entry<String, List<Point>> _iter15 : this.points.entrySet())
         {
           oprot.writeString(_iter15.getKey());
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, _iter15.getValue().size()));
-            for (DataPoint _iter16 : _iter15.getValue())
+            for (Point _iter16 : _iter15.getValue())
             {
               _iter16.write(oprot);
             }
@@ -486,7 +486,7 @@ public class DataPoints implements org.apache.thrift.TBase<DataPoints, DataPoint
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("DataPoints(");
+    StringBuilder sb = new StringBuilder("Points(");
     boolean first = true;
 
     sb.append("points:");

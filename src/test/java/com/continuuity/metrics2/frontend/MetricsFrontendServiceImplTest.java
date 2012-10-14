@@ -8,7 +8,9 @@ import com.continuuity.common.metrics.*;
 import com.continuuity.common.metrics.MetricRequest;
 import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
+import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.thrift.*;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.hamcrest.CoreMatchers;
@@ -16,6 +18,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +42,7 @@ public class MetricsFrontendServiceImplTest {
     configuration = CConfiguration.create();
     configuration.set(Constants.CFG_METRICS_CONNECTION_URL, connectionUrl);
     configuration.set(Constants.CFG_METRICS_COLLECTION_ALLOWED_TIMESERIES_METRICS,
-                      "processed,acks");
+                      "processed,acks,tuples.read.count,tuples.proc.count");
     processor = new FlowMetricsProcessor(configuration);
     Assert.assertNotNull(processor);
     client = new MetricsFrontendServiceImpl(configuration);
@@ -64,6 +67,16 @@ public class MetricsFrontendServiceImplTest {
       addMetric("acc0.app1.flow1.runid1.fl2.1.acks", 2*i);
       addMetric("acc0.app1.flow1.runid1.fl3.1.acks", 3*(i+1));
       addMetric("acc0.app1.flow1.runid1.fl4.1.acks", 4*(i+2));
+
+      addMetric("acc0.app1.flow1.runid1.fl1.1.tuples.read.count", 10);
+      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.read.count", 11*i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.read.count", 12*(i+1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.read.count", 13*(i+2));
+
+      addMetric("acc0.app1.flow1.runid1.fl1.1.tuples.proc.count", 10);
+      addMetric("acc0.app1.flow1.runid1.fl2.1.tuples.proc.count", 8*i);
+      addMetric("acc0.app1.flow1.runid1.fl3.1.tuples.proc.count", 14*(i+1));
+      addMetric("acc0.app1.flow1.runid1.fl4.1.tuples.proc.count", 7*(i+2));
 
       // Single flow, multiple flowlets
       addMetric("acc1.app1.flow1.runid1.fl1.1.processed", random.nextInt());
@@ -195,20 +208,24 @@ public class MetricsFrontendServiceImplTest {
   public void testAddingSingleMetricAndReadingItBackAtRunIdLevel()
     throws Exception {
     Assert.assertTrue(
-      addMetric("accountId.applicationId.flowId.runId.flowletId.1.processed",
-        10) == MetricResponse.Status.SUCCESS
-    );
-    Assert.assertTrue(
-    addMetric("accountId.applicationId.flowId.runId2.flowletId.1.processed",
+    addMetric("accountId1.applicationId.flowId.runId.flowletId.1.processed",
       11) == MetricResponse.Status.SUCCESS
     );
     FlowArgument argument =
-      new FlowArgument("accountId", "applicationId", "flowId");
+      new FlowArgument("accountId1", "applicationId", "flowId");
+
+    // Should find counters.
     argument.setRunId("runId");
-    List<Counter> counters = getCounters(argument,null);
+    List<Counter> counters = getCounters(argument, null);
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(1));
-    Assert.assertTrue(counters.get(0).getValue() == 10.0f);
+    Assert.assertTrue(counters.get(0).getValue() == 11.0f);
+
+    // We should not find any runid related counters.
+    argument.setRunId("rund2");
+    counters = getCounters(argument,null);
+    Assert.assertNotNull(counters);
+    Assert.assertThat(counters.size(), CoreMatchers.is(0));
   }
 
   @Test
@@ -219,7 +236,7 @@ public class MetricsFrontendServiceImplTest {
     argument.setRunId("runid1");
     argument.setFlowletId("fl1");
 
-    DataPoints dataPointsFlowLevel = getTimeseries(
+    Points dataPointsFlowLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOW_LEVEL,
@@ -229,9 +246,9 @@ public class MetricsFrontendServiceImplTest {
 
     Assert.assertNotNull(dataPointsFlowLevel);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
 
-    DataPoints dataPointsRunIdLevel = getTimeseries(
+    Points dataPointsRunIdLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.RUNID_LEVEL,
@@ -240,7 +257,7 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsRunIdLevel);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
   }
 
@@ -254,7 +271,7 @@ public class MetricsFrontendServiceImplTest {
     argument.setRunId("runid1");
     argument.setFlowletId("fl1");
 
-    DataPoints dataPointsFlowLevel = getTimeseries(
+    Points dataPointsFlowLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOW_LEVEL,
@@ -264,11 +281,11 @@ public class MetricsFrontendServiceImplTest {
 
     Assert.assertNotNull(dataPointsFlowLevel);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
 
-    DataPoints dataPointsRunIdLevel = getTimeseries(
+    Points dataPointsRunIdLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.RUNID_LEVEL,
@@ -277,9 +294,9 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsRunIdLevel);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
   }
 
@@ -292,7 +309,7 @@ public class MetricsFrontendServiceImplTest {
     argument.setRunId("runid1");
     argument.setFlowletId("fl1");
 
-    DataPoints dataPointsFlowLevel = getTimeseries(
+    Points dataPointsFlowLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOW_LEVEL,
@@ -301,7 +318,6 @@ public class MetricsFrontendServiceImplTest {
     );
 
     Assert.assertNotNull(dataPointsFlowLevel);
-    Assert.assertNull(dataPointsFlowLevel.getPoints().get("p1"));
   }
 
   /**
@@ -319,7 +335,7 @@ public class MetricsFrontendServiceImplTest {
     argument.setRunId("runid1");
     argument.setFlowletId("fl1");
 
-    DataPoints dataPointsFlowLevel = getTimeseries(
+    Points dataPointsFlowLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOW_LEVEL,
@@ -329,11 +345,11 @@ public class MetricsFrontendServiceImplTest {
 
     Assert.assertNotNull(dataPointsFlowLevel);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
 
-    DataPoints dataPointsRunIdLevel = getTimeseries(
+    Points dataPointsRunIdLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.RUNID_LEVEL,
@@ -342,12 +358,12 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsRunIdLevel);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
 
-    DataPoints dataPointsAppLevel = getTimeseries(
+    Points dataPointsAppLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.APPLICATION_LEVEL,
@@ -356,13 +372,13 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsAppLevel);
     Assert.assertTrue(dataPointsAppLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsAppLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
     Assert.assertTrue(dataPointsAppLevel.equals(dataPointsRunIdLevel));
     Assert.assertTrue(dataPointsAppLevel.equals(dataPointsFlowLevel));
 
-    DataPoints dataPointsAccountLevel = getTimeseries(
+    Points dataPointsAccountLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.ACCOUNT_LEVEL,
@@ -371,14 +387,14 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsAppLevel);
     Assert.assertTrue(dataPointsAccountLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsAccountLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
     Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsRunIdLevel));
     Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsFlowLevel));
     Assert.assertTrue(dataPointsAccountLevel.equals(dataPointsAppLevel));
 
-    DataPoints dataPointsFlowletLevel = getTimeseries(
+    Points dataPointsFlowletLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOWLET_LEVEL,
@@ -387,9 +403,9 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsFlowletLevel);
     Assert.assertTrue(dataPointsFlowletLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsFlowletLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
   }
 
   @Test
@@ -402,7 +418,7 @@ public class MetricsFrontendServiceImplTest {
     argument.setRunId("runid1");
     argument.setFlowletId("fl1");
 
-    DataPoints dataPointsFlowLevel = getTimeseries(
+    Points dataPointsFlowLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.FLOW_LEVEL,
@@ -412,11 +428,11 @@ public class MetricsFrontendServiceImplTest {
 
     Assert.assertNotNull(dataPointsFlowLevel);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
 
-    DataPoints dataPointsRunIdLevel = getTimeseries(
+    Points dataPointsRunIdLevel = getTimeseries(
       argument,
       metrics,
       MetricTimeseriesLevel.RUNID_LEVEL,
@@ -425,9 +441,9 @@ public class MetricsFrontendServiceImplTest {
     );
     Assert.assertNotNull(dataPointsRunIdLevel);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("processed").size() == POINTS - 1);
+                        .get("processed").size() == POINTS);
     Assert.assertTrue(dataPointsRunIdLevel.getPoints()
-                        .get("acks").size() == POINTS - 1);
+                        .get("acks").size() == POINTS);
     Assert.assertTrue(dataPointsFlowLevel.equals(dataPointsRunIdLevel));
   }
 
@@ -437,10 +453,8 @@ public class MetricsFrontendServiceImplTest {
     addMetric("demo.myapp.myflow.myfun.source.1.processed", 10);
     addMetric("demo.myapp.myflow.myfun.compute.1.processed", 11);
     addMetric("demo.myapp.myflow.myfun.sink.1.processed", 12);
-    List<Counter> counters = getCounters(
-      new FlowArgument("demo", "myapp", "myflow"),
-      null
-    );
+    List<Counter> counters = getCounters(new FlowArgument("demo", "myapp",
+                                                          "myflow"), null);
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(3));
   }
@@ -467,12 +481,21 @@ public class MetricsFrontendServiceImplTest {
 
     // Expectation is that all instance counts are aggregated into
     // the flowlet.
-    List<Counter> counters = getCounters(
-      new FlowArgument("demo", "myapp", "myflow"),
-      null
-    );
+    List<Counter> counters = getCounters(new FlowArgument("demo", "myapp", "myflow"), null);
     Assert.assertNotNull(counters);
     Assert.assertThat(counters.size(), CoreMatchers.is(3));
+  }
+
+  @Test
+  public void testBusynessMetric() throws Exception {
+    //acc0.app1.flow1.runid1.fl1.1.tuples.read.count
+    List<String> metrics = Lists.newArrayList();
+    metrics.add("busyness");
+    Points points = getTimeseries(new FlowArgument("acc0", "app1", "flow1"),
+                           metrics, MetricTimeseriesLevel.FLOW_LEVEL,timestamp,
+                           timestamp + counter + 10);
+    Assert.assertNotNull(points);
+    Assert.assertTrue(points.getPoints().get("busyness").size() == POINTS);
   }
 
   /**
@@ -505,7 +528,7 @@ public class MetricsFrontendServiceImplTest {
     return client.getCounters(request);
   }
 
-  private DataPoints getTimeseries(FlowArgument argument,
+  private Points getTimeseries(FlowArgument argument,
                                    List<String> metrics,
                                    MetricTimeseriesLevel level,
                                    long start,
@@ -519,6 +542,15 @@ public class MetricsFrontendServiceImplTest {
     request.setEndts(end);
     request.setSummary(true);
     return client.getTimeSeries(request);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullImmutableCopyList() throws Exception {
+    List<DataPoint> p = new ArrayList<DataPoint>();
+    ImmutableList<DataPoint> r = ImmutableList.copyOf(p);
+    Assert.assertNotNull(r);
+    p = null;
+    r = ImmutableList.copyOf(p);
   }
 
 }

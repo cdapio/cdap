@@ -276,7 +276,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(message instanceof MetricRequest) {
       final MetricRequest request = (MetricRequest) message;
-      Log.debug("Received metric : {}.", request.toString());
+      Log.trace("Received metric : {}.", request.toString());
 
       // If we have a valid request then we iterate through all the
       // processor attached to the metric type to process the metric.
