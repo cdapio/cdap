@@ -132,7 +132,7 @@
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness" unit="percent" width="170"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
@@ -231,7 +231,7 @@
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metric="processed.count" width="170"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metric="busyness" unit="percent" width="170"}}</div>
     </div>
 
     <div id="panels">

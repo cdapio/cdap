@@ -14,6 +14,7 @@ define([], function () {
 					if (data && data.length) {
 						this.get('sparkline').update(data);
 						this.get('label').html(this.__formatLabel(data[data.length - 1]));
+
 					}
 				}
 
@@ -83,7 +84,11 @@ define([], function () {
 				return (this.__titles[metric] || metric);
 			},
 			__formatLabel: function (value) {
-				return C.util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
+				if (this.get('unit') === 'percent') {
+					return Math.round(value) + '%';
+				} else {
+					return C.util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
+				}
 			},
 			didInsertElement: function () {
 
@@ -124,6 +129,12 @@ define([], function () {
 				}
 
 				this.set('label', label);
+
+				if (this.get('unit') === 'percent') {
+					this.get('label').css({
+						paddingTop: '28px'
+					});
+				}
 
 				var widget = d3.select(container[0]);
 				var sparkline = C.util.sparkline(widget, [], width, height, margin);
