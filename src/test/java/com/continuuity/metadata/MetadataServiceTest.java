@@ -2,7 +2,7 @@ package com.continuuity.metadata;
 
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metadata.stubs.*;
+import com.continuuity.metadata.thrift.*;
 import com.continuuity.runtime.MetadataModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -49,8 +49,8 @@ public class MetadataServiceTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithOnlyId() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-        stream = new com.continuuity.metadata.stubs.Stream("id1");
+    com.continuuity.metadata.thrift.Stream
+        stream = new com.continuuity.metadata.thrift.Stream("id1");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
   }
@@ -61,8 +61,8 @@ public class MetadataServiceTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithEmptyId() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("");
+    com.continuuity.metadata.thrift.Stream
+      stream = new com.continuuity.metadata.thrift.Stream("");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
   }
@@ -74,8 +74,8 @@ public class MetadataServiceTest {
    */
   @Test
   public void testCreateStreamWithIdAndName() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id1");
+    Stream
+      stream = new Stream("id1");
     stream.setName("Funny stream");
     mds.createStream(account, stream);
     Assert.assertTrue(true);
@@ -88,8 +88,7 @@ public class MetadataServiceTest {
    */
   @Test
   public void testCreateStreamCorrect() throws Exception {
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id1");
+    Stream stream = new Stream("id1");
     stream.setName("Funny stream");
     stream.setDescription("Funny stream that is so funny. You laugh it out");
     Assert.assertTrue(mds.createStream(account, stream));
@@ -106,8 +105,7 @@ public class MetadataServiceTest {
   public void testDeleteStream() throws Exception {
     int count = mds.getStreams(account).size();
 
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id2");
+    Stream stream = new Stream("id2");
     stream.setName("Serious stream");
     stream.setDescription("Serious stream. Shutup");
     Assert.assertTrue(mds.createStream(account, stream));
@@ -127,16 +125,15 @@ public class MetadataServiceTest {
   @Test
   public void testListStream() throws Exception {
     int before = mds.getStreams(account).size();
-    com.continuuity.metadata.stubs.Stream
-      stream = new com.continuuity.metadata.stubs.Stream("id3");
+    Stream stream = new Stream("id3");
     stream.setName("Serious stream");
     stream.setDescription("Serious stream. Shutup");
     Assert.assertTrue(mds.createStream(account, stream));
-    Collection<com.continuuity.metadata.stubs.Stream> streams
+    Collection<Stream> streams
       = mds.getStreams(account);
     int after = streams.size();
     Assert.assertTrue(after == before + 1);
-    for(com.continuuity.metadata.stubs.Stream s : streams) {
+    for(Stream s : streams) {
       if(s.getId().equals("id3")) {
         Assert.assertTrue("Serious stream".equals(s.getName()));
         Assert.assertTrue("Serious stream. Shutup".equals(s.getDescription()));

@@ -3,7 +3,12 @@ package com.continuuity.metadata;
 import com.continuuity.api.data.*;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.stubs.*;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.mortbay.log.Log;
@@ -14,8 +19,7 @@ import java.util.List;
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataService implements
-    com.continuuity.metadata.stubs.MetadataService.Iface {
+public class MetadataService implements com.continuuity.metadata.thrift.MetadataService.Iface {
   private final MetaDataStore mds;
 
   /**
@@ -36,7 +40,7 @@ public class MetadataService implements
    *
    * @param stream information about stream.
    * @return true if successful; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with creating
    *          stream.
    */
@@ -113,7 +117,7 @@ public class MetadataService implements
    *
    * @param stream to be deleted.
    * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with deleting
    *          stream.
    */
@@ -160,7 +164,7 @@ public class MetadataService implements
    *
    * @param account for which streams need to be retrieved.
    * @return list of stream associated with account.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue listing the
    *          streams for an account.
    */
@@ -207,7 +211,7 @@ public class MetadataService implements
    * @param stream Id of the stream for which more information is requested.
    * @return Stream with additional information like name and description else
    * return the Stream with just the id.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue reading in the
    *          information for stream.
    */
@@ -255,7 +259,7 @@ public class MetadataService implements
    *
    * @param dataset to be created.
    * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with creating
    *          a data set.
    */
@@ -332,7 +336,7 @@ public class MetadataService implements
    *
    * @param dataset to be deleted.
    * @return true if successfull; false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with creating
    *          a data set.
    */
@@ -377,7 +381,7 @@ public class MetadataService implements
    *
    * @param account for which metadata for datasets need to be retrieved.
    * @return list of data set associated with account
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          throw when there is issue with listing
    *          data set.
    */
@@ -431,7 +435,7 @@ public class MetadataService implements
    * @param account to which the dataset belongs to.
    * @param dataset of for which metdata is request.
    * @return Dataset associated with account and dataset.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is an issue with
    *          retrieving the data set.
    */
@@ -480,7 +484,7 @@ public class MetadataService implements
    * @param account under which the application is created.
    * @param application to be created.
    * @return true if created successfully or already exists, false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with creating
    *          metadata store entry for the application.
    */
@@ -551,7 +555,7 @@ public class MetadataService implements
    * @param application to be deleted.
    * @return true if application was deleted successfully or did not exists to
    *         be deleted; false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue deleting an
    *          application.
    */
@@ -598,7 +602,7 @@ public class MetadataService implements
    * Returns a list of application associated with account.
    *
    * @param account for which list of applications need to be retrieved.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue listing
    *          applications for a account.
    * @returns a list of application associated with account; else empty list.
@@ -644,7 +648,7 @@ public class MetadataService implements
    * @param account to the application belongs to.
    * @param application requested for meta data.
    * @return application meta data if exists; else the id passed.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue retrieving
    *          a application from metadata store.
    */
@@ -693,7 +697,7 @@ public class MetadataService implements
    * @param account under which the query is created.
    * @param query to be created.
    * @return true if created successfully or already exists, false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue with creating
    *          metadata store entry for the query.
    */
@@ -773,7 +777,7 @@ public class MetadataService implements
    * @param query to be deleted.
    * @return true if query was deleted successfully or did not exists to
    *         be deleted; false otherwise.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue deleting an
    *          query.
    */
@@ -820,7 +824,7 @@ public class MetadataService implements
    * Returns a list of query associated with account.
    *
    * @param account for which list of queries need to be retrieved.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue listing
    *          queries for a account.
    * @returns a list of queries associated with account; else empty list.
@@ -869,7 +873,7 @@ public class MetadataService implements
    * @param account to the query belongs to.
    * @param query requested for meta data.
    * @return query meta data if exists; else the id passed.
-   * @throws com.continuuity.metadata.stubs.MetadataServiceException
+   * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue retrieving
    *          a queries from metadata store.
    */

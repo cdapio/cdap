@@ -124,7 +124,7 @@ public class MetadataServer extends AbstractRegisteredServer
           serverPort
         )))
         .executorService(executorService)
-        .processor(new com.continuuity.metadata.stubs.MetadataService.Processor(service))
+        .processor(new com.continuuity.metadata.thrift.MetadataService.Processor(service))
         .workerThreads(threads);
 
       // ENG-443 - Set the max read buffer size. This is important as this will

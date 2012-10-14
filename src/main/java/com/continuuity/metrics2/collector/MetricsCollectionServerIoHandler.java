@@ -75,7 +75,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     @Override
     protected void runOneIteration() throws Exception {
       try {
-        Log.debug("Future reaper iterating through futures. Reaper list size {}.",
+        Log.trace("Future reaper iterating through futures. Reaper list size {}.",
           reapFutures.size());
         if(reapFutures.size() < 1) {
           return;
@@ -90,7 +90,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
           }
           reapFutures.remove(future);
         }
-        Log.debug("Future reaper done. Reaper list size {}.", reapFutures
+        Log.trace("Future reaper done. Reaper list size {}.", reapFutures
             .size());
       } catch (Exception e) {
         Log.warn("There was issue during future reaping. Reason : {}.",
@@ -276,7 +276,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(message instanceof MetricRequest) {
       final MetricRequest request = (MetricRequest) message;
-      Log.debug("Received metric : {}.", request.toString());
+      Log.trace("Received metric : {}.", request.toString());
 
       // If we have a valid request then we iterate through all the
       // processor attached to the metric type to process the metric.
