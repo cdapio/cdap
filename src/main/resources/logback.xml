@@ -9,6 +9,14 @@
 
 <configuration>
 
+    <!--
+      Disabling some chatty loggers.
+    -->
+    <logger name="org.apache.mina.core.filterchain" level="WARN"/>
+    <logger name="org.apache.mina.filter.codec" level="WARN"/>
+    <logger name="org.apache.zookeeper.server" level="ERROR"/>
+    <logger name="org.apache.zookeeper" level="ERROR"/>
+
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
         <file>logs/appfabric.log</file>
