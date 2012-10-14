@@ -76,7 +76,7 @@ define([], function () {
 				'tuples.read.count': 'Tuples Read',
 				'emitted.count': 'Tuples Emitted',
 				'dataops.count': 'Data Operations',
-				'busyness.count': 'Busyness',
+				'busyness': 'Busyness',
 				'flowlet.failure.count': 'Failures'
 			},
 			__getTitle: function (metric) {
