@@ -172,7 +172,7 @@ public class ClusterFeedReader {
     if (clusterInfo == null || clusterInfo.isEmpty()) {
       String str = "Cluster not found (id=" + clusterId + ")";
       LOG.warn(str);
-      throw new OperationException(StatusCode.KEY_NOT_FOUND, str);
+      return popFeed;
     }
     // Iterate categories and for each category iterate hours
     // (total iterations = # categories * # hours)
