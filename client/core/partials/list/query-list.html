@@ -16,6 +16,7 @@
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.reads" width="420"}}</td>
+		<td><button {{action start on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}} class="btn">Start</button></td>
 	</tr>
 	{{/each}}
 	</table>
