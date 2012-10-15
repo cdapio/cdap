@@ -71,6 +71,7 @@ dependencies {
     compile sourceSets.thrift.output
 
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
     // External dependencies.
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
