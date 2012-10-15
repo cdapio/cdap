@@ -18,7 +18,7 @@ define([], function () {
 						this.get('container').html('');
 
 						var widget = d3.select(this.get('container')[0]);
-						var sparkline = C.util.sparkline(widget, [], 
+						var sparkline = C.util.sparkline(widget, [],
 							this.get('width'), this.get('height'), 8);
 						this.set('sparkline', sparkline);
 
