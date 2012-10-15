@@ -30,7 +30,7 @@ define([
 				if (error) {
 					C.Vw.Informer.show(error.message, 'alert-error');
 				} else {
-					C.router.transitionTo('home');
+					window.history.go(-1);
 				}
 
 			});

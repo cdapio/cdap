@@ -141,12 +141,14 @@ a, a:visited {
 }
 
 #content {
-	width: 1056px;
+	min-width: 1056px;
+	max-width: 1456px;
 	margin-left: 224px;
-	background-color: #f0f1f1;
+	background-color: #F0F1F1;
 	position: relative;
 	min-height: 100%;
 	border-right: 4px solid #FAFAFA;
+	margin-right: 32px;
 
 }
 #content-body {
@@ -175,7 +177,7 @@ a, a:visited {
 	color: white !important;
 	text-decoration: none;
 	padding-right: 14px;
-	font-weight: 100;
+	font-weight: 200;
 	letter-spacing: 0.08em;
 }
 .global-dev {
@@ -187,10 +189,11 @@ a, a:visited {
 	padding-left: 14px;
 }
 .global-help {
-	background-position: 8px -30px;
+	background-position: 5px -30px;
 	padding-right: 0;
 	width: 0px;
 	height: 30px;
+	padding-left: 38px;
 }
 
 #breadcrumb {
@@ -212,11 +215,11 @@ a, a:visited {
 	background-position-y: 0px;
 	background-repeat: no-repeat;
 	text-decoration: none;
-	font-family: condensed;
-	text-transform: uppercase;
-	line-height: 42px;
+	line-height: 36px;
 	background-position-x: right;
 	letter-spacing: 0.08em;
+	font-size: 14px;
+	font-weight: 200;
 }
 
 #title {
@@ -361,6 +364,13 @@ h1 span {
 	margin-right: 45px;
 	box-shadow: inset 0px 0px 8px rgba(0, 0, 0, .05);
 }
+.sparkline-list-container-empty {
+	text-align: center;
+	font-family: condensed;
+	text-transform: uppercase;
+	line-height: 40px;
+	color: #DDD;
+}
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
 	height: 72px;
@@ -474,6 +484,7 @@ text {
 	border: 3px dotted #CCC;
 	border-radius: 3px;
 	background-color: #eaeaea;
+	box-shadow: inset 0px 0px 10px rgba(0, 0, 0, .05);
 }
 .drop-zone a {
 	color: #40AFD0;
@@ -613,6 +624,7 @@ input {
 }
 .dash-app-trends {
 	width: 100%;
+	border-top: 1px solid #eaeaea;
 }
 .dash-app-sub {
 	border-top: 1px solid #eff0ef;
@@ -1021,11 +1033,15 @@ a strong {
 .popup-close {
 	float: right;
 	cursor: pointer;
-	font-size: 28px;
-	width: 28px;
-	height: 28px;
+	font-size: 22px;
+	width: 22px;
+	height: 22px;
 	text-align: center;
-	margin: 20px 18px 0px 0px;
+	margin: -10px -10px 0px 0px;
+	background-color: #616A6B;
+	border-radius: 100%;
+	color: white;
+	box-shadow: 1px 1px 4px rgba(0, 0, 0, .35);
 }
 .popup-icon {
 	float: left;
@@ -1037,6 +1053,7 @@ a strong {
 .popup-title {
 	line-height: 36px;
 	padding: 12px 0px 12px 56px;
+	border-bottom: 1px solid #eaeaea;
 }
 .popup-title span {
 	color: #AAA;
@@ -1050,6 +1067,14 @@ a strong {
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
 	padding: 2px;
+}
+.popup-inject-wrapper {
+	border: 1px solid #EEE;
+	height: 27px;
+	background-color: #FAFAFA;
+	margin-right: 8px;
+	padding: 4px;
+	box-shadow: inset 0px 0px 8px rgba(0, 0, 0, .05);
 }
 #flowlet-popup-tabs {
 	height: 28px;
@@ -1069,6 +1094,9 @@ a strong {
 .flowlet-popup-tab a {
 	color: #505050;
 	display: block;
+}
+.flowlet-popup-tab a:hover {
+	text-decoration: none;
 }
 .flowlet-popup-tab.tab-selected {
 	background-color: #8b9395;
@@ -1132,6 +1160,9 @@ a strong {
 	padding: 0px 16px;
 	text-transform: uppercase;
 	margin: 4px 0px;
+	height: 20px;
+	line-height: 22px;
+	text-align: center;
 }
 .flowlet-popup-output {
 	background-image: url(../img/flowlet-popup-input.png);
@@ -1228,6 +1259,7 @@ a strong {
 #object-list {
 	margin: 0 auto 12px;
 	padding: 8px;
+	color: #616A6B;
 }
 .object-list-empty {
 	padding: 48px;
@@ -1328,6 +1360,9 @@ ol {
 	max-height: 32px;
 	overflow: hidden;
 	line-height: 12px;
+}
+.window-title span {
+	color: #c5ecf4;
 }
 .window-value {
 	font-size: 14px;

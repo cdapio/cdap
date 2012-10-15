@@ -4,7 +4,7 @@ define([
 	], function (Template) {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile(Template),
+		template: Em.Handlebars.compile(Template) /*,
 		start: function (event) {
 
 			var id = $(event.target).attr('flowId');
@@ -15,11 +15,12 @@ define([
 				params: [app, id, -1]
 			}, function (error, response) {
 
-				alert('Started');
+				window.alert('Started');
 
 			});
 
 		}
+		*/
 
 	});
 

@@ -64,19 +64,14 @@ define([
 
 			var flow = this.current;
 			
-			App.interstitial.loading('Pushing to Cloud...');
+			C.interstitial.loading('Pushing to Cloud...', 'abc');
 
-			App.socket.request('far', {
+			C.get('far', {
 				method: 'promote',
-				params: [flow.meta.app, flow.meta.name, flow.version]
+				params: [flow.applicationId, flow.id, flow.version]
 			}, function (error, response) {
-
-				if (error) {
-					C.Vw.Informer.show(error, 'alert-error');
-				} else {
-					C.Vw.Informer.show('Successfully pushed to cloud.');
-				}
-				App.interstitial.hide();
+				
+				C.interstitial.hide('abc');
 
 			});
 
@@ -105,7 +100,7 @@ define([
 				if (error) {
 					C.Vw.Informer.show(error.message, 'alert-error');
 				} else {
-					C.router.transitionTo('home');
+					window.history.go(-1);
 				}
 
 			});

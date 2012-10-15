@@ -72,8 +72,11 @@ define([
 			}, function (error, response) {
 
 				if (error) {
-					C.Vw.Flowlet.hide();
-					C.Vw.Informer.show('There was a problem connecting to the gateway.', 'alert-error');
+					C.Vw.Modal.show(
+					"Inject Error",
+					"The gateway responded with: " + error, function () {
+						window.location.reload();
+					});
 				}
 
 			});

@@ -69,19 +69,19 @@
             <tr>
               <td class="dash-app-resource dash-app-resource-health"></td>
               <td class="dash-app-resource">
-                <a href="#/apps" class="dash-app-resource-app">0</a>
+                <a href="#/apps" class="dash-app-resource-app">{{controller.counts.Application}}</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/flows" class="dash-app-resource-flow">0</a>
+                <a href="#/flows" class="dash-app-resource-flow">{{controller.counts.Flow}}</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/streams" class="dash-app-resource-stream">0</a>
+                <a href="#/streams" class="dash-app-resource-stream">{{controller.counts.Stream}}</a>
               </td>
               <td class="dash-app-resource">
-                <a href="#/data" class="dash-app-resource-dataset">0</a>
+                <a href="#/data" class="dash-app-resource-dataset">{{controller.counts.Dataset}}</a>
               </td>
               <td class="dash-app-resource" style="padding-right: 16px !important;">
-                <a href="#/queries" class="dash-app-resource-query">0</a>
+                <a href="#/queries" class="dash-app-resource-query">{{controller.counts.Query}}</a>
               </td>
             </tr>
           </tbody>
@@ -124,6 +124,7 @@
           </button>
           <ul class="dropdown-menu">
             <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+            <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
           </ul>
         </div>
       </div>
@@ -216,8 +217,9 @@
               {{/each}}
             </li>
             <li class="divider"></li>
-            <li><a {{action "upload" on="click"}}>Upload a New Version</a></li>
             <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
+            <li class="divider"></li>
+            <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
           </ul>
 
           <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
@@ -239,9 +241,8 @@
       <div class="panel">
         <div id="flowviz-container">
           <div class="btn-group" style="float: left;">
-            <button class="btn" style="width:150px;" disabled>{{view.flowletLabelName}}</button>
-              <button class="btn dropdown-toggle" data-toggle="dropdown">
-              <span class="caret"></span>
+            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
+              {{view.flowletLabelName}} <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>

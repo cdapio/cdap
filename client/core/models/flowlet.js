@@ -100,13 +100,13 @@ define([], function () {
 				var current = this;
 				var currentFlow = C.Ctl.Flow.get('current');
 
-				var app = currentFlow.meta.app;
-				var flow = currentFlow.meta.name;
+				var app = currentFlow.get('applicationId');
+				var flow = currentFlow.get('id');
 				var version = currentFlow.version;
 
 				var flowlet = current.name;
 
-				C.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.');
+				C.interstitial.loading('Setting instances for "' + flowlet + '" flowlet to ' + instances + '.', 'inst');
 				$('#flowlet-container').hide();
 
 				C.get('manager', {
@@ -116,12 +116,12 @@ define([], function () {
 
 					if (error) {
 						C.Vw.Informer.show(error, 'alert-error');
-						C.interstitial.hide();
 					} else {
 						current.set('instances', instances);
 						C.Vw.Informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
-						
 					}
+
+					C.interstitial.hide('inst');
 
 				});
 

@@ -48,7 +48,6 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 					app: Em.Route.extend({
 						route: '/:appId',
 						connectOutlets: function (router, context) {
-							console.log(context);
 							C.Ctl.Application.load(context.appId);
 							router.get('applicationController').connectOutlet({
 								viewClass: C.Vw.Application,

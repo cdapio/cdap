@@ -105,19 +105,28 @@ function(Models, Views, Controllers){
 			elementId: 'content'
 		}),
 		interstitial: {
+			__code: null,
 			show: function () {
 				$('#interstitial').show();
 				return this;
 			},
-			hide: function () {
-				$('#interstitial').fadeOut();
+			hide: function (code) {
+				if (this.__code) {
+					if (this.__code === code) {
+						$('#interstitial').fadeOut();
+						this.__code = null;
+					}
+				} else {
+					$('#interstitial').fadeOut();
+				}
 				return this;
 			},
 			label: function (message) {
 				$('#interstitial').html('<h3>' + message + '</h3>').show();
 				return this;
 			},
-			loading: function (message) {
+			loading: function (message, code) {
+				this.__code = code;
 				$('#interstitial').html((message ? '<h3>' + message + '</h3>' : '') +
 				'<img src="/assets/img/loading.gif" />').show();
 				return this;

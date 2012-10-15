@@ -1,14 +1,6 @@
 
 <div class="popup-container" style="padding-bottom: 24px;">
-
 <div class="popup-close" {{action close on="click"}}>×</div>
-{{#if controller.isCloud}}
-<div class="btn-group pull-right" style="margin: 16px 18px 0px 0px;">
-	<button class="btn" {{action "addOneInstance" on="click"}}>+</button>
-	<button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-	<button disabled="true" class="btn" style="width: 160px;text-align:left;">{{controller.current.instances}} instance{{controller.current.plural}}</button>
-</div>
-{{/if}}
 
 <div class="popup-icon" />
 <h1 class="popup-title">{{controller.current.name}} <span>Stream</span></h1>
@@ -21,7 +13,7 @@
 		</td>
 		<td style="padding-left: 12px;">
 			<div class="popup-white-label">Inject an Event</div>
-			<div>
+			<div class="popup-inject-wrapper">
 				{{view C.Vw.Injector}}
 				<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
 			</div>

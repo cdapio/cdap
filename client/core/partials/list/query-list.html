@@ -4,7 +4,8 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 448px;">Requests per Second (HTTP)</th>
+		<th style="width: 212px;">Requests</th>
+		<th style="width: 212px;">Errors</th>
 	</thead>
 	{{#each types.Query.content tagName="tbody"}}
 	<tr>
@@ -14,14 +15,14 @@
 		<td class="app-list-name">
 			{{name}}<br /><span class="app-list-status">{{typeName}}</span>
 		</td>
-		<td class="app-list-count">{{instances}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.reads" width="420"}}</td>
-		<td><button {{action start on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}} class="btn">Start</button></td>
+		<td class="app-list-count">1</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="busyness"}}</td>
 	</tr>
 	{{/each}}
 	</table>
 {{else}}
 	<div class="object-list-empty">
-		No Queries. Add a Query by uploading a JAR file above.
+		Add a Query by uploading a JAR file above.
 	</div>
 {{/if}}

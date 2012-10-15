@@ -129,9 +129,6 @@ define([], function () {
 
 				if (response.params && self.get('current')) {
 					self.get('current').set('currentState', response.params.status);
-					if (response.params.status === 'RUNNING') {
-						C.interstitial.hide();
-					}
 				}
 			});
 		},

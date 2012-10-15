@@ -126,15 +126,17 @@ try {
 			break;
 			case 'setInstances':
 
-				var flowlet_id = params[3];
-				var instances = params[4];
+				var flowlet_id = params[4];
+				var instances = params[5];
 
 				var identifier = new flowservices_types.FlowIdentifier({
-					applicationId: params[0],
-					flowId: params[1],
-					version: params[2] ? parseInt(params[2], 10) : -1,
-					accountId: 'demo'
+					accountId: params[0],
+					applicationId: params[1],
+					flowId: params[2],
+					version: params[3] || -1
 				});
+
+				console.log(method, params, auth_token, identifier, flowlet_id, instances);
 
 				Manager.setInstances(auth_token, identifier, flowlet_id, instances, done);
 
@@ -341,12 +343,12 @@ try {
 			res.on('data', function (chunk) {
 			});
 			res.on('end', function () {
-				done(res.statusCode);
+				done(res.statusCode !== 200, res.statusCode);
 			});
 		});
 
 		post_req.on('error', function (e) {
-			done(e);
+			done(e, null);
 		});
 
 		post_req.write(post_data);

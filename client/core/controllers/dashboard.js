@@ -6,6 +6,7 @@ define([], function () {
 	
 	return Em.ArrayProxy.create({
 		types: Em.Object.create(),
+		counts: Em.Object.create(),
 		load: function () {
 
 			var self = this;
@@ -27,8 +28,24 @@ define([], function () {
 				self.get('types.Application').pushObjects(objects);
 				self.getStats();
 
+				self.get('counts').set('Application', objects.length);
+
 				C.interstitial.hide();
 			});
+
+			C.Ctl.List.getObjects('Stream', function (objects) {
+				self.get('counts').set('Stream', objects.length);
+			});
+			C.Ctl.List.getObjects('Flow', function (objects) {
+				self.get('counts').set('Flow', objects.length);
+			});
+			C.Ctl.List.getObjects('Dataset', function (objects) {
+				self.get('counts').set('Dataset', objects.length);
+			});
+			C.Ctl.List.getObjects('Query', function (objects) {
+				self.get('counts').set('Query', objects.length);
+			});
+
 		},
 		testing: function () {
 			console.log('trigg');
@@ -45,6 +62,10 @@ define([], function () {
 				params: [null, null, ['processed.count', 'storage.trend'], start, end, 'ACCOUNT_LEVEL']
 			}, function (error, response) {
 				
+				if (!response.params) {
+					return;
+				}
+
 				var data, points = response.params.points;
 
 				for (var metric in points) {

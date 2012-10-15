@@ -40,6 +40,31 @@ define([], function () {
 						queries.push(objects[i]);
 					} else {
 						flows.push(objects[i]);
+
+						var id = objects[i].get('flowId');
+						var app = objects[i].get('applicationId');
+
+						C.get('manager', {
+							method: 'getFlowDefinition',
+							params: [app, id]
+						}, function (error, response, param) {
+
+							var flow = response.params;
+							if (flow.flowlets) {
+
+								var totalInstances = 0;
+
+								for (var j = 0; j < flow.flowlets.length; j ++) {
+									totalInstances += flow.flowlets[j].instances;
+								}
+
+								param.set('instances', totalInstances);
+							}
+
+
+
+						}, objects[i]);
+
 					}
 				}
 
@@ -47,6 +72,9 @@ define([], function () {
 				self.get('types.Query').pushObjects(queries);
 
 				// self.get('types.Flow').pushObjects(objects);
+
+
+
 				self.__loaded();
 
 			});
