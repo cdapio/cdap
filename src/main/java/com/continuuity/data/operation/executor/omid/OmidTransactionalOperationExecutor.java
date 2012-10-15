@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -75,14 +76,37 @@ implements TransactionalOperationExecutor {
 
   // Metrics
 
+  // TODO rework metric emission to avoid always generating the metric names
   private CMetrics cmetric = new CMetrics(MetricType.System);
-  
+  private ConcurrentMap<byte[], CMetrics> qmetrics =
+      new ConcurrentSkipListMap<byte[], CMetrics>(Bytes.BYTES_COMPARATOR);
+  private CMetrics qmetric(byte[] queueName) {
+    CMetrics metric = qmetrics.get(queueName);
+    if (metric == null) {
+      qmetrics.putIfAbsent(queueName,
+          new CMetrics(MetricType.FlowSystem, "q." + new String(queueName)));
+      metric = qmetrics.get(queueName);
+    }
+    return metric;
+  }
+
   private static final String METRIC_PREFIX = "omid-opex-";
   
   private void requestMetric(String requestType) {
     cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
   }
-  
+
+  private void ackMetric(byte[] queue, String consumer) {
+    qmetric(queue).meter("ack." + consumer, 1);
+  }
+  private void ackMetric(byte[] queue, long consumer) {
+    qmetric(queue).meter("ack." + consumer, 1);
+  }
+  private void enqueueMetric(byte[] queue) {
+    qmetric(queue).meter("enqueue", 1);
+  }
+
+
   private long begin() { return System.currentTimeMillis(); }
   private void end(String requestType, long beginning) {
     cmetric.histogram(METRIC_PREFIX + requestType + "-latency",
@@ -455,9 +479,22 @@ implements TransactionalOperationExecutor {
       finalize.execute(getQueueTable(ack.getKey()), pointer);
     }
 
-    // Transaction was successfully committed
+    // Transaction was successfully committed, emit metrics
+    // - for the transaction
     cmetric.meter(
         METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
+    // for each queue operation (enqueue or ack)
+    for (QueueInvalidate invalidate : invalidates)
+      if (invalidate instanceof QueueUnenqueue) {
+        enqueueMetric(((QueueUnenqueue)invalidate).queueName);
+      } else if (invalidate instanceof QueueUnack) {
+        QueueUnack unack = (QueueUnack)invalidate;
+        QueueConsumer consumer = unack.consumer;
+        if (consumer.getGroupName() == null)
+          ackMetric(unack.queueName, consumer.getGroupId());
+        else
+          ackMetric(unack.queueName, consumer.getGroupName());
+      }
   }
 
   /**

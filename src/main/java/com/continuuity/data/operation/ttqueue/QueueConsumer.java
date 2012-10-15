@@ -11,16 +11,28 @@ public class QueueConsumer {
   private final int instanceId;
   private final long groupId;
   private final int groupSize;
+  private final String groupName; // may be null
 
+  /**
+   * @param instanceId id of this consumer instance (starts at 0)
+   * @param groupId id of this consumer group (doesn't matter)
+   * @param groupSize number of consumer instances in this consumer group
+   * @param groupName the name of the consumer group
+   */
+  public QueueConsumer(int instanceId, long groupId, int groupSize,
+                       String groupName) {
+    this.instanceId = instanceId;
+    this.groupId = groupId;
+    this.groupSize = groupSize;
+    this.groupName = groupName;
+  }
   /**
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize) {
-    this.instanceId = instanceId;
-    this.groupId = groupId;
-    this.groupSize = groupSize;
+    this(instanceId, groupId, groupSize, null);
   }
 
   public int getInstanceId() {
@@ -35,12 +47,17 @@ public class QueueConsumer {
     return this.groupSize;
   }
 
+  public String getGroupName() {
+    return this.groupName;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("instanceidd", this.instanceId)
         .add("groupid", this.groupId)
         .add("groupsize", this.groupSize)
+        .add("name", this.groupName)
         .toString();
   }
 

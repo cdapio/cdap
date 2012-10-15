@@ -82,6 +82,7 @@ struct TQueueConsumer {
   1: i32 instanceId,
   2: i64 groupId,
   3: i32 groupSize,
+  4: optional string groupName,
 }
 
 struct TQueueEntryPointer {

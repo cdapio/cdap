@@ -33,6 +33,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final org.apache.thrift.protocol.TField INSTANCE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("instanceId", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField GROUP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("groupId", org.apache.thrift.protocol.TType.I64, (short)2);
   private static final org.apache.thrift.protocol.TField GROUP_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("groupSize", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField GROUP_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("groupName", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +44,14 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   public int instanceId; // required
   public long groupId; // required
   public int groupSize; // required
+  public String groupName; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     INSTANCE_ID((short)1, "instanceId"),
     GROUP_ID((short)2, "groupId"),
-    GROUP_SIZE((short)3, "groupSize");
+    GROUP_SIZE((short)3, "groupSize"),
+    GROUP_NAME((short)4, "groupName");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -69,6 +72,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           return GROUP_ID;
         case 3: // GROUP_SIZE
           return GROUP_SIZE;
+        case 4: // GROUP_NAME
+          return GROUP_NAME;
         default:
           return null;
       }
@@ -113,6 +118,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final int __GROUPID_ISSET_ID = 1;
   private static final int __GROUPSIZE_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
+  private _Fields optionals[] = {_Fields.GROUP_NAME};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -122,6 +128,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.GROUP_SIZE, new org.apache.thrift.meta_data.FieldMetaData("groupSize", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.GROUP_NAME, new org.apache.thrift.meta_data.FieldMetaData("groupName", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueConsumer.class, metaDataMap);
   }
@@ -152,6 +160,9 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     this.instanceId = other.instanceId;
     this.groupId = other.groupId;
     this.groupSize = other.groupSize;
+    if (other.isSetGroupName()) {
+      this.groupName = other.groupName;
+    }
   }
 
   public TQueueConsumer deepCopy() {
@@ -166,6 +177,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     this.groupId = 0;
     setGroupSizeIsSet(false);
     this.groupSize = 0;
+    this.groupName = null;
   }
 
   public int getInstanceId() {
@@ -237,6 +249,30 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     __isset_bit_vector.set(__GROUPSIZE_ISSET_ID, value);
   }
 
+  public String getGroupName() {
+    return this.groupName;
+  }
+
+  public TQueueConsumer setGroupName(String groupName) {
+    this.groupName = groupName;
+    return this;
+  }
+
+  public void unsetGroupName() {
+    this.groupName = null;
+  }
+
+  /** Returns true if field groupName is set (has been assigned a value) and false otherwise */
+  public boolean isSetGroupName() {
+    return this.groupName != null;
+  }
+
+  public void setGroupNameIsSet(boolean value) {
+    if (!value) {
+      this.groupName = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case INSTANCE_ID:
@@ -263,6 +299,14 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       }
       break;
 
+    case GROUP_NAME:
+      if (value == null) {
+        unsetGroupName();
+      } else {
+        setGroupName((String)value);
+      }
+      break;
+
     }
   }
 
@@ -276,6 +320,9 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
 
     case GROUP_SIZE:
       return Integer.valueOf(getGroupSize());
+
+    case GROUP_NAME:
+      return getGroupName();
 
     }
     throw new IllegalStateException();
@@ -294,6 +341,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       return isSetGroupId();
     case GROUP_SIZE:
       return isSetGroupSize();
+    case GROUP_NAME:
+      return isSetGroupName();
     }
     throw new IllegalStateException();
   }
@@ -335,6 +384,15 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (!(this_present_groupSize && that_present_groupSize))
         return false;
       if (this.groupSize != that.groupSize)
+        return false;
+    }
+
+    boolean this_present_groupName = true && this.isSetGroupName();
+    boolean that_present_groupName = true && that.isSetGroupName();
+    if (this_present_groupName || that_present_groupName) {
+      if (!(this_present_groupName && that_present_groupName))
+        return false;
+      if (!this.groupName.equals(that.groupName))
         return false;
     }
 
@@ -384,6 +442,16 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetGroupName()).compareTo(typedOther.isSetGroupName());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetGroupName()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.groupName, typedOther.groupName);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -415,6 +483,16 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     sb.append("groupSize:");
     sb.append(this.groupSize);
     first = false;
+    if (isSetGroupName()) {
+      if (!first) sb.append(", ");
+      sb.append("groupName:");
+      if (this.groupName == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.groupName);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -483,6 +561,14 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // GROUP_NAME
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.groupName = iprot.readString();
+              struct.setGroupNameIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -507,6 +593,13 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       oprot.writeFieldBegin(GROUP_SIZE_FIELD_DESC);
       oprot.writeI32(struct.groupSize);
       oprot.writeFieldEnd();
+      if (struct.groupName != null) {
+        if (struct.isSetGroupName()) {
+          oprot.writeFieldBegin(GROUP_NAME_FIELD_DESC);
+          oprot.writeString(struct.groupName);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -534,7 +627,10 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetGroupSize()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetGroupName()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetInstanceId()) {
         oprot.writeI32(struct.instanceId);
       }
@@ -544,12 +640,15 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetGroupSize()) {
         oprot.writeI32(struct.groupSize);
       }
+      if (struct.isSetGroupName()) {
+        oprot.writeString(struct.groupName);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueConsumer struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.instanceId = iprot.readI32();
         struct.setInstanceIdIsSet(true);
@@ -561,6 +660,10 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (incoming.get(2)) {
         struct.groupSize = iprot.readI32();
         struct.setGroupSizeIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.groupName = iprot.readString();
+        struct.setGroupNameIsSet(true);
       }
     }
   }

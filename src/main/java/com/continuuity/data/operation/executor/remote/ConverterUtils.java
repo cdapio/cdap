@@ -480,17 +480,21 @@ public class ConverterUtils {
 
   /** wrap a queue consumer */
   TQueueConsumer wrap(QueueConsumer consumer) {
-    return new TQueueConsumer(
+    TQueueConsumer tQueueConsumer=  new TQueueConsumer(
         consumer.getInstanceId(),
         consumer.getGroupId(),
         consumer.getGroupSize());
+    if (consumer.getGroupName() != null)
+      tQueueConsumer.setGroupName(consumer.getGroupName());
+    return tQueueConsumer;
   }
   /** unwrap a queue consumer */
   QueueConsumer unwrap(TQueueConsumer tQueueConsumer) {
     return new QueueConsumer(
         tQueueConsumer.getInstanceId(),
         tQueueConsumer.getGroupId(),
-        tQueueConsumer.getGroupSize());
+        tQueueConsumer.getGroupSize(),
+        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null);
   }
 
   /**

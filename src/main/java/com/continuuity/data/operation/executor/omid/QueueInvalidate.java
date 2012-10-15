@@ -61,7 +61,7 @@ public abstract class QueueInvalidate {
   }
 
   public static class QueueUnack extends QueueInvalidate {
-    private final QueueConsumer consumer;
+    final QueueConsumer consumer;
     public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
         QueueConsumer consumer) {
       super(queueName, entryPointer);
