@@ -81,7 +81,7 @@ startScripts {
 tasks.distZip {
     baseName = "continuuity"
     appendix = "developer-edition"
-    version = "1.2.0"
+    version = "1.2.1"
     classifier = "beta"
 }
 
