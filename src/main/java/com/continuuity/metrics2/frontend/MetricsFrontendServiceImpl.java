@@ -291,8 +291,11 @@ public class MetricsFrontendServiceImpl
             timeseries.rate(ImmutableList.copyOf(read)),
             new Function<Double, Double>() {
               @Override
-              public Double apply(@Nullable Double input) {
-                return input * 100;
+              public Double apply(@Nullable Double value) {
+                if(value.doubleValue() > 1) {
+                  value = new Double(1);
+                }
+                return value * 100;
               }
             }
           );
