@@ -33,7 +33,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -78,17 +77,8 @@ implements TransactionalOperationExecutor {
 
   // TODO rework metric emission to avoid always generating the metric names
   private CMetrics cmetric = new CMetrics(MetricType.System);
-  private ConcurrentMap<byte[], CMetrics> qmetrics =
-      new ConcurrentSkipListMap<byte[], CMetrics>(Bytes.BYTES_COMPARATOR);
-  private CMetrics qmetric(byte[] queueName) {
-    CMetrics metric = qmetrics.get(queueName);
-    if (metric == null) {
-      qmetrics.putIfAbsent(queueName,
-          new CMetrics(MetricType.FlowSystem, "q." + new String(queueName)));
-      metric = qmetrics.get(queueName);
-    }
-    return metric;
-  }
+  private CMetrics qmetric = new CMetrics(MetricType.FlowSystem,
+                                "ALL.ALL.ALL.ALL.ALL.0");
 
   private static final String METRIC_PREFIX = "omid-opex-";
   
@@ -96,14 +86,17 @@ implements TransactionalOperationExecutor {
     cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
   }
 
-  private void ackMetric(byte[] queue, String consumer) {
-    qmetric(queue).meter("ack." + consumer, 1);
-  }
-  private void ackMetric(byte[] queue, long consumer) {
-    qmetric(queue).meter("ack." + consumer, 1);
+  private void ackMetric(byte[] queue, QueueConsumer consumer) {
+    String metricName;
+    if (consumer.getGroupName() != null)
+      metricName = "q." + new String(queue) + ".ack." + consumer.getGroupName();
+    else
+      metricName = "q." + new String(queue) + ".ack." + consumer.getGroupId();
+    qmetric.counter(metricName, 1);
   }
   private void enqueueMetric(byte[] queue) {
-    qmetric(queue).meter("enqueue", 1);
+    String metricName = "q." + new String(queue) + ".enqueue";
+    qmetric.counter("enqueue", 1);
   }
 
 
@@ -490,10 +483,7 @@ implements TransactionalOperationExecutor {
       } else if (invalidate instanceof QueueUnack) {
         QueueUnack unack = (QueueUnack)invalidate;
         QueueConsumer consumer = unack.consumer;
-        if (consumer.getGroupName() == null)
-          ackMetric(unack.queueName, consumer.getGroupId());
-        else
-          ackMetric(unack.queueName, consumer.getGroupName());
+        ackMetric(unack.queueName, consumer);
       }
   }
 
