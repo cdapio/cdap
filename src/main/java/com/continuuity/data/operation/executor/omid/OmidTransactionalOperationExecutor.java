@@ -96,7 +96,7 @@ implements TransactionalOperationExecutor {
   }
   private void enqueueMetric(byte[] queue) {
     String metricName = "q." + new String(queue) + ".enqueue";
-    qmetric.counter("enqueue", 1);
+    qmetric.counter(metricName, 1);
   }
 
 
