@@ -382,15 +382,19 @@ public class ConverterUtils {
 
   /** wrap an EnqueuePayload operation */
   TQueueEnqueue wrap(QueueEnqueue enqueue) {
-    return new TQueueEnqueue(
+    TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
         wrap(enqueue.getData()),
         enqueue.getId());
+    if (enqueue.getProducer() != null)
+      tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
+    return tQueueEnqueue;
   }
   /** unwrap an EnqueuePayload operation */
   QueueEnqueue unwrap(TQueueEnqueue tEnqueue) {
     return new QueueEnqueue(
         tEnqueue.getId(),
+        unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
         tEnqueue.getValue());
   }
@@ -495,6 +499,19 @@ public class ConverterUtils {
         tQueueConsumer.getGroupId(),
         tQueueConsumer.getGroupSize(),
         tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null);
+  }
+
+  /** wrap a queue producer */
+  TQueueProducer wrap(QueueProducer producer) {
+    TQueueProducer tQueueProducer = new TQueueProducer();
+    if (producer != null && producer.getProducerName() != null)
+      tQueueProducer.setName(producer.getProducerName());
+    return tQueueProducer;
+  }
+  /** unwrap a queue producer */
+  QueueProducer unwrap(TQueueProducer tQueueProducer) {
+    if (tQueueProducer == null) return null;
+    return new QueueProducer(tQueueProducer.getName());
   }
 
   /**

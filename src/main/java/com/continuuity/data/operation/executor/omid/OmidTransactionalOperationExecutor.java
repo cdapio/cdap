@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -77,8 +78,18 @@ implements TransactionalOperationExecutor {
 
   // TODO rework metric emission to avoid always generating the metric names
   private CMetrics cmetric = new CMetrics(MetricType.System);
-  private CMetrics qmetric = new CMetrics(MetricType.FlowSystem,
-                                "ALL.ALL.ALL.ALL.ALL.0");
+
+  private ConcurrentMap<String, CMetrics> qmetrics =
+      new ConcurrentHashMap<String, CMetrics>();
+  private CMetrics qmetric(String group) {
+    CMetrics metric = qmetrics.get(group);
+    if (metric == null) {
+      qmetrics.putIfAbsent(group,
+          new CMetrics(MetricType.FlowSystem, group));
+      metric = qmetrics.get(group);
+    }
+    return metric;
+  }
 
   private static final String METRIC_PREFIX = "omid-opex-";
   
@@ -87,18 +98,17 @@ implements TransactionalOperationExecutor {
   }
 
   private void ackMetric(byte[] queue, QueueConsumer consumer) {
-    String metricName;
-    if (consumer.getGroupName() != null)
-      metricName = "q." + new String(queue) + ".ack." + consumer.getGroupName();
-    else
-      metricName = "q." + new String(queue) + ".ack." + consumer.getGroupId();
-    qmetric.counter(metricName, 1);
+    if (consumer != null && consumer.getGroupName() != null) {
+      String metricName = "q.ack." + new String(queue);
+      qmetric(consumer.getGroupName()).meter(metricName, 1);
+    }
   }
-  private void enqueueMetric(byte[] queue) {
-    String metricName = "q." + new String(queue) + ".enqueue";
-    qmetric.counter(metricName, 1);
+  private void enqueueMetric(byte[] queue, QueueProducer producer) {
+    if (producer != null && producer.getProducerName() != null) {
+      String metricName = "q.enqueue." + new String(queue);
+      qmetric(producer.getProducerName()).meter(metricName, 1);
+    }
   }
-
 
   private long begin() { return System.currentTimeMillis(); }
   private void end(String requestType, long beginning) {
@@ -479,7 +489,9 @@ implements TransactionalOperationExecutor {
     // for each queue operation (enqueue or ack)
     for (QueueInvalidate invalidate : invalidates)
       if (invalidate instanceof QueueUnenqueue) {
-        enqueueMetric(((QueueUnenqueue)invalidate).queueName);
+        QueueUnenqueue unenqueue = (QueueUnenqueue)invalidate;
+        QueueProducer producer = unenqueue.producer;
+        enqueueMetric(unenqueue.queueName, producer);
       } else if (invalidate instanceof QueueUnack) {
         QueueUnack unack = (QueueUnack)invalidate;
         QueueConsumer consumer = unack.consumer;
@@ -690,7 +702,8 @@ implements TransactionalOperationExecutor {
         enqueue.getKey(), enqueue.getData(), pointer.getSecond());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUnenqueue(enqueue.getKey(), result.getEntryPointer()));
+        new QueueUnenqueue(enqueue.getKey(), enqueue.getProducer(),
+            result.getEntryPointer()));
   }
 
   WriteTransactionResult write(QueueAck ack,

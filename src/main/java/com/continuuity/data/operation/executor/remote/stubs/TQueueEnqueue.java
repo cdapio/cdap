@@ -33,6 +33,7 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
   private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField PRODUCER_FIELD_DESC = new org.apache.thrift.protocol.TField("producer", org.apache.thrift.protocol.TType.STRUCT, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,12 +44,14 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
   public ByteBuffer queueName; // required
   public ByteBuffer value; // required
   public long id; // required
+  public TQueueProducer producer; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     QUEUE_NAME((short)1, "queueName"),
     VALUE((short)2, "value"),
-    ID((short)3, "id");
+    ID((short)3, "id"),
+    PRODUCER((short)4, "producer");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -69,6 +72,8 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
           return VALUE;
         case 3: // ID
           return ID;
+        case 4: // PRODUCER
+          return PRODUCER;
         default:
           return null;
       }
@@ -111,6 +116,7 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
   // isset id assignments
   private static final int __ID_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.PRODUCER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -120,6 +126,8 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.PRODUCER, new org.apache.thrift.meta_data.FieldMetaData("producer", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueProducer.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueEnqueue.class, metaDataMap);
   }
@@ -154,6 +162,9 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
 ;
     }
     this.id = other.id;
+    if (other.isSetProducer()) {
+      this.producer = new TQueueProducer(other.producer);
+    }
   }
 
   public TQueueEnqueue deepCopy() {
@@ -166,6 +177,7 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
     this.value = null;
     setIdIsSet(false);
     this.id = 0;
+    this.producer = null;
   }
 
   public byte[] getQueueName() {
@@ -259,6 +271,30 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
     __isset_bit_vector.set(__ID_ISSET_ID, value);
   }
 
+  public TQueueProducer getProducer() {
+    return this.producer;
+  }
+
+  public TQueueEnqueue setProducer(TQueueProducer producer) {
+    this.producer = producer;
+    return this;
+  }
+
+  public void unsetProducer() {
+    this.producer = null;
+  }
+
+  /** Returns true if field producer is set (has been assigned a value) and false otherwise */
+  public boolean isSetProducer() {
+    return this.producer != null;
+  }
+
+  public void setProducerIsSet(boolean value) {
+    if (!value) {
+      this.producer = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case QUEUE_NAME:
@@ -285,6 +321,14 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       }
       break;
 
+    case PRODUCER:
+      if (value == null) {
+        unsetProducer();
+      } else {
+        setProducer((TQueueProducer)value);
+      }
+      break;
+
     }
   }
 
@@ -298,6 +342,9 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
 
     case ID:
       return Long.valueOf(getId());
+
+    case PRODUCER:
+      return getProducer();
 
     }
     throw new IllegalStateException();
@@ -316,6 +363,8 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       return isSetValue();
     case ID:
       return isSetId();
+    case PRODUCER:
+      return isSetProducer();
     }
     throw new IllegalStateException();
   }
@@ -357,6 +406,15 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       if (!(this_present_id && that_present_id))
         return false;
       if (this.id != that.id)
+        return false;
+    }
+
+    boolean this_present_producer = true && this.isSetProducer();
+    boolean that_present_producer = true && that.isSetProducer();
+    if (this_present_producer || that_present_producer) {
+      if (!(this_present_producer && that_present_producer))
+        return false;
+      if (!this.producer.equals(that.producer))
         return false;
     }
 
@@ -406,6 +464,16 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetProducer()).compareTo(typedOther.isSetProducer());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetProducer()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.producer, typedOther.producer);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -445,6 +513,16 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
     sb.append("id:");
     sb.append(this.id);
     first = false;
+    if (isSetProducer()) {
+      if (!first) sb.append(", ");
+      sb.append("producer:");
+      if (this.producer == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.producer);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -513,6 +591,15 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // PRODUCER
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.producer = new TQueueProducer();
+              struct.producer.read(iprot);
+              struct.setProducerIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -541,6 +628,13 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       oprot.writeFieldBegin(ID_FIELD_DESC);
       oprot.writeI64(struct.id);
       oprot.writeFieldEnd();
+      if (struct.producer != null) {
+        if (struct.isSetProducer()) {
+          oprot.writeFieldBegin(PRODUCER_FIELD_DESC);
+          struct.producer.write(oprot);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -568,7 +662,10 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       if (struct.isSetId()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetProducer()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetQueueName()) {
         oprot.writeBinary(struct.queueName);
       }
@@ -578,12 +675,15 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       if (struct.isSetId()) {
         oprot.writeI64(struct.id);
       }
+      if (struct.isSetProducer()) {
+        struct.producer.write(oprot);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueEnqueue struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.queueName = iprot.readBinary();
         struct.setQueueNameIsSet(true);
@@ -595,6 +695,11 @@ public class TQueueEnqueue implements org.apache.thrift.TBase<TQueueEnqueue, TQu
       if (incoming.get(2)) {
         struct.id = iprot.readI64();
         struct.setIdIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.producer = new TQueueProducer();
+        struct.producer.read(iprot);
+        struct.setProducerIsSet(true);
       }
     }
   }

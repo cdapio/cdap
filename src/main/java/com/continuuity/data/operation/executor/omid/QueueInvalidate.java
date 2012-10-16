@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.continuuity.common.utils.ImmutablePair;
@@ -33,9 +34,12 @@ public abstract class QueueInvalidate {
       ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
 
   public static class QueueUnenqueue extends QueueInvalidate {
+    final QueueProducer producer;
     public QueueUnenqueue(final byte[] queueName,
-        QueueEntryPointer entryPointer) {
+                          QueueProducer producer,
+                          QueueEntryPointer entryPointer) {
       super(queueName, entryPointer);
+      this.producer = producer;
     }
     @Override
     public void execute(TTQueueTable queueTable,

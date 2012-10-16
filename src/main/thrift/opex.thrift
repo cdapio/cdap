@@ -72,10 +72,15 @@ struct TCompareAndSwap {
 
 // queue stuff
 
+struct TQueueProducer {
+  1: optional string name,
+}
+
 struct TQueueEnqueue {
   1: binary queueName,
   2: binary value,
   3: i64 id,
+  4: optional TQueueProducer producer,
 }
 
 struct TQueueConsumer {
