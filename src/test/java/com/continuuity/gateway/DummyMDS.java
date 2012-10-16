@@ -5,13 +5,18 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 
+/**
+ * this is for testing and returns exists=true for all streams that do not
+ * start with "x"
+ */
 public class DummyMDS extends MetadataService {
   DummyMDS() {
     super(new NoOperationExecutor());
   }
   @Override
   public Stream getStream(Account account, Stream stream) {
-    stream.setExists(true);
+    if (stream.getId().startsWith("x"))
+      stream.setExists(false);
     return stream;
   }
 }

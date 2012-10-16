@@ -143,11 +143,17 @@ public class RestCollectorTest {
     // submit a request with correct prefix but no destination -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl));
 
+    // POST with destination that is not registered
+    Assert.assertEquals(200, TestUtil.sendPostRequest(
+        baseUrl + "pfunk")); //correct
+    Assert.assertEquals(404, TestUtil.sendPostRequest(
+        baseUrl + "xyz")); // incorrect, not registered
+
     // POST with destination but more after that in the path -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendPostRequest(
-        baseUrl + "flow/stream/"));
+        baseUrl + "pfunk/stream/"));
     Assert.assertEquals(404, TestUtil.sendPostRequest(
-        baseUrl + "flow/events/more"));
+        baseUrl + "pfunk/events/more"));
 
     // POST with existing key but with query part -> 501 Not Implemented
     Assert.assertEquals(501, TestUtil.sendPostRequest(
