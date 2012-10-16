@@ -15,6 +15,11 @@ define([], function () {
 
 			this.set('name', this.get('flowId'));
 
-		}
+		},
+		isRunning: function () {
+
+			return this.get('currentState') === 'RUNNING' ? true : false;
+
+		}.property().cacheable(false)
 	});
 });

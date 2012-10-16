@@ -96,7 +96,8 @@ try {
 			applicationId: params[1],
 			flowId: params[2],
 			version: params[3] ? parseInt(params[3], 10) : -1,
-			accountId: params[0]
+			accountId: params[0],
+			type: flowservices_types.EntityType[params[4] || 'FLOW']
 		});
 
 		switch (method) {
@@ -106,7 +107,8 @@ try {
 						applicationId: params[1],
 						flowId: params[2],
 						version: parseInt(params[3], 10),
-						accountId: 'demo'
+						accountId: 'demo',
+						type: flowservices_types.EntityType[params[4] || 'FLOW']
 					}),
 					"arguments": []
 				});
@@ -412,7 +414,7 @@ try {
 								console.log('FARManager deploy', error);
 							} else {
 
-								socket.emit('upload', {'status': 'Verifying...'});
+								socket.emit('upload', {step: 0, 'status': 'Verifying...', result: arguments});
 
 								var current_status = -1;
 

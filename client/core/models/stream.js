@@ -33,7 +33,6 @@ define([], function () {
 		},
 		getUpdateRequest: function () {
 
-			console.log(this.get('metricNames'));
 
 			return [];
 

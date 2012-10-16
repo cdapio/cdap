@@ -6,6 +6,7 @@
 		<th style="width: 100px;text-align: center;">Instances</th>
 		<th style="width: 212px;">Requests</th>
 		<th style="width: 212px;">Errors</th>
+		<th style="width: 60px;">&nbsp;</th>
 	</thead>
 	{{#each types.Query.content tagName="tbody"}}
 	<tr>
@@ -13,11 +14,16 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			{{name}}<br /><span class="app-list-status">{{typeName}}</span>
+			{{name}}<br /><span class="app-list-status">{{currentState}}</span>
 		</td>
 		<td class="app-list-count">1</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="busyness"}}</td>
+		<td>{{#unless isRunning}}
+			<button class="btn" {{action start on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}}>Start</button>
+			{{else}}
+			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}}>Stop</button>
+			{{/unless}}
 	</tr>
 	{{/each}}
 	</table>
