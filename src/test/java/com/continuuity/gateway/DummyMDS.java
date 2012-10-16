@@ -13,9 +13,16 @@ public class DummyMDS extends MetadataService {
   DummyMDS() {
     super(new NoOperationExecutor());
   }
+
+  boolean allowAll = false;
+
+  public void allowAll() {
+    this.allowAll = true;
+  }
+
   @Override
   public Stream getStream(Account account, Stream stream) {
-    if (stream.getId().startsWith("x"))
+    if (!allowAll && stream.getId().startsWith("x"))
       stream.setExists(false);
     return stream;
   }

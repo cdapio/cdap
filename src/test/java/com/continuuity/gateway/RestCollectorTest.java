@@ -148,6 +148,10 @@ public class RestCollectorTest {
         baseUrl + "pfunk")); //correct
     Assert.assertEquals(404, TestUtil.sendPostRequest(
         baseUrl + "xyz")); // incorrect, not registered
+    // make mds return exists=true for all streams, try again, should succeed
+    ((DummyMDS)collector.getMetadataService()).allowAll();
+    Assert.assertEquals(200, TestUtil.sendPostRequest(
+        baseUrl + "xyz")); // incorrect, not registered
 
     // POST with destination but more after that in the path -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendPostRequest(

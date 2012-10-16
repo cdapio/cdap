@@ -60,6 +60,10 @@ public abstract class Collector extends Connector {
     this.streamCache = new StreamCache(mds);
   }
 
+  public MetadataService getMetadataService() {
+    return this.mds;
+  }
+
   public StreamCache getStreamCache() {
     return this.streamCache;
   }
