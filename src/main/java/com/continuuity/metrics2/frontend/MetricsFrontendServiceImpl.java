@@ -216,25 +216,18 @@ public class MetricsFrontendServiceImpl
     // being populated.
 
     // Validate the timing request.
-    System.out.println("Before validate Timeseries request");
     validateTimeseriesRequest(request);
-    System.out.println("After validate Timeseries request");
 
     // If start time is specified and end time is negative offset
     // from that start time, then we use that.
-    System.out.println("Before: Start time " + start + ", End time " + end);
     if(request.isSetStartts() && request.getStartts() < 0) {
-      System.out.println("Changing start time to start - " + request.getStartts());
       start = start + request.getStartts();
     }
-    System.out.println("After: Start time " + start  + ", End time " + end);
 
     if(request.isSetStartts() && request.isSetEndts()) {
       start = request.getStartts();
       end = request.getEndts();
     }
-
-    System.out.println("Start time " + start + " End time " + end);
 
     // Preprocess the metrics list.
     List<String> preprocessedMetrics = Lists.newArrayList();
