@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -76,38 +77,14 @@ implements TransactionalOperationExecutor {
 
   // Metrics
 
-  // TODO rework metric emission to avoid always generating the metric names
+  /* -------------------  data fabric system metrics ---------------- */
   private CMetrics cmetric = new CMetrics(MetricType.System);
 
-  private ConcurrentMap<String, CMetrics> qmetrics =
-      new ConcurrentHashMap<String, CMetrics>();
-  private CMetrics qmetric(String group) {
-    CMetrics metric = qmetrics.get(group);
-    if (metric == null) {
-      qmetrics.putIfAbsent(group,
-          new CMetrics(MetricType.FlowSystem, group));
-      metric = qmetrics.get(group);
-    }
-    return metric;
-  }
-
   private static final String METRIC_PREFIX = "omid-opex-";
-  
-  private void requestMetric(String requestType) {
-    cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
-  }
 
-  private void ackMetric(byte[] queue, QueueConsumer consumer) {
-    if (consumer != null && consumer.getGroupName() != null) {
-      String metricName = "q.ack." + new String(queue);
-      qmetric(consumer.getGroupName()).meter(metricName, 1);
-    }
-  }
-  private void enqueueMetric(byte[] queue, QueueProducer producer) {
-    if (producer != null && producer.getProducerName() != null) {
-      String metricName = "q.enqueue." + new String(queue);
-      qmetric(producer.getProducerName()).meter(metricName, 1);
-    }
+  private void requestMetric(String requestType) {
+    // TODO rework metric emission to avoid always generating the metric names
+    cmetric.meter(METRIC_PREFIX + requestType + "-numops", 1);
   }
 
   private long begin() { return System.currentTimeMillis(); }
@@ -115,7 +92,69 @@ implements TransactionalOperationExecutor {
     cmetric.histogram(METRIC_PREFIX + requestType + "-latency",
         System.currentTimeMillis() - beginning);
   }
-  
+
+  /* -------------------  (interstitial) queue metrics ---------------- */
+  private ConcurrentMap<String, CMetrics> queueMetrics =
+      new ConcurrentHashMap<String, CMetrics>();
+  private CMetrics getQueueMetric(String group) {
+    CMetrics metric = queueMetrics.get(group);
+    if (metric == null) {
+      queueMetrics.putIfAbsent(group,
+          new CMetrics(MetricType.FlowSystem, group));
+      metric = queueMetrics.get(group);
+    }
+    return metric;
+  }
+
+  private void ackMetric(byte[] queue, QueueConsumer consumer) {
+    if (consumer != null && consumer.getGroupName() != null) {
+      String metricName = "q.ack." + new String(queue);
+      getQueueMetric(consumer.getGroupName()).meter(metricName, 1);
+    }
+  }
+
+  private void enqueueMetric(byte[] queue, QueueProducer producer) {
+    if (producer != null && producer.getProducerName() != null) {
+      String metricName = "q.enqueue." + new String(queue);
+      getQueueMetric(producer.getProducerName()).meter(metricName, 1);
+    }
+  }
+
+  /* -------------------  (global) stream metrics ---------------- */
+  private CMetrics streamMetric = // we use a global flow group
+      new CMetrics(MetricType.FlowSystem, "-.-.-.-.-.0");
+
+  private ConcurrentMap<byte[], ImmutablePair<String, String>>
+      streamMetricNames = new ConcurrentSkipListMap<byte[],
+      ImmutablePair<String, String>>(Bytes.BYTES_COMPARATOR);
+  private ImmutablePair<String, String> getStreamMetricNames(byte[] stream) {
+    ImmutablePair<String, String> names = streamMetricNames.get(stream);
+    if (names == null) {
+      String streamStr = new String(stream);
+      streamMetricNames.putIfAbsent(stream, new ImmutablePair<String, String>(
+        "stream.enqueue." + streamStr, "stream.storage." + streamStr));
+      names = streamMetricNames.get(stream);
+    }
+    return names;
+  }
+
+  private boolean isStream(byte[] queueName) {
+    return Bytes.startsWith(queueName, TTQueue.STREAM_NAME_PREFIX);
+  }
+
+  private int streamSizeEstimate(byte[] streamName, byte[] data) {
+    // assume HBase uses space for the stream name, the data, and some metadata
+    return streamName.length + data.length + 50;
+  }
+
+  private void streamMetric(byte[] streamName, byte[] data) {
+    ImmutablePair<String, String> names = getStreamMetricNames(streamName);
+    streamMetric.meter(names.getFirst(), 1);
+    streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
+  }
+
+  /* -------------------  end metrics ---------------- */
+
   // named table management
 
   // a map of logical table name to existing <real name, table>, caches
@@ -492,6 +531,8 @@ implements TransactionalOperationExecutor {
         QueueUnenqueue unenqueue = (QueueUnenqueue)invalidate;
         QueueProducer producer = unenqueue.producer;
         enqueueMetric(unenqueue.queueName, producer);
+        if (isStream(unenqueue.queueName))
+          streamMetric(unenqueue.queueName, unenqueue.data);
       } else if (invalidate instanceof QueueUnack) {
         QueueUnack unack = (QueueUnack)invalidate;
         QueueConsumer consumer = unack.consumer;
@@ -702,8 +743,8 @@ implements TransactionalOperationExecutor {
         enqueue.getKey(), enqueue.getData(), pointer.getSecond());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
-        new QueueUnenqueue(enqueue.getKey(), enqueue.getProducer(),
-            result.getEntryPointer()));
+        new QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
+            enqueue.getProducer(), result.getEntryPointer()));
   }
 
   WriteTransactionResult write(QueueAck ack,

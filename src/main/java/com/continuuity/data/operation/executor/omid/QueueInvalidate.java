@@ -34,12 +34,15 @@ public abstract class QueueInvalidate {
       ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
 
   public static class QueueUnenqueue extends QueueInvalidate {
+    final byte[] data;
     final QueueProducer producer;
     public QueueUnenqueue(final byte[] queueName,
+                          final byte[] data,
                           QueueProducer producer,
                           QueueEntryPointer entryPointer) {
       super(queueName, entryPointer);
       this.producer = producer;
+      this.data = data;
     }
     @Override
     public void execute(TTQueueTable queueTable,
