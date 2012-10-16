@@ -206,7 +206,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "   CAST('%s' AS VARCHAR(64))," +
       "   CAST('%s' AS VARCHAR(64))," +
       "   CAST(%d AS INT)," +
-      "   CAST('%s' AS VARCHAR(64))" +
+      "   CAST('%s' AS VARCHAR(256))" +
       "))" +
       "AS vals(" +
       "      account_id," +

@@ -410,7 +410,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(5, start);
         stmt.setLong(6, end);
         stmt.setString(7, metric);
-        Log.debug("Timeseries query {}", stmt.toString());
+        Log.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -427,7 +427,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(2, start);
         stmt.setLong(3, end);
         stmt.setString(4, metric);
-        Log.debug("Timeseries query {}", stmt.toString());
+        Log.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -446,7 +446,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(3, start);
         stmt.setLong(4, end);
         stmt.setString(5, metric);
-        Log.debug("Timeseries query {}", stmt.toString());
+        Log.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.FLOW_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -467,7 +467,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(4, start);
         stmt.setLong(5, end);
         stmt.setString(6, metric);
-        Log.debug("Timeseries query {}", stmt.toString());
+        Log.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -490,7 +490,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(5, start);
         stmt.setLong(6, end);
         stmt.setString(7, metric);
-        Log.debug("Timeseries query {}", stmt.toString());
+        Log.trace("Timeseries query {}", stmt.toString());
       }
 
       // Execute the query.
