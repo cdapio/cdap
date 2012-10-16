@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Logger;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.manager.server.FARServer;
@@ -165,7 +166,8 @@ public class SingleNodeMain {
     File temporaryDir = new File(ZOOKEEPER_DATA_DIR);
     temporaryDir.mkdir();
 
-    zookeeper = new InMemoryZookeeper(temporaryDir);
+    int port = PortDetector.findFreePort();
+    zookeeper = new InMemoryZookeeper(port, temporaryDir);
 
     // Set the connection string about where ZK server started on */
     myConfiguration.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
