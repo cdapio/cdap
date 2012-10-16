@@ -60,6 +60,8 @@ define([], function () {
 			} else {
 
 				switch (response.step) {
+					case 0:
+					break;
 					case 1:
 					case 2:
 					case 3:
