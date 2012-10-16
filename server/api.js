@@ -270,9 +270,6 @@ try {
 					});
 
 					var names = params[3] || [];
-
-					console.log('params', names);
-
 					var request = new metricsservice_types.CounterRequest({
 						argument: flow,
 						name: names
@@ -293,7 +290,6 @@ try {
 						argument: flow,
 						metrics: params[2],
 						level: metricsservice_types.MetricTimeseriesLevel[level],
-						endts: params[4],
 						startts: params[3]
 					});
 

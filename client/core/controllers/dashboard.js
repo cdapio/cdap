@@ -36,9 +36,6 @@ define([], function () {
 					});
 					C.Ctl.List.getObjects('Query', function (obj) {
 						objects[i + 1].set('counts.Query', obj.length);
-
-						C.interstitial.hide();
-
 					});
 
 				}
@@ -62,6 +59,8 @@ define([], function () {
 				self.get('counts').set('Query', objects.length);
 			});
 
+			C.interstitial.hide();
+
 		},
 		testing: function () {
 			console.log('trigg');
@@ -69,13 +68,11 @@ define([], function () {
 		__timeout: null,
 		getStats: function () {
 
-			var self = this, objects, content,
-				end = Math.round(new Date().getTime() / 1000),
-				start = end - C.__timeRange;
+			var self = this, objects, content;
 
 			C.get('monitor', {
 				method: 'getTimeSeries',
-				params: [null, null, ['processed.count', 'storage.trend'], start, end, 'ACCOUNT_LEVEL']
+				params: [null, null, ['processed.count', 'storage.trend'], (C.__timeRange * -1), null, 'ACCOUNT_LEVEL']
 			}, function (error, response) {
 				
 				if (!response.params) {

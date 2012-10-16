@@ -98,8 +98,8 @@ a, a:visited {
 	background-image: url(../img/icons-large.png);
 	background-repeat: no-repeat;
 	line-height: 30px;
-	font-weight: 100;
-	font-size: 17px;
+	font-weight: 200;
+	font-size: 16px;
 	letter-spacing: 0.07em;
 }
 #nav ul li .nav-link:hover {
