@@ -64,8 +64,8 @@ struct TimeseriesRequest {
    1: required FlowArgument argument,
    2: required list<string> metrics,
    3: optional MetricTimeseriesLevel level,
-   4: optional i64 startts,
-   5: required i64 endts,
+   4: required i64 startts,
+   5: optional i64 endts,
    6: optional bool summary = 1,
 }
 
