@@ -24,6 +24,7 @@ import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
+import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -96,29 +97,49 @@ implements TransactionalOperationExecutor {
   /* -------------------  (interstitial) queue metrics ---------------- */
   private ConcurrentMap<String, CMetrics> queueMetrics =
       new ConcurrentHashMap<String, CMetrics>();
+
   private CMetrics getQueueMetric(String group) {
     CMetrics metric = queueMetrics.get(group);
     if (metric == null) {
       queueMetrics.putIfAbsent(group,
           new CMetrics(MetricType.FlowSystem, group));
       metric = queueMetrics.get(group);
+      Log.debug("Created new CMetrics for group '" + group + "'.");
     }
     return metric;
   }
 
-  private void ackMetric(byte[] queue, QueueConsumer consumer) {
-    if (consumer != null && consumer.getGroupName() != null) {
-      String metricName = "q.ack." + new String(queue);
-      getQueueMetric(consumer.getGroupName()).meter(metricName, 1);
+  private ConcurrentMap<byte[], ImmutablePair<String, String>>
+      queueMetricNames = new ConcurrentSkipListMap<byte[],
+      ImmutablePair<String, String>>(Bytes.BYTES_COMPARATOR);
+
+  private ImmutablePair<String, String> getQueueMetricNames(byte[] queue) {
+    ImmutablePair<String, String> names = queueMetricNames.get(queue);
+    if (names == null) {
+      String name = new String(queue).replace(":", "");
+      queueMetricNames.putIfAbsent(queue, new ImmutablePair<String, String>
+          ("q.enqueue." + name, "q.ack." + name));
+      names = queueMetricNames.get(queue);
+      Log.debug("using metric name '" + names.getFirst() + "' and '"
+          + names.getSecond() + "' for queue '" + new String(queue) + "'");
     }
+    return names;
   }
 
   private void enqueueMetric(byte[] queue, QueueProducer producer) {
     if (producer != null && producer.getProducerName() != null) {
-      String metricName = "q.enqueue." + new String(queue);
+      String metricName = getQueueMetricNames(queue).getFirst();
       getQueueMetric(producer.getProducerName()).meter(metricName, 1);
     }
   }
+
+  private void ackMetric(byte[] queue, QueueConsumer consumer) {
+    if (consumer != null && consumer.getGroupName() != null) {
+      String metricName = getQueueMetricNames(queue).getSecond();
+      getQueueMetric(consumer.getGroupName()).meter(metricName, 1);
+    }
+  }
+
 
   /* -------------------  (global) stream metrics ---------------- */
   private CMetrics streamMetric = // we use a global flow group
@@ -127,13 +148,16 @@ implements TransactionalOperationExecutor {
   private ConcurrentMap<byte[], ImmutablePair<String, String>>
       streamMetricNames = new ConcurrentSkipListMap<byte[],
       ImmutablePair<String, String>>(Bytes.BYTES_COMPARATOR);
+
   private ImmutablePair<String, String> getStreamMetricNames(byte[] stream) {
     ImmutablePair<String, String> names = streamMetricNames.get(stream);
     if (names == null) {
-      String streamStr = new String(stream);
+      String name = new String(stream).replace(":", "");
       streamMetricNames.putIfAbsent(stream, new ImmutablePair<String, String>(
-        "stream.enqueue." + streamStr, "stream.storage." + streamStr));
+        "stream.enqueue." + name, "stream.storage." + name));
       names = streamMetricNames.get(stream);
+      Log.debug("using metric name '" + names.getFirst() + "' and '"
+          + names.getSecond() + "' for stream '" + new String(stream) + "'");
     }
     return names;
   }
