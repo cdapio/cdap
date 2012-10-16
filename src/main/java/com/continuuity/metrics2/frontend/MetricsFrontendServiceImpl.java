@@ -152,11 +152,12 @@ public class MetricsFrontendServiceImpl
         sql.append("FROM metrics WHERE account_id = ? AND application_id = ?");
         sql.append(" ");
         sql.append("AND flow_id = ?");
-        sql.append(" ");
+        sql.append("AND");
         if(runIdInclusion != null) {
-          sql.append("AND").append(" ").append(runIdInclusion).append(" ");
+          sql.append(" ").append(runIdInclusion).append(" AND");
         }
-        sql.append("metric in (").append(values).append(")").append(" ");
+        sql.append(" ").append("metric in (")
+          .append(values).append(")").append(" ");
         sql.append("GROUP BY flowlet_id, metric");
       }
 
