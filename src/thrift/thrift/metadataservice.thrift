@@ -25,6 +25,7 @@ struct Stream {
    3: optional string description,
    4: optional i64 capacityInBytes,
    5: optional i64 expiryInSeconds,
+   6: optional bool exists = true,
 }
 
 /**
@@ -100,7 +101,7 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
  /**
-  * Retruns a single stream with more information.
+  * Returns a single stream with more information.
   *
   * @return information about a stream.
   * @throws MetadataServiceException thrown when there is issue reading in the
