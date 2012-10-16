@@ -369,7 +369,7 @@ CounterRequest.prototype.write = function(output) {
   return;
 };
 
-var DataPoint = module.exports.DataPoint = function(args) {
+var Point = module.exports.Point = function(args) {
   this.timestamp = null;
   this.value = null;
   if (args) {
@@ -381,8 +381,8 @@ var DataPoint = module.exports.DataPoint = function(args) {
     }
   }
 };
-DataPoint.prototype = {};
-DataPoint.prototype.read = function(input) {
+Point.prototype = {};
+Point.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -418,8 +418,8 @@ DataPoint.prototype.read = function(input) {
   return;
 };
 
-DataPoint.prototype.write = function(output) {
-  output.writeStructBegin('DataPoint');
+Point.prototype.write = function(output) {
+  output.writeStructBegin('Point');
   if (this.timestamp) {
     output.writeFieldBegin('timestamp', Thrift.Type.I64, 1);
     output.writeI64(this.timestamp);
@@ -435,7 +435,7 @@ DataPoint.prototype.write = function(output) {
   return;
 };
 
-var DataPoints = module.exports.DataPoints = function(args) {
+var Points = module.exports.Points = function(args) {
   this.points = null;
   this.latest = null;
   if (args) {
@@ -447,8 +447,8 @@ var DataPoints = module.exports.DataPoints = function(args) {
     }
   }
 };
-DataPoints.prototype = {};
-DataPoints.prototype.read = function(input) {
+Points.prototype = {};
+Points.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -474,13 +474,11 @@ DataPoints.prototype.read = function(input) {
         _size8 = _rtmp312.size;
         for (var _i13 = 0; _i13 < _size8; ++_i13)
         {
-          /*
           if (_i13 > 0 ) {
             if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
               input.rstack.pop();
             }
           }
-          */
           var key14 = null;
           var val15 = null;
           key14 = input.readString();
@@ -494,7 +492,7 @@ DataPoints.prototype.read = function(input) {
           for (var _i21 = 0; _i21 < _size16; ++_i21)
           {
             var elem22 = null;
-            elem22 = new ttypes.DataPoint();
+            elem22 = new ttypes.Point();
             elem22.read(input);
             val15.push(elem22);
           }
@@ -519,13 +517,11 @@ DataPoints.prototype.read = function(input) {
         _size23 = _rtmp327.size;
         for (var _i28 = 0; _i28 < _size23; ++_i28)
         {
-          /*
           if (_i28 > 0 ) {
             if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {
               input.rstack.pop();
             }
           }
-          */
           var key29 = null;
           var val30 = null;
           key29 = input.readString();
@@ -546,8 +542,8 @@ DataPoints.prototype.read = function(input) {
   return;
 };
 
-DataPoints.prototype.write = function(output) {
-  output.writeStructBegin('DataPoints');
+Points.prototype.write = function(output) {
+  output.writeStructBegin('Points');
   if (this.points) {
     output.writeFieldBegin('points', Thrift.Type.MAP, 1);
     output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.LIST, Thrift.objectLength(this.points));

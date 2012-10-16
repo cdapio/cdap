@@ -2,9 +2,10 @@
 
 # Copy in the Thrift files
 echo "Updating local thrift definitions"
+
 curl -s "https://raw.github.com/continuuity/flow/master/src/main/thrift/flowservices.thrift?login=dmosites&token=39bcb176f48dedba729fb8f1bd3d8f86" > flowservices.thrift
-curl -s "https://raw.github.com/continuuity/overlord/master/src/main/thrift/metricsservice.thrift?login=dmosites&token=a4a8b6e77ae879e232485347dc629233" > metricsservice.thrift
-curl -s "https://raw.github.com/continuuity/overlord/master/src/main/thrift/metadataservice.thrift?login=dmosites&token=b869512f87fc1183769a950193f6a944" > metadataservice.thrift
+curl -s "https://raw.github.com/continuuity/overlord/master/src/thrift/thrift/metadataservice.thrift?login=dmosites&token=f32ca8c4221b48385765b7ef9611b6ae" > metadataservice.thrift
+curl -s "https://raw.github.com/continuuity/overlord/master/src/thrift/thrift/metricsservice.thrift?login=dmosites&token=754afd44ca0d9fd7787d6af3c2d3d1b5" > metricsservice.thrift
 
 # Generate the new bindings
 echo "Generating thrift bindings"
