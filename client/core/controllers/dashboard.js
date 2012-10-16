@@ -44,6 +44,8 @@ define([], function () {
 
 				self.get('counts').set('Application', objects.length);
 
+				C.interstitial.hide();
+
 			});
 
 			C.Ctl.List.getObjects('Stream', function (objects) {
@@ -58,8 +60,6 @@ define([], function () {
 			C.Ctl.List.getObjects('Query', function (objects) {
 				self.get('counts').set('Query', objects.length);
 			});
-
-			C.interstitial.hide();
 
 		},
 		testing: function () {
