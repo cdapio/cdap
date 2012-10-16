@@ -13,6 +13,7 @@ public class FlumeCollectorTest {
   static FlumeCollector newCollector(String name) {
     FlumeCollector collector = new NettyFlumeCollector();
     collector.setName(name);
+    collector.setMetadataService(new DummyMDS());
     return collector;
   }
 

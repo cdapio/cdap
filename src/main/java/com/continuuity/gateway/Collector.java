@@ -4,6 +4,9 @@
 
 package com.continuuity.gateway;
 
+import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.metadata.MetadataService;
+
 /**
  * This is the base class for all collectors. A collector is a type of Connector
  * that receives events from external clients via RPC call and writes them to
@@ -21,6 +24,16 @@ public abstract class Collector extends Connector {
   protected Consumer consumer;
 
   /**
+   * The meta data service.
+   */
+  protected MetadataService mds;
+
+  /**
+   * Cache for Stream meta data lookups
+   */
+  protected StreamCache streamCache;
+
+  /**
    * Set the consumer for this collector. It may be shared with other collectors
    *
    * @param consumer The consumer to use.
@@ -36,5 +49,18 @@ public abstract class Collector extends Connector {
    */
   public Consumer getConsumer() {
     return this.consumer;
+  }
+
+  /**
+   * Set the meta data service for this collector
+   * @param service the metadata servrice to use
+   */
+  public void setMetadataService(MetadataService service) {
+    this.mds = service;
+    this.streamCache = new StreamCache(mds);
+  }
+
+  public StreamCache getStreamCache() {
+    return this.streamCache;
   }
 }

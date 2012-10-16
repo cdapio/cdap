@@ -30,6 +30,7 @@ dependencies {
         compile project(":flow").sourceSets.api.output
         compile project(":data-fabric")
         compile project(":data-fabric").sourceSets.api.output
+        compile project(":overlord")
     }
     else
     {

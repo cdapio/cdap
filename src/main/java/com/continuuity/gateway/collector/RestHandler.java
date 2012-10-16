@@ -1,15 +1,16 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
-import com.continuuity.common.metrics.CMetrics;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -166,22 +167,25 @@ public class RestHandler extends NettyRestHandler {
       String resourceName = path.substring(this.pathPrefix.length());
       if (resourceName.length() > 0) {
         int pos = resourceName.indexOf('/');
-        if (pos < 0) { // flowname
+        if (pos < 0) { // streamname
           destination = resourceName;
-        } else {
-          if (pos + 1 == resourceName.length()) {
-            destination = resourceName.substring(pos);
-          }
-          pos = resourceName.indexOf('/', pos + 1);
-          if (pos < 0) { // flowname/streamname
-            destination = resourceName;
-          }
+        } else if (pos + 1 == resourceName.length()) { // streamname/
+          destination = resourceName.substring(0, pos);
         }
       }
     }
     if (destination == null) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       LOG.debug("Received a request with invalid path " + path);
+      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    // validate the existence of the stream
+    if (!this.collector.getStreamCache().validateStream(
+        OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
+      LOG.debug("Received a request for non-existent stream " + destination);
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -222,6 +226,8 @@ public class RestHandler extends NettyRestHandler {
         } catch (Exception e) {
           LOG.error("Error consuming single event: " + e.getMessage());
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          this.collector.getStreamCache().refreshStream(
+              OperationContext.DEFAULT_ACCOUNT_ID, destination);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
@@ -257,6 +263,8 @@ public class RestHandler extends NettyRestHandler {
         } catch (Exception e) {
           LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
           metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+          this.collector.getStreamCache().refreshStream(
+              OperationContext.DEFAULT_ACCOUNT_ID, destination);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           break;
@@ -304,9 +312,11 @@ public class RestHandler extends NettyRestHandler {
         try {
           result = this.collector.getExecutor().
               execute(OperationContext.DEFAULT, dequeue);
-        } catch (Exception e) {
+        } catch (OperationException e) {
           LOG.error("Error dequeueing from stream " + queueURI +
               " with consumer " + queueConsumer + ": " + e.getMessage(), e);
+          this.collector.getStreamCache().refreshStream(
+              OperationContext.DEFAULT_ACCOUNT_ID, destination);
           respondError(message.getChannel(),
               HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;

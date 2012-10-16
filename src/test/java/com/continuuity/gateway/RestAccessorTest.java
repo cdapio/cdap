@@ -121,6 +121,7 @@ public class RestAccessorTest {
     consumer.setExecutor(this.executor);
     restCollector.setConsumer(consumer);
     restCollector.setExecutor(this.executor);
+    restCollector.setMetadataService(new DummyMDS());
     // start the accessor
     restCollector.start();
     // all fine

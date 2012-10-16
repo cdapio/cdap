@@ -11,6 +11,7 @@ public class RestCollectorTest {
 
   static RestCollector newCollector(String name) {
     RestCollector collector = new RestCollector();
+    collector.setMetadataService(new DummyMDS());
     collector.setName(name);
     return collector;
   }
@@ -67,7 +68,7 @@ public class RestCollectorTest {
     String name = "other";
     String prefix = "/data";
     String path = "/stream/";
-    String destination = "foo/bar";
+    String destination = "foo";
     int eventsToSend = 10;
     int port = PortDetector.findFreePort();
     CConfiguration configuration = new CConfiguration();
@@ -122,6 +123,7 @@ public class RestCollectorTest {
     RestCollector collector = new RestCollector();
     collector.setName(name);
     collector.setConsumer(new TestUtil.NoopConsumer());
+    collector.setMetadataService(new DummyMDS());
     collector.configure(configuration);
     collector.start();
 
@@ -130,7 +132,7 @@ public class RestCollectorTest {
 
     // submit a POST with flow/ or flow/stream as the destination -> 200
     Assert.assertEquals(200, TestUtil.sendPostRequest(baseUrl + "events/"));
-    Assert.assertEquals(200, TestUtil.sendPostRequest(baseUrl + "events/more"));
+    Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl + "events/more"));
 
     // submit a request without prefix in the path -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendPostRequest(

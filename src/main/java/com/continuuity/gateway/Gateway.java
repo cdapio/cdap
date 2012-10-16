@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.metadata.MetadataService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,12 @@ public class Gateway implements Server {
    */
   @Inject
   private OperationExecutor executor;
+
+  /**
+   * This is the executor that all accessors will use for the data fabric.
+   * Gateway can not function without a valid operation executor.
+   */
+  private MetadataService mds;
 
   /**
    * The list of connectors for this Gateway. This list is populated in
@@ -142,6 +149,7 @@ public class Gateway implements Server {
       // TODO: This should probably be done in the addConnector method?
       if (connector instanceof Collector) {
         ((Collector) connector).setConsumer(this.consumer);
+        ((Collector) connector).setMetadataService(this.mds);
       }
       if (connector instanceof DataAccessor) {
         ((DataAccessor) connector).setExecutor(this.executor);
@@ -210,6 +218,7 @@ public class Gateway implements Server {
     LOG.info("Setting Operations Executor to " +
         executor.getClass().getName() + ".");
     this.executor = executor;
+    this.mds = new MetadataService(executor);
   }
 
   /**
@@ -221,6 +230,10 @@ public class Gateway implements Server {
    * @throws IllegalArgumentException If configuration argument is null.
    */
   private void configure(CConfiguration configuration) {
+
+    if (this.mds == null) {
+      this.mds = new MetadataService(executor);
+    }
 
     if (configuration == null) {
       throw new IllegalArgumentException("'configuration' argument was null");

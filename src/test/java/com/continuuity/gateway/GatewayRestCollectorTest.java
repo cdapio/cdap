@@ -1,5 +1,6 @@
 package com.continuuity.gateway;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.PortDetector;
@@ -9,6 +10,9 @@ import com.continuuity.gateway.collector.RestCollector;
 import com.continuuity.gateway.consumer.EventWritingConsumer;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.TupleWritingConsumer;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Stream;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -79,6 +83,13 @@ public class GatewayRestCollectorTest {
     // Set up a basic consumer
     Consumer theConsumer = new PrintlnConsumer();
     theGateway.setConsumer(theConsumer);
+
+    // make sure the destination stream is defined in the meta data
+    MetadataService mds = new MetadataService(this.executor);
+    Stream stream = new Stream(this.stream);
+    stream.setName(this.stream);
+    mds.createStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
+
   } // end of setupGateway
 
 

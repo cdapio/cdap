@@ -4,11 +4,12 @@
 
 package com.continuuity.gateway.collector;
 
+import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.flow.flowlet.Event;
+import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
-import com.continuuity.common.metrics.CMetrics;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
@@ -108,7 +109,9 @@ class FlumeAdapter implements AvroSourceProtocol {
    * @param flumeEvent the flume event to be converted
    * @return the resulting event
    */
-  protected Event convertFlume2Event(AvroFlumeEvent flumeEvent) {
+  protected Event convertFlume2Event(AvroFlumeEvent flumeEvent)
+      throws Exception
+  {
     EventBuilder builder = new EventBuilder();
     builder.setBody(flumeEvent.getBody().array());
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
@@ -117,7 +120,17 @@ class FlumeAdapter implements AvroSourceProtocol {
     }
     builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
         this.getCollector().getName());
-    return builder.create();
+    Event event = builder.create();
+    String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
+    if (destination == null) {
+      throw new Exception("Cannot enqueue event without destination stream");
+    }
+    if (!this.collector.getStreamCache().validateStream(
+        OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+      throw new Exception("Cannot enqueue event to non-existent stream '" +
+          destination + "'.");
+    }
+    return event;
   }
 
   /**
@@ -127,7 +140,8 @@ class FlumeAdapter implements AvroSourceProtocol {
    * @param flumeEvents the flume events to be converted
    * @return the resulting events
    */
-  protected List<Event> convertFlume2Event(List<AvroFlumeEvent> flumeEvents) {
+  protected List<Event> convertFlume2Event(List<AvroFlumeEvent> flumeEvents)
+  throws Exception {
     List<Event> events = new ArrayList<Event>();
     for (AvroFlumeEvent flumeEvent : flumeEvents) {
       events.add(convertFlume2Event(flumeEvent));

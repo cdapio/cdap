@@ -75,9 +75,9 @@ public class TupleWritingConsumer extends Consumer {
     // figure out where to write it
     String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
     if (destination == null) {
-      LOG.debug("Enqueuing an event that has no destination. " +
-          "Using 'default' instead.");
-      destination = "default";
+      String message = "Event has no destination. Cannot enqueue event.";
+      LOG.debug(message);
+      throw new Exception(message);
     }
     // construct the stream URI to use for the data fabric
     String queueURI = FlowStream.
