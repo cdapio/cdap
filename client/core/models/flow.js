@@ -35,8 +35,7 @@ define([], function () {
 
 			var app = this.get('app'),
 				id = this.get('id'),
-				end = Math.round(new Date().getTime() / 1000),
-				start = end - C.__timeRange;
+				start = C.__timeRange * -1;
 
 			var metrics = [];
 			var metricNames = this.get('metricNames');
@@ -53,7 +52,7 @@ define([], function () {
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, end, 'FLOW_LEVEL']
+				params: [app, id, metrics, start, undefined, 'FLOW_LEVEL']
 			}, function (error, response) {
 
 				if (!response.params) {

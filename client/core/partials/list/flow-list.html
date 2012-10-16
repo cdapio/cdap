@@ -4,8 +4,8 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 212px;">Processed</th>
-		<th style="width: 212px;">Busyness</th>
+		<th style="width: 262px;">Processed</th>
+		<th style="width: 262px;">Busyness</th>
 	</thead>
 	{{#each types.Flow.content tagName="tbody"}}
 	<tr>
@@ -16,13 +16,16 @@
 			<a {{bindAttr href="href"}}>{{flowId}}</a><br /><span class="app-list-status">{{currentState}}</span>
 		</td>
 		<td class="app-list-count">{{instances}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="busyness"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="processed.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="busyness"}}</td>
 	</tr>
 	{{/each}}
 	</table>
 {{else}}
 	<div class="object-list-empty">
-		Add a Flow by uploading a JAR file above.
+		<div class="object-list-empty-content">
+			No Flows.
+			<br /><span>Add a Flow by uploading a JAR file above.</span>
+		</div>
 	</div>
 {{/if}}

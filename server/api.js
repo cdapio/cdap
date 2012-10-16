@@ -268,8 +268,14 @@ try {
 						flowId: params[1],
 						runId: params[2]
 					});
+
+					var names = params[3] || [];
+
+					console.log('params', names);
+
 					var request = new metricsservice_types.CounterRequest({
-						argument: flow
+						argument: flow,
+						name: names
 					});
 					Monitor.getCounters(request, done);
 				break;

@@ -13,10 +13,10 @@ define([
 			var timeRange = $(event.target).html();
 
 			C.setTimeRange({
-				'24 Hours': 86400,
-				'1 Hour': 3600,
-				'10 Minutes': 600,
-				'1 Minute': 60,
+				'Last 24 Hours': 86400,
+				'Last 1 Hour': 3600,
+				'Last 10 Minutes': 600,
+				'Last 1 Minute': 60,
 			}[timeRange]);
 
 		}

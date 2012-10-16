@@ -5,28 +5,33 @@ define([], function () {
 
 		updateData: function () {
 
-			var metric = this.get('metric');
-			if (metric && this.get('model') && this.get('model').metricData) {
+			var metrics = this.get('metrics');
 
-				metric = metric.replace(/\./g, '');
-				var data = this.get('model').metricData[metric];
+			for (var i = 0; i < metrics.length; i ++) {
+				var metric = metrics[i];
 
-				if (data && data.length) {
+				if (this.get('model') && this.get('model').metricData) {
 
-					if (!this.get('sparkline')) {
+					metric = metric.replace(/\./g, '');
+					var data = this.get('model').metricData[metric];
 
-						this.get('container').html('');
+					if (data && data.length) {
+						if (!this.get('sparkline')) {
 
-						var widget = d3.select(this.get('container')[0]);
-						var sparkline = C.util.sparkline(widget, [],
-							this.get('width'), this.get('height'), 8);
-						this.set('sparkline', sparkline);
+							this.get('container').html('');
+							this.get('container').css({margin: ''});
+							this.get('label').show();
 
+							var widget = d3.select(this.get('container')[0]);
+							var sparkline = C.util.sparkline(widget, [],
+								this.get('width'), this.get('height'), 8);
+							this.set('sparkline', sparkline);
+
+						}
+
+						this.get('sparkline').update(metric, data);
+						this.get('label').html(this.__formatLabel(data[data.length - 1]));
 					}
-
-					this.get('sparkline').update(data);
-					this.get('label').html(this.__formatLabel(data[data.length - 1]));
-
 				}
 			}
 
@@ -59,13 +64,14 @@ define([], function () {
 
 			if (this.get('model') && this.get('model').addMetricName) {
 
-				var metric = this.get('metric');
-				this.get('model').addMetricName(metric);
-			
-				metric = metric.replace(/\./g, '');
-
-				this.addObserver('model.metricData.' + metric, this, this.updateData);
-
+				var metrics = this.get('metrics');
+				var i = metrics.length, metric;
+				while (i--) {
+					metric = metrics[i];
+					this.get('model').addMetricName(metric);
+					metric = metric.replace(/\./g, '');
+					this.addObserver('model.metricData.' + metric, this, this.updateData);
+				}
 			}
 
 			return this.get('model');
@@ -74,14 +80,6 @@ define([], function () {
 		__loadingData: function (begin) {
 
 			return;
-
-			/*
-			if (begin === true || this.get('model').__loadingData) {
-				$(this.get('element')).addClass('sparkline-loading');
-			} else {
-				$(this.get('element')).removeClass('sparkline-loading');
-			}
-			*/
 			
 		}.observes('model.__loadingData'),
 		__titles: {
@@ -92,8 +90,17 @@ define([], function () {
 			'busyness': 'Busyness',
 			'flowlet.failure.count': 'Failures'
 		},
-		__getTitle: function (metric) {
-			return (this.__titles[metric] || metric);
+		__getTitle: function () {
+			var title = [];
+			var metrics = this.get('metrics');
+			var i = metrics.length;
+			while (i--) {
+				title.push(this.__titles[metrics[i]] || metrics[i]);
+				if (i > 0) {
+					title.push(' vs. ');
+				}
+			}
+			return title.join(' ');
 		},
 		__formatLabel: function (value) {
 			if (this.get('unit') === 'percent' || this.get('metric') === 'busyness') {
@@ -106,20 +113,32 @@ define([], function () {
 
 			var entityId = this.get('entity-id');
 			var entityType = this.get('entity-type');
-			var metric = this.get('metric');
+			var metricNames = this.get('metrics') || '';
 			var color = this.get('color');
 
+			var metrics = metricNames.split(',');
+			if (metrics.length === 1 && metrics[0] === ''){
+				metrics = [];
+			}
+
+			var i = metrics.length;
+			while(i--) {
+				metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
+			}
+
+			this.set('metrics', metrics);
+
 			var height = parseInt(this.get('height'), 10) || 70,
-				width = parseInt(this.get('width'), 10) || 200, label, container;
+				width = parseInt(this.get('width'), 10) || 250, label, container;
 
 			if (entityType === "Flowlet") {
 
 				$(this.get('element')).addClass('white');
 				label = $('<div class="sparkline-flowlet-value" />').appendTo(this.get('element'));
-				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle(metric) + '</div>');
+				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle() + '</div>');
 				
 				container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
-				width = width - 52;
+				width = width - 54;
 
 			} else if (this.get('listMode') || entityType) {
 
@@ -129,11 +148,11 @@ define([], function () {
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">No Data</div></div>').appendTo(this.get('element'));
 				height = 34;
-				width = width - 30;
+				width = width - 32;
 
 			} else {
 
-				$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle(metric) + '</div>');
+				$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
 				label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));
 
@@ -145,17 +164,19 @@ define([], function () {
 			this.set('label', label);
 			this.set('container', container);
 
-			if (this.get('unit') === 'percent') {
+			this.get('container').css({marginRight: '0'});
+			this.get('label').hide();
+
+			if (this.get('unit') === 'percent' && entityType !== 'Flowlet') {
 				this.get('label').css({
 					paddingTop: '28px'
 				});
 			}
 
-			if (!metric) {
+			if (!metrics.length) {
 				C.debug('NO METRIC FOR sparkline', this);
 
 			} else {
-				metric = metric.replace(/\./g, '');
 				if (this.get('listMode')) {
 					this.addObserver('controller.types.' + entityType + '.content', this, this.updateModel);
 				} else {

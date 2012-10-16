@@ -374,9 +374,11 @@ h1 span {
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
 	height: 72px;
-	margin-right: 80px;
+	margin-right: 78px;
+	/*
 	border-right: 1px solid #fff;
 	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
+	*/
 }
 .sparkline-box-title {
 	border-bottom: 1px solid white;
@@ -385,7 +387,7 @@ h1 span {
 }
 .sparkline-box-value {
 	float: right;
-	width: 75px;
+	width: 72px;
 	height: 50px;
 	font-weight: 300;
 	font-size: 26px;
@@ -474,7 +476,7 @@ text {
 	margin: 17px 0px;
 }
 .drop-zone {
-	width: 260px;
+	width: 224px;
 	color: #777;
 	text-align: center;
 	line-height: 52px;
@@ -1269,6 +1271,32 @@ a strong {
 }
 .object-list-empty a {
 	text-decoration: underline;
+}
+.object-list-empty-content {
+	margin: 0 auto;
+	width: 280px;
+	background-image: url(../img/empty-set.png);
+	background-repeat: no-repeat;
+	background-position: 0px 2px;
+	padding-left: 30px;
+	text-align: left;
+	font-size: 14px;
+	color: #8C9495;
+	padding-top: 2px;
+	line-height: 12px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+
+	border: 1px solid #efefef;
+	border-radius: 3px;
+	padding: 9px 8px 7px 40px;
+	background-position: 8px;
+	background-color: #fdfdfd;
+}
+.object-list-empty-content span {
+	font-size: 12px;
+	font-weight: 300;
+	letter-spacing: normal;
 }
 h3 a {
 	text-decoration: underline;

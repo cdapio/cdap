@@ -4,14 +4,19 @@
 
 define([], function () {
 	return Em.Object.extend({
+		metricData: null,
+		metricNames: null,
 		type: 'Stream',
 		plural: 'Streams',
 		href: function () {
 			return '#/streams/' + this.get('id');
 		}.property().cacheable(),
-		init: function () {
+		init: function() {
 			this._super();
 
+			this.set('metricData', Em.Object.create());
+			this.set('metricNames', {});
+			
 			if (!this.get('id')) {
 				this.set('id', this.get('name'));
 			}
@@ -21,7 +26,14 @@ define([], function () {
 		arrived: 0,
 		storage: '0B',
 		unconsumed: 0,
+		addMetricName: function (name) {
+
+			this.get('metricNames')[name] = 1;
+
+		},
 		getUpdateRequest: function () {
+
+			console.log(this.get('metricNames'));
 
 			return [];
 

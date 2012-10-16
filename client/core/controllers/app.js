@@ -49,6 +49,10 @@ define([], function () {
 							params: [app, id]
 						}, function (error, response, param) {
 
+							if (error) {
+								return false;
+							}
+
 							var flow = response.params;
 							if (flow.flowlets) {
 

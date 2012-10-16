@@ -33,7 +33,7 @@
 					{{name}}
 				</td>
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="tuples.read.count" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" metrics="tuples.read.count" classNames="sparkline-flowlet-box"}}
 				</td>
 			</tr>
 			{{/each}}
@@ -52,16 +52,16 @@
 		<table style="width: 100%">
 			<tr>
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="processed.count" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" metrics="processed.count" classNames="sparkline-flowlet-box"}}
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="dataops.count" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" metrics="dataops.count" classNames="sparkline-flowlet-box"}}
 				</td>
 			</tr>
 			<tr>
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="busyness" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" unit="percent" metrics="busyness" classNames="sparkline-flowlet-box"}}
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="flowlet.failure.count" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" metrics="flowlet.failure.count" classNames="sparkline-flowlet-box"}}
 				</td>
 			</tr>
 		</table>
@@ -75,7 +75,7 @@
 			{{#each controller.outputs tagName="tbody"}}
 			<tr>
 				<td class="flowlet-blue">
-					{{view C.Vw.Chart entity-type="Flowlet" width="290" metric="emitted.count" classNames="sparkline-flowlet-box"}}
+					{{view C.Vw.Chart entity-type="Flowlet" width="290" metrics="emitted.count" classNames="sparkline-flowlet-box"}}
 				</td>
 				<td class="flowlet-popup-input">
 					{{name}}

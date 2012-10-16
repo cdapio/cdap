@@ -4,8 +4,8 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 100px;text-align: center;">Unconsumed</th>
-		<th style="width: 324px;">Arrivals vs Consumed</th>
+		<th style="width: 100px;padding: 0;text-align: center;">Unconsumed</th>
+		<th style="width: 444px;">Arrivals</th>
 	</thead>
 	{{#each types.Stream.content tagName="tbody"}}
 	<tr>
@@ -17,12 +17,15 @@
 		</td>
 		<td class="app-list-count">{{storage}}</td>
 		<td class="app-list-count">{{unconsumed}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metric="stream.arrivals,stream.consumed" width="420"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metrics="q.stream://demo/{id}.ack.source.count" width="420"}}</td>
 	</tr>
 	{{/each}}
 	</table>
 {{else}}
 	<div class="object-list-empty">
-		Create a Stream by clicking the [+] button above.
+		<div class="object-list-empty-content">
+			No Streams.
+			<br /><span>Create a Stream by clicking the [+] button above.</span>
+		</div>
 	</div>
 {{/if}}

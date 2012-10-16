@@ -24,13 +24,29 @@ define([], function () {
 				var i = objects.length;
 				while (i--) {
 					objects[i] = C.Mdl['Application'].create(objects[i]);
+
+					C.Ctl.List.getObjects('Stream', function (obj) {
+						objects[i + 1].set('counts.Stream', obj.length);
+					});
+					C.Ctl.List.getObjects('Flow', function (obj) {
+						objects[i + 1].set('counts.Flow', obj.length);
+					});
+					C.Ctl.List.getObjects('Dataset', function (obj) {
+						objects[i + 1].set('counts.Dataset', obj.length);
+					});
+					C.Ctl.List.getObjects('Query', function (obj) {
+						objects[i + 1].set('counts.Query', obj.length);
+
+						C.interstitial.hide();
+
+					});
+
 				}
 				self.get('types.Application').pushObjects(objects);
 				self.getStats();
 
 				self.get('counts').set('Application', objects.length);
 
-				C.interstitial.hide();
 			});
 
 			C.Ctl.List.getObjects('Stream', function (objects) {

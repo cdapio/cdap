@@ -13,7 +13,7 @@ define([
 				'Arrival Rate': 'arrival.count',
 				'Queue Depth': 'queue.depth',
 				'Max Queue Depth': 'queue.maxdepth',
-				'Processing Rate': 'processed.count'
+				'Total Processed': 'processed.count'
 			}[label]);
 
 		},
@@ -23,7 +23,7 @@ define([
 				'arrival.count': 'Arrival Rate',
 				'queue.depth': 'Queue Depth',
 				'queue.maxdepth': 'Max Queue Depth',
-				'processed.count': 'Processing Rate'
+				'processed.count': 'Total Processed'
 			}[this.get('controller').__currentFlowletLabel];
 
 		}.property('controller.__currentFlowletLabel'),

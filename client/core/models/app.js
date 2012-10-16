@@ -33,8 +33,7 @@ define([], function () {
 			var self = this;
 
 			var id = this.get('id'),
-				end = Math.round(new Date().getTime() / 1000),
-				start = end - C.__timeRange;
+				start = C.__timeRange * -1;
 
 			var metrics = [];
 			var metricNames = this.get('metricNames');
@@ -52,7 +51,7 @@ define([], function () {
 				
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [id, null, metrics, start, end, 'APPLICATION_LEVEL']
+				params: [id, null, metrics, start, undefined, 'APPLICATION_LEVEL']
 			}, function (error, response, params) {
 
 				if (self.get('isDestroyed')) {

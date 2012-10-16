@@ -119,6 +119,7 @@ function(Models, Views, Controllers){
 				} else {
 					$('#interstitial').fadeOut();
 				}
+				$('#interstitial').html('<img src="/assets/img/loading.gif" />');
 				return this;
 			},
 			label: function (message) {
@@ -158,15 +159,26 @@ function(Models, Views, Controllers){
 
 				return {
 					g: g,
-					update: function (data) {
+					series: {}, // Need to store to track data boundaries
+					update: function (name, data) {
 
-						var max = d3.max(data) || 10;
-						var min = d3.min(data) || -10;
+						this.series[name] = data;
 
+						var allData = [], length = 0;
+						for (var i in this.series) {
+							allData = allData.concat(this.series[i]);
+							if (this.series[i].length > length) {
+								length = this.series[i].length;
+							}
+						}
+						var max = d3.max(allData) || 1;
+						var min = d3.min(allData) || -1;
 						var extend = Math.round(w * 0.08);
 
-						var y = d3.scale.linear().domain([max + 50, min - 50]).range([m, h - m]),
-							x = d3.scale.linear().domain([0, data.length]).range([extend*-1, w + extend*2]);
+						var yBuffer = 0.0;
+
+						var y = d3.scale.linear().domain([max + (max * yBuffer), min - (min * yBuffer)]).range([m, h - m]),
+							x = d3.scale.linear().domain([0, length]).range([extend * -1, w + extend * 2]);
 
 						var line = d3.svg.line().interpolate("basis")
 							.x(function(d,i) { return x(i); })
@@ -210,14 +222,14 @@ function(Models, Views, Controllers){
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {
-				86400: '24 Hours',
-				3600: '1 Hour',
-				600: '10 Minutes',
-				60: '1 Minute'
+				86400: 'Last 24 Hours',
+				3600: 'Last 1 Hour',
+				600: 'Last 10 Minutes',
+				60: 'Last 1 Minute'
 			}[millis]);
 		},
-		__timeRange: 86400,
-		__timeLabel: '24 Hours',
+		__timeRange: 60,
+		__timeLabel: 'Last 1 Minute',
 		Mdl: Models,
 		Vw: Views,
 		Ctl: Controllers

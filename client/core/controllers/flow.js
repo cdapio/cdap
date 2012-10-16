@@ -164,11 +164,38 @@ define([], function () {
 			
 			C.get.apply(C, this.get('current').getUpdateRequest());
 
+			var names = [], flowletName, uri;
+
+			var fs = C.Ctl.Flow.current.flowletStreams;
+			switch (this.__currentFlowletLabel) {
+				case 'arrival.count':
+					for (flowletName in fs) {
+						if (fs[flowletName].in) {
+							uri = fs[flowletName].in.first;
+							names.push('q.' + uri + '.enqueue.rate');
+						}
+					}
+				break;
+				case 'queue.depth':
+					for (flowletName in fs) {
+						if (fs[flowletName].in) {
+							uri = fs[flowletName].in.first;
+							names.push('q.' + uri + '.enqueue.count');
+							names.push('q.' + uri + '.ack.' + flowletName + '.count');
+						}
+					}
+
+			}
+
+			console.log('going', names);
+
 			C.get('monitor', {
 				method: 'getCounters',
-				params: [app, id, null]
+				params: [app, id, null, names]
 			}, function (error, response) {
 			
+				console.log(arguments);
+
 				if (C.router.currentState.name !== "flow") {
 					return;
 				}
@@ -180,9 +207,12 @@ define([], function () {
 				var metrics = response.params;
 				for (var i = 0; i < metrics.length; i ++) {
 
-					if (metrics[i].name !== (self.__currentFlowletLabel || 'processed.count')) {
+					if (self.__currentFlowletLabel === 'processed.count' &&
+						metrics[i].name !== 'processed.count') {
 						continue;
 					}
+
+					console.log(metrics[i].name);
 
 					var finish = metrics[i].value;
 					var flowlet = self.get_flowlet(metrics[i].qualifier);

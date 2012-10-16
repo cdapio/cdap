@@ -39,12 +39,11 @@ define([], function () {
 				metrics.push(name);
 			}
 
-			var end = Math.round(new Date().getTime() / 1000),
-				start = end - C.__timeRange;
+			var start = C.__timeRange * -1;
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, end, 'FLOWLET_LEVEL', this.get('id')]
+				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
 			}, function (error, response, id) {
 
 				if (!response.params) {
