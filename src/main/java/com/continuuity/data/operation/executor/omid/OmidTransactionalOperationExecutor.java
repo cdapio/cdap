@@ -109,6 +109,7 @@ implements TransactionalOperationExecutor {
           new CMetrics(MetricType.FlowSystem, group));
       metric = queueMetrics.get(group);
       Log.debug("Created new CMetrics for group '" + group + "'.");
+      // System.err.println("Created new CMetrics for group '" + group + "'.");
     }
     return metric;
   }
@@ -126,6 +127,8 @@ implements TransactionalOperationExecutor {
       names = queueMetricNames.get(queue);
       Log.debug("using metric name '" + names.getFirst() + "' and '"
           + names.getSecond() + "' for queue '" + new String(queue) + "'");
+      //System.err.println("using metric name '" + names.getFirst() + "' and '"
+      //    + names.getSecond() + "' for queue '" + new String(queue) + "'");
     }
     return names;
   }
@@ -162,6 +165,8 @@ implements TransactionalOperationExecutor {
       names = streamMetricNames.get(stream);
       Log.debug("using metric name '" + names.getFirst() + "' and '"
           + names.getSecond() + "' for stream '" + new String(stream) + "'");
+      //System.err.println("using metric name '" + names.getFirst() + "' and '"
+      //    + names.getSecond() + "' for stream '" + new String(stream) + "'");
     }
     return names;
   }
