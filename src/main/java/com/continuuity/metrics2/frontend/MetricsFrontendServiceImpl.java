@@ -3,12 +3,14 @@ package com.continuuity.metrics2.frontend;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
-import com.continuuity.metrics2.temporaldb.internal.Timeseries;
+import com.continuuity.metrics2.temporaldb.Timeseries;
 import com.continuuity.metrics2.thrift.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -25,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -204,32 +207,27 @@ public class MetricsFrontendServiceImpl
   @Override
   public Points getTimeSeries(TimeseriesRequest request)
     throws MetricsServiceException, TException {
-    List<Future<List<DataPoint>>> dataPointsFuture = Lists.newArrayList();
+    List<Future<ImmutablePair<String, List<DataPoint>>>>
+      dataPointsFuture = Lists.newArrayList();
+    Timeseries timeseries = new Timeseries();
 
-    long start = System.currentTimeMillis()/1000;;
-    long end = start;
+    long start = System.currentTimeMillis()/1000;
+    long end = start - 2;
 
     // Validate the timing request.
     validateTimeseriesRequest(request);
 
     // If start time is specified and end time is negative offset
     // from that start time, then we use that.
-    if(request.isSetStartts() && request.getEndts() < 0) {
-      start = request.getStartts() - request.getEndts() * 1000;
-      end = request.getStartts();
-    }
-
-    // If endts is negative and the startts is not set, then we offset it
-    // from the current time.
-    if(! request.isSetStartts() && request.getEndts() < 0) {
-      start = request.getStartts() - request.getEndts() * 1000;
+    if(request.isSetStartts() && request.getStartts() < 0) {
+      start = start + request.getStartts();
     }
 
     // if startts is set and endts > 0 then it endts has to be greater than
     // startts.
-    if(request.isSetStartts() && request.getEndts() > 0) {
+    if(request.isSetStartts() && request.isSetEndts()) {
       start = request.getStartts();
-      end = request.getEndts();
+      end = request.getEndts()-2; // We ignore current point.
     }
 
     // Preprocess the metrics list.
@@ -246,21 +244,19 @@ public class MetricsFrontendServiceImpl
     // Iterate through the metric list to be retrieved and request them
     // to be fetched in parallel.
     for(String metric : preprocessedMetrics) {
-      Callable<List<DataPoint>> worker =
+      Callable<ImmutablePair<String, List<DataPoint>>> worker =
         new RetrieveDataPointCallable(metric, start, end, request);
-      Future<List<DataPoint>> submit = executor.submit(worker);
+      Future<ImmutablePair<String, List<DataPoint>>> submit = executor.submit(worker);
       dataPointsFuture.add(submit);
     }
 
     // Now, join on all dataPoints retrieved from future.
+    long numPoints = Math.min(1800, end - start);
     Map<String, List<DataPoint>> dataPoints = Maps.newHashMap();
-    for(Future<List<DataPoint>> future : dataPointsFuture) {
+    for(Future<ImmutablePair<String, List<DataPoint>>> future : dataPointsFuture) {
       try {
-        List<DataPoint> dataPoint = future.get();
-        if(dataPoint.size() > 0) {
-          String metric = dataPoint.get(0).getMetric();
-          dataPoints.put(metric, dataPoint);
-        }
+        ImmutablePair<String, List<DataPoint>> dataPoint = future.get();
+        dataPoints.put(dataPoint.getFirst(), dataPoint.getSecond());
       } catch (InterruptedException e) {
         Log.info("Timeseries retrieval has been interrupted. Reason : {}",
                  e.getMessage());
@@ -272,7 +268,6 @@ public class MetricsFrontendServiceImpl
     }
 
     Map<String, List<Point>> results = Maps.newHashMap();
-    Timeseries timeseries = new Timeseries();
 
     // Iterate through the list of metric requested and
     for(String metric : request.getMetrics()) {
@@ -299,12 +294,16 @@ public class MetricsFrontendServiceImpl
               }
             }
           );
-          results.put(metric, convertDataPointToPoint(busyness));
+          ImmutableList<DataPoint> filledBusyness =
+            timeseries.fill(busyness,"busyness",start, end, numPoints, 1);
+          results.put(metric, convertDataPointToPoint(filledBusyness));
         }
       } else {
         ImmutableList<DataPoint> r =
           new Timeseries().rate(dataPoints.get(metric));
-        results.put(metric, convertDataPointToPoint(r));
+        ImmutableList<DataPoint> filledr =
+          timeseries.fill(r, metric, start, end, numPoints, 1);
+        results.put(metric, convertDataPointToPoint(filledr));
       }
     }
 
@@ -332,6 +331,7 @@ public class MetricsFrontendServiceImpl
       p1.setValue(point.getValue());
       p.add(p1);
     }
+    //Collections.reverse(p);
     return p;
   }
 
@@ -340,7 +340,7 @@ public class MetricsFrontendServiceImpl
    * parallel from database.
    */
   private class RetrieveDataPointCallable
-    implements Callable<List<DataPoint>> {
+    implements Callable<ImmutablePair<String, List<DataPoint>>> {
     final String metric;
     final long start;
     final long end;
@@ -354,12 +354,14 @@ public class MetricsFrontendServiceImpl
       this.request = request;
     }
     @Override
-    public List<DataPoint> call() throws Exception {
+    public ImmutablePair<String, List<DataPoint>> call() throws Exception {
       MetricTimeseriesLevel level = MetricTimeseriesLevel.FLOW_LEVEL;
       if(request.isSetLevel()) {
         level = request.getLevel();
       }
-      return getDataPoint(metric, level, start, end, request.getArgument());
+      List<DataPoint> points =
+        getDataPoint(metric, level, start, end, request.getArgument());
+      return new ImmutablePair<String, List<DataPoint>>(metric, points);
     }
   }
 
@@ -381,11 +383,6 @@ public class MetricsFrontendServiceImpl
     List<DataPoint> results = new ArrayList<DataPoint>();
 
     try {
-      // Move the window of start and end. This is to prevent the bumpyness
-      // in datapoints as they are being collected from multiple sources.
-      start = start - 5 ;
-      end = end - 5;
-
       // Get the connection for database.
       connection = getConnection();
 

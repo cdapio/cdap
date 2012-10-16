@@ -86,7 +86,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       this.processor = processor;
     }
 
-    private long olderThanTimeInSeconds = 60*10;
+    private long olderThanTimeInSeconds = 60*30;
 
     @Override
     protected void runOneIteration() throws Exception {

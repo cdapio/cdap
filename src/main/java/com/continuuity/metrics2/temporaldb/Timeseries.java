@@ -1,9 +1,10 @@
-package com.continuuity.metrics2.temporaldb.internal;
+package com.continuuity.metrics2.temporaldb;
 
 import com.continuuity.metrics2.common.Zip;
 import com.continuuity.metrics2.common.ZipIterator;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -184,6 +185,79 @@ public final class Timeseries {
       DataPoint p = result.get(1);
       result.remove(0);
       result.add(0, p);
+    }
+    return ImmutableList.copyOf(result);
+  }
+
+  /**
+   * Fills the list of datapoint with zeros.
+   * NOTE: This is a crappy function. Need more smarts.
+   *
+   * @param a list of datapoints to be filled with zeros.
+   * @param start time at which we start filling zeros.
+   * @param points specifies number of points.
+   * @param interval increments at which datapoints are added.
+   * @return immutable list of datapoints filled with zeros.
+   */
+  public ImmutableList<DataPoint> fill(List<DataPoint> a,
+                                       String metric,
+                                       long start, long end,
+                                       long points, long interval) {
+    List<DataPoint> result = new ArrayList<DataPoint>();
+    if(a == null || a.size() < 1) {
+      DataPoint.Builder dpb = new DataPoint.Builder(metric);
+      for(long i = start; i < start+points; i = i + interval) {
+        dpb.addTimestamp(i);
+        dpb.addValue(new Double(0));
+        result.add(dpb.create());
+      }
+      return ImmutableList.copyOf(result);
+    } else {
+      long startTimestamp = a.get(0).getTimestamp();
+      long endTimestamp = a.get(a.size()-1).getTimestamp();
+      if(start < startTimestamp) {
+        DataPoint.Builder dpb = new DataPoint.Builder(metric);
+        for(long i = start; i < startTimestamp; i = i + interval) {
+          dpb.addTimestamp(i);
+          dpb.addValue(new Double(0));
+          result.add(dpb.create());
+        }
+      }
+      result.addAll(a);
+      if(endTimestamp < end) {
+        DataPoint.Builder dpb = new DataPoint.Builder(metric);
+        for(long i = endTimestamp+interval; i < end; i = i + interval) {
+          dpb.addTimestamp(i);
+          dpb.addValue(new Double(0));
+          result.add(dpb.create());
+//          size++;
+//          if(size >= points) {
+//            break;
+//          }
+        }
+      }
+//
+//      boolean addedAtStart = false;
+//      if(start < startTimestamp) {
+//        DataPoint.Builder dpb = new DataPoint.Builder(metric);
+//        for(long i = start; i < startTimestamp; i = i + 1) {
+//          dpb.addTimestamp(i);
+//          dpb.addValue(new Double(0));
+//          result.add(dpb.create());
+//        }
+//        addedAtStart = true;
+//      }
+//      result.addAll(a);
+//      if(!addedAtStart) {
+//        int size = result.size();
+//        long timestamp = a.get(a.size()-1).getTimestamp();
+//        DataPoint.Builder dpb = new DataPoint.Builder(metric);
+//        for(int i = size + 1; i <= points; ++i) {
+//          dpb.addTimestamp(timestamp + i - size);
+//          dpb.addValue(new Double(0));
+//          result.add(dpb.create());
+//        }
+//      }
     }
     return ImmutableList.copyOf(result);
   }

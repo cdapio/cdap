@@ -1,6 +1,7 @@
 package com.continuuity.metrics2.temporaldb.internal;
 
 import com.continuuity.metrics2.temporaldb.DataPoint;
+import com.continuuity.metrics2.temporaldb.Timeseries;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -147,5 +148,59 @@ public class TimeseriesTest {
     for(DataPoint d : div) {
       Assert.assertTrue(d.getValue() == 50f);
     }
+  }
+
+  /**
+   * Test adding zeros to timeseries when the list is no filled completely.
+   */
+  @Test
+  public void testAddingZerosToTimeseries() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    A.add(create("A", 1, 2));
+    A.add(create("A", 2, 2));
+    A.add(create("A", 3, 2));
+    A.add(create("A", 4, 2));
+    A.add(create("A", 5, 2));
+
+    ImmutableList<DataPoint> zeroes =
+      new Timeseries().fill(A, "A", 1, 10, 10, 1);
+    Assert.assertNotNull(zeroes);
+    Assert.assertTrue(zeroes.size() == 10);
+  }
+
+  /**
+   * Test adding zeros to timeseries when the list had missing timestamp
+   * at begining of timeseries
+   */
+  @Test
+  public void testAddingZerosAtBeginingTimeseries() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    A.add(create("A", 5, 2));
+    A.add(create("A", 6, 2));
+    A.add(create("A", 7, 2));
+    A.add(create("A", 8, 2));
+    A.add(create("A", 9, 2));
+
+    ImmutableList<DataPoint> zeroes =
+      new Timeseries().fill(A, "A", 0, 10, 10, 1);
+    Assert.assertNotNull(zeroes);
+    Assert.assertTrue(zeroes.size() == 10);
+  }
+
+  /**
+   * Test adding zeros to timeseries when list is empty
+   */
+  @Test
+  public void testAddingZerosToEmptyTimeseries() throws Exception {
+    List<DataPoint> A = Lists.newArrayList();
+    ImmutableList<DataPoint> zeroes =
+      new Timeseries().fill(A, "A", 1, 10, 10, 1);
+    Assert.assertNotNull(zeroes);
+    Assert.assertTrue(zeroes.size() == 10);
+    A = null;
+    zeroes =
+      new Timeseries().fill(A, "A", 1, 10, 10, 1);
+    Assert.assertNotNull(zeroes);
+    Assert.assertTrue(zeroes.size() == 10);
   }
 }

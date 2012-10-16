@@ -4,6 +4,7 @@ package com.continuuity.metrics2.temporaldb.internal;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.metrics2.temporaldb.DataPoint;
 import com.continuuity.metrics2.temporaldb.Query;
+import com.continuuity.metrics2.temporaldb.Timeseries;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.junit.AfterClass;
