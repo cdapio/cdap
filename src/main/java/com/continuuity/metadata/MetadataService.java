@@ -245,6 +245,8 @@ public class MetadataService implements com.continuuity.metadata.thrift.Metadata
         stream.setDescription(entry.getTextField(
           FieldTypes.Stream.DESCRIPTION
         ));
+      } else {
+        stream.setExists(false);
       }
     } catch (OperationException e) {
       Log.warn("Failed to retrieve stream {}. Reason : {}.",
