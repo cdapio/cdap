@@ -274,7 +274,9 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       // If metric has same value, then we don't add the point.
       if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
          && !elements.getMetric().contains(".stream.out")
-         && !elements.getMetric().contains(".stream.in")) {
+         && !elements.getMetric().contains(".stream.in")
+         && !elements.getMetric().contains("queue//")
+         && !elements.getMetric().contains("stream//")) {
         return true;
       }
 

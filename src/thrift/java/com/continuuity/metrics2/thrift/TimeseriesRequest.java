@@ -134,9 +134,9 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     tmpMap.put(_Fields.LEVEL, new org.apache.thrift.meta_data.FieldMetaData("level", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, MetricTimeseriesLevel.class)));
-    tmpMap.put(_Fields.STARTTS, new org.apache.thrift.meta_data.FieldMetaData("startts", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.STARTTS, new org.apache.thrift.meta_data.FieldMetaData("startts", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.ENDTS, new org.apache.thrift.meta_data.FieldMetaData("endts", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.ENDTS, new org.apache.thrift.meta_data.FieldMetaData("endts", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.SUMMARY, new org.apache.thrift.meta_data.FieldMetaData("summary", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
@@ -152,13 +152,13 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
   public TimeseriesRequest(
     FlowArgument argument,
     List<String> metrics,
-    long endts)
+    long startts)
   {
     this();
     this.argument = argument;
     this.metrics = metrics;
-    this.endts = endts;
-    setEndtsIsSet(true);
+    this.startts = startts;
+    setStarttsIsSet(true);
   }
 
   /**
@@ -500,8 +500,8 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
         return false;
     }
 
-    boolean this_present_startts = true && this.isSetStartts();
-    boolean that_present_startts = true && that.isSetStartts();
+    boolean this_present_startts = true;
+    boolean that_present_startts = true;
     if (this_present_startts || that_present_startts) {
       if (!(this_present_startts && that_present_startts))
         return false;
@@ -509,8 +509,8 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
         return false;
     }
 
-    boolean this_present_endts = true;
-    boolean that_present_endts = true;
+    boolean this_present_endts = true && this.isSetEndts();
+    boolean that_present_endts = true && that.isSetEndts();
     if (this_present_endts || that_present_endts) {
       if (!(this_present_endts && that_present_endts))
         return false;
@@ -549,12 +549,12 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
     if (present_level)
       builder.append(level.getValue());
 
-    boolean present_startts = true && (isSetStartts());
+    boolean present_startts = true;
     builder.append(present_startts);
     if (present_startts)
       builder.append(startts);
 
-    boolean present_endts = true;
+    boolean present_endts = true && (isSetEndts());
     builder.append(present_endts);
     if (present_endts)
       builder.append(endts);
@@ -745,14 +745,14 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
         oprot.writeFieldEnd();
       }
     }
-    if (isSetStartts()) {
-      oprot.writeFieldBegin(STARTTS_FIELD_DESC);
-      oprot.writeI64(this.startts);
+    oprot.writeFieldBegin(STARTTS_FIELD_DESC);
+    oprot.writeI64(this.startts);
+    oprot.writeFieldEnd();
+    if (isSetEndts()) {
+      oprot.writeFieldBegin(ENDTS_FIELD_DESC);
+      oprot.writeI64(this.endts);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(ENDTS_FIELD_DESC);
-    oprot.writeI64(this.endts);
-    oprot.writeFieldEnd();
     if (isSetSummary()) {
       oprot.writeFieldBegin(SUMMARY_FIELD_DESC);
       oprot.writeBool(this.summary);
@@ -792,16 +792,16 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
       }
       first = false;
     }
-    if (isSetStartts()) {
+    if (!first) sb.append(", ");
+    sb.append("startts:");
+    sb.append(this.startts);
+    first = false;
+    if (isSetEndts()) {
       if (!first) sb.append(", ");
-      sb.append("startts:");
-      sb.append(this.startts);
+      sb.append("endts:");
+      sb.append(this.endts);
       first = false;
     }
-    if (!first) sb.append(", ");
-    sb.append("endts:");
-    sb.append(this.endts);
-    first = false;
     if (isSetSummary()) {
       if (!first) sb.append(", ");
       sb.append("summary:");
@@ -822,8 +822,8 @@ public class TimeseriesRequest implements org.apache.thrift.TBase<TimeseriesRequ
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'metrics' is unset! Struct:" + toString());
     }
 
-    if (!isSetEndts()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'endts' is unset! Struct:" + toString());
+    if (!isSetStartts()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'startts' is unset! Struct:" + toString());
     }
 
   }
