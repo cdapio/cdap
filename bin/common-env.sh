@@ -19,7 +19,7 @@ export OPTS="-XX:+UseConcMarkSweepGC"
 # export USE_GC_LOGFILE=true
 
 # Where log files are stored.  $CONTINUUITY_HOME/logs by default.
-export LOG_DIR=$CONTINUUITY_HOME/logs
+export LOG_DIR=/var/log/continuuity
 
 # A string representing this instance of hbase. $USER by default.
 export IDENT_STRING=$USER
