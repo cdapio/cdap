@@ -22,9 +22,11 @@ define([], function () {
 							this.get('container').css({margin: ''});
 							this.get('label').show();
 
+							console.log(this.get('unit'));
+
 							var widget = d3.select(this.get('container')[0]);
 							var sparkline = C.util.sparkline(widget, [],
-								this.get('width'), this.get('height'), 8);
+								this.get('width'), this.get('height'), this.get('unit') === 'percent');
 							this.set('sparkline', sparkline);
 
 						}
@@ -88,7 +90,8 @@ define([], function () {
 			'emitted.count': 'Tuples Emitted',
 			'dataops.count': 'Data Operations',
 			'busyness': 'Busyness',
-			'flowlet.failure.count': 'Failures'
+			'flowlet.failure.count': 'Failures',
+			'storage.trend': 'Storage Trend'
 		},
 		__getTitle: function () {
 			var title = [];
@@ -129,7 +132,9 @@ define([], function () {
 			this.set('metrics', metrics);
 
 			var height = parseInt(this.get('height'), 10) || 70,
-				width = parseInt(this.get('width'), 10) || 250, label, container;
+				width = parseInt(this.get('width'), 10) || 184, label, container;
+
+			width = $(this.get('element')).parent().innerWidth();
 
 			if (entityType === "Flowlet") {
 
@@ -148,14 +153,25 @@ define([], function () {
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">No Data</div></div>').appendTo(this.get('element'));
 				height = 34;
-				width = width - 32;
+				width = width - 94;
 
 			} else {
 
-				$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
 				label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));
+				
+				if (this.get('mode')) {
+					container.addClass('sparkline-box-container-white');
+					container.append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
+				} else {
+					container.addClass('sparkline-box-container');
+					container.append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
+				}
 
+
+				container = $('<div style="height: 69px;" />').appendTo(container);
+
+				width = width - 74;
 			}
 
 			this.set('width', width);
@@ -167,11 +183,13 @@ define([], function () {
 			this.get('container').css({marginRight: '0'});
 			this.get('label').hide();
 
-			if (this.get('unit') === 'percent' && entityType !== 'Flowlet') {
+			if (this.get('unit') === 'percent' && entityType !== 'Flowlet' && !this.get('listMode')) {
 				this.get('label').css({
-					paddingTop: '28px'
+					paddingTop: '38px'
 				});
 			}
+
+			console.log(metrics);
 
 			if (!metrics.length) {
 				C.debug('NO METRIC FOR sparkline', this);

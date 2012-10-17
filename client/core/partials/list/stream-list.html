@@ -4,7 +4,7 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 100px;padding: 0;text-align: center;">Unconsumed</th>
+		<th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Unconsumed</th>
 		<th style="width: 444px;">Arrivals</th>
 	</thead>
 	{{#each types.Stream.content tagName="tbody"}}
@@ -17,7 +17,7 @@
 		</td>
 		<td class="app-list-count">{{storage}}</td>
 		<td class="app-list-count">{{unconsumed}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metrics="q.stream://demo/{id}.ack.source.count" width="420"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metrics="q.stream//demo/{id}.ack.source.count" width="420"}}</td>
 	</tr>
 	{{/each}}
 	</table>

@@ -11,7 +11,7 @@ define([
 		"delete": function () {
 			
 			C.Vw.Modal.show(
-				"Delete Stream",
+				"Delete Application",
 				"Are you sure you would like to delete this Application? This action is not reversible.",
 				$.proxy(this.confirmed, this));
 

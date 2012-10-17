@@ -139,10 +139,34 @@ function(Models, Views, Controllers){
 
 		},
 		util: {
-			sparkline: function (widget, data, w, h, m, color) {
-		
-				var y = d3.scale.linear().domain([d3.max(data), 0]).range([0, h - m]),
-					x = d3.scale.linear().domain([0, data.length]).range([0, w]);
+			sparkline: function (widget, data, w, h, percent) {
+				
+				var allData = [], length = 0;
+				for (var i in this.series) {
+					allData = allData.concat(this.series[i]);
+					if (this.series[i].length > length) {
+						length = this.series[i].length;
+					}
+				}
+				var max = d3.max(allData) || 9;
+				var min = d3.min(allData) || -1;
+				var extend = Math.round(w / data.length);
+
+				var margin = 0;
+				var yBuffer = 0.0;
+				var y, x;
+
+				x = d3.scale.linear().domain([0, data.length]).range([0, w]);
+
+				if (percent) {
+					y = d3.scale.linear()
+						.domain([100, 0])
+						.range([0, h]);
+				} else {
+					y = d3.scale.linear()
+						.domain([max + (max * yBuffer), min - (min * yBuffer)])
+						.range([margin, h - margin]);
+				}
 
 				var vis = widget
 					.append("svg:svg")
@@ -155,10 +179,19 @@ function(Models, Views, Controllers){
 					.x(function(d,i) { return x(i); })
 					.y(function(d) { return y(d); });
 
-				var p = g.append("svg:path").attr('class', 'sparkline-data').attr("d", line(data));
+				if (percent) {
+					var area = d3.svg.area()
+						.x(line.x())
+						.y1(line.y())
+						.y0(y(0));
+					g.append("svg:path").attr('class', 'sparkline-area').attr("d", area(data));
+				}
+
+				g.append("svg:path").attr('class', 'sparkline-data').attr("d", line(data));
 
 				return {
 					g: g,
+					percent: percent,
 					series: {}, // Need to store to track data boundaries
 					update: function (name, data) {
 
@@ -171,20 +204,46 @@ function(Models, Views, Controllers){
 								length = this.series[i].length;
 							}
 						}
-						var max = d3.max(allData) || 1;
+						var max = d3.max(allData) || 9;
 						var min = d3.min(allData) || -1;
-						var extend = Math.round(w * 0.08);
+						var extend = Math.round(w / data.length);
 
 						var yBuffer = 0.0;
+						var y, x;
 
-						var y = d3.scale.linear().domain([max + (max * yBuffer), min - (min * yBuffer)]).range([m, h - m]),
-							x = d3.scale.linear().domain([0, length]).range([extend * -1, w + extend * 2]);
+						x = d3.scale.linear().domain([0, length]).range([extend * -1, w + extend]);
+
+						if (this.percent) {
+							y = d3.scale.linear()
+								.domain([100, 0])
+								.range([margin, h - margin]);
+						} else {
+							y = d3.scale.linear()
+								.domain([max + (max * yBuffer), min - (min * yBuffer)])
+								.range([margin, h - margin]);
+						}
 
 						var line = d3.svg.line().interpolate("basis")
 							.x(function(d,i) { return x(i); })
 							.y(function(d) { return y(d); });
 
-						this.g.selectAll("path")
+						if (this.percent) {
+							var area = d3.svg.area().interpolate("basis")
+								.x(line.x())
+								.y1(line.y())
+								.y0(y(0));
+
+							this.g.selectAll("path.sparkline-area")
+								.data([data])
+								.attr("transform", "translate(" + x(1) + ")")
+								.attr("d", area)
+								.transition()
+								.ease("linear")
+								.duration(1000)
+								.attr("transform", "translate(" + x(0) + ")");
+						}
+
+						this.g.selectAll("path.sparkline-data")
 							.data([data])
 							.attr("transform", "translate(" + x(1) + ")")
 							.attr("d", line)
@@ -192,6 +251,8 @@ function(Models, Views, Controllers){
 							.ease("linear")
 							.duration(1000)
 							.attr("transform", "translate(" + x(0) + ")");
+
+						
 					}
 				};
 			},
@@ -214,6 +275,11 @@ function(Models, Views, Controllers){
 					value = value / 1000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded + 'K';
+				} else {
+					var digits = 3 - (value + '').length;
+					digits = digits < 0 ? 0 : digits;
+					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
+					value = rounded;
 				}
 
 				return value;

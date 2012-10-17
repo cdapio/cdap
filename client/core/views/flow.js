@@ -10,18 +10,20 @@ define([
 
 			var label = $(event.target).html();
 			this.get('controller').set('__currentFlowletLabel', {
-				'Arrival Rate': 'arrival.count',
-				'Queue Depth': 'queue.depth',
+				'Enqueue Rate': 'arrival.count',
+				'Queue Size': 'queue.depth',
 				'Max Queue Depth': 'queue.maxdepth',
 				'Total Processed': 'processed.count'
 			}[label]);
+
+			this.get('controller').__resetFlowletLabels();
 
 		},
 		flowletLabelName: function () {
 
 			return {
-				'arrival.count': 'Arrival Rate',
-				'queue.depth': 'Queue Depth',
+				'arrival.count': 'Enqueue Rate',
+				'queue.depth': 'Queue Size',
 				'queue.maxdepth': 'Max Queue Depth',
 				'processed.count': 'Total Processed'
 			}[this.get('controller').__currentFlowletLabel];

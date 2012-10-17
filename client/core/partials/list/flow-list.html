@@ -4,7 +4,7 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 262px;">Processed</th>
+		<th style="width: 262px;">Processing Rate</th>
 		<th style="width: 262px;">Busyness</th>
 	</thead>
 	{{#each types.Flow.content tagName="tbody"}}
@@ -17,7 +17,7 @@
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="processed.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="busyness"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="busyness" unit="percent"}}</td>
 	</tr>
 	{{/each}}
 	</table>

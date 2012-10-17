@@ -34,6 +34,7 @@ define([], function () {
 
 			clearTimeout(this.updateTimeout);
 			this.set('types.Flowlet', Em.Object.create());
+			this.set('types.Stream', Em.Object.create());
 			this.set('current', null);
 			clearInterval(this.interval);
 
@@ -143,6 +144,30 @@ define([], function () {
 
 		__currentFlowletLabel: 'processed.count',
 
+		__setFlowletLabel: function (flowlet, value) {
+
+			var fs = flowlet.streams;
+
+			for (var j = 0; j < fs.length; j ++) {
+				fs[j].set('metrics', value);
+			}
+
+			value = C.util.number(value);
+			flowlet.set('label', value);
+
+		},
+
+		__resetFlowletLabels: function () {
+
+			var content = this.types.Flowlet.content;
+			content.forEach(function (item) {
+
+				item.set('label', '•');
+
+			});
+
+		},
+
 		updateStats: function () {
 			var self = this;
 
@@ -164,44 +189,56 @@ define([], function () {
 			
 			C.get.apply(C, this.get('current').getUpdateRequest());
 
-			var names = [], flowletName, uri;
+			var names = [], flowletName, streamName, uri;
 
 			var fs = C.Ctl.Flow.current.flowletStreams;
 			switch (this.__currentFlowletLabel) {
 				case 'arrival.count':
 					for (flowletName in fs) {
-						if (fs[flowletName].in) {
-							uri = fs[flowletName].in.first;
-							names.push('q.' + uri + '.enqueue.rate');
+
+						for (streamName in fs[flowletName]) {
+
+							if (fs[flowletName][streamName].second === 'IN') {
+								uri = fs[flowletName][streamName].first;
+								uri = uri.replace(/:/g, '');
+								names.push('q.enqueue.' + uri + '.meanRate');
+							}
+
 						}
 					}
 				break;
 				case 'queue.depth':
 					for (flowletName in fs) {
-						if (fs[flowletName].in) {
-							uri = fs[flowletName].in.first;
-							names.push('q.' + uri + '.enqueue.count');
-							names.push('q.' + uri + '.ack.' + flowletName + '.count');
+						for (streamName in fs[flowletName]) {
+							uri = fs[flowletName][streamName].first;
+							uri = uri.replace(/:/g, '');
+							names.push('q.enqueue.' + uri + '.count');
+							names.push('q.ack.' + uri + '.count');
 						}
 					}
 
 			}
-
-			console.log('going', names);
 
 			C.get('monitor', {
 				method: 'getCounters',
 				params: [app, id, null, names]
 			}, function (error, response) {
 			
-				console.log(arguments);
-
 				if (C.router.currentState.name !== "flow") {
 					return;
 				}
 
 				if (!response.params) {
 					return;
+				}
+
+				self.__resetFlowletLabels();
+
+				var allMetrics = false;
+				var valueToTake = {};
+				var cx = C.Ctl.Flow.current.connections;
+				for (var i = 0; i < cx.length; i ++) {
+					valueToTake[cx[i].to.flowlet] = 'queue://CountRandom/' + cx[i].from.flowlet + '/' + cx[i].from.stream;
 				}
 
 				var metrics = response.params;
@@ -212,21 +249,52 @@ define([], function () {
 						continue;
 					}
 
-					console.log(metrics[i].name);
+					var metric = metrics[i].name;
+					var name = metrics[i].qualifier;
 
-					var finish = metrics[i].value;
-					var flowlet = self.get_flowlet(metrics[i].qualifier);
+					if ((metric.indexOf('q.ack') === 0 || metric.indexOf('q.enqueue') === 0) &&
+						metric.indexOf('meanRate') === -1) {
 
-					var fs = flowlet.streams;
-					for (var j = 0; j < fs.length; j ++) {
-						fs[j].set('metrics', finish);
+						allMetrics = allMetrics || {};
+						allMetrics[metric] = metrics[i].value;
+
+					} else if (metric.indexOf('q.enqueue') === 0) {
+
+						var uri = metric.replace('q.enqueue.', '')
+							.replace('.meanRate', '')
+							.replace('//', '://');
+
+						var fs = C.Ctl.Flow.current.flowletStreams;
+						for (var flowletName in fs) {
+							for (var streamName in fs[flowletName]) {
+								if (fs[flowletName][streamName].second === 'IN') {
+									if (fs[flowletName][streamName].first === uri) {
+										var flowlet = self.get_flowlet(flowletName);
+										self.__setFlowletLabel(flowlet, metrics[i].value);
+									}
+								}
+							}
+						}
+
+					} else {
+
+						var flowlet = self.get_flowlet(name);
+						self.__setFlowletLabel(flowlet, metrics[i].value);
+
 					}
-
-					finish = C.util.number(finish);
-					flowlet.set('label', finish);
 
 				}
 
+
+				if (allMetrics) {
+
+					for (var i in valueToTake) {
+						var enqueued = allMetrics['q.enqueue.' + valueToTake[i].replace(':', '') + '.count'];
+						var ackd = allMetrics['q.ack.' + valueToTake[i].replace(':', '') + '.count'];
+						var flowlet = self.get_flowlet(i);
+						self.__setFlowletLabel(flowlet, enqueued - ackd);
+					}
+				}
 				self.startStats();
 			});
 		},

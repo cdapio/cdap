@@ -295,6 +295,8 @@ try {
 						startts: params[3]
 					});
 
+					console.log(request);
+
 					Monitor.getTimeSeries(request, function (error, response) {
 
 						if (error) {
@@ -347,7 +349,7 @@ try {
 			res.on('data', function (chunk) {
 			});
 			res.on('end', function () {
-				done(res.statusCode !== 200, res.statusCode);
+				done(res.statusCode !== 200 ? res.statusCode : false, res.statusCode);
 			});
 		});
 

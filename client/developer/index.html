@@ -80,22 +80,17 @@
               <td class="dash-app-resource">
                 <a href="#/data" class="dash-app-resource-dataset">{{controller.counts.Dataset}}</a>
               </td>
-              <td class="dash-app-resource" style="padding-right: 16px !important;">
+              <td class="dash-app-resource">
                 <a href="#/queries" class="dash-app-resource-query">{{controller.counts.Query}}</a>
               </td>
             </tr>
           </tbody>
         </table>
         <table class="table dash-app-trends">
-          <thead>
-            <tr>
-              <th>Processed Count</th>
-              <th>Storage Trend</th>
-          </thead>
           <tbody>
             <tr>
-              <td style="width: 50%;">{{view C.Vw.Chart listMode="true" width="480" color="orange" metrics="processed.count"}}</td>
-              <td style="width: 50%;">{{view C.Vw.Chart listMode="true" width="480" color="orange" metrics="storage.trend"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" width="480" color="orange" metrics="processed.count"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" width="480" color="orange" metrics="storage.trend"}}</td>
             </tr>
           </tbody>
         </table>
@@ -124,6 +119,7 @@
           </button>
           <ul class="dropdown-menu">
             <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+            <li class="divider"></li>
             <li><a href="#" {{action "promote" on="click"}}>Push to Cloud</a></li>
           </ul>
         </div>
@@ -132,11 +128,11 @@
         {{view C.Vw.DropZone}}
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness,processed.count" width="170"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{current.storage}}</div>
       </div>
     </div>
 
@@ -259,8 +255,8 @@
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count" width="170"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent" width="170"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
     </div>
 
     <div id="panels">
@@ -272,8 +268,8 @@
               {{view.flowletLabelName}} <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
-              <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>
-              <li><a {{action "setFlowletLabel" on="click"}}>Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Enqueue Rate</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Queue Size</a></li>
               <li><a {{action "setFlowletLabel" on="click"}}>Total Processed</a></li>
             </ul>
           </div>

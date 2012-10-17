@@ -2,23 +2,33 @@
 <div class="popup-container" style="padding-bottom: 24px;">
 <div class="popup-close" {{action close on="click"}}>×</div>
 
-<div class="popup-icon" />
-<h1 class="popup-title">{{controller.current.name}} <span>Stream</span></h1>
+<div class="popup-inject-wrapper">
+	{{view C.Vw.Injector}}
+	<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
+</div>
 
-<table style="width: 100%">
-	<tr>
-		<td style="padding-left: 12px;width: 50%;">
-			<div class="popup-white-label">Arrivals vs. Consumed</div>
-			{{view C.Vw.Chart entity-type="Stream" width="280" metric="arrivals,consumed"}}
-		</td>
-		<td style="padding-left: 12px;">
-			<div class="popup-white-label">Inject an Event</div>
-			<div class="popup-inject-wrapper">
-				{{view C.Vw.Injector}}
-				<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
-			</div>
-		</td>
-	</tr>
+<div class="popup-icon-stream" />
+<h1 class="popup-title">{{controller.current.name}}</h1>
+
+<table class="table">
+	<thead>
+		<th>Health</th>
+		<th style="width: 100px;text-align: center;">Storage</th>
+		<th style="width: 100px;text-align: center;">Unconsumed</th>
+		<th style="width: 295px;">Arrivals</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="list-health-cell">
+				<div class="list-health-box"></div>
+			</td>
+			<td class="app-list-name">{{storage}}</td>
+			<td class="app-list-count">{{unconsumed}}</td>
+			<td>
+				{{view C.Vw.Chart entity-type="Stream" width="280" metric="arrivals,consumed"}}
+			</td>
+		</tr>
+	</tbody>
 </table>
 
 </div>
