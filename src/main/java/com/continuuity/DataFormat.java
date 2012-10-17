@@ -131,19 +131,11 @@ public class DataFormat {
 
         // fetch configuration
         myConfiguration = CConfiguration.create();
-        myConfiguration.clear();
-
-        // TODO: Make this generic and scan for files before adding them
-        myConfiguration.addResource("continuuity-flow.xml");
-        myConfiguration.addResource("continuuity-gateway.xml");
-        myConfiguration.addResource("continuuity-webapp.xml");
-        myConfiguration.addResource("continuuity-data-fabric.xml");
-
 
         // read the relevant property
         String datadirjdbc = myConfiguration.get(dataDirPropName);
         // extract the relative file path from the jdbc string
-        String datadirpath = datadirjdbc.replaceAll(".*file:", "");
+        String datadirpath = datadirjdbc.replaceAll(".*file:([^/]+)/.*", "$1"  );
 
         //String datadirpath = myConfiguration.get(dataDirPropName);
         if(datadirpath == null) {
