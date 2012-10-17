@@ -257,6 +257,11 @@ public class MetadataServiceTest {
   @Test
   public void testFlowStuff() throws Exception {
 
+    // clean up streams in mds if there are any leftover from other tests
+    for (Stream stream : mds.getStreams(account)) {
+      Assert.assertTrue(mds.deleteStream(account, stream));
+    }
+
     List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
         mtList = Collections.emptyList(), listA = Lists.newArrayList();
     listAB.add("a"); listAB.add("b");
