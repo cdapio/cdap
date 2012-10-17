@@ -9,10 +9,24 @@ import java.util.Random;
 public class RandomSource extends SourceFlowlet {
 
   Random random;
+  long millis = 0;
+  int direction = 1;
 
   @Override
   public void generate(OutputCollector outputCollector) {
-    Tuple out = new TupleBuilder().set("number", new Integer(this.random.nextInt(10000))).create();
+    Tuple out = new TupleBuilder().set("number",
+                                       new Integer(
+                                         this.random.nextInt(10000)
+                                       )).create();
+    try {
+      Thread.sleep(millis);
+      millis += direction;
+      if(millis > 100 || millis < 1) {
+        direction = direction * -1;
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     outputCollector.add(out);
   }
 
