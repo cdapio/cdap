@@ -32,7 +32,7 @@
 
     <property>
         <name>state.storage.connection.url</name>
-        <value>jdbc:hsqldb:file:~/continuuity-data/flow-state-management;user=sa</value>
+        <value>jdbc:hsqldb:file:data/flow-state-management;user=sa</value>
         <description>
             Specifies the JDBC connection url for connecting to local or
             remote storage for storing flow state, runs and active flows.
@@ -213,7 +213,7 @@
     -->
     <property>
         <name>data.local.jdbc</name>
-        <value>jdbc:hsqldb:file:~/continuuity-data/fabricdb;user=sa</value>
+        <value>jdbc:hsqldb:file:data/fabricdb;user=sa</value>
         <description>Specifies local file system implementation</description>
     </property>
 
@@ -307,7 +307,7 @@
 
     <property>
         <name>overlord.metrics.connection.url</name>
-        <value>jdbc:hsqldb:file:~/continuuity-data/metricsdb?user=sa</value>
+        <value>jdbc:hsqldb:file:data/metricsdb?user=sa</value>
         <description>Specifies the connection string where metrics are stored
             </description>
     </property>
