@@ -17,6 +17,13 @@ public class FieldTypes {
     public static final String EXPIRY_IN_SECONDS = "expiryInSeconds";
   }
 
+  public static class Flow {
+    public static final String ID = "flow";
+    public static final String NAME = "name";
+    public static final String STREAMS = "streams";
+    public static final String DATASETS = "datasets";
+  }
+
   /**
    * Class representing constants for fields stored for Dataset
    */

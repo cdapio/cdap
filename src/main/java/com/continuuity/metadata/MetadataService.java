@@ -1,25 +1,25 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.MetaDataEntry;
+import com.continuuity.api.data.MetaDataStore;
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.mortbay.log.Log;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataService implements com.continuuity.metadata.thrift.MetadataService.Iface {
+public class MetadataService implements
+    com.continuuity.metadata.thrift.MetadataService.Iface {
   private final MetaDataStore mds;
 
   /**
@@ -920,6 +920,258 @@ public class MetadataService implements com.continuuity.metadata.thrift.Metadata
     }
     return query;
   }
+
+  /**
+   *  When creating/updating a flow, you need to have id, name and application
+   */
+  void validateFlow(Flow flow) throws MetadataServiceException {
+    String id = flow.getId();
+    if(id == null || id.isEmpty()) {
+      throw new MetadataServiceException("Flow id is empty or null.");
+    }
+    String name = flow.getName();
+    if(name == null || name.isEmpty()) {
+      throw new MetadataServiceException("Flow name is empty or null.");
+    }
+    String app = flow.getName();
+    if(app == null || app.isEmpty()) {
+      throw new MetadataServiceException("Flow's app name is empty or null.");
+    }
+  }
+
+  String ListToString(List<String> list) {
+    StringBuilder str = new StringBuilder();
+    if (list != null) {
+      for (String item : list) {
+        str.append(item);
+        str.append(' ');
+      }
+    }
+    return str.toString();
+  }
+
+  List<String> StringToList(String str) {
+    if (str == null || str.isEmpty())
+      return Collections.emptyList();
+    StringTokenizer tok = new StringTokenizer(str, " ");
+    List<String> list = Lists.newArrayList();
+    while (tok.hasMoreTokens()) {
+      list.add(tok.nextToken());
+    }
+    return list;
+  }
+
+  private MetaDataEntry makeEntry(String account, Flow flow) {
+    // Create a new metadata entry.
+    MetaDataEntry entry = new MetaDataEntry(
+        account, flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
+    entry.addField(FieldTypes.Flow.NAME, flow.getName());
+    entry.addField(FieldTypes.Flow.STREAMS, ListToString(flow.getStreams()));
+    entry.addField(FieldTypes.Flow.DATASETS, ListToString(flow.getDatasets()));
+    return entry;
+  }
+
+  private Flow makeFlow(MetaDataEntry entry) {
+    return new Flow(entry.getId(), entry.getApplication(),
+        entry.getTextField(FieldTypes.Flow.NAME),
+        StringToList(entry.getTextField(FieldTypes.Flow.STREAMS)),
+        StringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
+  }
+
+  @Override
+  public boolean createFlow(String account, Flow flow) throws
+      MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    // validate flow
+    validateFlow(flow);
+
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account, flow.getApplication());
+
+    // perform the insert
+    try {
+      this.mds.add(opContext, makeEntry(account, flow));
+      return true;
+    } catch (OperationException e) {
+      if (e.getStatus() == StatusCode.WRITE_CONFLICT) // entry already exists
+        return false;
+      Log.warn("Failed to create flow {}. Reason: {}.", flow, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+  }
+
+  @Override
+  public boolean updateFlow(String account, Flow flow)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    // validate flow
+    validateFlow(flow);
+
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account, flow.getApplication());
+
+    // perform the update
+    try {
+      this.mds.update(opContext, makeEntry(account, flow));
+      return true;
+    } catch (OperationException e) {
+      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
+        return false;
+      Log.warn("Failed to update flow {}. Reason: {}.", flow, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+  }
+
+  @Override
+  public boolean deleteFlow(String account, String application, String flowid)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account, application);
+
+    // perform the delete
+    try {
+      this.mds.delete(opContext,
+          account, application, FieldTypes.Flow.ID, flowid);
+    } catch (OperationException e) {
+      Log.warn("Failed to delete flow {}. Reason: {}.", flowid, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    return true;
+  }
+
+  @Override
+  public List<Flow> getFlows(String account) throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    // create a context
+    OperationContext opContext = new OperationContext(account, null);
+
+    // retrieve list of meta entries
+    List<MetaDataEntry> entries;
+    try {
+      entries = this.mds.list(
+          opContext, account, null, FieldTypes.Flow.ID, null);
+    } catch (OperationException e) {
+      Log.warn("Failed to list flows for account {}. Reason: {}.",
+          account, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    if (entries == null || entries.isEmpty())
+      return Collections.emptyList();
+
+    // convert each meta entry into a Flow
+    List<Flow> flows = Lists.newArrayList();
+    for (MetaDataEntry entry : entries)
+      flows.add(makeFlow(entry));
+    return flows;
+  }
+
+  @Override
+  public Flow getFlow(String account, String application, String flowid)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+
+    // create a context
+    OperationContext opContext = new OperationContext(account, null);
+
+    // retrieve the meta data entry
+    MetaDataEntry entry;
+    try {
+      entry = this.mds.get(
+          opContext, account, application, FieldTypes.Flow.ID, flowid);
+    } catch (OperationException e) {
+      Log.warn("Failed to list flows for account {}. Reason: {}.",
+          account, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    if (entry == null) {
+      List<String> emptyList = Collections.emptyList();
+      Flow flow = new Flow(flowid, application, "", emptyList, emptyList);
+      flow.setExists(false);
+      return flow;
+    } else
+      return makeFlow(entry);
+  }
+
+  @Override
+  public List<Flow> getFlowsByApplication(String account, String application)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    // create a context
+    OperationContext opContext = new OperationContext(account, null);
+
+    // retrieve list of meta entries
+    List<MetaDataEntry> entries;
+    try {
+      entries = this.mds.list(
+          opContext, account, application, FieldTypes.Flow.ID, null);
+    } catch (OperationException e) {
+      Log.warn("Failed to list flows for account {}. Reason: {}.",
+          account, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    if (entries == null || entries.isEmpty())
+      return Collections.emptyList();
+
+    // convert each meta entry into a Flow
+    List<Flow> flows = Lists.newArrayList();
+    for (MetaDataEntry entry : entries)
+      flows.add(makeFlow(entry));
+    return flows;
+  }
+
+  @Override
+  public List<Stream> getStreamsByApplication(String account, String app)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+
+    // first get all flows for the app
+    List<Flow> flows = getFlowsByApplication(account, app);
+
+    // this will hold all the streams we find in flows
+    Map<String, Stream> foundStreams = Maps.newHashMap();
+
+    // now iterate over all flows and get each stream
+    for (Flow flow : flows) {
+      List<String> flowStreams = flow.getStreams();
+      if (flowStreams == null || flowStreams.isEmpty())
+        continue;
+      for (String streamName : flowStreams) {
+        if (foundStreams.containsKey(streamName))
+          continue;
+        Stream stream =
+            getStream(new Account(account), new Stream(streamName));
+        if (stream.isExists()) {
+          foundStreams.put(streamName, stream);
+        }
+      }
+    }
+
+    // extract the found streams into a list
+    List<Stream> streams = Lists.newArrayList();
+    for (Stream stream : foundStreams.values())
+      streams.add(stream);
+    return streams;
+  }
+
   /**
    * Validates the account passed.
    *
@@ -933,8 +1185,10 @@ public class MetadataService implements com.continuuity.metadata.thrift.Metadata
       throw new
         MetadataServiceException("Account cannot be null");
     }
-
-    String accountId = account.getId();
+    validateAccount(account.getId());
+  }
+  void validateAccount(String accountId)
+      throws MetadataServiceException {
     if(accountId == null || accountId.isEmpty()) {
       throw new
         MetadataServiceException("Account Id cannot be null or empty");

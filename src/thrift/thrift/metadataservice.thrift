@@ -29,6 +29,18 @@ struct Stream {
 }
 
 /**
+ * Defines a Flow
+ */
+struct Flow {
+   1: required string id,
+   2: required string application,
+   3: required string name,
+   4: required list<string> streams,
+   5: required list<string> datasets,
+   6: optional bool exists = true,
+}
+
+/**
  * Defines a dataset types.
  */
 enum DatasetType {
@@ -231,4 +243,76 @@ service MetadataService {
   */
   Query getQuery(1: Account account, 2: Query query)
     throws (1: MetadataServiceException e),
+
+  /**
+   * Updates an existing flow
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the flow.
+   */
+  bool updateFlow(1: string account, 2: Flow flow)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Creates an flow if not exists.
+   *
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the flow.
+   */
+  bool createFlow(1: string account, 2: Flow flow)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Deletes an flow if exists.
+   *
+   * @return true if flow was deleted successfully or did not exists to
+   * be deleted; false otherwise.
+   * @throws MetadataServiceException thrown when there is issue deleting an
+   * flow.
+   */
+  bool deleteFlow(1: string account, 2: string app, 3: string flowid)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Returns a list of flow associated with account.
+   *
+   * @returns a list of flow associated with account; else empty list.
+   * @throws MetadataServiceException thrown when there is issue listing
+   * flow for a account.
+   */
+  list<Flow> getFlows(1: string account)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return more information about an flow.
+  *
+  * @return flow meta data if exists; else a Flow with the id and exists=false
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a flow from metadata store.
+  */
+  Flow getFlow(1: string account, 2: string app, 3: string flowid)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return a list of all flows of an application
+  *
+  * @return list of all flows
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a flow from metadata store.
+  */
+  list<Flow> getFlowsByApplication(1: string account, 2: string application)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return a list of all streams of an application
+  *
+  * @return list of all streams used by any of the app's flows
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a flow from metadata store.
+  */
+  list<Stream> getStreamsByApplication(1: string account, 2: string application)
+    throws (1: MetadataServiceException e),
+
 }

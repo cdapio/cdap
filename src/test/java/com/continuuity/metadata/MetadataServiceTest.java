@@ -4,6 +4,7 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metadata.thrift.*;
 import com.continuuity.runtime.MetadataModules;
+import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -12,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -246,6 +248,98 @@ public class MetadataServiceTest {
     }
     Account account1 = new Account("abc");
     Assert.assertTrue(mds.getApplications(account1).size() == 0);
+  }
+
+  /**
+   * Tests listing of applications.
+   * @throws Exception
+   */
+  @Test
+  public void testFlowStuff() throws Exception {
+
+    List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
+        mtList = Collections.emptyList(), listA = Lists.newArrayList();
+    listAB.add("a"); listAB.add("b");
+    listAC.add("a"); listAC.add("c");
+    listA.add("a");
+
+    Stream streamA = new Stream("a"); streamA.setName("stream A");
+    streamA.setDescription("an a");
+    Stream streamB = new Stream("b"); streamB.setName("stream B");
+    streamB.setDescription("a b");
+    Stream streamC = new Stream("c"); streamC.setName("stream C");
+    streamC.setDescription("a c");
+
+    Assert.assertTrue(mds.createStream(account, streamA));
+    Assert.assertTrue(mds.createStream(account, streamB));
+    Assert.assertTrue(mds.createStream(account, streamC));
+
+    Flow flow1 = new Flow("f1", "app1", "flow 1", listAB, mtList);
+    Flow flow2 = new Flow("f2", "app2", "flow 2", listAC, mtList);
+    Flow flow3 = new Flow("f1", "app2", "flow 1", listAB, mtList);
+
+    // add flow1, verify get and list
+    Assert.assertTrue(mds.createFlow(account.getId(), flow1));
+    Assert.assertEquals(flow1, mds.getFlow(account.getId(), "app1", "f1"));
+    List<Flow> flows = mds.getFlows(account.getId());
+    Assert.assertEquals(1, flows.size());
+    Assert.assertTrue(flows.contains(flow1));
+    flows = mds.getFlowsByApplication(account.getId(), "app1");
+    Assert.assertEquals(1, flows.size());
+    Assert.assertTrue(flows.contains(flow1));
+
+    // add flow2 and flow3, verify get and list
+    Assert.assertTrue(mds.createFlow(account.getId(), flow2));
+    Assert.assertEquals(flow2, mds.getFlow(account.getId(), "app2", "f2"));
+    Assert.assertTrue(mds.createFlow(account.getId(), flow3));
+    Assert.assertEquals(flow3, mds.getFlow(account.getId(), "app2", "f1"));
+    flows = mds.getFlows(account.getId());
+    Assert.assertEquals(3, flows.size());
+    Assert.assertTrue(flows.contains(flow1));
+    Assert.assertTrue(flows.contains(flow2));
+    Assert.assertTrue(flows.contains(flow3));
+    flows = mds.getFlowsByApplication(account.getId(), "app1");
+    Assert.assertEquals(1, flows.size());
+    Assert.assertTrue(flows.contains(flow1));
+    flows = mds.getFlowsByApplication(account.getId(), "app2");
+    Assert.assertEquals(2, flows.size());
+    Assert.assertTrue(flows.contains(flow2));
+    Assert.assertTrue(flows.contains(flow3));
+
+    // list and verify streams for account, app1 and app2
+    List<Stream> streams = mds.getStreams(account);
+    Assert.assertEquals(3, streams.size());
+    Assert.assertTrue(streams.contains(streamA));
+    Assert.assertTrue(streams.contains(streamB));
+    Assert.assertTrue(streams.contains(streamC));
+    streams = mds.getStreamsByApplication(account.getId(), "app1");
+    Assert.assertEquals(2, streams.size());
+    Assert.assertTrue(streams.contains(streamA));
+    Assert.assertTrue(streams.contains(streamB));
+    streams = mds.getStreamsByApplication(account.getId(), "app2");
+    Assert.assertEquals(3, streams.size());
+    Assert.assertTrue(streams.contains(streamA));
+    Assert.assertTrue(streams.contains(streamB));
+    Assert.assertTrue(streams.contains(streamC));
+
+    // update flow3 to have listA, list and verify streams again
+    flow3.setStreams(listA);
+    Assert.assertTrue(mds.updateFlow(account.getId(), flow3));
+    Assert.assertEquals(flow3, mds.getFlow(account.getId(), "app2", "f1"));
+    streams = mds.getStreamsByApplication(account.getId(), "app2");
+    Assert.assertEquals(2, streams.size());
+    Assert.assertTrue(streams.contains(streamA));
+    Assert.assertTrue(streams.contains(streamC));
+
+    // delete flow2, verify flows and streams for app2
+    Assert.assertTrue(mds.deleteFlow(account.getId(), "app2", "f2"));
+    Assert.assertFalse(mds.getFlow(account.getId(), "app2", "f2").isExists());
+    flows = mds.getFlowsByApplication(account.getId(), "app2");
+    Assert.assertEquals(1, flows.size());
+    Assert.assertTrue(flows.contains(flow3));
+    streams = mds.getStreamsByApplication(account.getId(), "app2");
+    Assert.assertEquals(1, streams.size());
+    Assert.assertTrue(streams.contains(streamA));
   }
 
 
