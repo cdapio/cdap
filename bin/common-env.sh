@@ -28,7 +28,7 @@ export IDENT_STRING=$USER
 # export NICENESS=10
 
 # The directory where pid files are stored. /tmp by default.
-export PID_DIR=/var/run/continuuity
+export PID_DIR=/var/run
 
 # Specifies the JAVA_HEAPMAX
 export JAVA_HEAPMAX=-Xmx128m
