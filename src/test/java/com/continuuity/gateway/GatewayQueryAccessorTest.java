@@ -120,7 +120,8 @@ public class GatewayQueryAccessorTest {
     }
 
     @Override
-    public QueryProviderResponse process(String method, Map<String, String> arguments) {
+    public QueryProviderResponse process(
+        String method, Map<String, String> arguments) {
       StringBuffer sb = new StringBuffer();
       sb.append("method : ").append(method).append(" [ ");
       for(Map.Entry<String, String> argument : arguments.entrySet()) {
@@ -171,23 +172,35 @@ public class GatewayQueryAccessorTest {
     String uriPrefix = "http://localhost:" + port + prefix + path;
 
     // test an invalid service, should return 404
-    HttpClient httpClient = new DefaultHttpClient();
-    HttpGet get = new HttpGet(uriPrefix + "HiUniverse?method=A&p1=v1&p2=v2");
-    HttpResponse response = httpClient.execute(get);
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND,
-        response.getStatusLine().getStatusCode());
+    sendAndExpectStatus(uriPrefix +
+        "HiUniverse/method?p1=v1&p2=v2", HttpStatus.SC_NOT_FOUND);
 
-    // test a request without method, should return 404
-    httpClient = new DefaultHttpClient();
-    get = new HttpGet(uriPrefix + "HiUniverse?p1=v1&p2=v2");
-    response = httpClient.execute(get);
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND,
-        response.getStatusLine().getStatusCode());
+    // test requests without method, should return 404
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld", HttpStatus.SC_NOT_FOUND);
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/", HttpStatus.SC_NOT_FOUND);
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld?p1=v1", HttpStatus.SC_NOT_FOUND);
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/p1=v1", HttpStatus.SC_OK); // no ? -> p1=v1 is the "method"
+
+    // test a request with method but incomplete args, should ignore arg
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/method?p1=v1&p2", HttpStatus.SC_OK);
+
+    // test a request with method but without params, should be fine
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/method", HttpStatus.SC_OK);
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/method?", HttpStatus.SC_OK);
+    sendAndExpectStatus(uriPrefix +
+        "HelloWorld/method/", HttpStatus.SC_NOT_FOUND);
 
     // test a valid query, should return a known value
-    httpClient = new DefaultHttpClient();
-    get = new HttpGet(uriPrefix + "HelloWorld?method=A&p1=v1&p2=v2");
-    response = httpClient.execute(get);
+    HttpClient httpClient = new DefaultHttpClient();
+    HttpGet get = new HttpGet(uriPrefix + "HelloWorld?method=A&p1=v1&p2=v2");
+    HttpResponse response= httpClient.execute(get);
     Assert.assertEquals(HttpStatus.SC_OK,
         response.getStatusLine().getStatusCode());
 
@@ -211,6 +224,15 @@ public class GatewayQueryAccessorTest {
 
     // Now stop the query processor.
     queryProcessor.stop();
+  }
+
+  private void sendAndExpectStatus(String uri, int expectedStatus)
+      throws Exception {
+    HttpClient httpClient = new DefaultHttpClient();
+    HttpGet get = new HttpGet(uri);
+    HttpResponse response = httpClient.execute(get);
+    Assert.assertEquals(expectedStatus,
+        response.getStatusLine().getStatusCode());
   }
 
 }
