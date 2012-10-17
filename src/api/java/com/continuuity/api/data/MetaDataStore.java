@@ -35,7 +35,7 @@ public interface MetaDataStore {
    * @param type The type of entry, must not be null
    * @param id The unique id of the entry (per account, app, type), non-null
    * @param field The name of the field to update, must not be null
-   * @param newValue The newValue for that column
+   * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
    * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
@@ -60,7 +60,7 @@ public interface MetaDataStore {
    * @param type The type of entry, must not be null
    * @param id The unique id of the entry (per account, app, type), non-null
    * @param field The name of the field to update, must not be null
-   * @param newValue The newValue for that column
+   * @param newValue The new value for that column
    * @param retryAttempts How many times to retry in case of write conflicts
    * @throws OperationException for data fabric errors. Specifically, if the
    * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
@@ -72,6 +72,56 @@ public interface MetaDataStore {
                           String type, String id,
                           String field, byte[] newValue,
                           int retryAttempts)
+      throws OperationException;
+
+  /**
+   * Compare-and-swap for a single text field of an entry with concurrency
+   * control. Like updateField, with the addition that the write is only
+   * performed if the field has the given, expected old value
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @param type The type of entry, must not be null
+   * @param id The unique id of the entry (per account, app, type), non-null
+   * @param field The name of the field to update, must not be null
+   * @param oldValue The new value for that column
+   * @param newValue The new value for that column
+   * @param retryAttempts How many times to retry in case of write conflicts
+   * @throws OperationException for data fabric errors. Specifically, if the
+   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   * number of retries after write conflict is exhausted, the status code is
+   * WRITE_CONFLICT.
+   */
+  public void swapField(OperationContext context,
+                        String account, String application,
+                        String type, String id,
+                        String field, String oldValue, String newValue,
+                        int retryAttempts)
+      throws OperationException;
+
+  /**
+   * Compare-and-swap for a single binary field of an entry with concurrency
+   * control. Like updateField, with the addition that the write is only
+   * performed if the field has the given, expected old value
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @param type The type of entry, must not be null
+   * @param id The unique id of the entry (per account, app, type), non-null
+   * @param field The name of the field to update, must not be null
+   * @param oldValue The old value for that column
+   * @param newValue The new value for that column
+   * @param retryAttempts How many times to retry in case of write conflicts
+   * @throws OperationException for data fabric errors. Specifically, if the
+   * entry does not exist yet, status code is ENTRY_NOT_FOUND, and if the
+   * number of retries after write conflict is exhausted, the status code is
+   * WRITE_CONFLICT.
+   */
+  public void swapField(OperationContext context,
+                        String account, String application,
+                        String type, String id,
+                        String field, byte[] oldValue, byte[] newValue,
+                        int retryAttempts)
       throws OperationException;
 
   /**

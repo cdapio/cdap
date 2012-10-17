@@ -208,6 +208,7 @@ abstract public class MetaDataStoreTest {
 
   @Test
   public void testUpdateField() throws Exception {
+    System.out.println("testUpdateField:");
     // create a meta data entry with two fields, one text one bin
     MetaDataEntry entry =
         new MetaDataEntry(context.getAccount(), null, "test", "abc");
@@ -285,6 +286,112 @@ abstract public class MetaDataStoreTest {
 
     Assert.assertEquals(1000, Integer.parseInt(text) + textConflicts.get());
     Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());
+  }
+
+  class TextThread extends Thread {
+    private AtomicInteger conflicts;
+    public TextThread(AtomicInteger conflicts) {
+      this.conflicts = conflicts;
+    }
+    @Override
+    public void run() {
+      for (int i = 1; i <= 1000; i++) {
+        try {
+          String old =
+              mds.get(context, context.getAccount(), null, "test", "xyz")
+              .getTextField("num");
+          int value = Integer.valueOf(old);
+          mds.swapField(context, context.getAccount(), null, "test", "xyz",
+              "num", old, Integer.toString(value + 1), 0);
+        } catch (OperationException e) {
+          if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+            // System.out.println("Conflict for text " + i + ": " + value);
+            conflicts.incrementAndGet();
+          } else {
+            Assert.fail(e.getMessage());
+          }
+        } catch (Exception e) {
+          Assert.fail(e.getMessage());
+        }
+      }
+    }
+  }
+
+  class BinThread extends Thread {
+    private AtomicInteger conflicts;
+    public BinThread(AtomicInteger conflicts) {
+      this.conflicts = conflicts;
+    }
+    @Override
+    public void run() {
+      for (int i = 1; i <= 1000; i++) {
+        try {
+          byte[] old =
+              mds.get(context, context.getAccount(), null, "test", "xyz")
+              .getBinaryField("num");
+          int value = Bytes.toInt(old);
+          mds.swapField(context, context.getAccount(), null, "test", "xyz",
+              "num", old, Bytes.toBytes(value + 1), 0);
+          value++;
+        } catch (OperationException e) {
+          if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+            // System.out.println("Conflict for binary " + i + ": " + value);
+            conflicts.incrementAndGet();
+          } else
+            Assert.fail(e.getMessage());
+        } catch (Exception e) {
+          Assert.fail(e.getMessage());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testSwapField() throws Exception {
+    System.out.println("testSwapField:");
+    // create a meta data entry with two fields, one text one bin
+    MetaDataEntry entry =
+        new MetaDataEntry(context.getAccount(), null, "test", "xyz");
+    entry.addField("num", "0");
+    entry.addField("num", Bytes.toBytes(0));
+    mds.add(context, entry);
+    final String account = context.getAccount();
+
+    // start two threads that loop n times
+    //   - each attempts to update one of the fields
+    //   - each increments the field if successful
+    //   - each counts the number of write conflicts
+
+    final AtomicInteger textConflicts = new AtomicInteger(0);
+    final AtomicInteger binaryConflicts = new AtomicInteger(0);
+
+    Thread textThread1 = new TextThread(textConflicts);
+    Thread textThread2 = new TextThread(textConflicts);
+    Thread binaryThread1 = new BinThread(binaryConflicts);
+    Thread binaryThread2 = new BinThread(binaryConflicts);
+    textThread1.start();
+    textThread2.start();
+    binaryThread1.start();
+    binaryThread2.start();
+
+    // in the end, the values of the two fields must be incremented
+    // (n - #conflicts(field)) times
+    textThread1.join();
+    textThread2.join();
+    binaryThread1.join();
+    binaryThread2.join();
+
+    entry = mds.get(context, context.getAccount(), null, "test", "xyz");
+    Assert.assertNotNull(entry);
+    String text = entry.getTextField("num");
+    byte[] binary = entry.getBinaryField("num");
+    System.out.println("text: " + text + ", " + textConflicts.get() +
+        " conflicts");
+    System.out.println("binary: " + Arrays.toString(binary) + ", " +
+        "" + binaryConflicts.get() + " conflicts");
+
+    Assert.assertEquals(2000, Integer.parseInt(text) + textConflicts.get());
+    Assert.assertEquals(2000, Bytes.toInt(binary) + binaryConflicts.get());
   }
 
 }

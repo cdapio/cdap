@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SerializingMetaDataStore implements MetaDataStore {
 
@@ -219,7 +216,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
       throw new IllegalArgumentException("field cannot be empty");
 
     updateField(context, account, application,
-        type, id, field, null, value, null, retries);
+        type, id, field, null, null, null, value, null, retries, false);
   }
 
   @Override
@@ -234,15 +231,47 @@ public class SerializingMetaDataStore implements MetaDataStore {
       throw new IllegalArgumentException("field cannot be empty");
 
     updateField(context, account, application,
-        type, id, null, field, null, value, retries);
+        type, id, null, field, null, null, null, value, retries, false);
+  }
+
+  @Override
+  public void swapField(OperationContext context,
+                          String account, String application,
+                          String type, String id,
+                          String field, String old, String value,
+                          int retries) throws OperationException {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
+
+    updateField(context, account, application,
+        type, id, field, null, old, null, value, null, retries, true);
+  }
+
+  @Override
+  public void swapField(OperationContext context,
+                          String account, String application,
+                          String type, String id,
+                          String field, byte[] old, byte[] value,
+                          int retries) throws OperationException {
+    if (field == null)
+      throw new IllegalArgumentException("field cannot be null");
+    if (field.isEmpty())
+      throw new IllegalArgumentException("field cannot be empty");
+
+    updateField(context, account, application,
+        type, id, null, field, null, old, null, value, retries, true);
   }
 
   private void updateField(OperationContext context,
                           String account, String application,
                           String type, String id,
                           String textField, String binField,
+                          String textOld, byte[] binOld,
                           String textValue, byte[] binValue,
-                          int retryAttempts) throws OperationException {
+                          int retryAttempts, boolean doCompareAndSwap)
+      throws OperationException {
     if (account == null)
       throw new IllegalArgumentException("account cannot be null");
     if (account.isEmpty())
@@ -290,6 +319,27 @@ public class SerializingMetaDataStore implements MetaDataStore {
       } catch (MetaDataException e) {
         throw new OperationException(
             StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      }
+
+      // in case of compare-and-swap, check the existing value
+      if (doCompareAndSwap) {
+        if (textField != null) {
+          String existingValue = entry.getTextField(textField);
+          if ((textOld == null && existingValue != null) ||
+              !textOld.equals(existingValue)) {
+            attempts = -1; // no point in retrying
+            throw new OperationException(StatusCode.WRITE_CONFLICT,
+                "Existing field value does not match expected value");
+          }
+        } else if (binField != null) {
+          byte[] existingValue = entry.getBinaryField(binField);
+          if ((binOld == null && existingValue != null) ||
+              !Arrays.equals(binOld, existingValue)) {
+            attempts = -1; // no point retrying
+            throw new OperationException(StatusCode.WRITE_CONFLICT,
+                "Existing field value does not match expected value");
+          }
+        }
       }
 
       // update the field
