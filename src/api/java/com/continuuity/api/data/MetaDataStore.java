@@ -10,7 +10,7 @@ public interface MetaDataStore {
   /**
    * adds a new entry.
    * @throws OperationException with status WRITE_CONFLICT if an entry with
-   * the the name and type already exists for the same account and app,
+   * the name and type already exists for the same account and app,
    * also throws OperationException for other data fabric problems.
    */
   public void add(OperationContext context,
