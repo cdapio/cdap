@@ -200,7 +200,7 @@
 
     <property>
         <name>collector.flume.port</name>
-        <value>10001</value>
+        <value>10004</value>
     </property>
 
     <property>
