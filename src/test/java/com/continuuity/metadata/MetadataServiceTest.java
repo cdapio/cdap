@@ -331,6 +331,15 @@ public class MetadataServiceTest {
     Assert.assertEquals(1, flows.size());
     Assert.assertTrue(flows.contains(flow2));
 
+    // list the flows for dataset B and C and verify
+    flows = mds.getFlowsByDataset(account.getId(), "b");
+    Assert.assertEquals(2, flows.size());
+    Assert.assertTrue(flows.contains(flow1));
+    Assert.assertTrue(flows.contains(flow3));
+    flows = mds.getFlowsByDataset(account.getId(), "c");
+    Assert.assertEquals(1, flows.size());
+    Assert.assertTrue(flows.contains(flow2));
+
     // list and verify streams for account, app1 and app2
     List<Stream> streams = mds.getStreams(account);
     Assert.assertEquals(3, streams.size());

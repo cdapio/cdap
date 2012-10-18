@@ -348,4 +348,14 @@ service MetadataService {
   list<Flow> getFlowsByStream(1: string account, 2: string stream)
     throws (1: MetadataServiceException e),
 
+ /**
+  * Return a list of all flows that use a dataset
+  *
+  * @return list of all flows using the dataset
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a flow from metadata store.
+  */
+  list<Flow> getFlowsByDataset(1: string account, 2: string dataset)
+    throws (1: MetadataServiceException e),
+
 }

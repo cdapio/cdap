@@ -1292,6 +1292,24 @@ public class MetadataService implements
     return flowsForStream;
   }
 
+  @Override
+  public List<Flow> getFlowsByDataset(String account, String dataset)
+      throws MetadataServiceException, TException {
+    // Validate all account.
+    validateAccount(account);
+
+    // first get all flows for the app
+    List<Flow> flows = getFlows(account);
+
+    // select the flows that use the dataset
+    List<Flow> flowsForDS = Lists.newLinkedList();
+    for (Flow flow : flows) {
+      if (flow.getDatasets().contains(dataset))
+        flowsForDS.add(flow);
+    }
+    return flowsForDS;
+  }
+
   /**
    * Validates the account passed.
    *
