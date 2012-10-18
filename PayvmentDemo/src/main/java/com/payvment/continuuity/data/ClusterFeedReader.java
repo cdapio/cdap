@@ -41,11 +41,11 @@ public class ClusterFeedReader {
 
   private final SortedCounterTable topScoreTable;
 
-  public ClusterFeedReader(DataFabric fabric) {
+  public ClusterFeedReader(ClusterTable clusterTable,
+      SortedCounterTable topScoreTable, DataFabric fabric) {
+    this.clusterTable = clusterTable;
+    this.topScoreTable = topScoreTable;
     this.fabric = fabric;
-    this.clusterTable = new ClusterTable(fabric, null);
-    this.topScoreTable = new SortedCounterTable("topScores", fabric, null,
-        new SortedCounterTable.SortedCounterConfig());
   }
 
   public ActivityFeed getActivityFeed(int clusterId, int limit)

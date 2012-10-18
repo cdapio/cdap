@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 import com.payvment.continuuity.SocialActionFlow;
 import com.payvment.continuuity.SocialActionParserFlowlet;
 import com.payvment.continuuity.data.ActivityFeed;
+import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.entity.SocialAction;
 import com.payvment.continuuity.entity.SocialAction.SocialActionType;
@@ -35,13 +36,15 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
   @Test(timeout = 20000)
   public void testSocialActionFlow() throws Exception {
     // Get references to tables
-    CounterTable productActionCountTable = new CounterTable("productActions",
-        getDataFabric(), getRegistry());
-    CounterTable allTimeScoreTable = new CounterTable("allTimeScores",
-        getDataFabric(), getRegistry());
+    ProductTable productTable = new ProductTable();
+    getDataSetRegistry().registerDataSet(productTable);
+    CounterTable productActionCountTable = new CounterTable("productActions");
+    getDataSetRegistry().registerDataSet(productActionCountTable);
+    CounterTable allTimeScoreTable = new CounterTable("allTimeScores");
+    getDataSetRegistry().registerDataSet(allTimeScoreTable);
     SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
-        getDataFabric(), getRegistry(),
         new SortedCounterTable.SortedCounterConfig());
+    getDataSetRegistry().registerDataSet(topScoreTable);
     
     // Instantiate product feed flow
     SocialActionFlow socialActionFlow = new SocialActionFlow();

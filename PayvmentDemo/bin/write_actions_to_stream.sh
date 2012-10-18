@@ -28,7 +28,7 @@ fi
 # Set defaults (reading existing environment variables if specified)
 
 GATEWAY_HOSTNAME=${GATEWAY_HOSTNAME:=localhost}
-ACTIONS_STREAM_NAME=${ACTIONS_STREAM_NAME:=clusters}
+ACTIONS_STREAM_NAME=${ACTIONS_STREAM_NAME:=social-actions}
 
 # Require one argument (filename of json actions file)
 

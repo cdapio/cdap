@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.lib.SortedCounterTable;
+import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.query.QueryProvider;
 import com.continuuity.api.query.QueryProviderContentType;
 import com.continuuity.api.query.QueryProviderResponse;
@@ -14,6 +16,7 @@ import com.continuuity.api.query.QueryProviderResponse.Status;
 import com.continuuity.api.query.QuerySpecifier;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ClusterFeedReader;
+import com.payvment.continuuity.data.ClusterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
 
@@ -25,9 +28,9 @@ import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
  * <p>
  * Example queries:
  * <pre>
- *   http://localhost:10003/query/feedreader/readactivity?clusterid=3&limit=10
+ *   http://localhost:10003/rest-query/feedreader/readactivity?clusterid=3&limit=10
  *   <p>
- *   http://localhost:10003/query/feedreader/readpopular?clusterid=3&numhours=24&limit=10
+ *   http://localhost:10003/rest-query/feedreader/readpopular?clusterid=3&numhours=24&limit=10
  * </pre>
  */
 public class ClusterFeedQueryProvider extends QueryProvider {
@@ -45,6 +48,21 @@ public class ClusterFeedQueryProvider extends QueryProvider {
     specifier.provider(ClusterFeedQueryProvider.class);
   }
 
+  private ClusterTable clusterTable;
+
+  private SortedCounterTable topScoreTable;
+  
+  @Override
+  public void initialize() {
+    this.clusterTable = new ClusterTable();
+    getQueryProviderContext().getDataSetRegistry().registerDataSet(
+        this.clusterTable);
+    this.topScoreTable = new SortedCounterTable("topScores",
+          new SortedCounterTable.SortedCounterConfig());
+    getQueryProviderContext().getDataSetRegistry().registerDataSet(
+        this.topScoreTable);
+  }
+
   /**
    * Performs the query once the URL has been validated and the inputs have been
    * parsed.  Further validation of arguments required per-method is performed
@@ -59,7 +77,8 @@ public class ClusterFeedQueryProvider extends QueryProvider {
    * <p>
    * <b><i>readpopular</i></b> performs a PopularFeed read and has required
    * arguments of <i>clusterid</i>, <i>numhours</i>, and <i>limit</i>.
-   * Optionally, can also specify an <i>offset</i>. 
+   * Optionally, can also specify an <i>offset</i> and <i>starttime</i>, which
+   * is treated as the start time for doing popular queries.
    * @param methodName method being performed
    * @param args arguments of method
    * @return string result
@@ -68,13 +87,16 @@ public class ClusterFeedQueryProvider extends QueryProvider {
   public QueryProviderResponse process(String methodName,
       Map<String, String> args) {
     if (this.reader == null) {
-      this.reader = new ClusterFeedReader(
+      this.reader = new ClusterFeedReader(this.clusterTable, this.topScoreTable,
           getQueryProviderContext().getDataFabric());
+    }
+    if (args == null || args.isEmpty()) {
+      LOG.warn("Received request for method '" + methodName + "' but " +
+          "contained no arguments (args=" + args + ")");
     }
     String str = "Received method " + methodName + " with args " +
         toString(args);
     LOG.info(str);
-    System.out.println(str);
     
     // Determine if the methodName type and args are valid
     // If they are valid, call specific method to perform query
@@ -122,8 +144,7 @@ public class ClusterFeedQueryProvider extends QueryProvider {
       }
       
       // All arguments parsed and verified.  Call activity feed read method.
-      return new QueryProviderResponse(
-          executeActivityFeedRead(clusterid, limit, maxts, mints));
+      return executeActivityFeedRead(clusterid, limit, maxts, mints);
       
     } else if (methodName.equals("readpopular")) {
 
@@ -155,9 +176,13 @@ public class ClusterFeedQueryProvider extends QueryProvider {
       
       // Check for additional arguments (first setting default values)
       Integer offset = 0;
+      Long starttime = System.currentTimeMillis();
       try {
         if (args.containsKey("offset")) {
           offset = Integer.valueOf(args.get("offset"));
+        }
+        if (args.containsKey("starttime")) {
+          starttime = Long.valueOf(args.get("starttime"));
         }
       } catch (NumberFormatException nfe) {
         String msg = "Numeric argument was not in an acceptable format " +
@@ -167,37 +192,38 @@ public class ClusterFeedQueryProvider extends QueryProvider {
       }
       
       // All arguments parsed and verified.  Call popular feed read method.
-      return new QueryProviderResponse(
-          executePopularFeedRead(clusterid, numhours, limit, offset));
+      return executePopularFeedRead(clusterid, starttime, numhours, limit,
+          offset);
       
     } else {
       
       // Invalid method
-      LOG.warn("Invalid read method.  method=" + methodName + ", args=" +
-          toString(args));
-      return null;
+      String msg = "Invalid read method.  method=" + methodName + ", args=" +
+          toString(args);
+      LOG.error(msg);
+      return new QueryProviderResponse(Status.FAILED, msg, msg);
     }
   }
 
-  private String executeActivityFeedRead(Integer clusterid, Integer limit,
-      Long maxts, Long mints) {
+  private QueryProviderResponse executeActivityFeedRead(Integer clusterid,
+      Integer limit, Long maxts, Long mints) {
     try {
       ActivityFeed feed =
           reader.getActivityFeed(clusterid, limit, maxts, mints);
-      return ActivityFeed.toJson(feed);
+      return new QueryProviderResponse(ActivityFeed.toJson(feed));
     } catch (OperationException e) {
-      LOG.warn("Exception reading activity feed (clusterid= " + clusterid +
-          ", limit=" + limit + ", maxts=" + maxts + ", mints=" + mints + ")",
-          e);
-      return null;
+      String msg = "Exception reading activity feed (clusterid= " + clusterid +
+          ", limit=" + limit + ", maxts=" + maxts + ", mints=" + mints + ")";
+      LOG.warn(msg, e);
+      return new QueryProviderResponse(Status.FAILED, msg, msg);
     }
   }
 
-  private String executePopularFeedRead(Integer clusterid, Integer numhours,
-      Integer limit, Integer offset) {
+  private QueryProviderResponse executePopularFeedRead(Integer clusterid,
+      Long starttime, Integer numhours, Integer limit, Integer offset) {
     try {
-      PopularFeed feed =
-          reader.getPopularFeed(clusterid, numhours, limit, offset);
+      PopularFeed feed = reader.getPopularFeed(clusterid,
+          Helpers.hour(starttime), numhours, limit, offset);
       List<PopularFeedEntry> entries = feed.getFeed(limit + offset);
       String jsonResult = null;
       if (offset == 0) {
@@ -209,20 +235,21 @@ public class ClusterFeedQueryProvider extends QueryProvider {
         entries = entries.subList(offset, entries.size());
         jsonResult = PopularFeed.toJson(entries);
       }
-      return jsonResult;
+      return new QueryProviderResponse(jsonResult);
     } catch (OperationException e) {
-      LOG.warn("Exception reading popular feed (clusterid= " + clusterid +
-          ", limit=" + limit + ", numhours=" + numhours + ", offset=" + offset,
-          e);
-      return null;
+      String msg = "Exception reading popular feed (clusterid= " + clusterid +
+          ", limit=" + limit + ", numhours=" + numhours + ", offset=" + offset;
+      LOG.warn(msg, e);
+      return new QueryProviderResponse(Status.FAILED, msg, msg);
     }
   }
 
   private String toString(Map<String, String> args) {
-    String str = "";
+    String str = "(";
     for (Map.Entry<String, String> arg : args.entrySet()) {
       str += arg.getKey() + "=" + arg.getValue() + " ";
     }
+    str += ")";
     return str.substring(0, str.length() - 1);
   }
 }

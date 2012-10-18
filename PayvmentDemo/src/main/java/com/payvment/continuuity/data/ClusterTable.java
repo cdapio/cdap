@@ -5,27 +5,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.continuuity.api.data.BatchCollectionRegistry;
-import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.DataLib;
 import com.continuuity.api.data.Delete;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.Write;
-import com.continuuity.api.data.lib.DataLib;
 import com.continuuity.api.data.util.Bytes;
 
 public class ClusterTable extends DataLib {
 
   private static final String CLUSTER_TABLE = "ClusterTable";
 
-  public ClusterTable(DataFabric fabric, BatchCollectionRegistry registry) {
-    super(CLUSTER_TABLE, fabric, registry);
+  public ClusterTable() {
+    super(CLUSTER_TABLE, CLUSTER_TABLE);
   }
 
   public void resetClusters(int maxClusterNumber) {
     for (int i=1;i<=maxClusterNumber;i++) {
-      this.collector.add(new Delete(makeRow(i)));
+      getCollector().add(new Delete(makeRow(i)));
     }
   }
 
@@ -45,7 +43,8 @@ public class ClusterTable extends DataLib {
   public Map<String,Double> readCluster(int clusterId)
       throws OperationException {
     OperationResult<Map<byte[],byte[]>> result =
-        this.fabric.read(new ReadColumnRange(makeRow(clusterId), null));
+        getDataFabric().read(new ReadColumnRange(getDataSetId(),
+            makeRow(clusterId), null));
     if (result.isEmpty()) return null;
     Map<byte[],byte[]> map = result.getValue();
     Map<String,Double> ret = new TreeMap<String,Double>();
@@ -71,7 +70,7 @@ public class ClusterTable extends DataLib {
       strings.add(Bytes.toBytes(info.getKey()));
       doubles.add(Bytes.toBytes(info.getValue().doubleValue()));
     }
-    this.collector.add(new Write(makeRow(clusterId),
+    getCollector().add(new Write(getDataSetId(), makeRow(clusterId),
         strings.toArray(new byte[len][]), doubles.toArray(new byte[len][])));
   }
 
@@ -87,8 +86,8 @@ public class ClusterTable extends DataLib {
    * @param weight
    */
   public void writeCluster(int clusterId, String category, Double weight) {
-    this.collector.add(new Write(makeRow(clusterId), Bytes.toBytes(category),
-        Bytes.toBytes(weight)));
+    getCollector().add(new Write(getDataSetId(), makeRow(clusterId),
+        Bytes.toBytes(category), Bytes.toBytes(weight)));
   }
 
   //

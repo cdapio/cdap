@@ -1,5 +1,7 @@
 package com.payvment.continuuity.entity;
 
+import com.continuuity.flow.flowlet.annotation.TupleSerializable;
+
 public class SocialAction {
 
   public Long id;
@@ -8,6 +10,7 @@ public class SocialAction {
   
   public String type;
   
+  @TupleSerializable
   public SocialActionType socialActionType;
 
   public Long product_id;

@@ -165,13 +165,16 @@ public class SocialActionFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.productActionCountTable = new CounterTable("productActions",
-          getFlowletContext().getDataFabric(), getFlowletContext());
-      this.allTimeScoreTable = new CounterTable("allTimeScores",
-          getFlowletContext().getDataFabric(), getFlowletContext());
+      this.productActionCountTable = new CounterTable("productActions");
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.productActionCountTable);
+      this.allTimeScoreTable = new CounterTable("allTimeScores");
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.allTimeScoreTable);
       this.topScoreTable = new SortedCounterTable("topScores",
-          getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.topScoreTable);
     }
 
     @Override
@@ -280,8 +283,9 @@ public class SocialActionFlow implements Flow {
     @Override
     public void initialize() {
       this.topScoreTable = new SortedCounterTable("topScores",
-          getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.topScoreTable);
     }
 
     @Override

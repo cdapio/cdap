@@ -161,7 +161,6 @@ public class ClusterWriterFlow implements Flow {
           .set("category", parsed[1])
           .set("weight", Double.valueOf(parsed[2]))
           .create();
-      System.out.println("Generated tuple: " + clusterTuple.toString());
       collector.add("writer_output", clusterTuple);
     }
 
@@ -213,8 +212,9 @@ public class ClusterWriterFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.clusterTable = new ClusterTable(getFlowletContext().getDataFabric(),
-          getFlowletContext());
+      this.clusterTable = new ClusterTable();
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.clusterTable);
     }
 
     @Override
@@ -253,16 +253,15 @@ public class ClusterWriterFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.clusterTable = new ClusterTable(getFlowletContext().getDataFabric(),
-          getFlowletContext());
+      this.clusterTable = new ClusterTable();
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.clusterTable);
     }
 
     @Override
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
       Integer maxClusterId = tuple.get("maxClusterId");
-      String msg = tuple.get("msg");
-      System.out.println("Cluster Reset.  Message: " + msg);
       this.clusterTable.resetClusters(maxClusterId);
     }
 

@@ -33,15 +33,15 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
   @Test(timeout = 20000)
   public void testProductFeedFlow() throws Exception {
     // Get references to tables
-    ProductTable productTable = new ProductTable(getDataFabric(),
-        getRegistry());
-    CounterTable productUpdateCountTable = new CounterTable("productUpdates",
-        getDataFabric(), getRegistry());
-    CounterTable allTimeScoreTable = new CounterTable("allTimeScores",
-        getDataFabric(), getRegistry());
+    ProductTable productTable = new ProductTable();
+    getDataSetRegistry().registerDataSet(productTable);
+    CounterTable productUpdateCountTable = new CounterTable("productUpdates");
+    getDataSetRegistry().registerDataSet(productUpdateCountTable);
+    CounterTable allTimeScoreTable = new CounterTable("allTimeScores");
+    getDataSetRegistry().registerDataSet(allTimeScoreTable);
     SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
-        getDataFabric(), getRegistry(),
         new SortedCounterTable.SortedCounterConfig());
+    getDataSetRegistry().registerDataSet(topScoreTable);
 
     // Instantiate product feed flow
     ProductFeedFlow productFeedFlow = new ProductFeedFlow();

@@ -11,11 +11,13 @@ import java.util.List;
 import org.junit.Test;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.test.FabricTestBase;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ClusterFeedReader;
+import com.payvment.continuuity.data.ClusterTable;
 import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.data.PopularFeed.PopularFeedEntry;
 import com.payvment.continuuity.entity.SocialAction;
@@ -67,7 +69,13 @@ public class TestClusterFeeds extends FabricTestBase {
     }
     
     // Verify flow processing results using feed reader queries
-    ClusterFeedReader feedReader = new ClusterFeedReader(getDataFabric());
+    ClusterTable clusterTable = new ClusterTable();
+    getDataSetRegistry().registerDataSet(clusterTable);
+    SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
+        new SortedCounterTable.SortedCounterConfig());
+    getDataSetRegistry().registerDataSet(topScoreTable);
+    ClusterFeedReader feedReader = new ClusterFeedReader(clusterTable,
+        topScoreTable, getDataFabric());
 
     // FIRST HOUR
     Long firstHour = 1349125200000L;

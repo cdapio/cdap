@@ -22,8 +22,8 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
   @Test(timeout = 20000)
   public void testClusterWriterFlow() throws Exception {
     // Get references to tables
-    ClusterTable clusterTable =
-        new ClusterTable(getDataFabric(), getRegistry());
+    ClusterTable clusterTable = new ClusterTable();
+    getDataSetRegistry().registerDataSet(clusterTable);
 
     // Instantiate cluster writer feed flow
     ClusterWriterFlow clusterWriterFlow = new ClusterWriterFlow();

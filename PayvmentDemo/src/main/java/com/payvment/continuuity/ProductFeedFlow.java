@@ -17,8 +17,8 @@ import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.payvment.continuuity.data.ActivityFeed;
-import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.ProductFeedEntry;
 
 public class ProductFeedFlow implements Flow {
@@ -87,15 +87,19 @@ public class ProductFeedFlow implements Flow {
 
     @Override
     public void initialize() {
-      this.productTable = new ProductTable(getFlowletContext().getDataFabric(),
-          getFlowletContext());
-      this.productUpdateCountTable = new CounterTable("productUpdates",
-          getFlowletContext().getDataFabric(), getFlowletContext());
-      this.allTimeScoreTable = new CounterTable("allTimeScores",
-          getFlowletContext().getDataFabric(), getFlowletContext());
+      this.productTable = new ProductTable();
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.productTable);
+      this.productUpdateCountTable = new CounterTable("productUpdates");
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.productUpdateCountTable);
+      this.allTimeScoreTable = new CounterTable("allTimeScores");
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.allTimeScoreTable);
       this.topScoreTable = new SortedCounterTable("topScores",
-          getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.topScoreTable);
     }
 
     @Override
@@ -154,8 +158,9 @@ public class ProductFeedFlow implements Flow {
     @Override
     public void initialize() {
       this.topScoreTable = new SortedCounterTable("topScores",
-          getFlowletContext().getDataFabric(), getFlowletContext(),
           new SortedCounterTable.SortedCounterConfig());
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.topScoreTable);
     }
 
     @Override

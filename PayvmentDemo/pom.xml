@@ -10,7 +10,7 @@
   <name>LishFeeds</name>
   <properties>
     <main>com.payvment.continuuity.SocialActionFlow</main>
-    <continuuityVersion>1.2.0-SNAPSHOT</continuuityVersion>
+    <continuuityVersion>1.2.1-SNAPSHOT</continuuityVersion>
   </properties>
   <dependencies>
     <!-- Add internal continuuity jars (until tests refactored)  -->
@@ -71,6 +71,14 @@
       <version>${continuuityVersion}</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/overlord-${continuuityVersion}.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>com.continuuity</groupId>
+      <artifactId>overlord</artifactId>
+      <version>${continuuityVersion}</version>
+      <classifier>thrift</classifier>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/overlord-${continuuityVersion}-thrift.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
