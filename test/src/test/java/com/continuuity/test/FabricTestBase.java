@@ -155,7 +155,7 @@ public abstract class FabricTestBase {
    * @return true if the flow has been successfully verified, false if not
    */
   protected boolean verifyFlow(Flow flow) {
-    FlowDefinition def = FlowTestHelper.createFlow(flow);
+    FlowDefinition def = FlowTestHelper.createFlow(flow, executor);
     if (def == null) return false;
     return true;
   }
