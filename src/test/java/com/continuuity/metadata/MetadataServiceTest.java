@@ -421,6 +421,16 @@ public class MetadataServiceTest {
     Assert.assertTrue(datasets.contains(datasetC));
     Assert.assertTrue(datasets.contains(datasetD));
 
+    // list the queries for dataset B and C and verify
+    queries = mds.getQueriesByDataset(account.getId(), "a");
+    Assert.assertEquals(3, queries.size());
+    Assert.assertTrue(queries.contains(query1));
+    Assert.assertTrue(queries.contains(query2));
+    Assert.assertTrue(queries.contains(query3));
+    queries = mds.getQueriesByDataset(account.getId(), "c");
+    Assert.assertEquals(1, queries.size());
+    Assert.assertTrue(queries.contains(query2));
+
     // delete query3, list again and verify (D should be gone now)
     Assert.assertTrue(mds.deleteQuery(account, query3));
     datasets = mds.getDatasetsByApplication(account.getId(), "app2");
@@ -470,6 +480,17 @@ public class MetadataServiceTest {
     Assert.assertEquals(2, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
     Assert.assertTrue(datasets.contains(datasetB));
+
+    // add datasetC to query1 using addToQuery
+    Assert.assertTrue(mds.addDatasetToQuery(account.getId(), "app1", "q1", "c"));
+
+    // now verify the datasets for app1 again
+    datasets = mds.getDatasetsByApplication(account.getId(), "app1");
+    Assert.assertEquals(3, datasets.size());
+    Assert.assertTrue(datasets.contains(datasetA));
+    Assert.assertTrue(datasets.contains(datasetB));
+    Assert.assertTrue(datasets.contains(datasetC));
+
   }
 
 
