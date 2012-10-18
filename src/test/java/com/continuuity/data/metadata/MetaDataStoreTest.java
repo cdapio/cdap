@@ -78,9 +78,24 @@ abstract public class MetaDataStoreTest {
   // test that insert fails if existent
   @Test
   public void testAddExisting() throws Exception {
+    // add a meta data record
+    MetaDataEntry meta = new MetaDataEntry("a", "a", "zz", "1");
+    meta.addField("a", "c");
+    mds.add(context, meta);
+    // add the same record again.
+    // succeeds because add() does conflict resolution
+    mds.add(context, meta);
+    // add the same record again, disabling conflict resolution -> fail
     try {
-      testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
-      testOneAddGet(false, "a", "a", "zz", "1", "a", "c", null, null);
+      mds.add(context, meta, false);
+      Assert.fail("expected an OperationException for adding existing entry.");
+    } catch (OperationException e) {
+      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+    }
+    // now add a modified record -> even conflict resolution must now fail
+    meta.addField("new", "field");
+    try {
+      mds.add(context, meta);
       Assert.fail("expected an OperationException for adding existing entry.");
     } catch (OperationException e) {
       Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
@@ -207,7 +222,7 @@ abstract public class MetaDataStoreTest {
   }
 
   @Test
-  public void testUpdateField() throws Exception {
+  public void testConcurrentUpdateField() throws Exception {
     System.out.println("testUpdateField:");
     // create a meta data entry with two fields, one text one bin
     MetaDataEntry entry =
@@ -346,7 +361,7 @@ abstract public class MetaDataStoreTest {
   }
 
   @Test
-  public void testSwapField() throws Exception {
+  public void testConcurrentSwapField() throws Exception {
     System.out.println("testSwapField:");
     // create a meta data entry with two fields, one text one bin
     MetaDataEntry entry =

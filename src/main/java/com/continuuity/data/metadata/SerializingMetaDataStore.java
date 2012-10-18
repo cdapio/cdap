@@ -86,33 +86,6 @@ public class SerializingMetaDataStore implements MetaDataStore {
     return str.substring(pos + 1, pos1);
   }
 
-  /*
-  private static final byte[] rowkeyPrefix = string2Bytes("_metadata_");
-  private static final byte[] mtBytes = new byte[0];
-
-  private static byte[] makeRowkey(String account) {
-    byte[] accountBytes = string2Bytes(account);
-    byte[] bytes = new byte[rowkeyPrefix.length + accountBytes.length];
-    System.arraycopy(rowkeyPrefix, 0, bytes, 0, rowkeyPrefix.length);
-    System.arraycopy(accountBytes, 0, bytes, rowkeyPrefix.length,
-        accountBytes.length);
-    return bytes;
-  }
-
-  private static byte[] makeColumnKey(String type, String app, String id) {
-    byte[] typeBytes = string2Bytes(type);
-    byte[] appBytes = app == null ? mtBytes : string2Bytes(app);
-    byte[] idBytes = string2Bytes(id);
-    byte[] bytes = new byte[typeBytes.length + appBytes.length
-        + idBytes.length + 2];
-    System.arraycopy(typeBytes, 0, bytes, 0, typeBytes.length);
-    System.arraycopy(appBytes, 0, bytes, typeBytes.length + 1, appBytes.length);
-    System.arraycopy(idBytes, 0, bytes,
-        typeBytes.hashCode() + appBytes.length + 2, idBytes.length);
-    return bytes;
-  }
-  */
-
   /**
    * To avoid the overhead of creating new serializer for every call,
    * we keep a serializer for each thread in a thread local structure.
@@ -137,17 +110,33 @@ public class SerializingMetaDataStore implements MetaDataStore {
   @Override
   public void add(OperationContext context,
                   MetaDataEntry entry) throws OperationException {
-    write(context, entry, false);
+    add(context, entry, true);
+  }
+
+  @Override
+  public void add(OperationContext context,
+                  MetaDataEntry entry, boolean resolve)
+      throws OperationException {
+    write(context, entry, false, resolve);
   }
 
   @Override
   public void update(OperationContext context,
                      MetaDataEntry entry) throws OperationException {
-    write(context, entry, true);
+    update(context, entry, true);
+  }
+
+  @Override
+  public void update(OperationContext context,
+                     MetaDataEntry entry, boolean resolve)
+      throws OperationException {
+    write(context, entry, true, resolve);
   }
 
   private void write(OperationContext context,
-                     MetaDataEntry entry, boolean isUpdate)
+                     MetaDataEntry entry,
+                     boolean isUpdate,
+                     boolean resolve)
       throws OperationException {
 
     if (entry == null)
@@ -180,6 +169,12 @@ public class SerializingMetaDataStore implements MetaDataStore {
             "Meta data entry does not exist.");
     }
     else if (!isUpdate && !result.isEmpty()) {
+      if (resolve) {
+        if (Arrays.equals(bytes, result.getValue().get(column))) {
+          // a value exists but it is identical with the one to write
+          return;
+        }
+      }
       throw new OperationException(StatusCode.WRITE_CONFLICT,
           "Meta data entry already exists.");
     }
@@ -194,9 +189,28 @@ public class SerializingMetaDataStore implements MetaDataStore {
         // conflict with some other thread or process
         CompareAndSwap compareAndSwap =
             new CompareAndSwap(tableName, rowkey, column, null, bytes);
-        opex.execute(context, compareAndSwap);
+          opex.execute(context, compareAndSwap);
       }
     } catch (OperationException e) {
+      if (resolve && e.getStatus() == StatusCode.WRITE_CONFLICT) {
+        // in case of write conflict, silently succeed if the conflicting
+        // operation wrote the same value
+        try {
+          // read again, this should get the value of the conflicting write
+          Read read = new Read(tableName, rowkey, column);
+          result = opex.execute(context, read);
+          // compare the latest value. If is the same, we are good
+          if (!result.isEmpty() &&
+              Arrays.equals(bytes, result.getValue().get(column)))
+            return;
+        } catch (OperationException e1) {
+          String message =
+              String.format("Error reading meta data: %s", e1.getMessage());
+          Log.error(message, e1);
+          throw new OperationException(e.getStatus(), message, e1);
+        }
+      }
+      // conflict coud not be resolved, or a different error
       String message =
           String.format("Error writing meta data: %s", e.getMessage());
       Log.error(message, e);
@@ -326,8 +340,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
         if (textField != null) {
           String existingValue = entry.getTextField(textField);
           if ((textOld == null && existingValue != null) ||
-              !textOld.equals(existingValue)) {
-            attempts = -1; // no point in retrying
+              (textOld != null && !textOld.equals(existingValue))) {
             throw new OperationException(StatusCode.WRITE_CONFLICT,
                 "Existing field value does not match expected value");
           }
@@ -335,7 +348,6 @@ public class SerializingMetaDataStore implements MetaDataStore {
           byte[] existingValue = entry.getBinaryField(binField);
           if ((binOld == null && existingValue != null) ||
               !Arrays.equals(binOld, existingValue)) {
-            attempts = -1; // no point retrying
             throw new OperationException(StatusCode.WRITE_CONFLICT,
                 "Existing field value does not match expected value");
           }

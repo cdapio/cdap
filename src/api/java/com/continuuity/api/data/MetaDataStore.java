@@ -8,7 +8,9 @@ public interface MetaDataStore {
   public final int DEFAULT_RETRIES_ON_CONFLICT = 3;
 
   /**
-   * adds a new entry.
+   * adds a new entry with conflict resolution.
+   * @param context the OperationContext of the caller
+   * @param entry the meta data entry to write
    * @throws OperationException with status WRITE_CONFLICT if an entry with
    * the name and type already exists for the same account and app,
    * also throws OperationException for other data fabric problems.
@@ -16,13 +18,48 @@ public interface MetaDataStore {
   public void add(OperationContext context,
                   MetaDataEntry entry) throws OperationException;
 
-  /** updates an existing entry.
+  /**
+   * adds a new entry with the option of conflict resolution.
+   * @param context the OperationContext of the caller
+   * @param entry the meta data entry to write
+   * @param resolve if true, write conflicts are resolved by reading the
+   *                latest value of the entry and comparing it with the
+   *                entry to be written. If they are the same, then the
+   *                write conflict is ignored silently.
+   * @throws OperationException with status WRITE_CONFLICT if an entry with
+   * the name and type already exists for the same account and app,
+   * also throws OperationException for other data fabric problems.
+   */
+  public void add(OperationContext context,
+                  MetaDataEntry entry,
+                  boolean resolve)
+      throws OperationException;
+
+  /**
+   * updates an existing entry with conflict resolution.
+   * @param context the OperationContext of the caller
+   * @param entry the meta data entry to write
    * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
    * the that name and type does not exist for the given account and app.
    * also throws OperationException for other data fabric problems.
    */
   public void update(OperationContext context,
                      MetaDataEntry entry) throws OperationException;
+
+  /** updates an existing entry with the option of conflict resolution.
+   * @param context the OperationContext of the caller
+   * @param entry the meta data entry to write
+   * @param resolve if true, write conflicts are resolved by reading the
+   *                latest value of the entry and comparing it with the
+   *                entry to be written. If they are the same, then the
+   *                write conflict is ignored silently.
+   * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
+   * the that name and type does not exist for the given account and app.
+   * also throws OperationException for other data fabric problems.
+   */
+  public void update(OperationContext context,
+                     MetaDataEntry entry,
+                     boolean resolve) throws OperationException;
 
   /**
    * Updates a single text field of an entry with concurrency control. If
@@ -126,26 +163,43 @@ public interface MetaDataStore {
 
   /**
    * Delete by name & type. This silently succeeds if the entry does not exist.
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @param type The type of entry, must not be null
+   * @param id The unique id of the entry (per account, app, type), non-null
    * @throws OperationException for data fabric errors.
    */
   public void delete(OperationContext context,
                      String account, String application,
-                     String type, String name)
+                     String type, String id)
       throws OperationException;
 
   /**
    * Get by name & type.
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @param type The type of entry, must not be null
+   * @param id The unique id of the entry (per account, app, type), non-null
    * @return the named entry, or null if it does not exist.
    * @throws OperationException for data fabric errors
    *
    */
   public MetaDataEntry get(OperationContext context,
                            String account, String application,
-                           String type, String name)
+                           String type, String id)
       throws OperationException;
 
   /**
    * List all entries of a given type
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @param type The type of entry, must not be null
+   * @param fields An optional map of field names and values. If non-null,
+   *               then an entry is only included in the result if it has
+   *               all fields in the map with the same values.
    * @return the list of matching entries. The list is empty if there are no
    * matching entries.
    * @throws OperationException if something goes wrong
@@ -155,7 +209,13 @@ public interface MetaDataStore {
                                   String type, Map<String, String> fields)
       throws OperationException;
 
-  /** delete all entries for an account or application */
+  /**
+   * delete all entries for an account or application within an account.
+   * @param context The operation context of the caller.
+   * @param account The account of the entry, must not be null
+   * @param application The application of the entry, may be null
+   * @throws OperationException if something goes wrong
+   */
   public void clear(OperationContext context,
                     String account, String application)
       throws OperationException;

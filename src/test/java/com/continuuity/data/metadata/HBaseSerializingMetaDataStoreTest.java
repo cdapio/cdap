@@ -13,5 +13,5 @@ public class HBaseSerializingMetaDataStoreTest extends
   }
 
   @Override @Test @Ignore
-  public void testSwapField() throws Exception {  }
+  public void testConcurrentSwapField() throws Exception {  }
 }
