@@ -273,10 +273,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       // write the time series for that metric.
       // If metric has same value, then we don't add the point.
       if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
-         && !elements.getMetric().contains(".stream.out")
-         && !elements.getMetric().contains(".stream.in")
-         && !elements.getMetric().contains("queue//")
-         && !elements.getMetric().contains("stream//")) {
+        && !elements.getMetric().contains(".stream.out")
+        && !elements.getMetric().contains(".stream.in")
+        && !elements.getMetric().contains("queue//")
+        && !elements.getMetric().contains("stream//")
+        && !elements.getMetric().contains("dataset.")) {
         return true;
       }
 
@@ -366,7 +367,13 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
       // If metric is not present then we don't attempt to
       // write the time series for that metric.
-      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())) {
+      // If metric has same value, then we don't add the point.
+      if(! allowedTimeseriesMetrics.containsKey(elements.getMetric())
+        && !elements.getMetric().contains(".stream.out")
+        && !elements.getMetric().contains(".stream.in")
+        && !elements.getMetric().contains("queue//")
+        && !elements.getMetric().contains("stream//")
+        && !elements.getMetric().contains("dataset.")) {
         return true;
       }
 
