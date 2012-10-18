@@ -369,7 +369,6 @@ abstract public class MetaDataStoreTest {
     entry.addField("num", "0");
     entry.addField("num", Bytes.toBytes(0));
     mds.add(context, entry);
-    final String account = context.getAccount();
 
     // start two threads that loop n times
     //   - each attempts to update one of the fields
@@ -406,6 +405,83 @@ abstract public class MetaDataStoreTest {
 
     Assert.assertEquals(2000, Integer.parseInt(text) + textConflicts.get());
     Assert.assertEquals(2000, Bytes.toInt(binary) + binaryConflicts.get());
+  }
+
+  class UpdateThread extends Thread {
+    AtomicInteger conflicts;
+    MetaDataEntry entry;
+    boolean resolve;
+    UpdateThread(AtomicInteger conflicts, MetaDataEntry entry,
+                 boolean resolve) {
+      this.conflicts =  conflicts;
+      this.entry = entry;
+      this.resolve = resolve;
+    }
+    @Override
+    public void run() {
+      for (int i = 1; i <= 1000; i++) {
+        try {
+          mds.update(context, entry, resolve);
+        } catch (OperationException e) {
+          if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
+            // System.out.println("Conflict for text " + i + ": " + value);
+            conflicts.incrementAndGet();
+          } else {
+            Assert.fail(e.getMessage());
+          }
+        } catch (Exception e) {
+          Assert.fail(e.getMessage());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testConcurrentUpdate() throws Exception {
+    System.out.println("testConcurrentUpdate:");
+    // create a meta data entry with two fields, one text one bin
+    final MetaDataEntry entry =
+        new MetaDataEntry(context.getAccount(), null, "test", "punk");
+    entry.addField("num", "0");
+    entry.addField("num", Bytes.toBytes(0));
+    mds.add(context, entry);
+
+    // start two threads that loop n times
+    //   - each attempts to update one of the fields
+    //   - each increments the field if successful
+    //   - each counts the number of write conflicts
+
+    final AtomicInteger conflicts = new AtomicInteger(0);
+
+    Thread updateThread1 = new UpdateThread(conflicts, entry, true);
+    Thread updateThread2 = new UpdateThread(conflicts, entry, true);
+    Thread updateThread3 = new UpdateThread(conflicts, entry, true);
+    updateThread1.start();
+    updateThread2.start();
+    updateThread3.start();
+    updateThread1.join();
+    updateThread2.join();
+    updateThread3.join();
+
+    // all threads write the same entry with conflict resolution
+    // this there should be no conflicts!
+    System.out.println("resolve = true:  " + conflicts.get() + " conflicts");
+    Assert.assertEquals(0, conflicts.get());
+
+    updateThread1 = new UpdateThread(conflicts, entry, false);
+    updateThread2 = new UpdateThread(conflicts, entry, false);
+    updateThread3 = new UpdateThread(conflicts, entry, false);
+    updateThread1.start();
+    updateThread2.start();
+    updateThread3.start();
+    updateThread1.join();
+    updateThread2.join();
+    updateThread3.join();
+
+    // all threads write the same entry without conflict resolution
+    // this there must be conflicts!
+    System.out.println("resolve = false: " + conflicts.get() + " conflicts");
+    Assert.assertTrue(conflicts.get() > 0);
   }
 
 }
