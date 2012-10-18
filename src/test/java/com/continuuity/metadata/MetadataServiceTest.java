@@ -265,10 +265,12 @@ public class MetadataServiceTest {
     }
 
     List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
-        mtList = Collections.emptyList(), listA = Lists.newArrayList();
+        mtList = Collections.emptyList(), listA = Lists.newArrayList(),
+        listAD = Lists.newArrayList();
     listAB.add("a"); listAB.add("b");
     listAC.add("a"); listAC.add("c");
     listA.add("a");
+    listAD.add("a"); listAD.add("d");
 
     Stream streamA = new Stream("a"); streamA.setName("stream A");
     streamA.setDescription("an a");
@@ -287,10 +289,13 @@ public class MetadataServiceTest {
     datasetB.setDescription("a b"); datasetB.setType("typeB");
     Dataset datasetC = new Dataset("c"); datasetC.setName("dataset C");
     datasetC.setDescription("a c"); datasetC.setType("typeC");
+    Dataset datasetD = new Dataset("d"); datasetD.setName("dataset D");
+    datasetD.setDescription("a d"); datasetD.setType("typeD");
 
     Assert.assertTrue(mds.createDataset(account, datasetA));
     Assert.assertTrue(mds.createDataset(account, datasetB));
     Assert.assertTrue(mds.createDataset(account, datasetC));
+    Assert.assertTrue(mds.createDataset(account, datasetD));
 
     Flow flow1 = new Flow("f1", "app1", "flow 1", listAB, listAB);
     Flow flow2 = new Flow("f2", "app2", "flow 2", listAC, listAC);
@@ -363,7 +368,7 @@ public class MetadataServiceTest {
     Query query2 = new Query("q2", "app2"); query2.setName("q2");
     query2.setServiceName("q2"); query2.setDatasets(listAC);
     Query query3 = new Query("q1", "app2"); query3.setName("q1");
-    query3.setServiceName("q1"); query3.setDatasets(listAB);
+    query3.setServiceName("q1"); query3.setDatasets(listAD);
 
     // add query1, verify get and list
     Assert.assertTrue(mds.createQuery(account, query1));
@@ -395,10 +400,11 @@ public class MetadataServiceTest {
 
     // list and verify datasets for account, app1 and app2
     List<Dataset> datasets = mds.getDatasets(account);
-    Assert.assertEquals(3, datasets.size());
+    Assert.assertEquals(4, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
     Assert.assertTrue(datasets.contains(datasetB));
     Assert.assertTrue(datasets.contains(datasetC));
+    Assert.assertTrue(datasets.contains(datasetD));
     datasets = mds.getDatasetsByApplication(account.getId(), "app1");
     Assert.assertEquals(2, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
@@ -408,6 +414,15 @@ public class MetadataServiceTest {
     Assert.assertTrue(streams.contains(streamA));
     Assert.assertTrue(streams.contains(streamB));
     Assert.assertTrue(streams.contains(streamC));
+    datasets = mds.getDatasetsByApplication(account.getId(), "app2");
+    Assert.assertEquals(4, datasets.size());
+    Assert.assertTrue(datasets.contains(datasetA));
+    Assert.assertTrue(datasets.contains(datasetB));
+    Assert.assertTrue(datasets.contains(datasetC));
+    Assert.assertTrue(datasets.contains(datasetD));
+
+    // delete query3, list again and verify (D should be gone now)
+    Assert.assertTrue(mds.deleteQuery(account, query3));
     datasets = mds.getDatasetsByApplication(account.getId(), "app2");
     Assert.assertEquals(3, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
@@ -428,8 +443,9 @@ public class MetadataServiceTest {
     Assert.assertTrue(datasets.contains(datasetA));
     Assert.assertTrue(datasets.contains(datasetC));
 
-    // delete flow2, verify flows, streams and datasets for app2
+    // delete flow2 and query2 verify flows, streams and datasets for app2
     Assert.assertTrue(mds.deleteFlow(account.getId(), "app2", "f2"));
+    Assert.assertTrue(mds.deleteQuery(account, query2));
     Assert.assertFalse(mds.getFlow(account.getId(), "app2", "f2").isExists());
     flows = mds.getFlowsByApplication(account.getId(), "app2");
     Assert.assertEquals(1, flows.size());

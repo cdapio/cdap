@@ -1343,11 +1343,11 @@ public class MetadataService implements
     // Validate all account.
     validateAccount(account);
 
-    // first get all flows for the app
-    List<Flow> flows = getFlowsByApplication(account, app);
-
     // this will hold all the datasets we find in flows
     Map<String, Dataset> foundDatasets = Maps.newHashMap();
+
+    // first get all flows for the app
+    List<Flow> flows = getFlowsByApplication(account, app);
 
     // now iterate over all flows and get each dataset
     for (Flow flow : flows) {
@@ -1355,6 +1355,25 @@ public class MetadataService implements
       if (flowDatasets == null || flowDatasets.isEmpty())
         continue;
       for (String datasetName : flowDatasets) {
+        if (foundDatasets.containsKey(datasetName))
+          continue;
+        Dataset dataset =
+            getDataset(new Account(account), new Dataset(datasetName));
+        if (dataset.isExists()) {
+          foundDatasets.put(datasetName, dataset);
+        }
+      }
+    }
+
+    // first get all queries for the app
+    List<Query> queries = getQueriesByApplication(account, app);
+
+    // now iterate over all flows and get each dataset
+    for (Query query : queries) {
+      List<String> queryDatasets = query.getDatasets();
+      if (queryDatasets == null || queryDatasets.isEmpty())
+        continue;
+      for (String datasetName : queryDatasets) {
         if (foundDatasets.containsKey(datasetName))
           continue;
         Dataset dataset =
