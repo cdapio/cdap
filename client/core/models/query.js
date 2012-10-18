@@ -21,7 +21,7 @@ define([], function () {
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
 
-			var app = this.get('name');
+			var app = this.get('application');
 			var id = this.get('id');
 
 			var self = this;
@@ -45,7 +45,7 @@ define([], function () {
 
 			var self = this;
 
-			var app = this.get('name'),
+			var app = this.get('application'),
 				id = this.get('id'),
 				start = C.__timeRange * -1;
 

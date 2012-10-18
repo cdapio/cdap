@@ -20,9 +20,9 @@
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
 		<td>{{#unless isRunning}}
-			<button class="btn" {{action start on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="name"}}>Start</button>
+			<button class="btn" {{action start on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Start</button>
 			{{else}}
-			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="name"}}>Stop</button>
+			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Stop</button>
 			{{/unless}}
 	</tr>
 	{{/each}}
