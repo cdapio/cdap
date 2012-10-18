@@ -889,7 +889,7 @@ public class MetadataService implements
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
       MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
+        mds.get(context, accountId, query.getApplication(),
                 FieldTypes.Query.ID, id);
 
       // If stream does not exist, then no point in deleting it.
@@ -898,7 +898,8 @@ public class MetadataService implements
       }
 
       // Invoke MDS to delete entry.
-      mds.delete(context, accountId, null, FieldTypes.Query.ID, id);
+      mds.delete(context, accountId, query.getApplication(),
+          FieldTypes.Query.ID, id);
     } catch (OperationException e) {
       Log.warn("Failed deleting query {}. Reason : {}",
                query, e.getMessage());

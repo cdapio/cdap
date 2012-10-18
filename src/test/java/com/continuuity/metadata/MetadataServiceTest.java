@@ -169,9 +169,8 @@ public class MetadataServiceTest {
     Assert.assertNotNull(dataset1);
   }
 
-  @Test
   public void testCreateQuery() throws Exception {
-    Query query = new Query("query1", "app1");
+    Query query = new Query("query1", "appX");
     query.setName("Query 1");
     query.setServiceName("myname");
     query.setDescription("test dataset");
@@ -185,7 +184,7 @@ public class MetadataServiceTest {
   public void testCreateDeleteListQuery() throws Exception {
     testCreateQuery(); // creates a dataset.
     // Now delete it.
-    Query query = new Query("query1", "app1");
+    Query query = new Query("query1", "appX");
     Assert.assertNotNull(mds.deleteQuery(account, query));
     List<Query> qlist = mds.getQueries(account);
     Assert.assertTrue(qlist.size() == 0);
@@ -257,9 +256,12 @@ public class MetadataServiceTest {
   @Test
   public void testFlowAndQueryStuff() throws Exception {
 
-    // clean up streams in mds if there are any leftover from other tests
+    // clean up streams/queries in mds if there are leftovers from other tests
     for (Stream stream : mds.getStreams(account)) {
       Assert.assertTrue(mds.deleteStream(account, stream));
+    }
+    for (Query query : mds.getQueries(account)) {
+      Assert.assertTrue(mds.deleteQuery(account, query));
     }
 
     List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
