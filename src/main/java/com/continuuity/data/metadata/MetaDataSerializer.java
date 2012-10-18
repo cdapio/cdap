@@ -77,8 +77,7 @@ public final class MetaDataSerializer {
     }
 	}
 
-  private static class MetaData extends MetaDataEntry {
-
+  public static class MetaData extends MetaDataEntry {
     public MetaData() {
       super("-", null, "-", "-");
     }
