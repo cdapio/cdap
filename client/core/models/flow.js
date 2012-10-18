@@ -19,6 +19,39 @@ define([], function () {
 			this.set('id', this.get('flowId') || this.get('id') || this.get('meta').name);
 			this.set('app', this.get('applicationId') || this.get('application'));
 
+			var app = this.get('app');
+			var id = this.get('id');
+
+			var self = this;
+
+			C.get('manager', {
+				method: 'status',
+				params: [app, id, -1]
+			}, function (error, response) {
+
+				self.set('currentState', response.params.status);
+
+			});
+
+			C.get('manager', {
+				method: 'getFlowDefinition',
+				params: [app, id]
+			}, function (error, response) {
+
+				if (error) {
+					return false;
+				}
+
+				var flow = response.params;
+				if (flow.flowlets) {
+					var totalInstances = 0;
+					for (var j = 0; j < flow.flowlets.length; j ++) {
+						totalInstances += flow.flowlets[j].instances;
+					}
+					self.set('instances', totalInstances);
+				}
+			});
+
 		},
 		addMetricName: function (name) {
 

@@ -14,15 +14,15 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			{{name}}<br /><span class="app-list-status">{{currentState}}</span>
+			{{id}}<br /><span class="app-list-status">{{currentState}}</span>
 		</td>
 		<td class="app-list-count">1</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.success.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.failed.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
 		<td>{{#unless isRunning}}
-			<button class="btn" {{action start on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}}>Start</button>
+			<button class="btn" {{action start on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="name"}}>Start</button>
 			{{else}}
-			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}}>Stop</button>
+			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="name"}}>Stop</button>
 			{{/unless}}
 	</tr>
 	{{/each}}

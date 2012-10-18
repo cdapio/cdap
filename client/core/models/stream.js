@@ -70,8 +70,6 @@ define([], function () {
 						data[k] = data[k].value;
 					}
 
-					console.log(metric, data);
-
 					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
 

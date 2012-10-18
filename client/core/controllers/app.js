@@ -40,33 +40,6 @@ define([], function () {
 						queries.push(objects[i]);
 					} else {
 						flows.push(objects[i]);
-
-						var id = objects[i].get('id');
-						var app = objects[i].get('app');
-
-						// Pull flow definition to get Number of intances:
-
-						C.get('manager', {
-							method: 'getFlowDefinition',
-							params: [app, id]
-						}, function (error, response, param) {
-
-							if (error) {
-								return false;
-							}
-
-							var flow = response.params;
-							if (flow.flowlets) {
-
-								var totalInstances = 0;
-
-								for (var j = 0; j < flow.flowlets.length; j ++) {
-									totalInstances += flow.flowlets[j].instances;
-								}
-
-								param.set('instances', totalInstances);
-							}
-						}, objects[i]);
 					}
 				}
 
