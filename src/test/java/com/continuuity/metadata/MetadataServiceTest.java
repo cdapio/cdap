@@ -255,7 +255,7 @@ public class MetadataServiceTest {
    * @throws Exception
    */
   @Test
-  public void testFlowStuff() throws Exception {
+  public void testFlowAndQueryStuff() throws Exception {
 
     // clean up streams in mds if there are any leftover from other tests
     for (Stream stream : mds.getStreams(account)) {
@@ -355,6 +355,41 @@ public class MetadataServiceTest {
     Assert.assertTrue(streams.contains(streamA));
     Assert.assertTrue(streams.contains(streamB));
     Assert.assertTrue(streams.contains(streamC));
+
+    Query query1 = new Query("q1", "app1"); query1.setName("q1");
+    query1.setServiceName("q1"); query1.setDatasets(listAB);
+    Query query2 = new Query("q2", "app2"); query2.setName("q2");
+    query2.setServiceName("q2"); query2.setDatasets(listAC);
+    Query query3 = new Query("q1", "app2"); query3.setName("q1");
+    query3.setServiceName("q1"); query3.setDatasets(listAB);
+
+    // add query1, verify get and list
+    Assert.assertTrue(mds.createQuery(account, query1));
+    Assert.assertEquals(query1, mds.getQuery(account, query1));
+    List<Query> queries = mds.getQueries(account);
+    Assert.assertEquals(1, queries.size());
+    Assert.assertTrue(queries.contains(query1));
+    queries = mds.getQueriesByApplication(account.getId(), "app1");
+    Assert.assertEquals(1, queries.size());
+    Assert.assertTrue(queries.contains(query1));
+
+    // add query2 and query3, verify get and list
+    Assert.assertTrue(mds.createQuery(account, query2));
+    Assert.assertEquals(query2, mds.getQuery(account, query2));
+    Assert.assertTrue(mds.createQuery(account, query3));
+    Assert.assertEquals(query3, mds.getQuery(account, query3));
+    queries = mds.getQueries(account);
+    Assert.assertEquals(3, queries.size());
+    Assert.assertTrue(queries.contains(query1));
+    Assert.assertTrue(queries.contains(query2));
+    Assert.assertTrue(queries.contains(query3));
+    queries = mds.getQueriesByApplication(account.getId(), "app1");
+    Assert.assertEquals(1, queries.size());
+    Assert.assertTrue(queries.contains(query1));
+    queries = mds.getQueriesByApplication(account.getId(), "app2");
+    Assert.assertEquals(2, queries.size());
+    Assert.assertTrue(queries.contains(query2));
+    Assert.assertTrue(queries.contains(query3));
 
     // list and verify datasets for account, app1 and app2
     List<Dataset> datasets = mds.getDatasets(account);

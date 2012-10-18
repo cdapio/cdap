@@ -728,9 +728,12 @@ public class MetadataService implements
     MetaDataEntry entry = new MetaDataEntry(
         account, query.getApplication(), FieldTypes.Query.ID, query.getId());
      // Adding other fields.
-    entry.addField(FieldTypes.Query.NAME, query.getName());
-    entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
-    entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
+    if (query.getName() != null)
+      entry.addField(FieldTypes.Query.NAME, query.getName());
+    if (query.getDescription() != null)
+      entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
+    if (query.getServiceName() != null)
+      entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
     entry.addField(FieldTypes.Query.DATASETS, ListToString(query.getDatasets()));
     return entry;
   }
