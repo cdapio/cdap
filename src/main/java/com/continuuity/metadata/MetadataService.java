@@ -297,7 +297,7 @@ public class MetadataService implements
       throw new MetadataServiceException("Dataset type should be set for create");
     }
 
-    int type = dataset.getType();
+    String type = dataset.getType();
 
     try {
       // Create a context.
@@ -322,7 +322,7 @@ public class MetadataService implements
       entry.addField(FieldTypes.Dataset.DESCRIPTION, description);
       entry.addField(FieldTypes.Dataset.CREATE_DATE,
                      String.format("%d", System.currentTimeMillis()));
-      entry.addField(FieldTypes.Dataset.TYPE, String.valueOf(type));
+      entry.addField(FieldTypes.Dataset.TYPE, type);
       // Invoke MDS to add entry.
       mds.add(context, entry);
     } catch (OperationException e) {
@@ -411,8 +411,7 @@ public class MetadataService implements
           dataset.getTextField(FieldTypes.Dataset.DESCRIPTION)
         );
         try {
-          int type = Integer.valueOf(dataset.getTextField(FieldTypes.Dataset
-                                                            .TYPE));
+          String type = dataset.getTextField(FieldTypes.Dataset.TYPE);
           rDataset.setType(type);
         } catch (NumberFormatException e) {
           Log.warn("Dataset {} has type that is not an integer",
@@ -469,8 +468,13 @@ public class MetadataService implements
           FieldTypes.Dataset.NAME
         ));
         dataset.setDescription(entry.getTextField(
-          FieldTypes.Dataset.DESCRIPTION
+            FieldTypes.Dataset.DESCRIPTION
         ));
+        dataset.setType(entry.getTextField(
+            FieldTypes.Dataset.TYPE
+        ));
+      } else {
+        dataset.setExists(false);
       }
     } catch (OperationException e) {
       Log.warn("Failed to retrieve dataset {}. Reason : {}.",
@@ -1029,6 +1033,67 @@ public class MetadataService implements
   }
 
   @Override
+  public boolean addDatasetToFlow(String account, String app,
+                                  String flowid, String dataset)
+      throws MetadataServiceException, TException {
+    return
+        addThingToFlow(account, app, flowid, FieldTypes.Flow.DATASETS, dataset);
+  }
+
+  @Override
+  public boolean addStreamToFlow(String account, String app,
+                                 String flowid, String stream)
+      throws MetadataServiceException, TException {
+    return
+        addThingToFlow(account, app, flowid, FieldTypes.Flow.STREAMS, stream);
+  }
+
+  private boolean addThingToFlow(String account, String app,
+        String flowid, String thingField, String thing)
+    throws MetadataServiceException, TException {
+
+      // Validate all account.
+    validateAccount(account);
+
+    // create a context
+    OperationContext opContext = new OperationContext(account, app);
+
+    // try three times, give up after 3 write conflicts
+    for (int i = 0; i < 3; i++) {
+      // retrieve the meta data entry
+      MetaDataEntry entry;
+      try {
+        entry = this.mds.get(
+            opContext, account, app, FieldTypes.Flow.ID, flowid);
+      } catch (OperationException e) {
+        Log.warn("Failed to list flows for account {}. Reason: {}.",
+            account, e.getMessage());
+        throw new MetadataServiceException(e.getMessage());
+      }
+      if (entry == null) throw new
+          MetadataServiceException("No meta data found for flow " + flowid);
+
+      String oldValue = entry.getTextField(thingField);
+      String newValue =
+          oldValue == null ? thing + " " : oldValue + thing + " ";
+
+      try {
+        mds.swapField(opContext, account, app, FieldTypes.Flow.ID, flowid,
+            thingField, oldValue, newValue, -1);
+        return true;
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+          Log.warn("Failed to swap field for flow {}. Reason: {}.", flowid,
+              e.getMessage());
+          throw new MetadataServiceException(e.getMessage());
+        }
+      }
+    }
+    // must be a write conflict, repeatedly
+    return false;
+  }
+
+  @Override
   public boolean deleteFlow(String account, String application, String flowid)
       throws MetadataServiceException, TException {
 
@@ -1094,7 +1159,7 @@ public class MetadataService implements
       entry = this.mds.get(
           opContext, account, application, FieldTypes.Flow.ID, flowid);
     } catch (OperationException e) {
-      Log.warn("Failed to list flows for account {}. Reason: {}.",
+      Log.warn("Failed to get flow for account {}. Reason: {}.",
           account, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
@@ -1170,6 +1235,42 @@ public class MetadataService implements
     for (Stream stream : foundStreams.values())
       streams.add(stream);
     return streams;
+  }
+
+  @Override
+  public List<Dataset> getDatasetsByApplication(String account, String app)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+
+    // first get all flows for the app
+    List<Flow> flows = getFlowsByApplication(account, app);
+
+    // this will hold all the datasets we find in flows
+    Map<String, Dataset> foundDatasets = Maps.newHashMap();
+
+    // now iterate over all flows and get each dataset
+    for (Flow flow : flows) {
+      List<String> flowDatasets = flow.getDatasets();
+      if (flowDatasets == null || flowDatasets.isEmpty())
+        continue;
+      for (String datasetName : flowDatasets) {
+        if (foundDatasets.containsKey(datasetName))
+          continue;
+        Dataset dataset =
+            getDataset(new Account(account), new Dataset(datasetName));
+        if (dataset.isExists()) {
+          foundDatasets.put(datasetName, dataset);
+        }
+      }
+    }
+
+    // extract the found datasets into a list
+    List<Dataset> datasets = Lists.newArrayList();
+    for (Dataset dataset : foundDatasets.values())
+      datasets.add(dataset);
+    return datasets;
   }
 
   /**

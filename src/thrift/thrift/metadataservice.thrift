@@ -41,27 +41,18 @@ struct Flow {
 }
 
 /**
- * Defines a dataset types.
- */
-enum DatasetType {
-  BASIC,
-  COUNTER,
-  TIME_SERIES,
-  CSV
-}
-
-/**
  * Defines a dataset
  */
 struct Dataset {
    1: required string id,
    2: optional string name,
    3: optional string description,
-   4: optional i32 type,
+   4: optional string type,
+   5: optional bool exists = true,
 }
 
 /**
- * Defines a query dataset.
+ * Defines a query.
  */
 struct Query {
    1: required string id,
@@ -245,6 +236,16 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
+   * Creates an flow if not exists.
+   *
+   * @return true if created successfully or already exists, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the flow.
+   */
+  bool createFlow(1: string account, 2: Flow flow)
+    throws (1: MetadataServiceException e),
+
+  /**
    * Updates an existing flow
    *
    * @return true if updated successfully, false otherwise.
@@ -255,13 +256,25 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates an flow if not exists.
+   * Adds a dataset to the datasets of a flow if it is not there yet
    *
-   * @return true if created successfully or already exists, false otherwise.
-   * @throws MetadataServiceException thrown when there is issue with creating
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with updating
    * metadata store entry for the flow.
    */
-  bool createFlow(1: string account, 2: Flow flow)
+   bool addDatasetToFlow(1: string account, 2: string app, 3: string flowid,
+                         4: string dataset)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Adds a stream to the streams of a flow if it is not there yet
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with updating
+   * metadata store entry for the flow.
+   */
+   bool addStreamToFlow(1: string account, 2: string app, 3: string flowid,
+                        4: string stream)
     throws (1: MetadataServiceException e),
 
   /**
@@ -313,6 +326,16 @@ service MetadataService {
   * a flow from metadata store.
   */
   list<Stream> getStreamsByApplication(1: string account, 2: string application)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return a list of all datasets of an application
+  *
+  * @return list of all datasets used by any of the app's flows
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a flow from metadata store.
+  */
+  list<Dataset> getDatasetsByApplication(1: string account, 2: string application)
     throws (1: MetadataServiceException e),
 
 }
