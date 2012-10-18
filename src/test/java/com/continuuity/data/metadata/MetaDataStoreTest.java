@@ -332,7 +332,6 @@ abstract public class MetaDataStoreTest {
           int value = Bytes.toInt(old);
           mds.swapField(context, context.getAccount(), null, "test", "xyz",
               "num", old, Bytes.toBytes(value + 1), 0);
-          value++;
         } catch (OperationException e) {
           if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
             // System.out.println("Conflict for binary " + i + ": " + value);
