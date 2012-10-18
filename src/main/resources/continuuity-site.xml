@@ -45,5 +45,13 @@
         <value>127.0.0.1</value>
     </property>
 
+    <!--
+       Metadata configuration
+    -->
+    <property>
+        <name>metadata.server.address</name>
+        <value>127.0.0.1</value>
+    </property>
+
 
 </configuration>
