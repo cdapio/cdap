@@ -1,13 +1,9 @@
 package com.continuuity.api.data.lib;
 
-import java.util.Map;
+import com.continuuity.api.data.*;
+import com.continuuity.api.data.DataLib;
 
-import com.continuuity.api.data.BatchCollectionRegistry;
-import com.continuuity.api.data.DataFabric;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.Write;
+import java.util.Map;
 
 /**
  * A key-value table.
@@ -22,13 +18,10 @@ public class KeyValueTable extends DataLib {
   /**
    * Constructs a key-value table with the specified name and using the
    * specified context.
-   * @param tableName
-   * @param fabric 
-   * @param registry 
+   * @param dataSetId Specifies the dataset Id.
    */
-  public KeyValueTable(String tableName, DataFabric fabric,
-      BatchCollectionRegistry registry) {
-    super(tableName, fabric, registry);
+  public KeyValueTable(String dataSetId) {
+    super(dataSetId, "KeyValueTable");
   }
 
   /**
@@ -38,12 +31,12 @@ public class KeyValueTable extends DataLib {
    * value is an empty value, otherwise, value is returned.
    * @param key key to read
    * @return value of key, null if key-value does not exist
-   * @throws OperationException
+   * @throws com.continuuity.api.data.OperationException
    */
   public byte [] read(byte [] key) throws OperationException {
     OperationResult<Map<byte[],byte[]>> result =
-        this.getDataFabric().read(
-            new Read(this.tableName, key, COLUMN));
+      this.getDataFabric().read(
+        new Read(getDataSetId(), key, COLUMN));
     if (result.isEmpty()) return null;
     return result.getValue().get(COLUMN);
   }
@@ -55,8 +48,8 @@ public class KeyValueTable extends DataLib {
    * @throws OperationException
    */
   public void performWrite(byte [] key, byte [] value)
-      throws OperationException {
-    this.fabric.execute(generateWrite(key, value));
+    throws OperationException {
+    getDataFabric().execute(generateWrite(key, value));
   }
 
   /**
@@ -76,6 +69,7 @@ public class KeyValueTable extends DataLib {
    * @return write operation to store specified key-value
    */
   public Write generateWrite(byte [] key, byte [] value) {
-    return new Write(this.tableName, key, COLUMN, value);
+    return new Write(getDataSetId(), key, COLUMN, value);
   }
+
 }

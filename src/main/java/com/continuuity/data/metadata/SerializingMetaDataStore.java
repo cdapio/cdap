@@ -354,6 +354,11 @@ public class SerializingMetaDataStore implements MetaDataStore {
       byte[] newBytes;
       try {
         newBytes = getSerializer().serialize(entry);
+        if (newBytes == null || newBytes.length == 0) {
+          throw new OperationException(StatusCode.INTERNAL_ERROR,
+              "serialization of meta data entry returned " +
+                  (newBytes == null ? "null" : "empty byte array"));
+        }
       } catch (MetaDataException e) {
         throw new OperationException(
             StatusCode.INTERNAL_ERROR, e.getMessage(), e);
