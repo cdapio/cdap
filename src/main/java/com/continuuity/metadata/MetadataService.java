@@ -251,6 +251,7 @@ public class MetadataService implements
           FieldTypes.Stream.DESCRIPTION
         ));
       } else {
+        stream = new Stream(stream.getId());
         stream.setExists(false);
       }
     } catch (OperationException e) {
@@ -479,6 +480,7 @@ public class MetadataService implements
             FieldTypes.Dataset.TYPE
         ));
       } else {
+        dataset = new Dataset(dataset.getId());
         dataset.setExists(false);
       }
     } catch (OperationException e) {
@@ -975,11 +977,12 @@ public class MetadataService implements
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
       MetaDataEntry entry =
-        mds.get(context, accountId, app, FieldTypes.Application.ID, id);
+        mds.get(context, accountId, app, FieldTypes.Query.ID, id);
 
       if(entry != null) {
         query = makeQuery(entry);
       } else {
+        query = new Query(query.getId(), query.getApplication());
         query.setExists(false);
       }
     } catch (OperationException e) {
