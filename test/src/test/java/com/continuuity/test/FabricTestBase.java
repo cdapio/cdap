@@ -123,10 +123,8 @@ public abstract class FabricTestBase {
       dataSetRegistry = new GenericDataSetRegistry(
         executor,
         fabric,
-        context,
         null,
-        ACCOUNT,
-        APPLICATION
+        ACCOUNT
       );
     }
     return dataSetRegistry;
