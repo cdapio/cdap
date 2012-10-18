@@ -9,7 +9,7 @@ public interface DataSetRegistry {
    * Registers a DataLib.
    *
    * @param dataLib To be registered for dataset.
-   * @return true if successfully registered; false otherwise.
+   * @return Registered DataLib.
    */
-  public boolean registerDataSet(DataLib dataLib);
+  public DataLib registerDataSet(DataLib dataLib);
 }
