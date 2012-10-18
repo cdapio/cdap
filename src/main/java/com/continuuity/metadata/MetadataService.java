@@ -7,7 +7,13 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.thrift.*;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
@@ -35,6 +41,123 @@ public class MetadataService implements
     this.mds = new SerializingMetaDataStore(opex);
   }
 
+  // When creating a stream, you need to have id, name and description
+  private void validateStream(Stream stream) throws MetadataServiceException {
+    if(stream.getId() == null || stream.getId().isEmpty()) {
+      throw new MetadataServiceException("Stream id is empty or null.");
+    }
+    if(stream.getName() == null || stream.getName().isEmpty()) {
+      throw new MetadataServiceException(
+          "Stream name must not be null or empty");
+    }
+  }
+
+  private MetaDataEntry makeEntry(Account account, Stream stream) {
+    // Create a new metadata entry.
+    MetaDataEntry entry = new MetaDataEntry(
+        account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+
+    // Adding other fields.
+    if (stream.isSetName())
+      entry.addField(FieldTypes.Stream.NAME, stream.getName());
+    if (stream.isSetDescription())
+      entry.addField(FieldTypes.Stream.DESCRIPTION, stream.getDescription());
+    if(stream.isSetCapacityInBytes())
+      entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
+          String.format("%d", stream.getCapacityInBytes()));
+    if(stream.isSetExpiryInSeconds())
+      entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
+          String.format("%d", stream.getExpiryInSeconds()));
+
+    return entry;
+  }
+
+  private Stream makeStream(MetaDataEntry entry) {
+    Stream stream = new Stream(entry.getId());
+    String name = entry.getTextField(FieldTypes.Stream.NAME);
+    if (name != null) stream.setName(name);
+    String description = entry.getTextField(FieldTypes.Stream.DESCRIPTION);
+    if (description != null) stream.setDescription(description);
+    String capacity = entry.getTextField(FieldTypes.Stream.CAPACITY_IN_BYTES);
+    if (capacity != null) stream.setCapacityInBytes(Integer.valueOf(capacity));
+    String expiry = entry.getTextField(FieldTypes.Stream.EXPIRY_IN_SECONDS);
+    if (expiry != null) stream.setExpiryInSeconds(Integer.valueOf(expiry));
+    return stream;
+  }
+
+  private enum CompareStatus {
+    EQUAL, DIFF, SUPER, SUB
+  }
+
+  // returns SUPER if the new value has more information than the existing one
+  private CompareStatus compareAlso(CompareStatus soFar,
+                                    String newValue,
+                                    String existingValue) {
+    if (soFar.equals(CompareStatus.DIFF)) return soFar;
+    if (newValue == null) {
+      // both null, no change in status
+      if (existingValue == null) return soFar;
+        // new value has less info: incompatible if it had more info so far
+      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
+        // new value has less info and it did not have more so far -> sub
+      else return CompareStatus.SUB;
+    } else { // new != null
+      // both are the same, no change in status
+      if (newValue.equals(existingValue)) return soFar;
+        // both non-null but different
+      else if (existingValue != null) return CompareStatus.DIFF;
+        // new value has more info: incompatible if it had less info so far
+      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
+        // new value has more info and it did not have less so far -> super
+      else return CompareStatus.SUPER;
+    }
+  }
+
+  // returns SUPER if the new value has more information than the existing one
+  private CompareStatus compareAlso(CompareStatus soFar,
+                                    boolean newNull, long newValue,
+                                    boolean existingNull, long existingValue) {
+    if (soFar.equals(CompareStatus.DIFF)) return soFar;
+    if (newNull) {
+      // both null, no change in status
+      if (existingNull) return soFar;
+      // new value has less info: incompatible if it had more info so far
+      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
+      // new value has less info and it did not have more so far -> sub
+      else return CompareStatus.SUB;
+    } else { // new != null
+      // both are the same, no change in status
+      if (newValue == existingValue) return soFar;
+      // both non-null but different
+      else if (!existingNull) return CompareStatus.DIFF;
+        // new value has more info: incompatible if it had less info so far
+      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
+        // new value has more info and it did not have less so far -> super
+      else return CompareStatus.SUPER;
+    }
+  }
+
+  private CompareStatus compareStreams(Stream stream,
+                                       MetaDataEntry existingEntry) {
+    Stream existing = makeStream(existingEntry);
+    CompareStatus status = CompareStatus.EQUAL;
+    status = compareAlso(status, stream.getId(), existing.getId());
+    if (status.equals(CompareStatus.DIFF)) return status;
+    status = compareAlso(status, stream.getName(), existing.getName());
+    if (status.equals(CompareStatus.DIFF)) return status;
+    status = compareAlso(
+        status, stream.getDescription(), existing.getDescription());
+    if (status.equals(CompareStatus.DIFF)) return status;
+    status = compareAlso(status,
+        stream.isSetCapacityInBytes(), stream.getCapacityInBytes(),
+        existing.isSetCapacityInBytes(), existing.getCapacityInBytes());
+    if (status.equals(CompareStatus.DIFF)) return status;
+    status = compareAlso(status,
+        stream.isSetExpiryInSeconds(), stream.getExpiryInSeconds(),
+        existing.isSetExpiryInSeconds(), existing.getExpiryInSeconds());
+    return status;
+  }
+
   /**
    * Creates a stream if not exist.
    * <p>
@@ -53,68 +176,57 @@ public class MetadataService implements
   public boolean createStream(Account account, Stream stream)
     throws MetadataServiceException, TException {
 
-    // Validate all account.
+    // Validate account and stream
     validateAccount(account);
-    String accountId = account.getId();
-
-    // When creating a stream, you need to have id, name and description
-    String id = stream.getId();
-    if(id == null || (id != null && id.isEmpty())) {
-      throw new MetadataServiceException("Stream id is empty or null.");
-    }
-
-    if(! stream.isSetName()) {
-      throw new MetadataServiceException("Stream name should be set for create");
-    }
-    String name = stream.getName();
-    if(name == null || (name != null && name.isEmpty())) {
-      throw new MetadataServiceException("Stream name cannot be null or empty");
-    }
-
-    String description = "";
-    if(stream.isSetDescription()) {
-      description = stream.getDescription();
-    }
+    validateStream(stream);
 
     try {
       // Create a context.
-      OperationContext context = new OperationContext(accountId);
+      OperationContext context = new OperationContext(account.getId());
 
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Stream.ID, id);
-      if(readEntry != null) {
+      MetaDataEntry readEntry = mds.get(
+          context, account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+      if (readEntry == null) {
+        // attempt to add, but in case of write conflict we must read
+        // again and try to resolve the conflict
+        MetaDataEntry entry = makeEntry(account, stream);
+        try {
+          // Invoke MDS to add entry
+          mds.add(context, entry);
+          return true;
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          // read again for conflict resolution
+          readEntry = mds.get(context,
+                account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+        }
+      }
+
+      // there is already an entry, determine how it compare to the new one
+      CompareStatus status = compareStreams(stream, readEntry);
+      // existing entry is equal or a superset of the new one -> good
+      if (status.equals(CompareStatus.EQUAL) ||
+          status.equals(CompareStatus.SUB))
         return true;
+      else if (status.equals(CompareStatus.DIFF)) {
+        // new entry is incompatible with existing -> conflict!
+        throw new MetadataServiceException("another, incompatible meta " +
+            "data entry already exists.");
       }
 
-      // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(
-        accountId, null, FieldTypes.Stream.ID, id
-      );
+      // Create a new metadata entry for update
+      MetaDataEntry entry = makeEntry(account, stream);
+      // Invoke MDS to update entry.
+      mds.update(context, entry);
+      return true;
 
-      // Adding other fields.
-      entry.addField(FieldTypes.Stream.NAME, name);
-      entry.addField(FieldTypes.Stream.DESCRIPTION, description);
-      entry.addField(FieldTypes.Stream.CREATE_DATE,
-                     String.format("%d", System.currentTimeMillis()));
-      if(stream.isSetCapacityInBytes()) {
-        entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
-                       String.format("%d", stream.getCapacityInBytes()));
-      }
-      if(stream.isSetExpiryInSeconds()) {
-        entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
-                       String.format("%d", stream.getExpiryInSeconds()));
-      }
-
-      // Invoke MDS to add entry.
-      mds.add(context, entry);
     } catch (OperationException e) {
-      Log.warn("Failed creating stream {}. Reason : {}", stream, e.getMessage());
+      Log.warn("Failed creating stream {}. Reason: {}", stream, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -136,7 +248,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = stream.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Stream id is empty or null.");
     }
 
@@ -144,19 +256,10 @@ public class MetadataService implements
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Stream.ID, id);
-
-      // If stream does not exist, then no point in deleting it.
-      if(readEntry == null) {
-        return true;
-      }
-
       // Invoke MDS to delete entry.
+      // This will also succeed if the entry does not exist
       mds.delete(context, accountId, null, FieldTypes.Stream.ID, id);
+
     } catch (OperationException e) {
       Log.warn("Failed deleting stream {}. Reason : {}", stream, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
@@ -188,25 +291,18 @@ public class MetadataService implements
 
       // Invoke MDS to list streams for an account.
       // NOTE: application is null and fields are null.
-      Collection<MetaDataEntry> streams =
+      Collection<MetaDataEntry> entries =
         mds.list(context, accountId, null, FieldTypes.Stream.ID, null);
-      for(MetaDataEntry stream : streams) {
-        Stream rstream = new Stream(stream.getId());
-        rstream.setName(stream.getTextField(FieldTypes.Stream.NAME));
-        rstream.setDescription(
-          stream.getTextField(FieldTypes.Stream.DESCRIPTION)
-        );
 
-        // More fields can be added later when we need them for now
-        // we just return id, name & description.
-        result.add(rstream);
-      }
+      for(MetaDataEntry entry : entries)
+        result.add(makeStream(entry));
+      return result;
+
     } catch (OperationException e) {
       Log.warn("Failed listing streams for account {}. Reason : {}",
                accountId, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return result;
   }
 
   /**
@@ -229,7 +325,7 @@ public class MetadataService implements
     String accountId = account.getId();
 
     String id = stream.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Stream does not have an id.");
     }
 
@@ -244,12 +340,7 @@ public class MetadataService implements
 
       // Add description and name to stream and return.
       if(entry != null) {
-        stream.setName(entry.getTextField(
-          FieldTypes.Stream.NAME
-        ));
-        stream.setDescription(entry.getTextField(
-          FieldTypes.Stream.DESCRIPTION
-        ));
+        stream = makeStream(entry);
       } else {
         stream = new Stream(stream.getId());
         stream.setExists(false);
@@ -281,7 +372,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = dataset.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Dataset id is empty or null.");
     }
 
@@ -290,7 +381,7 @@ public class MetadataService implements
     }
 
     String name = dataset.getName();
-    if(name == null || (name != null && name.isEmpty())) {
+    if(name == null || name.isEmpty()) {
       throw new MetadataServiceException("Dataset name cannot be null or empty");
     }
 
@@ -326,8 +417,6 @@ public class MetadataService implements
       // Adding other fields.
       entry.addField(FieldTypes.Dataset.NAME, name);
       entry.addField(FieldTypes.Dataset.DESCRIPTION, description);
-      entry.addField(FieldTypes.Dataset.CREATE_DATE,
-                     String.format("%d", System.currentTimeMillis()));
       entry.addField(FieldTypes.Dataset.TYPE, type);
       // Invoke MDS to add entry.
       mds.add(context, entry);
@@ -357,7 +446,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = dataset.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Dataset id is empty or null.");
     }
 
@@ -455,7 +544,7 @@ public class MetadataService implements
     String accountId = account.getId();
 
     String id = dataset.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Dataset does not have an id.");
     }
 
@@ -511,7 +600,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = application.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application id is empty or null.");
     }
 
@@ -524,7 +613,7 @@ public class MetadataService implements
       throw new MetadataServiceException("Application name should be set for create");
     }
     String name = application.getName();
-    if(name == null || (name != null && name.isEmpty())) {
+    if(name == null || name.isEmpty()) {
       throw new MetadataServiceException("Application name cannot be null or empty");
     }
 
@@ -549,8 +638,6 @@ public class MetadataService implements
       // Adding other fields.
       entry.addField(FieldTypes.Application.NAME, name);
       entry.addField(FieldTypes.Application.DESCRIPTION, description);
-      entry.addField(FieldTypes.Application.CREATE_DATE,
-                     String.format("%d", System.currentTimeMillis()));
       // Invoke MDS to add entry.
       mds.add(context, entry);
     } catch (OperationException e) {
@@ -582,7 +669,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = application.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application id is empty or null.");
     }
 
@@ -618,7 +705,7 @@ public class MetadataService implements
    * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue listing
    *          applications for a account.
-   * @returns a list of application associated with account; else empty list.
+   * @return a list of application associated with account; else empty list.
    */
   @Override
   public List<Application> getApplications(Account account)
@@ -674,7 +761,7 @@ public class MetadataService implements
     String accountId = account.getId();
 
     String id = application.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application does not have an id.");
     }
 
@@ -719,7 +806,7 @@ public class MetadataService implements
       throw new MetadataServiceException("Query's app name is empty or null.");
     }
     String serviceName = query.getServiceName();
-    if(name == null || (name != null && name.isEmpty())) {
+    if(serviceName == null || serviceName.isEmpty()) {
       throw new MetadataServiceException("Query service name cannot be null " +
           "or empty");
     }
@@ -878,7 +965,7 @@ public class MetadataService implements
 
     // When creating a stream, you need to have id, name and description
     String id = query.getId();
-    if(id == null || (id != null && id.isEmpty())) {
+    if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application id is empty or null.");
     }
 
@@ -915,7 +1002,7 @@ public class MetadataService implements
    * @throws com.continuuity.metadata.thrift.MetadataServiceException
    *          thrown when there is issue listing
    *          queries for a account.
-   * @returns a list of queries associated with account; else empty list.
+   * @return a list of queries associated with account; else empty list.
    */
   @Override
   public List<Query> getQueries(Account account)
