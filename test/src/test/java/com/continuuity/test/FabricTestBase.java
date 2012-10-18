@@ -3,16 +3,14 @@ package com.continuuity.test;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.continuuity.api.data.*;
+import com.continuuity.flow.common.GenericDataSetRegistry;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.BatchCollectionRegistry;
-import com.continuuity.api.data.DataFabric;
-import com.continuuity.api.data.OperationContext;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -63,7 +61,7 @@ import com.google.inject.Injector;
  *    <li>verify and run flows with {@link #verifyFlow(Flow)} and
  *        {@link #startFlow(Flow)}</li>
  *    <li>write data to streams with
- *        {@link #writeToStream(String, String, byte[])}</li>
+ *        {@link #writeToStream(String, byte[])}</li>
  * </ul>
  */
 public abstract class FabricTestBase {
@@ -74,6 +72,8 @@ public abstract class FabricTestBase {
   // TODO: Fix this when we deal with accounts
   private static final String ACCOUNT = "demo";
 
+  private static final String APPLICATION = "demo";
+
   private static final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
 
@@ -82,13 +82,15 @@ public abstract class FabricTestBase {
           OperationExecutor.class);
 
   private static final FlowletContext context =
-      new FlowletContextImpl(executor, OperationContext.DEFAULT, 1);
+      new FlowletContextImpl(executor, OperationContext.DEFAULT, 1, null);
 
   private static final DataFabric fabric = context.getDataFabric();
 
   private static final CConfiguration conf = CConfiguration.create();
 
   private static Gateway queryGateway = null;
+
+  private static DataSetRegistry dataSetRegistry = null;
 
   @BeforeClass
   public static void clearFabricBeforeTestClass() throws OperationException {
@@ -110,6 +112,24 @@ public abstract class FabricTestBase {
    */
   protected DataFabric getDataFabric() {
     return fabric;
+  }
+
+  /**
+   * Returns a reference to dataset registry.
+   * @return dataset registry reference.
+   */
+  protected DataSetRegistry getDataSetRegistry() {
+    if(dataSetRegistry == null) {
+      dataSetRegistry = new GenericDataSetRegistry(
+        executor,
+        fabric,
+        context,
+        null,
+        ACCOUNT,
+        APPLICATION
+      );
+    }
+    return dataSetRegistry;
   }
 
   /**
