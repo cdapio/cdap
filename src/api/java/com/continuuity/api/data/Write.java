@@ -203,4 +203,14 @@ public class Write implements WriteOperation {
   public long getId() {
     return id;
   }
+
+  @Override
+  public int getSize() {
+    if (key == null || columns == null || values == null) return 0;
+    int size = key.length;
+    for (int i=0; i<columns.length; i++) {
+      size += columns[i].length + values[i].length;
+    }
+    return size;
+  }
 }

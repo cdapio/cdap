@@ -173,4 +173,12 @@ public class CompareAndSwap implements ConditionalWriteOperation {
   public long getId() {
     return id;
   }
+
+  @Override
+  public int getSize() {
+    if (newValue == null || newValue.length == 0) return 0;
+    int diff = newValue.length - expectedValue.length;
+    if (diff < 0) return 0;
+    return diff;
+  }
 }

@@ -80,4 +80,9 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   public void setData(byte[] data) {
     this.data = data;
   }
+
+  @Override
+  public int getSize() {
+    return 0;
+  }
 }

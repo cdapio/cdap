@@ -186,6 +186,15 @@ implements TransactionalOperationExecutor {
     streamMetric.meter(names.getSecond(), streamSizeEstimate(streamName, data));
   }
 
+  private void namedTableMetric_read(String tableName) {
+    streamMetric.meter("dataset.read." + tableName, 1);
+  }
+  
+  private void namedTableMetric_write(String tableName, int dataSize) {
+    streamMetric.meter("dataset.write." + tableName, 1);
+    streamMetric.meter("dataset.storage." + tableName, dataSize);
+  }
+  
   /* -------------------  end metrics ---------------- */
 
   // named table management
@@ -361,7 +370,6 @@ implements TransactionalOperationExecutor {
     }
   }
 
-
   // Single reads
 
   @Override
@@ -374,6 +382,7 @@ implements TransactionalOperationExecutor {
     OperationResult<byte[]> result =
         read(context, read, this.oracle.getReadPointer());
     end("ReadKey", begin);
+    namedTableMetric_read(read.getTable());
     return result;
   }
 
@@ -397,6 +406,7 @@ implements TransactionalOperationExecutor {
     List<byte[]> result = table.getKeys(readKeys.getLimit(),
         readKeys.getOffset(), this.oracle.getReadPointer());
     end("ReadKey", begin);
+    namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
   }
 
@@ -412,6 +422,7 @@ implements TransactionalOperationExecutor {
     OperationResult<Map<byte[], byte[]>> result = table.get(
         read.getKey(), read.getColumns(), this.oracle.getReadPointer());
     end("Read", begin);
+    namedTableMetric_read(read.getTable());
     return result;
   }
 
@@ -429,6 +440,7 @@ implements TransactionalOperationExecutor {
         readColumnRange.getStopColumn(), readColumnRange.getLimit(),
         this.oracle.getReadPointer());
     end("ReadColumnRange", begin);
+    namedTableMetric_read(readColumnRange.getTable());
     return result;
   }
 
@@ -699,6 +711,7 @@ implements TransactionalOperationExecutor {
     table.put(write.getKey(), write.getColumns(),
         pointer.getSecond(), write.getValues());
     end("Write", begin);
+    namedTableMetric_write(write.getTable(), write.getSize());
     return new WriteTransactionResult(
         new Delete(write.getTable(), write.getKey(), write.getColumns()));
   }
@@ -713,6 +726,7 @@ implements TransactionalOperationExecutor {
     table.deleteAll(delete.getKey(), delete.getColumns(),
         pointer.getSecond());
     end("Delete", begin);
+    namedTableMetric_write(delete.getTable(), delete.getSize());
     return new WriteTransactionResult(
         new Undelete(delete.getTable(), delete.getKey(), delete.getColumns()));
   }
@@ -736,6 +750,7 @@ implements TransactionalOperationExecutor {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("Increment", begin);
+    namedTableMetric_write(increment.getTable(), increment.getSize());
     return new WriteTransactionResult(
         new Delete(increment.getTable(), increment.getKey(),
             increment.getColumns()), incrementValue);
@@ -756,6 +771,7 @@ implements TransactionalOperationExecutor {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("CompareAndSwap", begin);
+    namedTableMetric_write(write.getTable(), write.getSize());
     return new WriteTransactionResult(
         new Delete(write.getTable(), write.getKey(), write.getColumn()));
   }
