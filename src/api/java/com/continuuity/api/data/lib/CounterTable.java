@@ -3,7 +3,7 @@ package com.continuuity.api.data.lib;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.continuuity.api.data.BatchCollectionRegistry;
+import com.continuuity.api.data.DataLib;
 import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationException;
@@ -41,13 +41,9 @@ public class CounterTable extends DataLib {
   /**
    * Constructs a reference to a counter table by the specified name under the
    * specified flowlet context.
-   * @param tableName
-   * @param fabric 
-   * @param registry 
    */
-  public CounterTable(String tableName, DataFabric fabric,
-      BatchCollectionRegistry registry) {
-    super(tableName, fabric, registry);
+  public CounterTable(String dataSetId) {
+    super(dataSetId, "CounterTable");
   }
 
   // Single key counter
@@ -69,8 +65,8 @@ public class CounterTable extends DataLib {
    * @throws OperationException
    */
   public Long readSingleKey(byte [] counter) throws OperationException {
-    Read read = new Read(this.tableName, counter, COLUMN);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), counter, COLUMN);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     if (result.isEmpty()) return 0L;
     return Bytes.toLong(result.getValue().get(COLUMN));
   }
@@ -92,7 +88,7 @@ public class CounterTable extends DataLib {
    * @param amount amount to increment counter by
    */
   public void incrementSingleKey(byte [] counter, long amount) {
-    this.collector.add(generateSingleKeyIncrement(counter, amount));
+    getCollector().add(generateSingleKeyIncrement(counter, amount));
   }
 
   /**
@@ -126,7 +122,7 @@ public class CounterTable extends DataLib {
    * @return prepared increment operation
    */
   public Increment generateSingleKeyIncrement(byte [] counter, long amount) {
-    return new Increment(this.tableName, counter, COLUMN, amount);
+    return new Increment(getDataSetId(), counter, COLUMN, amount);
   }
 
   // Ordered counter set
@@ -140,8 +136,8 @@ public class CounterTable extends DataLib {
    */
   public Map<String,Long> readCounterSet(String counterSet)
       throws OperationException {
-    Read read = new Read(this.tableName, Bytes.toBytes(counterSet));
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), Bytes.toBytes(counterSet));
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<String,Long> ret = new TreeMap<String,Long>();
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -159,8 +155,8 @@ public class CounterTable extends DataLib {
    */
   public Map<byte[],Long> readCounterSet(byte [] counterSet)
       throws OperationException {
-    Read read = new Read(this.tableName, counterSet);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), counterSet);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -181,10 +177,10 @@ public class CounterTable extends DataLib {
    */
   public Map<String,Long> readCounterSet(String counterSet, String minCounter,
       String maxCounter) throws OperationException {
-    ReadColumnRange read = new ReadColumnRange(this.tableName,
+    ReadColumnRange read = new ReadColumnRange(getDataSetId(),
         Bytes.toBytes(counterSet), Bytes.toBytes(minCounter),
         Bytes.toBytes(maxCounter));
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<String,Long> ret = new TreeMap<String,Long>();
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -205,9 +201,9 @@ public class CounterTable extends DataLib {
    */
   public Map<byte[],Long> readCounterSet(byte [] counterSet, byte [] minCounter,
       byte [] maxCounter) throws OperationException {
-    ReadColumnRange read = new ReadColumnRange(this.tableName, counterSet,
+    ReadColumnRange read = new ReadColumnRange(getDataSetId(), counterSet,
         minCounter, maxCounter);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -239,8 +235,8 @@ public class CounterTable extends DataLib {
    */
   public Long readCounterSet(byte [] counterSet, byte [] counter)
   throws OperationException {
-    Read read = new Read(this.tableName, counterSet, counter);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), counterSet, counter);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     if (result.isEmpty()) return 0L;
     return Bytes.toLong(result.getValue().get(counter));
   }
@@ -257,8 +253,8 @@ public class CounterTable extends DataLib {
   public Map<String,Long> readCounterSet(String counterSet,
       String [] counters) throws OperationException {
     byte [][] columns = Helpers.saToBa(counters);
-    Read read = new Read(this.tableName, Bytes.toBytes(counterSet), columns);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), Bytes.toBytes(counterSet), columns);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<String,Long> ret = new TreeMap<String,Long>();
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -278,8 +274,8 @@ public class CounterTable extends DataLib {
    */
   public Map<byte[],Long> readCounterSet(byte [] counterSet,
       byte [][] counters) throws OperationException {
-    Read read = new Read(this.tableName, counterSet, counters);
-    OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
+    Read read = new Read(getDataSetId(), counterSet, counters);
+    OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     if (result.isEmpty()) return ret;
     for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
@@ -300,8 +296,8 @@ public class CounterTable extends DataLib {
    */
   public void incrementCounterSet(String counterSet, String counter,
       long amount) throws OperationException {
-    this.collector.add(
-        generateCounterSetIncrement(counterSet, counter, amount));
+    getCollector().add(generateCounterSetIncrement(counterSet, counter,
+                                                   amount));
   }
 
   /**
@@ -315,8 +311,7 @@ public class CounterTable extends DataLib {
    */
   public void incrementCounterSet(byte [] counterSet, byte [] counter,
       long amount) {
-    this.collector.add(
-        generateCounterSetIncrement(counterSet, counter, amount));
+    getCollector().add(generateCounterSetIncrement(counterSet, counter, amount));
   }
 
   /**
@@ -330,8 +325,7 @@ public class CounterTable extends DataLib {
    */
   public void incrementCounterSet(String counterSet,
       String [] counters, long [] amounts) {
-    this.collector.add(
-        generateCounterSetIncrement(counterSet, counters, amounts));
+    getCollector().add(generateCounterSetIncrement(counterSet, counters, amounts));
   }
 
   /**
@@ -345,8 +339,7 @@ public class CounterTable extends DataLib {
    */
   public void incrementCounterSet(byte [] counterSet,
       byte [][] counters, long [] amounts) {
-    this.collector.add(
-        generateCounterSetIncrement(counterSet, counters, amounts));
+    getCollector().add(generateCounterSetIncrement(counterSet, counters, amounts));
   }
 
   /**
@@ -365,7 +358,7 @@ public class CounterTable extends DataLib {
    */
   public Increment generateCounterSetIncrement(String counterSet,
       String counter, long amount) {
-    return new Increment(this.tableName, Bytes.toBytes(counterSet),
+    return new Increment(getDataSetId(), Bytes.toBytes(counterSet),
         Bytes.toBytes(counter), amount);
   }
 
@@ -385,7 +378,7 @@ public class CounterTable extends DataLib {
    */
   public Increment generateCounterSetIncrement(byte [] counterSet,
       byte [] counter, long amount) {
-    return new Increment(this.tableName, counterSet, counter, amount);
+    return new Increment(getDataSetId(), counterSet, counter, amount);
   }
 
   /**
@@ -404,7 +397,7 @@ public class CounterTable extends DataLib {
    */
   public Increment generateCounterSetIncrement(String counterSet,
       String [] counters, long [] amounts) {
-    return new Increment(this.tableName, Bytes.toBytes(counterSet),
+    return new Increment(getDataSetId(), Bytes.toBytes(counterSet),
         Helpers.saToBa(counters), amounts);
   }
 
@@ -424,6 +417,6 @@ public class CounterTable extends DataLib {
    */
   public Increment generateCounterSetIncrement(byte [] counterSet,
       byte [][] counters, long [] amounts) {
-    return new Increment(this.tableName, counterSet, counters, amounts);
+    return new Increment(getDataSetId(), counterSet, counters, amounts);
   }
 }

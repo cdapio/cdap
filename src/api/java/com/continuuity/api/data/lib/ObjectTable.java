@@ -1,30 +1,22 @@
 package com.continuuity.api.data.lib;
 
+import com.continuuity.api.data.*;
+import com.continuuity.api.data.DataLib;
+
 import java.util.Map;
 
-import com.continuuity.api.data.BatchCollectionRegistry;
-import com.continuuity.api.data.DataFabric;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.StatusCode;
-import com.continuuity.api.data.Write;
-
 public class ObjectTable<T extends SimpleSerializable> extends DataLib {
-
   private static final byte [] COLUMN = new byte [] { 'd' };
-
   private final Class<T> storedObjectClass;
 
-  public ObjectTable(DataFabric fabric, BatchCollectionRegistry registry,
-      String tableName, Class<T> storedObjectClass) {
-    super(tableName, fabric, registry);
+  public ObjectTable(String dataSetId, Class<T> storedObjectClass) {
+    super(dataSetId, "ObjectTable");
     this.storedObjectClass = storedObjectClass;
   }
 
   public T readObject(byte [] id) throws OperationException {
     OperationResult<Map<byte[],byte[]>> result =
-        this.getDataFabric().read(new Read(tableName, id, COLUMN));
+      this.getDataFabric().read(new Read(getDataSetId(), id, COLUMN));
     if (result.isEmpty()) return null;
     byte [] value = result.getValue().get(COLUMN);
     T t = null;
@@ -38,12 +30,12 @@ public class ObjectTable<T extends SimpleSerializable> extends DataLib {
   }
 
   public void updateObject(byte [] id, T t) {
-    Write write = new Write(tableName, id, COLUMN, t.toBytes());
+    Write write = new Write(getDataSetId(), id, COLUMN, t.toBytes());
     this.getCollector().add(write);
   }
 
   public void writeObject(byte [] id, T t) throws OperationException {
-    Write write = new Write(tableName, id, COLUMN, t.toBytes());
+    Write write = new Write(getDataSetId(), id, COLUMN, t.toBytes());
     this.getDataFabric().execute(write);
   }
 }
