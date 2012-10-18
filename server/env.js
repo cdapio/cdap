@@ -67,6 +67,8 @@
 
 						// Upload
 						config['resource.manager.server.port'] = 45000;
+						// MetaData
+						config['metadata.server.port'] = 45004;
 						// Manager
 						config['flow.manager.server.port'] = 45001;
 						// Monitor
