@@ -11,7 +11,8 @@ import com.continuuity.metadata.thrift.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
-import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -20,6 +21,10 @@ import java.util.*;
  */
 public class MetadataService implements
     com.continuuity.metadata.thrift.MetadataService.Iface {
+
+  private static final Logger Log
+      = LoggerFactory.getLogger(MetadataService.class);
+
   private final MetaDataStore mds;
 
   /**
@@ -697,6 +702,52 @@ public class MetadataService implements
     return application;
   }
 
+  // When creating a query, you need to have id, name and app
+  void validateQuery(Query query) throws MetadataServiceException {
+    String id = query.getId();
+    if(id == null || id.isEmpty()) {
+      throw new MetadataServiceException("Query id is empty or null.");
+    }
+    String name = query.getName();
+    if(name == null || name.isEmpty()) {
+      throw new MetadataServiceException("Query name is empty or null.");
+    }
+    String app = query.getApplication();
+    if(app == null || app.isEmpty()) {
+      throw new MetadataServiceException("Query's app name is empty or null.");
+    }
+    String serviceName = query.getServiceName();
+    if(name == null || (name != null && name.isEmpty())) {
+      throw new MetadataServiceException("Query service name cannot be null " +
+          "or empty");
+    }
+  }
+
+  private MetaDataEntry makeEntry(String account, Query query) {
+    // Create a new metadata entry.
+    MetaDataEntry entry = new MetaDataEntry(
+        account, query.getApplication(), FieldTypes.Query.ID, query.getId());
+     // Adding other fields.
+    entry.addField(FieldTypes.Query.NAME, query.getName());
+    entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
+    entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
+    entry.addField(FieldTypes.Query.DATASETS, ListToString(query.getDatasets()));
+    return entry;
+  }
+
+  private Query makeQuery(MetaDataEntry entry) {
+    Query query = new Query(entry.getId(), entry.getApplication());
+    String name = entry.getTextField(FieldTypes.Query.NAME);
+    if (name != null) query.setName(name);
+    String description = entry.getTextField(FieldTypes.Query.DESCRIPTION);
+    if (description != null) query.setDescription(description);
+    String service = entry.getTextField(FieldTypes.Query.SERVICE_NAME);
+    if (service != null) query.setServiceName(service);
+    String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
+    if (datasets != null) query.setDatasets(StringToList(datasets));
+    return query;
+  }
+
   /**
    * Creates an query if not exists.
    *
@@ -711,69 +762,94 @@ public class MetadataService implements
   public boolean createQuery(Account account, Query query)
     throws MetadataServiceException, TException {
 
-    // Validate all account.
+    // Validate account and query
     validateAccount(account);
-    String accountId = account.getId();
+    validateQuery(query);
 
-    // When creating a stream, you need to have id, name and description
-    String id = query.getId();
-    if(id == null || (id != null && id.isEmpty())) {
-      throw new MetadataServiceException("Query id is empty or null.");
-    }
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account.getId(), query.getApplication());
 
-    String description = "";
-    if(query.isSetDescription()) {
-      description = query.getDescription();
-    }
-
-    if(! query.isSetName()) {
-      throw new MetadataServiceException("Query name should be set for create");
-    }
-    String name = query.getName();
-    if(name == null || (name != null && name.isEmpty())) {
-      throw new MetadataServiceException("Query name cannot be null or empty");
-    }
-
-    if(! query.isSetServiceName()) {
-      throw new MetadataServiceException("Query service name should be set for create");
-    }
-    String serviceName = query.getServiceName();
-    if(name == null || (name != null && name.isEmpty())) {
-      throw new MetadataServiceException("Query service name cannot be null or empty");
-    }
-
+    // perform the insert
     try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Query.ID, id);
-      if(readEntry != null) {
-        return true;
-      }
-
-      // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(
-        accountId, null, FieldTypes.Query.ID, id
-      );
-
-      // Adding other fields.
-      entry.addField(FieldTypes.Query.NAME, name);
-      entry.addField(FieldTypes.Query.DESCRIPTION, description);
-      entry.addField(FieldTypes.Query.SERVICE_NAME, serviceName);
-      entry.addField(FieldTypes.Query.CREATE_DATE,
-                     String.format("%d", System.currentTimeMillis()));
-      // Invoke MDS to add entry.
-      mds.add(context, entry);
+      this.mds.add(opContext, makeEntry(account.getId(), query));
+      return true;
     } catch (OperationException e) {
-      Log.warn("Failed creating query {}. Reason : {}",
-               query, e.getMessage());
+      if (e.getStatus() == StatusCode.WRITE_CONFLICT) // entry already exists
+        return false;
+      Log.warn("Failed to create query {}. Reason: {}.", query, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
+  }
+
+  @Override
+  public boolean updateQuery(Account account, Query query)
+      throws MetadataServiceException, TException {
+
+    // Validate account and query
+    validateAccount(account);
+    validateQuery(query);
+
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account.getId(), query.getApplication());
+
+    // perform the update
+    try {
+      this.mds.update(opContext, makeEntry(account.getId(), query));
+      return true;
+    } catch (OperationException e) {
+      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
+        return false;
+      Log.warn("Failed to update query {}. Reason: {}.", query, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+  }
+
+  @Override
+  public boolean addDatasetToQuery(String account, String app,
+                                   String query, String dataset)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+
+    // create a context
+    OperationContext opContext = new OperationContext(account, app);
+
+    // try three times, give up after 3 write conflicts
+    for (int i = 0; i < 3; i++) {
+      // retrieve the meta data entry
+      MetaDataEntry entry;
+      try {
+        entry = this.mds.get(
+            opContext, account, app, FieldTypes.Query.ID, query);
+      } catch (OperationException e) {
+        Log.warn("Failed to get query for account {}. Reason: {}.",
+            account, e.getMessage());
+        throw new MetadataServiceException(e.getMessage());
+      }
+      if (entry == null) throw new
+          MetadataServiceException("No meta data found for query " + query);
+
+      String oldValue = entry.getTextField(FieldTypes.Query.DATASETS);
+      String newValue =
+          oldValue == null ? dataset + " " : oldValue + dataset + " ";
+
+      try {
+        mds.swapField(opContext, account, app, FieldTypes.Query.ID, query,
+            FieldTypes.Query.DATASETS, oldValue, newValue, -1);
+        return true;
+      } catch (OperationException e) {
+        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+          Log.warn("Failed to swap field for query {}. Reason: {}.", query,
+              e.getMessage());
+          throw new MetadataServiceException(e.getMessage());
+        }
+      }
+    }
+    // must be a write conflict, repeatedly
+    return false;
   }
 
   /**
@@ -844,31 +920,21 @@ public class MetadataService implements
     validateAccount(account);
     String accountId = account.getId();
 
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
+    // Create a context.
+    OperationContext context = new OperationContext(accountId);
 
-      // Invoke MDS to list streams for an account.
-      // NOTE: application is null and fields are null.
-      Collection<MetaDataEntry> queries =
-        mds.list(context, accountId, null, FieldTypes.Query.ID, null);
-      for(MetaDataEntry query : queries) {
-        Query rQuery = new Query(query.getId());
-        rQuery.setName(query.getTextField(FieldTypes.Query.NAME));
-        rQuery.setDescription(
-          query.getTextField(FieldTypes.Query.DESCRIPTION)
-        );
-        rQuery.setServiceName(
-          query.getTextField(FieldTypes.Query.SERVICE_NAME)
-        );
-        // More fields can be added later when we need them for now
-        // we just return id, name & description.
-        result.add(rQuery);
-      }
+    // query the meta data store
+    Collection<MetaDataEntry> queries;
+    try {
+      queries = mds.list(context, accountId, null, FieldTypes.Query.ID, null);
     } catch (OperationException e) {
-      Log.warn("Failed listing query for account {}. Reason : {}",
-               accountId, e.getMessage());
+      Log.warn("Failed to list queries for account {}. Reason: {}.",
+          account, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
+    }
+
+    for(MetaDataEntry entry : queries) {
+        result.add(makeQuery(entry));
     }
     return result;
   }
@@ -892,8 +958,12 @@ public class MetadataService implements
     String accountId = account.getId();
 
     String id = query.getId();
-    if(id == null || (id != null && id.isEmpty())) {
-      throw new MetadataServiceException("Application does not have an id.");
+    if(id == null || id.isEmpty()) {
+      throw new MetadataServiceException("Query does not have an id.");
+    }
+    String app = query.getApplication();
+    if(app == null || app.isEmpty()) {
+      throw new MetadataServiceException("Query does not have an app.");
     }
 
     try {
@@ -902,20 +972,12 @@ public class MetadataService implements
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
       MetaDataEntry entry =
-        mds.get(context, accountId, null,
-                FieldTypes.Application.ID, id);
+        mds.get(context, accountId, app, FieldTypes.Application.ID, id);
 
-      // Add description and name to stream and return.
       if(entry != null) {
-        query.setName(entry.getTextField(
-          FieldTypes.Query.NAME
-        ));
-        query.setDescription(entry.getTextField(
-          FieldTypes.Query.DESCRIPTION
-        ));
-        query.setServiceName(entry.getTextField(
-          FieldTypes.Query.SERVICE_NAME
-        ));
+        query = makeQuery(entry);
+      } else {
+        query.setExists(false);
       }
     } catch (OperationException e) {
       Log.warn("Failed to retrieve query {}. Reason : {}.",
@@ -1202,6 +1264,36 @@ public class MetadataService implements
   }
 
   @Override
+  public List<Query> getQueriesByApplication(String account,
+                                            String application)
+      throws MetadataServiceException, TException {
+
+    // Validate all account.
+    validateAccount(account);
+    // create a context
+    OperationContext opContext = new OperationContext(account, null);
+
+    // retrieve list of meta entries
+    List<MetaDataEntry> entries;
+    try {
+      entries = this.mds.list(
+          opContext, account, application, FieldTypes.Query.ID, null);
+    } catch (OperationException e) {
+      Log.warn("Failed to list flows for account {}. Reason: {}.",
+          account, e.getMessage());
+      throw new MetadataServiceException(e.getMessage());
+    }
+    if (entries == null || entries.isEmpty())
+      return Collections.emptyList();
+
+    // convert each meta entry into a Flow
+    List<Query> queries = Lists.newArrayList();
+    for (MetaDataEntry entry : entries)
+      queries.add(makeQuery(entry));
+    return queries;
+  }
+
+  @Override
   public List<Stream> getStreamsByApplication(String account, String app)
       throws MetadataServiceException, TException {
 
@@ -1308,6 +1400,24 @@ public class MetadataService implements
         flowsForDS.add(flow);
     }
     return flowsForDS;
+  }
+
+  @Override
+  public List<Query> getQueriesByDataset(String account, String dataset)
+      throws MetadataServiceException, TException {
+    // Validate all account.
+    validateAccount(account);
+
+    // first get all flows for the app
+    List<Query> queries = getQueries(new Account(account));
+
+    // select the flows that use the dataset
+    List<Query> queriesForDS = Lists.newLinkedList();
+    for (Query query : queries) {
+      if (query.getDatasets().contains(dataset))
+        queriesForDS.add(query);
+    }
+    return queriesForDS;
   }
 
   /**

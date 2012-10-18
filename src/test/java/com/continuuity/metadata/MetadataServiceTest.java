@@ -171,7 +171,7 @@ public class MetadataServiceTest {
 
   @Test
   public void testCreateQuery() throws Exception {
-    Query query = new Query("query1");
+    Query query = new Query("query1", "app1");
     query.setName("Query 1");
     query.setServiceName("myname");
     query.setDescription("test dataset");
@@ -185,7 +185,7 @@ public class MetadataServiceTest {
   public void testCreateDeleteListQuery() throws Exception {
     testCreateQuery(); // creates a dataset.
     // Now delete it.
-    Query query = new Query("query1");
+    Query query = new Query("query1", "app1");
     Assert.assertNotNull(mds.deleteQuery(account, query));
     List<Query> qlist = mds.getQueries(account);
     Assert.assertTrue(qlist.size() == 0);

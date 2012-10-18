@@ -56,9 +56,12 @@ struct Dataset {
  */
 struct Query {
    1: required string id,
-   2: optional string name,
-   3: optional string description,
-   4: optional string serviceName,
+   2: required string application,
+   3: optional string name,
+   4: optional string description,
+   5: optional string serviceName,
+   6: optional list<string> datasets,
+   7: optional bool exists = true,
 }
 
 /**
@@ -195,13 +198,34 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates an query if not exists.
+   * Creates a query if not exists.
    *
-   * @return true if created successfully or already exists, false otherwise.
+   * @return true if created successfully, false otherwise.
    * @throws MetadataServiceException thrown when there is issue with creating
    * metadata store entry for the query.
    */
   bool createQuery(1: Account account, 2: Query query)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Updates a query if it exists.
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * metadata store entry for the query.
+   */
+  bool updateQuery(1: Account account, 2: Query query)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Adds a dataset to the datasets of a query if it is not there yet
+   *
+   * @return true if updated successfully, false otherwise.
+   * @throws MetadataServiceException thrown when there is issue with updating
+   * metadata store entry for the flow.
+   */
+   bool addDatasetToQuery(1: string account, 2: string app, 3: string query,
+                          4: string dataset)
     throws (1: MetadataServiceException e),
 
   /**
@@ -311,11 +335,21 @@ service MetadataService {
  /**
   * Return a list of all flows of an application
   *
-  * @return list of all flows
+  * @return list of all flows of the app
   * @throws MetadataServiceException thrown when there is issue retrieving
   * a flow from metadata store.
   */
   list<Flow> getFlowsByApplication(1: string account, 2: string application)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return a list of all queries of an application
+  *
+  * @return list of all queries of the app
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a query from metadata store.
+  */
+  list<Query> getQueriesByApplication(1: string account, 2: string application)
     throws (1: MetadataServiceException e),
 
  /**
@@ -356,6 +390,16 @@ service MetadataService {
   * a flow from metadata store.
   */
   list<Flow> getFlowsByDataset(1: string account, 2: string dataset)
+    throws (1: MetadataServiceException e),
+
+ /**
+  * Return a list of all queries that use a dataset
+  *
+  * @return list of all queries using the dataset
+  * @throws MetadataServiceException thrown when there is issue retrieving
+  * a query from metadata store.
+  */
+  list<Query> getQueriesByDataset(1: string account, 2: string dataset)
     throws (1: MetadataServiceException e),
 
 }

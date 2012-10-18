@@ -178,9 +178,9 @@ public class MetadataService {
     public Application getApplication(Account account, Application application) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
-     * Creates an query if not exists.
+     * Creates a query if not exists.
      * 
-     * @return true if created successfully or already exists, false otherwise.
+     * @return true if created successfully, false otherwise.
      * @throws MetadataServiceException thrown when there is issue with creating
      * metadata store entry for the query.
      * 
@@ -188,6 +188,32 @@ public class MetadataService {
      * @param query
      */
     public boolean createQuery(Account account, Query query) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Updates a query if it exists.
+     * 
+     * @return true if updated successfully, false otherwise.
+     * @throws MetadataServiceException thrown when there is issue with creating
+     * metadata store entry for the query.
+     * 
+     * @param account
+     * @param query
+     */
+    public boolean updateQuery(Account account, Query query) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Adds a dataset to the datasets of a query if it is not there yet
+     * 
+     * @return true if updated successfully, false otherwise.
+     * @throws MetadataServiceException thrown when there is issue with updating
+     * metadata store entry for the flow.
+     * 
+     * @param account
+     * @param app
+     * @param query
+     * @param dataset
+     */
+    public boolean addDatasetToQuery(String account, String app, String query, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
      * Deletes an query if exists.
@@ -318,7 +344,7 @@ public class MetadataService {
     /**
      * Return a list of all flows of an application
      * 
-     * @return list of all flows
+     * @return list of all flows of the app
      * @throws MetadataServiceException thrown when there is issue retrieving
      * a flow from metadata store.
      * 
@@ -326,6 +352,18 @@ public class MetadataService {
      * @param application
      */
     public List<Flow> getFlowsByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException;
+
+    /**
+     * Return a list of all queries of an application
+     * 
+     * @return list of all queries of the app
+     * @throws MetadataServiceException thrown when there is issue retrieving
+     * a query from metadata store.
+     * 
+     * @param account
+     * @param application
+     */
+    public List<Query> getQueriesByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException;
 
     /**
      * Return a list of all streams of an application
@@ -375,6 +413,18 @@ public class MetadataService {
      */
     public List<Flow> getFlowsByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
 
+    /**
+     * Return a list of all queries that use a dataset
+     * 
+     * @return list of all queries using the dataset
+     * @throws MetadataServiceException thrown when there is issue retrieving
+     * a query from metadata store.
+     * 
+     * @param account
+     * @param dataset
+     */
+    public List<Query> getQueriesByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException;
+
   }
 
   public interface AsyncIface {
@@ -405,6 +455,10 @@ public class MetadataService {
 
     public void createQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.createQuery_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void updateQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.updateQuery_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void addDatasetToQuery(String account, String app, String query, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.addDatasetToQuery_call> resultHandler) throws org.apache.thrift.TException;
+
     public void deleteQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deleteQuery_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getQueries(Account account, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueries_call> resultHandler) throws org.apache.thrift.TException;
@@ -427,6 +481,8 @@ public class MetadataService {
 
     public void getFlowsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowsByApplication_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void getQueriesByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueriesByApplication_call> resultHandler) throws org.apache.thrift.TException;
+
     public void getStreamsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getStreamsByApplication_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getDatasetsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getDatasetsByApplication_call> resultHandler) throws org.apache.thrift.TException;
@@ -434,6 +490,8 @@ public class MetadataService {
     public void getFlowsByStream(String account, String stream, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowsByStream_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getFlowsByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowsByDataset_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getQueriesByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueriesByDataset_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -805,6 +863,62 @@ public class MetadataService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "createQuery failed: unknown result");
     }
 
+    public boolean updateQuery(Account account, Query query) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_updateQuery(account, query);
+      return recv_updateQuery();
+    }
+
+    public void send_updateQuery(Account account, Query query) throws org.apache.thrift.TException
+    {
+      updateQuery_args args = new updateQuery_args();
+      args.setAccount(account);
+      args.setQuery(query);
+      sendBase("updateQuery", args);
+    }
+
+    public boolean recv_updateQuery() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      updateQuery_result result = new updateQuery_result();
+      receiveBase(result, "updateQuery");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "updateQuery failed: unknown result");
+    }
+
+    public boolean addDatasetToQuery(String account, String app, String query, String dataset) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_addDatasetToQuery(account, app, query, dataset);
+      return recv_addDatasetToQuery();
+    }
+
+    public void send_addDatasetToQuery(String account, String app, String query, String dataset) throws org.apache.thrift.TException
+    {
+      addDatasetToQuery_args args = new addDatasetToQuery_args();
+      args.setAccount(account);
+      args.setApp(app);
+      args.setQuery(query);
+      args.setDataset(dataset);
+      sendBase("addDatasetToQuery", args);
+    }
+
+    public boolean recv_addDatasetToQuery() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      addDatasetToQuery_result result = new addDatasetToQuery_result();
+      receiveBase(result, "addDatasetToQuery");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "addDatasetToQuery failed: unknown result");
+    }
+
     public boolean deleteQuery(Account account, Query query) throws MetadataServiceException, org.apache.thrift.TException
     {
       send_deleteQuery(account, query);
@@ -1106,6 +1220,33 @@ public class MetadataService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowsByApplication failed: unknown result");
     }
 
+    public List<Query> getQueriesByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getQueriesByApplication(account, application);
+      return recv_getQueriesByApplication();
+    }
+
+    public void send_getQueriesByApplication(String account, String application) throws org.apache.thrift.TException
+    {
+      getQueriesByApplication_args args = new getQueriesByApplication_args();
+      args.setAccount(account);
+      args.setApplication(application);
+      sendBase("getQueriesByApplication", args);
+    }
+
+    public List<Query> recv_getQueriesByApplication() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getQueriesByApplication_result result = new getQueriesByApplication_result();
+      receiveBase(result, "getQueriesByApplication");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueriesByApplication failed: unknown result");
+    }
+
     public List<Stream> getStreamsByApplication(String account, String application) throws MetadataServiceException, org.apache.thrift.TException
     {
       send_getStreamsByApplication(account, application);
@@ -1212,6 +1353,33 @@ public class MetadataService {
         throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowsByDataset failed: unknown result");
+    }
+
+    public List<Query> getQueriesByDataset(String account, String dataset) throws MetadataServiceException, org.apache.thrift.TException
+    {
+      send_getQueriesByDataset(account, dataset);
+      return recv_getQueriesByDataset();
+    }
+
+    public void send_getQueriesByDataset(String account, String dataset) throws org.apache.thrift.TException
+    {
+      getQueriesByDataset_args args = new getQueriesByDataset_args();
+      args.setAccount(account);
+      args.setDataset(dataset);
+      sendBase("getQueriesByDataset", args);
+    }
+
+    public List<Query> recv_getQueriesByDataset() throws MetadataServiceException, org.apache.thrift.TException
+    {
+      getQueriesByDataset_result result = new getQueriesByDataset_result();
+      receiveBase(result, "getQueriesByDataset");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueriesByDataset failed: unknown result");
     }
 
   }
@@ -1678,6 +1846,82 @@ public class MetadataService {
       }
     }
 
+    public void updateQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<updateQuery_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      updateQuery_call method_call = new updateQuery_call(account, query, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class updateQuery_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private Account account;
+      private Query query;
+      public updateQuery_call(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<updateQuery_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.query = query;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("updateQuery", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        updateQuery_args args = new updateQuery_args();
+        args.setAccount(account);
+        args.setQuery(query);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_updateQuery();
+      }
+    }
+
+    public void addDatasetToQuery(String account, String app, String query, String dataset, org.apache.thrift.async.AsyncMethodCallback<addDatasetToQuery_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      addDatasetToQuery_call method_call = new addDatasetToQuery_call(account, app, query, dataset, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class addDatasetToQuery_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String app;
+      private String query;
+      private String dataset;
+      public addDatasetToQuery_call(String account, String app, String query, String dataset, org.apache.thrift.async.AsyncMethodCallback<addDatasetToQuery_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.app = app;
+        this.query = query;
+        this.dataset = dataset;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("addDatasetToQuery", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        addDatasetToQuery_args args = new addDatasetToQuery_args();
+        args.setAccount(account);
+        args.setApp(app);
+        args.setQuery(query);
+        args.setDataset(dataset);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_addDatasetToQuery();
+      }
+    }
+
     public void deleteQuery(Account account, Query query, org.apache.thrift.async.AsyncMethodCallback<deleteQuery_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       deleteQuery_call method_call = new deleteQuery_call(account, query, resultHandler, this, ___protocolFactory, ___transport);
@@ -2075,6 +2319,41 @@ public class MetadataService {
       }
     }
 
+    public void getQueriesByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getQueriesByApplication_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getQueriesByApplication_call method_call = new getQueriesByApplication_call(account, application, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getQueriesByApplication_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String application;
+      public getQueriesByApplication_call(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getQueriesByApplication_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.application = application;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getQueriesByApplication", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getQueriesByApplication_args args = new getQueriesByApplication_args();
+        args.setAccount(account);
+        args.setApplication(application);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Query> getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getQueriesByApplication();
+      }
+    }
+
     public void getStreamsByApplication(String account, String application, org.apache.thrift.async.AsyncMethodCallback<getStreamsByApplication_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getStreamsByApplication_call method_call = new getStreamsByApplication_call(account, application, resultHandler, this, ___protocolFactory, ___transport);
@@ -2215,6 +2494,41 @@ public class MetadataService {
       }
     }
 
+    public void getQueriesByDataset(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<getQueriesByDataset_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getQueriesByDataset_call method_call = new getQueriesByDataset_call(account, dataset, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getQueriesByDataset_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String account;
+      private String dataset;
+      public getQueriesByDataset_call(String account, String dataset, org.apache.thrift.async.AsyncMethodCallback<getQueriesByDataset_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.account = account;
+        this.dataset = dataset;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getQueriesByDataset", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getQueriesByDataset_args args = new getQueriesByDataset_args();
+        args.setAccount(account);
+        args.setDataset(dataset);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Query> getResult() throws MetadataServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getQueriesByDataset();
+      }
+    }
+
   }
 
   public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor<I> implements org.apache.thrift.TProcessor {
@@ -2241,6 +2555,8 @@ public class MetadataService {
       processMap.put("getApplications", new getApplications());
       processMap.put("getApplication", new getApplication());
       processMap.put("createQuery", new createQuery());
+      processMap.put("updateQuery", new updateQuery());
+      processMap.put("addDatasetToQuery", new addDatasetToQuery());
       processMap.put("deleteQuery", new deleteQuery());
       processMap.put("getQueries", new getQueries());
       processMap.put("getQuery", new getQuery());
@@ -2252,10 +2568,12 @@ public class MetadataService {
       processMap.put("getFlows", new getFlows());
       processMap.put("getFlow", new getFlow());
       processMap.put("getFlowsByApplication", new getFlowsByApplication());
+      processMap.put("getQueriesByApplication", new getQueriesByApplication());
       processMap.put("getStreamsByApplication", new getStreamsByApplication());
       processMap.put("getDatasetsByApplication", new getDatasetsByApplication());
       processMap.put("getFlowsByStream", new getFlowsByStream());
       processMap.put("getFlowsByDataset", new getFlowsByDataset());
+      processMap.put("getQueriesByDataset", new getQueriesByDataset());
       return processMap;
     }
 
@@ -2526,6 +2844,48 @@ public class MetadataService {
       }
     }
 
+    private static class updateQuery<I extends Iface> extends org.apache.thrift.ProcessFunction<I, updateQuery_args> {
+      public updateQuery() {
+        super("updateQuery");
+      }
+
+      protected updateQuery_args getEmptyArgsInstance() {
+        return new updateQuery_args();
+      }
+
+      protected updateQuery_result getResult(I iface, updateQuery_args args) throws org.apache.thrift.TException {
+        updateQuery_result result = new updateQuery_result();
+        try {
+          result.success = iface.updateQuery(args.account, args.query);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class addDatasetToQuery<I extends Iface> extends org.apache.thrift.ProcessFunction<I, addDatasetToQuery_args> {
+      public addDatasetToQuery() {
+        super("addDatasetToQuery");
+      }
+
+      protected addDatasetToQuery_args getEmptyArgsInstance() {
+        return new addDatasetToQuery_args();
+      }
+
+      protected addDatasetToQuery_result getResult(I iface, addDatasetToQuery_args args) throws org.apache.thrift.TException {
+        addDatasetToQuery_result result = new addDatasetToQuery_result();
+        try {
+          result.success = iface.addDatasetToQuery(args.account, args.app, args.query, args.dataset);
+          result.setSuccessIsSet(true);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class deleteQuery<I extends Iface> extends org.apache.thrift.ProcessFunction<I, deleteQuery_args> {
       public deleteQuery() {
         super("deleteQuery");
@@ -2752,6 +3112,26 @@ public class MetadataService {
       }
     }
 
+    private static class getQueriesByApplication<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getQueriesByApplication_args> {
+      public getQueriesByApplication() {
+        super("getQueriesByApplication");
+      }
+
+      protected getQueriesByApplication_args getEmptyArgsInstance() {
+        return new getQueriesByApplication_args();
+      }
+
+      protected getQueriesByApplication_result getResult(I iface, getQueriesByApplication_args args) throws org.apache.thrift.TException {
+        getQueriesByApplication_result result = new getQueriesByApplication_result();
+        try {
+          result.success = iface.getQueriesByApplication(args.account, args.application);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class getStreamsByApplication<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getStreamsByApplication_args> {
       public getStreamsByApplication() {
         super("getStreamsByApplication");
@@ -2825,6 +3205,26 @@ public class MetadataService {
         getFlowsByDataset_result result = new getFlowsByDataset_result();
         try {
           result.success = iface.getFlowsByDataset(args.account, args.dataset);
+        } catch (MetadataServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getQueriesByDataset<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getQueriesByDataset_args> {
+      public getQueriesByDataset() {
+        super("getQueriesByDataset");
+      }
+
+      protected getQueriesByDataset_args getEmptyArgsInstance() {
+        return new getQueriesByDataset_args();
+      }
+
+      protected getQueriesByDataset_result getResult(I iface, getQueriesByDataset_args args) throws org.apache.thrift.TException {
+        getQueriesByDataset_result result = new getQueriesByDataset_result();
+        try {
+          result.success = iface.getQueriesByDataset(args.account, args.dataset);
         } catch (MetadataServiceException e) {
           result.e = e;
         }
@@ -5442,14 +5842,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
-                  struct.success = new ArrayList<Stream>(_list16.size);
-                  for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+                  org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
+                  struct.success = new ArrayList<Stream>(_list24.size);
+                  for (int _i25 = 0; _i25 < _list24.size; ++_i25)
                   {
-                    Stream _elem18; // required
-                    _elem18 = new Stream();
-                    _elem18.read(iprot);
-                    struct.success.add(_elem18);
+                    Stream _elem26; // required
+                    _elem26 = new Stream();
+                    _elem26.read(iprot);
+                    struct.success.add(_elem26);
                   }
                   iprot.readListEnd();
                 }
@@ -5484,9 +5884,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Stream _iter19 : struct.success)
+            for (Stream _iter27 : struct.success)
             {
-              _iter19.write(oprot);
+              _iter27.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -5525,9 +5925,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Stream _iter20 : struct.success)
+            for (Stream _iter28 : struct.success)
             {
-              _iter20.write(oprot);
+              _iter28.write(oprot);
             }
           }
         }
@@ -5542,14 +5942,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Stream>(_list21.size);
-            for (int _i22 = 0; _i22 < _list21.size; ++_i22)
+            org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Stream>(_list29.size);
+            for (int _i30 = 0; _i30 < _list29.size; ++_i30)
             {
-              Stream _elem23; // required
-              _elem23 = new Stream();
-              _elem23.read(iprot);
-              struct.success.add(_elem23);
+              Stream _elem31; // required
+              _elem31 = new Stream();
+              _elem31.read(iprot);
+              struct.success.add(_elem31);
             }
           }
           struct.setSuccessIsSet(true);
@@ -9102,14 +9502,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
-                  struct.success = new ArrayList<Dataset>(_list24.size);
-                  for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                  org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
+                  struct.success = new ArrayList<Dataset>(_list32.size);
+                  for (int _i33 = 0; _i33 < _list32.size; ++_i33)
                   {
-                    Dataset _elem26; // required
-                    _elem26 = new Dataset();
-                    _elem26.read(iprot);
-                    struct.success.add(_elem26);
+                    Dataset _elem34; // required
+                    _elem34 = new Dataset();
+                    _elem34.read(iprot);
+                    struct.success.add(_elem34);
                   }
                   iprot.readListEnd();
                 }
@@ -9144,9 +9544,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Dataset _iter27 : struct.success)
+            for (Dataset _iter35 : struct.success)
             {
-              _iter27.write(oprot);
+              _iter35.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -9185,9 +9585,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Dataset _iter28 : struct.success)
+            for (Dataset _iter36 : struct.success)
             {
-              _iter28.write(oprot);
+              _iter36.write(oprot);
             }
           }
         }
@@ -9202,14 +9602,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Dataset>(_list29.size);
-            for (int _i30 = 0; _i30 < _list29.size; ++_i30)
+            org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Dataset>(_list37.size);
+            for (int _i38 = 0; _i38 < _list37.size; ++_i38)
             {
-              Dataset _elem31; // required
-              _elem31 = new Dataset();
-              _elem31.read(iprot);
-              struct.success.add(_elem31);
+              Dataset _elem39; // required
+              _elem39 = new Dataset();
+              _elem39.read(iprot);
+              struct.success.add(_elem39);
             }
           }
           struct.setSuccessIsSet(true);
@@ -12762,14 +13162,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
-                  struct.success = new ArrayList<Application>(_list32.size);
-                  for (int _i33 = 0; _i33 < _list32.size; ++_i33)
+                  org.apache.thrift.protocol.TList _list40 = iprot.readListBegin();
+                  struct.success = new ArrayList<Application>(_list40.size);
+                  for (int _i41 = 0; _i41 < _list40.size; ++_i41)
                   {
-                    Application _elem34; // required
-                    _elem34 = new Application();
-                    _elem34.read(iprot);
-                    struct.success.add(_elem34);
+                    Application _elem42; // required
+                    _elem42 = new Application();
+                    _elem42.read(iprot);
+                    struct.success.add(_elem42);
                   }
                   iprot.readListEnd();
                 }
@@ -12804,9 +13204,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Application _iter35 : struct.success)
+            for (Application _iter43 : struct.success)
             {
-              _iter35.write(oprot);
+              _iter43.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -12845,9 +13245,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Application _iter36 : struct.success)
+            for (Application _iter44 : struct.success)
             {
-              _iter36.write(oprot);
+              _iter44.write(oprot);
             }
           }
         }
@@ -12862,14 +13262,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Application>(_list37.size);
-            for (int _i38 = 0; _i38 < _list37.size; ++_i38)
+            org.apache.thrift.protocol.TList _list45 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Application>(_list45.size);
+            for (int _i46 = 0; _i46 < _list45.size; ++_i46)
             {
-              Application _elem39; // required
-              _elem39 = new Application();
-              _elem39.read(iprot);
-              struct.success.add(_elem39);
+              Application _elem47; // required
+              _elem47 = new Application();
+              _elem47.read(iprot);
+              struct.success.add(_elem47);
             }
           }
           struct.setSuccessIsSet(true);
@@ -14741,6 +15141,2064 @@ public class MetadataService {
 
   }
 
+  public static class updateQuery_args implements org.apache.thrift.TBase<updateQuery_args, updateQuery_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateQuery_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField QUERY_FIELD_DESC = new org.apache.thrift.protocol.TField("query", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new updateQuery_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new updateQuery_argsTupleSchemeFactory());
+    }
+
+    private Account account; // required
+    private Query query; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      QUERY((short)2, "query");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // QUERY
+            return QUERY;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Account.class)));
+      tmpMap.put(_Fields.QUERY, new org.apache.thrift.meta_data.FieldMetaData("query", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Query.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateQuery_args.class, metaDataMap);
+    }
+
+    public updateQuery_args() {
+    }
+
+    public updateQuery_args(
+      Account account,
+      Query query)
+    {
+      this();
+      this.account = account;
+      this.query = query;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public updateQuery_args(updateQuery_args other) {
+      if (other.isSetAccount()) {
+        this.account = new Account(other.account);
+      }
+      if (other.isSetQuery()) {
+        this.query = new Query(other.query);
+      }
+    }
+
+    public updateQuery_args deepCopy() {
+      return new updateQuery_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.query = null;
+    }
+
+    public Account getAccount() {
+      return this.account;
+    }
+
+    public void setAccount(Account account) {
+      this.account = account;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public Query getQuery() {
+      return this.query;
+    }
+
+    public void setQuery(Query query) {
+      this.query = query;
+    }
+
+    public void unsetQuery() {
+      this.query = null;
+    }
+
+    /** Returns true if field query is set (has been assigned a value) and false otherwise */
+    public boolean isSetQuery() {
+      return this.query != null;
+    }
+
+    public void setQueryIsSet(boolean value) {
+      if (!value) {
+        this.query = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((Account)value);
+        }
+        break;
+
+      case QUERY:
+        if (value == null) {
+          unsetQuery();
+        } else {
+          setQuery((Query)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case QUERY:
+        return getQuery();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case QUERY:
+        return isSetQuery();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof updateQuery_args)
+        return this.equals((updateQuery_args)that);
+      return false;
+    }
+
+    public boolean equals(updateQuery_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_query = true && this.isSetQuery();
+      boolean that_present_query = true && that.isSetQuery();
+      if (this_present_query || that_present_query) {
+        if (!(this_present_query && that_present_query))
+          return false;
+        if (!this.query.equals(that.query))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(updateQuery_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      updateQuery_args typedOther = (updateQuery_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetQuery()).compareTo(typedOther.isSetQuery());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetQuery()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.query, typedOther.query);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("updateQuery_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("query:");
+      if (this.query == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.query);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class updateQuery_argsStandardSchemeFactory implements SchemeFactory {
+      public updateQuery_argsStandardScheme getScheme() {
+        return new updateQuery_argsStandardScheme();
+      }
+    }
+
+    private static class updateQuery_argsStandardScheme extends StandardScheme<updateQuery_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, updateQuery_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.account = new Account();
+                struct.account.read(iprot);
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // QUERY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.query = new Query();
+                struct.query.read(iprot);
+                struct.setQueryIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, updateQuery_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          struct.account.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.query != null) {
+          oprot.writeFieldBegin(QUERY_FIELD_DESC);
+          struct.query.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class updateQuery_argsTupleSchemeFactory implements SchemeFactory {
+      public updateQuery_argsTupleScheme getScheme() {
+        return new updateQuery_argsTupleScheme();
+      }
+    }
+
+    private static class updateQuery_argsTupleScheme extends TupleScheme<updateQuery_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, updateQuery_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetQuery()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          struct.account.write(oprot);
+        }
+        if (struct.isSetQuery()) {
+          struct.query.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, updateQuery_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = new Account();
+          struct.account.read(iprot);
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.query = new Query();
+          struct.query.read(iprot);
+          struct.setQueryIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class updateQuery_result implements org.apache.thrift.TBase<updateQuery_result, updateQuery_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("updateQuery_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new updateQuery_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new updateQuery_resultTupleSchemeFactory());
+    }
+
+    private boolean success; // required
+    private MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(updateQuery_result.class, metaDataMap);
+    }
+
+    public updateQuery_result() {
+    }
+
+    public updateQuery_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public updateQuery_result(updateQuery_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public updateQuery_result deepCopy() {
+      return new updateQuery_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetadataServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof updateQuery_result)
+        return this.equals((updateQuery_result)that);
+      return false;
+    }
+
+    public boolean equals(updateQuery_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(updateQuery_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      updateQuery_result typedOther = (updateQuery_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("updateQuery_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class updateQuery_resultStandardSchemeFactory implements SchemeFactory {
+      public updateQuery_resultStandardScheme getScheme() {
+        return new updateQuery_resultStandardScheme();
+      }
+    }
+
+    private static class updateQuery_resultStandardScheme extends StandardScheme<updateQuery_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, updateQuery_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, updateQuery_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class updateQuery_resultTupleSchemeFactory implements SchemeFactory {
+      public updateQuery_resultTupleScheme getScheme() {
+        return new updateQuery_resultTupleScheme();
+      }
+    }
+
+    private static class updateQuery_resultTupleScheme extends TupleScheme<updateQuery_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, updateQuery_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, updateQuery_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class addDatasetToQuery_args implements org.apache.thrift.TBase<addDatasetToQuery_args, addDatasetToQuery_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addDatasetToQuery_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APP_FIELD_DESC = new org.apache.thrift.protocol.TField("app", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField QUERY_FIELD_DESC = new org.apache.thrift.protocol.TField("query", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField DATASET_FIELD_DESC = new org.apache.thrift.protocol.TField("dataset", org.apache.thrift.protocol.TType.STRING, (short)4);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new addDatasetToQuery_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new addDatasetToQuery_argsTupleSchemeFactory());
+    }
+
+    private String account; // required
+    private String app; // required
+    private String query; // required
+    private String dataset; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      APP((short)2, "app"),
+      QUERY((short)3, "query"),
+      DATASET((short)4, "dataset");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // APP
+            return APP;
+          case 3: // QUERY
+            return QUERY;
+          case 4: // DATASET
+            return DATASET;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APP, new org.apache.thrift.meta_data.FieldMetaData("app", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.QUERY, new org.apache.thrift.meta_data.FieldMetaData("query", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.DATASET, new org.apache.thrift.meta_data.FieldMetaData("dataset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addDatasetToQuery_args.class, metaDataMap);
+    }
+
+    public addDatasetToQuery_args() {
+    }
+
+    public addDatasetToQuery_args(
+      String account,
+      String app,
+      String query,
+      String dataset)
+    {
+      this();
+      this.account = account;
+      this.app = app;
+      this.query = query;
+      this.dataset = dataset;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public addDatasetToQuery_args(addDatasetToQuery_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetApp()) {
+        this.app = other.app;
+      }
+      if (other.isSetQuery()) {
+        this.query = other.query;
+      }
+      if (other.isSetDataset()) {
+        this.dataset = other.dataset;
+      }
+    }
+
+    public addDatasetToQuery_args deepCopy() {
+      return new addDatasetToQuery_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.app = null;
+      this.query = null;
+      this.dataset = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public void setAccount(String account) {
+      this.account = account;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getApp() {
+      return this.app;
+    }
+
+    public void setApp(String app) {
+      this.app = app;
+    }
+
+    public void unsetApp() {
+      this.app = null;
+    }
+
+    /** Returns true if field app is set (has been assigned a value) and false otherwise */
+    public boolean isSetApp() {
+      return this.app != null;
+    }
+
+    public void setAppIsSet(boolean value) {
+      if (!value) {
+        this.app = null;
+      }
+    }
+
+    public String getQuery() {
+      return this.query;
+    }
+
+    public void setQuery(String query) {
+      this.query = query;
+    }
+
+    public void unsetQuery() {
+      this.query = null;
+    }
+
+    /** Returns true if field query is set (has been assigned a value) and false otherwise */
+    public boolean isSetQuery() {
+      return this.query != null;
+    }
+
+    public void setQueryIsSet(boolean value) {
+      if (!value) {
+        this.query = null;
+      }
+    }
+
+    public String getDataset() {
+      return this.dataset;
+    }
+
+    public void setDataset(String dataset) {
+      this.dataset = dataset;
+    }
+
+    public void unsetDataset() {
+      this.dataset = null;
+    }
+
+    /** Returns true if field dataset is set (has been assigned a value) and false otherwise */
+    public boolean isSetDataset() {
+      return this.dataset != null;
+    }
+
+    public void setDatasetIsSet(boolean value) {
+      if (!value) {
+        this.dataset = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case APP:
+        if (value == null) {
+          unsetApp();
+        } else {
+          setApp((String)value);
+        }
+        break;
+
+      case QUERY:
+        if (value == null) {
+          unsetQuery();
+        } else {
+          setQuery((String)value);
+        }
+        break;
+
+      case DATASET:
+        if (value == null) {
+          unsetDataset();
+        } else {
+          setDataset((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case APP:
+        return getApp();
+
+      case QUERY:
+        return getQuery();
+
+      case DATASET:
+        return getDataset();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case APP:
+        return isSetApp();
+      case QUERY:
+        return isSetQuery();
+      case DATASET:
+        return isSetDataset();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof addDatasetToQuery_args)
+        return this.equals((addDatasetToQuery_args)that);
+      return false;
+    }
+
+    public boolean equals(addDatasetToQuery_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_app = true && this.isSetApp();
+      boolean that_present_app = true && that.isSetApp();
+      if (this_present_app || that_present_app) {
+        if (!(this_present_app && that_present_app))
+          return false;
+        if (!this.app.equals(that.app))
+          return false;
+      }
+
+      boolean this_present_query = true && this.isSetQuery();
+      boolean that_present_query = true && that.isSetQuery();
+      if (this_present_query || that_present_query) {
+        if (!(this_present_query && that_present_query))
+          return false;
+        if (!this.query.equals(that.query))
+          return false;
+      }
+
+      boolean this_present_dataset = true && this.isSetDataset();
+      boolean that_present_dataset = true && that.isSetDataset();
+      if (this_present_dataset || that_present_dataset) {
+        if (!(this_present_dataset && that_present_dataset))
+          return false;
+        if (!this.dataset.equals(that.dataset))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_app = true && (isSetApp());
+      builder.append(present_app);
+      if (present_app)
+        builder.append(app);
+
+      boolean present_query = true && (isSetQuery());
+      builder.append(present_query);
+      if (present_query)
+        builder.append(query);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(addDatasetToQuery_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      addDatasetToQuery_args typedOther = (addDatasetToQuery_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApp()).compareTo(typedOther.isSetApp());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApp()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.app, typedOther.app);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetQuery()).compareTo(typedOther.isSetQuery());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetQuery()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.query, typedOther.query);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetDataset()).compareTo(typedOther.isSetDataset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetDataset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dataset, typedOther.dataset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("addDatasetToQuery_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("app:");
+      if (this.app == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.app);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("query:");
+      if (this.query == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.query);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("dataset:");
+      if (this.dataset == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.dataset);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class addDatasetToQuery_argsStandardSchemeFactory implements SchemeFactory {
+      public addDatasetToQuery_argsStandardScheme getScheme() {
+        return new addDatasetToQuery_argsStandardScheme();
+      }
+    }
+
+    private static class addDatasetToQuery_argsStandardScheme extends StandardScheme<addDatasetToQuery_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addDatasetToQuery_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APP
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.app = iprot.readString();
+                struct.setAppIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // QUERY
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.query = iprot.readString();
+                struct.setQueryIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // DATASET
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.dataset = iprot.readString();
+                struct.setDatasetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addDatasetToQuery_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.app != null) {
+          oprot.writeFieldBegin(APP_FIELD_DESC);
+          oprot.writeString(struct.app);
+          oprot.writeFieldEnd();
+        }
+        if (struct.query != null) {
+          oprot.writeFieldBegin(QUERY_FIELD_DESC);
+          oprot.writeString(struct.query);
+          oprot.writeFieldEnd();
+        }
+        if (struct.dataset != null) {
+          oprot.writeFieldBegin(DATASET_FIELD_DESC);
+          oprot.writeString(struct.dataset);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class addDatasetToQuery_argsTupleSchemeFactory implements SchemeFactory {
+      public addDatasetToQuery_argsTupleScheme getScheme() {
+        return new addDatasetToQuery_argsTupleScheme();
+      }
+    }
+
+    private static class addDatasetToQuery_argsTupleScheme extends TupleScheme<addDatasetToQuery_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, addDatasetToQuery_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApp()) {
+          optionals.set(1);
+        }
+        if (struct.isSetQuery()) {
+          optionals.set(2);
+        }
+        if (struct.isSetDataset()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetApp()) {
+          oprot.writeString(struct.app);
+        }
+        if (struct.isSetQuery()) {
+          oprot.writeString(struct.query);
+        }
+        if (struct.isSetDataset()) {
+          oprot.writeString(struct.dataset);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, addDatasetToQuery_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(4);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.app = iprot.readString();
+          struct.setAppIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.query = iprot.readString();
+          struct.setQueryIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.dataset = iprot.readString();
+          struct.setDatasetIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class addDatasetToQuery_result implements org.apache.thrift.TBase<addDatasetToQuery_result, addDatasetToQuery_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addDatasetToQuery_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new addDatasetToQuery_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new addDatasetToQuery_resultTupleSchemeFactory());
+    }
+
+    private boolean success; // required
+    private MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addDatasetToQuery_result.class, metaDataMap);
+    }
+
+    public addDatasetToQuery_result() {
+    }
+
+    public addDatasetToQuery_result(
+      boolean success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public addDatasetToQuery_result(addDatasetToQuery_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public addDatasetToQuery_result deepCopy() {
+      return new addDatasetToQuery_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetadataServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return Boolean.valueOf(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof addDatasetToQuery_result)
+        return this.equals((addDatasetToQuery_result)that);
+      return false;
+    }
+
+    public boolean equals(addDatasetToQuery_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true;
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(addDatasetToQuery_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      addDatasetToQuery_result typedOther = (addDatasetToQuery_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("addDatasetToQuery_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class addDatasetToQuery_resultStandardSchemeFactory implements SchemeFactory {
+      public addDatasetToQuery_resultStandardScheme getScheme() {
+        return new addDatasetToQuery_resultStandardScheme();
+      }
+    }
+
+    private static class addDatasetToQuery_resultStandardScheme extends StandardScheme<addDatasetToQuery_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addDatasetToQuery_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.success = iprot.readBool();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addDatasetToQuery_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(struct.success);
+        oprot.writeFieldEnd();
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class addDatasetToQuery_resultTupleSchemeFactory implements SchemeFactory {
+      public addDatasetToQuery_resultTupleScheme getScheme() {
+        return new addDatasetToQuery_resultTupleScheme();
+      }
+    }
+
+    private static class addDatasetToQuery_resultTupleScheme extends TupleScheme<addDatasetToQuery_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, addDatasetToQuery_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeBool(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, addDatasetToQuery_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readBool();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
   public static class deleteQuery_args implements org.apache.thrift.TBase<deleteQuery_args, deleteQuery_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deleteQuery_args");
 
@@ -16422,14 +18880,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list40 = iprot.readListBegin();
-                  struct.success = new ArrayList<Query>(_list40.size);
-                  for (int _i41 = 0; _i41 < _list40.size; ++_i41)
+                  org.apache.thrift.protocol.TList _list48 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list48.size);
+                  for (int _i49 = 0; _i49 < _list48.size; ++_i49)
                   {
-                    Query _elem42; // required
-                    _elem42 = new Query();
-                    _elem42.read(iprot);
-                    struct.success.add(_elem42);
+                    Query _elem50; // required
+                    _elem50 = new Query();
+                    _elem50.read(iprot);
+                    struct.success.add(_elem50);
                   }
                   iprot.readListEnd();
                 }
@@ -16464,9 +18922,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Query _iter43 : struct.success)
+            for (Query _iter51 : struct.success)
             {
-              _iter43.write(oprot);
+              _iter51.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -16505,9 +18963,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Query _iter44 : struct.success)
+            for (Query _iter52 : struct.success)
             {
-              _iter44.write(oprot);
+              _iter52.write(oprot);
             }
           }
         }
@@ -16522,14 +18980,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list45 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Query>(_list45.size);
-            for (int _i46 = 0; _i46 < _list45.size; ++_i46)
+            org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list53.size);
+            for (int _i54 = 0; _i54 < _list53.size; ++_i54)
             {
-              Query _elem47; // required
-              _elem47 = new Query();
-              _elem47.read(iprot);
-              struct.success.add(_elem47);
+              Query _elem55; // required
+              _elem55 = new Query();
+              _elem55.read(iprot);
+              struct.success.add(_elem55);
             }
           }
           struct.setSuccessIsSet(true);
@@ -23365,14 +25823,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list48 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list48.size);
-                  for (int _i49 = 0; _i49 < _list48.size; ++_i49)
+                  org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list56.size);
+                  for (int _i57 = 0; _i57 < _list56.size; ++_i57)
                   {
-                    Flow _elem50; // required
-                    _elem50 = new Flow();
-                    _elem50.read(iprot);
-                    struct.success.add(_elem50);
+                    Flow _elem58; // required
+                    _elem58 = new Flow();
+                    _elem58.read(iprot);
+                    struct.success.add(_elem58);
                   }
                   iprot.readListEnd();
                 }
@@ -23407,9 +25865,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter51 : struct.success)
+            for (Flow _iter59 : struct.success)
             {
-              _iter51.write(oprot);
+              _iter59.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -23448,9 +25906,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter52 : struct.success)
+            for (Flow _iter60 : struct.success)
             {
-              _iter52.write(oprot);
+              _iter60.write(oprot);
             }
           }
         }
@@ -23465,14 +25923,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list53.size);
-            for (int _i54 = 0; _i54 < _list53.size; ++_i54)
+            org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list61.size);
+            for (int _i62 = 0; _i62 < _list61.size; ++_i62)
             {
-              Flow _elem55; // required
-              _elem55 = new Flow();
-              _elem55.read(iprot);
-              struct.success.add(_elem55);
+              Flow _elem63; // required
+              _elem63 = new Flow();
+              _elem63.read(iprot);
+              struct.success.add(_elem63);
             }
           }
           struct.setSuccessIsSet(true);
@@ -25373,14 +27831,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list56.size);
-                  for (int _i57 = 0; _i57 < _list56.size; ++_i57)
+                  org.apache.thrift.protocol.TList _list64 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list64.size);
+                  for (int _i65 = 0; _i65 < _list64.size; ++_i65)
                   {
-                    Flow _elem58; // required
-                    _elem58 = new Flow();
-                    _elem58.read(iprot);
-                    struct.success.add(_elem58);
+                    Flow _elem66; // required
+                    _elem66 = new Flow();
+                    _elem66.read(iprot);
+                    struct.success.add(_elem66);
                   }
                   iprot.readListEnd();
                 }
@@ -25415,9 +27873,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter59 : struct.success)
+            for (Flow _iter67 : struct.success)
             {
-              _iter59.write(oprot);
+              _iter67.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -25456,9 +27914,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter60 : struct.success)
+            for (Flow _iter68 : struct.success)
             {
-              _iter60.write(oprot);
+              _iter68.write(oprot);
             }
           }
         }
@@ -25473,14 +27931,992 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list61.size);
-            for (int _i62 = 0; _i62 < _list61.size; ++_i62)
+            org.apache.thrift.protocol.TList _list69 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list69.size);
+            for (int _i70 = 0; _i70 < _list69.size; ++_i70)
             {
-              Flow _elem63; // required
-              _elem63 = new Flow();
-              _elem63.read(iprot);
-              struct.success.add(_elem63);
+              Flow _elem71; // required
+              _elem71 = new Flow();
+              _elem71.read(iprot);
+              struct.success.add(_elem71);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getQueriesByApplication_args implements org.apache.thrift.TBase<getQueriesByApplication_args, getQueriesByApplication_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueriesByApplication_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getQueriesByApplication_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueriesByApplication_argsTupleSchemeFactory());
+    }
+
+    private String account; // required
+    private String application; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      APPLICATION((short)2, "application");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // APPLICATION
+            return APPLICATION;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueriesByApplication_args.class, metaDataMap);
+    }
+
+    public getQueriesByApplication_args() {
+    }
+
+    public getQueriesByApplication_args(
+      String account,
+      String application)
+    {
+      this();
+      this.account = account;
+      this.application = application;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getQueriesByApplication_args(getQueriesByApplication_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetApplication()) {
+        this.application = other.application;
+      }
+    }
+
+    public getQueriesByApplication_args deepCopy() {
+      return new getQueriesByApplication_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.application = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public void setAccount(String account) {
+      this.account = account;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getApplication() {
+      return this.application;
+    }
+
+    public void setApplication(String application) {
+      this.application = application;
+    }
+
+    public void unsetApplication() {
+      this.application = null;
+    }
+
+    /** Returns true if field application is set (has been assigned a value) and false otherwise */
+    public boolean isSetApplication() {
+      return this.application != null;
+    }
+
+    public void setApplicationIsSet(boolean value) {
+      if (!value) {
+        this.application = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case APPLICATION:
+        if (value == null) {
+          unsetApplication();
+        } else {
+          setApplication((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case APPLICATION:
+        return getApplication();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case APPLICATION:
+        return isSetApplication();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getQueriesByApplication_args)
+        return this.equals((getQueriesByApplication_args)that);
+      return false;
+    }
+
+    public boolean equals(getQueriesByApplication_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_application = true && this.isSetApplication();
+      boolean that_present_application = true && that.isSetApplication();
+      if (this_present_application || that_present_application) {
+        if (!(this_present_application && that_present_application))
+          return false;
+        if (!this.application.equals(that.application))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_application = true && (isSetApplication());
+      builder.append(present_application);
+      if (present_application)
+        builder.append(application);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getQueriesByApplication_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getQueriesByApplication_args typedOther = (getQueriesByApplication_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetApplication()).compareTo(typedOther.isSetApplication());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetApplication()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.application, typedOther.application);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getQueriesByApplication_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("application:");
+      if (this.application == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.application);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getQueriesByApplication_argsStandardSchemeFactory implements SchemeFactory {
+      public getQueriesByApplication_argsStandardScheme getScheme() {
+        return new getQueriesByApplication_argsStandardScheme();
+      }
+    }
+
+    private static class getQueriesByApplication_argsStandardScheme extends StandardScheme<getQueriesByApplication_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueriesByApplication_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // APPLICATION
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.application = iprot.readString();
+                struct.setApplicationIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueriesByApplication_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.application != null) {
+          oprot.writeFieldBegin(APPLICATION_FIELD_DESC);
+          oprot.writeString(struct.application);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getQueriesByApplication_argsTupleSchemeFactory implements SchemeFactory {
+      public getQueriesByApplication_argsTupleScheme getScheme() {
+        return new getQueriesByApplication_argsTupleScheme();
+      }
+    }
+
+    private static class getQueriesByApplication_argsTupleScheme extends TupleScheme<getQueriesByApplication_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueriesByApplication_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetApplication()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetApplication()) {
+          oprot.writeString(struct.application);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueriesByApplication_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.application = iprot.readString();
+          struct.setApplicationIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getQueriesByApplication_result implements org.apache.thrift.TBase<getQueriesByApplication_result, getQueriesByApplication_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueriesByApplication_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getQueriesByApplication_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueriesByApplication_resultTupleSchemeFactory());
+    }
+
+    private List<Query> success; // required
+    private MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Query.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueriesByApplication_result.class, metaDataMap);
+    }
+
+    public getQueriesByApplication_result() {
+    }
+
+    public getQueriesByApplication_result(
+      List<Query> success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getQueriesByApplication_result(getQueriesByApplication_result other) {
+      if (other.isSetSuccess()) {
+        List<Query> __this__success = new ArrayList<Query>();
+        for (Query other_element : other.success) {
+          __this__success.add(new Query(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getQueriesByApplication_result deepCopy() {
+      return new getQueriesByApplication_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Query> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Query elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Query>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Query> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<Query> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetadataServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Query>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getQueriesByApplication_result)
+        return this.equals((getQueriesByApplication_result)that);
+      return false;
+    }
+
+    public boolean equals(getQueriesByApplication_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getQueriesByApplication_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getQueriesByApplication_result typedOther = (getQueriesByApplication_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getQueriesByApplication_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getQueriesByApplication_resultStandardSchemeFactory implements SchemeFactory {
+      public getQueriesByApplication_resultStandardScheme getScheme() {
+        return new getQueriesByApplication_resultStandardScheme();
+      }
+    }
+
+    private static class getQueriesByApplication_resultStandardScheme extends StandardScheme<getQueriesByApplication_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueriesByApplication_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list72 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list72.size);
+                  for (int _i73 = 0; _i73 < _list72.size; ++_i73)
+                  {
+                    Query _elem74; // required
+                    _elem74 = new Query();
+                    _elem74.read(iprot);
+                    struct.success.add(_elem74);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueriesByApplication_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (Query _iter75 : struct.success)
+            {
+              _iter75.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getQueriesByApplication_resultTupleSchemeFactory implements SchemeFactory {
+      public getQueriesByApplication_resultTupleScheme getScheme() {
+        return new getQueriesByApplication_resultTupleScheme();
+      }
+    }
+
+    private static class getQueriesByApplication_resultTupleScheme extends TupleScheme<getQueriesByApplication_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueriesByApplication_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (Query _iter76 : struct.success)
+            {
+              _iter76.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueriesByApplication_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list77 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list77.size);
+            for (int _i78 = 0; _i78 < _list77.size; ++_i78)
+            {
+              Query _elem79; // required
+              _elem79 = new Query();
+              _elem79.read(iprot);
+              struct.success.add(_elem79);
             }
           }
           struct.setSuccessIsSet(true);
@@ -26351,14 +29787,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list64 = iprot.readListBegin();
-                  struct.success = new ArrayList<Stream>(_list64.size);
-                  for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                  org.apache.thrift.protocol.TList _list80 = iprot.readListBegin();
+                  struct.success = new ArrayList<Stream>(_list80.size);
+                  for (int _i81 = 0; _i81 < _list80.size; ++_i81)
                   {
-                    Stream _elem66; // required
-                    _elem66 = new Stream();
-                    _elem66.read(iprot);
-                    struct.success.add(_elem66);
+                    Stream _elem82; // required
+                    _elem82 = new Stream();
+                    _elem82.read(iprot);
+                    struct.success.add(_elem82);
                   }
                   iprot.readListEnd();
                 }
@@ -26393,9 +29829,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Stream _iter67 : struct.success)
+            for (Stream _iter83 : struct.success)
             {
-              _iter67.write(oprot);
+              _iter83.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -26434,9 +29870,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Stream _iter68 : struct.success)
+            for (Stream _iter84 : struct.success)
             {
-              _iter68.write(oprot);
+              _iter84.write(oprot);
             }
           }
         }
@@ -26451,14 +29887,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list69 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Stream>(_list69.size);
-            for (int _i70 = 0; _i70 < _list69.size; ++_i70)
+            org.apache.thrift.protocol.TList _list85 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Stream>(_list85.size);
+            for (int _i86 = 0; _i86 < _list85.size; ++_i86)
             {
-              Stream _elem71; // required
-              _elem71 = new Stream();
-              _elem71.read(iprot);
-              struct.success.add(_elem71);
+              Stream _elem87; // required
+              _elem87 = new Stream();
+              _elem87.read(iprot);
+              struct.success.add(_elem87);
             }
           }
           struct.setSuccessIsSet(true);
@@ -27329,14 +30765,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list72 = iprot.readListBegin();
-                  struct.success = new ArrayList<Dataset>(_list72.size);
-                  for (int _i73 = 0; _i73 < _list72.size; ++_i73)
+                  org.apache.thrift.protocol.TList _list88 = iprot.readListBegin();
+                  struct.success = new ArrayList<Dataset>(_list88.size);
+                  for (int _i89 = 0; _i89 < _list88.size; ++_i89)
                   {
-                    Dataset _elem74; // required
-                    _elem74 = new Dataset();
-                    _elem74.read(iprot);
-                    struct.success.add(_elem74);
+                    Dataset _elem90; // required
+                    _elem90 = new Dataset();
+                    _elem90.read(iprot);
+                    struct.success.add(_elem90);
                   }
                   iprot.readListEnd();
                 }
@@ -27371,9 +30807,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Dataset _iter75 : struct.success)
+            for (Dataset _iter91 : struct.success)
             {
-              _iter75.write(oprot);
+              _iter91.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -27412,9 +30848,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Dataset _iter76 : struct.success)
+            for (Dataset _iter92 : struct.success)
             {
-              _iter76.write(oprot);
+              _iter92.write(oprot);
             }
           }
         }
@@ -27429,14 +30865,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list77 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Dataset>(_list77.size);
-            for (int _i78 = 0; _i78 < _list77.size; ++_i78)
+            org.apache.thrift.protocol.TList _list93 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Dataset>(_list93.size);
+            for (int _i94 = 0; _i94 < _list93.size; ++_i94)
             {
-              Dataset _elem79; // required
-              _elem79 = new Dataset();
-              _elem79.read(iprot);
-              struct.success.add(_elem79);
+              Dataset _elem95; // required
+              _elem95 = new Dataset();
+              _elem95.read(iprot);
+              struct.success.add(_elem95);
             }
           }
           struct.setSuccessIsSet(true);
@@ -28307,14 +31743,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list80 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list80.size);
-                  for (int _i81 = 0; _i81 < _list80.size; ++_i81)
+                  org.apache.thrift.protocol.TList _list96 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list96.size);
+                  for (int _i97 = 0; _i97 < _list96.size; ++_i97)
                   {
-                    Flow _elem82; // required
-                    _elem82 = new Flow();
-                    _elem82.read(iprot);
-                    struct.success.add(_elem82);
+                    Flow _elem98; // required
+                    _elem98 = new Flow();
+                    _elem98.read(iprot);
+                    struct.success.add(_elem98);
                   }
                   iprot.readListEnd();
                 }
@@ -28349,9 +31785,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter83 : struct.success)
+            for (Flow _iter99 : struct.success)
             {
-              _iter83.write(oprot);
+              _iter99.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -28390,9 +31826,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter84 : struct.success)
+            for (Flow _iter100 : struct.success)
             {
-              _iter84.write(oprot);
+              _iter100.write(oprot);
             }
           }
         }
@@ -28407,14 +31843,14 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list85 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list85.size);
-            for (int _i86 = 0; _i86 < _list85.size; ++_i86)
+            org.apache.thrift.protocol.TList _list101 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list101.size);
+            for (int _i102 = 0; _i102 < _list101.size; ++_i102)
             {
-              Flow _elem87; // required
-              _elem87 = new Flow();
-              _elem87.read(iprot);
-              struct.success.add(_elem87);
+              Flow _elem103; // required
+              _elem103 = new Flow();
+              _elem103.read(iprot);
+              struct.success.add(_elem103);
             }
           }
           struct.setSuccessIsSet(true);
@@ -29285,14 +32721,14 @@ public class MetadataService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list88 = iprot.readListBegin();
-                  struct.success = new ArrayList<Flow>(_list88.size);
-                  for (int _i89 = 0; _i89 < _list88.size; ++_i89)
+                  org.apache.thrift.protocol.TList _list104 = iprot.readListBegin();
+                  struct.success = new ArrayList<Flow>(_list104.size);
+                  for (int _i105 = 0; _i105 < _list104.size; ++_i105)
                   {
-                    Flow _elem90; // required
-                    _elem90 = new Flow();
-                    _elem90.read(iprot);
-                    struct.success.add(_elem90);
+                    Flow _elem106; // required
+                    _elem106 = new Flow();
+                    _elem106.read(iprot);
+                    struct.success.add(_elem106);
                   }
                   iprot.readListEnd();
                 }
@@ -29327,9 +32763,9 @@ public class MetadataService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Flow _iter91 : struct.success)
+            for (Flow _iter107 : struct.success)
             {
-              _iter91.write(oprot);
+              _iter107.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -29368,9 +32804,9 @@ public class MetadataService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Flow _iter92 : struct.success)
+            for (Flow _iter108 : struct.success)
             {
-              _iter92.write(oprot);
+              _iter108.write(oprot);
             }
           }
         }
@@ -29385,14 +32821,992 @@ public class MetadataService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list93 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Flow>(_list93.size);
-            for (int _i94 = 0; _i94 < _list93.size; ++_i94)
+            org.apache.thrift.protocol.TList _list109 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Flow>(_list109.size);
+            for (int _i110 = 0; _i110 < _list109.size; ++_i110)
             {
-              Flow _elem95; // required
-              _elem95 = new Flow();
-              _elem95.read(iprot);
-              struct.success.add(_elem95);
+              Flow _elem111; // required
+              _elem111 = new Flow();
+              _elem111.read(iprot);
+              struct.success.add(_elem111);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new MetadataServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getQueriesByDataset_args implements org.apache.thrift.TBase<getQueriesByDataset_args, getQueriesByDataset_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueriesByDataset_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_FIELD_DESC = new org.apache.thrift.protocol.TField("account", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField DATASET_FIELD_DESC = new org.apache.thrift.protocol.TField("dataset", org.apache.thrift.protocol.TType.STRING, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getQueriesByDataset_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueriesByDataset_argsTupleSchemeFactory());
+    }
+
+    private String account; // required
+    private String dataset; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT((short)1, "account"),
+      DATASET((short)2, "dataset");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT
+            return ACCOUNT;
+          case 2: // DATASET
+            return DATASET;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ACCOUNT, new org.apache.thrift.meta_data.FieldMetaData("account", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.DATASET, new org.apache.thrift.meta_data.FieldMetaData("dataset", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueriesByDataset_args.class, metaDataMap);
+    }
+
+    public getQueriesByDataset_args() {
+    }
+
+    public getQueriesByDataset_args(
+      String account,
+      String dataset)
+    {
+      this();
+      this.account = account;
+      this.dataset = dataset;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getQueriesByDataset_args(getQueriesByDataset_args other) {
+      if (other.isSetAccount()) {
+        this.account = other.account;
+      }
+      if (other.isSetDataset()) {
+        this.dataset = other.dataset;
+      }
+    }
+
+    public getQueriesByDataset_args deepCopy() {
+      return new getQueriesByDataset_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.account = null;
+      this.dataset = null;
+    }
+
+    public String getAccount() {
+      return this.account;
+    }
+
+    public void setAccount(String account) {
+      this.account = account;
+    }
+
+    public void unsetAccount() {
+      this.account = null;
+    }
+
+    /** Returns true if field account is set (has been assigned a value) and false otherwise */
+    public boolean isSetAccount() {
+      return this.account != null;
+    }
+
+    public void setAccountIsSet(boolean value) {
+      if (!value) {
+        this.account = null;
+      }
+    }
+
+    public String getDataset() {
+      return this.dataset;
+    }
+
+    public void setDataset(String dataset) {
+      this.dataset = dataset;
+    }
+
+    public void unsetDataset() {
+      this.dataset = null;
+    }
+
+    /** Returns true if field dataset is set (has been assigned a value) and false otherwise */
+    public boolean isSetDataset() {
+      return this.dataset != null;
+    }
+
+    public void setDatasetIsSet(boolean value) {
+      if (!value) {
+        this.dataset = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ACCOUNT:
+        if (value == null) {
+          unsetAccount();
+        } else {
+          setAccount((String)value);
+        }
+        break;
+
+      case DATASET:
+        if (value == null) {
+          unsetDataset();
+        } else {
+          setDataset((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ACCOUNT:
+        return getAccount();
+
+      case DATASET:
+        return getDataset();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ACCOUNT:
+        return isSetAccount();
+      case DATASET:
+        return isSetDataset();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getQueriesByDataset_args)
+        return this.equals((getQueriesByDataset_args)that);
+      return false;
+    }
+
+    public boolean equals(getQueriesByDataset_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_account = true && this.isSetAccount();
+      boolean that_present_account = true && that.isSetAccount();
+      if (this_present_account || that_present_account) {
+        if (!(this_present_account && that_present_account))
+          return false;
+        if (!this.account.equals(that.account))
+          return false;
+      }
+
+      boolean this_present_dataset = true && this.isSetDataset();
+      boolean that_present_dataset = true && that.isSetDataset();
+      if (this_present_dataset || that_present_dataset) {
+        if (!(this_present_dataset && that_present_dataset))
+          return false;
+        if (!this.dataset.equals(that.dataset))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_account = true && (isSetAccount());
+      builder.append(present_account);
+      if (present_account)
+        builder.append(account);
+
+      boolean present_dataset = true && (isSetDataset());
+      builder.append(present_dataset);
+      if (present_dataset)
+        builder.append(dataset);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getQueriesByDataset_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getQueriesByDataset_args typedOther = (getQueriesByDataset_args)other;
+
+      lastComparison = Boolean.valueOf(isSetAccount()).compareTo(typedOther.isSetAccount());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetAccount()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.account, typedOther.account);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetDataset()).compareTo(typedOther.isSetDataset());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetDataset()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dataset, typedOther.dataset);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getQueriesByDataset_args(");
+      boolean first = true;
+
+      sb.append("account:");
+      if (this.account == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.account);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("dataset:");
+      if (this.dataset == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.dataset);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getQueriesByDataset_argsStandardSchemeFactory implements SchemeFactory {
+      public getQueriesByDataset_argsStandardScheme getScheme() {
+        return new getQueriesByDataset_argsStandardScheme();
+      }
+    }
+
+    private static class getQueriesByDataset_argsStandardScheme extends StandardScheme<getQueriesByDataset_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueriesByDataset_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ACCOUNT
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.account = iprot.readString();
+                struct.setAccountIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // DATASET
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.dataset = iprot.readString();
+                struct.setDatasetIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueriesByDataset_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.account != null) {
+          oprot.writeFieldBegin(ACCOUNT_FIELD_DESC);
+          oprot.writeString(struct.account);
+          oprot.writeFieldEnd();
+        }
+        if (struct.dataset != null) {
+          oprot.writeFieldBegin(DATASET_FIELD_DESC);
+          oprot.writeString(struct.dataset);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getQueriesByDataset_argsTupleSchemeFactory implements SchemeFactory {
+      public getQueriesByDataset_argsTupleScheme getScheme() {
+        return new getQueriesByDataset_argsTupleScheme();
+      }
+    }
+
+    private static class getQueriesByDataset_argsTupleScheme extends TupleScheme<getQueriesByDataset_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueriesByDataset_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetAccount()) {
+          optionals.set(0);
+        }
+        if (struct.isSetDataset()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetAccount()) {
+          oprot.writeString(struct.account);
+        }
+        if (struct.isSetDataset()) {
+          oprot.writeString(struct.dataset);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueriesByDataset_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.account = iprot.readString();
+          struct.setAccountIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.dataset = iprot.readString();
+          struct.setDatasetIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getQueriesByDataset_result implements org.apache.thrift.TBase<getQueriesByDataset_result, getQueriesByDataset_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueriesByDataset_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getQueriesByDataset_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueriesByDataset_resultTupleSchemeFactory());
+    }
+
+    private List<Query> success; // required
+    private MetadataServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Query.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueriesByDataset_result.class, metaDataMap);
+    }
+
+    public getQueriesByDataset_result() {
+    }
+
+    public getQueriesByDataset_result(
+      List<Query> success,
+      MetadataServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getQueriesByDataset_result(getQueriesByDataset_result other) {
+      if (other.isSetSuccess()) {
+        List<Query> __this__success = new ArrayList<Query>();
+        for (Query other_element : other.success) {
+          __this__success.add(new Query(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new MetadataServiceException(other.e);
+      }
+    }
+
+    public getQueriesByDataset_result deepCopy() {
+      return new getQueriesByDataset_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Query> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Query elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Query>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Query> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<Query> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public MetadataServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(MetadataServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<Query>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((MetadataServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getQueriesByDataset_result)
+        return this.equals((getQueriesByDataset_result)that);
+      return false;
+    }
+
+    public boolean equals(getQueriesByDataset_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getQueriesByDataset_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getQueriesByDataset_result typedOther = (getQueriesByDataset_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getQueriesByDataset_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getQueriesByDataset_resultStandardSchemeFactory implements SchemeFactory {
+      public getQueriesByDataset_resultStandardScheme getScheme() {
+        return new getQueriesByDataset_resultStandardScheme();
+      }
+    }
+
+    private static class getQueriesByDataset_resultStandardScheme extends StandardScheme<getQueriesByDataset_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueriesByDataset_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list112 = iprot.readListBegin();
+                  struct.success = new ArrayList<Query>(_list112.size);
+                  for (int _i113 = 0; _i113 < _list112.size; ++_i113)
+                  {
+                    Query _elem114; // required
+                    _elem114 = new Query();
+                    _elem114.read(iprot);
+                    struct.success.add(_elem114);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new MetadataServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueriesByDataset_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (Query _iter115 : struct.success)
+            {
+              _iter115.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getQueriesByDataset_resultTupleSchemeFactory implements SchemeFactory {
+      public getQueriesByDataset_resultTupleScheme getScheme() {
+        return new getQueriesByDataset_resultTupleScheme();
+      }
+    }
+
+    private static class getQueriesByDataset_resultTupleScheme extends TupleScheme<getQueriesByDataset_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueriesByDataset_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (Query _iter116 : struct.success)
+            {
+              _iter116.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueriesByDataset_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list117 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Query>(_list117.size);
+            for (int _i118 = 0; _i118 < _list117.size; ++_i118)
+            {
+              Query _elem119; // required
+              _elem119 = new Query();
+              _elem119.read(iprot);
+              struct.success.add(_elem119);
             }
           }
           struct.setSuccessIsSet(true);

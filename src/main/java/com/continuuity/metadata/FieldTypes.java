@@ -51,8 +51,8 @@ public class FieldTypes {
   public static class Query {
     public static final String ID = "query";
     public static final String NAME = "name";
+    public static final String DATASETS = "datasets";
     public static final String DESCRIPTION = "description";
-    public static final String CREATE_DATE = "createDate";
     public static final String SERVICE_NAME = "serviceName";
   }
 }

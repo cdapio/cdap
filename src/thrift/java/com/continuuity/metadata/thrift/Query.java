@@ -35,9 +35,12 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("Query");
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField SERVICE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("serviceName", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField APPLICATION_FIELD_DESC = new org.apache.thrift.protocol.TField("application", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField SERVICE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("serviceName", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField DATASETS_FIELD_DESC = new org.apache.thrift.protocol.TField("datasets", org.apache.thrift.protocol.TType.LIST, (short)6);
+  private static final org.apache.thrift.protocol.TField EXISTS_FIELD_DESC = new org.apache.thrift.protocol.TField("exists", org.apache.thrift.protocol.TType.BOOL, (short)7);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -46,16 +49,22 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
   }
 
   private String id; // required
+  private String application; // required
   private String name; // optional
   private String description; // optional
   private String serviceName; // optional
+  private List<String> datasets; // optional
+  private boolean exists; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
-    NAME((short)2, "name"),
-    DESCRIPTION((short)3, "description"),
-    SERVICE_NAME((short)4, "serviceName");
+    APPLICATION((short)2, "application"),
+    NAME((short)3, "name"),
+    DESCRIPTION((short)4, "description"),
+    SERVICE_NAME((short)5, "serviceName"),
+    DATASETS((short)6, "datasets"),
+    EXISTS((short)7, "exists");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -72,12 +81,18 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       switch(fieldId) {
         case 1: // ID
           return ID;
-        case 2: // NAME
+        case 2: // APPLICATION
+          return APPLICATION;
+        case 3: // NAME
           return NAME;
-        case 3: // DESCRIPTION
+        case 4: // DESCRIPTION
           return DESCRIPTION;
-        case 4: // SERVICE_NAME
+        case 5: // SERVICE_NAME
           return SERVICE_NAME;
+        case 6: // DATASETS
+          return DATASETS;
+        case 7: // EXISTS
+          return EXISTS;
         default:
           return null;
       }
@@ -118,11 +133,15 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.NAME,_Fields.DESCRIPTION,_Fields.SERVICE_NAME};
+  private static final int __EXISTS_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.NAME,_Fields.DESCRIPTION,_Fields.SERVICE_NAME,_Fields.DATASETS,_Fields.EXISTS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
@@ -130,26 +149,40 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.SERVICE_NAME, new org.apache.thrift.meta_data.FieldMetaData("serviceName", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.DATASETS, new org.apache.thrift.meta_data.FieldMetaData("datasets", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.EXISTS, new org.apache.thrift.meta_data.FieldMetaData("exists", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Query.class, metaDataMap);
   }
 
   public Query() {
+    this.exists = true;
+
   }
 
   public Query(
-    String id)
+    String id,
+    String application)
   {
     this();
     this.id = id;
+    this.application = application;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public Query(Query other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetId()) {
       this.id = other.id;
+    }
+    if (other.isSetApplication()) {
+      this.application = other.application;
     }
     if (other.isSetName()) {
       this.name = other.name;
@@ -160,6 +193,14 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     if (other.isSetServiceName()) {
       this.serviceName = other.serviceName;
     }
+    if (other.isSetDatasets()) {
+      List<String> __this__datasets = new ArrayList<String>();
+      for (String other_element : other.datasets) {
+        __this__datasets.add(other_element);
+      }
+      this.datasets = __this__datasets;
+    }
+    this.exists = other.exists;
   }
 
   public Query deepCopy() {
@@ -169,9 +210,13 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
   @Override
   public void clear() {
     this.id = null;
+    this.application = null;
     this.name = null;
     this.description = null;
     this.serviceName = null;
+    this.datasets = null;
+    this.exists = true;
+
   }
 
   public String getId() {
@@ -194,6 +239,29 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
   public void setIdIsSet(boolean value) {
     if (!value) {
       this.id = null;
+    }
+  }
+
+  public String getApplication() {
+    return this.application;
+  }
+
+  public void setApplication(String application) {
+    this.application = application;
+  }
+
+  public void unsetApplication() {
+    this.application = null;
+  }
+
+  /** Returns true if field application is set (has been assigned a value) and false otherwise */
+  public boolean isSetApplication() {
+    return this.application != null;
+  }
+
+  public void setApplicationIsSet(boolean value) {
+    if (!value) {
+      this.application = null;
     }
   }
 
@@ -266,6 +334,66 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     }
   }
 
+  public int getDatasetsSize() {
+    return (this.datasets == null) ? 0 : this.datasets.size();
+  }
+
+  public java.util.Iterator<String> getDatasetsIterator() {
+    return (this.datasets == null) ? null : this.datasets.iterator();
+  }
+
+  public void addToDatasets(String elem) {
+    if (this.datasets == null) {
+      this.datasets = new ArrayList<String>();
+    }
+    this.datasets.add(elem);
+  }
+
+  public List<String> getDatasets() {
+    return this.datasets;
+  }
+
+  public void setDatasets(List<String> datasets) {
+    this.datasets = datasets;
+  }
+
+  public void unsetDatasets() {
+    this.datasets = null;
+  }
+
+  /** Returns true if field datasets is set (has been assigned a value) and false otherwise */
+  public boolean isSetDatasets() {
+    return this.datasets != null;
+  }
+
+  public void setDatasetsIsSet(boolean value) {
+    if (!value) {
+      this.datasets = null;
+    }
+  }
+
+  public boolean isExists() {
+    return this.exists;
+  }
+
+  public void setExists(boolean exists) {
+    this.exists = exists;
+    setExistsIsSet(true);
+  }
+
+  public void unsetExists() {
+    __isset_bit_vector.clear(__EXISTS_ISSET_ID);
+  }
+
+  /** Returns true if field exists is set (has been assigned a value) and false otherwise */
+  public boolean isSetExists() {
+    return __isset_bit_vector.get(__EXISTS_ISSET_ID);
+  }
+
+  public void setExistsIsSet(boolean value) {
+    __isset_bit_vector.set(__EXISTS_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ID:
@@ -273,6 +401,14 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
         unsetId();
       } else {
         setId((String)value);
+      }
+      break;
+
+    case APPLICATION:
+      if (value == null) {
+        unsetApplication();
+      } else {
+        setApplication((String)value);
       }
       break;
 
@@ -300,6 +436,22 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       }
       break;
 
+    case DATASETS:
+      if (value == null) {
+        unsetDatasets();
+      } else {
+        setDatasets((List<String>)value);
+      }
+      break;
+
+    case EXISTS:
+      if (value == null) {
+        unsetExists();
+      } else {
+        setExists((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -307,6 +459,9 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     switch (field) {
     case ID:
       return getId();
+
+    case APPLICATION:
+      return getApplication();
 
     case NAME:
       return getName();
@@ -316,6 +471,12 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
 
     case SERVICE_NAME:
       return getServiceName();
+
+    case DATASETS:
+      return getDatasets();
+
+    case EXISTS:
+      return Boolean.valueOf(isExists());
 
     }
     throw new IllegalStateException();
@@ -330,12 +491,18 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     switch (field) {
     case ID:
       return isSetId();
+    case APPLICATION:
+      return isSetApplication();
     case NAME:
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
     case SERVICE_NAME:
       return isSetServiceName();
+    case DATASETS:
+      return isSetDatasets();
+    case EXISTS:
+      return isSetExists();
     }
     throw new IllegalStateException();
   }
@@ -359,6 +526,15 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (!(this_present_id && that_present_id))
         return false;
       if (!this.id.equals(that.id))
+        return false;
+    }
+
+    boolean this_present_application = true && this.isSetApplication();
+    boolean that_present_application = true && that.isSetApplication();
+    if (this_present_application || that_present_application) {
+      if (!(this_present_application && that_present_application))
+        return false;
+      if (!this.application.equals(that.application))
         return false;
     }
 
@@ -389,6 +565,24 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
         return false;
     }
 
+    boolean this_present_datasets = true && this.isSetDatasets();
+    boolean that_present_datasets = true && that.isSetDatasets();
+    if (this_present_datasets || that_present_datasets) {
+      if (!(this_present_datasets && that_present_datasets))
+        return false;
+      if (!this.datasets.equals(that.datasets))
+        return false;
+    }
+
+    boolean this_present_exists = true && this.isSetExists();
+    boolean that_present_exists = true && that.isSetExists();
+    if (this_present_exists || that_present_exists) {
+      if (!(this_present_exists && that_present_exists))
+        return false;
+      if (this.exists != that.exists)
+        return false;
+    }
+
     return true;
   }
 
@@ -400,6 +594,11 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     builder.append(present_id);
     if (present_id)
       builder.append(id);
+
+    boolean present_application = true && (isSetApplication());
+    builder.append(present_application);
+    if (present_application)
+      builder.append(application);
 
     boolean present_name = true && (isSetName());
     builder.append(present_name);
@@ -415,6 +614,16 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     builder.append(present_serviceName);
     if (present_serviceName)
       builder.append(serviceName);
+
+    boolean present_datasets = true && (isSetDatasets());
+    builder.append(present_datasets);
+    if (present_datasets)
+      builder.append(datasets);
+
+    boolean present_exists = true && (isSetExists());
+    builder.append(present_exists);
+    if (present_exists)
+      builder.append(exists);
 
     return builder.toHashCode();
   }
@@ -433,6 +642,16 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     }
     if (isSetId()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetApplication()).compareTo(typedOther.isSetApplication());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetApplication()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.application, typedOther.application);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -467,6 +686,26 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetDatasets()).compareTo(typedOther.isSetDatasets());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetDatasets()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.datasets, typedOther.datasets);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetExists()).compareTo(typedOther.isSetExists());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetExists()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.exists, typedOther.exists);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -492,6 +731,14 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       sb.append("null");
     } else {
       sb.append(this.id);
+    }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("application:");
+    if (this.application == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.application);
     }
     first = false;
     if (isSetName()) {
@@ -524,6 +771,22 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       }
       first = false;
     }
+    if (isSetDatasets()) {
+      if (!first) sb.append(", ");
+      sb.append("datasets:");
+      if (this.datasets == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.datasets);
+      }
+      first = false;
+    }
+    if (isSetExists()) {
+      if (!first) sb.append(", ");
+      sb.append("exists:");
+      sb.append(this.exists);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -532,6 +795,10 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     // check for required fields
     if (!isSetId()) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'id' is unset! Struct:" + toString());
+    }
+
+    if (!isSetApplication()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'application' is unset! Struct:" + toString());
     }
 
   }
@@ -546,6 +813,8 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -578,7 +847,15 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // NAME
+          case 2: // APPLICATION
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.application = iprot.readString();
+              struct.setApplicationIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // NAME
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.name = iprot.readString();
               struct.setNameIsSet(true);
@@ -586,7 +863,7 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // DESCRIPTION
+          case 4: // DESCRIPTION
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.description = iprot.readString();
               struct.setDescriptionIsSet(true);
@@ -594,10 +871,36 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // SERVICE_NAME
+          case 5: // SERVICE_NAME
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.serviceName = iprot.readString();
               struct.setServiceNameIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 6: // DATASETS
+            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
+                struct.datasets = new ArrayList<String>(_list16.size);
+                for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+                {
+                  String _elem18; // required
+                  _elem18 = iprot.readString();
+                  struct.datasets.add(_elem18);
+                }
+                iprot.readListEnd();
+              }
+              struct.setDatasetsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 7: // EXISTS
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.exists = iprot.readBool();
+              struct.setExistsIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -618,6 +921,11 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (struct.id != null) {
         oprot.writeFieldBegin(ID_FIELD_DESC);
         oprot.writeString(struct.id);
+        oprot.writeFieldEnd();
+      }
+      if (struct.application != null) {
+        oprot.writeFieldBegin(APPLICATION_FIELD_DESC);
+        oprot.writeString(struct.application);
         oprot.writeFieldEnd();
       }
       if (struct.name != null) {
@@ -641,6 +949,25 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
           oprot.writeFieldEnd();
         }
       }
+      if (struct.datasets != null) {
+        if (struct.isSetDatasets()) {
+          oprot.writeFieldBegin(DATASETS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.datasets.size()));
+            for (String _iter19 : struct.datasets)
+            {
+              oprot.writeString(_iter19);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.isSetExists()) {
+        oprot.writeFieldBegin(EXISTS_FIELD_DESC);
+        oprot.writeBool(struct.exists);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -659,6 +986,7 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
     public void write(org.apache.thrift.protocol.TProtocol prot, Query struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       oprot.writeString(struct.id);
+      oprot.writeString(struct.application);
       BitSet optionals = new BitSet();
       if (struct.isSetName()) {
         optionals.set(0);
@@ -669,7 +997,13 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (struct.isSetServiceName()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetDatasets()) {
+        optionals.set(3);
+      }
+      if (struct.isSetExists()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetName()) {
         oprot.writeString(struct.name);
       }
@@ -679,6 +1013,18 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (struct.isSetServiceName()) {
         oprot.writeString(struct.serviceName);
       }
+      if (struct.isSetDatasets()) {
+        {
+          oprot.writeI32(struct.datasets.size());
+          for (String _iter20 : struct.datasets)
+          {
+            oprot.writeString(_iter20);
+          }
+        }
+      }
+      if (struct.isSetExists()) {
+        oprot.writeBool(struct.exists);
+      }
     }
 
     @Override
@@ -686,7 +1032,9 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       TTupleProtocol iprot = (TTupleProtocol) prot;
       struct.id = iprot.readString();
       struct.setIdIsSet(true);
-      BitSet incoming = iprot.readBitSet(3);
+      struct.application = iprot.readString();
+      struct.setApplicationIsSet(true);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.name = iprot.readString();
         struct.setNameIsSet(true);
@@ -698,6 +1046,23 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (incoming.get(2)) {
         struct.serviceName = iprot.readString();
         struct.setServiceNameIsSet(true);
+      }
+      if (incoming.get(3)) {
+        {
+          org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.datasets = new ArrayList<String>(_list21.size);
+          for (int _i22 = 0; _i22 < _list21.size; ++_i22)
+          {
+            String _elem23; // required
+            _elem23 = iprot.readString();
+            struct.datasets.add(_elem23);
+          }
+        }
+        struct.setDatasetsIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.exists = iprot.readBool();
+        struct.setExistsIsSet(true);
       }
     }
   }
