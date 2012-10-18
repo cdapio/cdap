@@ -325,6 +325,9 @@ h1 span {
 	padding: 2px 4px;
 	font-weight: bold;
 }
+.app-list-count span {
+	line-height: 1px;
+}
 .panel table th, .popup-container table th {
 	padding: 3px 10px 0px;
 }

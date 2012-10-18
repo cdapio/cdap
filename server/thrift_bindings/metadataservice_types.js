@@ -560,12 +560,18 @@ Dataset.prototype.write = function(output) {
 
 var Query = module.exports.Query = function(args) {
   this.id = null;
+  this.application = null;
   this.name = null;
   this.description = null;
   this.serviceName = null;
+  this.datasets = null;
+  this.exists = true;
   if (args) {
     if (args.id !== undefined) {
       this.id = args.id;
+    }
+    if (args.application !== undefined) {
+      this.application = args.application;
     }
     if (args.name !== undefined) {
       this.name = args.name;
@@ -575,6 +581,12 @@ var Query = module.exports.Query = function(args) {
     }
     if (args.serviceName !== undefined) {
       this.serviceName = args.serviceName;
+    }
+    if (args.datasets !== undefined) {
+      this.datasets = args.datasets;
+    }
+    if (args.exists !== undefined) {
+      this.exists = args.exists;
     }
   }
 };
@@ -601,21 +613,55 @@ Query.prototype.read = function(input) {
       break;
       case 2:
       if (ftype == Thrift.Type.STRING) {
-        this.name = input.readString();
+        this.application = input.readString();
       } else {
         input.skip(ftype);
       }
       break;
       case 3:
       if (ftype == Thrift.Type.STRING) {
-        this.description = input.readString();
+        this.name = input.readString();
       } else {
         input.skip(ftype);
       }
       break;
       case 4:
       if (ftype == Thrift.Type.STRING) {
+        this.description = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 5:
+      if (ftype == Thrift.Type.STRING) {
         this.serviceName = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 6:
+      if (ftype == Thrift.Type.LIST) {
+        var _size16 = 0;
+        var _rtmp320;
+        this.datasets = [];
+        var _etype19 = 0;
+        _rtmp320 = input.readListBegin();
+        _etype19 = _rtmp320.etype;
+        _size16 = _rtmp320.size;
+        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        {
+          var elem22 = null;
+          elem22 = input.readString();
+          this.datasets.push(elem22);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 7:
+      if (ftype == Thrift.Type.BOOL) {
+        this.exists = input.readBool();
       } else {
         input.skip(ftype);
       }
@@ -636,19 +682,43 @@ Query.prototype.write = function(output) {
     output.writeString(this.id);
     output.writeFieldEnd();
   }
+  if (this.application) {
+    output.writeFieldBegin('application', Thrift.Type.STRING, 2);
+    output.writeString(this.application);
+    output.writeFieldEnd();
+  }
   if (this.name) {
-    output.writeFieldBegin('name', Thrift.Type.STRING, 2);
+    output.writeFieldBegin('name', Thrift.Type.STRING, 3);
     output.writeString(this.name);
     output.writeFieldEnd();
   }
   if (this.description) {
-    output.writeFieldBegin('description', Thrift.Type.STRING, 3);
+    output.writeFieldBegin('description', Thrift.Type.STRING, 4);
     output.writeString(this.description);
     output.writeFieldEnd();
   }
   if (this.serviceName) {
-    output.writeFieldBegin('serviceName', Thrift.Type.STRING, 4);
+    output.writeFieldBegin('serviceName', Thrift.Type.STRING, 5);
     output.writeString(this.serviceName);
+    output.writeFieldEnd();
+  }
+  if (this.datasets) {
+    output.writeFieldBegin('datasets', Thrift.Type.LIST, 6);
+    output.writeListBegin(Thrift.Type.STRING, this.datasets.length);
+    for (var iter23 in this.datasets)
+    {
+      if (this.datasets.hasOwnProperty(iter23))
+      {
+        iter23 = this.datasets[iter23];
+        output.writeString(iter23);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.exists) {
+    output.writeFieldBegin('exists', Thrift.Type.BOOL, 7);
+    output.writeBool(this.exists);
     output.writeFieldEnd();
   }
   output.writeFieldStop();

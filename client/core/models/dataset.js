@@ -47,12 +47,12 @@ define([], function () {
 			var self = this;
 
 			var storageMetric = 'dataset.storage.' + this.get('id') + '.count';
-			metrics.push(storageMetric);
+			//metrics.push(storageMetric);
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
-			}, function (error, response, id) {
+				params: [app, id, metrics, start, undefined, 'ACCOUNT_LEVEL', this.get('id')]
+			}, function (error, response) {
 
 				if (!response.params) {
 					return;
