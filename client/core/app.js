@@ -152,12 +152,13 @@ function(Models, Views, Controllers){
 				var min = d3.min(allData) || -1;
 				var extend = Math.round(w / data.length);
 
-				var margin = 0;
+				var margin = 5;
 				var yBuffer = 0.0;
 				var y, x;
 
-				x = d3.scale.linear().domain([0, data.length]).range([0, w]);
-
+				x = d3.scale.linear();//.domain([0, data.length]).range([0, w]);
+				y = d3.scale.linear();
+/*
 				if (percent) {
 					y = d3.scale.linear()
 						.domain([100, 0])
@@ -167,7 +168,7 @@ function(Models, Views, Controllers){
 						.domain([max + (max * yBuffer), min - (min * yBuffer)])
 						.range([margin, h - margin]);
 				}
-
+*/
 				var vis = widget
 					.append("svg:svg")
 					.attr('width', '100%')
@@ -204,8 +205,8 @@ function(Models, Views, Controllers){
 								length = this.series[i].length;
 							}
 						}
-						var max = d3.max(allData) || 9;
-						var min = d3.min(allData) || -1;
+						var max = d3.max(allData) || 100;
+						var min = d3.min(allData) || 0;
 						var extend = Math.round(w / data.length);
 
 						var yBuffer = 0.0;
@@ -215,7 +216,7 @@ function(Models, Views, Controllers){
 
 						if (this.percent) {
 							y = d3.scale.linear()
-								.domain([100, 0])
+								.domain([100, min])
 								.range([margin, h - margin]);
 						} else {
 							y = d3.scale.linear()
@@ -235,7 +236,7 @@ function(Models, Views, Controllers){
 
 							this.g.selectAll("path.sparkline-area")
 								.data([data])
-								.attr("transform", "translate(" + x(1) + ")")
+								.attr("transform", null)//"translate(" + x(1) + ")")
 								.attr("d", area)
 								.transition()
 								.ease("linear")
@@ -245,7 +246,7 @@ function(Models, Views, Controllers){
 
 						this.g.selectAll("path.sparkline-data")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", null)//"translate(" + x(1) + ")")
 							.attr("d", line)
 							.transition()
 							.ease("linear")
@@ -283,6 +284,16 @@ function(Models, Views, Controllers){
 				}
 
 				return value;
+			},
+			bytes: function (value) {
+
+				if (value > 1024) {
+
+					value /= 1024;
+					return [((Math.round(value * 100) / 100)), 'KB'];
+				}
+
+				return [value, 'BYTES'];
 			}
 		},
 		setTimeRange: function (millis) {

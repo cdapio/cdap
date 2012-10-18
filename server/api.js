@@ -50,14 +50,19 @@ try {
 		var MetaData = thrift.createClient(MetadataService, conn);
 
 		if (params.length === 2) {
-			var entitType = params.shift();
-			params[0] = new metadataservice_types[entitType](params[0]);
+			var entityType = params.shift();
+			params[0] = new metadataservice_types[entityType](params[0]);
 		}
 
 		// Pushing the accountID into arguments. Comes from the authenticated session.
-		params.unshift(new metadataservice_types.Account({
-			id: 'demo'
-		}));
+		if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
+			method === 'getFlowsByStream') {
+			params.unshift('demo');
+		} else {
+			params.unshift(new metadataservice_types.Account({
+				id: 'demo'
+			}));
+		}
 
 		if (method in MetaData) {
 			try {
@@ -265,7 +270,7 @@ try {
 			switch (method) {
 				case 'getCounters':
 					var flow = new metricsservice_types.FlowArgument({
-						accountId: 'demo',
+						accountId: (params[0] === '-' ? '-' : 'demo'),
 						applicationId: params[0],
 						flowId: params[1],
 						runId: params[2]
@@ -283,7 +288,7 @@ try {
 					var level = params[5] || 'FLOW_LEVEL';
 
 					var flow = new metricsservice_types.FlowArgument({
-						accountId: 'demo',
+						accountId: (params[0] === '-' ? '-' : 'demo'),
 						applicationId: params[0],
 						flowId: params[1],
 						flowletId: params[6] || null
@@ -294,8 +299,6 @@ try {
 						level: metricsservice_types.MetricTimeseriesLevel[level],
 						startts: params[3]
 					});
-
-					console.log(request);
 
 					Monitor.getTimeSeries(request, function (error, response) {
 

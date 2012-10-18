@@ -33,28 +33,25 @@ define([], function () {
 		},
 		getUpdateRequest: function () {
 
-
-			return [];
-
-			/*
-
-			var id = C.Ctl.Flow.current.id;
-			var app = C.Ctl.Flow.current.app;
-
-			var self = this;
-			var pointCount = 30;
-
 			var metrics = [];
 			for (var name in this.get('metricNames')) {
 				metrics.push(name);
 			}
 
-			var end = Math.round(new Date().getTime() / 1000),
-				start = end - pointCount;
+			var app = '-';
+			var id = '-';
+
+			var accountId = 'demo';
+
+			var start = C.__timeRange * -1;
+			var self = this;
+
+			var storageMetric = 'stream.storage.stream//' + accountId + '/' + this.get('id') + '.count';
+			//metrics.push(storageMetric);
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, end, 'FLOWLET_LEVEL', this.get('id')]
+				params: [app, id, metrics, start, undefined, 'ACCOUNT_LEVEL', this.get('id')]
 			}, function (error, response, id) {
 
 				if (!response.params) {
@@ -65,6 +62,7 @@ define([], function () {
 					latest = response.params.latest;
 
 				for (var metric in points) {
+
 					data = points[metric];
 
 					var k = data.length;
@@ -72,21 +70,33 @@ define([], function () {
 						data[k] = data[k].value;
 					}
 
-					data = data.splice(0, 25);
-					for (var k = data.length; k < 25; k++) {
-						data.unshift(0);
-					}
+					console.log(metric, data);
 
 					metric = metric.replace(/\./g, '');
-
 					self.get('metricData').set(metric, data);
-					this.set('__loadingData', false);
 
 				}
 
-			}];
+				C.get('monitor', {
+					method: 'getCounters',
+					params: ['-', '-', null, [storageMetric]]
+				}, function (error, response) {
 
-			*/
+					var storage;
+					if (!response.params.length) {
+						storage = 0;
+					} else {
+						storage = response.params[0].value;
+					}
+
+					self.set('storage', storage);
+
+					self.set('storageLabel', C.util.bytes(storage)[0]);
+					self.set('storageUnits', C.util.bytes(storage)[1]);
+
+				});
+
+			}];
 
 		}
 	});

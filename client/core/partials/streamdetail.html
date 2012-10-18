@@ -1,5 +1,5 @@
 
-<div class="popup-container" style="padding-bottom: 24px;">
+<div class="popup-container">
 <div class="popup-close" {{action close on="click"}}>×</div>
 
 <div class="popup-inject-wrapper">
@@ -22,10 +22,10 @@
 			<td class="list-health-cell">
 				<div class="list-health-box"></div>
 			</td>
-			<td class="app-list-name">{{storage}}</td>
-			<td class="app-list-count">{{unconsumed}}</td>
+			<td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
+			<td class="app-list-count">{{controller.current.unconsumed}}</td>
 			<td>
-				{{view C.Vw.Chart entity-type="Stream" width="280" metric="arrivals,consumed"}}
+				{{view C.Vw.Chart entity-type="Stream" width="262" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
 			</td>
 		</tr>
 	</tbody>

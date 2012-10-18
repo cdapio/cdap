@@ -83,9 +83,15 @@ define([], function () {
 
 			// Insert input stream node
 			if (this.get('controller').current.flowStreams.length) {
-				flowSource = C.Mdl.Stream.create(this.get('controller').current.flowStreams[0]);
-				this.get('controller').types.Stream.pushObject(flowSource);
-				this.__append(flowSource, 0);
+
+				var fs = this.get('controller').current.flowStreams;
+				for (var i = 0; i < fs.length; i ++) {
+
+					var flowSource = this.get('controller').get_flowlet(fs[i].name);
+					this.__append(flowSource, 0);
+
+				}
+
 			}
 
 			//** Begin Hax

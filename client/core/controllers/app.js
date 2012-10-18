@@ -41,8 +41,10 @@ define([], function () {
 					} else {
 						flows.push(objects[i]);
 
-						var id = objects[i].get('flowId');
-						var app = objects[i].get('applicationId');
+						var id = objects[i].get('id');
+						var app = objects[i].get('app');
+
+						// Pull flow definition to get Number of intances:
 
 						C.get('manager', {
 							method: 'getFlowDefinition',
@@ -64,24 +66,22 @@ define([], function () {
 
 								param.set('instances', totalInstances);
 							}
-
-
-
 						}, objects[i]);
-
 					}
 				}
 
 				self.get('types.Flow').pushObjects(flows);
-				self.get('types.Query').pushObjects(queries);
-
-				// self.get('types.Flow').pushObjects(objects);
-
-
-
 				self.__loaded();
 
-			});
+			}, app);
+
+			C.Ctl.List.getObjects('Query', function (objects) {
+				if (!self.get('types.Query')) {
+					self.set('types.Query', Em.ArrayProxy.create({content: []}));
+				}
+				self.get('types.Query').pushObjects(objects);
+				self.__loaded();
+			}, app);
 
 			C.Ctl.List.getObjects('Stream', function (objects) {
 				if (!self.get('types.Stream')) {
@@ -89,7 +89,7 @@ define([], function () {
 				}
 				self.get('types.Stream').pushObjects(objects);
 				self.__loaded();
-			});
+			}, app);
 
 			C.Ctl.List.getObjects('Dataset', function (objects) {
 				if (!self.get('types.Dataset')) {
@@ -97,7 +97,7 @@ define([], function () {
 				}
 				self.get('types.Dataset').pushObjects(objects);
 				self.__loaded();
-			});
+			}, app);
 
 		},
 		__remain: -1,
@@ -128,6 +128,21 @@ define([], function () {
 						}
 					}
 				}
+				
+
+				var storage = 0;
+				var streams = this.get('types.Stream').content;
+				for (var i = 0; i < streams.length; i ++) {
+					storage += streams[i].get('storage');
+				}
+				var datasets = this.get('types.Dataset').content;
+				for (var i = 0; i < datasets.length; i ++) {
+					storage += datasets[i].get('storage');
+				}
+
+				self.get('current').set('storageLabel', C.util.bytes(storage)[0]);
+				self.get('current').set('storageUnits', C.util.bytes(storage)[1]);
+
 			}
 
 			this.__timeout = setTimeout(function () {

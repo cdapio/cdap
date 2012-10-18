@@ -10,7 +10,7 @@ define([], function () {
 			'Application': 'getApplications',
 			'Flow': 'getFlows',
 			'Stream': 'getStreams',
-			'Query': 'getFlows',
+			'Query': 'getQueries',
 			'Dataset': 'getDatasets'
 		},
 		__plurals: {
@@ -23,16 +23,16 @@ define([], function () {
 		title: function () {
 			return this.__plurals[this.get('entityType')];
 		}.property('entityType'),
-		getObjects: function (type, callback) {
+		getObjects: function (type, callback, appId) {
 
 			var self = this;
 			this.set('entityType', type);
 
 			//** Hax: Remove special case for Flow when ready **//
-			
-			C.get(type === 'Flow' || type === 'Query' ? 'manager' : 'metadata', {
-				method: this.__methodNames[type],
-				params: []
+
+			C.get('metadata', {
+				method: this.__methodNames[type] + (appId ? 'ByApplication' : ''),
+				params: appId ? [appId] : []
 			}, function (error, response, params) {
 
 				if (error) {
@@ -45,11 +45,7 @@ define([], function () {
 					var objects = response.params;
 					var i = objects.length, type = params[0];
 					while (i--) {
-						if (objects[i].type === 1) {
-							objects[i] = C.Mdl['Query'].create(objects[i]);
-						} else {
-							objects[i] = C.Mdl[type].create(objects[i]);
-						}
+						objects[i] = C.Mdl[type].create(objects[i]);
 					}
 					if (typeof params[1] === 'function') { // For you
 						callback(objects);

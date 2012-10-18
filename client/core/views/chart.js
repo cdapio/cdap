@@ -22,8 +22,6 @@ define([], function () {
 							this.get('container').css({margin: ''});
 							this.get('label').show();
 
-							console.log(this.get('unit'));
-
 							var widget = d3.select(this.get('container')[0]);
 							var sparkline = C.util.sparkline(widget, [],
 								this.get('width'), this.get('height'), this.get('unit') === 'percent');
@@ -59,26 +57,53 @@ define([], function () {
 
 				this.set('model', ctl.get('current'));
 
-				if (!this.get('model')) {
-					this.__loadingData();
-				}
-			}
-
-			if (this.get('model') && this.get('model').addMetricName) {
-
-				var metrics = this.get('metrics');
-				var i = metrics.length, metric;
-				while (i--) {
-					metric = metrics[i];
-					this.get('model').addMetricName(metric);
-					metric = metric.replace(/\./g, '');
-					this.addObserver('model.metricData.' + metric, this, this.updateData);
-				}
 			}
 
 			return this.get('model');
 
 		},
+		setModelMetrics: function () {
+
+			if (!this.get('model')) {
+				return;
+			}
+
+			if (typeof this.get('model').addMetricName === 'function') {
+
+				var metrics = this.get('metrics');
+				var i = metrics.length, metric;
+				
+				var entityId = this.get('model').id;
+
+				// ** hax for StreamFlow **//
+				if (this.get('model').get('streamId')) {
+					entityId = this.get('model').get('streamId');
+				}
+
+				// ** hax for DatasetFlow **//
+				if (this.get('model').get('datasetId')) {
+					entityId = this.get('model').get('datasetId');
+				}
+
+				while (i--) {
+					metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
+				}
+
+				var i = metrics.length;
+
+				while (i--) {
+
+					metric = metrics[i];
+					this.get('model').addMetricName(metric);
+					metric = metric.replace(/\./g, '');
+
+					this.addObserver('model.metricData.' + metric, this, this.updateData);
+				}
+
+			}
+
+
+		}.observes('model'),
 		__loadingData: function (begin) {
 
 			return;
@@ -94,6 +119,11 @@ define([], function () {
 			'storage.trend': 'Storage Trend'
 		},
 		__getTitle: function () {
+
+			if (this.get('title')) {
+				return this.get('title');
+			}
+
 			var title = [];
 			var metrics = this.get('metrics');
 			var i = metrics.length;
@@ -124,17 +154,13 @@ define([], function () {
 				metrics = [];
 			}
 
-			var i = metrics.length;
-			while(i--) {
-				metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
-			}
-
 			this.set('metrics', metrics);
 
-			var height = parseInt(this.get('height'), 10) || 70,
-				width = parseInt(this.get('width'), 10) || 184, label, container;
+			var height = parseInt(this.get('height'), 10),
+				width = parseInt(this.get('width'), 10), label, container;
 
-			width = $(this.get('element')).parent().innerWidth();
+			height = height || 70;
+			width = width || $(this.get('element')).parent().innerWidth();
 
 			if (entityType === "Flowlet") {
 
@@ -153,25 +179,30 @@ define([], function () {
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
 				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">No Data</div></div>').appendTo(this.get('element'));
 				height = 34;
-				width = width - 94;
+				width = width - 66;
 
 			} else {
 
 				label = $('<div class="sparkline-box-value" />').appendTo(this.get('element'));
-				container = $('<div class="sparkline-box-container" />').appendTo(this.get('element'));
+				container = $('<div class="sparkline-box-container" />');
 				
-				if (this.get('mode')) {
+				if (this.get('mode') === "dash") {
 					container.addClass('sparkline-box-container-white');
-					container.append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
+					$(this.get('element')).append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
+					container.appendTo(this.get('element'));
+					container = $('<div />').appendTo(container);
 				} else {
 					container.addClass('sparkline-box-container');
-					container.append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
+					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
+					container.appendTo(this.get('element'));
+					container = $('<div style="height: 69px;" />').appendTo(container);
 				}
 
-
-				container = $('<div style="height: 69px;" />').appendTo(container);
-
 				width = width - 74;
+			}
+
+			if (entityType === 'Stream') {
+				this.set('listMode', false);
 			}
 
 			this.set('width', width);
@@ -189,8 +220,6 @@ define([], function () {
 				});
 			}
 
-			console.log(metrics);
-
 			if (!metrics.length) {
 				C.debug('NO METRIC FOR sparkline', this);
 
@@ -199,6 +228,11 @@ define([], function () {
 					this.addObserver('controller.types.' + entityType + '.content', this, this.updateModel);
 				} else {
 					this.addObserver('controller.current', this, this.updateModel);
+				}
+
+				// Now that we've set the listener, switch 'singular' charts back to listmode
+				if (this.get("mode") === 'singular') {
+					this.set('listMode', true);
 				}
 
 				this.updateModel();

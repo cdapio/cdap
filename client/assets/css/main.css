@@ -313,7 +313,9 @@ h1 span {
 	border: 1px solid #eee;
 	border-width: 0px 1px;
 }
-.panel table th, .popup-container table th, .sparkline-box-title, .drop-zone {
+.panel table th, .popup-container table th, 
+	.sparkline-box-title, .drop-zone, .app-list-count span
+	 {
 	border-top: 0;
 	font-family: "Condensed";
 	font-size: 12px;
@@ -378,7 +380,7 @@ h1 span {
 }
 .sparkline-box-container {
 	background-image: url(../img/sparkline-bg.png);
-	height: 88px;
+	height: 69px;
 	margin-right: 81px;
 	/*
 	border-right: 1px solid #fff;
@@ -387,7 +389,7 @@ h1 span {
 }
 .sparkline-box-container-white {
 	background-image: url(../img/sparkline-bg-white.png);
-	height: 91px;
+	height: 81px;
 	margin-right: 82px;
 }
 .sparkline-box-title {
@@ -461,11 +463,13 @@ h1 span {
 
 path.sparkline-data {
 	stroke: #eea44c;
-	stroke-width: 3;
+	stroke-width: 2;
 	fill: none;
 }
 path.sparkline-area {
 	fill: #e4e4e4;
+	stroke: #e4e4e4;
+	stroke-width: 2px;
 }
 .blue path.sparkline-data {
 	stroke: #40AFD0;
@@ -475,6 +479,11 @@ path.sparkline-area {
 }
 .orange path.sparkline-data {
 	stroke: #eea44c;
+}
+
+.sparkline-flowlet-container path.sparkline-area {
+	stroke: #83CCE1;
+	fill: #83CCE1;
 }
 
 line {
@@ -701,6 +710,7 @@ input {
 	text-align: center !important;
 	width: 56px;
 	color: #555;
+	vertical-align: middle !important;
 }
 .app-list-name {
 	overflow: hidden;
@@ -1089,12 +1099,9 @@ a strong {
 }
 .popup-inject-wrapper {
 	float: right;
-	border: 1px solid #EEE;
 	height: 27px;
-	background-color: #FAFAFA;
 	margin: 12px 0px;
 	padding: 4px;
-	box-shadow: inset 0px 0px 8px rgba(0, 0, 0, .05);
 }
 #flowlet-popup-tabs {
 	height: 28px;
@@ -1282,7 +1289,7 @@ a strong {
 	color: #616A6B;
 }
 .object-list-empty {
-	padding: 48px;
+	padding: 32px 48px;
 	text-align: center;
 	border: 1px solid #EEE;
 	border-width: 0px 1px;
@@ -1300,16 +1307,17 @@ a strong {
 	text-align: left;
 	font-size: 14px;
 	color: #8C9495;
-	padding-top: 2px;
 	line-height: 12px;
 	font-weight: 500;
 	letter-spacing: 0.08em;
 
 	border: 1px solid #efefef;
 	border-radius: 3px;
-	padding: 9px 8px 7px 40px;
-	background-position: 8px;
-	background-color: #fdfdfd;
+
+	background-position: 68px 25px;
+	background-color: #FDFDFD;
+	padding: 25px 25px 22px 100px;
+
 }
 .object-list-empty-content span {
 	font-size: 12px;

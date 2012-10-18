@@ -13,7 +13,7 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{flowId}}</a><br /><span class="app-list-status">{{currentState}}</span>
+			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
 		</td>
 		<td class="app-list-count">{{instances}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="processed.count"}}</td>

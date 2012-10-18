@@ -13,8 +13,8 @@
 		} else {
 			this.PORT = 80;
 
-			this.USERNAME = 'continuuity';
-			this.PASSWORD = 'realwh00p';
+			this.USERNAMES = ['payvment', 'continuuity'];
+			this.PASSWORDS = ['pvrealtime123!', 'realwh00p'];
 		}
 
 		app.use(express['static'](__dirname + '/../client/'));

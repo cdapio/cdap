@@ -7,8 +7,13 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 if (process.env.NODE_ENV !== 'development') {
 	app = express.createServer(express.basicAuth(function (u, p) {
-		if (Env.USERNAME) {
-			return Env.USERNAME === u && Env.PASSWORD === p;
+		if (Env.USERNAMES) {
+			for (var i = 0; i < Env.USERNAMES.length; i ++) {
+				if (Env.USERNAMES[i] === u && Env.PASSWORDS[i] === p) {
+					return true;
+				}
+			}
+			return false;
 		} else {
 			return true;
 		}

@@ -16,8 +16,8 @@ define([], function () {
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
 
-			this.set('id', this.get('flowId') || this.get('meta').name);
-			this.set('app', this.get('applicationId') || this.get('meta').app);
+			this.set('id', this.get('flowId') || this.get('id') || this.get('meta').name);
+			this.set('app', this.get('applicationId') || this.get('application'));
 
 		},
 		addMetricName: function (name) {
@@ -26,10 +26,6 @@ define([], function () {
 
 		},
 		getUpdateRequest: function () {
-
-			if (this.get('currentState') !== 'RUNNING') {
-				return [];
-			}
 
 			var self = this;
 
@@ -88,11 +84,7 @@ define([], function () {
 
 		},
 		href: function () {
-			if (this.get('applicationId')) {
-				return '#/flows/status/' + this.get('applicationId') + ':' + this.get('flowId');
-			} else {
-				return '#/flows/status/' + this.get('meta').app + ':' + this.get('meta').name;
-			}
+			return '#/flows/status/' + this.get('app') + ':' + this.get('id');
 		}.property(),
 		getMeta: function () {
 			var arr = [];

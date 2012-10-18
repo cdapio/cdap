@@ -15,9 +15,9 @@
 		<td class="app-list-name">
 			<a {{bindAttr href="href"}}>{{name}}</a>
 		</td>
-		<td class="app-list-count">{{storage}}</td>
+		<td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
 		<td class="app-list-count">{{unconsumed}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" metrics="q.stream//demo/{id}.ack.source.count" width="420"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" mode="singular" metrics="q.stream//demo/{id}.ack.source.count"}}</td>
 	</tr>
 	{{/each}}
 	</table>

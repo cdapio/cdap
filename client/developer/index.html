@@ -89,8 +89,8 @@
         <table class="table dash-app-trends">
           <tbody>
             <tr>
-              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" width="480" color="orange" metrics="processed.count"}}</td>
-              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" width="480" color="orange" metrics="storage.trend"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" color="orange" metrics="processed.count"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" color="orange" metrics="storage.trend"}}</td>
             </tr>
           </tbody>
         </table>
@@ -132,25 +132,25 @@
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{current.storage}}</div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
     </div>
 
     <div id="panels">
       <div class="panel">
-        <div class="panel-head">{{view C.Vw.CreateButton entityType="Stream"}}<div class="panel-title">Streams</div></div>
+        <div class="panel-head"><div class="panel-title">Streams</div></div>
         {{view C.Vw.StreamList}}
       </div>
       <div class="panel">
-        <div class="panel-head">{{view C.Vw.CreateButton entityType="Flow"}}<div class="panel-title">Flows</div></div>
+        <div class="panel-head"><div class="panel-title">Flows</div></div>
         {{view C.Vw.FlowList}}
       </div>
       <div class="panel">
-        <div class="panel-head">{{view C.Vw.CreateButton entityType="Dataset"}}<div class="panel-title">Datasets</div></div>
+        <div class="panel-head"><div class="panel-title">Datasets</div></div>
         {{view C.Vw.DatasetList}}
       </div>
       <div class="panel">
-        <div class="panel-head">{{view C.Vw.CreateButton entityType="Query"}}<div class="panel-title">Queries</div></div>
+        <div class="panel-head"><div class="panel-title">Queries</div></div>
         {{view C.Vw.QueryList}}
       </div>
     </div>
@@ -173,34 +173,31 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="Arrivas Vs. Consumed" width="180"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:14px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
     </div>
     <div id="panels">
-      <div class="panel" style="float: left; width: 400px;">
-        
-      </div>
-      <div class="panel" style="margin-left:420px;">
-        {{#if controller.content.length}}
+      <div class="panel">
+      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+      
+        {{#if controller.types.StreamFlow.content.length}}
           <table class="table">
           <thead>
             <th colspan="2">&nbsp;</th>
-            <th style="width: 100px;text-align: center;">Storage</th>
-            <th style="width: 448px;">Reads &amp; Writes</th>
+            <th style="width: 448px;">Reads</th>
           </thead>
-          {{#each controller.content tagName="tbody"}}
+          {{#each controller.types.StreamFlow.content tagName="tbody"}}
           <tr>
             <td class="list-health-cell">
               <div class="list-health-box"></div>
             </td>
             <td class="app-list-name">
-              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
-            <td class="app-list-count">{{storage}}</td>
-            <td>{{view C.Vw.Chart entity-id=id entity-type="Dataset" metrics="dataset.reads" width="420"}}</td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="q.ack.stream//demo/{id}.count"}}</td>
           </tr>
           {{/each}}
           </table>
@@ -359,20 +356,43 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="dataset.read,dataset.write" width="180"}}</div>
-      <div class="info-box" style="padding: 0;text-align: center;">
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes" metrics="dataset.write.{id}"}}</div>
+       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;width: 80px;">{{current.storage}}<br /><span>DISK</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:14px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="object-list-empty"></div>
+      <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
+      
+        {{#if controller.types.Flow.content.length}}
+          <table class="table">
+          <thead>
+            <th colspan="2">&nbsp;</th>
+            <th style="width: 448px;">Reads</th>
+          </thead>
+          {{#each controller.types.Flow.content tagName="tbody"}}
+          <tr>
+            <td class="list-health-cell">
+              <div class="list-health-box"></div>
+            </td>
+            <td class="app-list-name">
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
+            </td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="DatasetFlow" mode="singular" metrics="dataset.read.{id}.count"}}</td>
+          </tr>
+          {{/each}}
+          </table>
+        {{else}}
+          <div class="object-list-empty">
+            <div class="object-list-empty-content">
+              No Attached Flows.
+              <br /><span>Specify streams within your flow definition file.</span>
+            </div>
+          </div>
+        {{/if}}
       </div>
-      <div class="panel">
-        <div class="object-list-empty"></div>
-      </div>
-    </div>
   </script>
 
 </body>

@@ -17,8 +17,8 @@
 			{{name}}<br /><span class="app-list-status">{{currentState}}</span>
 		</td>
 		<td class="app-list-count">1</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="processed.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metric="busyness"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.success.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metric="query.failed.count"}}</td>
 		<td>{{#unless isRunning}}
 			<button class="btn" {{action start on="click"}} {{bindAttr flowId="flowId"}} {{bindAttr applicationId="applicationId"}}>Start</button>
 			{{else}}

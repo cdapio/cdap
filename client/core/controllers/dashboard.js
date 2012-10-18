@@ -27,16 +27,16 @@ define([], function () {
 
 					C.Ctl.List.getObjects('Stream', function (obj) {
 						objects[i + 1].set('counts.Stream', obj.length);
-					});
+					}, objects[i].id);
 					C.Ctl.List.getObjects('Flow', function (obj) {
 						objects[i + 1].set('counts.Flow', obj.length);
-					});
+					}, objects[i].id);
 					C.Ctl.List.getObjects('Dataset', function (obj) {
 						objects[i + 1].set('counts.Dataset', obj.length);
-					});
+					}, objects[i].id);
 					C.Ctl.List.getObjects('Query', function (obj) {
 						objects[i + 1].set('counts.Query', obj.length);
-					});
+					}, objects[i].id);
 
 				}
 				self.get('types.Application').pushObjects(objects);

@@ -360,19 +360,19 @@ MetadataService_getStreams_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size0 = 0;
-        var _rtmp34;
+        var _size16 = 0;
+        var _rtmp320;
         this.success = [];
-        var _etype3 = 0;
-        _rtmp34 = input.readListBegin();
-        _etype3 = _rtmp34.etype;
-        _size0 = _rtmp34.size;
-        for (var _i5 = 0; _i5 < _size0; ++_i5)
+        var _etype19 = 0;
+        _rtmp320 = input.readListBegin();
+        _etype19 = _rtmp320.etype;
+        _size16 = _rtmp320.size;
+        for (var _i21 = 0; _i21 < _size16; ++_i21)
         {
-          var elem6 = null;
-          elem6 = new ttypes.Stream();
-          elem6.read(input);
-          this.success.push(elem6);
+          var elem22 = null;
+          elem22 = new ttypes.Stream();
+          elem22.read(input);
+          this.success.push(elem22);
         }
         input.readListEnd();
       } else {
@@ -401,12 +401,12 @@ MetadataService_getStreams_result.prototype.write = function(output) {
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
-    for (var iter7 in this.success)
+    for (var iter23 in this.success)
     {
-      if (this.success.hasOwnProperty(iter7))
+      if (this.success.hasOwnProperty(iter23))
       {
-        iter7 = this.success[iter7];
-        iter7.write(output);
+        iter23 = this.success[iter23];
+        iter23.write(output);
       }
     }
     output.writeListEnd();
@@ -910,19 +910,19 @@ MetadataService_getDatasets_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size8 = 0;
-        var _rtmp312;
+        var _size24 = 0;
+        var _rtmp328;
         this.success = [];
-        var _etype11 = 0;
-        _rtmp312 = input.readListBegin();
-        _etype11 = _rtmp312.etype;
-        _size8 = _rtmp312.size;
-        for (var _i13 = 0; _i13 < _size8; ++_i13)
+        var _etype27 = 0;
+        _rtmp328 = input.readListBegin();
+        _etype27 = _rtmp328.etype;
+        _size24 = _rtmp328.size;
+        for (var _i29 = 0; _i29 < _size24; ++_i29)
         {
-          var elem14 = null;
-          elem14 = new ttypes.Dataset();
-          elem14.read(input);
-          this.success.push(elem14);
+          var elem30 = null;
+          elem30 = new ttypes.Dataset();
+          elem30.read(input);
+          this.success.push(elem30);
         }
         input.readListEnd();
       } else {
@@ -951,12 +951,12 @@ MetadataService_getDatasets_result.prototype.write = function(output) {
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
-    for (var iter15 in this.success)
+    for (var iter31 in this.success)
     {
-      if (this.success.hasOwnProperty(iter15))
+      if (this.success.hasOwnProperty(iter31))
       {
-        iter15 = this.success[iter15];
-        iter15.write(output);
+        iter31 = this.success[iter31];
+        iter31.write(output);
       }
     }
     output.writeListEnd();
@@ -1460,19 +1460,19 @@ MetadataService_getApplications_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size16 = 0;
-        var _rtmp320;
+        var _size32 = 0;
+        var _rtmp336;
         this.success = [];
-        var _etype19 = 0;
-        _rtmp320 = input.readListBegin();
-        _etype19 = _rtmp320.etype;
-        _size16 = _rtmp320.size;
-        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        var _etype35 = 0;
+        _rtmp336 = input.readListBegin();
+        _etype35 = _rtmp336.etype;
+        _size32 = _rtmp336.size;
+        for (var _i37 = 0; _i37 < _size32; ++_i37)
         {
-          var elem22 = null;
-          elem22 = new ttypes.Application();
-          elem22.read(input);
-          this.success.push(elem22);
+          var elem38 = null;
+          elem38 = new ttypes.Application();
+          elem38.read(input);
+          this.success.push(elem38);
         }
         input.readListEnd();
       } else {
@@ -1501,12 +1501,12 @@ MetadataService_getApplications_result.prototype.write = function(output) {
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
-    for (var iter23 in this.success)
+    for (var iter39 in this.success)
     {
-      if (this.success.hasOwnProperty(iter23))
+      if (this.success.hasOwnProperty(iter39))
       {
-        iter23 = this.success[iter23];
-        iter23.write(output);
+        iter39 = this.success[iter39];
+        iter39.write(output);
       }
     }
     output.writeListEnd();
@@ -2010,19 +2010,19 @@ MetadataService_getQueries_result.prototype.read = function(input) {
     {
       case 0:
       if (ftype == Thrift.Type.LIST) {
-        var _size24 = 0;
-        var _rtmp328;
+        var _size40 = 0;
+        var _rtmp344;
         this.success = [];
-        var _etype27 = 0;
-        _rtmp328 = input.readListBegin();
-        _etype27 = _rtmp328.etype;
-        _size24 = _rtmp328.size;
-        for (var _i29 = 0; _i29 < _size24; ++_i29)
+        var _etype43 = 0;
+        _rtmp344 = input.readListBegin();
+        _etype43 = _rtmp344.etype;
+        _size40 = _rtmp344.size;
+        for (var _i45 = 0; _i45 < _size40; ++_i45)
         {
-          var elem30 = null;
-          elem30 = new ttypes.Query();
-          elem30.read(input);
-          this.success.push(elem30);
+          var elem46 = null;
+          elem46 = new ttypes.Query();
+          elem46.read(input);
+          this.success.push(elem46);
         }
         input.readListEnd();
       } else {
@@ -2051,12 +2051,12 @@ MetadataService_getQueries_result.prototype.write = function(output) {
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.LIST, 0);
     output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
-    for (var iter31 in this.success)
+    for (var iter47 in this.success)
     {
-      if (this.success.hasOwnProperty(iter31))
+      if (this.success.hasOwnProperty(iter47))
       {
-        iter31 = this.success[iter31];
-        iter31.write(output);
+        iter47 = this.success[iter47];
+        iter47.write(output);
       }
     }
     output.writeListEnd();
@@ -2196,6 +2196,1670 @@ MetadataService_getQuery_result.prototype.write = function(output) {
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
     this.success.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_createFlow_args = function(args) {
+  this.account = null;
+  this.flow = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.flow !== undefined) {
+      this.flow = args.flow;
+    }
+  }
+};
+MetadataService_createFlow_args.prototype = {};
+MetadataService_createFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.flow = new ttypes.Flow();
+        this.flow.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_createFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_createFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.flow) {
+    output.writeFieldBegin('flow', Thrift.Type.STRUCT, 2);
+    this.flow.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_createFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_createFlow_result.prototype = {};
+MetadataService_createFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_createFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_createFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_updateFlow_args = function(args) {
+  this.account = null;
+  this.flow = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.flow !== undefined) {
+      this.flow = args.flow;
+    }
+  }
+};
+MetadataService_updateFlow_args.prototype = {};
+MetadataService_updateFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.flow = new ttypes.Flow();
+        this.flow.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_updateFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_updateFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.flow) {
+    output.writeFieldBegin('flow', Thrift.Type.STRUCT, 2);
+    this.flow.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_updateFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_updateFlow_result.prototype = {};
+MetadataService_updateFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_updateFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_updateFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_addDatasetToFlow_args = function(args) {
+  this.account = null;
+  this.app = null;
+  this.flowid = null;
+  this.dataset = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.app !== undefined) {
+      this.app = args.app;
+    }
+    if (args.flowid !== undefined) {
+      this.flowid = args.flowid;
+    }
+    if (args.dataset !== undefined) {
+      this.dataset = args.dataset;
+    }
+  }
+};
+MetadataService_addDatasetToFlow_args.prototype = {};
+MetadataService_addDatasetToFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.app = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowid = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.STRING) {
+        this.dataset = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_addDatasetToFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_addDatasetToFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.app) {
+    output.writeFieldBegin('app', Thrift.Type.STRING, 2);
+    output.writeString(this.app);
+    output.writeFieldEnd();
+  }
+  if (this.flowid) {
+    output.writeFieldBegin('flowid', Thrift.Type.STRING, 3);
+    output.writeString(this.flowid);
+    output.writeFieldEnd();
+  }
+  if (this.dataset) {
+    output.writeFieldBegin('dataset', Thrift.Type.STRING, 4);
+    output.writeString(this.dataset);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_addDatasetToFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_addDatasetToFlow_result.prototype = {};
+MetadataService_addDatasetToFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_addDatasetToFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_addDatasetToFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_addStreamToFlow_args = function(args) {
+  this.account = null;
+  this.app = null;
+  this.flowid = null;
+  this.stream = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.app !== undefined) {
+      this.app = args.app;
+    }
+    if (args.flowid !== undefined) {
+      this.flowid = args.flowid;
+    }
+    if (args.stream !== undefined) {
+      this.stream = args.stream;
+    }
+  }
+};
+MetadataService_addStreamToFlow_args.prototype = {};
+MetadataService_addStreamToFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.app = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowid = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.STRING) {
+        this.stream = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_addStreamToFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_addStreamToFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.app) {
+    output.writeFieldBegin('app', Thrift.Type.STRING, 2);
+    output.writeString(this.app);
+    output.writeFieldEnd();
+  }
+  if (this.flowid) {
+    output.writeFieldBegin('flowid', Thrift.Type.STRING, 3);
+    output.writeString(this.flowid);
+    output.writeFieldEnd();
+  }
+  if (this.stream) {
+    output.writeFieldBegin('stream', Thrift.Type.STRING, 4);
+    output.writeString(this.stream);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_addStreamToFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_addStreamToFlow_result.prototype = {};
+MetadataService_addStreamToFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_addStreamToFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_addStreamToFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_deleteFlow_args = function(args) {
+  this.account = null;
+  this.app = null;
+  this.flowid = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.app !== undefined) {
+      this.app = args.app;
+    }
+    if (args.flowid !== undefined) {
+      this.flowid = args.flowid;
+    }
+  }
+};
+MetadataService_deleteFlow_args.prototype = {};
+MetadataService_deleteFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.app = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowid = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.app) {
+    output.writeFieldBegin('app', Thrift.Type.STRING, 2);
+    output.writeString(this.app);
+    output.writeFieldEnd();
+  }
+  if (this.flowid) {
+    output.writeFieldBegin('flowid', Thrift.Type.STRING, 3);
+    output.writeString(this.flowid);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_deleteFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_deleteFlow_result.prototype = {};
+MetadataService_deleteFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlows_args = function(args) {
+  this.account = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+  }
+};
+MetadataService_getFlows_args.prototype = {};
+MetadataService_getFlows_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlows_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlows_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlows_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getFlows_result.prototype = {};
+MetadataService_getFlows_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size48 = 0;
+        var _rtmp352;
+        this.success = [];
+        var _etype51 = 0;
+        _rtmp352 = input.readListBegin();
+        _etype51 = _rtmp352.etype;
+        _size48 = _rtmp352.size;
+        for (var _i53 = 0; _i53 < _size48; ++_i53)
+        {
+          var elem54 = null;
+          elem54 = new ttypes.Flow();
+          elem54.read(input);
+          this.success.push(elem54);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlows_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlows_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter55 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter55))
+      {
+        iter55 = this.success[iter55];
+        iter55.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlow_args = function(args) {
+  this.account = null;
+  this.app = null;
+  this.flowid = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.app !== undefined) {
+      this.app = args.app;
+    }
+    if (args.flowid !== undefined) {
+      this.flowid = args.flowid;
+    }
+  }
+};
+MetadataService_getFlow_args.prototype = {};
+MetadataService_getFlow_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.app = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowid = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlow_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlow_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.app) {
+    output.writeFieldBegin('app', Thrift.Type.STRING, 2);
+    output.writeString(this.app);
+    output.writeFieldEnd();
+  }
+  if (this.flowid) {
+    output.writeFieldBegin('flowid', Thrift.Type.STRING, 3);
+    output.writeString(this.flowid);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlow_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getFlow_result.prototype = {};
+MetadataService_getFlow_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.success = new ttypes.Flow();
+        this.success.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlow_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlow_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.STRUCT, 0);
+    this.success.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlowsByApplication_args = function(args) {
+  this.account = null;
+  this.application = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.application !== undefined) {
+      this.application = args.application;
+    }
+  }
+};
+MetadataService_getFlowsByApplication_args.prototype = {};
+MetadataService_getFlowsByApplication_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.application = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlowsByApplication_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlowsByApplication_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.application) {
+    output.writeFieldBegin('application', Thrift.Type.STRING, 2);
+    output.writeString(this.application);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlowsByApplication_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getFlowsByApplication_result.prototype = {};
+MetadataService_getFlowsByApplication_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size56 = 0;
+        var _rtmp360;
+        this.success = [];
+        var _etype59 = 0;
+        _rtmp360 = input.readListBegin();
+        _etype59 = _rtmp360.etype;
+        _size56 = _rtmp360.size;
+        for (var _i61 = 0; _i61 < _size56; ++_i61)
+        {
+          var elem62 = null;
+          elem62 = new ttypes.Flow();
+          elem62.read(input);
+          this.success.push(elem62);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlowsByApplication_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlowsByApplication_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter63 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter63))
+      {
+        iter63 = this.success[iter63];
+        iter63.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getStreamsByApplication_args = function(args) {
+  this.account = null;
+  this.application = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.application !== undefined) {
+      this.application = args.application;
+    }
+  }
+};
+MetadataService_getStreamsByApplication_args.prototype = {};
+MetadataService_getStreamsByApplication_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.application = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getStreamsByApplication_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getStreamsByApplication_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.application) {
+    output.writeFieldBegin('application', Thrift.Type.STRING, 2);
+    output.writeString(this.application);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getStreamsByApplication_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getStreamsByApplication_result.prototype = {};
+MetadataService_getStreamsByApplication_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size64 = 0;
+        var _rtmp368;
+        this.success = [];
+        var _etype67 = 0;
+        _rtmp368 = input.readListBegin();
+        _etype67 = _rtmp368.etype;
+        _size64 = _rtmp368.size;
+        for (var _i69 = 0; _i69 < _size64; ++_i69)
+        {
+          var elem70 = null;
+          elem70 = new ttypes.Stream();
+          elem70.read(input);
+          this.success.push(elem70);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getStreamsByApplication_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getStreamsByApplication_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter71 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter71))
+      {
+        iter71 = this.success[iter71];
+        iter71.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getDatasetsByApplication_args = function(args) {
+  this.account = null;
+  this.application = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.application !== undefined) {
+      this.application = args.application;
+    }
+  }
+};
+MetadataService_getDatasetsByApplication_args.prototype = {};
+MetadataService_getDatasetsByApplication_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.application = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getDatasetsByApplication_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getDatasetsByApplication_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.application) {
+    output.writeFieldBegin('application', Thrift.Type.STRING, 2);
+    output.writeString(this.application);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getDatasetsByApplication_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getDatasetsByApplication_result.prototype = {};
+MetadataService_getDatasetsByApplication_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size72 = 0;
+        var _rtmp376;
+        this.success = [];
+        var _etype75 = 0;
+        _rtmp376 = input.readListBegin();
+        _etype75 = _rtmp376.etype;
+        _size72 = _rtmp376.size;
+        for (var _i77 = 0; _i77 < _size72; ++_i77)
+        {
+          var elem78 = null;
+          elem78 = new ttypes.Dataset();
+          elem78.read(input);
+          this.success.push(elem78);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getDatasetsByApplication_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getDatasetsByApplication_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter79 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter79))
+      {
+        iter79 = this.success[iter79];
+        iter79.write(output);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlowsByStream_args = function(args) {
+  this.account = null;
+  this.stream = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.stream !== undefined) {
+      this.stream = args.stream;
+    }
+  }
+};
+MetadataService_getFlowsByStream_args.prototype = {};
+MetadataService_getFlowsByStream_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.stream = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlowsByStream_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlowsByStream_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  if (this.stream) {
+    output.writeFieldBegin('stream', Thrift.Type.STRING, 2);
+    output.writeString(this.stream);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_getFlowsByStream_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_getFlowsByStream_result.prototype = {};
+MetadataService_getFlowsByStream_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size80 = 0;
+        var _rtmp384;
+        this.success = [];
+        var _etype83 = 0;
+        _rtmp384 = input.readListBegin();
+        _etype83 = _rtmp384.etype;
+        _size80 = _rtmp384.size;
+        for (var _i85 = 0; _i85 < _size80; ++_i85)
+        {
+          var elem86 = null;
+          elem86 = new ttypes.Flow();
+          elem86.read(input);
+          this.success.push(elem86);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_getFlowsByStream_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_getFlowsByStream_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRUCT, this.success.length);
+    for (var iter87 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter87))
+      {
+        iter87 = this.success[iter87];
+        iter87.write(output);
+      }
+    }
+    output.writeListEnd();
     output.writeFieldEnd();
   }
   if (this.e) {
@@ -2819,6 +4483,429 @@ MetadataServiceClient.prototype.recv_getQuery = function(input,mtype,rseqid) {
   }
   return callback('getQuery failed: unknown result');
 };
+MetadataServiceClient.prototype.createFlow = function(account, flow, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_createFlow(account, flow);
+};
+
+MetadataServiceClient.prototype.send_createFlow = function(account, flow) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('createFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_createFlow_args();
+  args.account = account;
+  args.flow = flow;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_createFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_createFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('createFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.updateFlow = function(account, flow, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_updateFlow(account, flow);
+};
+
+MetadataServiceClient.prototype.send_updateFlow = function(account, flow) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('updateFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_updateFlow_args();
+  args.account = account;
+  args.flow = flow;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_updateFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_updateFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('updateFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.addDatasetToFlow = function(account, app, flowid, dataset, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_addDatasetToFlow(account, app, flowid, dataset);
+};
+
+MetadataServiceClient.prototype.send_addDatasetToFlow = function(account, app, flowid, dataset) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('addDatasetToFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_addDatasetToFlow_args();
+  args.account = account;
+  args.app = app;
+  args.flowid = flowid;
+  args.dataset = dataset;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_addDatasetToFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_addDatasetToFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('addDatasetToFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.addStreamToFlow = function(account, app, flowid, stream, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_addStreamToFlow(account, app, flowid, stream);
+};
+
+MetadataServiceClient.prototype.send_addStreamToFlow = function(account, app, flowid, stream) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('addStreamToFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_addStreamToFlow_args();
+  args.account = account;
+  args.app = app;
+  args.flowid = flowid;
+  args.stream = stream;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_addStreamToFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_addStreamToFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('addStreamToFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.deleteFlow = function(account, app, flowid, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_deleteFlow(account, app, flowid);
+};
+
+MetadataServiceClient.prototype.send_deleteFlow = function(account, app, flowid) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('deleteFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_deleteFlow_args();
+  args.account = account;
+  args.app = app;
+  args.flowid = flowid;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_deleteFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_deleteFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('deleteFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.getFlows = function(account, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getFlows(account);
+};
+
+MetadataServiceClient.prototype.send_getFlows = function(account) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getFlows', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getFlows_args();
+  args.account = account;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getFlows = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getFlows_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getFlows failed: unknown result');
+};
+MetadataServiceClient.prototype.getFlow = function(account, app, flowid, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getFlow(account, app, flowid);
+};
+
+MetadataServiceClient.prototype.send_getFlow = function(account, app, flowid) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getFlow', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getFlow_args();
+  args.account = account;
+  args.app = app;
+  args.flowid = flowid;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getFlow = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getFlow_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getFlow failed: unknown result');
+};
+MetadataServiceClient.prototype.getFlowsByApplication = function(account, application, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getFlowsByApplication(account, application);
+};
+
+MetadataServiceClient.prototype.send_getFlowsByApplication = function(account, application) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getFlowsByApplication', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getFlowsByApplication_args();
+  args.account = account;
+  args.application = application;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getFlowsByApplication = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getFlowsByApplication_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getFlowsByApplication failed: unknown result');
+};
+MetadataServiceClient.prototype.getStreamsByApplication = function(account, application, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getStreamsByApplication(account, application);
+};
+
+MetadataServiceClient.prototype.send_getStreamsByApplication = function(account, application) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getStreamsByApplication', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getStreamsByApplication_args();
+  args.account = account;
+  args.application = application;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getStreamsByApplication = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getStreamsByApplication_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getStreamsByApplication failed: unknown result');
+};
+MetadataServiceClient.prototype.getDatasetsByApplication = function(account, application, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getDatasetsByApplication(account, application);
+};
+
+MetadataServiceClient.prototype.send_getDatasetsByApplication = function(account, application) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getDatasetsByApplication', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getDatasetsByApplication_args();
+  args.account = account;
+  args.application = application;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getDatasetsByApplication = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getDatasetsByApplication_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getDatasetsByApplication failed: unknown result');
+};
+MetadataServiceClient.prototype.getFlowsByStream = function(account, stream, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getFlowsByStream(account, stream);
+};
+
+MetadataServiceClient.prototype.send_getFlowsByStream = function(account, stream) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getFlowsByStream', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_getFlowsByStream_args();
+  args.account = account;
+  args.stream = stream;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_getFlowsByStream = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_getFlowsByStream_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getFlowsByStream failed: unknown result');
+};
 var MetadataServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -3055,6 +5142,160 @@ MetadataServiceProcessor.prototype.process_getQuery = function(seqid, input, out
   this._handler.getQuery(args.account, args.query, function (success) {
     result.success = success;
     output.writeMessageBegin("getQuery", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_createFlow = function(seqid, input, output) {
+  var args = new MetadataService_createFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_createFlow_result();
+  this._handler.createFlow(args.account, args.flow, function (success) {
+    result.success = success;
+    output.writeMessageBegin("createFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_updateFlow = function(seqid, input, output) {
+  var args = new MetadataService_updateFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_updateFlow_result();
+  this._handler.updateFlow(args.account, args.flow, function (success) {
+    result.success = success;
+    output.writeMessageBegin("updateFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_addDatasetToFlow = function(seqid, input, output) {
+  var args = new MetadataService_addDatasetToFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_addDatasetToFlow_result();
+  this._handler.addDatasetToFlow(args.account, args.app, args.flowid, args.dataset, function (success) {
+    result.success = success;
+    output.writeMessageBegin("addDatasetToFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_addStreamToFlow = function(seqid, input, output) {
+  var args = new MetadataService_addStreamToFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_addStreamToFlow_result();
+  this._handler.addStreamToFlow(args.account, args.app, args.flowid, args.stream, function (success) {
+    result.success = success;
+    output.writeMessageBegin("addStreamToFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_deleteFlow = function(seqid, input, output) {
+  var args = new MetadataService_deleteFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_deleteFlow_result();
+  this._handler.deleteFlow(args.account, args.app, args.flowid, function (success) {
+    result.success = success;
+    output.writeMessageBegin("deleteFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getFlows = function(seqid, input, output) {
+  var args = new MetadataService_getFlows_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getFlows_result();
+  this._handler.getFlows(args.account, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getFlows", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getFlow = function(seqid, input, output) {
+  var args = new MetadataService_getFlow_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getFlow_result();
+  this._handler.getFlow(args.account, args.app, args.flowid, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getFlow", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getFlowsByApplication = function(seqid, input, output) {
+  var args = new MetadataService_getFlowsByApplication_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getFlowsByApplication_result();
+  this._handler.getFlowsByApplication(args.account, args.application, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getFlowsByApplication", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getStreamsByApplication = function(seqid, input, output) {
+  var args = new MetadataService_getStreamsByApplication_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getStreamsByApplication_result();
+  this._handler.getStreamsByApplication(args.account, args.application, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getStreamsByApplication", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getDatasetsByApplication = function(seqid, input, output) {
+  var args = new MetadataService_getDatasetsByApplication_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getDatasetsByApplication_result();
+  this._handler.getDatasetsByApplication(args.account, args.application, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getDatasetsByApplication", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_getFlowsByStream = function(seqid, input, output) {
+  var args = new MetadataService_getFlowsByStream_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_getFlowsByStream_result();
+  this._handler.getFlowsByStream(args.account, args.stream, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getFlowsByStream", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();
