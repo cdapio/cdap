@@ -19,4 +19,12 @@ public interface WriteOperation extends Operation {
    * @return the priority of this write operation
    */
   public int getPriority();
+
+  /**
+   * Returns the size of this write operation in terms of the amount of storage
+   * that this write operation will utilize in the fabric.  This is used for
+   * storage metrics of datasets.
+   * @return size in bytes
+   */
+  public int getSize();
 }

@@ -138,4 +138,9 @@ public class Delete implements WriteOperation {
   public long getId() {
     return id;
   }
+
+  @Override
+  public int getSize() {
+    return 0;
+  }
 }

@@ -216,4 +216,14 @@ public class Increment implements WriteOperation, ReadOperation {
   public long getId() {
     return id;
   }
+
+  @Override
+  public int getSize() {
+    if (key == null || columns == null) return 0;
+    int size = key.length;
+    for (int i=0; i<columns.length; i++) {
+      size += columns[i].length + 8;
+    }
+    return size;
+  }
 }

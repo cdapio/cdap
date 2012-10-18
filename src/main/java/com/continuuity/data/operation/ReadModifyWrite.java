@@ -34,4 +34,9 @@ public class ReadModifyWrite implements ConditionalWriteOperation {
   public long getId() {
     return id;
   }
+
+  @Override
+  public int getSize() {
+    return 0;
+  }
 }
