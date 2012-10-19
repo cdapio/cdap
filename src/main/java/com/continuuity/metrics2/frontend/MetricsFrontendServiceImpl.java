@@ -235,7 +235,7 @@ public class MetricsFrontendServiceImpl
     for(String metric : request.getMetrics()) {
       if("busyness".equals(metric)) {
         preprocessedMetrics.add("tuples.read.count");
-        preprocessedMetrics.add("tuples.proc.count");
+        preprocessedMetrics.add("tuples.attempt.read.count");
       } else {
         preprocessedMetrics.add(metric);
       }
@@ -275,8 +275,8 @@ public class MetricsFrontendServiceImpl
       // and hence we retrieve the tuple.read.count and tuples.proc.count
       // and divide one by the other. This is done on the rate.
       if(metric.equals("busyness")) {
-        List<DataPoint> processed = dataPoints.get("tuples.proc.count");
-        List<DataPoint> read = dataPoints.get("tuples.read.count");
+        List<DataPoint> processed = dataPoints.get("tuples.read.count");
+        List<DataPoint> read = dataPoints.get("tuples.attempt.read.count");
         if(read == null || processed == null) {
           List<DataPoint> n = null;
           results.put(metric, convertDataPointToPoint(n));
@@ -307,6 +307,15 @@ public class MetricsFrontendServiceImpl
       }
     }
 
+//    StringBuffer sb = new StringBuffer();
+//    for(Map.Entry<String, List<Point>> entry : results.entrySet()) {
+//      sb.append("Metric :").append(entry.getKey()).append("[");
+//      for(Point point : entry.getValue()) {
+//        sb.append(point.getValue()).append(",");
+//      }
+//      sb.append("]").append("\n");
+//    }
+//    System.out.println(sb.toString());
     Points points = new Points();
     points.setPoints(results);
     return points;
