@@ -62,6 +62,7 @@ var Application = module.exports.Application = function(args) {
   this.id = null;
   this.name = null;
   this.description = null;
+  this.exists = true;
   if (args) {
     if (args.id !== undefined) {
       this.id = args.id;
@@ -71,6 +72,9 @@ var Application = module.exports.Application = function(args) {
     }
     if (args.description !== undefined) {
       this.description = args.description;
+    }
+    if (args.exists !== undefined) {
+      this.exists = args.exists;
     }
   }
 };
@@ -109,6 +113,13 @@ Application.prototype.read = function(input) {
         input.skip(ftype);
       }
       break;
+      case 4:
+      if (ftype == Thrift.Type.BOOL) {
+        this.exists = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
       default:
         input.skip(ftype);
     }
@@ -133,6 +144,11 @@ Application.prototype.write = function(output) {
   if (this.description) {
     output.writeFieldBegin('description', Thrift.Type.STRING, 3);
     output.writeString(this.description);
+    output.writeFieldEnd();
+  }
+  if (this.exists) {
+    output.writeFieldBegin('exists', Thrift.Type.BOOL, 4);
+    output.writeBool(this.exists);
     output.writeFieldEnd();
   }
   output.writeFieldStop();
