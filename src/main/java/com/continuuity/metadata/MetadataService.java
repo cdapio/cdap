@@ -25,9 +25,9 @@ import java.util.*;
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataService implements
-    com.continuuity.metadata.thrift.MetadataService.Iface {
-
+public class MetadataService extends MetadataHelper
+    implements com.continuuity.metadata.thrift.MetadataService.Iface
+{
   private static final Logger Log
       = LoggerFactory.getLogger(MetadataService.class);
 
@@ -39,123 +39,6 @@ public class MetadataService implements
    */
   public MetadataService(OperationExecutor opex) {
     this.mds = new SerializingMetaDataStore(opex);
-  }
-
-  // When creating a stream, you need to have id, name and description
-  private void validateStream(Stream stream) throws MetadataServiceException {
-    if(stream.getId() == null || stream.getId().isEmpty()) {
-      throw new MetadataServiceException("Stream id is empty or null.");
-    }
-    if(stream.getName() == null || stream.getName().isEmpty()) {
-      throw new MetadataServiceException(
-          "Stream name must not be null or empty");
-    }
-  }
-
-  private MetaDataEntry makeEntry(Account account, Stream stream) {
-    // Create a new metadata entry.
-    MetaDataEntry entry = new MetaDataEntry(
-        account.getId(), null, FieldTypes.Stream.ID, stream.getId());
-
-    // Adding other fields.
-    if (stream.isSetName())
-      entry.addField(FieldTypes.Stream.NAME, stream.getName());
-    if (stream.isSetDescription())
-      entry.addField(FieldTypes.Stream.DESCRIPTION, stream.getDescription());
-    if(stream.isSetCapacityInBytes())
-      entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
-          String.format("%d", stream.getCapacityInBytes()));
-    if(stream.isSetExpiryInSeconds())
-      entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
-          String.format("%d", stream.getExpiryInSeconds()));
-
-    return entry;
-  }
-
-  private Stream makeStream(MetaDataEntry entry) {
-    Stream stream = new Stream(entry.getId());
-    String name = entry.getTextField(FieldTypes.Stream.NAME);
-    if (name != null) stream.setName(name);
-    String description = entry.getTextField(FieldTypes.Stream.DESCRIPTION);
-    if (description != null) stream.setDescription(description);
-    String capacity = entry.getTextField(FieldTypes.Stream.CAPACITY_IN_BYTES);
-    if (capacity != null) stream.setCapacityInBytes(Integer.valueOf(capacity));
-    String expiry = entry.getTextField(FieldTypes.Stream.EXPIRY_IN_SECONDS);
-    if (expiry != null) stream.setExpiryInSeconds(Integer.valueOf(expiry));
-    return stream;
-  }
-
-  private enum CompareStatus {
-    EQUAL, DIFF, SUPER, SUB
-  }
-
-  // returns SUPER if the new value has more information than the existing one
-  private CompareStatus compareAlso(CompareStatus soFar,
-                                    String newValue,
-                                    String existingValue) {
-    if (soFar.equals(CompareStatus.DIFF)) return soFar;
-    if (newValue == null) {
-      // both null, no change in status
-      if (existingValue == null) return soFar;
-        // new value has less info: incompatible if it had more info so far
-      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
-        // new value has less info and it did not have more so far -> sub
-      else return CompareStatus.SUB;
-    } else { // new != null
-      // both are the same, no change in status
-      if (newValue.equals(existingValue)) return soFar;
-        // both non-null but different
-      else if (existingValue != null) return CompareStatus.DIFF;
-        // new value has more info: incompatible if it had less info so far
-      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
-        // new value has more info and it did not have less so far -> super
-      else return CompareStatus.SUPER;
-    }
-  }
-
-  // returns SUPER if the new value has more information than the existing one
-  private CompareStatus compareAlso(CompareStatus soFar,
-                                    boolean newNull, long newValue,
-                                    boolean existingNull, long existingValue) {
-    if (soFar.equals(CompareStatus.DIFF)) return soFar;
-    if (newNull) {
-      // both null, no change in status
-      if (existingNull) return soFar;
-      // new value has less info: incompatible if it had more info so far
-      else if (soFar.equals(CompareStatus.SUPER)) return CompareStatus.DIFF;
-      // new value has less info and it did not have more so far -> sub
-      else return CompareStatus.SUB;
-    } else { // new != null
-      // both are the same, no change in status
-      if (newValue == existingValue) return soFar;
-      // both non-null but different
-      else if (!existingNull) return CompareStatus.DIFF;
-        // new value has more info: incompatible if it had less info so far
-      else if (soFar.equals(CompareStatus.SUB)) return CompareStatus.DIFF;
-        // new value has more info and it did not have less so far -> super
-      else return CompareStatus.SUPER;
-    }
-  }
-
-  private CompareStatus compareStreams(Stream stream,
-                                       MetaDataEntry existingEntry) {
-    Stream existing = makeStream(existingEntry);
-    CompareStatus status = CompareStatus.EQUAL;
-    status = compareAlso(status, stream.getId(), existing.getId());
-    if (status.equals(CompareStatus.DIFF)) return status;
-    status = compareAlso(status, stream.getName(), existing.getName());
-    if (status.equals(CompareStatus.DIFF)) return status;
-    status = compareAlso(
-        status, stream.getDescription(), existing.getDescription());
-    if (status.equals(CompareStatus.DIFF)) return status;
-    status = compareAlso(status,
-        stream.isSetCapacityInBytes(), stream.getCapacityInBytes(),
-        existing.isSetCapacityInBytes(), existing.getCapacityInBytes());
-    if (status.equals(CompareStatus.DIFF)) return status;
-    status = compareAlso(status,
-        stream.isSetExpiryInSeconds(), stream.getExpiryInSeconds(),
-        existing.isSetExpiryInSeconds(), existing.getExpiryInSeconds());
-    return status;
   }
 
   /**
@@ -180,10 +63,10 @@ public class MetadataService implements
     validateAccount(account);
     validateStream(stream);
 
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(account.getId());
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
 
+    try {
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
       MetaDataEntry readEntry = mds.get(
@@ -205,23 +88,40 @@ public class MetadataService implements
         }
       }
 
-      // there is already an entry, determine how it compare to the new one
-      CompareStatus status = compareStreams(stream, readEntry);
-      // existing entry is equal or a superset of the new one -> good
-      if (status.equals(CompareStatus.EQUAL) ||
-          status.equals(CompareStatus.SUB))
-        return true;
-      else if (status.equals(CompareStatus.DIFF)) {
-        // new entry is incompatible with existing -> conflict!
-        throw new MetadataServiceException("another, incompatible meta " +
-            "data entry already exists.");
-      }
+      // loop a few times for write conflict resolution
+      for (int attempts = 3; attempts > 0; --attempts) {
+        // there is already an entry, determine how it compare to the new one
+        CompareStatus status = compare(stream, readEntry);
+        // existing entry is equal or a superset of the new one -> good
+        if (status.equals(CompareStatus.EQUAL) ||
+            status.equals(CompareStatus.SUB))
+          return true;
+        else if (status.equals(CompareStatus.DIFF)) {
+          // new entry is incompatible with existing -> conflict!
+          throw new MetadataServiceException("another, incompatible meta " +
+              "data entry already exists.");
+        }
 
-      // Create a new metadata entry for update
-      MetaDataEntry entry = makeEntry(account, stream);
-      // Invoke MDS to update entry.
-      mds.update(context, entry);
-      return true;
+        // Create a new metadata entry for update
+        MetaDataEntry entry = makeEntry(account, stream);
+        try {
+          // Invoke MDS to update entry, this can again fail with write conflict
+          mds.update(context, entry);
+          return true;
+
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          if (attempts <= 1)
+            throw e; // number of attempts exhausted
+          // read again for conflict resolution
+          readEntry = mds.get(context,
+              account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+        }
+      }
+      // unreachable but java does not detect that
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+          "this code should be unreachable");
 
     } catch (OperationException e) {
       Log.warn("Failed creating stream {}. Reason: {}", stream, e.getMessage());
@@ -259,12 +159,13 @@ public class MetadataService implements
       // Invoke MDS to delete entry.
       // This will also succeed if the entry does not exist
       mds.delete(context, accountId, null, FieldTypes.Stream.ID, id);
+      return true;
 
     } catch (OperationException e) {
-      Log.warn("Failed deleting stream {}. Reason : {}", stream, e.getMessage());
+      Log.warn("Failed deleting stream {}. Reason : {}", stream,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -306,14 +207,13 @@ public class MetadataService implements
   }
 
   /**
-   * Retruns a single stream with more information.
+   * Returns a single stream
    *
    * @param account account to which the stream belongs to.
    * @param stream Id of the stream for which more information is requested.
    * @return Stream with additional information like name and description else
    * return the Stream with just the id.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue reading in the
+   * @throws MetadataServiceException when there is issue reading in the
    *          information for stream.
    */
   @Override
@@ -338,19 +238,20 @@ public class MetadataService implements
         mds.get(context, accountId, null,
                 FieldTypes.Stream.ID, id);
 
-      // Add description and name to stream and return.
       if(entry != null) {
-        stream = makeStream(entry);
+        // convert the the meta data entry
+        return makeStream(entry);
       } else {
+        // return a blank object with exists = false
         stream = new Stream(stream.getId());
         stream.setExists(false);
+        return stream;
       }
     } catch (OperationException e) {
       Log.warn("Failed to retrieve stream {}. Reason : {}.",
                stream, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return stream;
   }
 
   /**
@@ -358,74 +259,82 @@ public class MetadataService implements
    *
    * @param dataset to be created.
    * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          throw when there is issue with creating
+   * @throws MetadataServiceException when there is issue with creating
    *          a data set.
    */
   @Override
   public boolean createDataset(Account account, Dataset dataset) throws
     MetadataServiceException, TException {
 
-    // Validate account.
+    // Validate account and dataset
     validateAccount(account);
-    String accountId = account.getId();
+    validateDataset(dataset);
 
-    // When creating a stream, you need to have id, name and description
-    String id = dataset.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Dataset id is empty or null.");
-    }
-
-    if(! dataset.isSetName()) {
-      throw new MetadataServiceException("Dataset name should be set for create");
-    }
-
-    String name = dataset.getName();
-    if(name == null || name.isEmpty()) {
-      throw new MetadataServiceException("Dataset name cannot be null or empty");
-    }
-
-    String description = "";
-    if(dataset.isSetDescription()) {
-      description = dataset.getDescription();
-    }
-
-    if(! dataset.isSetType()) {
-      throw new MetadataServiceException("Dataset type should be set for create");
-    }
-
-    String type = dataset.getType();
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
 
     try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Dataset.ID, id);
-      if(readEntry != null) {
-        return true;
+      MetaDataEntry readEntry = mds.get(context,
+          account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
+      if (readEntry == null) {
+        // attempt to add, but in case of write conflict we must read
+        // again and try to resolve the conflict
+        MetaDataEntry entry = makeEntry(account, dataset);
+        try {
+          // Invoke MDS to add entry
+          mds.add(context, entry);
+          return true;
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          // read again for conflict resolution
+          readEntry = mds.get(context,
+              account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
+        }
       }
 
-      // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(
-        accountId, null, FieldTypes.Dataset.ID, id
-      );
+      // loop a few times for write conflict resolution
+      for (int attempts = 3; attempts > 0; --attempts) {
+        // there is already an entry, determine how it compare to the new one
+        CompareStatus status = compare(dataset, readEntry);
+        // existing entry is equal or a superset of the new one -> good
+        if (status.equals(CompareStatus.EQUAL) ||
+            status.equals(CompareStatus.SUB))
+          return true;
+        else if (status.equals(CompareStatus.DIFF)) {
+          // new entry is incompatible with existing -> conflict!
+          throw new MetadataServiceException("another, incompatible meta " +
+              "data entry already exists.");
+        }
 
-      // Adding other fields.
-      entry.addField(FieldTypes.Dataset.NAME, name);
-      entry.addField(FieldTypes.Dataset.DESCRIPTION, description);
-      entry.addField(FieldTypes.Dataset.TYPE, type);
-      // Invoke MDS to add entry.
-      mds.add(context, entry);
+        // Create a new metadata entry for update
+        MetaDataEntry entry = makeEntry(account, dataset);
+        try {
+          // Invoke MDS to update entry, this can again fail with write conflict
+          mds.update(context, entry);
+          return true;
+
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          if (attempts <= 1)
+            throw e; // number of attempts exhausted
+          // read again for conflict resolution
+          readEntry = mds.get(context,
+              account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
+        }
+      }
+      // unreachable but java does not detect that
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+          "this code should be unreachable");
+
     } catch (OperationException e) {
-      Log.warn("Failed creating dataset {}. Reason : {}", dataset,
-               e.getMessage());
+      Log.warn("Failed creating dataset {}. Reason: {}", dataset,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -444,7 +353,7 @@ public class MetadataService implements
     validateAccount(account);
     String accountId = account.getId();
 
-    // When creating a stream, you need to have id, name and description
+    // When creating a dataset, you need to have id, name and description
     String id = dataset.getId();
     if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Dataset id is empty or null.");
@@ -454,27 +363,20 @@ public class MetadataService implements
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Dataset.ID, id);
-
-      // If stream does not exist, then no point in deleting it.
-      if(readEntry == null) {
-        return true;
-      }
       // Invoke MDS to delete entry.
+      // This will also succeed if the entry does not exist
       mds.delete(context, accountId, null, FieldTypes.Dataset.ID, id);
+      return true;
+
     } catch (OperationException e) {
-      Log.warn("Failed deleting dataset {}. Reason : {}", dataset, e.getMessage());
+      Log.warn("Failed deleting dataset {}. Reason : {}", dataset,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
-   * Return all metdata about datasets associated with the account.
+   * Return all metadata about datasets associated with the account.
    *
    * @param account for which metadata for datasets need to be retrieved.
    * @return list of data set associated with account
@@ -485,44 +387,29 @@ public class MetadataService implements
   @Override
   public List<Dataset> getDatasets(Account account) throws
     MetadataServiceException, TException {
-    List<Dataset> result = Lists.newArrayList();
 
     // Validate all account.
     validateAccount(account);
     String accountId = account.getId();
 
+    // Create a context.
+    OperationContext context = new OperationContext(accountId);
+
     try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Invoke MDS to list streams for an account.
-      // NOTE: application is null and fields are null.
-      Collection<MetaDataEntry> datasets =
+      // Invoke MDS to list datasets for an account.
+      Collection<MetaDataEntry> entries =
         mds.list(context, accountId, null, FieldTypes.Dataset.ID, null);
-      for(MetaDataEntry dataset : datasets) {
-        Dataset rDataset = new Dataset(dataset.getId());
-        rDataset.setName(dataset.getTextField(FieldTypes.Dataset.NAME));
-        rDataset.setDescription(
-          dataset.getTextField(FieldTypes.Dataset.DESCRIPTION)
-        );
-        try {
-          String type = dataset.getTextField(FieldTypes.Dataset.TYPE);
-          rDataset.setType(type);
-        } catch (NumberFormatException e) {
-          Log.warn("Dataset {} has type that is not an integer",
-                   rDataset.getName());
-        }
 
-        // More fields can be added later when we need them for now
-        // we just return id, name & description.
-        result.add(rDataset);
-      }
+      List<Dataset> result = Lists.newArrayList();
+      for(MetaDataEntry entry : entries)
+        result.add(makeDataset(entry));
+      return result;
+
     } catch (OperationException e) {
-      Log.warn("Failed listing streams for account {}. Reason : {}",
+      Log.warn("Failed listing datasets for account {}. Reason : {}",
                accountId, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return result;
   }
 
   /**
@@ -544,40 +431,30 @@ public class MetadataService implements
     String accountId = account.getId();
 
     String id = dataset.getId();
-    if(id == null || id.isEmpty()) {
+    if(id == null || id.isEmpty())
       throw new MetadataServiceException("Dataset does not have an id.");
-    }
+
+    OperationContext context = new OperationContext(accountId);
 
     try {
-      OperationContext context = new OperationContext(accountId);
+      // Read from meta data store
+      MetaDataEntry entry = mds.get(
+          context, accountId, null, FieldTypes.Dataset.ID, id);
 
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry entry =
-        mds.get(context, accountId, null,
-                FieldTypes.Dataset.ID, id);
-
-      // Add description and name to stream and return.
       if(entry != null) {
-        dataset.setName(entry.getTextField(
-          FieldTypes.Dataset.NAME
-        ));
-        dataset.setDescription(entry.getTextField(
-            FieldTypes.Dataset.DESCRIPTION
-        ));
-        dataset.setType(entry.getTextField(
-            FieldTypes.Dataset.TYPE
-        ));
+        // convert the the meta data entry
+        return makeDataset(entry);
       } else {
+        // return a blank object with exists = false
         dataset = new Dataset(dataset.getId());
         dataset.setExists(false);
+        return dataset;
       }
     } catch (OperationException e) {
       Log.warn("Failed to retrieve dataset {}. Reason : {}.",
                dataset, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return dataset;
   }
 
   /**
@@ -596,56 +473,73 @@ public class MetadataService implements
 
     // Validate all account.
     validateAccount(account);
-    String accountId = account.getId();
+    validateApplication(application);
 
-    // When creating a stream, you need to have id, name and description
-    String id = application.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Application id is empty or null.");
-    }
-
-    String description = "";
-    if(application.isSetDescription()) {
-      description = application.getDescription();
-    }
-
-    if(! application.isSetName()) {
-      throw new MetadataServiceException("Application name should be set for create");
-    }
-    String name = application.getName();
-    if(name == null || name.isEmpty()) {
-      throw new MetadataServiceException("Application name cannot be null or empty");
-    }
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
 
     try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Application.ID, id);
-      if(readEntry != null) {
-        return true;
+      MetaDataEntry readEntry = mds.get(context, account.getId(),
+          null, FieldTypes.Application.ID, application.getId());
+      if (readEntry == null) {
+        // attempt to add, but in case of write conflict we must read
+        // again and try to resolve the conflict
+        MetaDataEntry entry = makeEntry(account, application);
+        try {
+          // Invoke MDS to add entry
+          mds.add(context, entry);
+          return true;
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Application.ID, application.getId());
+        }
       }
 
-      // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(
-        accountId, null, FieldTypes.Application.ID, id
-      );
+      // loop a few times for write conflict resolution
+      for (int attempts = 3; attempts > 0; --attempts) {
+        // there is already an entry, determine how it compare to the new one
+        CompareStatus status = compare(application, readEntry);
+        // existing entry is equal or a superset of the new one -> good
+        if (status.equals(CompareStatus.EQUAL) ||
+            status.equals(CompareStatus.SUB))
+          return true;
+        else if (status.equals(CompareStatus.DIFF)) {
+          // new entry is incompatible with existing -> conflict!
+          throw new MetadataServiceException("another, incompatible meta " +
+              "data entry already exists.");
+        }
 
-      // Adding other fields.
-      entry.addField(FieldTypes.Application.NAME, name);
-      entry.addField(FieldTypes.Application.DESCRIPTION, description);
-      // Invoke MDS to add entry.
-      mds.add(context, entry);
+        // Create a new metadata entry for update
+        MetaDataEntry entry = makeEntry(account, application);
+        try {
+          // Invoke MDS to update entry, this can again fail with write conflict
+          mds.update(context, entry);
+          return true;
+
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          if (attempts <= 1)
+            throw e; // number of attempts exhausted
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Application.ID, application.getId());
+        }
+      }
+      // unreachable but java does not detect that
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+          "this code should be unreachable");
+
     } catch (OperationException e) {
-      Log.warn("Failed creating application {}. Reason : {}",
-               application, e.getMessage());
+      Log.warn("Failed creating application {}. Reason: {}", application,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -667,7 +561,7 @@ public class MetadataService implements
     validateAccount(account);
     String accountId = account.getId();
 
-    // When creating a stream, you need to have id, name and description
+    // When creating a application, you need to have id, name and description
     String id = application.getId();
     if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application id is empty or null.");
@@ -677,25 +571,16 @@ public class MetadataService implements
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, null,
-                FieldTypes.Application.ID, id);
-
-      // If stream does not exist, then no point in deleting it.
-      if(readEntry == null) {
-        return true;
-      }
-
       // Invoke MDS to delete entry.
+      // This will also succeed if the entry does not exist
       mds.delete(context, accountId, null, FieldTypes.Application.ID, id);
+      return true;
+
     } catch (OperationException e) {
       Log.warn("Failed deleting application {}. Reason : {}",
                application, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -710,7 +595,6 @@ public class MetadataService implements
   @Override
   public List<Application> getApplications(Account account)
     throws MetadataServiceException, TException {
-    List<Application> result = Lists.newArrayList();
 
     // Validate all account.
     validateAccount(account);
@@ -720,26 +604,20 @@ public class MetadataService implements
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
-      // Invoke MDS to list streams for an account.
-      // NOTE: application is null and fields are null.
-      Collection<MetaDataEntry> applications =
+      // Invoke MDS to list applications for an account.
+      Collection<MetaDataEntry> entries =
         mds.list(context, accountId, null, FieldTypes.Application.ID, null);
-      for(MetaDataEntry application : applications) {
-        Application rApplication = new Application(application.getId());
-        rApplication.setName(application.getTextField(FieldTypes.Application.NAME));
-        rApplication.setDescription(
-          application.getTextField(FieldTypes.Application.DESCRIPTION)
-        );
-        // More fields can be added later when we need them for now
-        // we just return id, name & description.
-        result.add(rApplication);
-      }
+
+      List<Application> result = Lists.newArrayList();
+      for(MetaDataEntry entry : entries)
+        result.add(makeApplication(entry));
+      return result;
+
     } catch (OperationException e) {
       Log.warn("Failed listing application for account {}. Reason : {}",
                accountId, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return result;
   }
 
   /**
@@ -770,74 +648,24 @@ public class MetadataService implements
 
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry entry =
-        mds.get(context, accountId, null,
-                FieldTypes.Application.ID, id);
+      MetaDataEntry entry = mds.get(
+          context, accountId, null, FieldTypes.Application.ID, id);
 
-      // Add description and name to stream and return.
       if(entry != null) {
-        application.setName(entry.getTextField(
-          FieldTypes.Application.NAME
-        ));
-        application.setDescription(entry.getTextField(
-          FieldTypes.Application.DESCRIPTION
-        ));
+        // convert the the meta data entry
+        return makeApplication(entry);
+      } else {
+        // return a blank object with exists = false
+        application = new Application(id);
+        application.setExists(false);
+        return application;
       }
+
     } catch (OperationException e) {
       Log.warn("Failed to retrieve application {}. Reason : {}.",
                application, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return application;
-  }
-
-  // When creating a query, you need to have id, name and app
-  void validateQuery(Query query) throws MetadataServiceException {
-    String id = query.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Query id is empty or null.");
-    }
-    String name = query.getName();
-    if(name == null || name.isEmpty()) {
-      throw new MetadataServiceException("Query name is empty or null.");
-    }
-    String app = query.getApplication();
-    if(app == null || app.isEmpty()) {
-      throw new MetadataServiceException("Query's app name is empty or null.");
-    }
-    String serviceName = query.getServiceName();
-    if(serviceName == null || serviceName.isEmpty()) {
-      throw new MetadataServiceException("Query service name cannot be null " +
-          "or empty");
-    }
-  }
-
-  private MetaDataEntry makeEntry(String account, Query query) {
-    // Create a new metadata entry.
-    MetaDataEntry entry = new MetaDataEntry(
-        account, query.getApplication(), FieldTypes.Query.ID, query.getId());
-     // Adding other fields.
-    if (query.getName() != null)
-      entry.addField(FieldTypes.Query.NAME, query.getName());
-    if (query.getDescription() != null)
-      entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
-    if (query.getServiceName() != null)
-      entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
-    entry.addField(FieldTypes.Query.DATASETS, ListToString(query.getDatasets()));
-    return entry;
-  }
-
-  private Query makeQuery(MetaDataEntry entry) {
-    Query query = new Query(entry.getId(), entry.getApplication());
-    String name = entry.getTextField(FieldTypes.Query.NAME);
-    if (name != null) query.setName(name);
-    String description = entry.getTextField(FieldTypes.Query.DESCRIPTION);
-    if (description != null) query.setDescription(description);
-    String service = entry.getTextField(FieldTypes.Query.SERVICE_NAME);
-    if (service != null) query.setServiceName(service);
-    String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
-    if (datasets != null) query.setDatasets(StringToList(datasets));
-    return query;
   }
 
   /**
@@ -854,22 +682,73 @@ public class MetadataService implements
   public boolean createQuery(Account account, Query query)
     throws MetadataServiceException, TException {
 
-    // Validate account and query
+    // Validate all account.
     validateAccount(account);
     validateQuery(query);
 
-    // create a context
-    OperationContext opContext =
-        new OperationContext(account.getId(), query.getApplication());
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
 
-    // perform the insert
     try {
-      this.mds.add(opContext, makeEntry(account.getId(), query));
-      return true;
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry = mds.get(context, account.getId(),
+          null, FieldTypes.Query.ID, query.getId());
+      if (readEntry == null) {
+        // attempt to add, but in case of write conflict we must read
+        // again and try to resolve the conflict
+        MetaDataEntry entry = makeEntry(account, query);
+        try {
+          // Invoke MDS to add entry
+          mds.add(context, entry);
+          return true;
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Query.ID, query.getId());
+        }
+      }
+
+      // loop a few times for write conflict resolution
+      for (int attempts = 3; attempts > 0; --attempts) {
+        // there is already an entry, determine how it compare to the new one
+        CompareStatus status = compare(query, readEntry);
+        // existing entry is equal or a superset of the new one -> good
+        if (status.equals(CompareStatus.EQUAL) ||
+            status.equals(CompareStatus.SUB))
+          return true;
+        else if (status.equals(CompareStatus.DIFF)) {
+          // new entry is incompatible with existing -> conflict!
+          throw new MetadataServiceException("another, incompatible meta " +
+              "data entry already exists.");
+        }
+
+        // Create a new metadata entry for update
+        MetaDataEntry entry = makeEntry(account, query);
+        try {
+          // Invoke MDS to update entry, this can again fail with write conflict
+          mds.update(context, entry);
+          return true;
+
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          if (attempts <= 1)
+            throw e; // number of attempts exhausted
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Query.ID, query.getId());
+        }
+      }
+      // unreachable but java does not detect that
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+          "this code should be unreachable");
+
     } catch (OperationException e) {
-      if (e.getStatus() == StatusCode.WRITE_CONFLICT) // entry already exists
-        return false;
-      Log.warn("Failed to create query {}. Reason: {}.", query, e.getMessage());
+      Log.warn("Failed creating query {}. Reason: {}", query,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
   }
@@ -888,7 +767,7 @@ public class MetadataService implements
 
     // perform the update
     try {
-      this.mds.update(opContext, makeEntry(account.getId(), query));
+      this.mds.update(opContext, makeEntry(account, query));
       return true;
     } catch (OperationException e) {
       if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
@@ -945,7 +824,7 @@ public class MetadataService implements
   }
 
   /**
-   * Deletes an query if exists.
+   * Deletes a query if exists.
    *
    * @param account the query belongs to.
    * @param query to be deleted.
@@ -963,7 +842,7 @@ public class MetadataService implements
     validateAccount(account);
     String accountId = account.getId();
 
-    // When creating a stream, you need to have id, name and description
+    // When deleting a query, you need to have id, name and description
     String id = query.getId();
     if(id == null || id.isEmpty()) {
       throw new MetadataServiceException("Application id is empty or null.");
@@ -973,26 +852,16 @@ public class MetadataService implements
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry =
-        mds.get(context, accountId, query.getApplication(),
-                FieldTypes.Query.ID, id);
-
-      // If stream does not exist, then no point in deleting it.
-      if(readEntry == null) {
-        return true;
-      }
-
       // Invoke MDS to delete entry.
+      // This will also succeed if the entry does not exist
       mds.delete(context, accountId, query.getApplication(),
           FieldTypes.Query.ID, id);
+      return true;
+
     } catch (OperationException e) {
-      Log.warn("Failed deleting query {}. Reason : {}",
-               query, e.getMessage());
+      Log.warn("Failed deleting query {}. Reason : {}", query, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return true;
   }
 
   /**
@@ -1017,16 +886,16 @@ public class MetadataService implements
     OperationContext context = new OperationContext(accountId);
 
     // query the meta data store
-    Collection<MetaDataEntry> queries;
+    Collection<MetaDataEntry> entries;
     try {
-      queries = mds.list(context, accountId, null, FieldTypes.Query.ID, null);
+      entries = mds.list(context, accountId, null, FieldTypes.Query.ID, null);
     } catch (OperationException e) {
       Log.warn("Failed to list queries for account {}. Reason: {}.",
           account, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
 
-    for(MetaDataEntry entry : queries) {
+    for(MetaDataEntry entry : entries) {
         result.add(makeQuery(entry));
     }
     return result;
@@ -1068,113 +937,111 @@ public class MetadataService implements
         mds.get(context, accountId, app, FieldTypes.Query.ID, id);
 
       if(entry != null) {
-        query = makeQuery(entry);
+        // convert the the meta data entry
+        return makeQuery(entry);
       } else {
+        // return a blank object with exists = false
         query = new Query(query.getId(), query.getApplication());
         query.setExists(false);
+        return query;
       }
+
     } catch (OperationException e) {
       Log.warn("Failed to retrieve query {}. Reason : {}.",
                query, e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
-    return query;
-  }
-
-  /**
-   *  When creating/updating a flow, you need to have id, name and application
-   */
-  void validateFlow(Flow flow) throws MetadataServiceException {
-    String id = flow.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Flow id is empty or null.");
-    }
-    String name = flow.getName();
-    if(name == null || name.isEmpty()) {
-      throw new MetadataServiceException("Flow name is empty or null.");
-    }
-    String app = flow.getName();
-    if(app == null || app.isEmpty()) {
-      throw new MetadataServiceException("Flow's app name is empty or null.");
-    }
-  }
-
-  String ListToString(List<String> list) {
-    StringBuilder str = new StringBuilder();
-    if (list != null) {
-      for (String item : list) {
-        str.append(item);
-        str.append(' ');
-      }
-    }
-    return str.toString();
-  }
-
-  List<String> StringToList(String str) {
-    if (str == null || str.isEmpty())
-      return Collections.emptyList();
-    StringTokenizer tok = new StringTokenizer(str, " ");
-    List<String> list = Lists.newArrayList();
-    while (tok.hasMoreTokens()) {
-      list.add(tok.nextToken());
-    }
-    return list;
-  }
-
-  private MetaDataEntry makeEntry(String account, Flow flow) {
-    // Create a new metadata entry.
-    MetaDataEntry entry = new MetaDataEntry(
-        account, flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
-    entry.addField(FieldTypes.Flow.NAME, flow.getName());
-    entry.addField(FieldTypes.Flow.STREAMS, ListToString(flow.getStreams()));
-    entry.addField(FieldTypes.Flow.DATASETS, ListToString(flow.getDatasets()));
-    return entry;
-  }
-
-  private Flow makeFlow(MetaDataEntry entry) {
-    return new Flow(entry.getId(), entry.getApplication(),
-        entry.getTextField(FieldTypes.Flow.NAME),
-        StringToList(entry.getTextField(FieldTypes.Flow.STREAMS)),
-        StringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
   }
 
   @Override
-  public boolean createFlow(String account, Flow flow) throws
+  public boolean createFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
 
     // Validate all account.
+    Account account = new Account(accountId);
     validateAccount(account);
-    // validate flow
     validateFlow(flow);
 
-    // create a context
-    OperationContext opContext =
-        new OperationContext(account, flow.getApplication());
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
 
-    // perform the insert
     try {
-      this.mds.add(opContext, makeEntry(account, flow));
-      return true;
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry readEntry = mds.get(context, account.getId(),
+          null, FieldTypes.Flow.ID, flow.getId());
+      if (readEntry == null) {
+        // attempt to add, but in case of write conflict we must read
+        // again and try to resolve the conflict
+        MetaDataEntry entry = makeEntry(account, flow);
+        try {
+          // Invoke MDS to add entry
+          mds.add(context, entry);
+          return true;
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Flow.ID, flow.getId());
+        }
+      }
+
+      // loop a few times for write conflict resolution
+      for (int attempts = 3; attempts > 0; --attempts) {
+        // there is already an entry, determine how it compare to the new one
+        CompareStatus status = compare(flow, readEntry);
+        // existing entry is equal or a superset of the new one -> good
+        if (status.equals(CompareStatus.EQUAL) ||
+            status.equals(CompareStatus.SUB))
+          return true;
+        else if (status.equals(CompareStatus.DIFF)) {
+          // new entry is incompatible with existing -> conflict!
+          throw new MetadataServiceException("another, incompatible meta " +
+              "data entry already exists.");
+        }
+
+        // Create a new metadata entry for update
+        MetaDataEntry entry = makeEntry(account, flow);
+        try {
+          // Invoke MDS to update entry, this can again fail with write conflict
+          mds.update(context, entry);
+          return true;
+
+        } catch (OperationException e) {
+          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
+            throw e; // we can only handle write conflicts here
+          if (attempts <= 1)
+            throw e; // number of attempts exhausted
+          // read again for conflict resolution
+          readEntry = mds.get(context, account.getId(),
+              null, FieldTypes.Flow.ID, flow.getId());
+        }
+      }
+      // unreachable but java does not detect that
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+          "this code should be unreachable");
+
     } catch (OperationException e) {
-      if (e.getStatus() == StatusCode.WRITE_CONFLICT) // entry already exists
-        return false;
-      Log.warn("Failed to create flow {}. Reason: {}.", flow, e.getMessage());
+      Log.warn("Failed creating flow {}. Reason: {}", flow,
+          e.getMessage());
       throw new MetadataServiceException(e.getMessage());
     }
   }
 
   @Override
-  public boolean updateFlow(String account, Flow flow)
+  public boolean updateFlow(String accountId, Flow flow)
       throws MetadataServiceException, TException {
 
     // Validate all account.
+    Account account = new Account(accountId);
     validateAccount(account);
     // validate flow
     validateFlow(flow);
 
     // create a context
     OperationContext opContext =
-        new OperationContext(account, flow.getApplication());
+        new OperationContext(account.getId(), flow.getApplication());
 
     // perform the update
     try {
