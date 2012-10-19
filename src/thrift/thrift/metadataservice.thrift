@@ -14,6 +14,7 @@ struct Application {
    1: required string id,
    2: optional string name,
    3: optional string description,
+   4: optional bool exists = true,
 }
 
 /**

@@ -37,6 +37,7 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField DESCRIPTION_FIELD_DESC = new org.apache.thrift.protocol.TField("description", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField EXISTS_FIELD_DESC = new org.apache.thrift.protocol.TField("exists", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,12 +48,14 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   private String id; // required
   private String name; // optional
   private String description; // optional
+  private boolean exists; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     NAME((short)2, "name"),
-    DESCRIPTION((short)3, "description");
+    DESCRIPTION((short)3, "description"),
+    EXISTS((short)4, "exists");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -73,6 +76,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
           return NAME;
         case 3: // DESCRIPTION
           return DESCRIPTION;
+        case 4: // EXISTS
+          return EXISTS;
         default:
           return null;
       }
@@ -113,7 +118,9 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.NAME,_Fields.DESCRIPTION};
+  private static final int __EXISTS_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.NAME,_Fields.DESCRIPTION,_Fields.EXISTS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -123,11 +130,15 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DESCRIPTION, new org.apache.thrift.meta_data.FieldMetaData("description", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.EXISTS, new org.apache.thrift.meta_data.FieldMetaData("exists", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Application.class, metaDataMap);
   }
 
   public Application() {
+    this.exists = true;
+
   }
 
   public Application(
@@ -141,6 +152,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
    * Performs a deep copy on <i>other</i>.
    */
   public Application(Application other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetId()) {
       this.id = other.id;
     }
@@ -150,6 +163,7 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     if (other.isSetDescription()) {
       this.description = other.description;
     }
+    this.exists = other.exists;
   }
 
   public Application deepCopy() {
@@ -161,6 +175,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     this.id = null;
     this.name = null;
     this.description = null;
+    this.exists = true;
+
   }
 
   public String getId() {
@@ -232,6 +248,28 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
   }
 
+  public boolean isExists() {
+    return this.exists;
+  }
+
+  public void setExists(boolean exists) {
+    this.exists = exists;
+    setExistsIsSet(true);
+  }
+
+  public void unsetExists() {
+    __isset_bit_vector.clear(__EXISTS_ISSET_ID);
+  }
+
+  /** Returns true if field exists is set (has been assigned a value) and false otherwise */
+  public boolean isSetExists() {
+    return __isset_bit_vector.get(__EXISTS_ISSET_ID);
+  }
+
+  public void setExistsIsSet(boolean value) {
+    __isset_bit_vector.set(__EXISTS_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ID:
@@ -258,6 +296,14 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       }
       break;
 
+    case EXISTS:
+      if (value == null) {
+        unsetExists();
+      } else {
+        setExists((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -271,6 +317,9 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
 
     case DESCRIPTION:
       return getDescription();
+
+    case EXISTS:
+      return Boolean.valueOf(isExists());
 
     }
     throw new IllegalStateException();
@@ -289,6 +338,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       return isSetName();
     case DESCRIPTION:
       return isSetDescription();
+    case EXISTS:
+      return isSetExists();
     }
     throw new IllegalStateException();
   }
@@ -333,6 +384,15 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
         return false;
     }
 
+    boolean this_present_exists = true && this.isSetExists();
+    boolean that_present_exists = true && that.isSetExists();
+    if (this_present_exists || that_present_exists) {
+      if (!(this_present_exists && that_present_exists))
+        return false;
+      if (this.exists != that.exists)
+        return false;
+    }
+
     return true;
   }
 
@@ -354,6 +414,11 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     builder.append(present_description);
     if (present_description)
       builder.append(description);
+
+    boolean present_exists = true && (isSetExists());
+    builder.append(present_exists);
+    if (present_exists)
+      builder.append(exists);
 
     return builder.toHashCode();
   }
@@ -392,6 +457,16 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
     }
     if (isSetDescription()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.description, typedOther.description);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetExists()).compareTo(typedOther.isSetExists());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetExists()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.exists, typedOther.exists);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -443,6 +518,12 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       }
       first = false;
     }
+    if (isSetExists()) {
+      if (!first) sb.append(", ");
+      sb.append("exists:");
+      sb.append(this.exists);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -465,6 +546,8 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -513,6 +596,14 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // EXISTS
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.exists = iprot.readBool();
+              struct.setExistsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -545,6 +636,11 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
           oprot.writeFieldEnd();
         }
       }
+      if (struct.isSetExists()) {
+        oprot.writeFieldBegin(EXISTS_FIELD_DESC);
+        oprot.writeBool(struct.exists);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -570,12 +666,18 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       if (struct.isSetDescription()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetExists()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetName()) {
         oprot.writeString(struct.name);
       }
       if (struct.isSetDescription()) {
         oprot.writeString(struct.description);
+      }
+      if (struct.isSetExists()) {
+        oprot.writeBool(struct.exists);
       }
     }
 
@@ -584,7 +686,7 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       TTupleProtocol iprot = (TTupleProtocol) prot;
       struct.id = iprot.readString();
       struct.setIdIsSet(true);
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.name = iprot.readString();
         struct.setNameIsSet(true);
@@ -592,6 +694,10 @@ public class Application implements org.apache.thrift.TBase<Application, Applica
       if (incoming.get(1)) {
         struct.description = iprot.readString();
         struct.setDescriptionIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.exists = iprot.readBool();
+        struct.setExistsIsSet(true);
       }
     }
   }
