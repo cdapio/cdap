@@ -288,7 +288,7 @@ function(Models, Views, Controllers){
 					return [((Math.round(value * 100) / 100)), 'MB'];
 				} else if (value > 1024) {
 					value /= 1024;
-					return [((Math.round(value * 100) / 100)), 'KB'];
+					return [((Math.round(value * 10) / 10)), 'KB'];
 				}
 
 				return [value, 'BYTES'];

@@ -7,35 +7,24 @@ define([
 		template: Em.Handlebars.compile(Template),
 		didInsertElement: function () {
 
-
-
 		},
-		start: function (event) {
-
-			var id = $(event.target).attr('flowId');
-			var app = $(event.target).attr('applicationId');
+		stateTransition: function (event) {
 
 			$(event.target).parent().html('<img src="/assets/img/chart-loading.gif" />');
 
-			C.socket.request('manager', {
-				method: 'start',
-				params: [app, id, -1, 'QUERY']
-			}, function (error, response) {
-
-				window.location.reload();
-
-			});
-
-		},
-		stop: function (event) {
-
 			var id = $(event.target).attr('flowId');
 			var app = $(event.target).attr('applicationId');
-
-			$(event.target).parent().html('<img src="/assets/img/chart-loading.gif" />');
+			var state = $(event.target).attr('state');
+			var method;
+			
+			if (state === 'RUNNING') {
+				method = 'stop';
+			} else {
+				method = 'start';
+			}
 
 			C.socket.request('manager', {
-				method: 'stop',
+				method: method,
 				params: [app, id, -1, 'QUERY']
 			}, function (error, response) {
 
@@ -53,6 +42,8 @@ define([
 
 			C.interstitial.loading('Pushing to Cloud...', 'abc');
 
+			window.scrollTo(0,0);
+
 			C.get('far', {
 				method: 'promote',
 				params: [app, id, -1]
@@ -62,6 +53,44 @@ define([
 
 			});
 
+		},
+		"delete": function () {
+
+			var id = $(event.target).attr('flowId');
+			var app = $(event.target).attr('applicationId');
+			var state = $(event.target).attr('state');
+
+			if (state !== 'STOPPED' &&
+				state !== 'DEPLOYED') {
+				C.Vw.Modal.show(
+					"Cannot Delete",
+					"The query is currently running. Please stop it first."
+				);
+			} else {
+				C.Vw.Modal.show(
+					"Delete Query",
+					"You are about to remove a Query, which is irreversible. You can upload this query again if you'd like. Do you want to proceed?",
+					$.proxy(this.confirmed, {
+						id: id,
+						app: app,
+						state: state
+					}));
+			}
+		},
+		confirmed: function () {
+
+			C.get('far', {
+				method: 'remove',
+				params: [this.app, this.id, -1]
+			}, function (error, response) {
+
+				if (error) {
+					C.Vw.Informer.show(error.message, 'alert-error');
+				} else {
+					window.history.go(-1);
+				}
+
+			});
 		}
 
 	});

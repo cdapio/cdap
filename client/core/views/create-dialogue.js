@@ -49,7 +49,6 @@ define([
 			setTimeout(function () {
 				$($('.modal-body').find('input[type=text]')[0]).focus();
 			}, 250);
-
 		},
 		warningMessage: '',
 		warningMessageBinding: 'C.Ctl.Upload.warningMessage',
@@ -59,7 +58,7 @@ define([
 			}
 			return 'display:none;';
 		}.property('warningMessage').cacheable(false),
-		confirmed: function () {
+		submit: function () {
 
 			var self = this;
 			C.get('metadata', {

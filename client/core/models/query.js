@@ -31,11 +31,22 @@ define([], function () {
 				params: [app, id, -1]
 			}, function (error, response) {
 
-				self.set('currentState', response.params.status);
+				if (response.params) {
+					self.set('currentState', response.params.status);
+				}
 
 			});
 
 		},
+		controlLabel: function () {
+
+			if (this.get('isRunning')) {
+				return 'Stop';
+			} else {
+				return 'Start';
+			}
+
+		}.property('currentState').cacheable(false),
 		addMetricName: function (name) {
 
 			this.get('metricNames')[name] = 1;

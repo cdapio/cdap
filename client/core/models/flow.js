@@ -29,7 +29,9 @@ define([], function () {
 				params: [app, id, -1]
 			}, function (error, response) {
 
-				self.set('currentState', response.params.status);
+				if (response.params) {
+					self.set('currentState', response.params.status);
+				}
 
 			});
 

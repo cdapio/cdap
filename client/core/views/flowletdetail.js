@@ -43,7 +43,7 @@ define([
 				for (var i = 0; i < cx.length; i ++) {
 					if (cx[i][direction]['flowlet'] === flowlet &&
 						cx[i][direction]['stream'] === input) {
-						res.push({name: cx[i][opp]['flowlet']});
+						res.push({name: cx[i][opp]['flowlet'] || cx[i][opp]['stream']});
 					}
 				}
 				return res;

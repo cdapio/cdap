@@ -4,9 +4,9 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 212px;">Requests</th>
-		<th style="width: 212px;">Errors</th>
-		<th style="width: 190px;">&nbsp;</th>
+		<th style="width: 212px;">Requests per Second</th>
+		<th style="width: 212px;">Errors per Second</th>
+		<th style="width: 86px;">&nbsp;</th>
 	</thead>
 	{{#each types.Query.content tagName="tbody"}}
 	<tr>
@@ -19,13 +19,23 @@
 		<td class="app-list-count">1</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
-		<td>{{#unless isRunning}}
-			<button class="btn" {{action promote on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}} style="width:120px;">Push to Cloud</button>
-			<button class="btn" {{action start on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Start</button>
-			{{else}}
-			<button class="btn" disabled="true" style="width:120px;">Push to Cloud</button>
-			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Stop</button>
-			{{/unless}}
+		<td>
+			<div class="btn-group pull-right" style="width:86px;text-align: center;">
+
+				<button class="btn dropdown-toggle" data-toggle="dropdown"> 
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" style="text-align: left;">
+					{{#unless ENV.isCloud}}
+					<li><a {{action "promote" on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Push to Cloud</a></li>
+					<li class="divider"></li>
+					{{/unless}}
+					<li><a {{action "delete" on="click"}} {{bindAttr state="currentState"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Delete This Query</a></li>
+				</ul>
+
+				<button class="btn" {{action stateTransition on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}} {{bindAttr state="currentState"}}>{{controlLabel}}</button>
+				
+			</div>
 	</tr>
 	{{/each}}
 	</table>

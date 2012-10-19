@@ -10,7 +10,7 @@
 				Display Name
 			</td>
 			<td>
-				{{view Ember.TextField valueBinding="form.name" }}
+				{{view C.Vw.TextField valueBinding="form.name" }}
 			</td>
 		</tr>
 		<tr>
@@ -34,5 +34,5 @@
 </div>
 <div class="modal-footer">
 	<button {{action "hide" on="click"}} class="btn">Cancel</a>
-	<button {{action "confirmed" on="click"}} class="btn btn-success">Okay</a>
+	<button {{action "submit" on="click"}} class="btn btn-success">Okay</a>
 </div>

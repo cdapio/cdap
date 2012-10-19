@@ -18,6 +18,11 @@ define([], function () {
 				}]
 			}, function (error, response) {
 
+				if (error) {
+					C.interstitial.label(error);
+					return;
+				}
+
 				self.set('current', C.Mdl.Application.create(response.params));
 
 			});

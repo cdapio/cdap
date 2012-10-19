@@ -411,7 +411,10 @@ define([], function () {
 							for (var i = 0 ; i < streams.length; i ++) {
 								var enqueued = allMetrics[streams[i][0]];
 								var ackd = allMetrics[streams[i][1]];
-								total += (enqueued - ackd);
+								var diff = enqueued - ackd;
+								if (diff > 0) {
+									total += diff;
+								}
 							}
 
 							var flowlet = self.get_flowlet(flowletName);

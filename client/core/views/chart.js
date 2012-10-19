@@ -112,12 +112,12 @@ define([], function () {
 			
 		}.observes('model.__loadingData'),
 		__titles: {
-			'processed.count': 'Processing Rate',
-			'tuples.read.count': 'Tuples Read',
+			'processed.count': 'Tuples per Second',
+			'tuples.read.count': 'Reads per Second',
 			'emitted.count': 'Tuples Emitted',
-			'dataops.count': 'Data Operations',
+			'dataops.count': 'Data Ops per Second',
 			'busyness': 'Busyness',
-			'flowlet.failure.count': 'Failures',
+			'flowlet.failure.count': 'Failures per Second',
 			'storage.trend': 'Storage Trend'
 		},
 		__getTitle: function () {
@@ -140,6 +140,9 @@ define([], function () {
 		__formatLabel: function (value) {
 			if (this.get('unit') === 'percent' || this.get('metric') === 'busyness') {
 				return Math.round(value) + '%';
+			} if (this.get('unit') === 'bytes') {
+				value = C.util.bytes(value);
+				return value[0] + (this.get('listMode') ? '' : '<br /><span>' + value[1] + '</span>');
 			} else {
 				return C.util.number(value) + (this.get('listMode') ? '' : '<br /><span>TPS</span>');
 			}
@@ -179,9 +182,9 @@ define([], function () {
 
 				$(this.get('element')).addClass(color || 'blue');
 				label = $('<div class="sparkline-list-value" />').appendTo(this.get('element'));
-				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">No Data</div></div>').appendTo(this.get('element'));
+				container = $('<div class="sparkline-list-container"><div class="sparkline-list-container-empty">&nbsp;</div></div>').appendTo(this.get('element'));
 				height = 34;
-				width = width - 66;
+				width = width - 70;
 
 			} else {
 

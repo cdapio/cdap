@@ -90,7 +90,7 @@
           <tbody>
             <tr>
               <td style="width: 50%;">{{view C.Vw.Chart mode="dash" color="orange" metrics="processed.count"}}</td>
-              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" color="orange" metrics="storage.trend"}}</td>
+              <td style="width: 50%;">{{view C.Vw.Chart mode="dash" color="orange" unit="bytes" metrics="storage.trend"}}</td>
             </tr>
           </tbody>
         </table>
@@ -142,7 +142,14 @@
         {{view C.Vw.StreamList}}
       </div>
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Flows</div></div>
+
+        <div class="panel-head">
+        {{#if controller.types.Flow.content.length}}
+        <div class="pull-right">
+          <button {{action startAllFlows on="click"}} class="btn">Start All</button>
+        </div>
+        {{/if}}
+        <div class="panel-title">Flows</div></div>
         {{view C.Vw.FlowList}}
       </div>
       <div class="panel">
@@ -164,7 +171,7 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons">
-            <button class="btn dropdown-toggle" data-toggle="dropdown" style="width:50px;">
+          <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions 
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu">
@@ -173,14 +180,15 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Events per Second" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="q.ack.stream//demo/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:13px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Unconsumed</div>
-        <div class="sparkline-box-value" style="padding-top:13px;padding-left:0;width:100px;">{{current.unconsumed}}<br /><span>Events</span></div>
+        <div class="sparkline-box-value" style="padding-top:19px;padding-left:0;width:100px;">{{current.unconsumed}}<br /><span>Events</span></div>
       </div>
     </div>
     <div id="panels">
@@ -192,7 +200,7 @@
           <thead>
             <th colspan="2">&nbsp;</th>
             <th style="width: 100px;text-align:center;">Unconsumed</th>
-            <th style="width: 448px;">Reads</th>
+            <th style="width: 448px;">Reads per Second</th>
           </thead>
           {{#each controller.current.types.StreamFlow.content tagName="tbody"}}
           <tr>
@@ -353,7 +361,7 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons">
-            <button class="btn dropdown-toggle" data-toggle="dropdown" style="width:50px;">
+            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions 
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu">
@@ -363,9 +371,10 @@
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="All Reads" metrics="dataset.write.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:14px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
     </div>
     <div id="panels">
@@ -377,8 +386,8 @@
           <table class="table">
           <thead>
             <th colspan="2">&nbsp;</th>
-            <th style="width: 262px;">Writes</th>
-            <th style="width: 262px;">Reads</th>
+            <th style="width: 262px;">Writes per Second</th>
+            <th style="width: 262px;">Reads per Second</th>
           </thead>
           {{#each controller.types.DatasetFlow.content tagName="tbody"}}
           <tr>

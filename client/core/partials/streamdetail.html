@@ -8,14 +8,14 @@
 </div>
 
 <div class="popup-icon-stream" />
-<h1 class="popup-title">{{controller.current.name}}</h1>
+<h1 class="popup-title"><a {{bindAttr href="controller.current.href"}}>{{controller.current.name}}</a></h1>
 
 <table class="table">
 	<thead>
 		<th>Health</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
 		<th style="width: 100px;text-align: center;">Unconsumed</th>
-		<th style="width: 295px;">Enqueued</th>
+		<th style="width: 295px;">Events per Second</th>
 	</thead>
 	<tbody>
 		<tr>
@@ -23,9 +23,9 @@
 				<div class="list-health-box"></div>
 			</td>
 			<td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
-			<td class="app-list-count">{{controller.current.unconsumed}}</td>
+			<td class="app-list-count">{{controller.current.unconsumed}}<br /><span>Events</span></td>
 			<td>
-				{{view C.Vw.Chart entity-type="Stream" width="294" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
+				{{view C.Vw.Chart entity-type="Stream" width="300" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
 			</td>
 		</tr>
 	</tbody>

@@ -34,6 +34,14 @@ define([
 				}
 
 			});
+		},
+		startAllFlows: function () {
+
+			var flows = this.get('controller').get('types.Flow').content;
+			for (var i = 0; i < flows.length; i ++) {
+				console.log(flows[i]);
+			}
+
 		}
 	});
 });

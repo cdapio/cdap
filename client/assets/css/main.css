@@ -33,6 +33,7 @@ body {
 
 .table th, .table td {
 	padding: 14px;
+	border-color: #eaeaea;
 }
 
 .modal.fade.in {
@@ -314,19 +315,20 @@ h1 span {
 	border-width: 0px 1px;
 }
 .panel table th, .popup-container table th, 
-	.sparkline-box-title, .drop-zone, .app-list-count span
+	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
 	 {
 	border-top: 0;
 	font-family: "Condensed";
 	font-size: 12px;
 	color: #77878b;
 	text-transform: uppercase;
-	letter-spacing: 0.1em;
+	
 	padding: 2px 4px;
 	font-weight: bold;
 }
 .app-list-count span {
 	line-height: 1px;
+	color: #9EAEB2;
 }
 .panel table th, .popup-container table th {
 	padding: 3px 10px 0px;
@@ -396,7 +398,7 @@ h1 span {
 	margin-right: 82px;
 }
 .sparkline-box-title {
-	padding: 4px;
+	padding: 4px 6px;
 	line-height: 14px;
 	height: 11px;
 }
@@ -406,16 +408,15 @@ h1 span {
 	height: 50px;
 	font-weight: 300;
 	font-size: 26px;
-	padding-top: 32px;
+	padding-top: 38px;
 	padding-left: 5px;
 	color: #555;
 	line-height: 14px;
 	overflow: hidden;
 }
 .sparkline-box-value span {
-	font-size: 11px;
-	color: #77878B;
-	font-weight: normal;
+	padding: 0;
+	color: #9EAEB2;
 	text-transform: uppercase;
 }
 .info-box.sparkline-box {
@@ -715,6 +716,7 @@ input {
 	width: 56px;
 	color: #555;
 	vertical-align: middle !important;
+	line-height: 14px !important;
 }
 .app-list-name {
 	overflow: hidden;
@@ -758,7 +760,9 @@ input {
 .nav-pills > .active > a, .nav-pills > .active > a:hover{
 	background-color: #8C9495;
 	border: 2px solid #A7B0B1;
+	/*
 	box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.2);
+	*/
 	margin: 0px 2px;
 	border-radius: 3px;
 }
@@ -1059,6 +1063,7 @@ a strong {
 	margin: 32px auto 0;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+	padding: 15px 20px;
 }
 .popup-close {
 	float: right;
@@ -1067,7 +1072,7 @@ a strong {
 	width: 22px;
 	height: 22px;
 	text-align: center;
-	margin: -10px -10px 0px 0px;
+	margin: -25px -30px 0px 0px;
 	background-color: #616A6B;
 	border-radius: 100%;
 	color: white;
@@ -1078,15 +1083,14 @@ a strong {
 	width: 32px;
 	height: 32px;
 	background-image: url(../img/flowlet-types-white.png);
-	margin: 16px 0px 0px 16px;
+	margin: 16px 0px 0px 12px;
 }
 .popup-icon-stream {
 	background-position: 0px 32px;
 }
 .popup-title {
 	line-height: 36px;
-	padding: 12px 0px 12px 56px;
-	border-bottom: 1px solid #eaeaea;
+	padding: 12px 0px 12px 52px;
 }
 .popup-title span {
 	color: #AAA;
@@ -1105,11 +1109,15 @@ a strong {
 	float: right;
 	height: 27px;
 	margin: 12px 0px;
-	padding: 4px;
+	padding: 4px 0px;
 }
 #flowlet-popup-tabs {
-	height: 28px;
-	background-color: #eee;
+	width: 100%;
+	height: 36px;
+	background-color: #EEE;
+	border-radius: 3px 3px 0px 0px;
+	overflow: hidden;
+	border: 0;
 }
 .flowlet-popup-tab {
 	float: left;
@@ -1120,11 +1128,19 @@ a strong {
 }
 
 .flowlet-popup-tab {
-	background-color: #b5bfc3;
+	background-color: #eaeaea;
 }
 .flowlet-popup-tab a {
-	color: #505050;
 	display: block;
+	color: #505050;
+	padding-right: 24px;
+	padding-left: 14px;
+	text-decoration: none;
+	line-height: 36px;
+	background-position-x: right;
+	letter-spacing: 0.08em;
+	font-size: 14px;
+	font-weight: 200;
 }
 .flowlet-popup-tab a:hover {
 	text-decoration: none;
@@ -1156,7 +1172,11 @@ a strong {
 }
 
 #flowlet-popup-tab-content {
-	
+	margin-bottom: 5px;
+	border: 1px solid #EAEAEA;
+	border-width: 0px 1px 1px 1px;
+	border-radius: 0px 0px 3px 3px;
+	overflow: hidden;
 }
 #flowlet-popup-inputs {
 	background-image: url(../img/flowlet-background-input.png);
@@ -1178,9 +1198,11 @@ a strong {
 	line-height: 56px;
 	color: white;
 	text-align: center;
-	width: 114px;
+	width: 102px;
 	background-repeat: no-repeat;
 	background-position: center center;
+	text-transform: uppercase;
+	padding-right: 12px !important;
 }
 .flowlet-popup-input-contrib {
 	background-image: url(../img/contrib-background.png);
@@ -1194,6 +1216,7 @@ a strong {
 	height: 20px;
 	line-height: 22px;
 	text-align: center;
+	width: 154px;
 }
 .flowlet-popup-output {
 	background-image: url(../img/flowlet-popup-input.png);
@@ -1304,14 +1327,15 @@ a strong {
 .object-list-empty-content {
 	margin: 0 auto;
 	width: 280px;
+	/*
 	background-image: url(../img/empty-set.png);
 	background-repeat: no-repeat;
 	background-position: 0px 2px;
-	padding-left: 30px;
+	*/
 	text-align: left;
 	font-size: 14px;
 	color: #8C9495;
-	line-height: 12px;
+	line-height: 14px;
 	font-weight: 500;
 	letter-spacing: 0.08em;
 
@@ -1320,7 +1344,7 @@ a strong {
 
 	background-position: 68px 25px;
 	background-color: #FDFDFD;
-	padding: 25px 25px 22px 100px;
+	padding: 25px 25px 22px 25px;
 
 }
 .object-list-empty-content span {
@@ -1421,6 +1445,7 @@ ol {
 }
 .window-title span {
 	color: #c5ecf4;
+	line-height: 16px;
 }
 .window-value {
 	font-size: 14px;

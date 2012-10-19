@@ -6,6 +6,8 @@ define([], function () {
 
 	var attachedFlow = Em.Object.extend({
 
+		unconsumed: 0,
+
 		init: function() {
 			this._super();
 
@@ -144,6 +146,10 @@ define([], function () {
 
 				var flows = response.params;
 
+				if (!flows) {
+					return;
+				}
+
 				for (var i = 0; i < flows.length; i ++) {
 					flows[i].streamId = id;
 					self.get('types.StreamFlow').pushObject(attachedFlow.create(flows[i]));
@@ -239,6 +245,10 @@ define([], function () {
 							method: 'getCounters',
 							params: [app, id, null, ['q.ack.' + uri + '.count']]
 						}, function (error, response, flow) {
+
+							if (!response.params || !response.params.length) {
+								return;
+							}
 
 							if (response.params[0].value < lowestAckd) {
 								lowestAckd = response.params[0].value;

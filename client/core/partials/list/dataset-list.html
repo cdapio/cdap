@@ -4,7 +4,7 @@
 	<thead>
 		<th colspan="2">&nbsp;</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 444px;">Writes</th>
+		<th style="width: 444px;">Writes per Second</th>
 	</thead>
 	{{#each types.Dataset.content tagName="tbody"}}
 	<tr>
@@ -12,7 +12,7 @@
 			<div class="list-health-box"></div>
 		</td>
 		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
+			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
 		</td>
 		<td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Dataset" mode="singular" metrics="dataset.write.{id}.count"}}</td>
@@ -23,7 +23,7 @@
 	<div class="object-list-empty">
 		<div class="object-list-empty-content">
 			No Datasets.
-			<br /><span>Create a Dataset by clicking the [+] button above.</span>
+			<br /><span>Please navigate to the <a href="#/data">Datasets page</a> to create one.</span>
 		</div>
 	</div>
 {{/if}}

@@ -9,6 +9,11 @@ define([], function () {
 				this.get('parentView').inject();
 			}
 			this.set('value', '');
+		},
+		didInsertElement: function () {
+
+			$(this.get('element')).css({width: '222px'});
+
 		}
 	});
 	
