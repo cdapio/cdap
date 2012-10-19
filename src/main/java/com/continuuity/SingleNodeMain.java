@@ -210,6 +210,7 @@ public class SingleNodeMain {
     out.println("");
     out.println("Additional options:");
     out.println("  --help      To print this message");
+    out.println("  --in-memory To run everything in memory");
     out.println("");
 
     if (error) {
@@ -224,13 +225,18 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
+
+    boolean inMemory = false;
+
     // We only support 'help' command line options currently
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
-          usage(false);
-          return;
+        usage(false);
+        return;
+      } else if ("--in-memory".equals(args[0])) {
+        inMemory = true;
       } else {
-          usage(true);
+        usage(true);
       }
     }
 
@@ -243,14 +249,22 @@ public class SingleNodeMain {
     MetadataModules metadataModules = new MetadataModules();
 
     // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-      farModules.getSingleNodeModules(),
-      flowManagerModules.getSingleNodeModules(),
-      metricsModules.getSingleNodeModules(),
-      gatewayModules.getSingleNodeModules(),
-      dataFabricModules.getSingleNodeModules(),
-      metadataModules.getSingleNodeModules()
-    );
+    Injector injector = inMemory?
+        Guice.createInjector(
+            farModules.getInMemoryModules(),
+            flowManagerModules.getInMemoryModules(),
+            metricsModules.getInMemoryModules(),
+            gatewayModules.getInMemoryModules(),
+            dataFabricModules.getInMemoryModules(),
+            metadataModules.getInMemoryModules())
+        : Guice.createInjector(
+            farModules.getSingleNodeModules(),
+            flowManagerModules.getSingleNodeModules(),
+            metricsModules.getSingleNodeModules(),
+            gatewayModules.getSingleNodeModules(),
+            dataFabricModules.getSingleNodeModules(),
+            metadataModules.getSingleNodeModules()
+        );
 
     // Create our server instance
     SingleNodeMain continuuity = injector.getInstance(SingleNodeMain.class);
