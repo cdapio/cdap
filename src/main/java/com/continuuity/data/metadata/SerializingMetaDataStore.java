@@ -117,7 +117,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
   public void add(OperationContext context,
                   MetaDataEntry entry, boolean resolve)
       throws OperationException {
-    write(context, entry, false, resolve);
+    write(context, null, entry, false, resolve);
   }
 
   @Override
@@ -130,10 +130,18 @@ public class SerializingMetaDataStore implements MetaDataStore {
   public void update(OperationContext context,
                      MetaDataEntry entry, boolean resolve)
       throws OperationException {
-    write(context, entry, true, resolve);
+    write(context, null, entry, true, resolve);
+  }
+
+  @Override
+  public void swap(OperationContext context,
+                   MetaDataEntry expected, MetaDataEntry entry)
+      throws OperationException {
+    write(context, expected, entry, true, true);
   }
 
   private void write(OperationContext context,
+                     MetaDataEntry expected,
                      MetaDataEntry entry,
                      boolean isUpdate,
                      boolean resolve)
@@ -164,23 +172,45 @@ public class SerializingMetaDataStore implements MetaDataStore {
       throw new OperationException(e.getStatus(), message, e);
     }
 
-    if (isUpdate && result.isEmpty()) {
-        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
-            "Meta data entry does not exist.");
-    }
-    else if (!isUpdate && !result.isEmpty()) {
-      if (resolve) {
-        if (Arrays.equals(bytes, result.getValue().get(column))) {
-          // a value exists but it is identical with the one to write
-          return;
-        }
+    byte[] bytesRead = null;
+    if (!result.isEmpty()) bytesRead = result.getValue().get(column);
+
+    if (!isUpdate && bytesRead != null) {
+      if (resolve && Arrays.equals(bytes, bytesRead)) {
+        // a value exists but it is identical with the one to write
+        return;
       }
       throw new OperationException(StatusCode.WRITE_CONFLICT,
           "Meta data entry already exists.");
     }
+    if (isUpdate) {
+      if (bytesRead == null) {
+        // update expects a value to update, but none is there
+        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
+            "Meta data entry does not exist.");
+      }
+      if (expected != null) {
+        byte[] expectedBytes;
+        try {
+          expectedBytes = getSerializer().serialize(expected);
+        } catch (MetaDataException e) {
+          throw new OperationException(
+              StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+        }
+        // compare with expected
+        if (!Arrays.equals(bytesRead, expectedBytes)) {
+          if (resolve && Arrays.equals(bytesRead, bytes)) {
+            // matches the new value -> no need to write
+            return;
+          }
+          throw new OperationException(StatusCode.WRITE_CONFLICT,
+              "Existing meta data entry does not match expected entry.");
+        }
+      }
+    }
 
     try {
-      if (isUpdate) {
+      if (isUpdate && expected == null) {
         // generate a write
         Write write = new Write(tableName, rowkey, column, bytes);
         opex.execute(context, write);
@@ -188,7 +218,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
         // generate a compare-and-swap operation to make sure there is no add
         // conflict with some other thread or process
         CompareAndSwap compareAndSwap =
-            new CompareAndSwap(tableName, rowkey, column, null, bytes);
+            new CompareAndSwap(tableName, rowkey, column, bytesRead, bytes);
           opex.execute(context, compareAndSwap);
       }
     } catch (OperationException e) {
@@ -210,10 +240,10 @@ public class SerializingMetaDataStore implements MetaDataStore {
           throw new OperationException(e.getStatus(), message, e1);
         }
       }
-      // conflict coud not be resolved, or a different error
+      // conflict could not be resolved, or a different error
       String message =
           String.format("Error writing meta data: %s", e.getMessage());
-      Log.error(message, e);
+      if (e.getStatus() != StatusCode.WRITE_CONFLICT) Log.error(message, e);
       throw new OperationException(e.getStatus(), message, e);
     }
   }

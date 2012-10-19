@@ -62,6 +62,19 @@ public interface MetaDataStore {
                      boolean resolve) throws OperationException;
 
   /**
+   * swaps an existing entry with conflict resolution.
+   * @param context the OperationContext of the caller
+   * @param expected the expected meta data entry before the write
+   * @param entry the meta data entry to write
+   * @throws OperationException with status ENTRY_NOT_FOUND if an entry with
+   * the that name and type does not exist for the given account and app.
+   * also throws OperationException for other data fabric problems.
+   */
+  public void swap(OperationContext context,
+                   MetaDataEntry expected,
+                   MetaDataEntry entry) throws OperationException;
+
+  /**
    * Updates a single text field of an entry with concurrency control. If
    * the entry is updated by someone else between the read and the write,
    * then this is a write conflict, and the update fails. A specified number

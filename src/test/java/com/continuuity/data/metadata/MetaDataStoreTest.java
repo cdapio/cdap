@@ -102,6 +102,49 @@ abstract public class MetaDataStoreTest {
     }
   }
 
+  // test that swap fails if the existing value matches neither the
+  // expected nor the new value
+  @Test
+  public void testSwap() throws OperationException {
+    // add a meta data record
+    MetaDataEntry meta = new MetaDataEntry("a", "b", "typ", "thisid");
+    meta.addField("a", "x");
+    mds.add(context, meta);
+
+    // create another entry with the same key but different field value
+    MetaDataEntry meta1 = new MetaDataEntry("a", "b", "typ", "thisid");
+    meta1.addField("a", "y");
+
+    // validate that swap succeeds
+    mds.swap(context, meta, meta1);
+
+    // create another entry with the same key but different field value
+    MetaDataEntry meta2 = new MetaDataEntry("a", "b", "typ", "thisid");
+    meta2.addField("a", "z");
+    meta2.addField("b", "1");
+
+    // validate that swapping again fails with the old expected value
+    try {
+      mds.swap(context, meta, meta2);
+      Assert.fail("Expected write conflict");
+    } catch (OperationException e) { // expected
+      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
+    }
+
+    // update the entry to meta2, and try swapping again, should now succeed
+    // although the expected value is not there, but the new value matches
+    mds.update(context, meta2);
+    mds.swap(context, meta, meta2);
+
+    // create a new meta data entry and add fields in different order
+    MetaDataEntry meta3 = new MetaDataEntry("a", "b", "typ", "thisid");
+    meta3.addField("b", "1");
+    meta3.addField("a", "z");
+
+    // verify that swap succeeds despite the different order of fields
+    mds.swap(context, meta3, meta);
+  }
+
   @Test
   public void testList() throws OperationException {
     opex.execute(context, new ClearFabric(ClearFabric.ToClear.META));
