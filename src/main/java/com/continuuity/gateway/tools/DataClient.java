@@ -71,6 +71,8 @@ public class DataClient {
   boolean clearData = false;     // to clear all table data
   boolean clearQueues = false;   // to clear all event streams
   boolean clearStreams = false;  // to clear all intra-flow queues
+  boolean clearTables = false;   // to clear all named tables
+  boolean clearMeta = false;     // to clear all meta data
 
   boolean keyNeeded;             // does the command require a key?
   boolean valueNeeded;           // does the command require a value?
@@ -95,7 +97,7 @@ public class DataClient {
     out.println("  " + name + " delete --key <string> [ <options> ]");
     out.println("  " + name + " list [ <options> ]");
     out.println("  " + name +
-        " clear ( --all | --data | --queues | --streams )");
+        " clear ( --all | --data | --queues | --streams | --tables | --meta)");
     out.println("Additional options:");
     out.println("  --base <url>            " +
         "To specify the base url to send to");
@@ -211,6 +213,10 @@ public class DataClient {
         clearQueues = true;
       } else if ("--streams".equals(arg)) {
         clearStreams = true;
+      } else if ("--tables".equals(arg)) {
+        clearTables = true;
+      } else if ("--meta".equals(arg)) {
+        clearMeta = true;
       } else if ("--verbose".equals(arg)) {
         verbose = true;
       } else if ("--help".equals(arg)) {
@@ -281,9 +287,10 @@ public class DataClient {
     }
     // verify that clear command specifies what to clear
     if ("clear".equals(command)) {
-      if (!(clearAll || clearData || clearQueues || clearStreams))
+      if (!(clearAll || clearData || clearQueues || clearStreams ||
+          clearTables || clearMeta))
         usage("You must specify what to clear - please us --all, --data, " +
-            "--queues, and/or --streams.");
+            "--queues, --tables, --meta and/or --streams.");
     }
     // --counter is only allowed for read and write, and not in conjunction
     // with --value-file
@@ -555,10 +562,29 @@ public class DataClient {
     }
     else if ("clear".equals(command)) {
       requestUrl = baseUrl + "?clear=";
-      if (clearAll) requestUrl += "data,queues,streams";
-      else if (clearData) requestUrl += "data";
-      else if (clearQueues) requestUrl += "queues";
-      else if (clearStreams) requestUrl += "streams";
+      if (clearAll) requestUrl += "all";
+      else {
+        String sep = "";
+        if (clearData) {
+          requestUrl += sep + "data";
+          sep = ",";
+        }
+        if (clearQueues) {
+          requestUrl += sep + "queues";
+          sep = ",";
+        }
+        if (clearStreams) {
+          requestUrl += sep + "streams";
+          sep = ",";
+        }
+        if (clearTables) {
+          requestUrl += sep + "tables";
+          sep = ",";
+        }
+        if (clearMeta) {
+          requestUrl += sep + "meta";
+        }
+      }
       // now execute this as a get
       try {
         response = client.execute(new HttpPost(requestUrl));
