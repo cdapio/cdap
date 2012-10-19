@@ -42,6 +42,8 @@ public class MetricsFrontendServiceImpl
     MetricsFrontendServiceImpl.class
   );
 
+  private static short SKIP_POINTS = 10;
+
   /**
    * Connection string to connect to database.
    */
@@ -222,7 +224,7 @@ public class MetricsFrontendServiceImpl
     // If start time is specified and end time is negative offset
     // from that start time, then we use that.
     if(request.isSetStartts() && request.getStartts() < 0) {
-      start = start + request.getStartts();
+      start = start + request.getStartts() + SKIP_POINTS;
     }
 
     if(request.isSetStartts() && request.isSetEndts()) {
@@ -334,7 +336,12 @@ public class MetricsFrontendServiceImpl
     if(points == null || points.size() < 1) {
       return p;
     }
+    short count = SKIP_POINTS;
     for(DataPoint point : points) {
+      if(count > 0) {
+        count--;
+        continue;
+      }
       Point p1 = new Point();
       p1.setTimestamp(point.getTimestamp());
       p1.setValue(point.getValue());
