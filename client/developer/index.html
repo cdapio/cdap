@@ -178,18 +178,23 @@
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:14px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
+      <div class="info-box" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Unconsumed</div>
+        <div class="sparkline-box-value" style="padding-top:22px;padding-left:0;width:100px;">{{current.unconsumed}}</div>
+      </div>
     </div>
     <div id="panels">
       <div class="panel">
       <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
       
-        {{#if controller.types.StreamFlow.content.length}}
+        {{#if controller.current.types.StreamFlow.content.length}}
           <table class="table">
           <thead>
             <th colspan="2">&nbsp;</th>
+            <th style="width: 100px;text-align:center;">Unconsumed</th>
             <th style="width: 448px;">Reads</th>
           </thead>
-          {{#each controller.types.StreamFlow.content tagName="tbody"}}
+          {{#each controller.current.types.StreamFlow.content tagName="tbody"}}
           <tr>
             <td class="list-health-cell">
               <div class="list-health-box"></div>
@@ -197,6 +202,7 @@
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
+            <td class="app-list-count">{{unconsumed}}</td>
             <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="q.ack.stream//demo/{id}.count"}}</td>
           </tr>
           {{/each}}
@@ -363,6 +369,7 @@
       </div>
     </div>
     <div id="panels">
+
       <div class="panel">
       <div class="panel-head"><div class="panel-title">Attached Flows</div></div>
       

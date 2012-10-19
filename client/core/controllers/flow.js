@@ -153,6 +153,8 @@ define([], function () {
 
 		__setFlowletLabel: function (flowlet, value) {
 
+			console.log('setting', flowlet.id, value);
+
 			if (!flowlet) {
 				console.log('No flowlet to set label', value);
 			}
@@ -301,9 +303,9 @@ define([], function () {
 					return;
 				}
 
-				if (metricType === 'processed' || metricType === 'enqueued') {
-					self.__resetFlowletLabels(0);
-				}
+				//if (metricType === 'processed' || metricType === 'enqueued') {
+					//self.__resetFlowletLabels(0);
+				//}
 
 				var metrics = response.params;
 				for (var i = 0; i < metrics.length; i ++) {
@@ -320,19 +322,6 @@ define([], function () {
 						}
 					}
 
-				}
-
-				// Enqueued looks up the value of a metric name (uri), given a flowlet.
-				if (metricType === 'enqueued') {
-
-					var flowlets = C.Ctl.Flow.types.Flowlet.content,
-						i, uri, value;
-
-					for (i = 0; i < flowlets.length; i ++) {
-						uri = queuedFor[flowlets[i].id];
-						value = allMetrics[uri];
-						self.__setFlowletLabel(flowlets[i], value || 0);
-					}
 				}
 
 				var flowStreams = C.Ctl.Flow.current.flowStreams;
@@ -392,6 +381,17 @@ define([], function () {
 								self.__setFlowletLabel(flowlet, value);
 
 							}
+
+							// Enqueued looks up the value of a metric name (uri), given a flowlet.
+							var flowlets = C.Ctl.Flow.types.Flowlet.content,
+								i, uri, value;
+
+							for (i = 0; i < flowlets.length; i ++) {
+								uri = queuedFor[flowlets[i].id];
+								value = allMetrics[uri];
+								self.__setFlowletLabel(flowlets[i], value || 0);
+							}
+						
 						}
 
 						// Clear out label for queue size for Streams
@@ -426,6 +426,19 @@ define([], function () {
 					});
 
 				} else {
+
+					// Enqueued looks up the value of a metric name (uri), given a flowlet.
+					if (metricType === 'enqueued') {
+
+						var flowlets = C.Ctl.Flow.types.Flowlet.content,
+							i, uri, value;
+
+						for (i = 0; i < flowlets.length; i ++) {
+							uri = queuedFor[flowlets[i].id];
+							value = allMetrics[uri];
+							self.__setFlowletLabel(flowlets[i], value || 0);
+						}
+					}
 
 					self.startStats();
 

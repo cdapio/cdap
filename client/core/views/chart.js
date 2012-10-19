@@ -160,7 +160,7 @@ define([], function () {
 				width = parseInt(this.get('width'), 10), label, container;
 
 			height = height || 70;
-			width = width || $(this.get('element')).parent().innerWidth();
+			width = width || $(this.get('element')).parent().outerWidth();
 
 			if (entityType === "Flowlet") {
 

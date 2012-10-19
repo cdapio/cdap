@@ -15,7 +15,7 @@
 		<th>Health</th>
 		<th style="width: 100px;text-align: center;">Storage</th>
 		<th style="width: 100px;text-align: center;">Unconsumed</th>
-		<th style="width: 295px;">Arrivals</th>
+		<th style="width: 295px;">Enqueued</th>
 	</thead>
 	<tbody>
 		<tr>
@@ -25,7 +25,7 @@
 			<td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
 			<td class="app-list-count">{{controller.current.unconsumed}}</td>
 			<td>
-				{{view C.Vw.Chart entity-type="Stream" width="262" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
+				{{view C.Vw.Chart entity-type="Stream" width="294" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
 			</td>
 		</tr>
 	</tbody>

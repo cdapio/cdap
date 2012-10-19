@@ -17,7 +17,7 @@
 		</td>
 		<td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
 		<td class="app-list-count">{{unconsumed}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" mode="singular" metrics="q.stream//demo/{id}.ack.source.count"}}</td>
+		<td>{{view C.Vw.Chart entity-id=id entity-type="Stream" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}</td>
 	</tr>
 	{{/each}}
 	</table>

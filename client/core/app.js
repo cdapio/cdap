@@ -158,17 +158,7 @@ function(Models, Views, Controllers){
 
 				x = d3.scale.linear();//.domain([0, data.length]).range([0, w]);
 				y = d3.scale.linear();
-/*
-				if (percent) {
-					y = d3.scale.linear()
-						.domain([100, 0])
-						.range([0, h]);
-				} else {
-					y = d3.scale.linear()
-						.domain([max + (max * yBuffer), min - (min * yBuffer)])
-						.range([margin, h - margin]);
-				}
-*/
+
 				var vis = widget
 					.append("svg:svg")
 					.attr('width', '100%')
@@ -212,7 +202,7 @@ function(Models, Views, Controllers){
 						var yBuffer = 0.0;
 						var y, x;
 
-						x = d3.scale.linear().domain([0, length]).range([extend * -1, w + extend]);
+						x = d3.scale.linear().domain([0, length]).range([0 - extend, w - extend]);
 
 						if (this.percent) {
 							y = d3.scale.linear()
@@ -236,7 +226,7 @@ function(Models, Views, Controllers){
 
 							this.g.selectAll("path.sparkline-area")
 								.data([data])
-								.attr("transform", null)//"translate(" + x(1) + ")")
+								.attr("transform", "translate(" + x(1) + ")")
 								.attr("d", area)
 								.transition()
 								.ease("linear")
@@ -246,7 +236,7 @@ function(Models, Views, Controllers){
 
 						this.g.selectAll("path.sparkline-data")
 							.data([data])
-							.attr("transform", null)//"translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(1) + ")")
 							.attr("d", line)
 							.transition()
 							.ease("linear")
@@ -263,22 +253,25 @@ function(Models, Views, Controllers){
 
 				if (value > 1000000000) {
 					var digits = 3 - (Math.round(value / 1000000000) + '').length;
+					digits = digits < 0 ? 2 : digits;
 					value = value / 1000000000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded + 'B';
 				} else if (value > 1000000) {
 					var digits = 3 - (Math.round(value / 1000000) + '').length;
+					digits = digits < 0 ? 2 : digits;
 					value = value / 1000000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded + 'M';
 				} else if (value > 10000) {
 					var digits = 3 - (Math.round(value / 1000) + '').length;
+					digits = digits < 0 ? 2 : digits;
 					value = value / 1000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded + 'K';
 				} else {
 					var digits = 3 - (value + '').length;
-					digits = digits < 0 ? 0 : digits;
+					digits = digits < 0 ? 2 : digits;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded;
 				}
@@ -287,8 +280,13 @@ function(Models, Views, Controllers){
 			},
 			bytes: function (value) {
 
-				if (value > 1024) {
-
+				if (value > 1073741824) {
+					value /= 1073741824;
+					return [((Math.round(value * 100) / 100)), 'GB'];
+				} else if (value > 1048576) {
+					value /= 1048576;
+					return [((Math.round(value * 100) / 100)), 'MB'];
+				} else if (value > 1024) {
 					value /= 1024;
 					return [((Math.round(value * 100) / 100)), 'KB'];
 				}
