@@ -25,7 +25,11 @@
 	<div class="object-list-empty">
 		<div class="object-list-empty-content">
 			No Streams.
+			{{#if C.onStreams}}
+			<br /><span>Please click the button above to create one.</span>
+			{{else}}
 			<br /><span>Please navigate to the <a href="#/streams">Streams page</a> to create one.</span>
+			{{/if}}
 		</div>
 	</div>
 {{/if}}

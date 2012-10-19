@@ -23,7 +23,11 @@
 	<div class="object-list-empty">
 		<div class="object-list-empty-content">
 			No Datasets.
+			{{#if C.onDatasets}}
+			<br /><span>Please click the button above to create one.</span>
+			{{else}}
 			<br /><span>Please navigate to the <a href="#/data">Datasets page</a> to create one.</span>
+			{{/if}}
 		</div>
 	</div>
 {{/if}}

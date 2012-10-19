@@ -144,11 +144,7 @@
       <div class="panel">
 
         <div class="panel-head">
-        {{#if controller.types.Flow.content.length}}
-        <div class="pull-right">
-          <button {{action startAllFlows on="click"}} class="btn">Start All</button>
-        </div>
-        {{/if}}
+        
         <div class="panel-title">Flows</div></div>
         {{view C.Vw.FlowList}}
       </div>
@@ -370,8 +366,8 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes" metrics="dataset.write.{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="All Reads" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes per Second" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.write.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>

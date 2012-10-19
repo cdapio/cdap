@@ -294,6 +294,12 @@ function(Models, Views, Controllers){
 				return [value, 'BYTES'];
 			}
 		},
+		onStreams: function () {
+			return C.router.currentState.parentState.name === 'streams';
+		}.property('C.router.currentState.parentState.name').cacheable(false),
+		onDatasets: function () {
+			return C.router.currentState.parentState.name === 'datas';
+		}.property('C.router.currentState.parentState.name').cacheable(false),
 		setTimeRange: function (millis) {
 			this.set('__timeRange', millis);
 			this.set('__timeLabel', {

@@ -13,7 +13,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 
 	$.extend(C, {
 		Router: Em.Router.extend({
-			enableLogging: true,
+			enableLogging: false,
 			root: Em.Route.extend({
 				home: Em.Route.extend({
 					route: '/',

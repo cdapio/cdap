@@ -67,9 +67,6 @@ define([], function () {
 
 					metric = metric.replace(/\./g, '');
 
-
-					console.log('updating', metric);
-
 					self.get('metricData').set(metric, data);
 
 				}

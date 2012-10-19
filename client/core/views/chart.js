@@ -29,8 +29,6 @@ define([], function () {
 
 						}
 
-						data.shift();
-
 						this.get('sparkline').update(i, data);
 						this.get('label').html(this.__formatLabel(data[data.length - 1]));
 					}
