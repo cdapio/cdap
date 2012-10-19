@@ -29,24 +29,29 @@ define([], function () {
 		getUpdateRequest: function () {
 
 			var metrics = [];
-			for (var name in this.get('metricNames')) {
-				metrics.push(name);
-			}
+			var enqueueMetrics = [];
 
-			var app = '-';
-			var id = '-';
+			for (var name in this.get('metricNames')) {
+
+				if (name.indexOf('stream.enqueue') !== -1) {
+					enqueueMetrics.push(name);
+				} else {
+					metrics.push(name);
+				}
+
+			}
 
 			var accountId = 'demo';
 
 			var start = C.__timeRange * -1;
 			var self = this;
 
-			var storageMetric = 'stream.storage.stream//' + accountId + '/' + this.get('id') + '.count';
-			metrics.push(storageMetric);
+			var app = this.get('app');
+			var id = this.get('id');
 
-			return ['monitor', {
+			C.get('monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
+				params: [app, id, enqueueMetrics, start, undefined, 'FLOW_LEVEL', this.get('id')]
 			}, function (error, response, id) {
 
 				if (!response.params) {
@@ -66,8 +71,39 @@ define([], function () {
 					}
 
 					metric = metric.replace(/\./g, '');
+					self.get('metricData').set(metric, data);
 
+				}
+			});
 
+			var app = '-';
+			var id = '-';
+
+			var storageMetric = 'stream.storage.stream//' + accountId + '/' + this.get('id') + '.count';
+			metrics.push(storageMetric);
+
+			return ['monitor', {
+				method: 'getTimeSeries',
+				params: [app, id, metrics, start, undefined, 'FLOW_LEVEL', this.get('id')]
+			}, function (error, response, id) {
+
+				if (!response.params) {
+					return;
+				}
+
+				var data, points = response.params.points,
+					latest = response.params.latest;
+
+				for (var metric in points) {
+
+					data = points[metric];
+
+					var k = data.length;
+					while(k --) {
+						data[k] = data[k].value;
+					}
+
+					metric = metric.replace(/\./g, '');
 					self.get('metricData').set(metric, data);
 
 				}

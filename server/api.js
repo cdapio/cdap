@@ -56,7 +56,7 @@ try {
 
 		// Pushing the accountID into arguments. Comes from the authenticated session.
 		if (method.indexOf('ByApplication') !== -1 || method === 'getFlows' || method === 'getFlow' ||
-			method === 'getFlowsByStream') {
+			method === 'getFlowsByStream' || method === 'getFlowsByDataset') {
 			params.unshift('demo');
 		} else {
 			params.unshift(new metadataservice_types.Account({

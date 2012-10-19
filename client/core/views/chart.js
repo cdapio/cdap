@@ -29,7 +29,7 @@ define([], function () {
 
 						}
 
-						this.get('sparkline').update(metric, data);
+						this.get('sparkline').update(i, data);
 						this.get('label').html(this.__formatLabel(data[data.length - 1]));
 					}
 				}
