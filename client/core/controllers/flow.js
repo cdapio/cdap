@@ -153,8 +153,6 @@ define([], function () {
 
 		__setFlowletLabel: function (flowlet, value) {
 
-			console.log('setting', flowlet.id, value);
-
 			if (!flowlet) {
 				console.log('No flowlet to set label', value);
 			}

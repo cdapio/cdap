@@ -118,7 +118,9 @@ define([], function () {
 		},
 		isSource: true,
 		arrived: 0,
-		storage: '0B',
+		storage: 0,
+		storageLabel: '0',
+		storageUnit: 'B',
 		unconsumed: 0,
 		addMetricName: function (name) {
 

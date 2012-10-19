@@ -45,6 +45,23 @@ define([
 
 			});
 
+		},
+		promote: function () {
+
+			var id = $(event.target).attr('flowId');
+			var app = $(event.target).attr('applicationId');
+
+			C.interstitial.loading('Pushing to Cloud...', 'abc');
+
+			C.get('far', {
+				method: 'promote',
+				params: [app, id, -1]
+			}, function (error, response) {
+				
+				C.interstitial.hide('abc');
+
+			});
+
 		}
 
 	});

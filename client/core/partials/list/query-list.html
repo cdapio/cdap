@@ -6,7 +6,7 @@
 		<th style="width: 100px;text-align: center;">Instances</th>
 		<th style="width: 212px;">Requests</th>
 		<th style="width: 212px;">Errors</th>
-		<th style="width: 60px;">&nbsp;</th>
+		<th style="width: 190px;">&nbsp;</th>
 	</thead>
 	{{#each types.Query.content tagName="tbody"}}
 	<tr>
@@ -20,8 +20,10 @@
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
 		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
 		<td>{{#unless isRunning}}
+			<button class="btn" {{action promote on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}} style="width:120px;">Push to Cloud</button>
 			<button class="btn" {{action start on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Start</button>
 			{{else}}
+			<button class="btn" disabled="true" style="width:120px;">Push to Cloud</button>
 			<button class="btn" {{action stop on="click"}} {{bindAttr flowId="id"}} {{bindAttr applicationId="application"}}>Stop</button>
 			{{/unless}}
 	</tr>
