@@ -49,7 +49,7 @@ public class QueryProviderDiscovery {
     // attempt to discover the service
     try {
       this.discoveryClient = new ServiceDiscoveryClient(zookeeper);
-      Log.info("Connected to service discovery. ");
+      Log.trace("Connected to service discovery. ");
     } catch (ServiceDiscoveryClientException e) {
       Log.error("Unable to start service discovery client: " + e.getMessage());
       throw new TException("Unable to start service discovery client.", e);
@@ -71,7 +71,7 @@ public class QueryProviderDiscovery {
       if (instance != null) {
         address = instance.getAddress();
         port = instance.getPort();
-        Log.info("Service discovered at " + address + ":" + port);
+        Log.trace("Service discovered at " + address + ":" + port);
         return address + ":" + port;
       } else {
         return null;
