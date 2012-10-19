@@ -164,11 +164,11 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       MysqlConnectionPoolDataSource mysqlDataSource =
         new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(mysqlDataSource, 40);
+      poolManager = new DBConnectionPoolManager(mysqlDataSource, 100);
     } else if(this.type == DBUtils.DBType.HSQLDB) {
       JDBCPooledDataSource jdbcDataSource = new JDBCPooledDataSource();
       jdbcDataSource.setUrl(connectionUrl);
-      poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
+      poolManager = new DBConnectionPoolManager(jdbcDataSource, 100);
     }
 
     // Starting the timeseries cleaners.
