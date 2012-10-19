@@ -338,7 +338,7 @@ public class MetricsFrontendServiceImpl
     }
     short count = SKIP_POINTS;
     for(DataPoint point : points) {
-      if(count > 0) {
+      if(points.size() > SKIP_POINTS && count > 0) {
         count--;
         continue;
       }
