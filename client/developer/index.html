@@ -176,11 +176,11 @@
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:14px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:13px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
       </div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Unconsumed</div>
-        <div class="sparkline-box-value" style="padding-top:22px;padding-left:0;width:100px;">{{current.unconsumed}}</div>
+        <div class="sparkline-box-value" style="padding-top:13px;padding-left:0;width:100px;">{{current.unconsumed}}<br /><span>Events</span></div>
       </div>
     </div>
     <div id="panels">
@@ -202,7 +202,7 @@
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
-            <td class="app-list-count">{{unconsumed}}</td>
+            <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>
             <td>{{view C.Vw.Chart entity-id=id entity-type="StreamFlow" metrics="stream.enqueue.{id}.count,q.ack.stream//demo/{id}.count"}}</td>
           </tr>
           {{/each}}
@@ -377,7 +377,8 @@
           <table class="table">
           <thead>
             <th colspan="2">&nbsp;</th>
-            <th style="width: 448px;">Reads</th>
+            <th style="width: 262px;">Writes</th>
+            <th style="width: 262px;">Reads</th>
           </thead>
           {{#each controller.types.DatasetFlow.content tagName="tbody"}}
           <tr>
@@ -387,6 +388,7 @@
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
             </td>
+            <td>{{view C.Vw.Chart entity-id=id entity-type="DatasetFlow" mode="singular" metrics="dataset.write.{id}.count"}}</td>
             <td>{{view C.Vw.Chart entity-id=id entity-type="DatasetFlow" mode="singular" metrics="dataset.read.{id}.count"}}</td>
           </tr>
           {{/each}}

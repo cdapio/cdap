@@ -46,7 +46,7 @@ define([], function () {
 
 			return ['monitor', {
 				method: 'getTimeSeries',
-				params: [app, id, metrics, start, undefined, 'FLOWLET_LEVEL', this.get('id')]
+				params: [app, id, metrics, start, undefined, 'FLOW_LEVEL', this.get('id')]
 			}, function (error, response, id) {
 
 				if (!response.params) {

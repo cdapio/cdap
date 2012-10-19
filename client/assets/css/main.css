@@ -416,6 +416,7 @@ h1 span {
 	font-size: 11px;
 	color: #77878B;
 	font-weight: normal;
+	text-transform: uppercase;
 }
 .info-box.sparkline-box {
 	width: 262px;

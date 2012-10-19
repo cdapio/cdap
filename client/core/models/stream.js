@@ -222,6 +222,10 @@ define([], function () {
 					params: ['-', '-', null, ['stream.enqueue.' + uri + '.count']]
 				}, function (error, response) {
 
+					if (!response.params.length) {
+						return;
+					}
+
 					var streamEnqueued = response.params[0].value;
 
 					var flows = self.get('types.StreamFlow').content;
