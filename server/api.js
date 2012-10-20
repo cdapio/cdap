@@ -64,8 +64,6 @@ try {
 			}));
 		}
 
-		console.log(method, params);
-
 		if (method in MetaData) {
 			try {
 				MetaData[method].apply(MetaData, params.concat(done));
