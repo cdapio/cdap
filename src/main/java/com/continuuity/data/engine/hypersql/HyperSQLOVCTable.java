@@ -805,7 +805,7 @@ implements OrderedVersionedColumnarTable {
   }
 
   private void handleSQLException(SQLException e, String where,
-      PreparedStatement ps) {
+      PreparedStatement ps) throws OperationException {
     String msg = "HyperSQL exception on " + where + "(error code = " +
         e.getErrorCode() + ") (statement = " + ps.toString() + ")";
     Log.error(msg, e);
