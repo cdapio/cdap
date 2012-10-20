@@ -422,7 +422,7 @@ implements OrderedVersionedColumnarTable {
               latest.getSecond(), latest.getFirst()));
 
     } catch (SQLException e) {
-      handleSQLException(e, "select");
+      handleSQLException(e, "select", ps);
     } finally {
       if (ps != null) {
         try {
@@ -800,6 +800,14 @@ implements OrderedVersionedColumnarTable {
       throws OperationException {
     String msg = "HyperSQL exception on " + where + "(error code = " +
         e.getErrorCode() + ")";
+    Log.error(msg, e);
+    throw new OperationException(StatusCode.SQL_ERROR, msg, e);
+  }
+
+  private void handleSQLException(SQLException e, String where,
+      PreparedStatement ps) {
+    String msg = "HyperSQL exception on " + where + "(error code = " +
+        e.getErrorCode() + ") (statement = " + ps.toString() + ")";
     Log.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
