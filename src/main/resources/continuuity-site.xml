@@ -9,7 +9,7 @@
 
     <property>
         <name>resource.manager.cloud.hostname</name>
-        <value>alpha.payvment.continuuity.com</value>
+        <value>hwcloud.continuuity.com</value>
         <description>Specifies the resource manager hostname in cloud.</description>
     </property>
 
