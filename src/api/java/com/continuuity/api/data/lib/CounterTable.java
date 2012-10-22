@@ -136,7 +136,8 @@ public class CounterTable extends DataLib {
    */
   public Map<String,Long> readCounterSet(String counterSet)
       throws OperationException {
-    Read read = new Read(getDataSetId(), Bytes.toBytes(counterSet));
+    ReadColumnRange read = new ReadColumnRange(getDataSetId(),
+        Bytes.toBytes(counterSet), null, null);
     OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<String,Long> ret = new TreeMap<String,Long>();
     if (result.isEmpty()) return ret;
@@ -155,7 +156,8 @@ public class CounterTable extends DataLib {
    */
   public Map<byte[],Long> readCounterSet(byte [] counterSet)
       throws OperationException {
-    Read read = new Read(getDataSetId(), counterSet);
+    ReadColumnRange read = new ReadColumnRange(getDataSetId(),
+        counterSet, null, null);
     OperationResult<Map<byte[],byte[]>> result = getDataFabric().read(read);
     Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
     if (result.isEmpty()) return ret;
