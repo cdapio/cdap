@@ -2,11 +2,14 @@
 <project name="TwitterScanner" default="jar">
 
     <!-- Override the default main class defn -->
-    <property name="main.class" value="TwitterScanner.TwitterFlow"/>
+    <property name="main.class" value="com.continuuity.examples.twitter.TwitterFlow"/>
 
     <!-- Now import the common build file -->
     <import file="../ant-common.xml"/>
 
-    <!-- Pick up any project jars -->
-
+    <target name="jar" depends="compile, manifest">
+        <jar destfile="${jar.name}" basedir="classes" manifest="${manifest.file}">
+	   <zipgroupfileset dir="lib/" includes="**/twitter4j*.jar" />
+	</jar>
+    </target>
 </project>
