@@ -5,8 +5,22 @@ define([
 	return Em.View.extend({
 		templateName: 'query',
 		currentBinding: 'controller.current',
-		requestMethod: null,
-		requestParams: null,
+		requestMethod: function () {
+			if (this.get('current') && this.get('current').serviceName === 'twitter') {
+				return 'getTopTags';
+			} else {
+				return 'readactivity';
+			}
+		}.property('current'),
+		requestParams: function () {
+
+			if (this.get('current') && this.get("current").serviceName === 'feedreader') {
+				return 'limit=10&clusterid=1';
+			} else {
+				return '';
+			}
+
+		}.property('current'),
 		responseBody: null,
 		responseCode: null,
 		submit: function (event) {
@@ -16,8 +30,8 @@ define([
 				method: 'query',
 				params: {
 					service: this.current.serviceName,
-					method: this.requestMethod,
-					query: this.requestParams
+					method: this.get('requestMethod'),
+					query: this.get('requestParams')
 				}
 			}, function (error, response) {
 

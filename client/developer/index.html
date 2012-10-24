@@ -445,12 +445,11 @@
           <thead>
           <tr>
             <th style="width: 140px;text-align: left;">
-              Method Name
+              Method
             </th>
             <th style="text-align: left;">
-              Query String
+              Parameters
             </th>
-                     
           </tr>
           </thead>
           <tbody>
@@ -461,7 +460,6 @@
             <td>
               {{view Ember.TextField valueBinding="view.requestParams" width="100%"}}
               <button {{action "submit" on="click"}} class="btn btn-success" style="margin:0px 16px;">Execute</button>
-              
             </td>
           </tr>
           </tbody>

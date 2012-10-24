@@ -359,7 +359,7 @@ try {
 				};
 				post_options.method = 'GET';
 				post_options.path = '/rest-query/' + params.service +
-					'/' + params.method + (params.query ? '?' + JSON.stringify(params.query) : '');
+					'/' + params.method + (params.query ? '?' + params.query : '');
 			break;
 		}
 
