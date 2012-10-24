@@ -469,10 +469,7 @@
       </div>
 
       <div class="panel" style="padding: 10px;">
-        <div class="well" style="min-height: 300px;margin:0;overflow: auto;padding: 8px 12px;">
-          <h2>{{view.responseCode}}</h2>
-          {{view.responseBody}}
-        </div>
+        {{view Ember.TextArea valueBinding="view.responseBody" classNames="well query-response"}}
       </div>
   </script>
 
