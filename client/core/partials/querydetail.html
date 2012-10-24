@@ -2,13 +2,27 @@
 <div class="popup-container">
 <div class="popup-close" {{action close on="click"}}>×</div>
 
-<div class="popup-inject-wrapper">
-	{{view C.Vw.Injector}}
-	<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
-</div>
-
 <div class="popup-icon-stream" />
 <h1 class="popup-title"><a {{bindAttr href="controller.current.href"}}>{{controller.current.name}}</a></h1>
+
+<table style="width: 100%">
+	<tr>
+		<td style="width: 150px;">
+			Display Name
+		</td>
+		<td>
+			{{view C.Vw.TextField valueBinding="form.name" }}
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Identifier
+		</td>
+		<td>
+			{{view Ember.TextField valueBinding="form.id" change=idChanged}}
+		</td>
+	</tr>
+</table>
 
 <table class="table" class="popup-stream-table">
 	<thead>

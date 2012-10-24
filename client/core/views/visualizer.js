@@ -229,6 +229,26 @@ define([], function () {
 					}
 				}
 
+				// Hax for 3 to 1
+				if (this.__location[from].row === 1 && this.__location[to].row === 0) {
+					var col1 = this.__location[from].col;
+					var col2 = this.__location[to].col;
+					if (this.get('childViews')[col1].get('childViews').length === 3 &&
+						this.get('childViews')[col2].get('childViews').length === 1) {
+						connector = [ "Flowchart", { gap: 0, stub: 1 } ];
+					}
+				}
+
+				// Hax for 1 to 3
+				if (this.__location[from].row === 0 && this.__location[to].row === 1) {
+					var col1 = this.__location[from].col;
+					var col2 = this.__location[to].col;
+					if (this.get('childViews')[col1].get('childViews').length === 1 &&
+						this.get('childViews')[col2].get('childViews').length === 3) {
+						connector = [ "Flowchart", { gap: 0, stub: 1 } ];
+					}
+				}
+
 				var color = '#CCC';
 				self.plumber.connect({
 					paintStyle: { strokeStyle:color, lineWidth:4 },

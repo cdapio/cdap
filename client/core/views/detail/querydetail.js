@@ -1,11 +1,19 @@
 
-// Stream detail view
+// Query detail view
 
 define([
-	'lib/text!../partials/streamdetail.html'
+	'lib/text!../../partials/querydetail.html'
 	], function (Template) {
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template),
+		didInsertElement: function () {
+
+			$(this.get('element')).css({
+				top: '0px',
+				right: '-20px'
+			});
+
+		},
 		injector: Ember.TextField.extend({
 			valueBinding: 'parentView.injectValue',
 			insertNewline: function() {
@@ -63,7 +71,7 @@ define([
 			this.set('injectValue', '');
 
 			C.get('gateway', {
-				method: 'POST',
+				method: 'inject',
 				params: {
 					name: flow,
 					stream: stream,
@@ -74,7 +82,7 @@ define([
 				if (error) {
 					C.Vw.Modal.show(
 					"Inject Error",
-					"The gateway responded with: " + error, function () {
+					"The gateway responded with: " + error.statusCode + ': ' + error.data, function () {
 						window.location.reload();
 					});
 				}

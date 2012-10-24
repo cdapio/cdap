@@ -2,7 +2,7 @@
 // Flowlet detail view
 
 define([
-	'lib/text!../partials/flowletdetail.html'
+	'lib/text!../../partials/flowletdetail.html'
 	], function (Template) {
 	return Em.View.extend({
 		template: Em.Handlebars.compile(Template),

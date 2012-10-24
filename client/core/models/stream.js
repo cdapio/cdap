@@ -228,7 +228,7 @@ define([], function () {
 					params: ['-', '-', null, ['stream.enqueue.' + uri + '.count']]
 				}, function (error, response) {
 
-					if (!response.params.length) {
+					if (!response.params || !response.params.length) {
 						return;
 					}
 
@@ -254,10 +254,18 @@ define([], function () {
 								lowestAckd = response.params[0].value;
 							}
 
-							flow.set('unconsumed', C.util.number(streamEnqueued - lowestAckd));
+							var diff = streamEnqueued - response.params[0].value;
+							if (diff < 0) {
+								diff = 0;
+							}
+							flow.set('unconsumed', C.util.number(diff));
 
 							if (--remain === 0) {
-								self.set('unconsumed', C.util.number(streamEnqueued - lowestAckd));
+								diff = streamEnqueued - lowestAckd;
+								if (diff < 0) {
+									diff = 0;
+								}
+								self.set('unconsumed', C.util.number(diff));
 							}
 
 						}, flows[i]);
@@ -270,7 +278,7 @@ define([], function () {
 				}, function (error, response) {
 
 					var storage;
-					if (!response.params.length) {
+					if (!response.params || !response.params.length) {
 						storage = 0;
 					} else {
 						storage = response.params[0].value;

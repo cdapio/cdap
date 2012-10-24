@@ -256,7 +256,7 @@
             {{/unless}}
           </ul>
 
-          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Push</button>
+          <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
           
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
@@ -308,6 +308,16 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="flowviz-container" class="flowviz-fade">
+          <div class="btn-group" style="float: left;">
+            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
+              {{view.flowletLabelName}} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Queue Depth</a></li>
+              <li><a {{action "setFlowletLabel" on="click"}}>Total Processed</a></li>
+            </ul>
+          </div>
           {{view C.Vw.Visualizer viewName="visualizer"}}
         </div>
       </div>
@@ -361,7 +371,7 @@
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes per Second" metrics="dataset.write.{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.read.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.write.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -412,14 +422,8 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
       <div id="action-buttons" class="btn-group" style="float: right;">
-
-
-
         <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
-
-          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} flow-action="Drain"><span class="btn-drain" />Push</button>
-
-        <button class="btn dropdown-toggle" data-toggle="dropdown">
+        <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
@@ -439,37 +443,39 @@
     </div>
     <div id="panels">
 
-      <div class="panel">
-      <div class="panel-head"><div class="panel-title">Make a Request</div></div>
+      <div class="panel" style="float: left; width: 400px;">
+      <div class="panel-head"><div class="panel-title">Request</div></div>
         <table style="width: 100%">
-          <thead>
           <tr>
-            <th style="width: 140px;text-align: left;">
+            <td style="width: 150px;">
               Method Name
-            </th>
-            <th style="text-align: left;">
-              Query String
-            </th>
-                     
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
+            </td>
             <td>
               {{view C.Vw.TextField valueBinding="view.requestMethod" }}
             </td>
+          </tr>
+          <tr>
             <td>
-              {{view Ember.TextField valueBinding="view.requestParams" width="100%"}}
-              <button {{action "submit" on="click"}} class="btn btn-success" style="margin:0px 16px;">Execute</button>
-              
+              Query String
+            </td>
+            <td>
+              {{view Ember.TextField valueBinding="view.requestParams"}}
             </td>
           </tr>
-          </tbody>
+          <tr>
+            <td>
+              &nbsp;
+            </td>
+            <td style="text-align: right;">
+              <button {{action "submit" on="click"}} class="btn btn-success">Execute</a>
+            </td>
+          </tr>
         </table>
       </div>
 
-      <div class="panel" style="padding: 10px;">
-        <div class="well" style="min-height: 300px;margin:0;overflow: auto;padding: 8px 12px;">
+      <div class="panel" style="margin-left: 416px;padding-bottom: 10px;">
+        <div class="panel-head"><div class="panel-title">Response</div></div>
+        <div class="well" style="margin: 10px 10px 0px 10px;min-height: 109px;overflow: auto;padding: 8px 12px;">
           <h2>{{view.responseCode}}</h2>
           {{view.responseBody}}
         </div>

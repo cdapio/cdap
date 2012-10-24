@@ -83,7 +83,7 @@ define([], function () {
 				}, function (error, response) {
 
 					var storage;
-					if (!response.params.length) {
+					if (!response.params || !response.params.length) {
 						storage = 0;
 					} else {
 						storage = response.params[0].value;

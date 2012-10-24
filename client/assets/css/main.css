@@ -189,7 +189,7 @@ a, a:visited {
 	letter-spacing: 0.08em;
 }
 .global-dev {
-	background-position: 8px -60px;
+	background-position: 8px -30px;
 }
 .global-user {
 	background-position: 8px 0px;
@@ -197,7 +197,7 @@ a, a:visited {
 	padding-left: 14px;
 }
 .global-help {
-	background-position: 5px -30px;
+	background-position: 5px -60px;
 	padding-right: 0;
 	width: 0px;
 	height: 30px;
@@ -1063,7 +1063,7 @@ a strong {
 	margin: 32px auto 0;
 	background-color: #fff;
 	box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
-	padding: 15px 20px;
+	padding: 8px 20px 15px 20px;
 }
 .popup-close {
 	float: right;
@@ -1072,7 +1072,7 @@ a strong {
 	width: 22px;
 	height: 22px;
 	text-align: center;
-	margin: -25px -30px 0px 0px;
+	margin: -20px -30px 0px 0px;
 	background-color: #616A6B;
 	border-radius: 100%;
 	color: white;
@@ -1084,6 +1084,9 @@ a strong {
 	height: 32px;
 	background-image: url(../img/flowlet-types-white.png);
 	margin: 16px 0px 0px 12px;
+}
+.popup-stream-table {
+	border-top: 1px solid #eaeaea;
 }
 .popup-icon-stream {
 	background-position: 0px 32px;
@@ -1153,8 +1156,8 @@ a strong {
 }
 
 .flowlet-popup-tab-content {
-	
-	min-height: 214px;
+	height: 214px;
+	overflow: auto;
 }
 .flowlet-popup-tab-content td {
 	padding: 4px;
@@ -1410,7 +1413,7 @@ ol {
 	margin-top: 72px;
 }
 .window-2 {
-	margin-top: 144px;
+	margin-top: 154px;
 }
 .window-3 {
 	margin-top: 216px;

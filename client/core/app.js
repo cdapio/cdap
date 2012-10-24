@@ -206,9 +206,18 @@ function(Models, Views, Controllers){
 
 						if (this.percent) {
 							y = d3.scale.linear()
-								.domain([100, min])
+								.domain([100, 0])
 								.range([margin, h - margin]);
 						} else {
+							if ((max - min) === 0) {
+								if (data[0]) {
+									max = data[0] + data[0] * 0.1;
+									min = data[0] - data[0] * 0.1;
+								} else {
+									max = 10;
+									min = 0;
+								}
+							}
 							y = d3.scale.linear()
 								.domain([max + (max * yBuffer), min - (min * yBuffer)])
 								.range([margin, h - margin]);

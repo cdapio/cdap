@@ -54,10 +54,15 @@ define([], function () {
 				for (var i = 0; i < flowlets.length; i ++) {
 					objects.push(C.Mdl.Flowlet.create(flowlets[i]));
 				}
-
-				self.set('types.Stream', Em.ArrayProxy.create());
 				self.set('types.Flowlet', Em.ArrayProxy.create({content: objects}));
 				
+				var streams = response.params.flowStreams;
+				objects = [];
+				for (var i = 0; i < streams.length; i ++) {
+					objects.push(C.Mdl.Stream.create(streams[i]));
+				}
+				self.set('types.Stream', Em.ArrayProxy.create({content: objects}));
+
 				C.router.applicationController.view.visualizer.drawGraph();
 
 				C.get('manager', {

@@ -336,23 +336,49 @@ try {
 	this.gateway = function (method, params, done) {
 
 		var post_data = params.payload || "";
-		var post_options = {
-		host: this.config['gateway.hostname'],
-		port: this.config['gateway.port'],
-		path: '/rest-stream' + (params.stream ? '/' + params.stream : ''),
-		method: 'POST',
-		headers: {
-			'com.continuuity.token': 'TOKEN',
-			'Content-Length': post_data.length
+
+		var post_options = {};
+
+		switch (method) {
+			case 'inject':
+				post_options = {
+					host: this.config['gateway.hostname'],
+					port: this.config['gateway.port']
+				};
+				post_options.method = 'POST';
+				post_options.path = '/rest-stream' + (params.stream ? '/' + params.stream : '');
+				post_options.headers = {
+					'com.continuuity.token': 'TOKEN',
+					'Content-Length': post_data.length
+				};
+			break;
+			case 'query':
+				post_options = {
+					host: this.config['gateway.hostname'],
+					port: 10003
+				};
+				post_options.method = 'GET';
+				post_options.path = '/rest-query/' + params.service +
+					'/' + params.method + (params.query ? '?' + JSON.stringify(params.query) : '');
+			break;
 		}
-		};
 
 		var post_req = http.request(post_options, function(res) {
 			res.setEncoding('utf8');
+			var data = [];
+
 			res.on('data', function (chunk) {
+				data.push(chunk);
 			});
 			res.on('end', function () {
-				done(res.statusCode !== 200 ? res.statusCode : false, res.statusCode);
+				data = data.join('');
+				done(res.statusCode !== 200 ? {
+					statusCode: res.statusCode,
+					response: data
+				} : false, {
+					statusCode: res.statusCode,
+					response: data
+				});
 			});
 		});
 
@@ -360,7 +386,10 @@ try {
 			done(e, null);
 		});
 
-		post_req.write(post_data);
+		if (method === 'inject') {
+			post_req.write(post_data);
+		}
+
 		post_req.end();
 
 	};

@@ -28,6 +28,10 @@ define([
 			click: function (event) {
 				var viz;
 
+				if (C.router.currentState.name === 'history') {
+					return;
+				}
+
 				if (this.get('current').get('type') === 'Stream') {
 					viz = C.router.applicationController.view.get('stream-detail');
 				} else {

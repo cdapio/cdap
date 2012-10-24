@@ -8,6 +8,21 @@ define([
 		didInsertElement: function () {
 
 		},
+		select: function (event) {
+
+			var viz = this.get('query-detail');
+
+			var id = $(event.target).attr('flowId');
+			var q = this.get('controller').get('types.Query').content;
+			var i = q.length;
+			while (i--) {
+				if (q[i].get('id') === id) {
+					viz.show(q[i]);
+					return;
+				}
+			}
+
+		},
 		stateTransition: function (event) {
 
 			$(event.target).parent().html('<img src="/assets/img/chart-loading.gif" />');

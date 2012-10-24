@@ -96,7 +96,6 @@ define([], function () {
 					metric = metrics[i];
 					this.get('model').addMetricName(metric);
 					metric = metric.replace(/\./g, '');
-
 					this.addObserver('model.metricData.' + metric, this, this.updateData);
 				}
 

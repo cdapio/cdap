@@ -102,7 +102,7 @@ define([], function () {
 
 		},
 		href: function () {
-			return '#/flows/status/' + this.get('app') + ':' + this.get('id');
+			return '#/queries/' + this.get('application') + ':' + this.get('id');
 		}.property(),
 		getMeta: function () {
 			var arr = [];
@@ -124,7 +124,7 @@ define([], function () {
 
 			if (this.currentState === 'RUNNING' ||
 				this.currentState === 'PAUSING') {
-				return 'btn-pause';
+				return 'btn-stop';
 			} else {
 				return 'btn-start';
 			}
@@ -155,7 +155,7 @@ define([], function () {
 				'stopped': 'Start',
 				'stopping': 'Start',
 				'starting': 'Start',
-				'running': 'Pause',
+				'running': 'Stop',
 				'adjusting': '...',
 				'draining': '...',
 				'failed': 'Start'

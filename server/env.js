@@ -125,7 +125,13 @@
 		*/
 
 		io.configure('production', function(){
-			io.set('transports', ['websocket']);
+			io.set('transports', [
+				'websocket',
+				'flashsocket',
+				'htmlfile',
+				'xhr-polling',
+				'jsonp-polling'
+				]);
 		});
 		/*
 			The following were commented out for causing problems.
