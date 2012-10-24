@@ -88,6 +88,68 @@ define([], function () {
 
 		},
 
+		startAllFlows: function () {
+
+			var flows = this.get('types.Flow').content;
+			var flowCount = flows.length;
+			var i = flowCount;
+			while(i--) {
+
+				flows[i].set('currentState', 'STARTING');
+
+				console.log('Starting', flows[i].application, flows[i].id, flows[i].version);
+
+				C.socket.request('manager', {
+					method: 'start',
+					params: [flows[i].application, flows[i].id, -1, 'FLOW']
+				}, function (error, response, flow) {
+
+					flow.set('currentState', 'RUNNING');
+
+					if (!--flowCount) {
+
+						console.log('Flows Done!');
+
+						$('#start-all-button').find('button').show().attr('disabled', true);
+						$('#start-all-button').find('img').hide();
+
+					}
+
+				}, flows[i]);
+
+			}
+
+		},
+
+		startAll: function () {
+
+			var queries = this.get('types.Query').content;
+			var queryCount = queries.length;
+			var i = queryCount;
+			while(i--) {
+
+				queries[i].set('currentState', 'STARTING');
+
+				console.log('Starting', queries[i].application, queries[i].id, queries[i].version);
+
+				C.socket.request('manager', {
+					method: 'start',
+					params: [queries[i].application, queries[i].id, -1, 'QUERY']
+				}, function (error, response, query) {
+					
+					query.set('currentState', 'RUNNING');
+
+					if (!--queryCount) {
+
+						C.Ctl.Application.startAllFlows();
+
+					}
+
+				}, queries[i]);
+			}
+
+		},
+
 		__timeout: null,
 		getStats: function () {
 

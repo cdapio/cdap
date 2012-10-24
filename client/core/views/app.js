@@ -35,12 +35,12 @@ define([
 
 			});
 		},
-		startAllFlows: function () {
+		startAll: function () {
 
-			var flows = this.get('controller').get('types.Flow').content;
-			for (var i = 0; i < flows.length; i ++) {
-				console.log(flows[i]);
-			}
+			$('#start-all-button').find('button').hide();
+			$('#start-all-button').find('img').show();
+
+			C.Ctl.Application.startAll();
 
 		}
 	});

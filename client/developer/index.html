@@ -110,6 +110,10 @@
   <script type="text/x-handlebars" data-template-name="application">
     <div id="title">
       {{view C.Vw.TimeSelector}}
+      <div id="start-all-button" class="pull-right" style="margin-top:2px;">
+        <button {{action startAll on="click"}} class="btn">Start All</button>
+        <img style="display: none;margin-top: 2px;" src="/assets/img/start-all-load.gif" />
+      </div>
       <h1>{{current.name}} <span>Application</span></h1>
     </div>
 
