@@ -91,7 +91,8 @@ public class MetadataService extends MetadataHelper
       // loop a few times for write conflict resolution
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
-        CompareStatus status = compare(stream, readEntry);
+        CompareStatus status = readEntry == null
+            ? CompareStatus.SUPER : compare(stream, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -106,7 +107,11 @@ public class MetadataService extends MetadataHelper
         MetaDataEntry entry = makeEntry(account, stream);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
-          mds.update(context, entry);
+          if (readEntry == null) {
+            mds.add(context, entry);
+          } else {
+            mds.update(context, entry);
+          }
           return true;
 
         } catch (OperationException e) {
@@ -298,7 +303,8 @@ public class MetadataService extends MetadataHelper
       // loop a few times for write conflict resolution
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
-        CompareStatus status = compare(dataset, readEntry);
+        CompareStatus status = readEntry == null
+            ? CompareStatus.SUPER : compare(dataset, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -313,7 +319,11 @@ public class MetadataService extends MetadataHelper
         MetaDataEntry entry = makeEntry(account, dataset);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
-          mds.update(context, entry);
+          if (readEntry == null) {
+            mds.add(context, entry);
+          } else {
+            mds.update(context, entry);
+          }
           return true;
 
         } catch (OperationException e) {
@@ -503,7 +513,8 @@ public class MetadataService extends MetadataHelper
       // loop a few times for write conflict resolution
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
-        CompareStatus status = compare(application, readEntry);
+        CompareStatus status = readEntry == null
+            ? CompareStatus.SUPER : compare(application, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -518,7 +529,11 @@ public class MetadataService extends MetadataHelper
         MetaDataEntry entry = makeEntry(account, application);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
-          mds.update(context, entry);
+          if (readEntry == null) {
+            mds.add(context, entry);
+          } else {
+            mds.update(context, entry);
+          }
           return true;
 
         } catch (OperationException e) {
@@ -714,7 +729,8 @@ public class MetadataService extends MetadataHelper
       // loop a few times for write conflict resolution
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
-        CompareStatus status = compare(query, readEntry);
+        CompareStatus status = readEntry == null
+            ? CompareStatus.SUPER : compare(query, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -729,7 +745,11 @@ public class MetadataService extends MetadataHelper
         MetaDataEntry entry = makeEntry(account, query);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
-          mds.update(context, entry);
+          if (readEntry == null) {
+            mds.add(context, entry);
+          } else {
+            mds.update(context, entry);
+          }
           return true;
 
         } catch (OperationException e) {
@@ -990,7 +1010,8 @@ public class MetadataService extends MetadataHelper
       // loop a few times for write conflict resolution
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
-        CompareStatus status = compare(flow, readEntry);
+        CompareStatus status = readEntry == null
+            ? CompareStatus.SUPER : compare(flow, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -1005,7 +1026,11 @@ public class MetadataService extends MetadataHelper
         MetaDataEntry entry = makeEntry(account, flow);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
-          mds.update(context, entry);
+          if (readEntry == null) {
+            mds.add(context, entry);
+          } else {
+            mds.update(context, entry);
+          }
           return true;
 
         } catch (OperationException e) {
