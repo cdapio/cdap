@@ -1,6 +1,5 @@
 
 #header {
-	height: 36px;
 	background-color: #6DBEDA;
 	border-bottom: 1px solid #5d8593;
 }
@@ -14,17 +13,5 @@
 }
 
 #breadcrumb li a {
-	display: block;
-	color: white;
-	padding-right: 24px;
-	padding-left: 14px;
 	background-image: url(/assets/img/breadcrumb-split-blue.png);
-	background-position-y: 0px;
-	background-repeat: no-repeat;
-	text-decoration: none;
-	line-height: 36px;
-	background-position-x: right;
-	letter-spacing: 0.08em;
-	font-size: 14px;
-	font-weight: 200;
 }
