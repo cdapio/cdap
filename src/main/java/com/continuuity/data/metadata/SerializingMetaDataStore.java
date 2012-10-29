@@ -157,6 +157,8 @@ public class SerializingMetaDataStore implements MetaDataStore {
     try {
       bytes = getSerializer().serialize(entry);
     } catch (MetaDataException e) {
+      // no need to log, serializer has logged this already
+      // the meta data exception is only a wrapper around the actual exception
       throw new OperationException(
           StatusCode.INTERNAL_ERROR, e.getMessage(), e.getCause());
     }
@@ -180,14 +182,19 @@ public class SerializingMetaDataStore implements MetaDataStore {
         // a value exists but it is identical with the one to write
         return;
       }
-      throw new OperationException(StatusCode.WRITE_CONFLICT,
-          "Meta data entry already exists.");
+      // a different value already exists
+      String message =
+          String.format("Meta data entry for %s already exists.", entry);
+      Log.debug(message);
+      throw new OperationException(StatusCode.WRITE_CONFLICT, message);
     }
     if (isUpdate) {
       if (bytesRead == null) {
         // update expects a value to update, but none is there
-        throw new OperationException(StatusCode.ENTRY_NOT_FOUND,
-            "Meta data entry does not exist.");
+        String message =
+            String.format("Meta data entry for %s does not exist.", entry);
+        Log.debug(message);
+        throw new OperationException(StatusCode.ENTRY_NOT_FOUND, message);
       }
       if (expected != null) {
         byte[] expectedBytes;
@@ -203,8 +210,11 @@ public class SerializingMetaDataStore implements MetaDataStore {
             // matches the new value -> no need to write
             return;
           }
-          throw new OperationException(StatusCode.WRITE_CONFLICT,
-              "Existing meta data entry does not match expected entry.");
+          String message = String.format("Existing meta data entry " +
+              "for %s does not match expected entry.", entry);
+          Log.debug(message);
+          // existing entry is there but does not match expected entry
+          throw new OperationException(StatusCode.WRITE_CONFLICT, message);
         }
       }
     }

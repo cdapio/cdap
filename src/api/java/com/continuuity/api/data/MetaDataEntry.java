@@ -1,5 +1,6 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Arrays;
@@ -112,5 +113,14 @@ public class MetaDataEntry {
       if (!Arrays.equals(this.getBinaryField(key), other.getBinaryField(key)))
         return false;
     return true;
+  }
+
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("account", account)
+        .add("application", application)
+        .add("type", type)
+        .add("id", id)
+        .toString();
   }
 }
