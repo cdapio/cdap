@@ -4,13 +4,17 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -23,14 +27,15 @@ public abstract class TestOVCTable {
   // TODO: As part of ENG-211, add testing of HBaseOVCTable
 
   private OrderedVersionedColumnarTable table;
+  private OVCTableHandle tableHandle;
 
   private static final Random r = new Random();
 
   @Before
   public void initialize() throws OperationException {
     System.out.println("\n\nBeginning test\n\n");
-    OVCTableHandle tableHandle = getTableHandle();
-    this.table = tableHandle.getTable(
+    this.tableHandle = getTableHandle();
+    this.table = this.tableHandle.getTable(
         Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
   }
 
@@ -754,5 +759,65 @@ public abstract class TestOVCTable {
 //    keys = this.table.getKeys(Integer.MAX_VALUE, 0, RP_MAX);
 //    assertEquals(8, keys.size());
 
+  }
+
+  class TableCreateThread extends Thread {
+    AtomicInteger trigger;
+    int stopSignal;
+    int lastCreated;
+    AtomicBoolean failed;
+    int getLastCreated() {
+      return this.lastCreated;
+    }
+    TableCreateThread(AtomicInteger trigger, AtomicBoolean failed,
+                      int stopSignal) {
+      this.trigger = trigger;
+      this.failed = failed;
+      this.stopSignal = stopSignal;
+      this.lastCreated = trigger.get();
+    }
+    public void run() {
+      while (true) {
+        int number = this.trigger.get();
+        if (number == stopSignal) break;
+        if (number != this.lastCreated) {
+          byte[] tableName = Integer.toString(this.trigger.get()).getBytes();
+          try {
+            tableHandle.getTable(tableName);
+          } catch (Exception e) {
+            failed.set(true);
+            e.printStackTrace();
+            Assert.fail("Creating table '" + this.trigger.get() + "' failed " +
+                "with message: " + e.getMessage());
+          }
+          this.lastCreated = this.trigger.get();
+        }
+      }
+    }
+  }
+
+  @Test @Ignore // ignoring this because it runs for minutes on HBase
+  public void testConcurrentCreate() throws Exception {
+    AtomicInteger trigger = new AtomicInteger(0);
+    AtomicBoolean failed = new AtomicBoolean(false);
+    TableCreateThread t1 = new TableCreateThread(trigger, failed, -1);
+    TableCreateThread t2 = new TableCreateThread(trigger, failed, -1);
+    t1.start();
+    t2.start();
+    System.err.println("both threads started");
+    while (trigger.get() < 10) {
+      int current = trigger.incrementAndGet();
+      System.err.println("triggered " + current);
+      while (!failed.get() && (t1.getLastCreated() != current || t2
+          .getLastCreated() != current));
+      if (failed.get()) break;
+      System.err.println("done with " + current);
+    }
+    trigger.set(-1);
+    t1.join();
+    t2.join();
+    System.err.println("completed." );
+    if (failed.get())
+      Assert.fail("At least one thread failed");
   }
 }
