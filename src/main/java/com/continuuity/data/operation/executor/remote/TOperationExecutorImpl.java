@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -70,19 +71,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_WRITE_REQUESTS,
         Constants.METRIC_WRITE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TWrite: " + tWrite);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TWrite: " + tWrite);
 
     try {
       OperationContext context = unwrap(tcontext);
       Write write = unwrap(tWrite);
       this.opex.execute(context, write);
-      if (Log.isDebugEnabled()) Log.debug("Write successful.");
+      if (Log.isTraceEnabled()) Log.trace("Write successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Write failed: " + e.getMessage());
+      Log.warn("Write failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
 
@@ -96,19 +98,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_DELETE_REQUESTS,
         Constants.METRIC_DELETE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TDelete: " + tDelete);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TDelete: " + tDelete);
 
     try {
       OperationContext context = unwrap(tcontext);
       Delete delete = unwrap(tDelete);
       this.opex.execute(context, delete);
-      if (Log.isDebugEnabled()) Log.debug("Delete successful.");
+      if (Log.isTraceEnabled()) Log.trace("Delete successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Delete failed: " + e.getMessage());
+      Log.warn("Delete failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -122,19 +125,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_INCREMENT_REQUESTS,
         Constants.METRIC_INCREMENT_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TIncrement: " + tIncrement);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TIncrement: " + tIncrement);
 
     try {
       OperationContext context = unwrap(tcontext);
       Increment increment = unwrap(tIncrement);
       this.opex.execute(context, increment);
-      if (Log.isDebugEnabled()) Log.debug("Increment successful.");
+      if (Log.isTraceEnabled()) Log.trace("Increment successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Increment failed: " + e.getMessage());
+      Log.warn("Increment failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -148,19 +152,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_COMPAREANDSWAP_REQUESTS,
         Constants.METRIC_COMPAREANDSWAP_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TCompareAndSwap: " + tCompareAndSwap);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TCompareAndSwap: " + tCompareAndSwap);
 
     try {
       OperationContext context = unwrap(tcontext);
       CompareAndSwap compareAndSwap = unwrap(tCompareAndSwap);
       this.opex.execute(context, compareAndSwap);
-      if (Log.isDebugEnabled()) Log.debug("CompareAndSwap successful.");
+      if (Log.isTraceEnabled()) Log.trace("CompareAndSwap successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("CompareAndSwap failed: " + e.getMessage());
+      Log.warn("CompareAndSwap failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -174,19 +179,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_ENQUEUE_REQUESTS,
         Constants.METRIC_ENQUEUE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TQueueEnqueue: " + tQueueEnqueue);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueEnqueue: " + tQueueEnqueue);
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueEnqueue queueEnqueue = unwrap(tQueueEnqueue);
       this.opex.execute(context, queueEnqueue);
-      if (Log.isDebugEnabled()) Log.debug("EnqueuePayload successful.");
+      if (Log.isTraceEnabled()) Log.trace("EnqueuePayload successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("EnqueuePayload failed: " + e.getMessage());
+      Log.warn("EnqueuePayload failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -200,19 +206,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_ACK_REQUESTS,
         Constants.METRIC_ACK_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TQueueAck: " + tQueueAck);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueAck: " + tQueueAck);
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueAck queueAck = unwrap(tQueueAck);
       this.opex.execute(context, queueAck);
-      if (Log.isDebugEnabled()) Log.debug("Ack successful.");
+      if (Log.isTraceEnabled()) Log.trace("Ack successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Ack failed: " + e.getMessage());
+      Log.warn("Ack failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -228,8 +235,8 @@ public class TOperationExecutorImpl
         Constants.METRIC_BATCH_REQUESTS,
         Constants.METRIC_BATCH_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received Batch");
+    if (Log.isTraceEnabled())
+      Log.trace("Received Batch");
     List<WriteOperation> writes = new ArrayList<WriteOperation>(batch.size());
     for (TWriteOperation tWriteOp : batch) {
       WriteOperation writeOp;
@@ -251,19 +258,20 @@ public class TOperationExecutorImpl
             + tWriteOp.toString() + " in batch. Skipping.");
         continue;
       }
-      if (Log.isDebugEnabled())
-        Log.debug("Operation in batch: " + writeOp);
+      if (Log.isTraceEnabled())
+        Log.trace("Operation in batch: " + writeOp);
       writes.add(writeOp);
     }
 
     try {
       OperationContext context = unwrap(tcontext);
       this.opex.execute(context, writes);
-      if (Log.isDebugEnabled()) Log.debug("Batch successful.");
+      if (Log.isTraceEnabled()) Log.trace("Batch successful.");
       helper.success();
 
     } catch (OperationException e) {
-      Log.debug("Batch failed: " + e.getMessage());
+      Log.warn("Batch failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -282,20 +290,21 @@ public class TOperationExecutorImpl
         Constants.METRIC_READKEY_REQUESTS,
         Constants.METRIC_READKEY_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TReadKey: " + tReadKey);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TReadKey: " + tReadKey);
 
     try {
       OperationContext context = unwrap(tcontext);
       ReadKey readKey = unwrap(tReadKey);
       OperationResult<byte[]> result = this.opex.execute(context, readKey);
       TOptionalBinary tResult = wrapBinary(result);
-      if (Log.isDebugEnabled()) Log.debug("ReadKey successful.");
+      if (Log.isTraceEnabled()) Log.trace("ReadKey successful.");
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("ReadKey failed: " + e.getMessage());
+      Log.warn("ReadKey failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -310,8 +319,8 @@ public class TOperationExecutorImpl
         Constants.METRIC_READ_REQUESTS,
         Constants.METRIC_READ_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TRead: " + tRead);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TRead: " + tRead);
 
     try {
       OperationContext context = unwrap(tcontext);
@@ -319,12 +328,13 @@ public class TOperationExecutorImpl
       OperationResult<Map<byte[], byte[]>> result =
           this.opex.execute(context, read);
       TOptionalBinaryMap tResult = wrapMap(result);
-      if (Log.isDebugEnabled()) Log.debug("Read successful." );
+      if (Log.isTraceEnabled()) Log.trace("Read successful.");
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("Read failed: " + e.getMessage());
+      Log.warn("Read failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -339,8 +349,8 @@ public class TOperationExecutorImpl
         Constants.METRIC_READALLKEYS_REQUESTS,
         Constants.METRIC_READALLKEYS_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TReadAllKeys: " + tReadAllKeys);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TReadAllKeys: " + tReadAllKeys);
 
     try {
       OperationContext context = unwrap(tcontext);
@@ -348,12 +358,13 @@ public class TOperationExecutorImpl
       OperationResult<List<byte[]>> result =
           this.opex.execute(context, readAllKeys);
       TOptionalBinaryList tResult = wrapList(result);
-      if (Log.isDebugEnabled()) Log.debug("ReadAllKeys successful.");
+      if (Log.isTraceEnabled()) Log.trace("ReadAllKeys successful.");
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("ReadAllKeys failed: " + e.getMessage());
+      Log.warn("ReadAllKeys failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -369,8 +380,8 @@ public class TOperationExecutorImpl
         Constants.METRIC_READCOLUMNRANGE_REQUESTS,
         Constants.METRIC_READCOLUMNRANGE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TReadColumnRange: " + tReadColumnRange);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TReadColumnRange: " + tReadColumnRange);
 
     try {
       OperationContext context = unwrap(tcontext);
@@ -378,12 +389,13 @@ public class TOperationExecutorImpl
       OperationResult<Map<byte[], byte[]>> result =
           this.opex.execute(context, readColumnRange);
       TOptionalBinaryMap tResult = wrapMap(result);
-      if (Log.isDebugEnabled()) Log.debug("ReadColumnRange successful.");
+      if (Log.isTraceEnabled()) Log.trace("ReadColumnRange successful.");
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("ReadColumnRange failed: " + e.getMessage());
+      Log.warn("ReadColumnRange failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -400,20 +412,21 @@ public class TOperationExecutorImpl
         Constants.METRIC_DEQUEUE_REQUESTS,
         Constants.METRIC_DEQUEUE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TQueueDequeue" + tQueueDequeue.toString());
+    if (Log.isTraceEnabled())
+      Log.trace("Received TQueueDequeue" + tQueueDequeue.toString());
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueDequeue queueDequeue = unwrap(tQueueDequeue);
       DequeueResult result = this.opex.execute(context, queueDequeue);
-      if (Log.isDebugEnabled()) Log.debug("DequeuePayload successful.");
+      if (Log.isTraceEnabled()) Log.trace("DequeuePayload successful.");
       TDequeueResult tResult = wrap(result);
       helper.success();
       return tResult;
 
     } catch (OperationException e) {
-      Log.debug("DequeuePayload failed: " + e.getMessage());
+      Log.warn("DequeuePayload failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -430,19 +443,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_GETGROUPID_REQUESTS,
         Constants.METRIC_GETGROUPID_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TGetGroupID: " + tGetGroupId);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TGetGroupID: " + tGetGroupId);
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueAdmin.GetGroupID getGroupID = unwrap(tGetGroupId);
       long groupId = this.opex.execute(context, getGroupID);
-      if (Log.isDebugEnabled()) Log.debug("GetGroupID successful: " + groupId);
+      if (Log.isTraceEnabled()) Log.trace("GetGroupID successful: " + groupId);
       helper.success();
       return groupId;
 
     } catch (OperationException e) {
-      Log.debug("GetGroupID failed: " + e.getMessage());
+      Log.warn("GetGroupID failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -459,22 +473,23 @@ public class TOperationExecutorImpl
         Constants.METRIC_GETQUEUEMETA_REQUESTS,
         Constants.METRIC_GETQUEUEMETA_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TGetQueueMeta: " + tGetQueueMeta);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TGetQueueMeta: " + tGetQueueMeta);
 
     try {
       OperationContext context = unwrap(tcontext);
       QueueAdmin.GetQueueMeta getQueueMeta = unwrap(tGetQueueMeta);
       OperationResult<QueueAdmin.QueueMeta> queueMeta =
           this.opex.execute(context, getQueueMeta);
-      if (Log.isDebugEnabled()) Log.debug("GetQueueMeta successful: " +
-          (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
+      if (Log.isTraceEnabled()) Log.trace("GetQueueMeta successful: " +
+                                            (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
       TQueueMeta tQueueMeta =  wrap(queueMeta);
       helper.success();
       return tQueueMeta;
 
     } catch (OperationException e) {
-      Log.debug("GetQueueMeta failed: " + e.getMessage());
+      Log.warn("GetQueueMeta failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);
     }
@@ -491,19 +506,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_CLEARFABRIC_REQUESTS,
         Constants.METRIC_CLEARFABRIC_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TClearFabric: " + tClearFabric);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TClearFabric: " + tClearFabric);
 
     try {
       OperationContext context = unwrap(tcontext);
       ClearFabric clearFabric = unwrap(tClearFabric);
       this.opex.execute(context, clearFabric);
-      if (Log.isDebugEnabled()) Log.debug("Clear successful.");
+      if (Log.isTraceEnabled()) Log.trace("Clear successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Clear failed: " + e.getMessage());
+      Log.warn("Clear failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }
@@ -517,19 +533,20 @@ public class TOperationExecutorImpl
         Constants.METRIC_OPENTABLE_REQUESTS,
         Constants.METRIC_OPENTABLE_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received TOpenTable: " + tOpenTable);
+    if (Log.isTraceEnabled())
+      Log.trace("Received TOpenTable: " + tOpenTable);
 
     try {
       OperationContext context = unwrap(tcontext);
       OpenTable openTable = unwrap(tOpenTable);
       this.opex.execute(context, openTable);
-      if (Log.isDebugEnabled()) Log.debug("Open table successful.");
+      if (Log.isTraceEnabled()) Log.trace("Open table successful.");
       helper.success();
 
     } catch (OperationException e) {
       helper.failure();
-      Log.debug("Open table failed: " + e.getMessage());
+      Log.warn("Open table failed: " + e.getMessage());
+      Log.warn(StackTraceUtil.toStringStackTrace(e));
       throw wrap(e);
     }
   }

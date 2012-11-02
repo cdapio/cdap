@@ -108,7 +108,7 @@ implements TransactionalOperationExecutor {
       queueMetrics.putIfAbsent(group,
           new CMetrics(MetricType.FlowSystem, group));
       metric = queueMetrics.get(group);
-      Log.debug("Created new CMetrics for group '" + group + "'.");
+      Log.trace("Created new CMetrics for group '" + group + "'.");
       // System.err.println("Created new CMetrics for group '" + group + "'.");
     }
     return metric;
@@ -125,7 +125,7 @@ implements TransactionalOperationExecutor {
       queueMetricNames.putIfAbsent(queue, new ImmutablePair<String, String>
           ("q.enqueue." + name, "q.ack." + name));
       names = queueMetricNames.get(queue);
-      Log.debug("using metric name '" + names.getFirst() + "' and '"
+      Log.trace("using metric name '" + names.getFirst() + "' and '"
           + names.getSecond() + "' for queue '" + new String(queue) + "'");
       //System.err.println("using metric name '" + names.getFirst() + "' and '"
       //    + names.getSecond() + "' for queue '" + new String(queue) + "'");
@@ -163,7 +163,7 @@ implements TransactionalOperationExecutor {
       streamMetricNames.putIfAbsent(stream, new ImmutablePair<String, String>(
         "stream.enqueue." + name, "stream.storage." + name));
       names = streamMetricNames.get(stream);
-      Log.debug("using metric name '" + names.getFirst() + "' and '"
+      Log.trace("using metric name '" + names.getFirst() + "' and '"
           + names.getSecond() + "' for stream '" + new String(stream) + "'");
       //System.err.println("using metric name '" + names.getFirst() + "' and '"
       //    + names.getSecond() + "' for stream '" + new String(stream) + "'");

@@ -212,7 +212,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
           }
           String message = String.format("Existing meta data entry " +
               "for %s does not match expected entry.", entry);
-          Log.debug(message);
+          Log.trace(message);
           // existing entry is there but does not match expected entry
           throw new OperationException(StatusCode.WRITE_CONFLICT, message);
         }

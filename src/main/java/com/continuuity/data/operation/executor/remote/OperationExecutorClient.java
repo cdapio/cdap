@@ -71,15 +71,15 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_BATCH_REQUESTS,
         Constants.METRIC_BATCH_LATENCY);
 
-    if (Log.isDebugEnabled())
-      Log.debug("Received Batch of " + writes.size() + "WriteOperations: ");
+    if (Log.isTraceEnabled())
+      Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
 
     TOperationContext tcontext = wrap(context);
 
     List<TWriteOperation> tWrites = Lists.newArrayList();
     for (WriteOperation writeOp : writes) {
-      if (Log.isDebugEnabled())
-        Log.debug("  WriteOperation: " + writeOp.toString());
+      if (Log.isTraceEnabled())
+        Log.trace("  WriteOperation: " + writeOp.toString());
       TWriteOperation tWriteOp = new TWriteOperation();
       if (writeOp instanceof Write)
         tWriteOp.setWrite(wrap((Write)writeOp));
@@ -101,9 +101,9 @@ public class OperationExecutorClient extends ConverterUtils {
       tWrites.add(tWriteOp);
     }
     try {
-      if (Log.isDebugEnabled()) Log.debug("Sending Batch.");
+      if (Log.isTraceEnabled()) Log.trace("Sending Batch.");
       client.batch(tcontext, tWrites);
-      if (Log.isDebugEnabled()) Log.debug("Batch successful.");
+      if (Log.isTraceEnabled()) Log.trace("Batch successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -125,12 +125,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_DEQUEUE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + dequeue);
+      if (Log.isTraceEnabled()) Log.trace("Received " + dequeue);
       TOperationContext tcontext = wrap(context);
       TQueueDequeue tDequeue = wrap(dequeue);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tDequeue);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tDequeue);
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
-      if (Log.isDebugEnabled()) Log.debug("TDequeue successful.");
+      if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
       DequeueResult dequeueResult = unwrap(tDequeueResult);
       helper.success();
       return dequeueResult;
@@ -154,12 +154,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_GETGROUPID_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + getGroupId);
+      if (Log.isTraceEnabled()) Log.trace("Received " + getGroupId);
       TOperationContext tcontext = wrap(context);
       TGetGroupId tGetGroupId = wrap(getGroupId);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tGetGroupId);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetGroupId);
       long result = client.getGroupId(tcontext, tGetGroupId);
-      if (Log.isDebugEnabled()) Log.debug("Result of TGetGroupId: " + result);
+      if (Log.isTraceEnabled()) Log.trace("Result of TGetGroupId: " + result);
       helper.success();
       return result;
 
@@ -183,12 +183,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_GETQUEUEMETA_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + getQueueMeta);
+      if (Log.isTraceEnabled()) Log.trace("Received " + getQueueMeta);
       TOperationContext tcontext = wrap(context);
       TGetQueueMeta tGetQueueMeta = wrap(getQueueMeta);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tGetQueueMeta);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetQueueMeta);
       TQueueMeta tQueueMeta = client.getQueueMeta(tcontext, tGetQueueMeta);
-      if (Log.isDebugEnabled()) Log.debug("TGetQueueMeta successful.");
+      if (Log.isTraceEnabled()) Log.trace("TGetQueueMeta successful.");
       OperationResult<QueueAdmin.QueueMeta> queueMeta = unwrap(tQueueMeta);
       helper.success();
       return queueMeta;
@@ -212,12 +212,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_CLEARFABRIC_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + clearFabric);
+      if (Log.isTraceEnabled()) Log.trace("Received " + clearFabric);
       TOperationContext tContext = wrap(context);
       TClearFabric tClearFabric = wrap(clearFabric);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tClearFabric);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tClearFabric);
       client.clearFabric(tContext, tClearFabric);
-      if (Log.isDebugEnabled()) Log.debug("ClearFabric successful.");
+      if (Log.isTraceEnabled()) Log.trace("ClearFabric successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -238,12 +238,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_OPENTABLE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + openTable);
+      if (Log.isTraceEnabled()) Log.trace("Received " + openTable);
       TOperationContext tContext = wrap(context);
       TOpenTable tOpenTable = wrap(openTable);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tOpenTable);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tOpenTable);
       client.openTable(tContext, tOpenTable);
-      if (Log.isDebugEnabled()) Log.debug("OpenTable successful.");
+      if (Log.isTraceEnabled()) Log.trace("OpenTable successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -265,12 +265,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_READKEY_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + readKey);
+      if (Log.isTraceEnabled()) Log.trace("Received " + readKey);
       TOperationContext tcontext = wrap(context);
       TReadKey tReadKey = wrap(readKey);
-      if (Log.isDebugEnabled()) Log.debug("Sending TReadKey" + tReadKey);
+      if (Log.isTraceEnabled()) Log.trace("Sending TReadKey" + tReadKey);
       TOptionalBinary tResult = client.readKey(tcontext, tReadKey);
-      if (Log.isDebugEnabled()) Log.debug("TReadKey successful.");
+      if (Log.isTraceEnabled()) Log.trace("TReadKey successful.");
       OperationResult<byte[]> result = unwrap(tResult);
       helper.success();
       return result;
@@ -294,12 +294,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_READ_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + read);
+      if (Log.isTraceEnabled()) Log.trace("Received " + read);
       TOperationContext tcontext = wrap(context);
       TRead tRead = wrap(read);
-      if (Log.isDebugEnabled()) Log.debug("Sending TRead." + tRead);
+      if (Log.isTraceEnabled()) Log.trace("Sending TRead." + tRead);
       TOptionalBinaryMap tResult = client.read(tcontext, tRead);
-      if (Log.isDebugEnabled()) Log.debug("TRead successful.");
+      if (Log.isTraceEnabled()) Log.trace("TRead successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
       helper.success();
       return result;
@@ -323,12 +323,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_READALLKEYS_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + readKeys);
+      if (Log.isTraceEnabled()) Log.trace("Received " + readKeys);
       TOperationContext tcontext = wrap(context);
       TReadAllKeys tReadAllKeys = wrap(readKeys);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tReadAllKeys);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tReadAllKeys);
       TOptionalBinaryList tResult = client.readAllKeys(tcontext, tReadAllKeys);
-      if (Log.isDebugEnabled()) Log.debug("TReadAllKeys successful.");
+      if (Log.isTraceEnabled()) Log.trace("TReadAllKeys successful.");
       OperationResult<List<byte[]>> result = unwrap(tResult);
       helper.success();
       return result;
@@ -353,13 +353,13 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_READCOLUMNRANGE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received ReadColumnRange.");
+      if (Log.isTraceEnabled()) Log.trace("Received ReadColumnRange.");
       TOperationContext tcontext = wrap(context);
       TReadColumnRange tReadColumnRange = wrap(readColumnRange);
-      if (Log.isDebugEnabled()) Log.debug("Sending TReadColumnRange.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TReadColumnRange.");
       TOptionalBinaryMap tResult =
           client.readColumnRange(tcontext, tReadColumnRange);
-      if (Log.isDebugEnabled()) Log.debug("TReadColumnRange successful.");
+      if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
       helper.success();
       return result;
@@ -382,12 +382,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_WRITE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received Write.");
+      if (Log.isTraceEnabled()) Log.trace("Received Write.");
       TOperationContext tcontext = wrap(context);
       TWrite tWrite = wrap(write);
-      if (Log.isDebugEnabled()) Log.debug("Sending TWrite.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TWrite.");
       client.write(tcontext, tWrite);
-      if (Log.isDebugEnabled()) Log.debug("TWrite successful.");
+      if (Log.isTraceEnabled()) Log.trace("TWrite successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -408,12 +408,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_DELETE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received Delete.");
+      if (Log.isTraceEnabled()) Log.trace("Received Delete.");
       TOperationContext tcontext = wrap(context);
       TDelete tDelete = wrap(delete);
-      if (Log.isDebugEnabled()) Log.debug("Sending TDelete.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TDelete.");
       client.delet(tcontext, tDelete);
-      if (Log.isDebugEnabled()) Log.debug("TDelete successful.");
+      if (Log.isTraceEnabled()) Log.trace("TDelete successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -435,12 +435,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_INCREMENT_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received Increment.");
+      if (Log.isTraceEnabled()) Log.trace("Received Increment.");
       TOperationContext tcontext = wrap(context);
       TIncrement tIncrement = wrap(increment);
-      if (Log.isDebugEnabled()) Log.debug("Sending TIncrement.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TIncrement.");
       client.increment(tcontext, tIncrement);
-      if (Log.isDebugEnabled()) Log.debug("TIncrement successful.");
+      if (Log.isTraceEnabled()) Log.trace("TIncrement successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -462,12 +462,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_COMPAREANDSWAP_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received CompareAndSwap.");
+      if (Log.isTraceEnabled()) Log.trace("Received CompareAndSwap.");
       TOperationContext tcontext = wrap(context);
       TCompareAndSwap tCompareAndSwap = wrap(compareAndSwap);
-      if (Log.isDebugEnabled()) Log.debug("Sending TCompareAndSwap.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TCompareAndSwap.");
       client.compareAndSwap(tcontext, tCompareAndSwap);
-      if (Log.isDebugEnabled()) Log.debug("TCompareAndSwap successful.");
+      if (Log.isTraceEnabled()) Log.trace("TCompareAndSwap successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -489,12 +489,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_ENQUEUE_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received EnqueuePayload.");
+      if (Log.isTraceEnabled()) Log.trace("Received EnqueuePayload.");
       TOperationContext tcontext = wrap(context);
       TQueueEnqueue tQueueEnqueue = wrap(enqueue);
-      if (Log.isDebugEnabled()) Log.debug("Sending TQueueEnqueue.");
+      if (Log.isTraceEnabled()) Log.trace("Sending TQueueEnqueue.");
       client.queueEnqueue(tcontext, tQueueEnqueue);
-      if (Log.isDebugEnabled()) Log.debug("TQueueEnqueue successful.");
+      if (Log.isTraceEnabled()) Log.trace("TQueueEnqueue successful.");
       helper.success();
 
     } catch (TOperationException te) {
@@ -516,12 +516,12 @@ public class OperationExecutorClient extends ConverterUtils {
         Constants.METRIC_ACK_LATENCY);
 
     try {
-      if (Log.isDebugEnabled()) Log.debug("Received " + ack);
+      if (Log.isTraceEnabled()) Log.trace("Received " + ack);
       TOperationContext tcontext = wrap(context);
       TQueueAck tQueueAck = wrap(ack);
-      if (Log.isDebugEnabled()) Log.debug("Sending " + tQueueAck);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tQueueAck);
       client.queueAck(tcontext, tQueueAck);
-      if (Log.isDebugEnabled()) Log.debug("TQueueAck successful.");
+      if (Log.isTraceEnabled()) Log.trace("TQueueAck successful.");
       helper.success();
 
     } catch (TOperationException te) {
