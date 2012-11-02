@@ -31,7 +31,6 @@ define([
 
 			controller.set('current', current);
 			controller.getStats(self);
-			$(this.get('element')).show();
 
 			var cx = C.Ctl.Flow.current.connections;
 			function find_contributors(direction, flowlet, input) {
@@ -74,6 +73,8 @@ define([
 
 			this.select('inputs');
 
+			$(this.get('element')).fadeIn();
+
 		},
 		select: function (event) {
 
@@ -102,6 +103,15 @@ define([
 			$(this.get('element')).hide();
 			clearTimeout(this.__timeout);
 
+		},
+		navigate: function (event) {
+
+			var id = $(event.target).attr('flowlet-id');
+			var flowlet = C.Ctl.Flow.get_flowlet(id);
+			
+			this.close();
+			this.show(flowlet);
+			
 		},
 		addOneInstance: function () {
 			this.confirm('Add 1 instance to ', +1);

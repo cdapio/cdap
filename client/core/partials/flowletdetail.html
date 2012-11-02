@@ -26,7 +26,7 @@
 			<tr>
 				<td>
 					{{#each contrib}}
-						<div class="flowlet-popup-input-contrib">{{name}}</div>
+						<div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
 					{{/each}}
 				</td>
 				<td class="flowlet-popup-input">
@@ -82,7 +82,7 @@
 				</td>
 				<td>
 					{{#each contrib}}
-						<div class="flowlet-popup-input-contrib">{{name}}</div>
+						<div {{action navigate on="click"}} {{bindAttr flowlet-id="name"}} class="flowlet-popup-input-contrib">{{name}}</div>
 					{{/each}}
 				</td>
 			</tr>

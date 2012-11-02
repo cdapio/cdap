@@ -1056,7 +1056,7 @@ a strong {
 	background-color: rgba(240, 241, 241, 0.8);
 	z-index: 50;
 	display: none;
-	min-height: 600px;
+	min-height: 700px;
 }
 .popup-container {
 	width: 630px;
@@ -1220,6 +1220,10 @@ a strong {
 	line-height: 22px;
 	text-align: center;
 	width: 154px;
+	cursor: pointer;
+}
+.flowlet-popup-input-contrib:hover {
+	color: #8b9395;
 }
 .flowlet-popup-output {
 	background-image: url(../img/flowlet-popup-input.png);
