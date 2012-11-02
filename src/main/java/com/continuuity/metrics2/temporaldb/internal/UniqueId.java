@@ -57,7 +57,7 @@ class UniqueId {
       return ID_START;
     } else if (maxId.length == 4) {
       int maxIdAsInt = Bytes.getInt(maxId);
-      Log.debug("< maxid=" + maxIdAsInt + " [" + Bytes.toHex(maxId)
+      Log.trace("< maxid=" + maxIdAsInt + " [" + Bytes.toHex(maxId)
                     + "]");
       return maxIdAsInt;
     } else {

@@ -104,7 +104,7 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
     // Break down the metric name into it's components.
     // If there are any issue with how it's constructed,
     // send a failure back and log a message on the server.
-    Log.debug("Received flow metric {}", request.toString());
+    Log.trace("Received flow metric {}", request.toString());
     try {
       final FlowMetricElements elements =
         new FlowMetricElements.Builder(request.getMetricName()).create();
@@ -112,14 +112,14 @@ public class FlowMetricsProcessorLevelDB implements MetricsProcessor {
         return Futures.future(new Callable<MetricResponse.Status>() {
           public MetricResponse.Status call() {
             if (updateDataPoint(elements, request)) {
-              Log.debug("Successfully processed metric {}.", request.toString());
+              Log.trace("Successfully processed metric {}.", request.toString());
               return MetricResponse.Status.SUCCESS;
             }
             return MetricResponse.Status.FAILED;
           }
         }, ec);
       } else {
-        Log.debug("Invalid flow metric elements for request {}",
+        Log.trace("Invalid flow metric elements for request {}",
                   request.toString());
       }
     } catch (BuilderException e) {

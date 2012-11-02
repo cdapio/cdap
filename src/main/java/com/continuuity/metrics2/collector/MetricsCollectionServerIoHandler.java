@@ -95,7 +95,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       } catch (Exception e) {
         Log.warn("There was issue during future reaping. Reason : {}.",
                  e.getMessage());
-        Log.debug(StackTraceUtil.toStringStackTrace(e));
+        Log.warn(StackTraceUtil.toStringStackTrace(e));
       }
     }
 
@@ -153,7 +153,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     if(klassSystem != null && klassSystem.length > 0) {
       for(String klass : klassSystem) {
         loadCreateAndAddToList(MetricType.System, klass);
-        Log.debug("Added {} plugin for processing system metrics.",
+        Log.trace("Added {} plugin for processing system metrics.",
                   klass);
       }
     }
@@ -166,7 +166,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
         loadCreateAndAddToList(MetricType.FlowSystem, klass);
-        Log.debug("Added {} plugin for processing flow system metrics.",
+        Log.trace("Added {} plugin for processing flow system metrics.",
                   klass);
       }
     }
@@ -180,7 +180,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     if(klassFlowUser != null && klassFlowUser.length > 0) {
       for(String klass : klassFlowUser) {
         loadCreateAndAddToList(MetricType.FlowUser, klass);
-        Log.debug("Added {} plugin for processing flow user metrics.",
+        Log.trace("Added {} plugin for processing flow user metrics.",
                   klass);
       }
     }

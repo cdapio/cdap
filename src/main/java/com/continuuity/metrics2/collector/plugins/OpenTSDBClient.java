@@ -83,7 +83,7 @@ final class OpenTSDBClient extends IoHandlerAdapter {
             @Override
             public void operationComplete(CloseFuture future) {
               if(future.isClosed()) {
-                Log.debug("Successfully close session.");
+                Log.trace("Successfully close session.");
               }
             }
           });

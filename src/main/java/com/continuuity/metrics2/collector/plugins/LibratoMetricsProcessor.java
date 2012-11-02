@@ -162,7 +162,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         int count = Math.min(queue.size(), BATCH_SIZE);
 
 
-        Log.debug("Current queue size {}, sending metrics to librato",
+        Log.trace("Current queue size {}, sending metrics to librato",
                   count);
 
         // If there is nothing in queue, then we don't need to
@@ -171,7 +171,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
           return;
         }
 
-        Log.debug("Sending a batch of {} to librato.", count);
+        Log.trace("Sending a batch of {} to librato.", count);
 
         // Iterate through the queue and generate the body of the
         // request to be sent to librato.
@@ -216,7 +216,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         // Write the body and prepare the request to be sent.
         final RequestBuilder builder = new RequestBuilder("POST");
         String json = mapper.writeValueAsString(measurements);
-        Log.debug("JSON data to librato {}", json);
+        Log.trace("JSON data to librato {}", json);
         builder.setBody(json);
         builder.addHeader("Content-Type", "application/json");
         builder.setHeader("User-Agent", userAgent);
@@ -240,7 +240,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
                          "status : {}.", response.getStatusCode(),
                        response.getStatusText());
             } else {
-              Log.debug("Successfully sent metric to librato.");
+              Log.trace("Successfully sent metric to librato.");
             }
             return response;
           }
@@ -359,7 +359,7 @@ public final class LibratoMetricsProcessor implements MetricsProcessor {
         } catch (InterruptedException e) {
           return MetricResponse.Status.IGNORED;
         }
-        Log.debug("Successfully added metric {} to librato queue.",
+        Log.trace("Successfully added metric {} to librato queue.",
                   request.toString());
         return MetricResponse.Status.SUCCESS;
       }
