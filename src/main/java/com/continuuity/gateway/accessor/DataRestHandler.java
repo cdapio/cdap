@@ -90,13 +90,13 @@ public class DataRestHandler extends NettyRestHandler {
     HttpMethod method = request.getMethod();
     String requestUri = request.getUri();
 
-    LOG.debug("Request received: " + method + " " + requestUri);
+    LOG.trace("Request received: " + method + " " + requestUri);
     metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
 
     // we only support get requests for now
     if (method != HttpMethod.GET && method != HttpMethod.DELETE &&
         method != HttpMethod.PUT && method != HttpMethod.POST) {
-      LOG.debug("Received a " + method + " request, which is not supported");
+      LOG.trace("Received a " + method + " request, which is not supported");
       respondNotAllowed(message.getChannel(), allowedMethods);
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       return;
@@ -132,14 +132,14 @@ public class DataRestHandler extends NettyRestHandler {
     // respond with error for bad requests
     if (operation == BAD) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received an incomplete request '" + request.getUri() + "'.");
+      LOG.trace("Received an incomplete request '" + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
     }
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received an unsupported " + method + " request '"
+      LOG.trace("Received an unsupported " + method + " request '"
           + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -149,7 +149,7 @@ public class DataRestHandler extends NettyRestHandler {
     if (operation != LIST && operation != CLEAR &&
         parameters != null && !parameters.isEmpty()) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a " + method +
+      LOG.trace("Received a " + method +
           " request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -174,7 +174,7 @@ public class DataRestHandler extends NettyRestHandler {
           key = remainder.substring(pos + 1);
         else {
           metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-          LOG.debug("Received a request with invalid path " +
+          LOG.trace("Received a request with invalid path " +
               path + "(path does not end with key)");
           respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
           return;
@@ -185,7 +185,7 @@ public class DataRestHandler extends NettyRestHandler {
     if ((destination == null && operation != CLEAR) ||
         (destination != null && operation == CLEAR)) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with unknown path '" + path + "'.");
+      LOG.trace("Received a request with unknown path '" + path + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -194,7 +194,7 @@ public class DataRestHandler extends NettyRestHandler {
     if (operation != LIST && operation != CLEAR &&
         (key == null || key.length() == 0)) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with invalid path " +
+      LOG.trace("Received a request with invalid path " +
           path + "(no key given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
@@ -203,7 +203,7 @@ public class DataRestHandler extends NettyRestHandler {
     if ((operation == LIST || operation == CLEAR) &&
         (key != null && key.length() > 0)) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with invalid path " +
+      LOG.trace("Received a request with invalid path " +
           path + "(no key may be given)");
       respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
       return;
@@ -212,7 +212,7 @@ public class DataRestHandler extends NettyRestHandler {
     // check that destination is valid - for now only "default" is allowed
     if (destination != null && !"default".equals(destination)) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with path " + path +
+      LOG.trace("Received a request with path " + path +
           " for destination other than 'default'");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
@@ -222,7 +222,7 @@ public class DataRestHandler extends NettyRestHandler {
     byte[] keyBinary = null;
     if (key != null) {
       key = URLDecoder.decode(key, "ISO8859_1");
-      LOG.debug("Received " + method + " request for key '" + key + "'.");
+      LOG.trace("Received " + method + " request for key '" + key + "'.");
       keyBinary = key.getBytes("ISO8859_1");
     }
 
@@ -261,7 +261,7 @@ public class DataRestHandler extends NettyRestHandler {
             start = Integer.valueOf(startParams.get(0));
           } catch (NumberFormatException e) {
             metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-            LOG.debug("Received a request with invalid start '" +
+            LOG.trace("Received a request with invalid start '" +
                 startParams.get(0) + "' (not an integer).");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
@@ -273,7 +273,7 @@ public class DataRestHandler extends NettyRestHandler {
             limit = Integer.valueOf(limitParams.get(0));
           } catch (NumberFormatException e) {
             metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-            LOG.debug("Received a request with invalid limit '" +
+            LOG.trace("Received a request with invalid limit '" +
                 limitParams.get(0) + "' (not an integer).");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
@@ -285,7 +285,7 @@ public class DataRestHandler extends NettyRestHandler {
           if (!"hex".equals(enc) && !"url".equals(enc) &&
               !Charset.isSupported(enc)) {
             metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-            LOG.debug("Received a request with invalid encoding " + enc + ".");
+            LOG.trace("Received a request with invalid encoding " + enc + ".");
             respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
             return;
           }
@@ -407,7 +407,7 @@ public class DataRestHandler extends NettyRestHandler {
               toClear.add(ClearFabric.ToClear.STREAMS);
             else {
               metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-              LOG.debug("Received invalid clear request with URI " +
+              LOG.trace("Received invalid clear request with URI " +
                   requestUri);
               respondError(message.getChannel(),
                   HttpResponseStatus.BAD_REQUEST);

@@ -47,7 +47,7 @@ public class NettyFlumeCollector extends FlumeCollector {
   @Override
   public void start() {
 
-    LOG.debug("Starting up " + this);
+    LOG.info("Starting up " + this);
 
     // this is all standard avro ipc. The key is to pass in Flume's avro
     // source protocol as the interface, and the FlumeAdapter as its
@@ -69,13 +69,13 @@ public class NettyFlumeCollector extends FlumeCollector {
 
   @Override
   public void stop() {
-    LOG.debug("Stopping " + this);
+    LOG.info("Stopping " + this);
     try {
       this.server.close();
       this.server.join();
     } catch (InterruptedException e) {
       LOG.info("Received interrupt during join.");
     }
-    LOG.debug("Stopped " + this);
+    LOG.info("Stopped " + this);
   }
 }

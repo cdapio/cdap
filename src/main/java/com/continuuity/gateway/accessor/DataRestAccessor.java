@@ -67,7 +67,7 @@ public class DataRestAccessor
 
   @Override
   public void start() throws Exception {
-    LOG.debug("Starting up " + this);
+    LOG.info("Starting up " + this);
     // construct the internet address
     InetSocketAddress address =
         new InetSocketAddress(this.httpConfig.getPort());
@@ -97,10 +97,10 @@ public class DataRestAccessor
 
   @Override
   public void stop() {
-    LOG.debug("Stopping " + this);
+    LOG.info("Stopping " + this);
     // closing the channel stops the service
     if (this.serverChannel != null)
       this.serverChannel.close();
-    LOG.debug("Stopped " + this);
+    LOG.info("Stopped " + this);
   }
 }

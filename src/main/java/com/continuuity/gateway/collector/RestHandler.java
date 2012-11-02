@@ -109,13 +109,13 @@ public class RestHandler extends NettyRestHandler {
                               MessageEvent message) throws Exception {
     HttpRequest request = (HttpRequest) message.getMessage();
 
-    LOG.debug("Request received");
+    LOG.trace("Request received");
     metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
 
     // we only support POST
     HttpMethod method = request.getMethod();
     if (method != HttpMethod.POST && method != HttpMethod.GET ) {
-      LOG.debug("Received a " + method + " request, which is not supported");
+      LOG.trace("Received a " + method + " request, which is not supported");
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       respondNotAllowed(message.getChannel(), allowedMethods);
       return;
@@ -143,7 +143,7 @@ public class RestHandler extends NettyRestHandler {
     // respond with error for unknown requests
     if (operation == UNKNOWN) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received an unsupported " + method +
+      LOG.trace("Received an unsupported " + method +
           " request '" + request.getUri() + "'.");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -152,7 +152,7 @@ public class RestHandler extends NettyRestHandler {
     if ((operation == ENQUEUE || operation == META) &&
         parameters != null && !parameters.isEmpty()) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug(
+      LOG.trace(
           "Received a request with query parameters, which is not supported");
       respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -176,7 +176,7 @@ public class RestHandler extends NettyRestHandler {
     }
     if (destination == null) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with invalid path " + path);
+      LOG.trace("Received a request with invalid path " + path);
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -185,7 +185,7 @@ public class RestHandler extends NettyRestHandler {
     if (!this.collector.getStreamCache().validateStream(
         OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request for non-existent stream " + destination);
+      LOG.trace("Received a request for non-existent stream " + destination);
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -218,7 +218,7 @@ public class RestHandler extends NettyRestHandler {
         }
         Event event = builder.create();
 
-        LOG.debug("Sending event to consumer: " + event);
+        LOG.trace("Sending event to consumer: " + event);
         // let the consumer process the event.
         // in case of exception, respond with internal error
         try {
@@ -238,7 +238,7 @@ public class RestHandler extends NettyRestHandler {
         break;
       }
       case META: {
-        LOG.debug("Received a request for stream meta data," +
+        LOG.trace("Received a request for stream meta data," +
             " which is not implemented yet.");
         metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
@@ -284,13 +284,13 @@ public class RestHandler extends NettyRestHandler {
         String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
         Long id = null;
         if (idHeader == null) {
-          LOG.debug("Received a dequeue request without header " +
+          LOG.trace("Received a dequeue request without header " +
               Constants.HEADER_STREAM_CONSUMER);
         } else {
           try {
             id = Long.valueOf(idHeader);
           } catch (NumberFormatException e) {
-            LOG.debug("Received a dequeue request with a invalid header "
+            LOG.trace("Received a dequeue request with a invalid header "
                 + Constants.HEADER_STREAM_CONSUMER + ": " + e.getMessage());
         } }
         if (null == id) {

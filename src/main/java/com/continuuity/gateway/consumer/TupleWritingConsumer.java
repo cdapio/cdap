@@ -76,13 +76,13 @@ public class TupleWritingConsumer extends Consumer {
     String destination = event.getHeader(Constants.HEADER_DESTINATION_STREAM);
     if (destination == null) {
       String message = "Event has no destination. Cannot enqueue event.";
-      LOG.debug(message);
+      LOG.trace(message);
       throw new Exception(message);
     }
     // construct the stream URI to use for the data fabric
     String queueURI = FlowStream.
         buildStreamURI(Constants.defaultAccount, destination).toString();
-    LOG.debug("Sending tuple to " + queueURI + ", tuple = " + event);
+    LOG.trace("Sending tuple to " + queueURI + ", tuple = " + event);
 
     return new QueueEnqueue(queueURI.getBytes(), bytes);
   }

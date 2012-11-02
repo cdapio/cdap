@@ -79,12 +79,12 @@ public class QueryRestHandler extends NettyRestHandler {
     HttpMethod method = request.getMethod();
     String uri = request.getUri();
 
-    LOG.debug("Request received: " + method + " " + uri);
+    LOG.trace("Request received: " + method + " " + uri);
     metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
 
     // only GET is supported for now
     if (method != HttpMethod.GET) {
-      LOG.debug("Received a " + method + " request, which is not supported");
+      LOG.trace("Received a " + method + " request, which is not supported");
       respondNotAllowed(message.getChannel(), allowedMethods);
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       return;
@@ -105,7 +105,7 @@ public class QueryRestHandler extends NettyRestHandler {
     }
     if (provider == null) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request with unsupported path " + uri);
+      LOG.trace("Received a request with unsupported path " + uri);
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
     }
@@ -115,7 +115,7 @@ public class QueryRestHandler extends NettyRestHandler {
           .getServiceAddress(provider);
     if (serviceAddress == null) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.debug("Received a request for query provider " + provider + " " +
+      LOG.trace("Received a request for query provider " + provider + " " +
           "which is not registered. ");
       respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
       return;
@@ -124,7 +124,7 @@ public class QueryRestHandler extends NettyRestHandler {
     // make HTTP call to provider with method?param=...
     String relayUri = "http://" + serviceAddress + "/v1/query/" +
         provider + remainder;
-    LOG.debug("Relaying request to " + relayUri);
+    LOG.trace("Relaying request to " + relayUri);
 
     // TODO use more efficient Http client
     HttpGet get = new HttpGet(relayUri);

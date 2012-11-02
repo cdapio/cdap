@@ -73,7 +73,7 @@ class FlumeAdapter implements AvroSourceProtocol {
   public final Status append(AvroFlumeEvent event) {
     metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
     metrics.counter(this.getClass(), Constants.METRIC_ENQUEUE_REQUESTS, 1);
-    LOG.debug("Received event: " + event);
+    LOG.trace("Received event: " + event);
     try {
       this.collector.getConsumer().consumeEvent(convertFlume2Event(event));
       metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
@@ -90,7 +90,7 @@ class FlumeAdapter implements AvroSourceProtocol {
   public final Status appendBatch(List<AvroFlumeEvent> events) {
     metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
     metrics.counter(this.getClass(), Constants.METRIC_BATCH_REQUESTS, 1);
-    LOG.debug("Received batch: " + events);
+    LOG.trace("Received batch: " + events);
     try {
       this.collector.getConsumer().consumeEvents(convertFlume2Event(events));
       metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
