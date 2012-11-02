@@ -37,7 +37,7 @@ public final class JarResources {
    * @param name a resource name.
    */
   public byte[] getResource(String name) {
-    LOG.debug("Resource name = " + name);
+    LOG.trace("Resource name = " + name);
     return (byte[])htJarContents.get(name);
   }
 
@@ -53,7 +53,7 @@ public final class JarResources {
 
       while (e.hasMoreElements()) {
         ZipEntry ze=(ZipEntry)e.nextElement();
-        LOG.debug(dumpZipEntry(ze));
+        LOG.trace(dumpZipEntry(ze));
         htSizes.put(ze.getName(),new Integer((int)ze.getSize()));
       }
       zf.close();
@@ -68,7 +68,7 @@ public final class JarResources {
           continue;
         }
 
-        LOG.debug("ze.getName()="+ze.getName()+
+        LOG.trace("ze.getName()="+ze.getName()+
               ","+"getSize()="+ze.getSize() );
 
         int size=(int)ze.getSize();
@@ -90,7 +90,7 @@ public final class JarResources {
 
         // add to internal resource hashtable
         htJarContents.put(ze.getName(),b);
-        LOG.debug(ze.getName() + " rb=" + rb + ",size=" + size + ",csize="
+        LOG.trace(ze.getName() + " rb=" + rb + ",size=" + size + ",csize="
                     + ze.getCompressedSize());
       }
     } catch (NullPointerException e){

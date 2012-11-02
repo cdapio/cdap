@@ -146,14 +146,13 @@ public class MetricsClient {
                          new Object[] {hostname, port, interval});
                 Thread.sleep(interval * 1000L);
               } catch (InterruptedException e) {
-                Log.debug("Interrupted while sleeping");
+                Thread.currentThread().interrupt();
                 break; // Go back to check if we have asked to stop.
               }
 
               // Exponentially increase the amount of time to sleep,
               // untill we reach 30 seconds sleep between reconnects.
               interval = Math.min(BACKOFF_MAX_TIME, interval*BACKOFF_EXPONENT);
-              continue;
             } else {
               // we are conected and now need to send data.
               break;
@@ -190,15 +189,17 @@ public class MetricsClient {
         // Write the command to the session and attach a future for reporting
         // any issues seen.
         WriteFuture future = session.write(cmd);
-        future.addListener(new IoFutureListener<WriteFuture>() {
-          @Override
-          public void operationComplete(WriteFuture future) {
-            if(! future.isWritten()) {
-              Log.warn("Attempted to send metric to overlord, " +
-                "failed " + "due to session failures. [ {} ]", cmd);
+        if(future != null) {
+          future.addListener(new IoFutureListener<WriteFuture>() {
+            @Override
+            public void operationComplete(WriteFuture future) {
+              if(! future.isWritten()) {
+                Log.warn("Attempted to send metric to overlord, " +
+                           "failed " + "due to session failures. [ {} ]", cmd);
+              }
             }
-          }
-        });
+          });
+        }
       }
     }
   }
