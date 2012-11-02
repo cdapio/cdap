@@ -41,27 +41,23 @@ public class MetadataService extends MetadataHelper
     this.mds = new SerializingMetaDataStore(opex);
   }
 
-  /**
-   * Creates a stream if not exist.
-   * <p>
-   *   Stream creation requires id, name and description to be present.
-   *   Without these fields a stream creation would fail. If a stream
-   *   already exists, then it will be untouched.
-   * </p>
-   *
-   * @param stream information about stream.
-   * @return true if successful; false otherwise
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue with creating
-   *          stream.
-   */
-  @Override
-  public boolean createStream(Account account, Stream stream)
-    throws MetadataServiceException, TException {
+  //-------------------- generic methods ---------------------------------
 
-    // Validate account and stream
+  /**
+   * Creates a meta data object if not existing. Relies on the meta data helper
+   * for the specific type of meta data objects to do conversions, comparisons,
+   * etc. All other code is generic for all types of objects.
+   *
+   * @param t the meta data object to create in the MDS.
+   * @return true if successful; false otherwise
+   * @throws MetadataServiceException when there is a failure.
+   */
+  private <T> boolean create(Helper<T> helper, Account account, T t)
+      throws MetadataServiceException, TException {
+
+    // Validate account and meta data object
     validateAccount(account);
-    validateStream(stream);
+    helper.validate(t);
 
     // Create a context.
     OperationContext context = new OperationContext(account.getId());
@@ -69,12 +65,12 @@ public class MetadataService extends MetadataHelper
     try {
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(
-          context, account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+      MetaDataEntry readEntry = mds.get(context, account.getId(),
+          helper.getApplication(t), helper.getFieldType(), helper.getId(t));
       if (readEntry == null) {
         // attempt to add, but in case of write conflict we must read
         // again and try to resolve the conflict
-        MetaDataEntry entry = makeEntry(account, stream);
+        MetaDataEntry entry = helper.makeEntry(account, t);
         try {
           // Invoke MDS to add entry
           mds.add(context, entry);
@@ -83,8 +79,8 @@ public class MetadataService extends MetadataHelper
           if (e.getStatus() != StatusCode.WRITE_CONFLICT)
             throw e; // we can only handle write conflicts here
           // read again for conflict resolution
-          readEntry = mds.get(context,
-                account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+          readEntry = mds.get(context, account.getId(),
+              helper.getApplication(t), helper.getFieldType(), helper.getId(t));
         }
       }
 
@@ -92,7 +88,7 @@ public class MetadataService extends MetadataHelper
       for (int attempts = 3; attempts > 0; --attempts) {
         // there is already an entry, determine how it compare to the new one
         CompareStatus status = readEntry == null
-            ? CompareStatus.SUPER : compare(stream, readEntry);
+            ? CompareStatus.SUPER : helper.compare(t, readEntry);
         // existing entry is equal or a superset of the new one -> good
         if (status.equals(CompareStatus.EQUAL) ||
             status.equals(CompareStatus.SUB))
@@ -104,7 +100,7 @@ public class MetadataService extends MetadataHelper
         }
 
         // Create a new metadata entry for update
-        MetaDataEntry entry = makeEntry(account, stream);
+        MetaDataEntry entry = helper.makeEntry(account, t);
         try {
           // Invoke MDS to update entry, this can again fail with write conflict
           if (readEntry == null) {
@@ -120,8 +116,8 @@ public class MetadataService extends MetadataHelper
           if (attempts <= 1)
             throw e; // number of attempts exhausted
           // read again for conflict resolution
-          readEntry = mds.get(context,
-              account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+          readEntry = mds.get(context, account.getId(),
+              helper.getApplication(t), helper.getFieldType(), helper.getId(t));
         }
       }
       // unreachable but java does not detect that
@@ -129,32 +125,70 @@ public class MetadataService extends MetadataHelper
           "this code should be unreachable");
 
     } catch (OperationException e) {
-      Log.warn("Failed creating stream {}. Reason: {}", stream, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
+      String message = String.format("Failed creating %s '%s'. Reason: %s",
+          helper.getName(), t, e.getMessage());
+      Log.error(message);
+      throw new MetadataServiceException(message);
     }
   }
 
   /**
-   * Deletes a stream if exists.
+   * Updates an existing meta data object.
+   * Relies on the meta data helper for the specific type of meta data objects
+   * to do conversions, comparisons, etc. All other code is generic for all
+   * types of objects.
    *
-   * @param stream to be deleted.
-   * @return true if successfull; false otherwise
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue with deleting
-   *          stream.
+   * @param t the meta data object to create in the MDS.
+   * @return true if the entry existed and delete successful; false if the
+   *    entry did not exist.
+   * @throws MetadataServiceException when there is a failure.
    */
-  @Override
-  public boolean deleteStream(Account account, Stream stream)
-    throws MetadataServiceException, TException {
+  private <T> boolean update(Helper<T> helper, Account account, T t)
+      throws MetadataServiceException, TException {
+
+    // Validate account and the meta data object.
+    validateAccount(account);
+    helper.validate(t);
+
+    // create a context
+    OperationContext opContext =
+        new OperationContext(account.getId(), helper.getApplication(t));
+
+    // perform the update
+    try {
+      this.mds.update(opContext, helper.makeEntry(account, t));
+      return true;
+    } catch (OperationException e) {
+      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
+        return false;
+      String message = String.format("Failed to update %s %s. Reason: %s.",
+          helper.getName(), helper.getId(t), e.getMessage());
+      Log.error(message, e);
+      throw new MetadataServiceException(message);
+    }
+  }
+
+  /**
+   * Deletes a meta data object if existing. Relies on the meta data helper
+   * for the specific type of meta data objects to do conversions, comparisons,
+   * etc. All other code is generic for all types of objects.
+   *
+   * @param t the meta data object to delete in the MDS.
+   * @return true if successful; false otherwise
+   * @throws MetadataServiceException when there is a failure.
+   */
+  private <T> boolean delete(Helper<T> helper, Account account, T t)
+      throws MetadataServiceException, TException {
 
     // Validate all account.
     validateAccount(account);
     String accountId = account.getId();
 
-    // When creating a stream, you need to have id, name and description
-    String id = stream.getId();
+    // Verify the meta data object has an id
+    String id = helper.getId(t);
     if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Stream id is empty or null.");
+      throw new MetadataServiceException(helper.getName() +
+          " id is empty or null.");
     }
 
     try {
@@ -163,1121 +197,335 @@ public class MetadataService extends MetadataHelper
 
       // Invoke MDS to delete entry.
       // This will also succeed if the entry does not exist
-      mds.delete(context, accountId, null, FieldTypes.Stream.ID, id);
+      mds.delete(context,
+          accountId, helper.getApplication(t), helper.getFieldType(), id);
       return true;
 
     } catch (OperationException e) {
-      Log.warn("Failed deleting stream {}. Reason : {}", stream,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
+      String message = String.format("Failed deleting %s %s. Reason: %s",
+          helper.getName(), t, e.getMessage());
+      Log.error(message, e);
+      throw new MetadataServiceException(message);
     }
   }
 
   /**
-   * Retrieve streams associated with account.
+   * Retrieve all meta data objects of a given type associated with an account.
+   * Relies on the meta data helper for the specific type of meta data
+   * objects to do conversions, comparisons, etc. All other code is generic
+   * for all types of objects.
    *
-   * @param account for which streams need to be retrieved.
-   * @return list of stream associated with account.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          throw when there is issue listing the
-   *          streams for an account.
+   * @param account for which objects need to be retrieved.
+   * @return list of objects associated with account.
+   * @throws MetadataServiceException in case of a failure
    */
-  @Override
-  public List<Stream> getStreams(Account account)
-    throws MetadataServiceException, TException {
-    List<Stream> result = Lists.newArrayList();
+  private <T> List<T> list(Helper<T> helper, Account account, Application app)
+      throws MetadataServiceException, TException {
 
     // Validate all account.
     validateAccount(account);
     String accountId = account.getId();
+    String appId = app == null ? null : app.getId();
+
+    List<T> result = Lists.newArrayList();
 
     try {
       // Create a context.
       OperationContext context = new OperationContext(accountId);
 
       // Invoke MDS to list streams for an account.
-      // NOTE: application is null and fields are null.
+      // note: application may be null, and filter fields are null
       Collection<MetaDataEntry> entries =
-        mds.list(context, accountId, null, FieldTypes.Stream.ID, null);
+          mds.list(context, accountId, appId, helper.getFieldType(), null);
 
       for(MetaDataEntry entry : entries)
-        result.add(makeStream(entry));
+        result.add(helper.makeFromEntry(entry));
       return result;
 
     } catch (OperationException e) {
-      Log.warn("Failed listing streams for account {}. Reason : {}",
-               accountId, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
+      String message = String.format(
+          "Failed listing %s's for account %s. Reason: %s",
+          helper.getName(), accountId, e.getMessage());
+      Log.error(message, e);
+      throw new MetadataServiceException(message);
     }
   }
 
   /**
-   * Returns a single stream
+   * Returns a single meta data object
+   * Relies on the meta data helper for the specific type of meta data
+   * objects to do conversions, comparisons, etc. All other code is generic
+   * for all types of objects.
    *
-   * @param account account to which the stream belongs to.
-   * @param stream Id of the stream for which more information is requested.
-   * @return Stream with additional information like name and description else
-   * return the Stream with just the id.
-   * @throws MetadataServiceException when there is issue reading in the
-   *          information for stream.
+   * @param account account to which the object belongs to.
+   * @param t the object for which more information is requested.
+   * @return if the object exists in the MDS, the object with additional
+   *    information like name and description. Otherwise an empty meta data
+   *    objects with exists = false.
+   * @throws MetadataServiceException in case of failure
    */
-  @Override
-  public Stream getStream(Account account, Stream stream)
-    throws MetadataServiceException, TException {
-
-    // Validate account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    String id = stream.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Stream does not have an id.");
-    }
-
-    try {
-      OperationContext context = new OperationContext(accountId);
-
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry entry =
-        mds.get(context, accountId, null,
-                FieldTypes.Stream.ID, id);
-
-      if(entry != null) {
-        // convert the the meta data entry
-        return makeStream(entry);
-      } else {
-        // return a blank object with exists = false
-        stream = new Stream(stream.getId());
-        stream.setExists(false);
-        return stream;
-      }
-    } catch (OperationException e) {
-      Log.warn("Failed to retrieve stream {}. Reason : {}.",
-               stream, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Creates a dataset if not exist.
-   *
-   * @param dataset to be created.
-   * @return true if successfull; false otherwise
-   * @throws MetadataServiceException when there is issue with creating
-   *          a data set.
-   */
-  @Override
-  public boolean createDataset(Account account, Dataset dataset) throws
-    MetadataServiceException, TException {
-
-    // Validate account and dataset
-    validateAccount(account);
-    validateDataset(dataset);
-
-    // Create a context.
-    OperationContext context = new OperationContext(account.getId());
-
-    try {
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(context,
-          account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
-      if (readEntry == null) {
-        // attempt to add, but in case of write conflict we must read
-        // again and try to resolve the conflict
-        MetaDataEntry entry = makeEntry(account, dataset);
-        try {
-          // Invoke MDS to add entry
-          mds.add(context, entry);
-          return true;
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          // read again for conflict resolution
-          readEntry = mds.get(context,
-              account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
-        }
-      }
-
-      // loop a few times for write conflict resolution
-      for (int attempts = 3; attempts > 0; --attempts) {
-        // there is already an entry, determine how it compare to the new one
-        CompareStatus status = readEntry == null
-            ? CompareStatus.SUPER : compare(dataset, readEntry);
-        // existing entry is equal or a superset of the new one -> good
-        if (status.equals(CompareStatus.EQUAL) ||
-            status.equals(CompareStatus.SUB))
-          return true;
-        else if (status.equals(CompareStatus.DIFF)) {
-          // new entry is incompatible with existing -> conflict!
-          throw new MetadataServiceException("another, incompatible meta " +
-              "data entry already exists.");
-        }
-
-        // Create a new metadata entry for update
-        MetaDataEntry entry = makeEntry(account, dataset);
-        try {
-          // Invoke MDS to update entry, this can again fail with write conflict
-          if (readEntry == null) {
-            mds.add(context, entry);
-          } else {
-            mds.update(context, entry);
-          }
-          return true;
-
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          if (attempts <= 1)
-            throw e; // number of attempts exhausted
-          // read again for conflict resolution
-          readEntry = mds.get(context,
-              account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
-        }
-      }
-      // unreachable but java does not detect that
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-          "this code should be unreachable");
-
-    } catch (OperationException e) {
-      Log.warn("Failed creating dataset {}. Reason: {}", dataset,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Deletes a dataset.
-   *
-   * @param dataset to be deleted.
-   * @return true if successfull; false otherwise.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          throw when there is issue with creating
-   *          a data set.
-   */
-  @Override
-  public boolean deleteDataset(Account account, Dataset dataset) throws
-    MetadataServiceException, TException {
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    // When creating a dataset, you need to have id, name and description
-    String id = dataset.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Dataset id is empty or null.");
-    }
-
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Invoke MDS to delete entry.
-      // This will also succeed if the entry does not exist
-      mds.delete(context, accountId, null, FieldTypes.Dataset.ID, id);
-      return true;
-
-    } catch (OperationException e) {
-      Log.warn("Failed deleting dataset {}. Reason : {}", dataset,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Return all metadata about datasets associated with the account.
-   *
-   * @param account for which metadata for datasets need to be retrieved.
-   * @return list of data set associated with account
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          throw when there is issue with listing
-   *          data set.
-   */
-  @Override
-  public List<Dataset> getDatasets(Account account) throws
-    MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    // Create a context.
-    OperationContext context = new OperationContext(accountId);
-
-    try {
-      // Invoke MDS to list datasets for an account.
-      Collection<MetaDataEntry> entries =
-        mds.list(context, accountId, null, FieldTypes.Dataset.ID, null);
-
-      List<Dataset> result = Lists.newArrayList();
-      for(MetaDataEntry entry : entries)
-        result.add(makeDataset(entry));
-      return result;
-
-    } catch (OperationException e) {
-      Log.warn("Failed listing datasets for account {}. Reason : {}",
-               accountId, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a dataset.
-   *
-   * @param account to which the dataset belongs to.
-   * @param dataset of for which metdata is request.
-   * @return Dataset associated with account and dataset.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is an issue with
-   *          retrieving the data set.
-   */
-  @Override
-  public Dataset getDataset(Account account, Dataset dataset)
-    throws MetadataServiceException, TException {
-
-    // Validate account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    String id = dataset.getId();
-    if(id == null || id.isEmpty())
-      throw new MetadataServiceException("Dataset does not have an id.");
-
-    OperationContext context = new OperationContext(accountId);
-
-    try {
-      // Read from meta data store
-      MetaDataEntry entry = mds.get(
-          context, accountId, null, FieldTypes.Dataset.ID, id);
-
-      if(entry != null) {
-        // convert the the meta data entry
-        return makeDataset(entry);
-      } else {
-        // return a blank object with exists = false
-        dataset = new Dataset(dataset.getId());
-        dataset.setExists(false);
-        return dataset;
-      }
-    } catch (OperationException e) {
-      Log.warn("Failed to retrieve dataset {}. Reason : {}.",
-               dataset, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Creates an application if not exists.
-   *
-   * @param account under which the application is created.
-   * @param application to be created.
-   * @return true if created successfully or already exists, false otherwise.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue with creating
-   *          metadata store entry for the application.
-   */
-  @Override
-  public boolean createApplication(Account account, Application application)
-    throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    validateApplication(application);
-
-    // Create a context.
-    OperationContext context = new OperationContext(account.getId());
-
-    try {
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(context, account.getId(),
-          null, FieldTypes.Application.ID, application.getId());
-      if (readEntry == null) {
-        // attempt to add, but in case of write conflict we must read
-        // again and try to resolve the conflict
-        MetaDataEntry entry = makeEntry(account, application);
-        try {
-          // Invoke MDS to add entry
-          mds.add(context, entry);
-          return true;
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Application.ID, application.getId());
-        }
-      }
-
-      // loop a few times for write conflict resolution
-      for (int attempts = 3; attempts > 0; --attempts) {
-        // there is already an entry, determine how it compare to the new one
-        CompareStatus status = readEntry == null
-            ? CompareStatus.SUPER : compare(application, readEntry);
-        // existing entry is equal or a superset of the new one -> good
-        if (status.equals(CompareStatus.EQUAL) ||
-            status.equals(CompareStatus.SUB))
-          return true;
-        else if (status.equals(CompareStatus.DIFF)) {
-          // new entry is incompatible with existing -> conflict!
-          throw new MetadataServiceException("another, incompatible meta " +
-              "data entry already exists.");
-        }
-
-        // Create a new metadata entry for update
-        MetaDataEntry entry = makeEntry(account, application);
-        try {
-          // Invoke MDS to update entry, this can again fail with write conflict
-          if (readEntry == null) {
-            mds.add(context, entry);
-          } else {
-            mds.update(context, entry);
-          }
-          return true;
-
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          if (attempts <= 1)
-            throw e; // number of attempts exhausted
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Application.ID, application.getId());
-        }
-      }
-      // unreachable but java does not detect that
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-          "this code should be unreachable");
-
-    } catch (OperationException e) {
-      Log.warn("Failed creating application {}. Reason: {}", application,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Deletes an application if exists.
-   *
-   * @param account the application belongs to.
-   * @param application to be deleted.
-   * @return true if application was deleted successfully or did not exists to
-   *         be deleted; false otherwise.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue deleting an
-   *          application.
-   */
-  @Override
-  public boolean deleteApplication(Account account, Application application)
-    throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    // When creating a application, you need to have id, name and description
-    String id = application.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Application id is empty or null.");
-    }
-
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Invoke MDS to delete entry.
-      // This will also succeed if the entry does not exist
-      mds.delete(context, accountId, null, FieldTypes.Application.ID, id);
-      return true;
-
-    } catch (OperationException e) {
-      Log.warn("Failed deleting application {}. Reason : {}",
-               application, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of application associated with account.
-   *
-   * @param account for which list of applications need to be retrieved.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue listing
-   *          applications for a account.
-   * @return a list of application associated with account; else empty list.
-   */
-  @Override
-  public List<Application> getApplications(Account account)
-    throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Invoke MDS to list applications for an account.
-      Collection<MetaDataEntry> entries =
-        mds.list(context, accountId, null, FieldTypes.Application.ID, null);
-
-      List<Application> result = Lists.newArrayList();
-      for(MetaDataEntry entry : entries)
-        result.add(makeApplication(entry));
-      return result;
-
-    } catch (OperationException e) {
-      Log.warn("Failed listing application for account {}. Reason : {}",
-               accountId, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Return more information about an application.
-   *
-   * @param account to the application belongs to.
-   * @param application requested for meta data.
-   * @return application meta data if exists; else the id passed.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue retrieving
-   *          a application from metadata store.
-   */
-  @Override
-  public Application getApplication(Account account, Application application)
-    throws MetadataServiceException, TException {
-
-    // Validate account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    String id = application.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Application does not have an id.");
-    }
-
-    try {
-      OperationContext context = new OperationContext(accountId);
-
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry entry = mds.get(
-          context, accountId, null, FieldTypes.Application.ID, id);
-
-      if(entry != null) {
-        // convert the the meta data entry
-        return makeApplication(entry);
-      } else {
-        // return a blank object with exists = false
-        application = new Application(id);
-        application.setExists(false);
-        return application;
-      }
-
-    } catch (OperationException e) {
-      Log.warn("Failed to retrieve application {}. Reason : {}.",
-               application, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  /**
-   * Creates an query if not exists.
-   *
-   * @param account under which the query is created.
-   * @param query to be created.
-   * @return true if created successfully or already exists, false otherwise.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue with creating
-   *          metadata store entry for the query.
-   */
-  @Override
-  public boolean createQuery(Account account, Query query)
-    throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    validateQuery(query);
-
-    // Create a context.
-    OperationContext context = new OperationContext(account.getId());
-
-    try {
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(context, account.getId(),
-          null, FieldTypes.Query.ID, query.getId());
-      if (readEntry == null) {
-        // attempt to add, but in case of write conflict we must read
-        // again and try to resolve the conflict
-        MetaDataEntry entry = makeEntry(account, query);
-        try {
-          // Invoke MDS to add entry
-          mds.add(context, entry);
-          return true;
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Query.ID, query.getId());
-        }
-      }
-
-      // loop a few times for write conflict resolution
-      for (int attempts = 3; attempts > 0; --attempts) {
-        // there is already an entry, determine how it compare to the new one
-        CompareStatus status = readEntry == null
-            ? CompareStatus.SUPER : compare(query, readEntry);
-        // existing entry is equal or a superset of the new one -> good
-        if (status.equals(CompareStatus.EQUAL) ||
-            status.equals(CompareStatus.SUB))
-          return true;
-        else if (status.equals(CompareStatus.DIFF)) {
-          // new entry is incompatible with existing -> conflict!
-          throw new MetadataServiceException("another, incompatible meta " +
-              "data entry already exists.");
-        }
-
-        // Create a new metadata entry for update
-        MetaDataEntry entry = makeEntry(account, query);
-        try {
-          // Invoke MDS to update entry, this can again fail with write conflict
-          if (readEntry == null) {
-            mds.add(context, entry);
-          } else {
-            mds.update(context, entry);
-          }
-          return true;
-
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          if (attempts <= 1)
-            throw e; // number of attempts exhausted
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Query.ID, query.getId());
-        }
-      }
-      // unreachable but java does not detect that
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-          "this code should be unreachable");
-
-    } catch (OperationException e) {
-      Log.warn("Failed creating query {}. Reason: {}", query,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-  }
-
-  @Override
-  public boolean updateQuery(Account account, Query query)
+  private <T> T get(Helper<T> helper, Account account, T t)
       throws MetadataServiceException, TException {
 
-    // Validate account and query
+    // Validate account.
     validateAccount(account);
-    validateQuery(query);
+    String accountId = account.getId();
 
-    // create a context
-    OperationContext opContext =
-        new OperationContext(account.getId(), query.getApplication());
+    String id = helper.getId(t);
+    if(id == null || id.isEmpty()) {
+      throw new MetadataServiceException(
+          helper.getName() + " does not have an id.");
+    }
 
-    // perform the update
     try {
-      this.mds.update(opContext, makeEntry(account, query));
-      return true;
+      OperationContext context = new OperationContext(accountId);
+
+      // Read the meta data entry to see if it's already present.
+      // If already present, return without applying the new changes.
+      MetaDataEntry entry = mds.get(context,
+          accountId, helper.getApplication(t), helper.getFieldType(), id);
+
+      if(entry != null) {
+        // convert the the meta data entry
+        return helper.makeFromEntry(entry);
+      } else {
+        // return a blank object with exists = false
+        return helper.makeNonExisting(t);
+      }
     } catch (OperationException e) {
-      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
-        return false;
-      Log.warn("Failed to update query {}. Reason: {}.", query, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
+      String message = String.format("Failed to retrieve %s %s. Reason: %s.",
+          helper.getName(), helper.getId(t), e.getMessage());
+      Log.error(message, e);
+      throw new MetadataServiceException(message);
     }
   }
 
-  @Override
-  public boolean addDatasetToQuery(String account, String app,
-                                   String query, String dataset)
-      throws MetadataServiceException, TException {
+  private boolean addItemToListField(
+      String account, String app,
+      String type, String id, String what,
+      String field, String item) throws MetadataServiceException, TException {
 
-    // Validate all account.
+    // validate account.
     validateAccount(account);
 
     // create a context
     OperationContext opContext = new OperationContext(account, app);
 
     // try three times, give up after 3 write conflicts
-    for (int i = 0; i < 3; i++) {
+    for (int attempts = 2; attempts >= 0; --attempts) {
       // retrieve the meta data entry
       MetaDataEntry entry;
       try {
-        entry = this.mds.get(
-            opContext, account, app, FieldTypes.Query.ID, query);
+        entry = this.mds.get(opContext, account, app, type, id);
       } catch (OperationException e) {
-        Log.warn("Failed to get query for account {}. Reason: {}.",
-            account, e.getMessage());
-        throw new MetadataServiceException(e.getMessage());
+        String message = String.format("Failed to get %s '%s' for account " +
+            "'%s'. Reason: %s.", what, id, account, e.getMessage());
+        Log.error(message, e);
+        throw new MetadataServiceException(message);
       }
-      if (entry == null) throw new
-          MetadataServiceException("No meta data found for query " + query);
+      if (entry == null) throw new MetadataServiceException(
+          "No meta data found for " + what + " '" + id + "'");
 
-      String oldValue = entry.getTextField(FieldTypes.Query.DATASETS);
-      String newValue =
-          oldValue == null ? dataset + " " : oldValue + dataset + " ";
+      String oldValue = entry.getTextField(field);
+      String newValue = oldValue == null ? item + " " : oldValue + item + " ";
 
       try {
-        mds.swapField(opContext, account, app, FieldTypes.Query.ID, query,
-            FieldTypes.Query.DATASETS, oldValue, newValue, -1);
+        mds.swapField(opContext, account, app, type, id, field,
+            oldValue, newValue, -1);
         return true;
       } catch (OperationException e) {
-        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
-          Log.warn("Failed to swap field for query {}. Reason: {}.", query,
-              e.getMessage());
-          throw new MetadataServiceException(e.getMessage());
+        if (e.getStatus() != StatusCode.WRITE_CONFLICT || attempts <= 0) {
+          String message = String.format("Failed to swap field '%s' for %s " +
+              "'%s'. Reason: %s.", field, what, id, e.getMessage());
+          Log.error(message, e);
+          throw new MetadataServiceException(message);
         }
       }
     }
-    // must be a write conflict, repeatedly
+    // must be a write conflict, repeatedly, but this statement will not be
+    // reached...
     return false;
   }
 
-  /**
-   * Deletes a query if exists.
-   *
-   * @param account the query belongs to.
-   * @param query to be deleted.
-   * @return true if query was deleted successfully or did not exists to
-   *         be deleted; false otherwise.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue deleting an
-   *          query.
-   */
+  //-------------------------- Stream APIs ---------------------------------
+
+  @Override
+  public boolean createStream(Account account, Stream stream)
+      throws MetadataServiceException, TException {
+    return create(streamHelper, account, stream);
+  }
+
+  @Override
+  public boolean deleteStream(Account account, Stream stream)
+      throws MetadataServiceException, TException {
+    return delete(streamHelper, account, stream);
+  }
+
+  @Override
+  public List<Stream> getStreams(Account account)
+      throws MetadataServiceException, TException {
+    return list(streamHelper, account, null);
+  }
+
+  @Override
+  public Stream getStream(Account account, Stream stream)
+      throws MetadataServiceException, TException {
+    return get(streamHelper, account, stream);
+  }
+
+  //-------------------------- Dataset APIs ---------------------------------
+
+  @Override
+  public boolean createDataset(Account account, Dataset dataset) throws
+      MetadataServiceException, TException {
+    return create(datasetHelper, account, dataset);
+  }
+
+  @Override
+  public boolean deleteDataset(Account account, Dataset dataset) throws
+      MetadataServiceException, TException {
+    return delete(datasetHelper, account, dataset);
+  }
+
+  @Override
+  public List<Dataset> getDatasets(Account account) throws
+      MetadataServiceException, TException {
+    return list(datasetHelper, account, null);
+  }
+
+  @Override
+  public Dataset getDataset(Account account, Dataset dataset)
+      throws MetadataServiceException, TException {
+    return get(datasetHelper, account, dataset);
+  }
+
+  //---------------------- Application APIs --------------------------------
+
+  @Override
+  public boolean createApplication(Account account, Application application)
+      throws MetadataServiceException, TException {
+    return create(applicationHelper, account, application);
+  }
+
+  @Override
+  public boolean deleteApplication(Account account, Application application)
+      throws MetadataServiceException, TException {
+    return delete(applicationHelper, account, application);
+  }
+
+  @Override
+  public List<Application> getApplications(Account account)
+      throws MetadataServiceException, TException {
+    return list(applicationHelper, account, null);
+  }
+
+  @Override
+  public Application getApplication(Account account, Application application)
+      throws MetadataServiceException, TException {
+    return get(applicationHelper, account, application);
+  }
+
+  //-------------------------- Query APIs --------------------------------
+
+  @Override
+  public boolean createQuery(Account account, Query query)
+      throws MetadataServiceException, TException {
+    return create(queryHelper, account, query);
+  }
+
+  @Override
+  public boolean updateQuery(Account account, Query query)
+      throws MetadataServiceException, TException {
+    return update(queryHelper, account, query);
+  }
+
+  @Override
+  public boolean addDatasetToQuery(String account, String app,
+                                   String qid, String dataset)
+      throws MetadataServiceException, TException {
+    return addItemToListField(account, app, FieldTypes.Query.ID, qid,
+        "query", FieldTypes.Query.DATASETS, dataset);
+  }
+
   @Override
   public boolean deleteQuery(Account account, Query query)
-    throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    // When deleting a query, you need to have id, name and description
-    String id = query.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Application id is empty or null.");
-    }
-
-    try {
-      // Create a context.
-      OperationContext context = new OperationContext(accountId);
-
-      // Invoke MDS to delete entry.
-      // This will also succeed if the entry does not exist
-      mds.delete(context, accountId, query.getApplication(),
-          FieldTypes.Query.ID, id);
-      return true;
-
-    } catch (OperationException e) {
-      Log.warn("Failed deleting query {}. Reason : {}", query, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
+      throws MetadataServiceException, TException {
+    return delete(queryHelper, account, query);
   }
 
-  /**
-   * Returns a list of query associated with account.
-   *
-   * @param account for which list of queries need to be retrieved.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue listing
-   *          queries for a account.
-   * @return a list of queries associated with account; else empty list.
-   */
   @Override
   public List<Query> getQueries(Account account)
-    throws MetadataServiceException, TException {
-    List<Query> result = Lists.newArrayList();
-
-    // Validate all account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    // Create a context.
-    OperationContext context = new OperationContext(accountId);
-
-    // query the meta data store
-    Collection<MetaDataEntry> entries;
-    try {
-      entries = mds.list(context, accountId, null, FieldTypes.Query.ID, null);
-    } catch (OperationException e) {
-      Log.warn("Failed to list queries for account {}. Reason: {}.",
-          account, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-
-    for(MetaDataEntry entry : entries) {
-        result.add(makeQuery(entry));
-    }
-    return result;
+      throws MetadataServiceException, TException {
+    return list(queryHelper, account, null);
   }
 
-  /**
-   * Return more information about an query.
-   *
-   * @param account to the query belongs to.
-   * @param query requested for meta data.
-   * @return query meta data if exists; else the id passed.
-   * @throws com.continuuity.metadata.thrift.MetadataServiceException
-   *          thrown when there is issue retrieving
-   *          a queries from metadata store.
-   */
+  @Override
+  public List<Query> getQueriesByApplication(String account, String appid)
+      throws MetadataServiceException, TException {
+    return list(queryHelper, new Account(account), new Application(appid));
+  }
+
   @Override
   public Query getQuery(Account account, Query query)
-    throws MetadataServiceException, TException {
-
-    // Validate account.
-    validateAccount(account);
-    String accountId = account.getId();
-
-    String id = query.getId();
-    if(id == null || id.isEmpty()) {
-      throw new MetadataServiceException("Query does not have an id.");
-    }
-    String app = query.getApplication();
-    if(app == null || app.isEmpty()) {
-      throw new MetadataServiceException("Query does not have an app.");
-    }
-
-    try {
-      OperationContext context = new OperationContext(accountId);
-
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry entry =
-        mds.get(context, accountId, app, FieldTypes.Query.ID, id);
-
-      if(entry != null) {
-        // convert the the meta data entry
-        return makeQuery(entry);
-      } else {
-        // return a blank object with exists = false
-        query = new Query(query.getId(), query.getApplication());
-        query.setExists(false);
-        return query;
-      }
-
-    } catch (OperationException e) {
-      Log.warn("Failed to retrieve query {}. Reason : {}.",
-               query, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
+      throws MetadataServiceException, TException {
+    return get(queryHelper, account, query);
   }
+
+  //-------------------------- Flow APIs --------------------------------
 
   @Override
   public boolean createFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
-
-    // Validate all account.
-    Account account = new Account(accountId);
-    validateAccount(account);
-    validateFlow(flow);
-
-    // Create a context.
-    OperationContext context = new OperationContext(account.getId());
-
-    try {
-      // Read the meta data entry to see if it's already present.
-      // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(context, account.getId(),
-          null, FieldTypes.Flow.ID, flow.getId());
-      if (readEntry == null) {
-        // attempt to add, but in case of write conflict we must read
-        // again and try to resolve the conflict
-        MetaDataEntry entry = makeEntry(account, flow);
-        try {
-          // Invoke MDS to add entry
-          mds.add(context, entry);
-          return true;
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Flow.ID, flow.getId());
-        }
-      }
-
-      // loop a few times for write conflict resolution
-      for (int attempts = 3; attempts > 0; --attempts) {
-        // there is already an entry, determine how it compare to the new one
-        CompareStatus status = readEntry == null
-            ? CompareStatus.SUPER : compare(flow, readEntry);
-        // existing entry is equal or a superset of the new one -> good
-        if (status.equals(CompareStatus.EQUAL) ||
-            status.equals(CompareStatus.SUB))
-          return true;
-        else if (status.equals(CompareStatus.DIFF)) {
-          // new entry is incompatible with existing -> conflict!
-          throw new MetadataServiceException("another, incompatible meta " +
-              "data entry already exists.");
-        }
-
-        // Create a new metadata entry for update
-        MetaDataEntry entry = makeEntry(account, flow);
-        try {
-          // Invoke MDS to update entry, this can again fail with write conflict
-          if (readEntry == null) {
-            mds.add(context, entry);
-          } else {
-            mds.update(context, entry);
-          }
-          return true;
-
-        } catch (OperationException e) {
-          if (e.getStatus() != StatusCode.WRITE_CONFLICT)
-            throw e; // we can only handle write conflicts here
-          if (attempts <= 1)
-            throw e; // number of attempts exhausted
-          // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
-              null, FieldTypes.Flow.ID, flow.getId());
-        }
-      }
-      // unreachable but java does not detect that
-      throw new OperationException(StatusCode.INTERNAL_ERROR,
-          "this code should be unreachable");
-
-    } catch (OperationException e) {
-      Log.warn("Failed creating flow {}. Reason: {}", flow,
-          e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
+    return create(flowHelper, new Account(accountId), flow);
   }
 
   @Override
-  public boolean updateFlow(String accountId, Flow flow)
-      throws MetadataServiceException, TException {
-
-    // Validate all account.
-    Account account = new Account(accountId);
-    validateAccount(account);
-    // validate flow
-    validateFlow(flow);
-
-    // create a context
-    OperationContext opContext =
-        new OperationContext(account.getId(), flow.getApplication());
-
-    // perform the update
-    try {
-      this.mds.update(opContext, makeEntry(account, flow));
-      return true;
-    } catch (OperationException e) {
-      if (e.getStatus() == StatusCode.ENTRY_NOT_FOUND) // entry does not exist
-        return false;
-      Log.warn("Failed to update flow {}. Reason: {}.", flow, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
+  public boolean updateFlow(String accountId, Flow flow) throws
+      MetadataServiceException, TException {
+    return update(flowHelper, new Account(accountId), flow);
   }
 
   @Override
   public boolean addDatasetToFlow(String account, String app,
                                   String flowid, String dataset)
       throws MetadataServiceException, TException {
-    return
-        addThingToFlow(account, app, flowid, FieldTypes.Flow.DATASETS, dataset);
+    return addItemToListField(account, app, FieldTypes.Flow.ID, flowid,
+        "flow", FieldTypes.Flow.DATASETS, dataset);
   }
 
   @Override
   public boolean addStreamToFlow(String account, String app,
                                  String flowid, String stream)
       throws MetadataServiceException, TException {
-    return
-        addThingToFlow(account, app, flowid, FieldTypes.Flow.STREAMS, stream);
-  }
-
-  private boolean addThingToFlow(String account, String app,
-        String flowid, String thingField, String thing)
-    throws MetadataServiceException, TException {
-
-      // Validate all account.
-    validateAccount(account);
-
-    // create a context
-    OperationContext opContext = new OperationContext(account, app);
-
-    // try three times, give up after 3 write conflicts
-    for (int i = 0; i < 3; i++) {
-      // retrieve the meta data entry
-      MetaDataEntry entry;
-      try {
-        entry = this.mds.get(
-            opContext, account, app, FieldTypes.Flow.ID, flowid);
-      } catch (OperationException e) {
-        Log.warn("Failed to list flows for account {}. Reason: {}.",
-            account, e.getMessage());
-        throw new MetadataServiceException(e.getMessage());
-      }
-      if (entry == null) throw new
-          MetadataServiceException("No meta data found for flow " + flowid);
-
-      String oldValue = entry.getTextField(thingField);
-      String newValue =
-          oldValue == null ? thing + " " : oldValue + thing + " ";
-
-      try {
-        mds.swapField(opContext, account, app, FieldTypes.Flow.ID, flowid,
-            thingField, oldValue, newValue, -1);
-        return true;
-      } catch (OperationException e) {
-        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
-          Log.warn("Failed to swap field for flow {}. Reason: {}.", flowid,
-              e.getMessage());
-          throw new MetadataServiceException(e.getMessage());
-        }
-      }
-    }
-    // must be a write conflict, repeatedly
-    return false;
+    return addItemToListField(account, app, FieldTypes.Flow.ID, flowid,
+        "flow", FieldTypes.Flow.STREAMS, stream);
   }
 
   @Override
-  public boolean deleteFlow(String account, String application, String flowid)
+  public boolean deleteFlow(String account, String appid, String flowid)
       throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-
-    // create a context
-    OperationContext opContext =
-        new OperationContext(account, application);
-
-    // perform the delete
-    try {
-      this.mds.delete(opContext,
-          account, application, FieldTypes.Flow.ID, flowid);
-    } catch (OperationException e) {
-      Log.warn("Failed to delete flow {}. Reason: {}.", flowid, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-    return true;
+    return delete(flowHelper, new Account(account), new Flow(flowid, appid));
   }
 
   @Override
-  public List<Flow> getFlows(String account) throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    // create a context
-    OperationContext opContext = new OperationContext(account, null);
-
-    // retrieve list of meta entries
-    List<MetaDataEntry> entries;
-    try {
-      entries = this.mds.list(
-          opContext, account, null, FieldTypes.Flow.ID, null);
-    } catch (OperationException e) {
-      Log.warn("Failed to list flows for account {}. Reason: {}.",
-          account, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-    if (entries == null || entries.isEmpty())
-      return Collections.emptyList();
-
-    // convert each meta entry into a Flow
-    List<Flow> flows = Lists.newArrayList();
-    for (MetaDataEntry entry : entries)
-      flows.add(makeFlow(entry));
-    return flows;
-  }
-
-  @Override
-  public Flow getFlow(String account, String application, String flowid)
+  public List<Flow> getFlows(String account)
       throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-
-    // create a context
-    OperationContext opContext = new OperationContext(account, null);
-
-    // retrieve the meta data entry
-    MetaDataEntry entry;
-    try {
-      entry = this.mds.get(
-          opContext, account, application, FieldTypes.Flow.ID, flowid);
-    } catch (OperationException e) {
-      Log.warn("Failed to get flow for account {}. Reason: {}.",
-          account, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-    if (entry == null) {
-      List<String> emptyList = Collections.emptyList();
-      Flow flow = new Flow(flowid, application, "", emptyList, emptyList);
-      flow.setExists(false);
-      return flow;
-    } else
-      return makeFlow(entry);
+    return list(flowHelper, new Account(account), null);
   }
 
   @Override
   public List<Flow> getFlowsByApplication(String account, String application)
       throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    // create a context
-    OperationContext opContext = new OperationContext(account, null);
-
-    // retrieve list of meta entries
-    List<MetaDataEntry> entries;
-    try {
-      entries = this.mds.list(
-          opContext, account, application, FieldTypes.Flow.ID, null);
-    } catch (OperationException e) {
-      Log.warn("Failed to list flows for account {}. Reason: {}.",
-          account, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-    if (entries == null || entries.isEmpty())
-      return Collections.emptyList();
-
-    // convert each meta entry into a Flow
-    List<Flow> flows = Lists.newArrayList();
-    for (MetaDataEntry entry : entries)
-      flows.add(makeFlow(entry));
-    return flows;
+    return list(flowHelper, new Account(account), new Application(application));
   }
 
   @Override
-  public List<Query> getQueriesByApplication(String account,
-                                            String application)
+  public Flow getFlow(String account, String application, String flowid)
       throws MetadataServiceException, TException {
-
-    // Validate all account.
-    validateAccount(account);
-    // create a context
-    OperationContext opContext = new OperationContext(account, null);
-
-    // retrieve list of meta entries
-    List<MetaDataEntry> entries;
-    try {
-      entries = this.mds.list(
-          opContext, account, application, FieldTypes.Query.ID, null);
-    } catch (OperationException e) {
-      Log.warn("Failed to list flows for account {}. Reason: {}.",
-          account, e.getMessage());
-      throw new MetadataServiceException(e.getMessage());
-    }
-    if (entries == null || entries.isEmpty())
-      return Collections.emptyList();
-
-    // convert each meta entry into a Flow
-    List<Query> queries = Lists.newArrayList();
-    for (MetaDataEntry entry : entries)
-      queries.add(makeQuery(entry));
-    return queries;
+    return get(flowHelper, new Account(account), new Flow(flowid, application));
   }
+
+  //----------- Queries that require joining across meta data types ----------
 
   @Override
   public List<Stream> getStreamsByApplication(String account, String app)
@@ -1425,26 +673,4 @@ public class MetadataService extends MetadataHelper
     return queriesForDS;
   }
 
-  /**
-   * Validates the account passed.
-   *
-   * @param account to be validated.
-   * @throws MetadataServiceException thrown if account is null or empty.
-   */
-  void validateAccount(Account account)
-    throws MetadataServiceException {
-    // Validate all fields.
-    if(account == null) {
-      throw new
-        MetadataServiceException("Account cannot be null");
-    }
-    validateAccount(account.getId());
-  }
-  void validateAccount(String accountId)
-      throws MetadataServiceException {
-    if(accountId == null || accountId.isEmpty()) {
-      throw new
-        MetadataServiceException("Account Id cannot be null or empty");
-    }
-  }
 }

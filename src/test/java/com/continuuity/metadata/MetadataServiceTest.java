@@ -13,15 +13,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Tests metadata service functionality.
  */
 public class MetadataServiceTest {
-  /** Instance of operation executor */
-  private static OperationExecutor opex;
 
   /** Instance of metadata service. */
   private static MetadataService mds;
@@ -35,7 +32,8 @@ public class MetadataServiceTest {
       new MetadataModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules()
     );
-    opex = injector.getInstance(OperationExecutor.class);
+    /* Instance of operation executor */
+    OperationExecutor opex = injector.getInstance(OperationExecutor.class);
     mds = new MetadataService(opex);
     account = new Account("demo");
   }
@@ -265,8 +263,7 @@ public class MetadataServiceTest {
     }
 
     List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
-        mtList = Collections.emptyList(), listA = Lists.newArrayList(),
-        listAD = Lists.newArrayList();
+        listA = Lists.newArrayList(), listAD = Lists.newArrayList();
     listAB.add("a"); listAB.add("b");
     listAC.add("a"); listAC.add("c");
     listA.add("a");
@@ -297,9 +294,12 @@ public class MetadataServiceTest {
     Assert.assertTrue(mds.createDataset(account, datasetC));
     Assert.assertTrue(mds.createDataset(account, datasetD));
 
-    Flow flow1 = new Flow("f1", "app1", "flow 1", listAB, listAB);
-    Flow flow2 = new Flow("f2", "app2", "flow 2", listAC, listAC);
-    Flow flow3 = new Flow("f1", "app2", "flow 1", listAB, listAB);
+    Flow flow1 = new Flow("f1", "app1"); flow1.setName("flow 1");
+    flow1.setStreams(listAB); flow1.setDatasets(listAB);
+    Flow flow2 = new Flow("f2", "app2"); flow2.setName("flow 2");
+    flow2.setStreams(listAC); flow2.setDatasets(listAC);
+    Flow flow3 = new Flow("f1", "app2"); flow3.setName("flow 1");
+    flow3.setStreams(listAB); flow3.setDatasets(listAB);
 
     // add flow1, verify get and list
     Assert.assertTrue(mds.createFlow(account.getId(), flow1));
