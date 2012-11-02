@@ -35,9 +35,9 @@ struct Stream {
 struct Flow {
    1: required string id,
    2: required string application,
-   3: required string name,
-   4: required list<string> streams,
-   5: required list<string> datasets,
+   3: optional string name,
+   4: optional list<string> streams,
+   5: optional list<string> datasets,
    6: optional bool exists = true,
 }
 

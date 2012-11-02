@@ -7,26 +7,13 @@
 package com.continuuity.metadata.thrift;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Defines a Flow
@@ -49,9 +36,9 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
 
   private String id; // required
   private String application; // required
-  private String name; // required
-  private List<String> streams; // required
-  private List<String> datasets; // required
+  private String name; // optional
+  private List<String> streams; // optional
+  private List<String> datasets; // optional
   private boolean exists; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -130,7 +117,7 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
   // isset id assignments
   private static final int __EXISTS_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
-  private _Fields optionals[] = {_Fields.EXISTS};
+  private _Fields optionals[] = {_Fields.NAME,_Fields.STREAMS,_Fields.DATASETS,_Fields.EXISTS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -138,12 +125,12 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.APPLICATION, new org.apache.thrift.meta_data.FieldMetaData("application", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.STREAMS, new org.apache.thrift.meta_data.FieldMetaData("streams", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.STREAMS, new org.apache.thrift.meta_data.FieldMetaData("streams", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
-    tmpMap.put(_Fields.DATASETS, new org.apache.thrift.meta_data.FieldMetaData("datasets", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.DATASETS, new org.apache.thrift.meta_data.FieldMetaData("datasets", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     tmpMap.put(_Fields.EXISTS, new org.apache.thrift.meta_data.FieldMetaData("exists", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
@@ -159,17 +146,11 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
 
   public Flow(
     String id,
-    String application,
-    String name,
-    List<String> streams,
-    List<String> datasets)
+    String application)
   {
     this();
     this.id = id;
     this.application = application;
-    this.name = name;
-    this.streams = streams;
-    this.datasets = datasets;
   }
 
   /**
@@ -696,30 +677,36 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
       sb.append(this.application);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("name:");
-    if (this.name == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.name);
+    if (isSetName()) {
+      if (!first) sb.append(", ");
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
     }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("streams:");
-    if (this.streams == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.streams);
+    if (isSetStreams()) {
+      if (!first) sb.append(", ");
+      sb.append("streams:");
+      if (this.streams == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.streams);
+      }
+      first = false;
     }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("datasets:");
-    if (this.datasets == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.datasets);
+    if (isSetDatasets()) {
+      if (!first) sb.append(", ");
+      sb.append("datasets:");
+      if (this.datasets == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.datasets);
+      }
+      first = false;
     }
-    first = false;
     if (isSetExists()) {
       if (!first) sb.append(", ");
       sb.append("exists:");
@@ -738,18 +725,6 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
 
     if (!isSetApplication()) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'application' is unset! Struct:" + toString());
-    }
-
-    if (!isSetName()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'name' is unset! Struct:" + toString());
-    }
-
-    if (!isSetStreams()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'streams' is unset! Struct:" + toString());
-    }
-
-    if (!isSetDatasets()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'datasets' is unset! Struct:" + toString());
     }
 
   }
@@ -882,33 +857,39 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
         oprot.writeFieldEnd();
       }
       if (struct.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(struct.name);
-        oprot.writeFieldEnd();
+        if (struct.isSetName()) {
+          oprot.writeFieldBegin(NAME_FIELD_DESC);
+          oprot.writeString(struct.name);
+          oprot.writeFieldEnd();
+        }
       }
       if (struct.streams != null) {
-        oprot.writeFieldBegin(STREAMS_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.streams.size()));
-          for (String _iter6 : struct.streams)
+        if (struct.isSetStreams()) {
+          oprot.writeFieldBegin(STREAMS_FIELD_DESC);
           {
-            oprot.writeString(_iter6);
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.streams.size()));
+            for (String _iter6 : struct.streams)
+            {
+              oprot.writeString(_iter6);
+            }
+            oprot.writeListEnd();
           }
-          oprot.writeListEnd();
+          oprot.writeFieldEnd();
         }
-        oprot.writeFieldEnd();
       }
       if (struct.datasets != null) {
-        oprot.writeFieldBegin(DATASETS_FIELD_DESC);
-        {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.datasets.size()));
-          for (String _iter7 : struct.datasets)
+        if (struct.isSetDatasets()) {
+          oprot.writeFieldBegin(DATASETS_FIELD_DESC);
           {
-            oprot.writeString(_iter7);
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.datasets.size()));
+            for (String _iter7 : struct.datasets)
+            {
+              oprot.writeString(_iter7);
+            }
+            oprot.writeListEnd();
           }
-          oprot.writeListEnd();
+          oprot.writeFieldEnd();
         }
-        oprot.writeFieldEnd();
       }
       if (struct.isSetExists()) {
         oprot.writeFieldBegin(EXISTS_FIELD_DESC);
@@ -934,26 +915,41 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
       TTupleProtocol oprot = (TTupleProtocol) prot;
       oprot.writeString(struct.id);
       oprot.writeString(struct.application);
-      oprot.writeString(struct.name);
-      {
-        oprot.writeI32(struct.streams.size());
-        for (String _iter8 : struct.streams)
-        {
-          oprot.writeString(_iter8);
-        }
-      }
-      {
-        oprot.writeI32(struct.datasets.size());
-        for (String _iter9 : struct.datasets)
-        {
-          oprot.writeString(_iter9);
-        }
-      }
       BitSet optionals = new BitSet();
-      if (struct.isSetExists()) {
+      if (struct.isSetName()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetStreams()) {
+        optionals.set(1);
+      }
+      if (struct.isSetDatasets()) {
+        optionals.set(2);
+      }
+      if (struct.isSetExists()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetName()) {
+        oprot.writeString(struct.name);
+      }
+      if (struct.isSetStreams()) {
+        {
+          oprot.writeI32(struct.streams.size());
+          for (String _iter8 : struct.streams)
+          {
+            oprot.writeString(_iter8);
+          }
+        }
+      }
+      if (struct.isSetDatasets()) {
+        {
+          oprot.writeI32(struct.datasets.size());
+          for (String _iter9 : struct.datasets)
+          {
+            oprot.writeString(_iter9);
+          }
+        }
+      }
       if (struct.isSetExists()) {
         oprot.writeBool(struct.exists);
       }
@@ -966,32 +962,38 @@ public class Flow implements org.apache.thrift.TBase<Flow, Flow._Fields>, java.i
       struct.setIdIsSet(true);
       struct.application = iprot.readString();
       struct.setApplicationIsSet(true);
-      struct.name = iprot.readString();
-      struct.setNameIsSet(true);
-      {
-        org.apache.thrift.protocol.TList _list10 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-        struct.streams = new ArrayList<String>(_list10.size);
-        for (int _i11 = 0; _i11 < _list10.size; ++_i11)
-        {
-          String _elem12; // required
-          _elem12 = iprot.readString();
-          struct.streams.add(_elem12);
-        }
-      }
-      struct.setStreamsIsSet(true);
-      {
-        org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-        struct.datasets = new ArrayList<String>(_list13.size);
-        for (int _i14 = 0; _i14 < _list13.size; ++_i14)
-        {
-          String _elem15; // required
-          _elem15 = iprot.readString();
-          struct.datasets.add(_elem15);
-        }
-      }
-      struct.setDatasetsIsSet(true);
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
+        struct.name = iprot.readString();
+        struct.setNameIsSet(true);
+      }
+      if (incoming.get(1)) {
+        {
+          org.apache.thrift.protocol.TList _list10 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.streams = new ArrayList<String>(_list10.size);
+          for (int _i11 = 0; _i11 < _list10.size; ++_i11)
+          {
+            String _elem12; // required
+            _elem12 = iprot.readString();
+            struct.streams.add(_elem12);
+          }
+        }
+        struct.setStreamsIsSet(true);
+      }
+      if (incoming.get(2)) {
+        {
+          org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.datasets = new ArrayList<String>(_list13.size);
+          for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+          {
+            String _elem15; // required
+            _elem15 = iprot.readString();
+            struct.datasets.add(_elem15);
+          }
+        }
+        struct.setDatasetsIsSet(true);
+      }
+      if (incoming.get(3)) {
         struct.exists = iprot.readBool();
         struct.setExistsIsSet(true);
       }
