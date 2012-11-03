@@ -65,6 +65,7 @@ public class DataClientTest {
     // configure a gateway
     port = PortDetector.findFreePort();
     configuration = new CConfiguration();
+    configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
         Constants.CONFIG_CLASSNAME), DataRestAccessor.class.getCanonicalName());

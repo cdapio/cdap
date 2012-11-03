@@ -56,6 +56,7 @@ public class GatewayRestAccessorTest {
     // Create and populate a new config object
     CConfiguration configuration = new CConfiguration();
 
+    configuration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     configuration.set(Constants.CONFIG_CONNECTORS, name);
     configuration.set(Constants.buildConnectorPropertyName(name,
         Constants.CONFIG_CLASSNAME), DataRestAccessor.class.getCanonicalName());

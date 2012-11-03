@@ -42,7 +42,7 @@ public class NettyFlumeCollector extends FlumeCollector {
     super.configure(configuration);
     // the only additional option we need is number of netty threads
     this.threads = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_THREADS), Constants.DEFAULT_THREADS);
+        this.getName(), Constants.CONFIG_THREADS), Constants.DEFAULT_THREADS);
   }
   @Override
   public void start() {

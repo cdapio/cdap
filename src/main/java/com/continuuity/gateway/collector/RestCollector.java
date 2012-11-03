@@ -74,7 +74,7 @@ public class RestCollector extends Collector
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
     this.httpConfig =
-        HttpConfig.configure(this.name, configuration, defaultConfig);
+        HttpConfig.configure(this.getName(), configuration, defaultConfig);
   }
 
   @Override

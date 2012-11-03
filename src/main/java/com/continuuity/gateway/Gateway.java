@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.gateway.util.ServiceDiscovery;
 import com.continuuity.metadata.MetadataService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -57,6 +58,11 @@ public class Gateway implements Server {
   private MetadataService mds;
 
   /**
+   * This will be shared by all connectors for zk service discovery
+   */
+  private ServiceDiscovery serviceDiscovery;
+
+  /**
    * The list of connectors for this Gateway. This list is populated in
    * the configure method.
    */
@@ -73,6 +79,7 @@ public class Gateway implements Server {
    *
    * @return Our current Configuration
    */
+  @SuppressWarnings("unused")
   public CConfiguration getConfiguration() {
     return myConfiguration;
   }
@@ -111,10 +118,11 @@ public class Gateway implements Server {
   /**
    * Start the gateway. This will also start the Consumer and all the Connectors
    *
-   * @throws Exception If there is no Consumer, or whatever Exception a
+   * @throws ServerException If there is no Consumer, or whatever Exception a
    *                   connector throws during start().
    */
-  public void start(String[] args, CConfiguration conf) throws ServerException {
+  public void start(String[] args, CConfiguration conf) throws
+      ServerException {
 
     // Configure ourselves first
     configure(conf);
@@ -229,11 +237,7 @@ public class Gateway implements Server {
    *                      be null.
    * @throws IllegalArgumentException If configuration argument is null.
    */
-  private void configure(CConfiguration configuration) {
-
-    if (this.mds == null) {
-      this.mds = new MetadataService(executor);
-    }
+  private void configure(CConfiguration configuration) throws ServerException {
 
     if (configuration == null) {
       throw new IllegalArgumentException("'configuration' argument was null");
@@ -241,8 +245,20 @@ public class Gateway implements Server {
 
     LOG.info("Configuring Gateway..");
 
+    if (this.mds == null) {
+      this.mds = new MetadataService(executor);
+    }
+
     // Save the configuration so we can use it again later
     myConfiguration = configuration;
+
+    // try to establish service discovery
+    boolean doDiscovery = configuration.getBoolean(
+        Constants.CONFIG_DO_SERVICE_DISCOVERY, true);
+    if (doDiscovery) {
+      this.serviceDiscovery = new ServiceDiscovery(configuration);
+      this.serviceDiscovery.initialize();
+    }
 
     // Retrieve the list of connectors that we will create
     Collection<String> connectorNames = myConfiguration.
@@ -285,6 +301,9 @@ public class Gateway implements Server {
               connectorName + "'.");
           continue;
         }
+
+        // set the connector's discovery client
+        newConnector.setServiceDiscovery(this.serviceDiscovery);
 
         // Add it to our Connector list
         try {

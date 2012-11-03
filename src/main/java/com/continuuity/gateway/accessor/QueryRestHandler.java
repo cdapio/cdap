@@ -1,6 +1,7 @@
 package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import org.apache.http.HttpEntity;
@@ -111,9 +112,10 @@ public class QueryRestHandler extends NettyRestHandler {
     }
 
     // determine the service provider for the given path
-    String serviceAddress = this.accessor.getProviderDiscovery()
-          .getServiceAddress(provider);
-    if (serviceAddress == null) {
+    String serviceName = "query." + provider;
+    ImmutablePair<String, Integer> pair = this.accessor.
+        getServiceDiscovery().getServiceAddress(serviceName);
+    if (pair == null) {
       metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
       LOG.trace("Received a request for query provider " + provider + " " +
           "which is not registered. ");
@@ -122,8 +124,8 @@ public class QueryRestHandler extends NettyRestHandler {
     }
 
     // make HTTP call to provider with method?param=...
-    String relayUri = "http://" + serviceAddress + "/v1/query/" +
-        provider + remainder;
+    String relayUri = "http://" + pair.getFirst() + ":" + pair.getSecond()
+        + "/v1/query/" + provider + remainder;
     LOG.trace("Relaying request to " + relayUri);
 
     // TODO use more efficient Http client

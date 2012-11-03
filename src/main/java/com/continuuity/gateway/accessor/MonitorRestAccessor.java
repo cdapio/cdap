@@ -15,19 +15,19 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-public class QueryRestAccessor
+public class MonitorRestAccessor
 extends Accessor implements NettyRequestHandlerFactory {
 
   private static final Logger LOG = LoggerFactory
-      .getLogger(QueryRestAccessor.class);
+      .getLogger(MonitorRestAccessor.class);
 
   /**
    * this will provide defaults for the HTTP service, such as port and paths
    */
   private static final HttpConfig defaultHttpConfig =
-      new HttpConfig("accessor.query")
-          .setPort(10010)
-          .setPathMiddle("/rest-query/");
+      new HttpConfig("accessor.metrics")
+          .setPort(10005)
+          .setPathMiddle("/rest-metrics/");
 
   /**
    * this will provide the actual HTTP configuration, backed by the default
@@ -57,7 +57,7 @@ extends Accessor implements NettyRequestHandlerFactory {
 
   @Override
   public SimpleChannelUpstreamHandler newHandler() {
-    return new QueryRestHandler(this);
+    return new MonitorRestHandler(this);
   }
 
   @Override

@@ -66,6 +66,7 @@ public class GatewayRestCollectorTest {
     // Create and populate a new config object
     myConfiguration = new CConfiguration();
 
+    myConfiguration.setBoolean(Constants.CONFIG_DO_SERVICE_DISCOVERY, false);
     myConfiguration.set(Constants.CONFIG_CONNECTORS, name);
     myConfiguration.set(Constants.buildConnectorPropertyName(name,
         Constants.CONFIG_CLASSNAME), RestCollector.class.getCanonicalName());

@@ -56,6 +56,12 @@ public class Constants {
       = GATEWAY_PREFIX + "hostname";
 
   /**
+   * Whether gateway should provide ZK service discovery to the connectors
+   */
+  public static final String CONFIG_DO_SERVICE_DISCOVERY
+      = GATEWAY_PREFIX + "discovery";
+
+  /**
    * Class name of a named connector
    */
   public static final String CONFIG_CLASSNAME = "class";
@@ -148,6 +154,9 @@ public class Constants {
   public static final String defaultAccount =
       OperationContext.DEFAULT_ACCOUNT_ID;
 
-
+  public static final String metricsServiceName =
+      com.continuuity.common.conf.Constants.SERVICE_METRICS_FRONTEND_SERVER;
+  public static final String flowServiceName =
+      com.continuuity.common.conf.Constants.SERVICE_FLOW_SERVER;
 
 } // end of Constants class

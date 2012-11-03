@@ -47,7 +47,7 @@ public abstract class FlumeCollector extends Collector {
     super.configure(configuration);
     // the only option we need is the port number
     this.port = configuration.getInt(Constants.buildConnectorPropertyName(
-        this.name, Constants.CONFIG_PORT), DefaultPort);
+        this.getName(), Constants.CONFIG_PORT), DefaultPort);
   }
 
   /**

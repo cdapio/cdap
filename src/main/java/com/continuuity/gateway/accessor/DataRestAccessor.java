@@ -57,7 +57,7 @@ public class DataRestAccessor
   public void configure(CConfiguration configuration) throws Exception {
     super.configure(configuration);
     this.httpConfig = HttpConfig.configure(
-        this.name, configuration, defaultHttpConfig);
+        this.getName(), configuration, defaultHttpConfig);
   }
 
   @Override
