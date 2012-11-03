@@ -123,7 +123,8 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>collector.rest,collector.flume,accessor.rest,query.rest</value>
+        <value>collector.rest,collector.flume,accessor.rest,
+            query.rest,monitor.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -169,6 +170,28 @@
     <property>
         <name>query.rest.middle</name>
         <value>/rest-query/</value>
+    </property>
+
+    <property>
+        <name>monitor.rest.class</name>
+        <value>com.continuuity.gateway.accessor.MonitorRestAccessor</value>
+        <description>Specifies the class for the REST metrics
+            connector</description>
+    </property>
+
+    <property>
+        <name>monitor.rest.port</name>
+        <value>10005</value>
+    </property>
+
+    <property>
+        <name>monitor.rest.threads</name>
+        <value>5</value>
+    </property>
+
+    <property>
+        <name>monitor.rest.middle</name>
+        <value>/rest-monitor/</value>
     </property>
 
     <property>

@@ -13,7 +13,9 @@ public class Constants {
   public static final String
     SERVICE_METRICS_FRONTEND_SERVER = "metricsfrontend";
   public static final String
-    SERVICE_METADATA_SERVER = "metadata";
+      SERVICE_METADATA_SERVER = "metadata";
+  public static final String
+      SERVICE_FLOW_SERVER = "flow-service";
 
   /**
    * Common across components.
