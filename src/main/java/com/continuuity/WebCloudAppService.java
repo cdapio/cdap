@@ -83,7 +83,7 @@ public class WebCloudAppService implements Server {
           try {
             String line;
             while ((line = br.readLine()) != null) {
-              logger.debug("[User Interface output] " + line);
+              logger.trace("[User Interface output] " + line);
             }
           } catch (IOException ie) {
             logger.error(ie.getMessage());
