@@ -91,12 +91,18 @@ public class MonitorRestHandler extends NettyRestHandler {
             accessor.getHttpConfig().getPathMiddle();
   }
 
+  // a metrics thrift client for every thread
   ThreadLocal<MetricsFrontendService.Client> metricsClients =
       new ThreadLocal<MetricsFrontendService.Client>();
 
+  // a flow thrift client for every thread
   ThreadLocal<FlowService.Client> flowClients =
       new ThreadLocal<FlowService.Client>();
 
+  /**
+   * generic method to discover a thrift service and start up the
+   * thrift transport and protocol layer
+   */
   private TProtocol getThriftProtocol(String serviceName)
       throws ServerException{
 
@@ -124,9 +130,17 @@ public class MonitorRestHandler extends NettyRestHandler {
     return new TBinaryProtocol(transport);
   }
 
+  /**
+   * obtain a metrics thrift client from the thread-local, if necessary create
+   * and connect the client (when this thread needs it for the first time)
+   * @return A connected metrics client
+   * @throws ServerException if service discovery or connecting to the
+   * service fails.
+   */
   private MetricsFrontendService.Client getMetricsClient()
       throws ServerException {
-    if (metricsClients.get() == null) {
+    if (metricsClients.get() == null ||
+        !metricsClients.get().getInputProtocol().getTransport().isOpen()) {
       TProtocol protocol = getThriftProtocol(Constants.metricsServiceName);
       MetricsFrontendService.Client client = new
           MetricsFrontendService.Client(protocol);
@@ -135,9 +149,17 @@ public class MonitorRestHandler extends NettyRestHandler {
     return metricsClients.get();
   }
 
+  /**
+   * obtain a flow thrift client from the thread-local, if necessary create
+   * and connect the client (when this thread needs it for the first time)
+   * @return A connected flow client
+   * @throws ServerException if service discovery or connecting to the
+   * service fails.
+   */
   private FlowService.Client getFlowClient() throws ServerException {
-    if (flowClients.get() == null) {
-      TProtocol protocol = getThriftProtocol(Constants.flowServiceName);
+    if (flowClients.get() == null ||
+      !flowClients.get().getInputProtocol().getTransport().isOpen()) {
+        TProtocol protocol = getThriftProtocol(Constants.flowServiceName);
       FlowService.Client client = new FlowService.Client(protocol);
       flowClients.set(client);
     }
