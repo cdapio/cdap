@@ -123,8 +123,7 @@
 
     <property>
         <name>gateway.connectors</name>
-        <value>collector.rest,collector.flume,accessor.rest,
-            query.rest,monitor.rest</value>
+        <value>collector.rest,collector.flume,accessor.rest,query.rest,monitor.rest</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
