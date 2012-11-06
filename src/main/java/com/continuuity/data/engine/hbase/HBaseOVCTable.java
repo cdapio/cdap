@@ -7,10 +7,16 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.Scanner;
+import com.google.common.collect.Lists;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.ColumnPaginationFilter;
+import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,40 +294,26 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
 
-      // for now prepare for post filtering
       if (limit <= 0) limit = Integer.MAX_VALUE;
 
-      // TODO: enable this push down of filters
       // push down the limit into the get as a filter, negative means unlimited
-      /*
       List<Filter> filters = Lists.newArrayList();
       if (startColumn != null || stopColumn != null) filters.add(
           new ColumnRangeFilter(startColumn, true, stopColumn, false));
-      if (limit > 0) filters.add(
-          new ColumnCountGetFilter(limit));
+      if (limit != Integer.MAX_VALUE) filters.add(
+          new ColumnPaginationFilter(limit, 0));
       if (filters.size() > 1)
         get.setFilter(new FilterList(filters));
       else if (filters.size() == 1)
         get.setFilter(filters.get(0));
-      */
 
       Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
-      byte[] last = null;
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
-        byte [] column = kv.getQualifier();
-        if (Bytes.equals(last, column)) continue;
-        if (startColumn != null &&
-            Bytes.compareTo(startColumn, column) > 0) continue;
-        if (stopColumn != null &&
-            Bytes.compareTo(column, stopColumn) >= 0) break;
-        map.put(column, kv.getValue());
-        // break out if limit is reached
-        if (map.size() >= limit) break;
-        last = column;
+        map.put(kv.getQualifier(), kv.getValue());
       }
       if (map.isEmpty()) {
         return new

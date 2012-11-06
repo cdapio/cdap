@@ -212,7 +212,7 @@ public abstract class TestOVCTable {
   @Test
   public void testReadColumnRange() throws OperationException {
 
-    byte [] row = Bytes.toBytes("testMultiColumnReadsAndWrites");
+    byte [] row = Bytes.toBytes("testReadColumnRange");
 
     int ncols = 100;
     assertTrue(ncols % 2 == 0); // needs to be even in this test
