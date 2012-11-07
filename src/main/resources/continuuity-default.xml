@@ -74,7 +74,7 @@
 
     <property>
         <name>resource.manager.cloud.hostname</name>
-        <value>50.97.203.197</value>
+        <value>50.23.86.172</value>
         <description>Specifies the resource manager hostname in cloud.</description>
     </property>
 
