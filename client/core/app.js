@@ -49,7 +49,7 @@ function(Models, Views, Controllers){
 		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
-				name: "Payvment, Inc."
+				name: "Demo User"
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				names: {
@@ -141,13 +141,37 @@ function(Models, Views, Controllers){
 		util: {
 			reset: function () {
 				C.Vw.Modal.show(
-					"Reset Cluster",
+					"Reset AppFabric",
 					"You are about to DELETE ALL CONTINUUITY DATA on your cluster. Are you SURE you would like to do this?",
 					function () {
 
-						
+						C.interstitial.loading('Clearing...');
+
+						C.get('far', {
+							method: 'reset',
+							params: []
+						}, function (error, response) {
+
+							C.interstitial.hide();
+
+							if (error) {
+
+								setTimeout(function () {
+									C.Vw.Modal.show(
+										"Reset Error",
+										error.message
+										);
+								}, 1000);
+
+							} else {
+								C.router.transitionTo('home');
+								window.location.reload();
+							}
+
+						});
 						
 					});
+				return false;
 			},
 			sparkline: function (widget, data, w, h, percent) {
 				
@@ -348,8 +372,12 @@ function(Models, Views, Controllers){
 
 	function connected (env) {
 
-		window.ENV.isCloud = (env !== 'development');
-		C.debug('Environment set to "' + env + '"');
+		window.ENV.isCloud = (env.name !== 'development');
+		window.ENV.version = env.version;
+		if (env.version !== 'UNKNOWN') {
+			$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>');
+		}
+		C.debug('Environment set to "' + env.name + '", version ' + env.version);
 
 		// This function is called when the socket is (re)connected.
 

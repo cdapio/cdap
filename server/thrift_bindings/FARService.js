@@ -797,6 +797,248 @@ FARService_remove_result.prototype.write = function(output) {
   return;
 };
 
+var FARService_removeAll_args = function(args) {
+  this.token = null;
+  this.accountId = null;
+  if (args) {
+    if (args.token !== undefined) {
+      this.token = args.token;
+    }
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+  }
+};
+FARService_removeAll_args.prototype = {};
+FARService_removeAll_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.token = new ttypes.DelegationToken();
+        this.token.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FARService_removeAll_args.prototype.write = function(output) {
+  output.writeStructBegin('FARService_removeAll_args');
+  if (this.token) {
+    output.writeFieldBegin('token', Thrift.Type.STRUCT, 1);
+    this.token.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 2);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FARService_removeAll_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+FARService_removeAll_result.prototype = {};
+FARService_removeAll_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.FARServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FARService_removeAll_result.prototype.write = function(output) {
+  output.writeStructBegin('FARService_removeAll_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FARService_reset_args = function(args) {
+  this.token = null;
+  this.accountId = null;
+  if (args) {
+    if (args.token !== undefined) {
+      this.token = args.token;
+    }
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+  }
+};
+FARService_reset_args.prototype = {};
+FARService_reset_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.token = new ttypes.DelegationToken();
+        this.token.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FARService_reset_args.prototype.write = function(output) {
+  output.writeStructBegin('FARService_reset_args');
+  if (this.token) {
+    output.writeFieldBegin('token', Thrift.Type.STRUCT, 1);
+    this.token.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 2);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FARService_reset_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+FARService_reset_result.prototype = {};
+FARService_reset_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.FARServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FARService_reset_result.prototype.write = function(output) {
+  output.writeStructBegin('FARService_reset_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FARServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -1024,6 +1266,76 @@ FARServiceClient.prototype.recv_remove = function(input,mtype,rseqid) {
   }
   callback(null)
 };
+FARServiceClient.prototype.removeAll = function(token, accountId, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_removeAll(token, accountId);
+};
+
+FARServiceClient.prototype.send_removeAll = function(token, accountId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('removeAll', Thrift.MessageType.CALL, this.seqid);
+  var args = new FARService_removeAll_args();
+  args.token = token;
+  args.accountId = accountId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FARServiceClient.prototype.recv_removeAll = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FARService_removeAll_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
+FARServiceClient.prototype.reset = function(token, accountId, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_reset(token, accountId);
+};
+
+FARServiceClient.prototype.send_reset = function(token, accountId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('reset', Thrift.MessageType.CALL, this.seqid);
+  var args = new FARService_reset_args();
+  args.token = token;
+  args.accountId = accountId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FARServiceClient.prototype.recv_reset = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FARService_reset_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
 var FARServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -1120,6 +1432,34 @@ FARServiceProcessor.prototype.process_remove = function(seqid, input, output) {
   this._handler.remove(args.token, args.identifier, function (success) {
     result.success = success;
     output.writeMessageBegin("remove", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FARServiceProcessor.prototype.process_removeAll = function(seqid, input, output) {
+  var args = new FARService_removeAll_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FARService_removeAll_result();
+  this._handler.removeAll(args.token, args.accountId, function (success) {
+    result.success = success;
+    output.writeMessageBegin("removeAll", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FARServiceProcessor.prototype.process_reset = function(seqid, input, output) {
+  var args = new FARService_reset_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FARService_reset_result();
+  this._handler.reset(args.token, args.accountId, function (success) {
+    result.success = success;
+    output.writeMessageBegin("reset", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

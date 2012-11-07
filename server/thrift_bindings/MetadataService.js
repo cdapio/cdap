@@ -4640,6 +4640,113 @@ MetadataService_getQueriesByDataset_result.prototype.write = function(output) {
   return;
 };
 
+var MetadataService_deleteAll_args = function(args) {
+  this.account = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+  }
+};
+MetadataService_deleteAll_args.prototype = {};
+MetadataService_deleteAll_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.account = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteAll_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteAll_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRING, 1);
+    output.writeString(this.account);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_deleteAll_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_deleteAll_result.prototype = {};
+MetadataService_deleteAll_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_deleteAll_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_deleteAll_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var MetadataServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -5866,6 +5973,40 @@ MetadataServiceClient.prototype.recv_getQueriesByDataset = function(input,mtype,
   }
   return callback('getQueriesByDataset failed: unknown result');
 };
+MetadataServiceClient.prototype.deleteAll = function(account, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_deleteAll(account);
+};
+
+MetadataServiceClient.prototype.send_deleteAll = function(account) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('deleteAll', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_deleteAll_args();
+  args.account = account;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_deleteAll = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_deleteAll_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
 var MetadataServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -6326,6 +6467,20 @@ MetadataServiceProcessor.prototype.process_getQueriesByDataset = function(seqid,
   this._handler.getQueriesByDataset(args.account, args.dataset, function (success) {
     result.success = success;
     output.writeMessageBegin("getQueriesByDataset", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_deleteAll = function(seqid, input, output) {
+  var args = new MetadataService_deleteAll_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_deleteAll_result();
+  this._handler.deleteAll(args.account, function (success) {
+    result.success = success;
+    output.writeMessageBegin("deleteAll", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

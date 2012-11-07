@@ -964,6 +964,113 @@ FlowService_getFlowHistory_result.prototype.write = function(output) {
   return;
 };
 
+var FlowService_stopAll_args = function(args) {
+  this.accountId = null;
+  if (args) {
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+  }
+};
+FlowService_stopAll_args.prototype = {};
+FlowService_stopAll_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_stopAll_args.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_stopAll_args');
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 1);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var FlowService_stopAll_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+FlowService_stopAll_result.prototype = {};
+FlowService_stopAll_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.FlowServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+FlowService_stopAll_result.prototype.write = function(output) {
+  output.writeStructBegin('FlowService_stopAll_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var FlowServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -1230,6 +1337,40 @@ FlowServiceClient.prototype.recv_getFlowHistory = function(input,mtype,rseqid) {
   }
   return callback('getFlowHistory failed: unknown result');
 };
+FlowServiceClient.prototype.stopAll = function(accountId, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_stopAll(accountId);
+};
+
+FlowServiceClient.prototype.send_stopAll = function(accountId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('stopAll', Thrift.MessageType.CALL, this.seqid);
+  var args = new FlowService_stopAll_args();
+  args.accountId = accountId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+FlowServiceClient.prototype.recv_stopAll = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new FlowService_stopAll_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
 var FlowServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -1340,6 +1481,20 @@ FlowServiceProcessor.prototype.process_getFlowHistory = function(seqid, input, o
   this._handler.getFlowHistory(args.id, function (success) {
     result.success = success;
     output.writeMessageBegin("getFlowHistory", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+FlowServiceProcessor.prototype.process_stopAll = function(seqid, input, output) {
+  var args = new FlowService_stopAll_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new FlowService_stopAll_result();
+  this._handler.stopAll(args.accountId, function (success) {
+    result.success = success;
+    output.writeMessageBegin("stopAll", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

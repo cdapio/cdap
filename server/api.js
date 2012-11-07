@@ -29,8 +29,9 @@ try {
 (function () {
 
 	this.config = {};
-	this.configure = function (config) {
+	this.configure = function (config, version) {
 		this.config = config;
+		this.version = version;
 	};
 
 	this.metadata = function (method, params, done) {
@@ -203,6 +204,7 @@ try {
 	this.far = function (method, params, done) {
 
 		var identifier;
+		var accountId = 'demo';
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
 
 		var conn = thrift.createConnection(
@@ -240,6 +242,12 @@ try {
 					accountId: 'demo'
 				});
 				FAR.promote(auth_token, identifier, done);
+
+				break;
+
+			case 'reset':
+
+				FAR.reset(auth_token, accountId, done);
 
 				break;
 

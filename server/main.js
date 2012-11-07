@@ -37,7 +37,7 @@ io.sockets.on('connection', function (socket) {
 
 	sockets[id] = socket;
 
-	socket.emit('env', process.env.NODE_ENV || 'development');
+	socket.emit('env', {"name": process.env.NODE_ENV || 'development', "version": Env.api.version});
 
 	socket.on('metadata', function (request) {
 		Env.api.metadata(request.method, request.params, function (error, response) {

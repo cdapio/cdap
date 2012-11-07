@@ -26,6 +26,18 @@
 			xml2js = require('xml2js');
 		var parser = new xml2js.Parser();
 
+		function getVersion (done) {
+			fs.readFile('/opt/continuuity/VERSION', 'utf8', function (error, result) {
+				if (error) {
+					console.log('Could not find VERSION file. /opt/continuuity/VERSION');
+					done('UNKNOWN');
+				} else {
+					console.log('VERSION: ', result);
+					done(result);
+				}
+			});
+		}
+
 		fs.readFile((process.env.CONTINUUITY_HOME || './server') + '/conf/continuuity-site.xml',
 			function (err, result) {
 
@@ -51,8 +63,10 @@
 					config['gateway.port'] = 10000;
 					config['gateway.hostname'] = '127.0.0.1';
 
-					api.configure(config);
-					done(true);
+					getVersion(function (version) {
+						api.configure(config, version);
+						done(true);
+					});
 
 				} else {
 					parser.parseString(result, function (err, result) {
@@ -76,8 +90,10 @@
 						// Gateway
 						config['gateway.port'] = 10000;
 
-						api.configure(config);
-						done(true);
+						getVersion(function (version) {
+							api.configure(config, version);
+							done(true);
+						});
 
 					});
 				}
