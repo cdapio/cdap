@@ -137,6 +137,11 @@ define([], function () {
 		},
 		refresh: function () {
 
+			if (!this.get('current')) {
+				clearInterval(this.interval);
+				return;
+			}
+
 			var self = this;
 			var app = this.get('current').applicationId;
 			var id = this.get('current').get('meta').name;
