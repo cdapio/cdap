@@ -403,4 +403,14 @@ service MetadataService {
   list<Query> getQueriesByDataset(1: string account, 2: string dataset)
     throws (1: MetadataServiceException e),
 
+ /**
+  * Delete all applications, flows, queries, datasets and streams for an
+  * account.
+  *
+  * @throws MetadataServiceException thrown when there is an issue listing
+  *     or deleting things.
+  */
+  void deleteAll(1: string account)
+    throws (1: MetadataServiceException e),
+
 }

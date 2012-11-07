@@ -491,6 +491,15 @@ public class MetadataServiceTest {
     Assert.assertTrue(datasets.contains(datasetB));
     Assert.assertTrue(datasets.contains(datasetC));
 
+    // wipe out everything
+    mds.deleteAll(account.getId());
+    // verify that all apps, flows, queries, datasets and streams are gone
+    Assert.assertEquals(0, mds.getApplications(account).size());
+    Assert.assertEquals(0, mds.getFlows(account.getId()).size());
+    Assert.assertEquals(0, mds.getQueries(account).size());
+    Assert.assertEquals(0, mds.getDatasets(account).size());
+    Assert.assertEquals(0, mds.getStreams(account).size());
+
   }
 
 

@@ -673,4 +673,38 @@ public class MetadataService extends MetadataHelper
     return queriesForDS;
   }
 
+  @Override
+  public void deleteAll(String accountId)
+      throws MetadataServiceException, TException {
+
+    // Validate account.
+    validateAccount(accountId);
+    Account account = new Account(accountId);
+
+    // list all streams for the account and delete them
+    for (Stream stream : getStreams(account)) {
+      deleteStream(account, stream);
+    }
+
+    // list all datasets for the account and delete them
+    for (Dataset dataset : getDatasets(account)) {
+      deleteDataset(account, dataset);
+    }
+
+    // list all queries for the account and delete them
+    for (Query query : getQueries(account)) {
+      deleteQuery(account, query);
+    }
+
+    // list all flows for the account and delete them
+    for (Flow flow : getFlows(accountId)) {
+      deleteFlow(accountId, flow.getApplication(), flow.getId());
+    }
+
+    // list all applications for the account and delete them
+    for (Application application : getApplications(account)) {
+      deleteApplication(account, application);
+    }
+  }
+
 }
