@@ -40,7 +40,6 @@
   <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a class="global-link global-help" href="http://www.continuuity.com/" target="_blank"></a>
         <a class="global-link global-user" href="#">{{user.name}}</a>
       </div>
       <ul id="breadcrumb">
@@ -55,7 +54,7 @@
     </div>
     <div id="footer" style="clear: both;">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
     <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
-    Send us Questions &amp; Feedback</a><br /></div>
+    Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="C.util.reset();">Reset Cluster</a></div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="dashboard">
@@ -235,6 +234,7 @@
       {{view C.Vw.TimeSelector}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li class="active"><a href="#">Status</a></li>
+        <li><a href="#" {{action "goToLog" on="click"}}>Logs</a></li>
         <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
       </ul>
       <h1>{{current.meta.name}} <span>Flow</span></h1>
@@ -298,11 +298,33 @@
 
   </script>
 
+
+  <script type="text/x-handlebars" data-template-name="flow-log">
+
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li class="active"><a href="#">Logs</a></li>
+        <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
+      </ul>
+      <h1>{{current.meta.name}} <span>Flow</span></h1>
+    </div>
+
+    <div id="panels">
+      <div class="panel" style="padding: 10px;">
+        {{view Ember.TextArea valueBinding="view.responseBody" classNames="well query-response"}}
+      </div>
+    </div>
+
+  </script>
+
   <script type="text/x-handlebars" data-template-name="flow-history">
     <div id="title">
       {{view C.Vw.TimeSelector}}
        <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li><a href="#" {{action "goToLog" on="click"}}>Logs</a></li>
         <li class="active"><a href="#">History</a></li>
       </ul>
       <h1>{{current.meta.name}} <span>Flow</span></h1>

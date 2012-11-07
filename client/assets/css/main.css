@@ -440,6 +440,7 @@ h1 span {
 	padding: 4px;
 	height: 14px;
 	letter-spacing: 0.08em;
+	font-size: 12px;
 }
 .sparkline-flowlet-value {
 	width: 60px;
@@ -834,6 +835,7 @@ a strong {
 	letter-spacing: 0.1em;
 	line-height: 22px;
 	height: 28px;
+	font-size: 12px !important;
 }
 .btn-success, .btn-danger {
 	color: #fff;

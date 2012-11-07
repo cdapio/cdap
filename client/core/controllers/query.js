@@ -39,6 +39,25 @@ define([], function () {
 						self.get('current').set('version', response.params.version);
 						C.interstitial.hide();
 						self.startStats();
+
+						var ctl = C.router.applicationController;
+						var appId = self.get('current').get('applicationId');
+
+						if (!(appId in ctl.breadcrumbs.names)) {
+
+							C.get('metadata', {
+								method: 'getApplication',
+								params: ['Application', {
+									id: appId
+								}]
+							}, function (error, response) {
+
+								ctl.breadcrumbs.names[response.params.id] = response.params.name;
+								C.router.currentState.notifyPropertyChange('name');
+
+							});
+						}
+
 					}
 
 					self.interval = setInterval(function () {

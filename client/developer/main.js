@@ -95,6 +95,21 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						enter: C.interstitial.show
 					}),
+					log: Em.Route.extend({
+						route: '/log/:id',
+						connectOutlets: function (router, context) {
+							var id = context.id.split(':');
+							C.Ctl.FlowLog.load(id[0], id[1]);
+							router.get('applicationController').connectOutlet({
+								viewClass: C.Vw.FlowLog,
+								controller: C.Ctl.FlowLog
+							});
+						},
+						navigateAway: function () {
+							C.Ctl.FlowLog.unload();
+						},
+						enter: C.interstitial.show
+					}),
 					history: Em.Route.extend({
 						route: '/history/:id',
 						connectOutlets: function (router, context) {

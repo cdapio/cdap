@@ -171,7 +171,7 @@ define([], function () {
 				$(this.get('element')).append('<div class="sparkline-flowlet-title">' + this.__getTitle() + '</div>');
 				
 				container = $('<div class="sparkline-flowlet-container" />').appendTo(this.get('element'));
-				width = width - 54;
+				width = width - 44;
 
 			} else if (this.get('listMode') || entityType) {
 
@@ -193,14 +193,18 @@ define([], function () {
 					$(this.get('element')).append('<div class="sparkline-box-title" style="padding-left:0;background-color:#fff;">' + this.__getTitle() + '</div>');
 					container.appendTo(this.get('element'));
 					container = $('<div />').appendTo(container);
+
+					width = width - 48;
+
 				} else {
 					container.addClass('sparkline-box-container');
 					$(this.get('element')).append('<div class="sparkline-box-title">' + this.__getTitle() + '</div>');
 					container.appendTo(this.get('element'));
 					container = $('<div style="height: 69px;" />').appendTo(container);
-				}
 
-				width = width - 74;
+					width = width - 68;
+
+				}
 			}
 
 			if (entityType === 'Stream') {

@@ -2,7 +2,7 @@ define([
 	], function () {
 	
 	return Em.View.extend({
-		templateName: 'flow-history',
+		templateName: 'flow-log',
 		currentBinding: 'controller.current',
 
 		setFlowletLabel: function (event) {
@@ -35,13 +35,14 @@ define([
 
 		},
 
-		goToLog: function () {
+		goToHistory: function () {
 
-			C.router.transitionTo('flows.log', {
+			C.router.transitionTo('flows.history', {
 				id: this.get('current').app + ':' + this.get('current').id
 			});
 
 		},
+
 
 		loadRun: function (event) {
 

@@ -6,8 +6,8 @@ define(['views/dashboard', 'views/app',
 	'views/list/app-list', 'views/list/stream-list', 'views/list/dataset-list', 'views/list/query-list',
 	'views/dropzone',
 	'views/dataset', 'views/stream', 'views/timeselector', 'views/create-button', 'views/create-dialogue',
-	'views/detail/streamdetail', 'views/create-textfield', 'views/detail/querydetail', 'views/query'],
-	function (D, A, F, Fh, Fd, Pl, Vz, Dn, M, I, C, Lp, Fl, Al, Sl, Dsl, Ql, Dz, Ds, S, Ts, Cb, Cr, Sd, Ctx, Qd, Q) {
+	'views/detail/streamdetail', 'views/create-textfield', 'views/detail/querydetail', 'views/query', 'views/flow-log'],
+	function (D, A, F, Fh, Fd, Pl, Vz, Dn, M, I, C, Lp, Fl, Al, Sl, Dsl, Ql, Dz, Ds, S, Ts, Cb, Cr, Sd, Ctx, Qd, Q, Flo) {
 		return {
 			Dash: D,
 			Application: A,
@@ -35,7 +35,8 @@ define(['views/dashboard', 'views/app',
 			StreamDetail: Sd,
 			TextField: Ctx,
 			QueryDetail: Qd,
-			Query: Q
+			Query: Q,
+			FlowLog: Flo
 		};
 	}
 );

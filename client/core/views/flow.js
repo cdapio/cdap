@@ -30,6 +30,14 @@ define([
 
 		}.property('controller.__currentFlowletLabel'),
 
+		goToLog: function () {
+
+			C.router.transitionTo('flows.log', {
+				id: this.get('current').app + ':' + this.get('current').id
+			});
+
+		},
+
 		goToHistory: function () {
 
 			C.router.transitionTo('flows.history', {

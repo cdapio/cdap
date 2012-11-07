@@ -88,8 +88,6 @@ define([], function () {
 
 				C.router.applicationController.view.visualizer.drawGraph();
 
-
-
 				//
 				// Request Flow Status
 				//
@@ -104,6 +102,23 @@ define([], function () {
 						self.get('current').set('version', response.params.version);
 
 						self.updateStats();
+						var ctl = C.router.applicationController;
+						var appId = self.get('current').get('applicationId');
+
+						if (!(appId in ctl.breadcrumbs.names)) {
+
+							C.get('metadata', {
+								method: 'getApplication',
+								params: ['Application', {
+									id: appId
+								}]
+							}, function (error, response) {
+
+								ctl.breadcrumbs.names[response.params.id] = response.params.name;
+								C.router.currentState.notifyPropertyChange('name');
+
+							});
+						}
 
 						C.interstitial.hide();
 					

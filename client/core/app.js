@@ -49,10 +49,18 @@ function(Models, Views, Controllers){
 		},
 		ApplicationController: Ember.Controller.extend({
 			user: {
-				name: "Demo User"
+				name: "Payvment, Inc."
 			},
 			breadcrumbs: Em.ArrayProxy.create({
+				names: {
+					'flows': 'Flows',
+					'upload': 'Upload',
+					'apps': 'Applications',
+					'streams': 'Streams',
+					'data': 'Datasets'
+				},
 				content: function () {
+
 					var path;
 					if (C) {
 						path = C.router.location.location.hash.split('/');
@@ -62,14 +70,6 @@ function(Models, Views, Controllers){
 
 					var crumbs = [];
 					var href = ['#'];
-
-					var names = {
-						'flows': 'Flows',
-						'upload': 'Upload',
-						'apps': 'Applications',
-						'streams': 'Streams',
-						'data': 'Datasets'
-					};
 
 					/** Hax. Deals with AppID:FlowID style IDs for flows. **/
 					if (path.length && path[path.length - 1].indexOf(':') !== -1) {
@@ -81,7 +81,7 @@ function(Models, Views, Controllers){
 								name: 'Applications',
 								href: '#/apps'
 							}, {
-								name: app,
+								name: this.names[app] || app,
 								href: '#/apps/' + app
 							}
 						];
@@ -91,7 +91,7 @@ function(Models, Views, Controllers){
 					for (var i = 1; i < path.length - 1; i ++) {
 						href.push(path[i]);
 						crumbs.push({
-							name: names[path[i]] || path[i],
+							name: this.names[path[i]] || path[i],
 							href: href.join('/')
 						});
 					}
@@ -139,6 +139,16 @@ function(Models, Views, Controllers){
 
 		},
 		util: {
+			reset: function () {
+				C.Vw.Modal.show(
+					"Reset Cluster",
+					"You are about to DELETE ALL CONTINUUITY DATA on your cluster. Are you SURE you would like to do this?",
+					function () {
+
+						
+						
+					});
+			},
 			sparkline: function (widget, data, w, h, percent) {
 				
 				var allData = [], length = 0;
@@ -324,6 +334,17 @@ function(Models, Views, Controllers){
 		Vw: Views,
 		Ctl: Controllers
 	});
+
+	window.onblur = function () {
+		if (C && typeof C.blur === 'function') {
+			C.blur();
+		}
+	};
+	window.onfocus = function () {
+		if (C && typeof C.focus === 'function') {
+			C.focus();
+		}
+	};
 
 	function connected (env) {
 
