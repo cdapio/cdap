@@ -48,6 +48,53 @@ public class DBUtils {
     return type;
   }
 
+  /**
+   * Clears the tables for metrics.
+   *
+   * @param connection connection to DB
+   * @param accountId who's data needs to be cleared.
+   * @return true if successful; false otherwise.
+   */
+  public static boolean clearMetricsTables(Connection connection,
+                                           String accountId) {
+    PreparedStatement stmt = null;
+    try {
+      String sql = "DELETE FROM metrics WHERE account_id = ? OR account_id = ?";
+      stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      stmt.setString(2, "-");
+      stmt.execute();
+      if(stmt != null) {
+        stmt.close();
+        stmt = null;
+      }
+      sql = "DELETE FROM timeseries WHERE account_id = ? OR account_id = ?";
+      stmt = connection.prepareStatement(sql);
+      stmt.setString(1, accountId);
+      stmt.setString(2, "-");
+      stmt.execute();
+      if(stmt != null) {
+        stmt.close();
+        stmt = null;
+      }
+      return true;
+    } catch (SQLException e) {
+      Log.warn("Failed clearing tables. Reason : {}", e.getMessage());
+      return false;
+    } finally {
+      try {
+        if(stmt != null) {
+          stmt.close();
+        }
+        if(connection != null) {
+          connection.close();
+        }
+      } catch (SQLException e) {
+        Log.warn("Failed closing connection/statement. Reason : {}",
+                 e.getMessage());
+      }
+    }
+  }
 
   /**
    * @return true if all tables created; false otherwise

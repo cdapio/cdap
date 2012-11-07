@@ -10,7 +10,6 @@ import com.continuuity.metrics2.temporaldb.Timeseries;
 import com.continuuity.metrics2.thrift.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -27,7 +26,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -38,6 +36,7 @@ import java.util.concurrent.*;
  */
 public class MetricsFrontendServiceImpl
   implements MetricsFrontendService.Iface {
+
   private static final Logger Log = LoggerFactory.getLogger(
     MetricsFrontendServiceImpl.class
   );
@@ -83,7 +82,6 @@ public class MetricsFrontendServiceImpl
       jdbcDataSource.setUrl(connectionUrl);
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
     }
-
     DBUtils.createMetricsTables(getConnection(), this.type);
   }
 
@@ -96,6 +94,26 @@ public class MetricsFrontendServiceImpl
       return poolManager.getValidConnection();
     }
     return null;
+  }
+
+  /**
+   * Resets the metrics for a given account.
+   *
+   * @param accountId for which the metrics needs to be set.
+   * @throws MetricsServiceException thrown when there is issue with reseting
+   * metrics.
+   * @throws TException for Thrift level issues
+   */
+  @Override
+  public void reset(String accountId) throws MetricsServiceException, TException {
+    try {
+      if(! DBUtils.clearMetricsTables(getConnection(), accountId)) {
+        throw new MetricsServiceException("Failed to reset metrics for " +
+                                            "account " + accountId);
+      }
+    } catch (SQLException e) {
+      throw new MetricsServiceException(e.getMessage());
+    }
   }
 
   /**

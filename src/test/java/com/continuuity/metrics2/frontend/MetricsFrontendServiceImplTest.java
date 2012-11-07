@@ -498,6 +498,16 @@ public class MetricsFrontendServiceImplTest {
     Assert.assertTrue(points.getPoints().get("busyness").size() >= 1);
   }
 
+  @Test
+  public void testResetMetrics() throws Exception {
+    testMultipleFlowletsAndMultipleInstancePerFlowlet();
+    client.reset("demo");
+    List<Counter> counters
+      = getCounters(new FlowArgument("demo", "myapp", "myflow"), null);
+    Assert.assertNotNull(counters);
+    Assert.assertThat(counters.size(), CoreMatchers.is(0));
+  }
+
   /**
    * @return Status of adding a metric.
    */

@@ -87,5 +87,11 @@ service MetricsFrontendService {
   */
   Points getTimeSeries(1: TimeseriesRequest request)
     throws (1: MetricsServiceException e),
+
+  /**
+   * Resets the tables for a given account.
+   */
+  void reset(1: string accountId)
+    throws (1: MetricsServiceException e),
 }
 
