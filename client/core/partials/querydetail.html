@@ -6,43 +6,43 @@
 <h1 class="popup-title"><a {{bindAttr href="controller.current.href"}}>{{controller.current.name}}</a></h1>
 
 <table style="width: 100%">
-	<tr>
-		<td style="width: 150px;">
-			Display Name
-		</td>
-		<td>
-			{{view C.Vw.TextField valueBinding="form.name" }}
-		</td>
-	</tr>
-	<tr>
-		<td>
-			Identifier
-		</td>
-		<td>
-			{{view Ember.TextField valueBinding="form.id" change=idChanged}}
-		</td>
-	</tr>
+<tr>
+<td style="width: 150px;">
+Display Name
+</td>
+<td>
+{{view C.Vw.TextField valueBinding="form.name" }}
+</td>
+</tr>
+<tr>
+<td>
+Identifier
+</td>
+<td>
+{{view Ember.TextField valueBinding="form.id" change=idChanged}}
+</td>
+</tr>
 </table>
 
 <table class="table" class="popup-stream-table">
-	<thead>
-		<th>Health</th>
-		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 100px;text-align: center;">Unconsumed</th>
-		<th style="width: 295px;">Events per Second</th>
-	</thead>
-	<tbody>
-		<tr>
-			<td class="list-health-cell">
-				<div class="list-health-box"></div>
-			</td>
-			<td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
-			<td class="app-list-count">{{controller.current.unconsumed}}<br /><span>Events</span></td>
-			<td>
-				{{view C.Vw.Chart entity-type="Stream" width="300" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
-			</td>
-		</tr>
-	</tbody>
+<thead>
+<th>Health</th>
+<th style="width: 100px;text-align: center;">Storage</th>
+<th style="width: 100px;text-align: center;">Unconsumed</th>
+<th style="width: 295px;">Events per Second</th>
+</thead>
+<tbody>
+<tr>
+<td class="list-health-cell">
+<div class="list-health-box"></div>
+</td>
+<td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
+<td class="app-list-count">{{controller.current.unconsumed}}<br /><span>Events</span></td>
+<td>
+{{view C.Vw.Chart entity-type="Stream" width="300" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
+</td>
+</tr>
+</tbody>
 </table>
 
 </div>

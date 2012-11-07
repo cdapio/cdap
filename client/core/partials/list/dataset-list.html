@@ -1,33 +1,33 @@
 
 {{#if types.Dataset.content.length}}
-	<table class="table">
-	<thead>
-		<th colspan="2">&nbsp;</th>
-		<th style="width: 100px;text-align: center;">Storage</th>
-		<th style="width: 444px;">Writes per Second</th>
-	</thead>
-	{{#each types.Dataset.content tagName="tbody"}}
-	<tr>
-		<td class="list-health-cell">
-			<div class="list-health-box"></div>
-		</td>
-		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
-		</td>
-		<td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Dataset" mode="singular" metrics="dataset.write.{id}.count"}}</td>
-	</tr>
-	{{/each}}
-	</table>
+<table class="table">
+<thead>
+<th colspan="2">&nbsp;</th>
+<th style="width: 100px;text-align: center;">Storage</th>
+<th style="width: 444px;">Writes per Second</th>
+</thead>
+{{#each types.Dataset.content tagName="tbody"}}
+<tr>
+<td class="list-health-cell">
+<div class="list-health-box"></div>
+</td>
+<td class="app-list-name">
+<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
+</td>
+<td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Dataset" mode="singular" metrics="dataset.write.{id}.count"}}</td>
+</tr>
+{{/each}}
+</table>
 {{else}}
-	<div class="object-list-empty">
-		<div class="object-list-empty-content">
-			No Datasets.
-			{{#if C.onDatasets}}
-			<br /><span>Please click the button above to create one.</span>
-			{{else}}
-			<br /><span>Please navigate to the <a href="#/data">Datasets page</a> to create one.</span>
-			{{/if}}
-		</div>
-	</div>
+<div class="object-list-empty">
+<div class="object-list-empty-content">
+No Datasets.
+{{#if C.onDatasets}}
+<br /><span>Please click the button above to create one.</span>
+{{else}}
+<br /><span>Please navigate to the <a href="#/data">Datasets page</a> to create one.</span>
+{{/if}}
+</div>
+</div>
 {{/if}}

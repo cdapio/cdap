@@ -1,36 +1,36 @@
 <div class="modal-header">
-	<a {{action "hide" on="click"}} class="close">&times;</a>
-	<h2>Upload a Flow</h2>
+<a {{action "hide" on="click"}} class="close">&times;</a>
+<h2>Upload a Flow</h2>
 </div>
 <div class="modal-body">
-	<table style="width: 100%">
-		<tr>
-			<td>
-				Select an App
-			</td>
-			<td>
-				{{view Ember.Select valueBinding="form.app" contentBinding="availableApps"}}
-			</td>
-		</tr>
-		<tr>
-			<td style="width:100px;">
-				Drop a File
-			</td>
-			<td>
-				{{view C.Vw.DropZone}}
-			</td>
-		</tr>
-		<tr>
-			<td>
-				Select a File
-			</td>
-			<td>
-				<input type="file" />
-			</td>
-		</tr>
-	</table>
-	<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
+<table style="width: 100%">
+<tr>
+<td>
+Select an App
+</td>
+<td>
+{{view Ember.Select valueBinding="form.app" contentBinding="availableApps"}}
+</td>
+</tr>
+<tr>
+<td style="width:100px;">
+Drop a File
+</td>
+<td>
+{{view C.Vw.DropZone}}
+</td>
+</tr>
+<tr>
+<td>
+Select a File
+</td>
+<td>
+<input type="file" />
+</td>
+</tr>
+</table>
+<div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
 </div>
 <div class="modal-footer">
-	<button {{action "hide" on="click"}} class="btn">Cancel</a>
+<button {{action "hide" on="click"}} class="btn">Cancel</a>
 </div>

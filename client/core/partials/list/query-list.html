@@ -1,34 +1,34 @@
 
 {{#if types.Query.content.length}}
-	<table class="table">
-	<thead>
-		<th colspan="2">&nbsp;</th>
-		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 212px;">Requests per Second</th>
-		<th style="width: 212px;">Errors per Second</th>
-	</thead>
-	{{#each types.Query.content tagName="tbody"}}
-	<tr>
-		<td class="list-health-cell">
-			<div class="list-health-box"></div>
-		</td>
-		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{id}}</a><br /><span class="app-list-status">{{currentState}}</span>
-		</td>
-		<td class="app-list-count">1</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
-		
-	</tr>
-	{{/each}}
-	</table>
+<table class="table">
+<thead>
+<th colspan="2">&nbsp;</th>
+<th style="width: 100px;text-align: center;">Instances</th>
+<th style="width: 212px;">Requests per Second</th>
+<th style="width: 212px;">Errors per Second</th>
+</thead>
+{{#each types.Query.content tagName="tbody"}}
+<tr>
+<td class="list-health-cell">
+<div class="list-health-box"></div>
+</td>
+<td class="app-list-name">
+<a {{bindAttr href="href"}}>{{id}}</a><br /><span class="app-list-status">{{currentState}}</span>
+</td>
+<td class="app-list-count">1</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.success.count"}}</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Query" metrics="query.failed.count"}}</td>
+
+</tr>
+{{/each}}
+</table>
 {{else}}
-	<div class="object-list-empty">
-		<div class="object-list-empty-content">
-			No Queries.
-			<br /><span>Add a Query by uploading a JAR file.</span>
-		</div>
-	</div>
+<div class="object-list-empty">
+<div class="object-list-empty-content">
+No Queries.
+<br /><span>Add a Query by uploading a JAR file.</span>
+</div>
+</div>
 {{/if}}
 
 {{view C.Vw.QueryDetail viewName="query-detail"}}

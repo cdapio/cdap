@@ -1,34 +1,34 @@
 {{#if types.Application.length}}
-	<table class="table">
-	<thead>
-		<th colspan="2"></th>
-		<th style="text-align: center;">Streams</th>
-		<th style="text-align: center;">Flows</th>
-		<th style="text-align: center;">DataSets</th>
-		<th style="text-align: center;">Queries</th>
-		<th style="width: 364px;">Tuples per Second</th>
-	</thead>
-	{{#each controller.types.Application tagName="tbody"}}
-	<tr>
-		<td class="list-health-cell">
-			<div class="list-health-box"></div>
-		</td>
-		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{name}}</a>
-		</td>
-		<td class="app-list-count">{{counts.Stream}}</strong></td>
-		<td class="app-list-count">{{counts.Flow}}</strong></td>
-		<td class="app-list-count">{{counts.Dataset}}</strong></td>
-		<td class="app-list-count">{{counts.Query}}</strong></td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Application" height="50" metrics="processed.count"}}</td>
-	</tr>
-	{{/each}}
-	</table>
+<table class="table">
+<thead>
+<th colspan="2"></th>
+<th style="text-align: center;">Streams</th>
+<th style="text-align: center;">Flows</th>
+<th style="text-align: center;">DataSets</th>
+<th style="text-align: center;">Queries</th>
+<th style="width: 364px;">Tuples per Second</th>
+</thead>
+{{#each controller.types.Application tagName="tbody"}}
+<tr>
+<td class="list-health-cell">
+<div class="list-health-box"></div>
+</td>
+<td class="app-list-name">
+<a {{bindAttr href="href"}}>{{name}}</a>
+</td>
+<td class="app-list-count">{{counts.Stream}}</strong></td>
+<td class="app-list-count">{{counts.Flow}}</strong></td>
+<td class="app-list-count">{{counts.Dataset}}</strong></td>
+<td class="app-list-count">{{counts.Query}}</strong></td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Application" height="50" metrics="processed.count"}}</td>
+</tr>
+{{/each}}
+</table>
 {{else}}
-	<div class="object-list-empty">
-		<div class="object-list-empty-content">
-			No Applications.
-			<br /><span>Create an Application by clicking the button above.</span>
-		</div>
-	</div>
+<div class="object-list-empty">
+<div class="object-list-empty-content">
+No Applications.
+<br /><span>Create an Application by clicking the button above.</span>
+</div>
+</div>
 {{/if}}

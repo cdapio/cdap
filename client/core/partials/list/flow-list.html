@@ -1,31 +1,31 @@
 
 {{#if types.Flow.content.length}}
-	<table class="table">
-	<thead>
-		<th colspan="2">&nbsp;</th>
-		<th style="width: 100px;text-align: center;">Instances</th>
-		<th style="width: 262px;">Tuples per Second</th>
-		<th style="width: 262px;">Busyness</th>
-	</thead>
-	{{#each types.Flow.content tagName="tbody"}}
-	<tr>
-		<td class="list-health-cell">
-			<div class="list-health-box"></div>
-		</td>
-		<td class="app-list-name">
-			<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
-		</td>
-		<td class="app-list-count">{{instances}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="processed.count"}}</td>
-		<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="busyness" unit="percent"}}</td>
-	</tr>
-	{{/each}}
-	</table>
+<table class="table">
+<thead>
+<th colspan="2">&nbsp;</th>
+<th style="width: 100px;text-align: center;">Instances</th>
+<th style="width: 262px;">Tuples per Second</th>
+<th style="width: 262px;">Busyness</th>
+</thead>
+{{#each types.Flow.content tagName="tbody"}}
+<tr>
+<td class="list-health-cell">
+<div class="list-health-box"></div>
+</td>
+<td class="app-list-name">
+<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+</td>
+<td class="app-list-count">{{instances}}</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="processed.count"}}</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Flow" metrics="busyness" unit="percent"}}</td>
+</tr>
+{{/each}}
+</table>
 {{else}}
-	<div class="object-list-empty">
-		<div class="object-list-empty-content">
-			No Flows.
-			<br /><span>Add a Flow by uploading a JAR file.</span>
-		</div>
-	</div>
+<div class="object-list-empty">
+<div class="object-list-empty-content">
+No Flows.
+<br /><span>Add a Flow by uploading a JAR file.</span>
+</div>
+</div>
 {{/if}}
