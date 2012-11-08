@@ -15,6 +15,9 @@ tasks.withType(Compile) {
  */
 dependencies {
 
+    // Self dependencies.
+    compile sourceSets.api.output
+
     // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'com.google.guava', name: 'guava', version: '12.+'
@@ -60,6 +63,11 @@ task dist(type:  Tar, dependsOn: jar) {
     from('bin') {
         into('common/bin')
     }
+}
+
+artifacts {
+  archives apiJavadocJar
+  archives apiJar
 }
 
 /**
