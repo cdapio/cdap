@@ -88,7 +88,7 @@ public class GatewayFlumeCollectorTest {
     MetadataService mds = new MetadataService(this.executor);
     Stream stream = new Stream(destination);
     stream.setName(destination);
-    mds.createStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
+    mds.assertStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
   } // end of setupGateway
 
   /**

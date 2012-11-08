@@ -17,6 +17,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,9 +88,9 @@ public class GatewayRestCollectorTest {
 
     // make sure the destination stream is defined in the meta data
     MetadataService mds = new MetadataService(this.executor);
-    Stream stream = new Stream(this.stream);
-    stream.setName(this.stream);
-    mds.createStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
+    Stream stream = new Stream(GatewayRestCollectorTest.stream);
+    stream.setName(GatewayRestCollectorTest.stream);
+    mds.assertStream(new Account(OperationContext.DEFAULT_ACCOUNT_ID), stream);
 
   } // end of setupGateway
 
@@ -131,6 +132,7 @@ public class GatewayRestCollectorTest {
    *
    * @throws Exception If any exceptions happen during the test
    */
+  @Test @Ignore
   public void testRestToQueueWithEventWriteConsumer() throws Exception {
 
     // Set up our consumer and queues
