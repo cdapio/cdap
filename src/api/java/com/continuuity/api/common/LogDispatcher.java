@@ -1,13 +1,19 @@
-package com.continuuity.common.logger;
-
-import org.apache.log4j.Level;
+package com.continuuity.api.common;
 
 /**
  *
  */
 public interface LogDispatcher {
+  public static enum Level {
+    TRACE,
+    DEBUG,
+    WARN,
+    ERROR,
+    INFO
+  }
   public String getName();
   public Level getLevel();
+  public void setLevel(Level level);
   public void trace(LogTag tag, String msg, Throwable throwable);
   public void trace(LogTag tag, String msg);
   public void debug(LogTag tag, String msg, Throwable throwable);
@@ -23,4 +29,5 @@ public interface LogDispatcher {
   public boolean isWarnEnabled();
   public boolean isTraceEnabled();
   public boolean isErrorEnabled();
+  public boolean writeLog(LogTag tag, Level level, String message, String stack);
 }

@@ -1,4 +1,4 @@
-package com.continuuity.common.logger;
+package com.continuuity.api.common;
 
 import java.util.Formatter;
 
