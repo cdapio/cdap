@@ -78,13 +78,24 @@ exception MetadataServiceException {
  */
 service MetadataService {
   /**
-   * Creates a stream.
+   * Creates a new stream.
    *
    * @return true if successful; false otherwise
    * @throws MetadataServiceException thrown when there is issue with creating
    * stream.
    */
   bool createStream(1: Account account, 2: Stream stream)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Asserts that a stream exists: creates if it does not exist, checks
+   * compatibility if it already exists
+   *
+   * @return true if successful; false otherwise
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * stream.
+   */
+  bool assertStream(1: Account account, 2: Stream stream)
     throws (1: MetadataServiceException e),
 
   /**
@@ -118,13 +129,24 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates a dataset.
+   * Creates a new dataset
    *
    * @return true if successfull; false otherwise
    * @throws MetadataServiceException thrown when there is issue with creating
    * a data set.
    */
   bool createDataset(1: Account account, 2: Dataset dataset)
+    throws (1: MetadataServiceException e),
+
+  /**
+   * Asserts that a dataset exists: creates if it does not exist, checks
+   * compatibility if it already exists
+   *
+   * @return true if successfull; false otherwise
+   * @throws MetadataServiceException thrown when there is issue with creating
+   * a data set.
+   */
+  bool assertDataset(1: Account account, 2: Dataset dataset)
     throws (1: MetadataServiceException e),
 
   /**
@@ -158,7 +180,7 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates an application if not exists.
+   * Creates an new application.
    *
    * @return true if created successfully or already exists, false otherwise.
    * @throws MetadataServiceException thrown when there is issue with creating
@@ -199,7 +221,7 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates a query if not exists.
+   * Creates a new query.
    *
    * @return true if created successfully, false otherwise.
    * @throws MetadataServiceException thrown when there is issue with creating
@@ -261,7 +283,7 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
-   * Creates an flow if not exists.
+   * Creates a new flow.
    *
    * @return true if created successfully or already exists, false otherwise.
    * @throws MetadataServiceException thrown when there is issue with creating

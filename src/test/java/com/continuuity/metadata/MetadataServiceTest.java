@@ -52,7 +52,7 @@ public class MetadataServiceTest {
     com.continuuity.metadata.thrift.Stream
         stream = new com.continuuity.metadata.thrift.Stream("id1");
     mds.createStream(account, stream);
-    Assert.assertTrue(true);
+    Assert.fail();
   }
 
   /**
@@ -64,7 +64,7 @@ public class MetadataServiceTest {
     com.continuuity.metadata.thrift.Stream
       stream = new com.continuuity.metadata.thrift.Stream("");
     mds.createStream(account, stream);
-    Assert.assertTrue(true);
+    Assert.fail();
   }
 
   /**
@@ -78,7 +78,6 @@ public class MetadataServiceTest {
       stream = new Stream("id1");
     stream.setName("Funny stream");
     mds.createStream(account, stream);
-    Assert.assertTrue(true);
   }
 
   /**

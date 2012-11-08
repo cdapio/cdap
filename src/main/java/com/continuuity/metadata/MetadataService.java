@@ -44,15 +44,56 @@ public class MetadataService extends MetadataHelper
   //-------------------- generic methods ---------------------------------
 
   /**
-   * Creates a meta data object if not existing. Relies on the meta data helper
-   * for the specific type of meta data objects to do conversions, comparisons,
-   * etc. All other code is generic for all types of objects.
+   * Creates a new meta data entry, fails if an entry for the same object
+   * already exists.
+   *
+   * Relies on the meta data helper for the specific type of meta data
+   * objects to do conversions, comparisons, etc. All other code is generic
+   * for all types of objects.
    *
    * @param t the meta data object to create in the MDS.
    * @return true if successful; false otherwise
    * @throws MetadataServiceException when there is a failure.
    */
   private <T> boolean create(Helper<T> helper, Account account, T t)
+      throws MetadataServiceException, TException {
+
+    // Validate account and meta data object
+    validateAccount(account);
+    helper.validate(t);
+
+    // Create a context.
+    OperationContext context = new OperationContext(account.getId());
+
+    try {
+      // perform the insert, no conflict resolution
+      this.mds.add(context, helper.makeEntry(account, t), false);
+      return true;
+    } catch (OperationException e) {
+      String message = String.format("Failed to create %s %s. Reason: %s.",
+          helper.getName(), helper.getId(t), e.getMessage());
+      Log.error(message, e);
+      throw new MetadataServiceException(message);
+    }
+
+  }
+
+
+  /**
+   * Creates a meta data object if not existing. If the object already
+   * exists, verify that the existing entry is compatible (equivalent or
+   * subsuming) with the new entry. In other words, after this method
+   * succeeds, a compatible entry is guaranteed to exist.
+   *
+   * Relies on the meta data helper for the specific type of meta data
+   * objects to do conversions, comparisons, etc. All other code is generic
+   * for all types of objects.
+   *
+   * @param t the meta data object to create in the MDS.
+   * @return true if successful; false otherwise
+   * @throws MetadataServiceException when there is a failure.
+   */
+  private <T> boolean assertt(Helper<T> helper, Account account, T t)
       throws MetadataServiceException, TException {
 
     // Validate account and meta data object
@@ -356,6 +397,12 @@ public class MetadataService extends MetadataHelper
   }
 
   @Override
+  public boolean assertStream(Account account, Stream stream)
+      throws MetadataServiceException, TException {
+    return assertt(streamHelper, account, stream);
+  }
+
+  @Override
   public boolean deleteStream(Account account, Stream stream)
       throws MetadataServiceException, TException {
     return delete(streamHelper, account, stream);
@@ -379,6 +426,12 @@ public class MetadataService extends MetadataHelper
   public boolean createDataset(Account account, Dataset dataset) throws
       MetadataServiceException, TException {
     return create(datasetHelper, account, dataset);
+  }
+
+  @Override
+  public boolean assertDataset(Account account, Dataset dataset) throws
+      MetadataServiceException, TException {
+    return assertt(datasetHelper, account, dataset);
   }
 
   @Override
