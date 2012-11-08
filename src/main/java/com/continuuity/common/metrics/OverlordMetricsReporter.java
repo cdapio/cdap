@@ -325,6 +325,7 @@ public class OverlordMetricsReporter extends AbstractPollingReporter
                              String context) throws Exception {
     sendLong(name.getType(), name.getGroup(), name.getName() + ".count",
              name.getScope(), counter.count());
+    counter.clear();
   }
 
   @Override
