@@ -6,6 +6,11 @@ package com.continuuity.common.conf;
 public class Constants {
 
   /**
+   * The default account id to use
+   */
+  public static String DEFAULT_ACCOUNT_ID = "demo";
+
+  /**
    * Service names.
    */
   public static final String
@@ -226,5 +231,13 @@ public class Constants {
     DEFAULT_OVERLORD_SERVER_PORT = 45005;
   public static final int
     DEFAULT_OVERLORD_SERVER_THREADS = 10;
+
+  /**
+   * Config for Log Collection
+   */
+  public static final String CFG_LOG_COLLECTION_ROOT =
+      "log.collection.root";
+  public static final String DEFAULT_LOG_COLLECTION_ROOT =
+      "/continuuity/data/logs";
 
 }
