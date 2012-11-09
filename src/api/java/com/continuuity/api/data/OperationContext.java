@@ -1,7 +1,5 @@
 package com.continuuity.api.data;
 
-import com.continuuity.common.conf.Constants;
-
 public class OperationContext {
 
   private String application;
@@ -34,7 +32,7 @@ public class OperationContext {
 
   /** defaults to be used everywhere until we support true accounts */
   public static final String DEFAULT_ACCOUNT_ID =
-      Constants.DEFAULT_ACCOUNT_ID;
+      "demo";
   public static final OperationContext DEFAULT =
       new OperationContext(DEFAULT_ACCOUNT_ID);
 }
