@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.continuuity.api.data.*;
+import com.continuuity.flow.common.FlowLogTag;
 import com.continuuity.flow.common.GenericDataSetRegistry;
+import com.continuuity.flow.common.LocalLogDispatcher;
+
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -16,6 +19,8 @@ import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.ClearFabric.ToClear;
@@ -81,12 +86,14 @@ public abstract class FabricTestBase {
       (OmidTransactionalOperationExecutor)injector.getInstance(
           OperationExecutor.class);
 
+  private static final CConfiguration conf = CConfiguration.create();
+
   private static final FlowletContext context =
-      new FlowletContextImpl(executor, OperationContext.DEFAULT, 1, null);
+      new FlowletContextImpl(executor, OperationContext.DEFAULT, 1,
+          "id", new FlowLogTag(ACCOUNT, APPLICATION, "flow", "runid"),
+          new LocalLogDispatcher(conf), new CMetrics(MetricType.FlowUser));
 
   private static final DataFabric fabric = context.getDataFabric();
-
-  private static final CConfiguration conf = CConfiguration.create();
 
   private static Gateway queryGateway = null;
 
