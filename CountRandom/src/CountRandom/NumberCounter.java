@@ -9,6 +9,7 @@ public class NumberCounter extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     Integer i = tuple.get("number");
+    getFlowletContext().getLogger().info("Processing integer " + i.intValue());
     outputCollector.add(new Increment(i.toString().getBytes(), 1L));
   }
 
