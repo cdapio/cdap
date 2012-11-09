@@ -93,5 +93,13 @@ service MetricsFrontendService {
    */
   void reset(1: string accountId)
     throws (1: MetricsServiceException e),
+
+  /**
+   * Returns log line.
+   */
+  list<string> getLog(1: string accountId, 2: string applicationId,
+                      3: string flowId, 4: i32 size)
+    throws (1: MetricsServiceException e),
+
 }
 

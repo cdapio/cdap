@@ -1,8 +1,10 @@
 package com.continuuity.metrics2.frontend;
 
+import com.continuuity.api.common.LogTag;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.common.logging.LogCollector;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.metrics2.common.DBUtils;
 import com.continuuity.metrics2.temporaldb.DataPoint;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,7 +40,7 @@ import java.util.concurrent.*;
 public class MetricsFrontendServiceImpl
   implements MetricsFrontendService.Iface {
 
-  private static final Logger Log = LoggerFactory.getLogger(
+  private static final Logger LOG = LoggerFactory.getLogger(
     MetricsFrontendServiceImpl.class
   );
 
@@ -52,6 +55,8 @@ public class MetricsFrontendServiceImpl
    * Type of Database we are configured with.
    */
   private DBUtils.DBType type;
+
+  private LogCollector collector;
 
   /**
    *
@@ -83,6 +88,7 @@ public class MetricsFrontendServiceImpl
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
     }
     DBUtils.createMetricsTables(getConnection(), this.type);
+    collector = new LogCollector(configuration);
   }
 
   /**
@@ -112,6 +118,32 @@ public class MetricsFrontendServiceImpl
                                             "account " + accountId);
       }
     } catch (SQLException e) {
+      throw new MetricsServiceException(e.getMessage());
+    }
+  }
+
+  @Override
+  public List<String> getLog(final String accountId, final String applicationId,
+                             final String flowId, int size)
+    throws MetricsServiceException, TException {
+    LogTag logTag = new LogTag() {
+      @Override
+      public String getTag() {
+        return String.format("%s:%s:%s", accountId, applicationId, flowId);
+      }
+    };
+
+    if(size < 0) {
+      size = 10 * 1024;
+    }
+
+    List<String> lines = null;
+    try {
+      lines = collector.tail(logTag.getTag(), size);
+      return lines;
+    } catch (IOException e) {
+      LOG.warn("Failed to tail log file. Tag {}. Reason : {}",
+               logTag.getTag(), e.getMessage());
       throw new MetricsServiceException(e.getMessage());
     }
   }
@@ -199,7 +231,7 @@ public class MetricsFrontendServiceImpl
           ));
         }
       } catch (SQLException e) {
-        Log.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
+        LOG.warn("Unable to retrieve counters. Reason : {}", e.getMessage());
       } finally {
         try {
           if(rs != null) {
@@ -212,8 +244,8 @@ public class MetricsFrontendServiceImpl
             connection.close();
           }
         } catch(SQLException e) {
-          Log.warn("Failed to close connection/statement/record. Reason : {}",
-            e.getMessage());
+          LOG.warn("Failed to close connection/statement/record. Reason : " +
+                     "{}", e.getMessage());
         }
       }
 
@@ -278,11 +310,11 @@ public class MetricsFrontendServiceImpl
         ImmutablePair<String, List<DataPoint>> dataPoint = future.get();
         dataPoints.put(dataPoint.getFirst(), dataPoint.getSecond());
       } catch (InterruptedException e) {
-        Log.info("Timeseries retrieval has been interrupted. Reason : {}",
+        LOG.info("Timeseries retrieval has been interrupted. Reason : {}",
                  e.getMessage());
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        Log.warn("There was error getting results of a future. Reason : {}",
+        LOG.warn("There was error getting results of a future. Reason : {}",
                  e.getMessage());
       }
     }
@@ -445,7 +477,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(5, start);
         stmt.setLong(6, end);
         stmt.setString(7, metric);
-        Log.trace("Timeseries query {}", stmt.toString());
+        LOG.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.ACCOUNT_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -462,7 +494,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(2, start);
         stmt.setLong(3, end);
         stmt.setString(4, metric);
-        Log.trace("Timeseries query {}", stmt.toString());
+        LOG.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.APPLICATION_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -481,7 +513,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(3, start);
         stmt.setLong(4, end);
         stmt.setString(5, metric);
-        Log.trace("Timeseries query {}", stmt.toString());
+        LOG.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.FLOW_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -502,7 +534,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(4, start);
         stmt.setLong(5, end);
         stmt.setString(6, metric);
-        Log.trace("Timeseries query {}", stmt.toString());
+        LOG.trace("Timeseries query {}", stmt.toString());
       } else if(level == MetricTimeseriesLevel.FLOWLET_LEVEL) {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT timestamp, metric, SUM(value) AS aggregate");
@@ -525,7 +557,7 @@ public class MetricsFrontendServiceImpl
         stmt.setLong(5, start);
         stmt.setLong(6, end);
         stmt.setString(7, metric);
-        Log.trace("Timeseries query {}", stmt.toString());
+        LOG.trace("Timeseries query {}", stmt.toString());
       }
 
       // Execute the query.
@@ -539,7 +571,7 @@ public class MetricsFrontendServiceImpl
         results.add(dpb.create());
       }
     } catch (SQLException e) {
-      Log.warn("Failed retrieving data for request {}. Reason : {}",
+      LOG.warn("Failed retrieving data for request {}. Reason : {}",
                argument.toString(), e.getMessage());
     } finally {
       try {
@@ -553,8 +585,8 @@ public class MetricsFrontendServiceImpl
           connection.close();
         }
       } catch (SQLException e) {
-        Log.warn("Failed closing recordset/statement/connection. Reason : {}",
-                 e.getMessage());
+        LOG.warn("Failed closing recordset/statement/connection. Reason : " +
+                   "{}", e.getMessage());
       }
     }
     return results;
