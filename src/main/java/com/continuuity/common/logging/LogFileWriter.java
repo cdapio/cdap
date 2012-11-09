@@ -6,8 +6,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class LogFileWriter implements LogWriter {
+
+  static final Charset charsetUtf8 = Charset.forName("UTF-8");
 
   LogConfiguration config;
   FileSystem fileSystem;
@@ -67,19 +70,22 @@ public class LogFileWriter implements LogWriter {
   }
 
   void openFileForWrite(String path, String name) throws IOException {
-    Path fsPath = new Path(path, name);
-    if (!fileSystem.exists(fsPath)) {
-      this.fileSystem.create(fsPath);
+    Path filePath = new Path(path, name);
+    if (!fileSystem.exists(filePath)) {
+      out = this.fileSystem.create(filePath);
+    } else {
+      out = fileSystem.append(filePath);
     }
-    out = fileSystem.append(fsPath);
   }
 
   void closeFile() throws IOException {
     out.close();
   }
 
-  void persistMessage(String message) throws IOException {
-    out.writeUTF(message);
+  synchronized void persistMessage(String message) throws IOException {
+    out.write(message.getBytes(charsetUtf8));
+    out.write('\n');
+    out.flush();
   }
 
   long getCurrentFileSize() throws IOException {

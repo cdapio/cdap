@@ -6,7 +6,7 @@ public interface LogWriter {
 
   /**
    * Configures this writer
-   * @param config
+   * @param config specifies what log to write to
    */
   public void configure(LogConfiguration config) throws IOException;
 

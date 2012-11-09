@@ -1,5 +1,7 @@
 package com.continuuity.common.logging;
 
+import java.io.IOException;
+
 public class LogConfiguration {
 
   private final String account;
@@ -11,10 +13,16 @@ public class LogConfiguration {
   public final long DEFAULT_ROLL_THRESHOLD = 4 * 1024 * 1024; // 4MB
   public final int  DEFAULT_ROLL_INSTANCES = 5; // .log, log.1, ... log.4
 
-  public LogConfiguration(String pathPrefix, String account,
-                          String application, String flow) {
+  public LogConfiguration(String pathPrefix,
+                          String tag) throws IOException {
+    // parse the log tag
+    String[] splits = tag.split(":");
+    if (splits.length < 3)
+      throw new IOException("Invalid log tag '" + tag + "'");
+    String account = splits[0], app = splits[1], flow = splits[2];
+
     this.account = account;
-    this.application = application;
+    this.application = app;
     this.flow = flow;
     this.prefix = pathPrefix;
     this.path = String.format("%s/%s/%s/", pathPrefix, application, flow);

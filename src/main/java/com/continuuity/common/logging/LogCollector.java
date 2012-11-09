@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class LogCollector {
@@ -43,14 +44,9 @@ public class LogCollector {
         // check if it is stull null
         logger = loggers.get(tag);
         if (logger == null) {
-          // parse the log tag
-          String[] splits = tag.split(":");
-          if (splits.length < 3)
-            throw new IOException("Invalid log tag '" + tag + "'");
-          String account = splits[0], app = splits[1], flow = splits[2];
           // create a new log configuration for this tag
           LogConfiguration conf =
-              new LogConfiguration(this.pathPrefix, account, app, flow);
+              new LogConfiguration(this.pathPrefix, tag);
           // create a new log writer
           logger = new LogFileWriter();
           logger.configure(conf);
@@ -60,6 +56,16 @@ public class LogCollector {
       }
     }
     return logger;
+  }
+
+  public List<String> tail(String tag, int size) throws IOException {
+    // create a new log configuration for this tag
+    LogConfiguration conf =
+        new LogConfiguration(this.pathPrefix, tag);
+    // create a new log reader
+    LogReader reader = new LogFileReader();
+    reader.configure(conf);
+    return reader.tail(size);
   }
 
 }
