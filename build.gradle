@@ -21,6 +21,7 @@ dependencies {
     else
     {
         compile group: 'com.continuuity', name: 'common', version: "${version}" , changing: true
+        compile group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true
         compile group: 'com.continuuity', name: 'data-fabric', version: "${version}" , changing: true
         compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}" , changing: true
         compile group: 'com.continuuity', name: 'flow', version: "${version}" , changing: true
