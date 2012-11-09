@@ -392,6 +392,25 @@
     </property>
 
 
+    <!--
+      Log collection service configuration
+    -->
+    <property>
+        <name>log.collection.server.address</name>
+        <value>localhost</value>
+        <description>Specifies the hostname where the collection service runs</description>
+    </property>
 
+    <property>
+        <name>log.collection.port</name>
+        <value>12157</value>
+        <description>Port the log collection service runs on</description>
+    </property>
+
+    <property>
+        <name>log.collection.root</name>
+        <value>data/logs</value>
+        <description>Root location for collecting logs</description>
+    </property>
 
 </configuration>
