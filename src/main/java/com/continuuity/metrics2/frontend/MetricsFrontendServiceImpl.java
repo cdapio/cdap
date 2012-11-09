@@ -301,9 +301,9 @@ public class MetricsFrontendServiceImpl
           List<DataPoint> n = null;
           results.put(metric, convertDataPointToPoint(n));
         } else {
-          ImmutableList<DataPoint> busyness = new Timeseries().div(
-            ImmutableList.copyOf(processed),
-            ImmutableList.copyOf(read),
+          ImmutableList<DataPoint> busyness = timeseries.div(
+            timeseries.rate(ImmutableList.copyOf(processed)),
+            timeseries.rate(ImmutableList.copyOf(read)),
             new Function<Double, Double>() {
               @Override
               public Double apply(@Nullable Double value) {
@@ -319,8 +319,10 @@ public class MetricsFrontendServiceImpl
           results.put(metric, convertDataPointToPoint(filledBusyness));
         }
       } else {
+        ImmutableList<DataPoint> r =
+          timeseries.rate(dataPoints.get(metric));
         ImmutableList<DataPoint> filledr =
-          timeseries.fill(dataPoints.get(metric), metric, start, end, numPoints, 1);
+          timeseries.fill(r, metric, start, end, numPoints, 1);
         results.put(metric, convertDataPointToPoint(filledr));
       }
     }

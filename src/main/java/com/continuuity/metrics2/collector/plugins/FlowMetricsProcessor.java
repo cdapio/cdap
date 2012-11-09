@@ -225,16 +225,10 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "      metrics.run_id = vals.run_id AND " +
       "      metrics.instance_id = vals.instance_id AND " +
       "      metrics.metric = vals.metric " +
-      " WHEN MATCHED THEN UPDATE SET ";
-
-    if(request.getMetricName().contains(".count")) {
-      sql = sql + " metrics.value = metrics.value + %f, metrics.last_updt = now() ";
-    } else {
-      sql = sql + " metrics.value = %f";
-    }
-
-    sql = sql +  " WHEN NOT MATCHED THEN INSERT VALUES (" +
-      "      '%s', '%s', '%s', '%s', '%s', %d, '%s', %f, now())";
+      " WHEN MATCHED THEN UPDATE SET " +
+      " metrics.value = %f, metrics.last_updt = now() " +
+      " WHEN NOT MATCHED THEN INSERT VALUES (" +
+      " '%s', '%s', '%s', '%s', '%s', %d, '%s', %f, now())";
 
     // Bind parameters in prepared statements can be used only
     // for queries. As this sql is not exactly we cannot use prepared
@@ -346,11 +340,8 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
       "   value, " +
       "   last_updt " +
       ")" +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, now()) ";
-
-    if(request.getMetricName().contains(".count")) {
-      sql = sql + "ON DUPLICATE KEY UPDATE value = value + ?, last_updt = now()";
-    }
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, now()) " +
+      "ON DUPLICATE KEY UPDATE value = ?, last_updt = now()";
 
     Connection connection = null;
     PreparedStatement stmt = null;
