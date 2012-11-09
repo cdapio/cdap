@@ -352,8 +352,9 @@ public class MetadataService extends MetadataHelper
     // create a context
     OperationContext opContext = new OperationContext(account, app);
 
-    // try three times, give up after 3 write conflicts
-    for (int attempts = 2; attempts >= 0; --attempts) {
+    // try n times, give up after n write conflicts
+    final int retryAttempts = 5;
+    for (int attempts = retryAttempts; attempts >= 0; --attempts) {
       // retrieve the meta data entry
       MetaDataEntry entry;
       try {
@@ -368,6 +369,9 @@ public class MetadataService extends MetadataHelper
           "No meta data found for " + what + " '" + id + "'");
 
       String oldValue = entry.getTextField(field);
+      for (String x : oldValue.split(" ")) {
+        if (x.equals(item)) return true; // item is already in list
+      }
       String newValue = oldValue == null ? item + " " : oldValue + item + " ";
 
       try {
@@ -375,10 +379,29 @@ public class MetadataService extends MetadataHelper
             oldValue, newValue, -1);
         return true;
       } catch (OperationException e) {
-        if (e.getStatus() != StatusCode.WRITE_CONFLICT || attempts <= 0) {
-          String message = String.format("Failed to swap field '%s' for %s " +
-              "'%s'. Reason: %s.", field, what, id, e.getMessage());
+        String message = String.format("Failed to swap field '%s' for %s " +
+            "'%s'. Reason: %s.", field, what, id, e.getMessage());
+        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
+          // not a write conflict, must be some more serious problem
+          Log.error(message);
+          throw new MetadataServiceException(message);
+        }
+        if (attempts <= 0) {
+          // retry attempts exhausted, bail out
           Log.error(message, e);
+          message = String.format("Repeatedly failed to swap field '%s' for " +
+              "%s (%d attempts). Giving up.", field, what, retryAttempts);
+          throw new MetadataServiceException(message);
+        }
+        // there was a write conflict, random sleep before next attempt
+        Log.debug(message);
+        int millis = new Random(System.currentTimeMillis()).nextInt(100);
+        Log.debug("Sleeping " + millis + " ms before next attempt.");
+        try {
+          Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+          message = "InterruptedException during sleep()";
+          Log.error(message);
           throw new MetadataServiceException(message);
         }
       }
