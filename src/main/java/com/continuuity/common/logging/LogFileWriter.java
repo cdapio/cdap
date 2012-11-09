@@ -50,13 +50,8 @@ public class LogFileWriter implements LogWriter {
   }
 
   String formatMessage(LogEvent event) {
-    if (event.getStackTrace() == null) {
-      return String.format("%s [%s] %s", event.getTag().getTag(),
+      return String.format("%s [%s] %s", event.getTag(),
           event.getLevel(), event.getMessage());
-    } else {
-      return String.format("%s [%s] %s - at %s", event.getTag().getTag(),
-          event.getLevel(), event.getMessage(), event.getStackTrace());
-    }
   }
 
   String makeFileName(int instance) {
@@ -92,7 +87,7 @@ public class LogFileWriter implements LogWriter {
   }
 
   void deleteFile(String path, String name) throws IOException {
-    fileSystem.delete(new Path(path, name));
+    fileSystem.delete(new Path(path), false);
   }
 
   void renameFile(String path, String oldName, String newName)

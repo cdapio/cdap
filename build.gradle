@@ -10,6 +10,11 @@ tasks.withType(Compile) {
 } 
 */
 
+// The versions of our dependencies
+// TODO these are also defined in gateway... how do we ensure they stay in sync
+def avroVersion = '1.6.2'
+def flumeVersion = '1.2+'
+
 /**
  * Specify all the dependencies
  */
@@ -51,6 +56,12 @@ dependencies {
     // For metrics
     compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
+
+    // flume-ng dependencies
+    compile "org.apache.avro:avro:$avroVersion"
+    compile "org.apache.avro:avro-ipc:$avroVersion"
+    compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$flumeVersion"
 
 }
 

@@ -1,37 +1,30 @@
 package com.continuuity.common.logging;
 
-import com.continuuity.api.common.LogDispatcher;
-import com.continuuity.api.common.LogTag;
-
 public class LogEvent {
 
-  private final LogTag tag;
-  private final LogDispatcher.Level level;
-  private final String message;
-  private final String stacktrace;
+  public static final String FIELD_NAME_LOGTAG = "logtag";
+  public static final String FIELD_NAME_LOGLEVEL = "level";
 
-  public LogEvent(LogTag tag, LogDispatcher.Level level,
-                  String message, String stacktrace) {
-    this.tag = tag;
+  private final String tag;
+  private final String level;
+  private final String message;
+
+  public LogEvent(String logtag, String level, String message) {
+    this.tag = logtag;
     this.level = level;
     this.message = message;
-    this.stacktrace = stacktrace;
   }
 
-  public LogTag getTag() {
+  public String getTag() {
     return tag;
   }
 
-  public LogDispatcher.Level getLevel() {
+  public String getLevel() {
     return level;
   }
 
   public String getMessage() {
     return message;
-  }
-
-  public String getStackTrace() {
-    return stacktrace;
   }
 
 }

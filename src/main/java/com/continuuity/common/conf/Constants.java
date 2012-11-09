@@ -239,5 +239,13 @@ public class Constants {
       "log.collection.root";
   public static final String DEFAULT_LOG_COLLECTION_ROOT =
       "/continuuity/data/logs";
+  public static final String CFG_LOG_COLLECTION_PORT =
+      "log.collection.port";
+  public static final int DEFAULT_LOG_COLLECTION_PORT =
+      12157;
+  public static final String CFG_LOG_COLLECTION_THREADS =
+      "log.collection.threads";
+  public static final int DEFAULT_LOG_COLLECTION_THREADS =
+      10;
 
 }

@@ -1,6 +1,5 @@
 package com.continuuity.common.logging;
 
-import com.continuuity.api.common.LogTag;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.collect.Maps;
@@ -15,7 +14,7 @@ public class LogCollector {
   private static final Logger LOG
       = LoggerFactory.getLogger(LogCollector.class);
 
-  ConcurrentMap<LogTag, LogWriter> loggers = Maps.newConcurrentMap();
+  ConcurrentMap<String, LogWriter> loggers = Maps.newConcurrentMap();
 
   private String pathPrefix;
 
@@ -36,7 +35,7 @@ public class LogCollector {
     }
   }
 
-  private LogWriter getLogger(LogTag tag) throws IOException {
+  private LogWriter getLogger(String tag) throws IOException {
     // figure out whether we already have a log writer for this tag
     LogWriter logger = loggers.get(tag);
     if (logger == null) {
@@ -45,9 +44,9 @@ public class LogCollector {
         logger = loggers.get(tag);
         if (logger == null) {
           // parse the log tag
-          String[] splits = tag.getTag().split(":");
+          String[] splits = tag.split(":");
           if (splits.length < 3)
-            throw new IOException("Invalid log tag '" + tag.getTag() + "'");
+            throw new IOException("Invalid log tag '" + tag + "'");
           String account = splits[0], app = splits[1], flow = splits[2];
           // create a new log configuration for this tag
           LogConfiguration conf =
