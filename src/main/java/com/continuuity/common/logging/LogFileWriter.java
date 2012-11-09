@@ -85,7 +85,7 @@ public class LogFileWriter implements LogWriter {
   synchronized void persistMessage(String message) throws IOException {
     out.write(message.getBytes(charsetUtf8));
     out.write('\n');
-    out.flush();
+    out.hsync(); // note flush() and hflush() do not work!
   }
 
   long getCurrentFileSize() throws IOException {
@@ -98,6 +98,9 @@ public class LogFileWriter implements LogWriter {
 
   void renameFile(String path, String oldName, String newName)
       throws IOException {
-    fileSystem.rename(new Path(path, oldName), new Path(path, newName));
+    Path oldPath = new Path(path, oldName);
+    if (!fileSystem.exists(oldPath)) return;
+    Path newPath = new Path(path, newName);
+    fileSystem.rename(oldPath, newPath);
   }
 }
