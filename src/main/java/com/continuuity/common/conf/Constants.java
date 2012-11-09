@@ -238,7 +238,7 @@ public class Constants {
   public static final String CFG_LOG_COLLECTION_ROOT =
       "log.collection.root";
   public static final String DEFAULT_LOG_COLLECTION_ROOT =
-      "/continuuity/data/logs";
+      "data/logs";
   public static final String CFG_LOG_COLLECTION_PORT =
       "log.collection.port";
   public static final int DEFAULT_LOG_COLLECTION_PORT =
