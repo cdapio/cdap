@@ -247,5 +247,9 @@ public class Constants {
       "log.collection.threads";
   public static final int DEFAULT_LOG_COLLECTION_THREADS =
       10;
+  public static final String CFG_LOG_COLLECTION_SERVER_ADDRESS =
+      "log.collection.server.address";
+  public static final String DEFAULT_LOG_COLLECTION_SERVER_ADDRESS =
+      "localhost";
 
 }

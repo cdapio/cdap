@@ -56,4 +56,9 @@ public class FlumeLogCollector {
         + this.threads + " threads.");
   }
 
+  public static void main(String[] args) {
+    CConfiguration configuration = CConfiguration.create();
+    new FlumeLogCollector(configuration).start();
+  }
+
 }
