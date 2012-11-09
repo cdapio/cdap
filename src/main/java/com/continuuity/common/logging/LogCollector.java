@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class LogCollector {
@@ -66,6 +67,13 @@ public class LogCollector {
     LogReader reader = new LogFileReader();
     reader.configure(conf);
     return reader.tail(size);
+  }
+
+  public void close() throws IOException {
+    for (Map.Entry<String, LogWriter> entry : loggers.entrySet()) {
+      entry.getValue().close();
+      loggers.remove(entry.getKey());
+    }
   }
 
 }

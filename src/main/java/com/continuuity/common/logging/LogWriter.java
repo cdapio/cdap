@@ -16,4 +16,8 @@ public interface LogWriter {
    */
   public void log(LogEvent event) throws IOException;
 
+  /**
+   * closes the writer and flushes and closes all open files.
+   */
+  public void close() throws IOException;
 }

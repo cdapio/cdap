@@ -52,6 +52,11 @@ public class LogFileWriter implements LogWriter {
     }
   }
 
+  @Override
+  public void close() throws IOException {
+    closeFile();
+  }
+
   String formatMessage(LogEvent event) {
       return String.format("%s [%s] %s", event.getTag(),
           event.getLevel(), event.getMessage());
@@ -79,13 +84,20 @@ public class LogFileWriter implements LogWriter {
   }
 
   void closeFile() throws IOException {
-    out.close();
+    synchronized(this) {
+      if (out != null) {
+        out.close();
+        out = null;
+      }
+    }
   }
 
-  synchronized void persistMessage(String message) throws IOException {
-    out.write(message.getBytes(charsetUtf8));
-    out.write('\n');
-    out.hsync(); // note flush() and hflush() do not work!
+  void persistMessage(String message) throws IOException {
+    synchronized(this) {
+      out.write(message.getBytes(charsetUtf8));
+      out.write('\n');
+      out.hsync(); // note flush() and hflush() do not work!
+    }
   }
 
   long getCurrentFileSize() throws IOException {

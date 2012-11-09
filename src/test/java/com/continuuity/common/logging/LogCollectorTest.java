@@ -47,6 +47,8 @@ public class LogCollectorTest {
     String logtag = "a:b:c";
 
     collector.log(new LogEvent(logtag, "ERROR", "this is an error message"));
+    collector.close();
+
     List<String> lines = collector.tail(logtag, 1024);
     for (String line : lines) {
       System.out.println(line);

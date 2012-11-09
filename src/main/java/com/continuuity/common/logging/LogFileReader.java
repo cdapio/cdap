@@ -63,10 +63,13 @@ public class LogFileReader implements LogReader {
     byte[] bytes = new byte[(int)bytesToRead];
     input.readFully(bytes);
 
-    // find the first newline
     int pos = 0;
-    while (pos < bytesToRead && bytes[pos] != '\n') pos++;
-    pos++; // now we are just after the first new line
+    if (seekPos > 0) {
+      // if we seeked into the file, then we are likely in the middle of the
+      // line, and we want to skip up to the first new line
+      while (pos < bytesToRead && bytes[pos] != '\n') pos++;
+      pos++; // now we are just after the first new line
+    }
 
     // read lines until the end of the buffer
     while (pos < bytesToRead) {
