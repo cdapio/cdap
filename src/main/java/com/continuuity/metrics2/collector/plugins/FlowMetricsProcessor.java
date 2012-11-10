@@ -124,7 +124,7 @@ public final class FlowMetricsProcessor implements MetricsProcessor {
 
     @Override
     protected Scheduler scheduler() {
-      return Scheduler.newFixedRateSchedule(0, 1L, TimeUnit.SECONDS);
+      return Scheduler.newFixedRateSchedule(0, 1L, TimeUnit.MINUTES);
     }
   }
 
