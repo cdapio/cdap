@@ -51,7 +51,6 @@ public class FlumeLogCollector {
             Executors.newCachedThreadPool(),
             this.threads));
     this.server.start();
-
     LOG.info("Log Collection Source started on port " + port + " with "
         + this.threads + " threads.");
   }

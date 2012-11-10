@@ -24,6 +24,14 @@ public class LogFileWriter implements LogWriter {
     fileSystem = FileSystem.get(CConfiguration.create());
     // make sure the base path exists in the file system
     createPath(config.getLogFilePath());
+
+    // NOTE: This is to get around the append not working.
+    // We move the previous run log as part of rotation and create
+    // a new log file.
+    for (int i = config.getMaxInstances() - 1; i > 0; --i) {
+      renameFile(config.getLogFilePath(),
+                 makeFileName(i - 1), makeFileName(i));
+    }
     // open the file to write to (create or append)
     openFileForWrite(config.getLogFilePath(), makeFileName(0));
   }
