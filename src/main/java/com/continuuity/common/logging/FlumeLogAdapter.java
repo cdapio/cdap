@@ -8,6 +8,7 @@ import org.apache.flume.source.avro.Status;
 import org.apache.thrift.TBaseHelper;
 
 import java.util.List;
+import java.util.Map;
 
 public class FlumeLogAdapter implements AvroSourceProtocol {
 
@@ -21,10 +22,15 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
 
   @Override
   public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-    String logtag =
-        event.getHeaders().get(LogEvent.FIELD_NAME_LOGTAG).toString();
-    String level =
-        event.getHeaders().get(LogEvent.FIELD_NAME_LOGLEVEL).toString();
+    if(event == null) {
+      return Status.UNKNOWN;
+    }
+    Map<CharSequence, CharSequence> headers = event.getHeaders();
+    if(headers == null) {
+      return Status.UNKNOWN;
+    }
+    String logtag = headers.get(LogEvent.FIELD_NAME_LOGTAG).toString();
+    String level = headers.get(LogEvent.FIELD_NAME_LOGLEVEL).toString();
     String body = new String(TBaseHelper.byteBufferToByteArray(event.getBody()));
     LogEvent logEvent = new LogEvent(logtag, level, body);
     this.collector.log(logEvent);
