@@ -276,6 +276,11 @@ try {
 			var Monitor = thrift.createClient(MetricsFrontendService, conn);
 
 			switch (method) {
+				case 'getLog':
+
+					params.unshift('demo');
+					Monitor.getLog.apply(Monitor, params.concat(done));
+
 				case 'getCounters':
 					var flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : 'demo'),

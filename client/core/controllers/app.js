@@ -93,30 +93,34 @@ define([], function () {
 			var flows = this.get('types.Flow').content;
 			var flowCount = flows.length;
 			var i = flowCount;
-			while(i--) {
 
-				flows[i].set('currentState', 'STARTING');
+			if (!flowCount) {
 
-				console.log('Starting', flows[i].application, flows[i].id, flows[i].version);
+				$('#start-all-button').find('button').show().attr('disabled', true);
+				$('#start-all-button').find('img').hide();
 
-				C.socket.request('manager', {
-					method: 'start',
-					params: [flows[i].application, flows[i].id, -1, 'FLOW']
-				}, function (error, response, flow) {
+			} else {
 
-					flow.set('currentState', 'RUNNING');
+				while(i--) {
 
-					if (!--flowCount) {
+					flows[i].set('currentState', 'STARTING');
 
-						console.log('Flows Done!');
+					C.socket.request('manager', {
+						method: 'start',
+						params: [flows[i].application, flows[i].id, -1, 'FLOW']
+					}, function (error, response, flow) {
 
-						$('#start-all-button').find('button').show().attr('disabled', true);
-						$('#start-all-button').find('img').hide();
+						flow.set('currentState', 'RUNNING');
 
-					}
+						if (!--flowCount) {
 
-				}, flows[i]);
+							$('#start-all-button').find('button').show().attr('disabled', true);
+							$('#start-all-button').find('img').hide();
 
+						}
+
+					}, flows[i]);
+				}
 			}
 
 		},
@@ -126,27 +130,47 @@ define([], function () {
 			var queries = this.get('types.Query').content;
 			var queryCount = queries.length;
 			var i = queryCount;
-			while(i--) {
 
-				queries[i].set('currentState', 'STARTING');
+			if (!queryCount) {
 
-				console.log('Starting', queries[i].application, queries[i].id, queries[i].version);
+				C.Ctl.Application.startAllFlows();
 
-				C.socket.request('manager', {
-					method: 'start',
-					params: [queries[i].application, queries[i].id, -1, 'QUERY']
-				}, function (error, response, query) {
-					
-					query.set('currentState', 'RUNNING');
+			} else {
 
-					if (!--queryCount) {
+				while(i--) {
 
-						C.Ctl.Application.startAllFlows();
+					queries[i].set('currentState', 'STARTING');
 
-					}
+					C.socket.request('manager', {
+						method: 'start',
+						params: [queries[i].application, queries[i].id, -1, 'QUERY']
+					}, function (error, response, query) {
+						
+						query.set('currentState', 'RUNNING');
 
-				}, queries[i]);
+						if (!--queryCount) {
+
+							C.Ctl.Application.startAllFlows();
+
+						}
+
+					}, queries[i]);
+
+				}
 			}
+
+		},
+
+		stopAll: function () {
+
+			C.get('manager', {
+				method: 'stopAll',
+				params: []
+			}, function (error, response) {
+
+				console.log(arguments);
+
+			});
 
 		},
 

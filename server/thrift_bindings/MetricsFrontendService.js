@@ -274,6 +274,300 @@ MetricsFrontendService_getTimeSeries_result.prototype.write = function(output) {
   return;
 };
 
+var MetricsFrontendService_reset_args = function(args) {
+  this.accountId = null;
+  if (args) {
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+  }
+};
+MetricsFrontendService_reset_args.prototype = {};
+MetricsFrontendService_reset_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetricsFrontendService_reset_args.prototype.write = function(output) {
+  output.writeStructBegin('MetricsFrontendService_reset_args');
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 1);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetricsFrontendService_reset_result = function(args) {
+  this.e = null;
+  if (args) {
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetricsFrontendService_reset_result.prototype = {};
+MetricsFrontendService_reset_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetricsServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetricsFrontendService_reset_result.prototype.write = function(output) {
+  output.writeStructBegin('MetricsFrontendService_reset_result');
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetricsFrontendService_getLog_args = function(args) {
+  this.accountId = null;
+  this.applicationId = null;
+  this.flowId = null;
+  this.size = null;
+  if (args) {
+    if (args.accountId !== undefined) {
+      this.accountId = args.accountId;
+    }
+    if (args.applicationId !== undefined) {
+      this.applicationId = args.applicationId;
+    }
+    if (args.flowId !== undefined) {
+      this.flowId = args.flowId;
+    }
+    if (args.size !== undefined) {
+      this.size = args.size;
+    }
+  }
+};
+MetricsFrontendService_getLog_args.prototype = {};
+MetricsFrontendService_getLog_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRING) {
+        this.accountId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRING) {
+        this.applicationId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 3:
+      if (ftype == Thrift.Type.STRING) {
+        this.flowId = input.readString();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 4:
+      if (ftype == Thrift.Type.I32) {
+        this.size = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetricsFrontendService_getLog_args.prototype.write = function(output) {
+  output.writeStructBegin('MetricsFrontendService_getLog_args');
+  if (this.accountId) {
+    output.writeFieldBegin('accountId', Thrift.Type.STRING, 1);
+    output.writeString(this.accountId);
+    output.writeFieldEnd();
+  }
+  if (this.applicationId) {
+    output.writeFieldBegin('applicationId', Thrift.Type.STRING, 2);
+    output.writeString(this.applicationId);
+    output.writeFieldEnd();
+  }
+  if (this.flowId) {
+    output.writeFieldBegin('flowId', Thrift.Type.STRING, 3);
+    output.writeString(this.flowId);
+    output.writeFieldEnd();
+  }
+  if (this.size) {
+    output.writeFieldBegin('size', Thrift.Type.I32, 4);
+    output.writeI32(this.size);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetricsFrontendService_getLog_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetricsFrontendService_getLog_result.prototype = {};
+MetricsFrontendService_getLog_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.LIST) {
+        var _size52 = 0;
+        var _rtmp356;
+        this.success = [];
+        var _etype55 = 0;
+        _rtmp356 = input.readListBegin();
+        _etype55 = _rtmp356.etype;
+        _size52 = _rtmp356.size;
+        for (var _i57 = 0; _i57 < _size52; ++_i57)
+        {
+          var elem58 = null;
+          elem58 = input.readString();
+          this.success.push(elem58);
+        }
+        input.readListEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetricsServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetricsFrontendService_getLog_result.prototype.write = function(output) {
+  output.writeStructBegin('MetricsFrontendService_getLog_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.LIST, 0);
+    output.writeListBegin(Thrift.Type.STRING, this.success.length);
+    for (var iter59 in this.success)
+    {
+      if (this.success.hasOwnProperty(iter59))
+      {
+        iter59 = this.success[iter59];
+        output.writeString(iter59);
+      }
+    }
+    output.writeListEnd();
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var MetricsFrontendServiceClient = exports.Client = function(output, pClass) {
     this.output = output;
     this.pClass = pClass;
@@ -355,6 +649,80 @@ MetricsFrontendServiceClient.prototype.recv_getTimeSeries = function(input,mtype
   }
   return callback('getTimeSeries failed: unknown result');
 };
+MetricsFrontendServiceClient.prototype.reset = function(accountId, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_reset(accountId);
+};
+
+MetricsFrontendServiceClient.prototype.send_reset = function(accountId) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('reset', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetricsFrontendService_reset_args();
+  args.accountId = accountId;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetricsFrontendServiceClient.prototype.recv_reset = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetricsFrontendService_reset_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  callback(null)
+};
+MetricsFrontendServiceClient.prototype.getLog = function(accountId, applicationId, flowId, size, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_getLog(accountId, applicationId, flowId, size);
+};
+
+MetricsFrontendServiceClient.prototype.send_getLog = function(accountId, applicationId, flowId, size) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('getLog', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetricsFrontendService_getLog_args();
+  args.accountId = accountId;
+  args.applicationId = applicationId;
+  args.flowId = flowId;
+  args.size = size;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetricsFrontendServiceClient.prototype.recv_getLog = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetricsFrontendService_getLog_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('getLog failed: unknown result');
+};
 var MetricsFrontendServiceProcessor = exports.Processor = function(handler) {
   this._handler = handler
 }
@@ -395,6 +763,34 @@ MetricsFrontendServiceProcessor.prototype.process_getTimeSeries = function(seqid
   this._handler.getTimeSeries(args.request, function (success) {
     result.success = success;
     output.writeMessageBegin("getTimeSeries", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetricsFrontendServiceProcessor.prototype.process_reset = function(seqid, input, output) {
+  var args = new MetricsFrontendService_reset_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetricsFrontendService_reset_result();
+  this._handler.reset(args.accountId, function (success) {
+    result.success = success;
+    output.writeMessageBegin("reset", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetricsFrontendServiceProcessor.prototype.process_getLog = function(seqid, input, output) {
+  var args = new MetricsFrontendService_getLog_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetricsFrontendService_getLog_result();
+  this._handler.getLog(args.accountId, args.applicationId, args.flowId, args.size, function (success) {
+    result.success = success;
+    output.writeMessageBegin("getLog", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

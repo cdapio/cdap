@@ -23,16 +23,6 @@ define([], function () {
 			}
 		},
 
-		unload: function () {
-
-			this.get('content').clear();
-			this.set('content', []);
-
-			this.set('types.Flowlet', Em.Object.create());
-			this.set('current', null);
-
-		},
-
 		__currentFlowletLabel: 'processed.count',
 
 		load: function (app, id) {
@@ -67,8 +57,53 @@ define([], function () {
 
 				// READY TO GO
 
-
 			});
+
+			this.interval = setInterval(function () {
+
+				C.get('monitor', {
+					method: 'getLog',
+					params: [app, id, 1024 * 1024]
+				}, function (error, response) {
+
+					if (C.router.currentState.name !== 'log') {
+						return;
+					}
+
+					if (error) {
+
+						C.router.applicationController.view.set('responseBody', JSON.stringify(error));
+
+					} else {
+
+						var items = response.params;
+						C.router.applicationController.view.set('responseBody', items.join('\n'));
+					}
+					
+					setTimeout(function () {
+						var textarea = C.router.applicationController.view.get('logView').get('element');
+						textarea = $(textarea);
+						textarea.scrollTop(textarea[0].scrollHeight - textarea.height());
+					}, 200);
+
+				});
+
+			}, 5000);
+
+		},
+
+		interval: null,
+		unload: function () {
+
+			this.get('content').clear();
+			this.set('content', []);
+
+			this.set('types.Flowlet', Em.Object.create());
+			this.set('current', null);
+
+			clearInterval(this.interval);
+
 		}
+
 	});
 });

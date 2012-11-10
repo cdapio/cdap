@@ -143,6 +143,141 @@ MetadataService_createStream_result.prototype.write = function(output) {
   return;
 };
 
+var MetadataService_assertStream_args = function(args) {
+  this.account = null;
+  this.stream = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.stream !== undefined) {
+      this.stream = args.stream;
+    }
+  }
+};
+MetadataService_assertStream_args.prototype = {};
+MetadataService_assertStream_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.stream = new ttypes.Stream();
+        this.stream.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_assertStream_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_assertStream_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.stream) {
+    output.writeFieldBegin('stream', Thrift.Type.STRUCT, 2);
+    this.stream.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_assertStream_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_assertStream_result.prototype = {};
+MetadataService_assertStream_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_assertStream_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_assertStream_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var MetadataService_deleteStream_args = function(args) {
   this.account = null;
   this.stream = null;
@@ -678,6 +813,141 @@ MetadataService_createDataset_result.prototype.read = function(input) {
 
 MetadataService_createDataset_result.prototype.write = function(output) {
   output.writeStructBegin('MetadataService_createDataset_result');
+  if (this.success) {
+    output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
+    output.writeBool(this.success);
+    output.writeFieldEnd();
+  }
+  if (this.e) {
+    output.writeFieldBegin('e', Thrift.Type.STRUCT, 1);
+    this.e.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_assertDataset_args = function(args) {
+  this.account = null;
+  this.dataset = null;
+  if (args) {
+    if (args.account !== undefined) {
+      this.account = args.account;
+    }
+    if (args.dataset !== undefined) {
+      this.dataset = args.dataset;
+    }
+  }
+};
+MetadataService_assertDataset_args.prototype = {};
+MetadataService_assertDataset_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.account = new ttypes.Account();
+        this.account.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.dataset = new ttypes.Dataset();
+        this.dataset.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_assertDataset_args.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_assertDataset_args');
+  if (this.account) {
+    output.writeFieldBegin('account', Thrift.Type.STRUCT, 1);
+    this.account.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.dataset) {
+    output.writeFieldBegin('dataset', Thrift.Type.STRUCT, 2);
+    this.dataset.write(output);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var MetadataService_assertDataset_result = function(args) {
+  this.success = null;
+  this.e = null;
+  if (args) {
+    if (args.success !== undefined) {
+      this.success = args.success;
+    }
+    if (args.e !== undefined) {
+      this.e = args.e;
+    }
+  }
+};
+MetadataService_assertDataset_result.prototype = {};
+MetadataService_assertDataset_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.BOOL) {
+        this.success = input.readBool();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.e = new ttypes.MetadataServiceException();
+        this.e.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+MetadataService_assertDataset_result.prototype.write = function(output) {
+  output.writeStructBegin('MetadataService_assertDataset_result');
   if (this.success) {
     output.writeFieldBegin('success', Thrift.Type.BOOL, 0);
     output.writeBool(this.success);
@@ -4792,6 +5062,44 @@ MetadataServiceClient.prototype.recv_createStream = function(input,mtype,rseqid)
   }
   return callback('createStream failed: unknown result');
 };
+MetadataServiceClient.prototype.assertStream = function(account, stream, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_assertStream(account, stream);
+};
+
+MetadataServiceClient.prototype.send_assertStream = function(account, stream) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('assertStream', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_assertStream_args();
+  args.account = account;
+  args.stream = stream;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_assertStream = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_assertStream_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('assertStream failed: unknown result');
+};
 MetadataServiceClient.prototype.deleteStream = function(account, stream, callback) {
   this.seqid += 1;
   this._reqs[this.seqid] = callback;
@@ -4942,6 +5250,44 @@ MetadataServiceClient.prototype.recv_createDataset = function(input,mtype,rseqid
     return callback(null, result.success);
   }
   return callback('createDataset failed: unknown result');
+};
+MetadataServiceClient.prototype.assertDataset = function(account, dataset, callback) {
+  this.seqid += 1;
+  this._reqs[this.seqid] = callback;
+  this.send_assertDataset(account, dataset);
+};
+
+MetadataServiceClient.prototype.send_assertDataset = function(account, dataset) {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('assertDataset', Thrift.MessageType.CALL, this.seqid);
+  var args = new MetadataService_assertDataset_args();
+  args.account = account;
+  args.dataset = dataset;
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+MetadataServiceClient.prototype.recv_assertDataset = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new MetadataService_assertDataset_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.e) {
+    return callback(result.e);
+  }
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('assertDataset failed: unknown result');
 };
 MetadataServiceClient.prototype.deleteDataset = function(account, dataset, callback) {
   this.seqid += 1;
@@ -6039,6 +6385,20 @@ MetadataServiceProcessor.prototype.process_createStream = function(seqid, input,
   })
 }
 
+MetadataServiceProcessor.prototype.process_assertStream = function(seqid, input, output) {
+  var args = new MetadataService_assertStream_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_assertStream_result();
+  this._handler.assertStream(args.account, args.stream, function (success) {
+    result.success = success;
+    output.writeMessageBegin("assertStream", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
 MetadataServiceProcessor.prototype.process_deleteStream = function(seqid, input, output) {
   var args = new MetadataService_deleteStream_args();
   args.read(input);
@@ -6089,6 +6449,20 @@ MetadataServiceProcessor.prototype.process_createDataset = function(seqid, input
   this._handler.createDataset(args.account, args.dataset, function (success) {
     result.success = success;
     output.writeMessageBegin("createDataset", Thrift.MessageType.REPLY, seqid);
+    result.write(output);
+    output.writeMessageEnd();
+    output.flush();
+  })
+}
+
+MetadataServiceProcessor.prototype.process_assertDataset = function(seqid, input, output) {
+  var args = new MetadataService_assertDataset_args();
+  args.read(input);
+  input.readMessageEnd();
+  var result = new MetadataService_assertDataset_result();
+  this._handler.assertDataset(args.account, args.dataset, function (success) {
+    result.success = success;
+    output.writeMessageBegin("assertDataset", Thrift.MessageType.REPLY, seqid);
     result.write(output);
     output.writeMessageEnd();
     output.flush();

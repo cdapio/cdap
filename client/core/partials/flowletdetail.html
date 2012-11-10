@@ -33,7 +33,7 @@
 {{name}}
 </td>
 <td class="flowlet-blue">
-{{view C.Vw.Chart entity-type="Flowlet" width="305" metrics="tuples.read.count" classNames="sparkline-flowlet-box"}}
+{{view C.Vw.Chart entity-type="Flowlet" title="Incoming Tuples per Second" streamId=name width="305" metrics="q.queue//{flowId}/{flowletId}/{streamId}.ack.count.count" classNames="sparkline-flowlet-box"}}
 </td>
 </tr>
 {{/each}}
@@ -75,7 +75,7 @@ There are no inputs on this flowlet.
 {{#each controller.outputs tagName="tbody"}}
 <tr>
 <td class="flowlet-blue">
-{{view C.Vw.Chart entity-type="Flowlet" width="305" metrics="emitted.count" classNames="sparkline-flowlet-box"}}
+{{view C.Vw.Chart entity-type="Flowlet" title="Outgoing Tuples per Second" streamId=name width="305" metrics="q.queue//{flowId}/{flowletId}/{streamId}.ack.count.count" classNames="sparkline-flowlet-box"}}
 </td>
 <td class="flowlet-popup-input">
 {{name}}

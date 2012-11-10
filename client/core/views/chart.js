@@ -89,6 +89,21 @@ define([], function () {
 					metrics[i] = metrics[i].replace(/\{id\}/g, entityId);
 				}
 
+				// Hax for flowlet Queue
+				if (this.get('streamId')) {
+
+					var flowId = C.Ctl.Flow.current.id;
+					var flowletId = C.router.applicationController.view.get('flowlet-detail').controller.current.id;
+
+					i = metrics.length;
+					while (i--) {
+						metrics[i] = metrics[i].replace(/\{streamId\}/g, this.get('streamId'))
+							.replace(/\{flowletId\}/g, flowletId)
+							.replace(/\{flowId\}/g, flowId)
+					}
+
+				}
+
 				var i = metrics.length;
 
 				while (i--) {
