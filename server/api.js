@@ -281,6 +281,8 @@ try {
 					params.unshift('demo');
 					Monitor.getLog.apply(Monitor, params.concat(done));
 
+				break;
+
 				case 'getCounters':
 					var flow = new metricsservice_types.FlowArgument({
 						accountId: (params[0] === '-' ? '-' : 'demo'),

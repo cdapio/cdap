@@ -99,7 +99,7 @@ define([], function () {
 					while (i--) {
 						metrics[i] = metrics[i].replace(/\{streamId\}/g, this.get('streamId'))
 							.replace(/\{flowletId\}/g, flowletId)
-							.replace(/\{flowId\}/g, flowId)
+							.replace(/\{flowId\}/g, flowId);
 					}
 
 				}
