@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Application Manager service is base implementation for YARN application manager.
  */
 public class ApplicationMasterServiceImpl extends AbstractScheduledService implements ApplicationMasterService {
-  private static final Logger Log = LoggerFactory.getLogger(ApplicationMasterServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationMasterServiceImpl.class);
 
   /**
    * Parameters settings for application master.
@@ -90,7 +90,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    */
   @Override
   protected void startUp() {
-    Log.info("Starting the flow runner.");
+    LOG.info("Starting the flow runner.");
     resourceMgr = rmHandler.connect();
 
     // Register the application master with the resource manager.
@@ -104,7 +104,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
       request.setTrackingUrl(specification.getTrackingUrl());
       registration = resourceMgr.registerApplicationMaster(request);
     } catch (YarnRemoteException e) {
-      Log.error("There was problem during registering the application master. Reason : {}", e.getMessage());
+      LOG.error("There was problem during registering the application master" +
+                  "." + " Reason : {}", e.getMessage());
       stop();
       return;
     }
@@ -112,20 +113,20 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     minClusterResource = registration.getMinimumResourceCapability();
     maxClusterResource = registration.getMaximumResourceCapability();
 
-    Log.trace("Minimum Cluster Resource {}.", minClusterResource);
-    Log.trace("Maximum Cluster Resource {}.", maxClusterResource);
+    LOG.trace("Minimum Cluster Resource {}.", minClusterResource);
+    LOG.trace("Maximum Cluster Resource {}.", maxClusterResource);
 
     // Gets all container group parameters
     List<TaskSpecification> tasks = specification.getTaskSpecifications();
 
 //    if(tasks.size() < 1) {
-//      Log.info("No containers have been configured to be started. Stopping now");
+//      LOG.info("No containers have been configured to be started. Stopping now");
 //      stop();
 //    }
 
     // Initial list of tasks provided.
     tasksHandler = new TasksHandler(ImmutableList.copyOf(tasks));
-    Log.info("Application Master service started.");
+    LOG.info("Application Master service started.");
   }
 
   /**
@@ -143,11 +144,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
      */
     try {
       if(! tasksHandler.process()) {
-        Log.info("ApplicationMaster service is stopping.");
+        LOG.info("ApplicationMaster service is stopping.");
         stop();
       }
     } catch (Exception e) {
-      Log.error("Caught exception. Reason : {}.", e.getMessage());
+      LOG.error("Caught exception. Reason : {}.", e.getMessage());
     }
   }
 
@@ -156,7 +157,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
    */
   @Override
   protected void shutDown() {
-    Log.info("Shutting down the application service.");
+    LOG.info("Shutting down the application service.");
 
     // Ask the tasks handler to shutdown.
     tasksHandler.stop();
@@ -176,7 +177,8 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     try {
       resourceMgr.finishApplicationMaster(request);
     } catch (YarnRemoteException e) {
-      Log.warn("Failed while shutting down application manager service. Reason : {}", e.getMessage());
+      LOG.warn("Failed while shutting down application manager service. " +
+                 "Reason : {}", e.getMessage());
     }
 
     // After we have stopped the stop hook is invoked.
@@ -276,7 +278,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
     try {
       return resourceMgr.allocate(req).getAMResponse();
     } catch (YarnRemoteException e) {
-      Log.warn("There was a problem while requesting resource. Reason : {}", e.getMessage());
+      LOG.warn("There was a problem while requesting resource. Reason : {}", e.getMessage());
     }
 
     return Records.newRecord(AllocateResponse.class).getAMResponse();
@@ -426,18 +428,19 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         int toBeRequested = 0;
         int toBeReleased = toRelease.size();
 
-        Log.trace("Number of tasks in queue waiting to be requested for container is {}", readyToRunQueue.size());
+        LOG.trace("Number of tasks in queue waiting to be requested for " +
+                    "container is {}", readyToRunQueue.size());
         for(TaskSpecification specification : readyToRunQueue.values()) {
           /** Initialize the failed task counter. */
           if(! failedTaskMetrics.containsKey(specification.getId())) {
             failedTaskMetrics.put(specification.getId(), 0);
           }
           if(runningTaskQueue.containsKey(specification.getId())) {
-            Log.warn("Task with id {} already running. This should never happen.", specification.getId());
+            LOG.warn("Task with id {} already running. This should never happen.", specification.getId());
             continue;
           }
-          Log.trace("Request a container for a task with ID {} with resource capacity : Memory {} MB",
-            specification.getId(), specification.getMemory());
+          LOG.trace("Request a container for a task with ID {} with resource " +
+                      "" + "capacity : Memory {} MB", specification.getId(), specification.getMemory());
           ResourceRequest req = containerLaunchContextFactory.createResourceRequest(specification);
           req.setNumContainers(specification.getNumInstances());
           resourceRequests.add(req);
@@ -448,7 +451,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          * Create a unique request for each allocate request, include containers to be requested and containers
          * to be released.
          */
-        Log.trace("Requesting {} containers, Releasing {} container(s).", toBeRequested, toBeReleased);
+        LOG.trace("Requesting {} containers, Releasing {} container(s).", toBeRequested, toBeReleased);
         AMResponse response = allocate(requestId.incrementAndGet(), resourceRequests, toRelease);
 
         /**
@@ -459,11 +462,11 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
         /** Clear up toRelease object, so that new once can be added to it. */
         toRelease.clear();
 
-        Log.trace("{} out of {} new containers were allocated.", newContainers.size(), toBeRequested);
+        LOG.trace("{} out of {} new containers were allocated.", newContainers.size(), toBeRequested);
 
         /** Iterate through each container and assign them to a non running task specification */
         for(final Container container : newContainers) {
-          Log.trace("Assigning a task to the container {}", container.toString());
+          LOG.trace("Assigning a task to the container {}", container.toString());
 
           /** Add to the tab a the container id that needs to be released. */
           releaseContainerTab.put(container.getId(), false);
@@ -474,8 +477,9 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
            * back.
            */
           if(containerMgrs.containsKey(container.getId())) {
-            Log.warn("Was allocated a container with id {} that was running a task in past. " +
-              "Will not use that container. Requesting it to be released.", container.getId());
+            LOG.warn("Was allocated a container with id {} that was running a" +
+                       " task in past. " + "Will not use that container. " +
+                       "Requesting it to be released.", container.getId());
 
             /** If the container is still running, then make sure we do not release that. */
             if(containerMgrs.get(container.getId()) == null) {
@@ -495,7 +499,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
               public boolean apply(@Nullable TaskSpecification input) {
                 Resource resource = container.getResource();
                 if (resource.getMemory() == input.getMemory()) {
-                  Log.trace("Found matching task specification for container {}", container.toString());
+                  LOG.trace("Found matching task specification for container {}", container.toString());
                   return true;
                 }
                 return false;
@@ -507,7 +511,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
            * the list of running containers after starting it.
            */
           if(matchingSpec.isPresent()) {
-            Log.trace("Matching container found. Assigning task to it.");
+            LOG.trace("Matching container found. Assigning task to it.");
 
             /** Create a container handler and assign a task specification to it. */
             TaskSpecification specification = matchingSpec.get();
@@ -531,7 +535,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
             taskToContainerId.put(specification.getId(), container.getId());
             containerIdToTask.put(container.getId(), specification.getId());
           } else {
-            Log.warn("No matching task specification found for the container. Container ID {}. Requesting release.", container.toString());
+            LOG.warn("No matching task specification found for the container. Container ID {}. Requesting release.", container.toString());
             toRelease.add(container.getId());
           }
         }
@@ -540,14 +544,14 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
          * Now, we get the status of all the containers, if there are some failed container, then, we start them
          * again.
          */
-        Log.trace("Checking the statuses of containers.");
+        LOG.trace("Checking the statuses of containers.");
         for(ContainerStatus status : response.getCompletedContainersStatuses()) {
           int exitStatus = status.getExitStatus();
           ContainerId containerId = status.getContainerId();
 
           /** If the container has not yet completed, then we have nothing to do, we let it run. */
           if(status.getState() != ContainerState.COMPLETE) {
-            Log.trace("Container id {} is still running or is new. So skipping it.", containerId.toString());
+            LOG.trace("Container id {} is still running or is new. So skipping it.", containerId.toString());
             continue;
           }
 
@@ -555,16 +559,16 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           releaseContainerTab.put(containerId, true);
 
           if(! containerMgrs.containsKey(containerId)) {
-            Log.trace("Container {} was allocated, but was not assigned any task.", containerId.getId());
+            LOG.trace("Container {} was allocated, but was not assigned any task.", containerId.getId());
             continue;
           } else {
-            Log.trace("Waiting for container '{}' to stop as it has either failed or completed.", containerId);
+            LOG.trace("Waiting for container '{}' to stop as it has either failed or completed.", containerId);
             containerMgrs.get(containerId).stopAndWait();
             containerMgrs.put(containerId, null);
           }
 
           String taskId = containerIdToTask.get(containerId);
-          Log.trace("Status of container id {}, task id {} is {}", new Object[] { containerId, taskId, exitStatus});
+          LOG.trace("Status of container id {}, task id {} is {}", new Object[]{containerId, taskId, exitStatus});
 
           TaskSpecification specification = runningTaskQueue.get(taskId);
 
@@ -628,7 +632,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
 
       boolean keepRunning = true;
 
-      Log.trace("Tasks handler has been requested to be stopped.");
+      LOG.trace("Tasks handler has been requested to be stopped.");
 
       while(keepRunning) {
 
@@ -646,12 +650,13 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           /** The container is not released yet. So, check if there is task running within it. */
           if (!releaseContainerTab.get(containerId)) {
             foundNoContainersToBeReleased = false;
-            if(containerMgrs.containsKey(containerId) && containerMgrs.get(containerId) != null) {
-              Log.trace("Attempting to stop container {}", containerId);
+            if(containerMgrs.containsKey(containerId) && containerMgrs.get
+              (containerId) != null) {
+              LOG.trace("Attempting to stop container {}", containerId);
               /** Stop the container. */
               containerMgrs.get(containerId).stopAndWait();
             }
-            Log.trace("Adding the container {} to be released.", containerId);
+            LOG.trace("Adding the container {} to be released.", containerId);
             /** Add the container to be released. */
             toRelease.add(containerId);
           }
