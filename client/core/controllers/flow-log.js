@@ -53,8 +53,6 @@ define([], function () {
 				}
 				self.set('types.Stream', Em.ArrayProxy.create({content: objects}));
 
-				C.interstitial.hide();
-
 				// READY TO GO
 
 			});
@@ -63,7 +61,7 @@ define([], function () {
 
 				C.get('monitor', {
 					method: 'getLog',
-					params: [app, id, 1024 * 1024]
+					params: [app, id, 1024 * 10]
 				}, function (error, response) {
 
 					if (C.router.currentState.name !== 'log') {
@@ -85,6 +83,8 @@ define([], function () {
 						textarea = $(textarea);
 						textarea.scrollTop(textarea[0].scrollHeight - textarea.height());
 					}, 200);
+
+					C.interstitial.hide();
 
 				});
 

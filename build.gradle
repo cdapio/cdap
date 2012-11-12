@@ -101,7 +101,15 @@ task assets(type:Copy, dependsOn: 'jslibs') {
     from 'client/assets'
     into 'build/' + project.ext.edition + '/client/assets'
 }
-task z_client(type:Copy, dependsOn: 'assets') {
+task patch_mkdir(type:Exec, dependsOn: 'assets') {
+    commandLine "mkdir"
+    args "build/" + project.ext.edition + "/client/patch"
+}
+task asset_patch(type:Copy, dependsOn: 'patch_mkdir') {
+    from 'client/' + project.ext.edition + '/patch/assets'
+    into 'build/' + project.ext.edition + '/client/patch/assets'
+}
+task z_client(type:Copy, dependsOn: 'asset_patch') {
     from 'client/' + project.ext.edition + '/index.html'
     into 'build/' + project.ext.edition + '/client'
 }
