@@ -42,7 +42,6 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
 
   @Override
   public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-
     Map<String, String> headers = toStringMap(event.getHeaders());
     if(! headers.containsKey(LogEvent.FIELD_NAME_LOGTAG) ||
        ! headers.containsKey(LogEvent.FIELD_NAME_LOGLEVEL)) {
