@@ -88,10 +88,14 @@ public abstract class FabricTestBase {
 
   private static final CConfiguration conf = CConfiguration.create();
 
+  private static final String group =
+    String.format("%s.%s.%s.%s.%s.%d", ACCOUNT, APPLICATION,
+                  "flow", "runid", "flowlet", 1);
+
   private static final FlowletContext context =
       new FlowletContextImpl(executor, OperationContext.DEFAULT, 1,
           "id", new FlowLogTag(ACCOUNT, APPLICATION, "flow", "runid"),
-          new LocalLogDispatcher(conf), new CMetrics(MetricType.FlowUser));
+          new LocalLogDispatcher(conf), new CMetrics(MetricType.FlowUser,group));
 
   private static final DataFabric fabric = context.getDataFabric();
 
