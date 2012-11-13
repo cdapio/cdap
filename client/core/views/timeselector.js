@@ -19,6 +19,18 @@ define([
 				'Last 1 Minute': 60,
 			}[timeRange]);
 
+			var element = $(this.get('element'));
+
+			element.find('img').show();
+			element.find('button').hide();
+
+			setTimeout(function () {
+
+				element.find('img').hide();
+				element.find('button').show();
+
+			}, 1000);
+
 		}
 	});
 });
