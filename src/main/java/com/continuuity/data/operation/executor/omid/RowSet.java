@@ -14,4 +14,5 @@ public interface RowSet {
   public boolean contains(byte [] row);
 
   public boolean conflictsWith(RowSet rows);
+
 }

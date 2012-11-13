@@ -419,7 +419,10 @@ public class TOperationExecutorImpl
       OperationContext context = unwrap(tcontext);
       QueueDequeue queueDequeue = unwrap(tQueueDequeue);
       DequeueResult result = this.opex.execute(context, queueDequeue);
-      if (Log.isTraceEnabled()) Log.trace("DequeuePayload successful.");
+      if (Log.isTraceEnabled()) {
+        Log.trace("DequeuePayload successful with status {}",
+                  result.getStatus().name());
+      }
       TDequeueResult tResult = wrap(result);
       helper.success();
       return tResult;

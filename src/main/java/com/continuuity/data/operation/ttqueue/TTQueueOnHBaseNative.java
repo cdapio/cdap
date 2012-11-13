@@ -61,7 +61,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
     this.timeOracle = timeOracle;
     this.shardConfig = new HBQShardConfig(
         conf.getLong("ttqueue.shard.max.entries", 1024),
-        conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024)); // 1MB
+        conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024)); // 1GB
     this.expirationConfig = new HBQExpirationConfig(
         conf.getLong("ttqueue.entry.age.max", 120 * 1000), // 120 seconds
         conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000)); // 10 seconds

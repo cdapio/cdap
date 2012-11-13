@@ -30,6 +30,8 @@ public class MemoryOracle implements TransactionOracle {
    */
   TreeMap<Long,RowSet> rowSets = new TreeMap<Long,RowSet>();
 
+  private static final Long[] LONG_TYPE = new Long[0];
+
   /**
    * This the list of in progress transactions
    */
@@ -92,6 +94,19 @@ public class MemoryOracle implements TransactionOracle {
     // No conflicts found!
     this.rowSets.put(now, rows);
     moveReadPointer(txid);
+
+    // Find all row sets that were committed earlier than the start of
+    // earliest transaction that's in progress and delete them from the
+    // rowset.
+    if(!this.inProgress.isEmpty()) {
+      long minTxId = this.inProgress.first();
+      Long[] toDiscardTxIds
+        = this.rowSets.headMap(minTxId).keySet().toArray(LONG_TYPE);
+      for(Long removeTxId : toDiscardTxIds) {
+        this.rowSets.remove(removeTxId);
+      }
+    }
+
     return true;
   }
 
