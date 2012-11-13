@@ -448,24 +448,38 @@ function(Models, Views, Controllers){
 	};
 
 	var warningTimeout;
+	var lastThirty = [];
 
 	socket.on('exec', function (error, response) {
 		
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
-			if( new Date().getTime() - pending[response.id][2] > 1000) {
+			lastThirty.push(new Date().getTime() - pending[response.id][2]);
+
+			if (lastThirty.length > 30) {
+				lastThirty.shift();
+			}
+
+			var i = lastThirty.length, sum = 0;
+			while (i--) {
+				sum += lastThirty[i];
+			}
+
+			if(sum / lastThirty.length > 1500) {
 
 				clearTimeout(warningTimeout);
 				$('#warning').fadeIn();
+				warningTimeout = null;
 
 			} else {
 
-				clearTimeout(warningTimeout);
-				warningTimeout = setTimeout(function () {
-					$('#warning').fadeOut();
-				}, 1000);
-
+				if (warningTimeout === null) {
+					warningTimeout = setTimeout(function () {
+						$('#warning').fadeOut();
+						warningTimeout = null;
+					}, 1000);
+				}
 			}
 
 			pending[response.id][0](error, response, pending[response.id][1]);

@@ -175,6 +175,7 @@ define([], function () {
 
 			if (!flowlet) {
 				console.log('No flowlet to set label', value);
+				return;
 			}
 
 			var fs = flowlet.streams;
