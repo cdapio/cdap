@@ -12,7 +12,7 @@ apply plugin: 'js'
 
 defaultTasks 'build'
 
-project.ext.set("edition", "developer")
+//project.ext.set("edition", "developer")
 
 //define source for JSHint
 javascript.source {
@@ -33,12 +33,13 @@ javascript.source {
 
 // this writes it's output to dest file only. does not fail build
 task jshintjs(type: com.eriwen.gradle.js.tasks.JsHintTask) {
+    project.buildDir.mkdirs()
     source = javascript.source.prod.js.files
     dest = file("${buildDir}/jshint.out")
 }
 
 // check jshint output file and if non-zero length, then fail build 
-task x_syntax(dependsOn: ['jshintjs']) {
+task x_syntax() {
     doLast {
         ext.jshintlog = file("${buildDir}/jshint.out")
         if( ext.jshintlog.length() != 0 ) {
@@ -58,13 +59,22 @@ task gitPull(type: Exec, description: 'Update git repositories and submodules') 
 
 // task to run syntax checking with node and jshint options.  requires "node" executable in path.
 // CI Build runs 'syntax' task instead
-task syntax_node(type: Exec, description: 'runs jshint on all non-test and lib JS files') << {
+task syntax_node_dev(type: Exec, description: 'runs jshint on all non-test and lib JS files') << {
 	
 	// Uses jshint.json configuration file
 	// Uses .jshintignore for exceptions
 
 	commandLine = ["./tools/jshint/bin/hint", 
-		"./client/core/models/", "./client/core/views/", "./client/core/controllers/", "./client/core/", "./client/" + project.ext.edition + "/patch/views", 
+		"./client/core/models/", "./client/core/views/", "./client/core/controllers/", "./client/core/", "./client/" + "developer" + "/patch/views", 
+		"./server/", "--config", 'jshint.json']
+}
+task syntax_node_cloud(type: Exec, description: 'runs jshint on all non-test and lib JS files') << {
+	
+	// Uses jshint.json configuration file
+	// Uses .jshintignore for exceptions
+
+	commandLine = ["./tools/jshint/bin/hint", 
+		"./client/core/models/", "./client/core/views/", "./client/core/controllers/", "./client/core/", "./client/" + "cloud" + "/patch/views", 
 		"./server/", "--config", 'jshint.json']
 }
 
@@ -73,49 +83,96 @@ task binaries (type: Copy) {
 	into 'build/bin'
 }
 
-task y_server(type:Copy, description: 'Copies relevant server files to build') {
+task y_server_dev(type:Copy, description: 'Copies relevant server files to build') {
 	from 'server/'
-	into 'build/' + project.ext.edition + '/server'
+	into 'build/' + "developer" + '/server'
 }
-y_server.configure {
+task y_server_cloud(type:Copy, description: 'Copies relevant server files to build') {
+	from 'server/'
+	into 'build/' + "cloud" + '/server'
+}
+y_server_dev.configure {
+	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
+}
+y_server_cloud.configure {
 	include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'api.js', 'env.js', 'main.js')
 }
 
 
-buildDir = new File("${project.projectDir}/build/" + project.ext.edition)
+project.ext.devBuildDir = new File("${project.projectDir}/build/" + "developer")
+project.ext.cloudBuildDir = new File("${project.projectDir}/build/" + "cloud")
 
-task js(type:Exec, description: 'Combines and minifies JS') {
+task js_dev(type:Exec, description: 'Combines and minifies JS') {
 
-        buildDir.mkdirs()
+        project.ext.devBuildDir.mkdirs()
 
         commandLine "node"
-        args "${project.projectDir}/tools/requirejs/bin/r.js", "-o", "${project.projectDir}/app.build.js", "baseUrl=${project.projectDir}/client/${project.ext.edition}", "out=${project.projectDir}/build/${project.ext.edition}/client/main.js"
+        args "${project.projectDir}/tools/requirejs/bin/r.js", "-o", "${project.projectDir}/app.build.js", "baseUrl=${project.projectDir}/client/developer", "out=${project.projectDir}/build/developer/client/main.js"
+
+}
+task js_cloud(type:Exec, description: 'Combines and minifies JS') {
+
+        project.ext.cloudBuildDir.mkdirs()
+
+        commandLine "node"
+        args "${project.projectDir}/tools/requirejs/bin/r.js", "-o", "${project.projectDir}/app.build.js", "baseUrl=${project.projectDir}/client/cloud", "out=${project.projectDir}/build/cloud/client/main.js"
 
 }
 
-task jslibs(type:Copy, dependsOn: 'js') {
+task jslibs_dev(type:Copy, dependsOn: 'js_dev') {
     from 'client/core/lib'
-    into 'build/' + project.ext.edition + '/client/core/lib'
+    into 'build/' + "developer" + '/client/core/lib'
 }
-task assets(type:Copy, dependsOn: 'jslibs') {
-    from 'client/assets'
-    into 'build/' + project.ext.edition + '/client/assets'
-}
-task patch_mkdir(type:Exec, dependsOn: 'assets') {
-    commandLine "mkdir"
-    args "build/" + project.ext.edition + "/client/patch"
-}
-task asset_patch(type:Copy, dependsOn: 'patch_mkdir') {
-    from 'client/' + project.ext.edition + '/patch/assets'
-    into 'build/' + project.ext.edition + '/client/patch/assets'
-}
-task z_client(type:Copy, dependsOn: 'asset_patch') {
-    from 'client/' + project.ext.edition + '/index.html'
-    into 'build/' + project.ext.edition + '/client'
+task jslibs_cloud(type:Copy, dependsOn: 'js_cloud') {
+    from 'client/core/lib'
+    into 'build/' + "cloud" + '/client/core/lib'
 }
 
-task build(overwrite: true, dependsOn: ['clean', 'x_syntax', 'y_server', 'z_client']) << {
+task assets_dev(type:Copy, dependsOn: 'jslibs_dev') {
+    from 'client/assets'
+    into 'build/' + "developer" + '/client/assets'
+}
+task assets_cloud(type:Copy, dependsOn: 'jslibs_cloud') {
+    from 'client/assets'
+    into 'build/' + "cloud" + '/client/assets'
+}
+
+task patch_mkdir_dev(type:Exec, dependsOn: 'assets_dev') {
+    commandLine "mkdir"
+    args "build/" + "developer" + "/client/patch"
+}
+task patch_mkdir_cloud(type:Exec, dependsOn: 'assets_cloud') {
+    commandLine "mkdir"
+    args "build/" + "cloud" + "/client/patch"
+}
+
+task asset_patch_dev(type:Copy, dependsOn: 'patch_mkdir_dev') {
+    from 'client/' + "developer" + '/patch/assets'
+    into 'build/' + "developer" + '/client/patch/assets'
+}
+task asset_patch_cloud(type:Copy, dependsOn: 'patch_mkdir_cloud') {
+    from 'client/' + "cloud" + '/patch/assets'
+    into 'build/' + "cloud" + '/client/patch/assets'
+}
+
+task z_client_dev(type:Copy, dependsOn: 'asset_patch_dev') {
+    from 'client/' + "developer" + '/index.html'
+    into 'build/' + "developer" + '/client'
+}
+task z_client_cloud(type:Copy, dependsOn: 'asset_patch_cloud') {
+    from 'client/' + "cloud" + '/index.html'
+    into 'build/' + "cloud" + '/client'
+}
+
+task build_dev(overwrite: true, dependsOn: ['clean', 'x_syntax', 'y_server_dev', 'z_client_dev']) << {
  
+}
+task build_cloud(overwrite: true, dependsOn: ['clean', 'x_syntax', 'y_server_cloud', 'z_client_cloud']) << {
+ 
+}
+
+task build (overwrite: true, dependsOn: ['build_dev', 'build_cloud']) << {
+
 }
 
 task run (type: Exec, dependsOn: ['build']) {
