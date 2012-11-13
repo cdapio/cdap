@@ -438,7 +438,7 @@ function(Models, Views, Controllers){
 				return;
 			}
 			request.id = current_id ++;
-			pending[request.id] = [response, params];
+			pending[request.id] = [response, params, new Date().getTime()];
 			this.emit(service, request);
 		}
 	});
@@ -447,10 +447,27 @@ function(Models, Views, Controllers){
 		C.socket.request.apply(C.socket, arguments);
 	};
 
+	var warningTimeout;
+
 	socket.on('exec', function (error, response) {
 		
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
+
+			if( new Date().getTime() - pending[response.id][2] > 1000) {
+
+				clearTimeout(warningTimeout);
+				$('#warning').fadeIn();
+
+			} else {
+
+				clearTimeout(warningTimeout);
+				warningTimeout = setTimeout(function () {
+					$('#warning').fadeOut();
+				}, 1000);
+
+			}
+
 			pending[response.id][0](error, response, pending[response.id][1]);
 			delete pending[response.id];
 		}

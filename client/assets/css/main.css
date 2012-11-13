@@ -148,6 +148,31 @@ a, a:visited {
 	margin-bottom: 8px;
 }
 
+#warning {
+	display: none;
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	pointer-events: none;
+}
+#warning div {
+	background-color: #ff7d7d;
+	border-radius: 0px 0px 4px 4px;
+	width: 360px;
+	margin: 0 auto;
+	text-align: center;
+	font-size: 12px;
+	color: #fff;
+	border: 1px solid #fff;
+	border-top: 0;
+	padding: 0px 8px;
+}
+#warning div a {
+	color: #fff;
+	text-decoration: underline;
+}
+
 #content {
 	min-width: 1056px;
 	max-width: 1456px;
@@ -504,7 +529,7 @@ text {
 	margin: 17px 0px;
 }
 .drop-zone {
-	width: 238px;
+	width: 228px;
 	color: #777;
 	text-align: center;
 	line-height: 52px;
