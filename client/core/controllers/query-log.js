@@ -30,40 +30,26 @@ define([], function () {
 			var self = this;
 
 			C.interstitial.loading();
-			C.get('manager', {
-				method: 'getFlowDefinition',
-				params: [app, id]
+			C.get('metadata', {
+				method: 'getQuery',
+				params: ['Query', {
+					application: app,
+					id: id
+				}]
 			}, function (error, response) {
 
-				if (!response.params) {
-					return;
-				}
-
+				response.params.currentState = 'UNKNOWN';
+				response.params.version = -1;
+				response.params.type = 'Query';
 				response.params.applicationId = app;
 
-				self.set('current', C.Mdl.Flow.create(response.params));
-
-				var flowlets = response.params.flowlets;
-				var objects = [];
-				for (var i = 0; i < flowlets.length; i ++) {
-					objects.push(C.Mdl.Flowlet.create(flowlets[i]));
-				}
-				self.set('types.Flowlet', Em.ArrayProxy.create({content: objects}));
-				
-				var streams = response.params.flowStreams;
-				objects = [];
-				for (var i = 0; i < streams.length; i ++) {
-					objects.push(C.Mdl.Stream.create(streams[i]));
-				}
-				self.set('types.Stream', Em.ArrayProxy.create({content: objects}));
-
-				// READY TO GO
+				self.set('current', C.Mdl.Query.create(response.params));
 
 			});
 
 			function logInterval () {
 
-				if (C.router.currentState.get('path') !== 'root.flows.log') {
+				if (C.router.currentState.get('path') !== 'root.queries.log') {
 					clearInterval(self.interval);
 					return;
 				}
@@ -73,8 +59,12 @@ define([], function () {
 					params: [app, id, 1024 * 10]
 				}, function (error, response) {
 
-					if (C.router.currentState.get('path') !== 'root.flows.log') {
+					if (C.router.currentState.get('path') !== 'root.queries.log') {
 						clearInterval(self.interval);
+						return;
+					}
+
+					if (C.router.currentState.name !== 'log') {
 						return;
 					}
 
@@ -98,6 +88,7 @@ define([], function () {
 					C.interstitial.hide();
 
 				});
+
 			}
 
 			logInterval();
@@ -111,7 +102,6 @@ define([], function () {
 
 			this.get('content').clear();
 			this.set('content', []);
-			this.set('types.Flowlet', Em.Object.create());
 			this.set('current', null);
 			clearInterval(this.interval);
 

@@ -466,7 +466,7 @@ function(Models, Views, Controllers){
 				sum += lastThirty[i];
 			}
 
-			if(sum / lastThirty.length > 1500) {
+			if(sum / lastThirty.length > 5000) {
 
 				clearTimeout(warningTimeout);
 				$('#warning').fadeIn();

@@ -68,7 +68,13 @@ define([
 				C.Ctl.Query[action.toLowerCase()](app, id, -1);
 			}
 		},
+		goToLog: function () {
 
+			C.router.transitionTo('queries.log', {
+				id: this.get('current').applicationId + ':' + this.get('current').id
+			});
+
+		},
 		promote: function (event) {
 
 			var id = $(event.target).attr('flow-id');

@@ -301,7 +301,6 @@
 
   </script>
 
-
   <script type="text/x-handlebars" data-template-name="flow-log">
 
     <div id="title">
@@ -312,6 +311,25 @@
         <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
       </ul>
       <h1>{{current.meta.name}} <span>Flow</span></h1>
+    </div>
+
+    <div id="panels">
+      <div class="panel" style="padding: 10px;">
+        {{view Ember.TextArea valueBinding="view.responseBody" viewName="logView" classNames="well query-response"}}
+      </div>
+    </div>
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="query-log">
+
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li class="active"><a href="#">Logs</a></li>
+      </ul>
+      <h1>{{current.meta.name}} <span>Query</span></h1>
     </div>
 
     <div id="panels">

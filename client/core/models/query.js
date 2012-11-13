@@ -102,7 +102,7 @@ define([], function () {
 
 		},
 		href: function () {
-			return '#/queries/' + this.get('application') + ':' + this.get('id');
+			return '#/queries/status/' + this.get('application') + ':' + this.get('id');
 		}.property(),
 		getMeta: function () {
 			var arr = [];

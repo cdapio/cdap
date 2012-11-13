@@ -177,7 +177,7 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						enter: C.interstitial.show
 					}),
 					query: Em.Route.extend({
-						route: '/:id',
+						route: '/status/:id',
 						connectOutlets: function (router, context) {
 
 							var id = context.id.split(':');
@@ -190,6 +190,21 @@ define (['core/app', 'patch/views/index'], function (C, Patch) {
 						},
 						navigateAway: function () {
 							C.Ctl.Query.unload();
+						},
+						enter: C.interstitial.show
+					}),
+					log: Em.Route.extend({
+						route: '/log/:id',
+						connectOutlets: function (router, context) {
+							var id = context.id.split(':');
+							C.Ctl.QueryLog.load(id[0], id[1]);
+							router.get('applicationController').connectOutlet({
+								viewClass: C.Vw.QueryLog,
+								controller: C.Ctl.QueryLog
+							});
+						},
+						navigateAway: function () {
+							C.Ctl.QueryLog.unload();
 						},
 						enter: C.interstitial.show
 					})
