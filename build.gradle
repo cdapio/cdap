@@ -37,9 +37,9 @@ dependencies {
 
     compile group: 'kryo', name: 'kryo', version: '2.12'
     compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
-    compile('org.apache.hbase:hbase:0.94.3.1.4.0.continuuity') { exclude module: 'junit' }
+    compile('org.apache.hbase:hbase:0.94.2.1.4.1.continuuity') { exclude module: 'junit' }
 
-    testCompile('org.apache.hbase:hbase:0.94.3.1.4.0.continuuity:tests') { exclude module: 'junit' }
+    testCompile('org.apache.hbase:hbase:0.94.2.1.4.1.continuuity:tests') { exclude module: 'junit' }
     testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
 }
 
