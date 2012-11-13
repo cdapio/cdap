@@ -192,12 +192,12 @@ task cloud_stage_envconf (type: Copy) {
 
 // these should be build tasks in webapp
 task cloud_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/developer/client')
+    from project(':web-cloud-app').file('build/cloud/client')
     into "${buildDir}/cloud/web-app/client"
 }
 
 task cloud_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/developer/server')
+    from project(':web-cloud-app').file('build/cloud/server')
     into "${buildDir}/cloud/web-app/server"
 }
 
