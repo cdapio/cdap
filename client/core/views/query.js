@@ -5,22 +5,28 @@ define([
 	return Em.View.extend({
 		templateName: 'query',
 		currentBinding: 'controller.current',
-		requestMethod: function () {
-			if (this.get('current') && this.get('current').serviceName === 'twitter') {
-				return 'getTopTags';
-			} else {
-				return 'readactivity';
-			}
-		}.property('current'),
-		requestParams: function () {
+		requestMethod: null,
+		requestParams: null,
+		setDefaults: function () {
 
 			if (this.get('current') && this.get("current").serviceName === 'feedreader') {
-				return 'limit=10&clusterid=1';
+
+				this.set('requestMethod', 'readactivity');
+				this.set('requestParams', 'limit=10&clusterid=1');
+
 			} else {
-				return '';
+
+				this.set('requestMethod', 'getTopTags');
+
 			}
 
-		}.property('current'),
+		},
+		init: function () {
+
+			this._super();
+			this.addObserver('current', this, this.setDefaults);
+
+		},
 		responseBody: null,
 		responseCode: null,
 		submit: function (event) {
