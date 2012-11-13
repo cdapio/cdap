@@ -245,11 +245,13 @@ a, a:visited {
 	padding-right: 24px;
 	padding-left: 14px;
 	background-image: url(../img/breadcrumb-split.png);
-	background-position-y: 0px;
+	
 	background-repeat: no-repeat;
 	text-decoration: none;
 	line-height: 36px;
-	background-position-x: right;
+	
+	background-position: right 0px;
+
 	letter-spacing: 0.08em;
 	font-size: 14px;
 	font-weight: 200;
