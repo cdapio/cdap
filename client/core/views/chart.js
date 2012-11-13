@@ -90,7 +90,7 @@ define([], function () {
 				}
 
 				// Hax for flowlet Queue
-				if (this.get('streamId')) {
+				if (this.get('streamId') && C.Ctl.Flow.current) {
 
 					var flowId = C.Ctl.Flow.current.id;
 					var flowletId = C.router.applicationController.view.get('flowlet-detail').controller.current.id;

@@ -40,7 +40,6 @@
   <script type="text/x-handlebars" data-template-name="main">
     <div id="header">
       <div id="global">
-        <a class="global-link global-help" href="http://www.continuuity.com/" target="_blank"></a>
         <a class="global-link global-user" href="#">{{user.name}}</a>
       </div>
       <ul id="breadcrumb">
@@ -55,7 +54,7 @@
     </div>
     <div id="footer" style="clear: both;">COPYRIGHT &copy; 2012 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
     <i class="icon-question-sign"></i><a style="text-decoration: underline;" href="mailto:support@continuuity.com">
-    Send us Questions &amp; Feedback</a><br /></div>
+    Send us Questions &amp; Feedback</a> &#183; <a style="text-decoration:underline;" href="#" onclick="return C.util.reset();">Reset AppFabric</a></div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="dashboard">
@@ -110,6 +109,10 @@
   <script type="text/x-handlebars" data-template-name="application">
     <div id="title">
       {{view C.Vw.TimeSelector}}
+      <div id="start-all-button" class="pull-right" style="margin-top:2px;">
+        <button {{action startAll on="click"}} class="btn">Start All</button>
+        <img style="display: none;margin-top: 2px;" src="/assets/img/start-all-load.gif" />
+      </div>
       <h1>{{current.name}} <span>Application</span></h1>
     </div>
 
@@ -231,6 +234,7 @@
       {{view C.Vw.TimeSelector}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li class="active"><a href="#">Status</a></li>
+        <li><a href="#" {{action "goToLog" on="click"}}>Logs</a></li>
         <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
       </ul>
       <h1>{{current.meta.name}} <span>Flow</span></h1>
@@ -256,7 +260,9 @@
             {{/unless}}
           </ul>
 
-          <button class="btn" style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Drain</button>
+          {{#unless ENV.isCloud}}
+          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Drain"><span class="btn-drain" />Push</button>
+          {{/unless}}
           
           <button class="btn" {{bindAttr disabled="current.stopDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.meta.name"}} flow-action="Stop" ><span class="btn-stop" />Stop</button>
           
@@ -294,11 +300,33 @@
 
   </script>
 
+
+  <script type="text/x-handlebars" data-template-name="flow-log">
+
+    <div id="title">
+      {{view C.Vw.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li class="active"><a href="#">Logs</a></li>
+        <li><a href="#" {{action "goToHistory" on="click"}}>History</a></li>
+      </ul>
+      <h1>{{current.meta.name}} <span>Flow</span></h1>
+    </div>
+
+    <div id="panels">
+      <div class="panel" style="padding: 10px;">
+        {{view Ember.TextArea valueBinding="view.responseBody" viewName="logView" classNames="well query-response"}}
+      </div>
+    </div>
+
+  </script>
+
   <script type="text/x-handlebars" data-template-name="flow-history">
     <div id="title">
       {{view C.Vw.TimeSelector}}
        <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li><a href="#" {{action "goToStatus" on="click"}}>Status</a></li>
+        <li><a href="#" {{action "goToLog" on="click"}}>Logs</a></li>
         <li class="active"><a href="#">History</a></li>
       </ul>
       <h1>{{current.meta.name}} <span>Flow</span></h1>
@@ -308,16 +336,6 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="flowviz-container" class="flowviz-fade">
-          <div class="btn-group" style="float: left;">
-            <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:14px;float: right;">
-              {{view.flowletLabelName}} <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu">
-              <li><a {{action "setFlowletLabel" on="click"}}>Arrival Rate</a></li>
-              <li><a {{action "setFlowletLabel" on="click"}}>Queue Depth</a></li>
-              <li><a {{action "setFlowletLabel" on="click"}}>Total Processed</a></li>
-            </ul>
-          </div>
           {{view C.Vw.Visualizer viewName="visualizer"}}
         </div>
       </div>
@@ -371,7 +389,7 @@
       </div>
       <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes per Second" metrics="dataset.write.{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.read.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -422,8 +440,16 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
       <div id="action-buttons" class="btn-group" style="float: right;">
+
+
+
         <button class="btn" {{bindAttr disabled="current.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} {{bindAttr flow-action="current.defaultAction"}}><span {{bindAttr class="current.actionIcon"}} />{{current.defaultAction}}</button>
-        <button class="btn dropdown-toggle" data-toggle="dropdown" style="padding-left:16px;">Actions
+
+          {{#unless ENV.isCloud}}
+          <button class="btn" style="width:64px;" {{action "promote" on="click"}} {{bindAttr flow-app="current.applicationId"}} {{bindAttr flow-id="current.id"}} flow-action="Drain"><span class="btn-drain" />Push</button>
+          {{/unless}}
+
+        <button class="btn dropdown-toggle" data-toggle="dropdown">
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
@@ -443,42 +469,35 @@
     </div>
     <div id="panels">
 
-      <div class="panel" style="float: left; width: 400px;">
-      <div class="panel-head"><div class="panel-title">Request</div></div>
+      <div class="panel">
+      <div class="panel-head"><div class="panel-title">Make a Request</div></div>
         <table style="width: 100%">
+          <thead>
           <tr>
-            <td style="width: 150px;">
-              Method Name
-            </td>
+            <th style="width: 140px;text-align: left;">
+              Method
+            </th>
+            <th style="text-align: left;">
+              Parameters
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
             <td>
               {{view C.Vw.TextField valueBinding="view.requestMethod" }}
             </td>
-          </tr>
-          <tr>
             <td>
-              Query String
-            </td>
-            <td>
-              {{view Ember.TextField valueBinding="view.requestParams"}}
+              {{view Ember.TextField valueBinding="view.requestParams" width="100%"}}
+              <button {{action "submit" on="click"}} class="btn btn-success" style="margin:0px 16px;">Execute</button>
             </td>
           </tr>
-          <tr>
-            <td>
-              &nbsp;
-            </td>
-            <td style="text-align: right;">
-              <button {{action "submit" on="click"}} class="btn btn-success">Execute</a>
-            </td>
-          </tr>
+          </tbody>
         </table>
       </div>
 
-      <div class="panel" style="margin-left: 416px;padding-bottom: 10px;">
-        <div class="panel-head"><div class="panel-title">Response</div></div>
-        <div class="well" style="margin: 10px 10px 0px 10px;min-height: 109px;overflow: auto;padding: 8px 12px;">
-          <h2>{{view.responseCode}}</h2>
-          {{view.responseBody}}
-        </div>
+      <div class="panel" style="padding: 10px;">
+        {{view Ember.TextArea valueBinding="view.responseBody" classNames="well query-response"}}
       </div>
   </script>
 
