@@ -29,9 +29,10 @@ try {
 (function () {
 
 	this.config = {};
-	this.configure = function (config, version) {
+	this.configure = function (config, version, ip) {
 		this.config = config;
 		this.version = version;
+		this.ip = ip;
 	};
 
 	this.metadata = function (method, params, done) {
