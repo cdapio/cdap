@@ -2,7 +2,7 @@
 // Server environment configuration
 //
 
-var getNetworkIP = (function () {
+var getNetworkIPs = (function () {
     var ignoreRE = /^(127\.0\.0\.1|::1|fe80(:1)?::1(%.*)?)$/i;
 
     var exec = require('child_process').exec;
@@ -10,44 +10,44 @@ var getNetworkIP = (function () {
     var command;
     var filterRE;
 
-    if (process.platform === 'darwin') {
-         command = 'ifconfig';
-         filterRE = /\binet\s+([^\s]+)/g;
-         // filterRE = /\binet6\s+([^\s]+)/g; // IPv6
-    } else {
-         command = 'ifconfig';
-         filterRE = /\binet\b[^:]+:\s*([^\s]+)/g;
-         // filterRE = /\binet6[^:]+:\s*([^\s]+)/g; // IPv6
+    switch (process.platform) {
+    case 'win32':
+    //case 'win64': // TODO: test
+        command = 'ipconfig';
+        filterRE = /\bIP(v[46])?-?[^:\r\n]+:\s*([^\s]+)/g;
+        // TODO: find IPv6 RegEx
+        break;
+    case 'darwin':
+        command = 'ifconfig';
+        filterRE = /\binet\s+([^\s]+)/g;
+        // filterRE = /\binet6\s+([^\s]+)/g; // IPv6
+        break;
+    default:
+        command = 'ifconfig';
+        filterRE = /\binet\b[^:]+:\s*([^\s]+)/g;
+        // filterRE = /\binet6[^:]+:\s*([^\s]+)/g; // IPv6
+        break;
     }
 
     return function (callback, bypassCache) {
-         // get cached value
         if (cached && !bypassCache) {
             callback(null, cached);
             return;
         }
         // system call
         exec(command, function (error, stdout, sterr) {
-            var ips = [];
-            // extract IPs
-            var matches = stdout.match(filterRE);
-            // JS has no lookbehind REs, so we need a trick
+            cached = [];
+            var ip;
+            var matches = stdout.match(filterRE) || [];
+            //if (!error) {
             for (var i = 0; i < matches.length; i++) {
-                ips.push(matches[i].replace(filterRE, '$1'));
-            }
-
-            // filter BS
-            for (var i = 0, l = ips.length; i < l; i++) {
-                if (!ignoreRE.test(ips[i])) {
-                    //if (!error) {
-                        cached = ips[i];
-                    //}
-                    callback(error, ips[i]);
-                    return;
+                ip = matches[i].replace(filterRE, '$1');
+                if (!ignoreRE.test(ip)) {
+                    cached.push(ip);
                 }
             }
-            // nothing found
-            callback(error, null);
+            //}
+            callback(error, cached);
         });
     };
 })();
@@ -115,7 +115,7 @@ var getNetworkIP = (function () {
 
 					getVersion(function (version) {
 
-						getNetworkIP(function (error, ip) {
+						getNetworkIPs(function (error, ip) {
 						
 							api.configure(config, version, ip);
 							done(true);
@@ -148,7 +148,7 @@ var getNetworkIP = (function () {
 
 						getVersion(function (version) {
 
-							getNetworkIP(function (error, ip) {
+							getNetworkIPs(function (error, ip) {
 							
 								api.configure(config, version, ip);
 								done(true);

@@ -381,9 +381,9 @@ function(Models, Views, Controllers){
 
 		if (!C.initialized) {
 
-			if (env.version !== 'UNKNOWN') {
+			//if (env.version !== 'UNKNOWN') {
 				$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
-			}
+			//}
 
 			C.debug('Application connected.');
 			
