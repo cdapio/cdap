@@ -1,0 +1,20 @@
+Version 1.2.1
+    - API Changes
+        - Support for logging from within the flowlet
+        - Support for generating new metrics from within the flowlet
+              (only counters)
+    - Metrics
+        - Support for retrieving metrics for a flow through REST
+              interface (Gateway). Includes system as well as user metrics
+        - Added backend support for collecting 'FlowUser' metrics
+        - Nagios plugin providing status and metrics for a given flow
+    - Logging
+        - Support for collecting user logs centralized
+        - Integration for viewing logs from within web cloud app
+    - Other features
+        - Fabric reset from web cloud app
+        - Version of continuuity added to web cloud app
+    - Bugs and Fixes
+        - Dataset initialization intermittently fails
+        - Filter push down for HBase ReadColumnRange
+        - Cleaned logging, moved lot of logs to trace
