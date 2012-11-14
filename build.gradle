@@ -49,7 +49,7 @@ task x_syntax() {
     }
 }
 
-task clean(overwrite: true, description: 'Remove all files from ./build/') << {
+task clean(overwrite: true, description: 'Remove all files from ./build/') {
 	"rm -rf ${project.projectDir}/build".execute()
 }
 
