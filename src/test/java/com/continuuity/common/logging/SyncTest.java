@@ -7,7 +7,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.*;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 
 public class SyncTest {
@@ -15,14 +17,18 @@ public class SyncTest {
   MiniDFSCluster dfsCluster = null;
   Configuration config = null;
 
+  @Rule
+  public TemporaryFolder tempFolder = new TemporaryFolder();
+
   @Before
   public void startDFS() throws IOException {
 
+    File dfsPath = tempFolder.newFolder();
+    System.setProperty("test.build.data", dfsPath.toString());
+    System.setProperty("test.cache.data", dfsPath.toString());
+    System.out.println("Starting up Mini DFS cluster...");
     config = new Configuration();
     config.setInt("dfs.block.size", 4 * 1024);
-    //System.setProperty("test.build.data", dfsPath.toString());
-    //System.setProperty("test.cache.data", dfsPath.toString());
-    System.out.println("Starting up Mini DFS cluster...");
     dfsCluster = new MiniDFSCluster.Builder(config)
         .nameNodePort(0)
         .numDataNodes(1)
@@ -46,7 +52,7 @@ public class SyncTest {
   public void testSync() throws IOException {
     FileSystem fs = FileSystem.get(config);
     // create a file and write n bytes, then sync
-    Path path = new Path("hdfs:/myfile");
+    Path path = new Path("/myfile");
     FSDataOutputStream out = fs.create(path);
     int numBytes = 5000;
     for (int i = 0; i < numBytes; i++) {
