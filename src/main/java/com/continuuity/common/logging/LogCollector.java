@@ -19,13 +19,25 @@ public class LogCollector {
 
   ConcurrentMap<String, LogWriter> loggers = Maps.newConcurrentMap();
 
-  private String pathPrefix;
-  private FileSystem fs;
+  private final String pathPrefix;
+  private final CConfiguration config;
+  private FileSystem fs = null;
 
-  public LogCollector(CConfiguration config) throws IOException {
+  private FileSystem getFileSystem() throws IOException {
+    if (fs == null) {
+      synchronized(this) {
+        if (fs == null) {
+          fs = FileSystem.get(config);
+        }
+      }
+    }
+    return fs;
+  }
+
+  public LogCollector(CConfiguration config) {
     this.pathPrefix = config.get(Constants.CFG_LOG_COLLECTION_ROOT,
         Constants.DEFAULT_LOG_COLLECTION_ROOT);
-    this.fs = FileSystem.get(config);
+    this.config = config;
     LOG.info("Root directory for log collection is " + pathPrefix);
   }
 
@@ -50,7 +62,7 @@ public class LogCollector {
         if (logger == null) {
           // create a new log configuration for this tag
           LogConfiguration conf =
-              new LogConfiguration(this.fs, this.pathPrefix, tag);
+              new LogConfiguration(getFileSystem(), this.pathPrefix, tag);
           // create a new log writer
           logger = new LogFileWriter();
           logger.configure(conf);
@@ -65,7 +77,7 @@ public class LogCollector {
   public List<String> tail(String tag, int size) throws IOException {
     // create a new log configuration for this tag
     LogConfiguration conf =
-        new LogConfiguration(this.fs, this.pathPrefix, tag);
+        new LogConfiguration(getFileSystem(), this.pathPrefix, tag);
     // create a new log reader
     LogReader reader = new LogFileReader();
     reader.configure(conf);

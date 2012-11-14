@@ -6,10 +6,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 
@@ -20,8 +17,11 @@ public class SyncTest {
 
   @Before
   public void startDFS() throws IOException {
+
     config = new Configuration();
-    config.setInt("dfs.block.size", 4*1024);
+    config.setInt("dfs.block.size", 4 * 1024);
+    //System.setProperty("test.build.data", dfsPath.toString());
+    //System.setProperty("test.cache.data", dfsPath.toString());
     System.out.println("Starting up Mini DFS cluster...");
     dfsCluster = new MiniDFSCluster.Builder(config)
         .nameNodePort(0)
@@ -33,7 +33,6 @@ public class SyncTest {
     dfsCluster.waitClusterUp();
     System.out.println("Mini DFS is started.");
     config.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
-
   }
 
   @After
@@ -43,24 +42,30 @@ public class SyncTest {
     System.out.println("Mini DFS is shut down.");
   }
 
-  @Test
+  @Test @Ignore
   public void testSync() throws IOException {
-    Path path = new Path("myfile");
     FileSystem fs = FileSystem.get(config);
+    // create a file and write n bytes, then sync
+    Path path = new Path("hdfs:/myfile");
     FSDataOutputStream out = fs.create(path);
     int numBytes = 5000;
     for (int i = 0; i < numBytes; i++) {
       out.write((byte)i);
-      out.hsync();
     }
-    out.close();
+    out.hsync();
+    // verify the file is there and has all the bytes
     Assert.assertTrue(fs.exists(path));
     Assert.assertEquals(numBytes, fs.getFileStatus(path).getLen());
+    // read back and verify all bytes
     FSDataInputStream in = fs.open(path);
     byte[] buffer = new byte[numBytes];
     in.readFully(buffer);
-    for (int i = 0; i < numBytes; i++) Assert.assertEquals((byte)i, buffer[i]);
+    for (int i = 0; i < numBytes; i++) {
+      Assert.assertEquals((byte)i, buffer[i]);
+    }
     in.close();
+    // now close the writer
+    out.close();
   }
 
 }
