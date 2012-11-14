@@ -10,6 +10,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -33,7 +34,7 @@ public class FlumeLogCollector {
   private int port;
 
 
-  public void start() {
+  public void start() throws IOException {
 
     LOG.info("Starting up " + this);
 
@@ -56,8 +57,13 @@ public class FlumeLogCollector {
   }
 
   public static void main(String[] args) {
-    CConfiguration configuration = CConfiguration.create();
-    new FlumeLogCollector(configuration).start();
+    try {
+      CConfiguration configuration = CConfiguration.create();
+      new FlumeLogCollector(configuration).start();
+    } catch (Exception e) {
+      LOG.error("Failed to start Log Collection Source: " + e.getMessage(), e);
+      System.err.println("Error: " + e.getMessage());
+    }
   }
 
 }

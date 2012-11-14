@@ -7,6 +7,7 @@ import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.apache.thrift.TBaseHelper;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
   private CConfiguration config;
   private LogCollector collector;
 
-  public FlumeLogAdapter(CConfiguration config) {
+  public FlumeLogAdapter(CConfiguration config) throws IOException {
     this.config = config;
     this.collector = new LogCollector(config);
   }

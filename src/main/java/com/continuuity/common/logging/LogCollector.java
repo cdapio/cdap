@@ -3,6 +3,7 @@ package com.continuuity.common.logging;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,10 +20,12 @@ public class LogCollector {
   ConcurrentMap<String, LogWriter> loggers = Maps.newConcurrentMap();
 
   private String pathPrefix;
+  private FileSystem fs;
 
-  public LogCollector(CConfiguration config) {
+  public LogCollector(CConfiguration config) throws IOException {
     this.pathPrefix = config.get(Constants.CFG_LOG_COLLECTION_ROOT,
         Constants.DEFAULT_LOG_COLLECTION_ROOT);
+    this.fs = FileSystem.get(config);
     LOG.info("Root directory for log collection is " + pathPrefix);
   }
 
@@ -47,7 +50,7 @@ public class LogCollector {
         if (logger == null) {
           // create a new log configuration for this tag
           LogConfiguration conf =
-              new LogConfiguration(this.pathPrefix, tag);
+              new LogConfiguration(this.fs, this.pathPrefix, tag);
           // create a new log writer
           logger = new LogFileWriter();
           logger.configure(conf);
@@ -62,7 +65,7 @@ public class LogCollector {
   public List<String> tail(String tag, int size) throws IOException {
     // create a new log configuration for this tag
     LogConfiguration conf =
-        new LogConfiguration(this.pathPrefix, tag);
+        new LogConfiguration(this.fs, this.pathPrefix, tag);
     // create a new log reader
     LogReader reader = new LogFileReader();
     reader.configure(conf);

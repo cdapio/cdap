@@ -1,6 +1,5 @@
 package com.continuuity.common.logging;
 
-import com.continuuity.common.conf.CConfiguration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -14,6 +13,7 @@ public class LogFileWriter implements LogWriter {
 
   LogConfiguration config;
   FileSystem fileSystem;
+  Path currentPath;
   private FSDataOutputStream out;
 
   @Override
@@ -21,7 +21,7 @@ public class LogFileWriter implements LogWriter {
     // remember configuration
     this.config = config;
     // open a file system
-    fileSystem = FileSystem.get(CConfiguration.create());
+    fileSystem = config.getFileSystem();
     // make sure the base path exists in the file system
     createPath(config.getLogFilePath());
 
@@ -104,7 +104,10 @@ public class LogFileWriter implements LogWriter {
     synchronized(this) {
       out.write(message.getBytes(charsetUtf8));
       out.write('\n');
-      out.hsync(); // note flush() and hflush() do not work!
+      out.hsync(); // note flush() and hflush() do not seem to work!
+      // brute force would close and reopen the file for append.
+      //out.close();
+      //openFileForWrite(config.getLogFilePath(), makeFileName(0));
     }
   }
 
@@ -113,7 +116,8 @@ public class LogFileWriter implements LogWriter {
   }
 
   void deleteFile(String path, String name) throws IOException {
-    fileSystem.delete(new Path(path), false);
+    if (fileSystem.exists(new Path(path, name)))
+      fileSystem.delete(new Path(path, name), false);
   }
 
   void renameFile(String path, String oldName, String newName)

@@ -1,6 +1,5 @@
 package com.continuuity.common.logging;
 
-import com.continuuity.common.conf.CConfiguration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -19,7 +18,7 @@ public class LogFileReader implements LogReader {
     // remember configuration
     this.config = config;
     // open a file system
-    fileSystem = FileSystem.get(CConfiguration.create());
+    fileSystem = config.getFileSystem();
   }
 
   @Override
