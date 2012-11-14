@@ -97,6 +97,10 @@ public class GatewayQueryAccessorTest {
     theGateway.setConsumer(new TestUtil.NoopConsumer());
     theGateway.start(null, configuration);
 
+    // TODO clean this up as soon as it is fixed in flow
+    // this appears to be need for flows/queries to work in tests
+    configuration.setBoolean("execution.mode.singlenode", true);
+
   } // end of setupGateway
 
   @AfterClass
@@ -132,7 +136,7 @@ public class GatewayQueryAccessorTest {
     }
   }
 
-  @Test
+  @Test(timeout = 30000)
   public void testQueryThroughGateway() throws Exception {
 
     /** This sucks, but it is what it is. */
