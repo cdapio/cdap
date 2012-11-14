@@ -18,11 +18,9 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
 
   private static final Logger LOG
     = LoggerFactory.getLogger(FlumeLogAdapter.class);
-  private CConfiguration config;
   private LogCollector collector;
 
   public FlumeLogAdapter(CConfiguration config) throws IOException {
-    this.config = config;
     this.collector = new LogCollector(config);
   }
 
