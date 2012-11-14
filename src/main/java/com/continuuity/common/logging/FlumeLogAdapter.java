@@ -6,13 +6,18 @@ import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.apache.thrift.TBaseHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class FlumeLogAdapter implements AvroSourceProtocol {
 
+  private static final Logger LOG
+    = LoggerFactory.getLogger(FlumeLogAdapter.class);
   private CConfiguration config;
   private LogCollector collector;
 
@@ -21,17 +26,35 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
     this.collector = new LogCollector(config);
   }
 
+  private static Map<String, String>
+  toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
+    Map<String, String> stringMap =
+      new HashMap<String, String>();
+    if(charSeqMap == null) {
+      return stringMap;
+    }
+    for(Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
+      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
+  }
+
   @Override
   public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-    if(event == null) {
+    Map<String, String> headers = toStringMap(event.getHeaders());
+    if(! headers.containsKey(LogEvent.FIELD_NAME_LOGTAG) ||
+       ! headers.containsKey(LogEvent.FIELD_NAME_LOGLEVEL)) {
       return Status.UNKNOWN;
     }
-    Map<CharSequence, CharSequence> headers = event.getHeaders();
-    if(headers == null) {
+
+    String logtag = headers.get(LogEvent.FIELD_NAME_LOGTAG);
+    String level = headers.get(LogEvent.FIELD_NAME_LOGLEVEL);
+
+    if(logtag == null || logtag.isEmpty() || level == null || level.isEmpty()) {
+      LOG.warn("Logtag or level is null. Please check the send events.");
       return Status.UNKNOWN;
     }
-    String logtag = headers.get(LogEvent.FIELD_NAME_LOGTAG).toString();
-    String level = headers.get(LogEvent.FIELD_NAME_LOGLEVEL).toString();
+
     String body = new String(TBaseHelper.byteBufferToByteArray(event.getBody()));
     LogEvent logEvent = new LogEvent(logtag, level, body);
     this.collector.log(logEvent);
