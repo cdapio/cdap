@@ -374,14 +374,16 @@ function(Models, Views, Controllers){
 
 		window.ENV.isCloud = (env.name !== 'development');
 		window.ENV.version = env.version;
-		if (env.version !== 'UNKNOWN') {
-			$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>');
-		}
+		
 		C.debug('Environment set to "' + env.name + '", version ' + env.version);
 
 		// This function is called when the socket is (re)connected.
 
 		if (!C.initialized) {
+
+			if (env.version !== 'UNKNOWN') {
+				$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>');
+			}
 
 			C.debug('Application connected.');
 			
