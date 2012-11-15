@@ -29,6 +29,7 @@ public class LogCollector {
       synchronized(this) {
         if (fs == null) {
           fs = FileSystem.get(config);
+          // TODO horrible! what worth is the FileSystem abstraction then?
           // not sure why this is, but the local file system's hflush() does
           // not appear to work. Using the raw local file system fixes it.
           if (fs instanceof LocalFileSystem)
