@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DFSOutputStream;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -53,12 +54,13 @@ public class SyncTest {
     FileSystem fs = FileSystem.get(config);
     // create a file and write n bytes, then sync
     Path path = new Path("/myfile");
-    FSDataOutputStream out = fs.create(path);
+    FSDataOutputStream out = fs.create(path, false, 4096, (short)2, 4096L);
     int numBytes = 5000;
     for (int i = 0; i < numBytes; i++) {
       out.write((byte)i);
     }
-    out.hsync();
+    ((DFSOutputStream)out.getWrappedStream()).hflush();
+    // out.hflush();
     // verify the file is there and has all the bytes
     Assert.assertTrue(fs.exists(path));
     Assert.assertEquals(numBytes, fs.getFileStatus(path).getLen());

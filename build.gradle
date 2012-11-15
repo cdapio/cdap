@@ -14,6 +14,7 @@ tasks.withType(Compile) {
 // TODO these are also defined in gateway... how do we ensure they stay in sync
 def avroVersion = '1.6.2'
 def flumeVersion = '1.2+'
+def hadoopVersion = '2.0.0-alpha'
 
 /**
  * Specify all the dependencies
@@ -43,12 +44,12 @@ dependencies {
     testCompile group: 'com.sun.jersey', name: 'jersey-core', version:'1.13'
 
     // All hadoop related dependencies
-    compile group: 'org.apache.hadoop', name: 'hadoop-hdfs', version:'2.0.0-alpha'
-    compile group: 'org.apache.hadoop', name: 'hadoop-annotations', version:'2.0.0-alpha'
-    compile group: 'org.apache.hadoop', name: 'hadoop-common', version:'2.0.0-alpha'
-    compile group: 'org.apache.hadoop', name: 'hadoop-yarn-common', version:'2.0.0-alpha'
-    compile group: 'org.apache.hadoop', name: 'hadoop-yarn-api', version:'2.0.0-alpha'
-    testCompile group: 'org.apache.hadoop', name: 'hadoop-minicluster', version:'2.0.0-alpha'
+    compile "org.apache.hadoop:hadoop-common:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-annotations:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-hdfs:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-common:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-api:$hadoopVersion"
+    testCompile "org.apache.hadoop:hadoop-minicluster:$hadoopVersion"
 
     // Thrift dependencies
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
