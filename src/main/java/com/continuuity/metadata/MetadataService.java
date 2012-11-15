@@ -28,7 +28,7 @@ import java.util.*;
 public class MetadataService extends MetadataHelper
     implements com.continuuity.metadata.thrift.MetadataService.Iface
 {
-  private static final Logger Log
+  private static final Logger LOG
       = LoggerFactory.getLogger(MetadataService.class);
 
   private final MetaDataStore mds;
@@ -72,7 +72,7 @@ public class MetadataService extends MetadataHelper
     } catch (OperationException e) {
       String message = String.format("Failed to create %s %s. Reason: %s.",
           helper.getName(), helper.getId(t), e.getMessage());
-      Log.error(message, e);
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
 
@@ -168,7 +168,7 @@ public class MetadataService extends MetadataHelper
     } catch (OperationException e) {
       String message = String.format("Failed creating %s '%s'. Reason: %s",
           helper.getName(), t, e.getMessage());
-      Log.error(message);
+      LOG.error(message);
       throw new MetadataServiceException(message);
     }
   }
@@ -204,7 +204,7 @@ public class MetadataService extends MetadataHelper
         return false;
       String message = String.format("Failed to update %s %s. Reason: %s.",
           helper.getName(), helper.getId(t), e.getMessage());
-      Log.error(message, e);
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
   }
@@ -235,7 +235,16 @@ public class MetadataService extends MetadataHelper
     try {
       // Create a context.
       OperationContext context = new OperationContext(accountId);
-
+      if (helper.getApplication(t) == null) {
+        LOG.debug(String.format(
+            "Deleting meta data for %s '%s' in account '%s'.",
+            helper.getName(), helper.getId(t), account.getId()));
+      } else {
+        LOG.debug(String.format(
+            "Deleting meta data for %s '%s' in account '%s' and application " +
+            "'%s'.", helper.getName(), helper.getId(t), account.getId(),
+            helper.getApplication(t)));
+      }
       // Invoke MDS to delete entry.
       // This will also succeed if the entry does not exist
       mds.delete(context,
@@ -245,7 +254,7 @@ public class MetadataService extends MetadataHelper
     } catch (OperationException e) {
       String message = String.format("Failed deleting %s %s. Reason: %s",
           helper.getName(), t, e.getMessage());
-      Log.error(message, e);
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
   }
@@ -287,7 +296,7 @@ public class MetadataService extends MetadataHelper
       String message = String.format(
           "Failed listing %s's for account %s. Reason: %s",
           helper.getName(), accountId, e.getMessage());
-      Log.error(message, e);
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
   }
@@ -336,7 +345,7 @@ public class MetadataService extends MetadataHelper
     } catch (OperationException e) {
       String message = String.format("Failed to retrieve %s %s. Reason: %s.",
           helper.getName(), helper.getId(t), e.getMessage());
-      Log.error(message, e);
+      LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
   }
@@ -362,7 +371,7 @@ public class MetadataService extends MetadataHelper
       } catch (OperationException e) {
         String message = String.format("Failed to get %s '%s' for account " +
             "'%s'. Reason: %s.", what, id, account, e.getMessage());
-        Log.error(message, e);
+        LOG.error(message, e);
         throw new MetadataServiceException(message);
       }
       if (entry == null) throw new MetadataServiceException(
@@ -383,25 +392,25 @@ public class MetadataService extends MetadataHelper
             "'%s'. Reason: %s.", field, what, id, e.getMessage());
         if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
           // not a write conflict, must be some more serious problem
-          Log.error(message);
+          LOG.error(message);
           throw new MetadataServiceException(message);
         }
         if (attempts <= 0) {
           // retry attempts exhausted, bail out
-          Log.error(message, e);
+          LOG.error(message, e);
           message = String.format("Repeatedly failed to swap field '%s' for " +
               "%s (%d attempts). Giving up.", field, what, retryAttempts);
           throw new MetadataServiceException(message);
         }
         // there was a write conflict, random sleep before next attempt
-        Log.debug(message);
+        LOG.debug(message);
         int millis = new Random(System.currentTimeMillis()).nextInt(100);
-        Log.debug("Sleeping " + millis + " ms before next attempt.");
+        LOG.debug("Sleeping " + millis + " ms before next attempt.");
         try {
           Thread.sleep(millis);
         } catch (InterruptedException ie) {
           message = "InterruptedException during sleep()";
-          Log.error(message);
+          LOG.error(message);
           throw new MetadataServiceException(message);
         }
       }
@@ -753,6 +762,7 @@ public class MetadataService extends MetadataHelper
   public void deleteAll(String accountId)
       throws MetadataServiceException, TException {
 
+    LOG.info("Deleting all meta data for account '" + accountId + "'.");
     // Validate account.
     validateAccount(accountId);
     Account account = new Account(accountId);
@@ -761,26 +771,32 @@ public class MetadataService extends MetadataHelper
     for (Stream stream : getStreams(account)) {
       deleteStream(account, stream);
     }
+    LOG.info("Stream meta data for account '" + accountId + "' deleted.");
 
     // list all datasets for the account and delete them
     for (Dataset dataset : getDatasets(account)) {
       deleteDataset(account, dataset);
     }
+    LOG.info("Dataset meta data for account '" + accountId + "' deleted.");
 
     // list all queries for the account and delete them
     for (Query query : getQueries(account)) {
       deleteQuery(account, query);
     }
+    LOG.info("Query meta data for account '" + accountId + "' deleted.");
 
     // list all flows for the account and delete them
     for (Flow flow : getFlows(accountId)) {
       deleteFlow(accountId, flow.getApplication(), flow.getId());
     }
+    LOG.info("Flow meta data for account '" + accountId + "' deleted.");
 
     // list all applications for the account and delete them
     for (Application application : getApplications(account)) {
       deleteApplication(account, application);
     }
+    LOG.info("Application meta data for account '" + accountId + "' deleted.");
+    LOG.info("All meta data for account '" + accountId + "' deleted.");
   }
 
 }
