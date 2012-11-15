@@ -53,6 +53,13 @@ public class LogCollectorTest {
     lines = collector.tail(logtag, 10 * lengthOfOne + 10);
     Assert.assertEquals(5, lines.size());
 
+    // test that we can also read with another instance of the collector
+    LogCollector collector2 = new LogCollector(config);
+    // this should return only one message
+    lines = collector2.tail(logtag, lengthOfOne + 10);
+    Assert.assertEquals(1, lines.size());
+
+
     // write 6 more messages, this should roll the log after the last one
     for (int i = 5; i < 11; i++) {
       collector.log(new LogEvent(logtag, "ERROR", makeMessage(i)));

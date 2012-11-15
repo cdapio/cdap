@@ -56,7 +56,11 @@ public class LogFileReader implements LogReader {
     FileStatus status = fileSystem.getFileStatus(path);
     if (!status.isFile()) return lines;
 
-    long fileSize = sizeHint < 0 ? status.getLen() : sizeHint;
+    long fileSize;
+    if (sizeHint >= 0) fileSize = sizeHint;
+    else if (i > 0) fileSize = status.getLen();
+    else fileSize = determineTrueFileSize(path, status);
+
     long seekPos = 0;
     long bytesToRead = size;
     if (fileSize >= size) {
@@ -102,6 +106,16 @@ public class LogFileReader implements LogReader {
       pos++; // skip the new line character
     }
     return lines;
+  }
+
+  private long determineTrueFileSize(Path path, FileStatus status)
+      throws IOException {
+    FSDataInputStream stream = fileSystem.open(path);
+    stream.seek(status.getLen());
+    // we need to read repeatedly until we reach the end of the file
+    byte[] buffer = new byte[1024 * 1024];
+    while (stream.read(buffer, 0, buffer.length) >= 0);
+    return stream.getPos();
   }
 
   String makeFileName(int instance) {
