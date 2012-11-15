@@ -5,7 +5,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DFSOutputStream;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -28,14 +28,14 @@ public class SyncTest {
     System.setProperty("test.build.data", dfsPath.toString());
     System.setProperty("test.cache.data", dfsPath.toString());
     System.out.println("Starting up Mini DFS cluster...");
-    config = new Configuration();
-    config.setInt("dfs.block.size", 4 * 1024);
+    config = new HdfsConfiguration();
+    // config.setInt("dfs.block.size", 4 * 1024);
     dfsCluster = new MiniDFSCluster.Builder(config)
-        .nameNodePort(0)
-        .numDataNodes(1)
+    //    .nameNodePort(0)
+        .numDataNodes(2)
         .format(true)
-        .manageDataDfsDirs(true)
-        .manageNameDfsDirs(true)
+    //    .manageDataDfsDirs(true)
+    //    .manageNameDfsDirs(true)
         .build();
     dfsCluster.waitClusterUp();
     System.out.println("Mini DFS is started.");
@@ -59,11 +59,11 @@ public class SyncTest {
     for (int i = 0; i < numBytes; i++) {
       out.write((byte)i);
     }
-    ((DFSOutputStream)out.getWrappedStream()).hflush();
-    // out.hflush();
-    // verify the file is there and has all the bytes
+    out.hflush();
+    // verify the file is there
     Assert.assertTrue(fs.exists(path));
-    Assert.assertEquals(numBytes, fs.getFileStatus(path).getLen());
+    // do not verify the length of the file, hflush() does not update that
+    //Assert.assertEquals(numBytes, fs.getFileStatus(path).getLen());
     // read back and verify all bytes
     FSDataInputStream in = fs.open(path);
     byte[] buffer = new byte[numBytes];

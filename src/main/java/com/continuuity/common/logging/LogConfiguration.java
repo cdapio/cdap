@@ -1,5 +1,6 @@
 package com.continuuity.common.logging;
 
+import com.continuuity.common.conf.CConfiguration;
 import org.apache.hadoop.fs.FileSystem;
 
 import java.io.IOException;
@@ -12,11 +13,18 @@ public class LogConfiguration {
   private final String prefix;
   private final String path;
   private final FileSystem fs;
+  private final long threshold;
+  private final int instances;
 
-  public final long DEFAULT_ROLL_THRESHOLD = 130 * 1024 * 1024; // 4MB
-  public final int  DEFAULT_ROLL_INSTANCES = 5; // .log, log.1, ... log.4
+
+  public static final String CFG_ROLL_THRESHOLD = "logfile.roll.size";
+  public static final String CFG_ROLL_INSTANCES = "logfile.roll.instances";
+
+  public static final long DEFAULT_ROLL_THRESHOLD = 4 * 1024 * 1024; // 4MB
+  public static final int  DEFAULT_ROLL_INSTANCES = 5; // .log, log.1, ... log.4
 
   public LogConfiguration(FileSystem fs,
+                          CConfiguration config,
                           String pathPrefix,
                           String tag) throws IOException {
     // parse the log tag
@@ -31,6 +39,9 @@ public class LogConfiguration {
     this.flow = flow;
     this.prefix = pathPrefix;
     this.path = String.format("%s/%s/%s/", pathPrefix, application, flow);
+
+    this.threshold = config.getLong(CFG_ROLL_THRESHOLD, DEFAULT_ROLL_THRESHOLD);
+    this.instances = config.getInt(CFG_ROLL_INSTANCES, DEFAULT_ROLL_INSTANCES);
   }
 
   public FileSystem getFileSystem() {
@@ -46,11 +57,11 @@ public class LogConfiguration {
   }
 
   public long getSizeThreshold() {
-    return DEFAULT_ROLL_THRESHOLD;
+    return this.threshold;
   }
 
   public int getMaxInstances() {
-    return DEFAULT_ROLL_INSTANCES;
+    return this.instances;
   }
 
 }

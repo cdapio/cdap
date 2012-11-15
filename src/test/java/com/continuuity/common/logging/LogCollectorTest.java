@@ -2,9 +2,10 @@ package com.continuuity.common.logging;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -12,23 +13,11 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 
 public class LogCollectorTest {
 
   String makeMessage(int i) {
-    return "This is message " + i + ".";
-  }
-
-  static String makeTempDir() {
-    Random rand = new Random(System.currentTimeMillis());
-    while (true) {
-      int num = rand.nextInt(Integer.MAX_VALUE);
-      String dirName = "tmp_coll" + num;
-      File dir = new File(dirName);
-      if (dir.mkdir())
-        return dirName;
-    }
+    return String.format("This is error message %5d.", i);
   }
 
   @Rule
@@ -36,19 +25,108 @@ public class LogCollectorTest {
 
   private void testCollection(CConfiguration config) throws IOException {
 
-    LogCollector collector = new LogCollector(config);
     String logtag = "a:b:c";
-    for (int i = 0; i < 30; i++) {
-      collector.log(
-        new LogEvent(logtag, "ERROR", "this is error message #" + i));
-    }
-    // collector.close();
+    int lengthOfOne = String.format("%s [%s] %s\n", logtag, "ERROR",
+        makeMessage(10000)).getBytes(LogFileWriter.charsetUtf8).length;
 
-    List<String> lines = collector.tail(logtag, 45);
-    for (String line : lines) {
-      System.out.println(line);
+    // start a log collector with 3 instances and space for 11 messages each
+    // (file rolls after a message is logged, hence the extra 2 bytes make
+    // space for an extra message.
+    config.setInt(LogConfiguration.CFG_ROLL_INSTANCES, 3);
+    config.setInt(LogConfiguration.CFG_ROLL_THRESHOLD, 10 * lengthOfOne + 2);
+    LogCollector collector = new LogCollector(config);
+
+    // write 5 messages, they should all be in the same file
+    for (int i = 0; i < 5; i++) {
+      collector.log(new LogEvent(logtag, "ERROR", makeMessage(i)));
     }
+
+    // this should return only one message
+    List<String> lines = collector.tail(logtag, lengthOfOne + 10);
     Assert.assertEquals(1, lines.size());
+
+    // this should return 3 messages
+    lines = collector.tail(logtag, 3 * lengthOfOne + 10);
+    Assert.assertEquals(3, lines.size());
+
+    // this should return only 5 messages
+    lines = collector.tail(logtag, 10 * lengthOfOne + 10);
+    Assert.assertEquals(5, lines.size());
+
+    // write 6 more messages, this should roll the log after the last one
+    for (int i = 5; i < 11; i++) {
+      collector.log(new LogEvent(logtag, "ERROR", makeMessage(i)));
+    }
+
+    // this should return only one message, and that is the last one: 10
+    lines = collector.tail(logtag, lengthOfOne + 10);
+    Assert.assertEquals(1, lines.size());
+    Assert.assertTrue(lines.get(0).contains(makeMessage(10)));
+
+    // write 1 more message, this should start writing to the next file
+    collector.log(new LogEvent(logtag, "ERROR", makeMessage(11)));
+
+    // this should return two messages: 10 + 11
+    lines = collector.tail(logtag, 2 * lengthOfOne + 10);
+    Assert.assertEquals(2, lines.size());
+    Assert.assertTrue(lines.get(0).contains(makeMessage(10)));
+    Assert.assertTrue(lines.get(1).contains(makeMessage(11)));
+
+    // write 24 more messages, this should now roll and evict some
+    for (int i = 12; i < 36; i++) {
+      collector.log(new LogEvent(logtag, "ERROR", makeMessage(i)));
+    }
+
+    // read across all instances: the current file has 3, the others 11
+    // hence reading 16 should read across all 3 files
+    lines = collector.tail(logtag, 16 * lengthOfOne + 10);
+    Assert.assertEquals(16, lines.size());
+    for (int i = 0; i < 16; i++) {
+      Assert.assertTrue(lines.get(i).contains(makeMessage(i + 20)));
+    }
+
+    // read past the last instance: the current file has 3, the others 11
+    // hence reading 27 should exceed the 3 files
+    lines = collector.tail(logtag, 27 * lengthOfOne + 10);
+    Assert.assertEquals(25, lines.size());
+    for (int i = 0; i < 25; i++) {
+      Assert.assertTrue(lines.get(i).contains(makeMessage(i + 11)));
+    }
+
+    // close the log collector and reopen it
+    collector.close();
+    collector = new LogCollector(config);
+
+    // verify that the state is the same with the new collector
+    lines = collector.tail(logtag, 27 * lengthOfOne + 10);
+    Assert.assertEquals(25, lines.size());
+    for (int i = 0; i < 25; i++) {
+      Assert.assertTrue(lines.get(i).contains(makeMessage(i + 11)));
+    }
+
+    // write 1 more message, this should append to the current file
+    collector.log(new LogEvent(logtag, "ERROR", makeMessage(36)));
+
+
+    // verify that append works and we see an additional message
+    // - if it rolls, then we lose messages
+    // - if it fails, then we don't see the new message
+    lines = collector.tail(logtag, 27 * lengthOfOne + 10);
+    // the local file system append() does not work. Hence we roll the
+    // log when re-opening the collector and lose one file (11 messages)
+    // TODO how terrible! it defeats the purpose of the FileSystem abstraction
+    // TODO fix this as soon as append works for local fs
+    if (FileSystem.get(config) instanceof LocalFileSystem) {
+      Assert.assertEquals(15, lines.size());
+      for (int i = 0; i < 15; i++) {
+        Assert.assertTrue(lines.get(i).contains(makeMessage(i + 22)));
+      }
+    } else {
+      Assert.assertEquals(26, lines.size());
+      for (int i = 0; i < 26; i++) {
+        Assert.assertTrue(lines.get(i).contains(makeMessage(i + 11)));
+      }
+    }
   }
 
   @Test
@@ -59,12 +137,11 @@ public class LogCollectorTest {
 
     CConfiguration config = CConfiguration.create();
     config.set(Constants.CFG_LOG_COLLECTION_ROOT, prefix.getAbsolutePath());
-    config.set("fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem");
 
     testCollection(config);
   }
 
-  @Test @Ignore
+  @Test
   public void testCollectionDFS() throws IOException {
 
     MiniDFSCluster dfsCluster = null;
@@ -76,7 +153,7 @@ public class LogCollectorTest {
 
       System.err.println("Starting up Mini HDFS cluster...");
       CConfiguration conf = CConfiguration.create();
-      conf.setInt("dfs.block.size", 1024*1024);
+      //conf.setInt("dfs.block.size", 1024*1024);
       dfsCluster = new MiniDFSCluster.Builder(conf)
           .nameNodePort(0)
           .numDataNodes(1)
@@ -95,9 +172,11 @@ public class LogCollectorTest {
 
       testCollection(conf);
     } finally {
-      System.err.println("Shutting down Mini HDFS cluster...");
-      dfsCluster.shutdown();
-      System.err.println("Mini HDFS is shut down.");
+      if (dfsCluster != null) {
+        System.err.println("Shutting down Mini HDFS cluster...");
+        dfsCluster.shutdown();
+        System.err.println("Mini HDFS is shut down.");
+      }
     }
   }
 

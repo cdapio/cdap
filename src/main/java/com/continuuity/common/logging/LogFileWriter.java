@@ -3,6 +3,7 @@ package com.continuuity.common.logging;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,7 +14,6 @@ public class LogFileWriter implements LogWriter {
 
   LogConfiguration config;
   FileSystem fileSystem;
-  Path currentPath;
   private FSDataOutputStream out;
 
   @Override
@@ -25,12 +25,12 @@ public class LogFileWriter implements LogWriter {
     // make sure the base path exists in the file system
     createPath(config.getLogFilePath());
 
-    // NOTE: This is to get around the append not working.
-    // We move the previous run log as part of rotation and create
-    // a new log file.
-    for (int i = config.getMaxInstances() - 1; i > 0; --i) {
-      renameFile(config.getLogFilePath(),
-                 makeFileName(i - 1), makeFileName(i));
+    // TODO how terrible! it defeats the purpose of the FileSystem abstraction
+    // TODO fix this as soon as append works for local fs
+    // Note: append is not working on local file system (it appears to work
+    // for DFS). Hence we roll the log in case of local fs.
+    if (!(fileSystem instanceof DistributedFileSystem)) {
+      roll();
     }
     // open the file to write to (create or append)
     openFileForWrite(config.getLogFilePath(), makeFileName(0));
@@ -44,19 +44,24 @@ public class LogFileWriter implements LogWriter {
       // if necessary, rotate the log
       // - check size of current file, if exceeds:
       if (getCurrentFileSize() > config.getSizeThreshold()) {
-        // close current
-        closeFile();
-        // delete oldest
-        deleteFile(config.getLogFilePath(),
-            makeFileName(config.getMaxInstances() - 1));
-        // rename all files
-        for (int i = config.getMaxInstances() - 1; i > 0; --i) {
-          renameFile(config.getLogFilePath(),
-              makeFileName(i - 1), makeFileName(i));
-        }
+        // roll the existing log files
+        roll();
         // - open a new file
         openFileForWrite(config.getLogFilePath(), makeFileName(0));
       }
+    }
+  }
+
+  private void roll() throws IOException {
+    // close current
+    closeFile();
+    // delete oldest
+    deleteFile(config.getLogFilePath(),
+        makeFileName(config.getMaxInstances() - 1));
+    // rename all files
+    for (int i = config.getMaxInstances() - 1; i > 0; --i) {
+      renameFile(config.getLogFilePath(),
+          makeFileName(i - 1), makeFileName(i));
     }
   }
 
@@ -85,7 +90,7 @@ public class LogFileWriter implements LogWriter {
   void openFileForWrite(String path, String name) throws IOException {
     Path filePath = new Path(path, name);
     if (!fileSystem.exists(filePath)) {
-      out = this.fileSystem.create(filePath);
+      out = fileSystem.create(filePath);
     } else {
       out = fileSystem.append(filePath);
     }
@@ -104,11 +109,13 @@ public class LogFileWriter implements LogWriter {
     synchronized(this) {
       out.write(message.getBytes(charsetUtf8));
       out.write('\n');
-      out.hsync(); // note flush() and hflush() do not seem to work!
-      // brute force would close and reopen the file for append.
-      //out.close();
-      //openFileForWrite(config.getLogFilePath(), makeFileName(0));
+      out.hflush();
     }
+  }
+
+  @Override
+  public long getWritePosition() throws IOException {
+    return getCurrentFileSize();
   }
 
   long getCurrentFileSize() throws IOException {

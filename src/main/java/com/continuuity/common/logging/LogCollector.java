@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocalFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,10 @@ public class LogCollector {
       synchronized(this) {
         if (fs == null) {
           fs = FileSystem.get(config);
+          // not sure why this is, but the local file system's hflush() does
+          // not appear to work. Using the raw local file system fixes it.
+          if (fs instanceof LocalFileSystem)
+            fs = ((LocalFileSystem) fs).getRawFileSystem();
         }
       }
     }
@@ -61,8 +66,8 @@ public class LogCollector {
         logger = loggers.get(tag);
         if (logger == null) {
           // create a new log configuration for this tag
-          LogConfiguration conf =
-              new LogConfiguration(getFileSystem(), this.pathPrefix, tag);
+          LogConfiguration conf = new
+              LogConfiguration(getFileSystem(), config, this.pathPrefix, tag);
           // create a new log writer
           logger = new LogFileWriter();
           logger.configure(conf);
@@ -75,13 +80,22 @@ public class LogCollector {
   }
 
   public List<String> tail(String tag, int size) throws IOException {
+
+    // determine whether we have a writer open for this log
+    LogWriter writer = loggers.get(tag);
+    long sizeHint = -1L;
+    if (writer != null) {
+      sizeHint = writer.getWritePosition();
+    }
+
     // create a new log configuration for this tag
     LogConfiguration conf =
-        new LogConfiguration(getFileSystem(), this.pathPrefix, tag);
+        new LogConfiguration(getFileSystem(), config, this.pathPrefix, tag);
+
     // create a new log reader
     LogReader reader = new LogFileReader();
     reader.configure(conf);
-    return reader.tail(size);
+    return reader.tail(size, sizeHint);
   }
 
   public void close() throws IOException {

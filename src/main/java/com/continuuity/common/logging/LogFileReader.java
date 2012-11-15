@@ -22,11 +22,30 @@ public class LogFileReader implements LogReader {
   }
 
   @Override
-  public List<String> tail(int size) throws IOException {
-    return tail(new ArrayList<String>(), 0, size);
+  public List<String> tail(int sizeToRead, long writePos) throws IOException {
+    return tail(new ArrayList<String>(), 0, sizeToRead, writePos);
   }
 
-  private List<String> tail(ArrayList<String> lines, int i, long size)
+
+  /**
+   * Recursive method to tail the log. Reads from the current log file
+   * instance (i), and if that does not have sufficient size, recurses to the
+   * next older instance (i+1). If the caller knows the size of the current
+   * file (i), he can pass it via the fileSize parameter.
+   * @param lines A list of log lines to append read lines to
+   * @param i The current log file instance to start reading from
+   * @param size number of bytes to read at most
+   * @param sizeHint if known, the caller should pass in the length of the
+   *                 current log file instance. This helps to seek to the end
+   *                 of a file that has not been closed yet (and hence file
+   *                 status does not reflect its correct size). Only needed
+   *                 at instance 0. Otherwise (for recursive calls) this is
+   *                 -1, and the file size will be obatained via file status.
+   * @return The list of lines read
+   * @throws IOException if reading goes badly wrong
+   */
+  private List<String> tail(ArrayList<String> lines, int i, long size,
+                            long sizeHint)
       throws IOException {
 
     // get the path of the current log file instance (xxx.log[.i])
@@ -37,7 +56,7 @@ public class LogFileReader implements LogReader {
     FileStatus status = fileSystem.getFileStatus(path);
     if (!status.isFile()) return lines;
 
-    long fileSize = status.getLen();
+    long fileSize = sizeHint < 0 ? status.getLen() : sizeHint;
     long seekPos = 0;
     long bytesToRead = size;
     if (fileSize >= size) {
@@ -47,7 +66,7 @@ public class LogFileReader implements LogReader {
     } else {
       // if size of current file is less than limit, make a recursive
       // call to tail for previous file
-      tail(lines, i + 1, size - fileSize);
+      tail(lines, i + 1, size - fileSize, -1);
       bytesToRead = fileSize;
     }
 
