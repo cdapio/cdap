@@ -83,8 +83,8 @@ public class RemoteOperationExecutor
     Log.info("Opex client provider is " + this.clientProvider);
 
     // configure the client provider for long-running operations
-    int longTimeout = config.getInt(Constants.CFG_LONG_DATA_OPEX_CLIENT_TIMEOUT,
-        Constants.DEFAULT_LONG_DATA_OPEX_CLIENT_TIMEOUT);
+    int longTimeout = config.getInt(Constants.CFG_DATA_OPEX_CLIENT_LONG_TIMEOUT,
+        Constants.DEFAULT_DATA_OPEX_CLIENT_LONG_TIMEOUT);
     this.longClientProvider = new SingleUseClientProvider(config, longTimeout);
     this.longClientProvider.initialize();
     Log.info("Opex client provider for long-runnig operations is "

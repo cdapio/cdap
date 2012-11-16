@@ -34,7 +34,7 @@ public class Constants {
       = "data.opex.client.timeout";
 
   /** to specify the opex client socket timeout for long-running ops in ms */
-  public static final String CFG_LONG_DATA_OPEX_CLIENT_TIMEOUT
+  public static final String CFG_DATA_OPEX_CLIENT_LONG_TIMEOUT
       = "data.opex.client.long.timeout";
 
   /** to specify the opex client provider strategy. */
@@ -70,7 +70,7 @@ public class Constants {
       = 30 * 1000;
 
   /** opex client timeout for long operations such as ClearFabric */
-  public static final int DEFAULT_LONG_DATA_OPEX_CLIENT_TIMEOUT
+  public static final int DEFAULT_DATA_OPEX_CLIENT_LONG_TIMEOUT
       = 300 * 1000;
 
   /** default number of pooled opex clients */

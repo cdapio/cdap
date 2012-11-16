@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -9,15 +10,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeoutTest extends OpexServiceTestBase {
 
   static OperationContext context = OperationContext.DEFAULT;
+  static final AtomicInteger clearCount = new AtomicInteger(0);
+
 
   @BeforeClass
   public static void startService() throws Exception {
     CConfiguration config = CConfiguration.create();
     config.setInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT, 500);
+    config.setInt(Constants.CFG_DATA_OPEX_CLIENT_LONG_TIMEOUT, 1500);
     config.set(Constants.CFG_DATA_OPEX_CLIENT_RETRY_STRATEGY, "n-times");
     config.setInt(Constants.CFG_DATA_OPEX_CLIENT_ATTEMPTS, 3);
     OperationExecutorServiceTest.startService(config,
@@ -26,6 +31,7 @@ public class TimeoutTest extends OpexServiceTestBase {
           public String getName() {
             return "noop(sleep on write)";
           }
+
           @Override
           public void execute(OperationContext context,
                               Write write) throws OperationException {
@@ -36,10 +42,11 @@ public class TimeoutTest extends OpexServiceTestBase {
             }
             super.execute(context, write);
           }
+
           @Override
           public void execute(OperationContext context,
                               List<WriteOperation> batch)
-          throws OperationException {
+              throws OperationException {
             try {
               Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -47,7 +54,9 @@ public class TimeoutTest extends OpexServiceTestBase {
             }
             super.execute(context, batch);
           }
+
           int readCount = 0;
+
           @Override
           public OperationResult<byte[]> execute(
               OperationContext context, ReadKey read)
@@ -61,9 +70,23 @@ public class TimeoutTest extends OpexServiceTestBase {
               return super.execute(context, read);
             } else {
               return new OperationResult<byte[]>(
-                  new byte[] { (byte)readCount });
+                  new byte[]{(byte) readCount});
             }
           }
+
+          @Override
+          public void execute(OperationContext context,
+                              ClearFabric clear) {
+            clearCount.incrementAndGet();
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+              // do nothing
+            }
+            super.execute(context, clear);
+          }
+
+
         });
   }
 
@@ -98,4 +121,16 @@ public class TimeoutTest extends OpexServiceTestBase {
     Assert.assertArrayEquals(new byte[] { 3 },
         remote.execute(context, read).getValue());
   }
+
+  /**
+   * This tests that clear fabric has a longer timeout
+   */
+  @Test
+  public void testLongTimeout() throws OperationException {
+    ClearFabric clearFabric = new ClearFabric(ClearFabric.ToClear.ALL);
+    remote.execute(context, clearFabric);
+    // ensure that no retry was needed
+    Assert.assertEquals(1, clearCount.get());
+  }
+
 }
