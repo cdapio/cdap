@@ -29,9 +29,13 @@ public class Constants {
 
   // Configuration key names and defaults used by opex client.
 
-  /** to specify the opex client provider strategy. */
+  /** to specify the opex client socket timeout in ms */
   public static final String CFG_DATA_OPEX_CLIENT_TIMEOUT
       = "data.opex.client.timeout";
+
+  /** to specify the opex client socket timeout for long-running ops in ms */
+  public static final String CFG_LONG_DATA_OPEX_CLIENT_TIMEOUT
+      = "data.opex.client.long.timeout";
 
   /** to specify the opex client provider strategy. */
   public static final String CFG_DATA_OPEX_CLIENT_PROVIDER
@@ -61,9 +65,13 @@ public class Constants {
   public static final String CFG_DATA_OPEX_CLIENT_BACKOFF_LIMIT
       = "data.opex.client.retry.backoff.limit";
 
-  /** to specify the opex client socket timeout in milli seconds */
+  /** the default opex client socket timeout in milli seconds */
   public static final int DEFAULT_DATA_OPEX_CLIENT_TIMEOUT
       = 30 * 1000;
+
+  /** opex client timeout for long operations such as ClearFabric */
+  public static final int DEFAULT_LONG_DATA_OPEX_CLIENT_TIMEOUT
+      = 300 * 1000;
 
   /** default number of pooled opex clients */
   public static final int    DEFAULT_DATA_OPEX_CLIENT_COUNT

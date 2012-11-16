@@ -68,6 +68,7 @@ public class PooledClientProvider extends AbstractClientProvider {
   @Override
   public void discardClient(OperationExecutorClient client) {
     clients.discard(client);
+    client.close();
   }
 
   @Override

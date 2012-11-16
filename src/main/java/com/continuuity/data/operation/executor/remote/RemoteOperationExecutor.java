@@ -32,6 +32,9 @@ public class RemoteOperationExecutor
   // we will use this to provide every call with an opex client
   private OpexClientProvider clientProvider;
 
+  // we will use this for getting clients for long-running operations
+  private OpexClientProvider longClientProvider;
+
   // the retry strategy we will use
   RetryStrategyProvider retryStrategyProvider;
 
@@ -78,6 +81,14 @@ public class RemoteOperationExecutor
     }
     this.clientProvider.initialize();
     Log.info("Opex client provider is " + this.clientProvider);
+
+    // configure the client provider for long-running operations
+    int longTimeout = config.getInt(Constants.CFG_LONG_DATA_OPEX_CLIENT_TIMEOUT,
+        Constants.DEFAULT_LONG_DATA_OPEX_CLIENT_TIMEOUT);
+    this.longClientProvider = new SingleUseClientProvider(config, longTimeout);
+    this.longClientProvider.initialize();
+    Log.info("Opex client provider for long-runnig operations is "
+        + this.longClientProvider);
   }
 
   /**
@@ -106,6 +117,11 @@ public class RemoteOperationExecutor
         throws TException, OperationException;
   }
 
+  /** see execute(operation, client) */
+  private <T> T execute(Operation<T> operation) throws OperationException {
+    return execute(operation, null);
+  }
+
   /**
    * This is a generic method implementing the somewhat complex execution
    * and retry logic for operations, to avoid repetitive code.
@@ -119,19 +135,25 @@ public class RemoteOperationExecutor
    * applied for thrift exceptions.
    *
    * @param operation The operation to be executed
+   * @param provider An opex client provider. If null, then a client will be
+   *                 obtained using the client provider
    * @param <T> The return type of the operation
    * @return the result of the operation, or a value returned by error()
    * @throws OperationException if the operation fails with an exception
    *    other than TException
    */
-  private <T> T execute(Operation<T> operation)
-      throws OperationException {
+  private <T> T execute(Operation<T> operation, OpexClientProvider provider)
+  throws OperationException {
     RetryStrategy retryStrategy = retryStrategyProvider.newRetryStrategy();
     while (true) {
+      // did we get a custom client provider or do we use the default?
+      if (provider == null) {
+        provider = this.clientProvider;
+      }
       OperationExecutorClient client = null;
       try {
         // this will throw a TException if it cannot get a client
-        client = this.clientProvider.getClient();
+        client = provider.getClient();
 
         // note that this can throw exceptions other than TException
         // hence the finally clause at the end
@@ -140,7 +162,7 @@ public class RemoteOperationExecutor
       } catch (TException te) {
         // a thrift error occurred, the thrift client may be in a bad state
         if (client != null) {
-          this.clientProvider.discardClient(client);
+          provider.discardClient(client);
           client = null;
         }
 
@@ -162,7 +184,7 @@ public class RemoteOperationExecutor
         // in case any other exception happens (other than TException), and
         // also in case of succeess, the client must be returned to the pool.
         if (client != null)
-          this.clientProvider.returnClient(client);
+          provider.returnClient(client);
       }
     }
   }
@@ -238,7 +260,7 @@ public class RemoteOperationExecutor
             client.execute(context, clearFabric);
             return true;
           }
-        });
+        }, this.longClientProvider);
   }
 
   @Override

@@ -48,5 +48,4 @@ public interface OpexClientProvider {
    * @param client The client to discard
    */
   void discardClient(OperationExecutorClient client);
-
 }

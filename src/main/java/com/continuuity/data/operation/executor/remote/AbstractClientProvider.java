@@ -65,6 +65,10 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
   }
 
   protected OperationExecutorClient newClient() throws TException {
+    return newClient(-1);
+  }
+
+  protected OperationExecutorClient newClient(int timeout) throws TException {
     String address;
     int port;
 
@@ -95,8 +99,10 @@ public abstract class AbstractClientProvider implements OpexClientProvider {
       Log.info("Service discovered at " + address + ":" + port);
     }
     // now we have an address and port, try to connect a client
-    int timeout = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT,
-        Constants.DEFAULT_DATA_OPEX_CLIENT_TIMEOUT);
+    if (timeout < 0) {
+      timeout = configuration.getInt(Constants.CFG_DATA_OPEX_CLIENT_TIMEOUT,
+          Constants.DEFAULT_DATA_OPEX_CLIENT_TIMEOUT);
+    }
     Log.info("Attempting to connect to Operation Executor service at " +
         address + ":" + port + " with timeout " + timeout + " ms.");
     // thrift transport layer
