@@ -72,11 +72,10 @@ public class MetadataServiceTest {
    * throw MetadataServiceException.
    * @throws Exception
    */
-  @Test
-  public void testCreateStreamWithIdAndName() throws Exception {
-    Stream
-      stream = new Stream("id1");
-    stream.setName("Funny stream");
+  @Test(expected = MetadataServiceException.class)
+  public void testCreateStreamWithIdAndEmptyName() throws Exception {
+    Stream stream = new Stream("id1");
+    stream.setName("");
     mds.createStream(account, stream);
   }
 
@@ -142,7 +141,6 @@ public class MetadataServiceTest {
     Assert.assertTrue(mds.getStreams(account1).size() == 0);
   }
 
-  @Test
   public void testCreateDataset() throws Exception {
     Dataset dataset = new Dataset("dataset1");
     dataset.setName("Data Set1");
@@ -468,6 +466,7 @@ public class MetadataServiceTest {
 
     // add streamB and datasetB back to flow3 using addToFlow
     Assert.assertTrue(mds.addStreamToFlow(account.getId(), "app2", "f1", "b"));
+    Assert.assertTrue(mds.addDatasetToFlow(account.getId(), "app2", "f1", "b"));
     Assert.assertTrue(mds.addDatasetToFlow(account.getId(), "app2", "f1", "b"));
 
     // now verify the streams and datasets for app2 again

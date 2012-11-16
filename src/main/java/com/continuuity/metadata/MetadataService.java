@@ -7,20 +7,17 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
-import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.thrift.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Implementation of thrift meta data service handler.
@@ -361,6 +358,9 @@ public class MetadataService extends MetadataHelper
     // create a context
     OperationContext opContext = new OperationContext(account, app);
 
+    LOG.debug(String.format("Adding '%s' to field %s of %s '%s'...",
+        item, field, what, id));
+
     // try n times, give up after n write conflicts
     final int retryAttempts = 5;
     for (int attempts = retryAttempts; attempts >= 0; --attempts) {
@@ -379,13 +379,20 @@ public class MetadataService extends MetadataHelper
 
       String oldValue = entry.getTextField(field);
       for (String x : oldValue.split(" ")) {
-        if (x.equals(item)) return true; // item is already in list
+        if (x.equals(item)) {
+          LOG.debug(String.format("No need to add '%s' to field %s of %s " +
+              "'%s': Already in current value '%s'.", item, field, what, id,
+              oldValue));
+          return true; // item is already in list
+        }
       }
       String newValue = oldValue == null ? item + " " : oldValue + item + " ";
 
       try {
         mds.swapField(opContext, account, app, type, id, field,
             oldValue, newValue, -1);
+        LOG.debug(String.format("Added '%s' to field %s of %s '%s': " +
+            "New value is '%s'.", item, field, what, id, newValue));
         return true;
       } catch (OperationException e) {
         String message = String.format("Failed to swap field '%s' for %s " +
