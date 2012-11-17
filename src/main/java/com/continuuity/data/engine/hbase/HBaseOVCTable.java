@@ -294,9 +294,10 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       get.setTimeRange(0, getMaxStamp(readPointer));
       get.setMaxVersions();
 
+      // negative limit means unlimited, map that to int.max
       if (limit <= 0) limit = Integer.MAX_VALUE;
 
-      // push down the limit into the get as a filter, negative means unlimited
+      // push down the column range and the limit into the get as a filter
       List<Filter> filters = Lists.newArrayList();
       if (startColumn != null || stopColumn != null) filters.add(
           new ColumnRangeFilter(startColumn, true, stopColumn, false));
@@ -312,11 +313,18 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
           Bytes.BYTES_COMPARATOR);
       byte[] last = null;
       for (KeyValue kv : result.raw()) {
+        // filter out versions that are invisible under current ReadPointer
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
+        // make sure that we skip repeated occurrences of the same column -
+        // they would be older revisions that overwrite the most recent one
+        // in the result map!
         byte [] column = kv.getQualifier();
         if (Bytes.equals(last, column)) continue;
+        // add to the result
         map.put(kv.getQualifier(), kv.getValue());
+        // and remember this column to be able to filter out older revisions
+        // of the same column (which would follow next in the hbase result)
         last = column;
       }
       if (map.isEmpty()) {
