@@ -310,10 +310,14 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       Result result = this.readTable.get(get);
       Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(
           Bytes.BYTES_COMPARATOR);
+      byte[] last = null;
       for (KeyValue kv : result.raw()) {
         long version = kv.getTimestamp();
         if (!readPointer.isVisible(version)) continue;
+        byte [] column = kv.getQualifier();
+        if (Bytes.equals(last, column)) continue;
         map.put(kv.getQualifier(), kv.getValue());
+        last = column;
       }
       if (map.isEmpty()) {
         return new

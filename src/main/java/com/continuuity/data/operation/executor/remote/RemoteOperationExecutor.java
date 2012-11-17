@@ -86,7 +86,7 @@ public class RemoteOperationExecutor
     // for this we use a provider that creates a new connection every time,
     // and closes the connection after the call. The reason is that these
     // operations are very rare, and it is not worth keeping another pool of
-    // open thrift connections around. 
+    // open thrift connections around.
     int longTimeout = config.getInt(Constants.CFG_DATA_OPEX_CLIENT_LONG_TIMEOUT,
         Constants.DEFAULT_DATA_OPEX_CLIENT_LONG_TIMEOUT);
     this.longClientProvider = new SingleUseClientProvider(config, longTimeout);
