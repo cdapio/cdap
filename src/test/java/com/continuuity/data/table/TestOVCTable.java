@@ -9,10 +9,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -297,6 +294,52 @@ public abstract class TestOVCTable {
       idx++;
     }
 
+  }
+
+  @Test
+  public void testColumnRangeWithVersions() throws OperationException {
+    byte [] row = Bytes.toBytes("testColumnRangeWithVersions");
+    byte [] one = { 1 };
+    byte [] two = { 2 };
+    byte [] three = { 3 };
+    byte [] colA = { 'a' };
+    byte [] colB = { 'b' };
+    byte [] colC = { 'c' };
+    byte [] colD = { 'd' };
+
+    // write 1 to each of four columns with version 10
+    this.table.put(row, new byte [][] { colA, colB, colC, colD }, 10L,
+        new byte [][] { one, one, one, one });
+    // write 2 to two of the four columns with version 11
+    this.table.put(row, new byte [][] { colB, colC }, 11L,
+        new byte [][] { two, two });
+    // write 3 to one of these two columns with version 12
+    this.table.put(row, new byte [][] { colC }, 12L,
+        new byte [][] { three });
+
+    // read all columns [A..D[ with latest version and no exclusions
+    Map<byte[],byte[]> colMap =
+        this.table.get(row, colA, colD, -1, RP_MAX).getValue();
+    Assert.assertArrayEquals(one, colMap.get(colA));
+    Assert.assertArrayEquals(two, colMap.get(colB));
+    Assert.assertArrayEquals(three, colMap.get(colC));
+    Assert.assertNull(colMap.get(colD));
+
+    // read columns [B..] with version <= 11 and no exclusions
+    colMap = this.table.
+        get(row, colB, null, -1, new MemoryReadPointer(11)).getValue();
+    Assert.assertNull(colMap.get(colA));
+    Assert.assertArrayEquals(two, colMap.get(colB));
+    Assert.assertArrayEquals(two, colMap.get(colC));
+    Assert.assertArrayEquals(one, colMap.get(colD));
+
+    // read all columns with version <= 12 and exclusions is 11
+    colMap = this.table.get(row, null, null, -1,
+        new MemoryReadPointer(12, Collections.singleton(11L))).getValue();
+    Assert.assertArrayEquals(one, colMap.get(colA));
+    Assert.assertArrayEquals(one, colMap.get(colB));
+    Assert.assertArrayEquals(three, colMap.get(colC));
+    Assert.assertArrayEquals(one, colMap.get(colD));
   }
 
   @Test
