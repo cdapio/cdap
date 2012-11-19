@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.logging.LocalLogDispatcher;
 import com.continuuity.flow.common.FlowLogTag;
 import com.continuuity.flow.common.GenericDataSetRegistry;
-import com.continuuity.flow.common.LocalLogDispatcher;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
