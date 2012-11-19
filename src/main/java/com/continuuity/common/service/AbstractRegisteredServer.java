@@ -1,6 +1,7 @@
 package com.continuuity.common.service;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This abstract class makes it easy to build a registered server.
@@ -91,12 +94,17 @@ public abstract class AbstractRegisteredServer {
     cmdPortServer.addListener(command, description, listener);
   }
 
+  /**
+   * Iterate through all the configured loggers and changes the level
+   * to the level specified by <code>level</code>.
+   *
+   * @param level The level to be set on logger.
+   */
   public static void setLoggingLevel(Level level) {
-    ch.qos.logback.classic.Logger root =
-      (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(
-        ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME
-      );
-    root.setLevel(level);
+    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+    for(ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
+      log.setLevel(level);
+    }
   }
   /**
    * Starts the service

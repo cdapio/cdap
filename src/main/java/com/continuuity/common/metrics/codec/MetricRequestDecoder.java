@@ -49,7 +49,7 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     while(in.hasRemaining()) {
       byte current = in.get();
       if(current == '\n') {
-        // remeber the current position and limit.
+        // remember the current position and limit.
         int position = in.position();
         int limit = in.limit();
         try {
