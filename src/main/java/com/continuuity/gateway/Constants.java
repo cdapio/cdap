@@ -132,20 +132,20 @@ public class Constants {
 
   // Constants for metrics collection
 
-  public static final String METRIC_REQUESTS = "requests";
-  public static final String METRIC_BAD_REQUESTS = "badRequests";
-  public static final String METRIC_READ_REQUESTS = "readRequests";
-  public static final String METRIC_WRITE_REQUESTS = "writeRequests";
-  public static final String METRIC_DELETE_REQUESTS = "deleteRequests";
-  public static final String METRIC_LIST_REQUESTS = "listRequests";
-  public static final String METRIC_CLEAR_REQUESTS = "clearRequests";
-  public static final String METRIC_ENQUEUE_REQUESTS = "enqueueRequests";
-  public static final String METRIC_BATCH_REQUESTS = "enqueueBatchRequests";
-  public static final String METRIC_DEQUEUE_REQUESTS = "dequeueRequests";
-  public static final String METRIC_CONSUMER_ID_REQUESTS = "newIdRequests";
-  public static final String METRIC_INTERNAL_ERRORS = "internalErrors";
-  public static final String METRIC_NOT_FOUND = "notFounds";
-  public static final String METRIC_SUCCESS = "successful";
+  public static final String METRIC_REQUESTS = "gateway.requests";
+  public static final String METRIC_BAD_REQUESTS = "gateway.badRequests";
+  public static final String METRIC_READ_REQUESTS = "gateway.readRequests";
+  public static final String METRIC_WRITE_REQUESTS = "gateway.writeRequests";
+  public static final String METRIC_DELETE_REQUESTS = "gateway.deleteRequests";
+  public static final String METRIC_LIST_REQUESTS = "gateway.listRequests";
+  public static final String METRIC_CLEAR_REQUESTS = "gateway.clearRequests";
+  public static final String METRIC_ENQUEUE_REQUESTS = "gateway.enqueueRequests";
+  public static final String METRIC_BATCH_REQUESTS = "gateway.enqueueBatchRequests";
+  public static final String METRIC_DEQUEUE_REQUESTS = "gateway.dequeueRequests";
+  public static final String METRIC_CONSUMER_ID_REQUESTS = "gateway.newIdRequests";
+  public static final String METRIC_INTERNAL_ERRORS = "gateway.internalErrors";
+  public static final String METRIC_NOT_FOUND = "gateway.notFounds";
+  public static final String METRIC_SUCCESS = "gateway.successful";
 
   /**
    * this is a place holder for the account id of events until we have
