@@ -7,15 +7,6 @@ define([], function () {
 	return Em.View.extend({
 		tagName: 'button',
 		classNames: ['btn', 'create-btn', 'pull-right'],
-		classNameBindings: ['buttonColor'],
-		buttonColor: function () {
-
-			if (this.get('entityType') === 'Application') {
-				return '';
-			}
-			return 'btn-success';
-
-		}.property('entityType'),
 		template: Em.Handlebars.compile('Create'),
 		entityType: 'Application',
 		click: function () {

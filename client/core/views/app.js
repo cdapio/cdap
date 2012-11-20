@@ -35,12 +35,56 @@ define([
 
 			});
 		},
-		startAll: function () {
+		startAllFlows: function (event) {
 
-			$('#start-all-button').find('button').hide();
-			$('#start-all-button').find('img').show();
+			var container = $(event.target).parent();
 
-			C.Ctl.Application.startAll();
+			container.find('button').hide();
+			container.find('img').show();
+
+			C.Ctl.Application.startAllFlows(function () {
+				container.find('button').show();
+				container.find('img').hide();
+			});
+
+		},
+		stopAllFlows: function (event) {
+
+			var container = $(event.target).parent();
+			
+			container.find('button').hide();
+			container.find('img').show();
+
+			C.Ctl.Application.stopAllFlows(function () {
+				container.find('button').show();
+				container.find('img').hide();
+			});
+
+		},
+		startAllQueries: function (event) {
+
+			var container = $(event.target).parent();
+
+			container.find('button').hide();
+			container.find('img').show();
+
+			C.Ctl.Application.startAllQueries(function () {
+				container.find('button').show();
+				container.find('img').hide();
+			});
+
+		},
+		stopAllQueries: function (event) {
+
+			var container = $(event.target).parent();
+
+			container.find('button').hide();
+			container.find('img').show();
+
+			C.Ctl.Application.stopAllQueries(function () {
+				container.find('button').show();
+				container.find('img').hide();
+			});
 
 		}
 	});

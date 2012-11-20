@@ -110,10 +110,6 @@
   <script type="text/x-handlebars" data-template-name="application">
     <div id="title">
       {{view C.Vw.TimeSelector}}
-      <div id="start-all-button" class="pull-right" style="margin-top:2px;text-align:center;width:90px;">
-        <button {{action startAll on="click"}} class="btn">Start All</button>
-        <img style="display: none;margin-top: 2px;" src="/assets/img/start-all-load.gif" />
-      </div>
       <h1>{{current.name}} <span>Application</span></h1>
     </div>
 
@@ -150,16 +146,33 @@
       <div class="panel">
 
         <div class="panel-head">
-        
-        <div class="panel-title">Flows</div></div>
+          {{#if types.Flow.content.length}}
+            <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
+              <button {{action startAllFlows on="click"}} class="btn">Start</button>
+              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load.gif" />
+              <button {{action stopAllFlows on="click"}} class="btn">Stop</button>
+            </div>
+          {{/if}}
+          <div class="panel-title">Flows</div>
+        </div>
         {{view C.Vw.FlowList}}
+
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">Datasets</div></div>
         {{view C.Vw.DatasetList}}
       </div>
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Queries</div></div>
+        <div class="panel-head">
+          {{#if types.Query.content.length}}
+            <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
+              <button {{action startAllQueries on="click"}} class="btn">Start</button>
+              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load.gif" />
+              <button {{action stopAllQueries on="click"}} class="btn">Stop</button>
+            </div>
+          {{/if}}
+          <div class="panel-title">Queries</div>
+        </div>
         {{view C.Vw.QueryList}}
       </div>
     </div>

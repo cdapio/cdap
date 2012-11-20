@@ -449,25 +449,27 @@ function(Models, Views, Controllers){
 	};
 
 	var warningTimeout;
-	var lastThirty = [];
+	var toAverage = [];
+	var averageOver = 30;
+	var maxResponseTime = 5000;
 
 	socket.on('exec', function (error, response) {
 		
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
-			lastThirty.push(new Date().getTime() - pending[response.id][2]);
+			toAverage.push(new Date().getTime() - pending[response.id][2]);
 
-			if (lastThirty.length > 30) {
-				lastThirty.shift();
+			if (toAverage.length > averageOver) {
+				toAverage.shift();
 			}
 
-			var i = lastThirty.length, sum = 0;
+			var i = toAverage.length, sum = 0;
 			while (i--) {
-				sum += lastThirty[i];
+				sum += toAverage[i];
 			}
 
-			if(sum / lastThirty.length > 5000) {
+			if(sum / toAverage.length > maxResponseTime) {
 
 				clearTimeout(warningTimeout);
 				$('#warning').fadeIn();

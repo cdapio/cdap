@@ -98,6 +98,16 @@ define([], function () {
 
 					if (response.params) {
 
+						if (response.params.status === 'UNDEFINED') {
+							C.Vw.Modal.show(
+								"Flow Deleted",
+								"This flow has been deleted by another user.",
+								function () {
+									C.router.transitionTo('home');
+								});
+							return;
+						}
+
 						self.get('current').set('currentState', response.params.status);
 						self.get('current').set('version', response.params.version);
 
@@ -156,6 +166,17 @@ define([], function () {
 			}, function (error, response) {
 
 				if (response.params && self.get('current')) {
+
+					if (response.params.status === 'UNDEFINED') {
+						C.Vw.Modal.show(
+							"Flow Deleted",
+							"This flow has been deleted by another user.",
+							function () {
+								C.router.transitionTo('home');
+							});
+						return;
+					}
+					
 					self.get('current').set('currentState', response.params.status);
 				}
 			});

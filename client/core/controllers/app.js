@@ -88,7 +88,7 @@ define([], function () {
 
 		},
 
-		startAllFlows: function () {
+		startAllFlows: function (done) {
 
 			var flows = this.get('types.Flow').content;
 			var flowCount = flows.length;
@@ -96,8 +96,7 @@ define([], function () {
 
 			if (!flowCount) {
 
-				$('#start-all-button').find('button').show().attr('disabled', true);
-				$('#start-all-button').find('img').hide();
+				done();
 
 			} else {
 
@@ -114,8 +113,7 @@ define([], function () {
 
 						if (!--flowCount) {
 
-							$('#start-all-button').find('button').show().attr('disabled', true);
-							$('#start-all-button').find('img').hide();
+							done();
 
 						}
 
@@ -125,7 +123,42 @@ define([], function () {
 
 		},
 
-		startAll: function () {
+		stopAllFlows: function (done) {
+
+			var flows = this.get('types.Flow').content;
+			var flowCount = flows.length;
+			var i = flowCount;
+
+			if (!flowCount) {
+
+				done();
+
+			} else {
+
+				while(i--) {
+
+					flows[i].set('currentState', 'STOPPING');
+
+					C.socket.request('manager', {
+						method: 'stop',
+						params: [flows[i].application, flows[i].id, -1, 'FLOW']
+					}, function (error, response, flow) {
+
+						flow.set('currentState', 'STOPPED');
+
+						if (!--flowCount) {
+
+							done();
+
+						}
+
+					}, flows[i]);
+				}
+			}
+
+		},
+
+		startAllQueries: function (done) {
 
 			var queries = this.get('types.Query').content;
 			var queryCount = queries.length;
@@ -133,7 +166,7 @@ define([], function () {
 
 			if (!queryCount) {
 
-				C.Ctl.Application.startAllFlows();
+				done();
 
 			} else {
 
@@ -150,7 +183,43 @@ define([], function () {
 
 						if (!--queryCount) {
 
-							C.Ctl.Application.startAllFlows();
+							done();
+
+						}
+
+					}, queries[i]);
+
+				}
+			}
+
+		},
+
+		stopAllQueries: function (done) {
+
+			var queries = this.get('types.Query').content;
+			var queryCount = queries.length;
+			var i = queryCount;
+
+			if (!queryCount) {
+
+				done();
+
+			} else {
+
+				while(i--) {
+
+					queries[i].set('currentState', 'STOPPING');
+
+					C.socket.request('manager', {
+						method: 'stop',
+						params: [queries[i].application, queries[i].id, -1, 'QUERY']
+					}, function (error, response, query) {
+						
+						query.set('currentState', 'STOPPED');
+
+						if (!--queryCount) {
+
+							done();
 
 						}
 

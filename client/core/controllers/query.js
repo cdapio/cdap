@@ -19,6 +19,11 @@ define([], function () {
 				}]
 			}, function (error, response) {
 
+				if (!response.params) {
+					C.router.transitionTo('home');
+					return;
+				}
+
 				response.params.currentState = 'UNKNOWN';
 				response.params.version = -1;
 				response.params.type = 'Query';
@@ -35,6 +40,17 @@ define([], function () {
 				}, function (error, response) {
 
 					if (response.params) {
+
+						if (response.params.status === 'UNDEFINED') {
+							C.Vw.Modal.show(
+								"Query Deleted",
+								"This query has been deleted by another user.",
+								function () {
+									C.router.transitionTo('home');
+								});
+							return;
+						}
+
 						self.get('current').set('currentState', response.params.status);
 						self.get('current').set('version', response.params.version);
 						C.interstitial.hide();
@@ -120,6 +136,17 @@ define([], function () {
 			}, function (error, response) {
 
 				if (response.params && self.get('current')) {
+
+					if (response.params.status === 'UNDEFINED') {
+						C.Vw.Modal.show(
+							"Query Deleted",
+							"This query has been deleted by another user.",
+							function () {
+								C.router.transitionTo('home');
+							});
+						return;
+					}
+
 					self.get('current').set('currentState', response.params.status);
 				}
 			});
