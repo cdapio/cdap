@@ -43,7 +43,7 @@ implements OrderedVersionedColumnarTable {
   private static final String COLUMN_TYPE = "VARBINARY(1024)";
   private static final String VERSION_TYPE = "BIGINT";
   private static final String TYPE_TYPE = "INT";
-  private static final String VALUE_TYPE = "VARBINARY(1024)";
+  private static final String VALUE_TYPE = "VARBINARY(1048576)";
 
   private static final byte [] NULL_VAL = new byte [0];
 
