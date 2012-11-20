@@ -372,18 +372,17 @@ function(Models, Views, Controllers){
 
 	function connected (env) {
 
-		window.ENV.isCloud = (env.name !== 'development');
-		window.ENV.version = env.version;
-
-		C.debug('Environment set to "' + env.name + '", version ' + env.version);
-
 		// This function is called when the socket is (re)connected.
 
 		if (!C.initialized) {
 
-			//if (env.version !== 'UNKNOWN') {
+			window.ENV.isCloud = (env.name !== 'development');
+			window.ENV.version = env.version;
+			C.debug('Environment set to "' + env.name + '", version ' + env.version);
+
+			if (env.version !== 'UNKNOWN') {
 				$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
-			//}
+			}
 
 			C.debug('Application connected.');
 			

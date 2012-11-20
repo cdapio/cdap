@@ -784,6 +784,7 @@ input {
 	line-height: 14px;
 	height: 10px;
 	letter-spacing: 0.1em;
+	border-radius: 2px;
 }
 .nav-pills > .active > a, .nav-pills > .active > a:hover{
 	background-color: #8C9495;
@@ -1352,10 +1353,12 @@ a strong {
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	min-height: 540px;
+	height: 540px;
 	margin:0;
 	overflow: auto;
-	padding: 8px 12px;
+	padding: 0 8px;
+	font-size: 12px;
+	cursor: text;
 }
 
 #object-list {

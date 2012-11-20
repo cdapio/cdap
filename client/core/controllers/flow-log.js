@@ -61,6 +61,8 @@ define([], function () {
 
 			});
 
+			var goneOver = false;
+
 			function logInterval () {
 
 				if (C.router.currentState.get('path') !== 'root.flows.log') {
@@ -77,23 +79,43 @@ define([], function () {
 						clearInterval(self.interval);
 						return;
 					}
-
+					
 					if (error) {
 
-						C.router.applicationController.view.set('responseBody', JSON.stringify(error));
+						response = JSON.stringify(error);
 
 					} else {
 
 						var items = response.params;
-						C.router.applicationController.view.set('responseBody', items.join('\n'));
+						response = items.join('\n');
+
+						if (items.length === 0) {
+							response = '[ No Log Messages ]';
+						}
+
 					}
-					
-					var textarea = C.router.applicationController.view.get('logView').get('element');
+
+					$('#logView').html(response);
+					var textarea = $('#logView');
 
 					setTimeout(function () {
-						textarea = $(textarea);
-						textarea.scrollTop(textarea[0].scrollHeight - textarea.height());
-					}, 200);
+
+						// Content exceeds height
+						if (textarea[0].scrollHeight > textarea.height()) {
+
+							if (!goneOver) {
+								textarea.scrollTop(textarea[0].scrollHeight);
+								goneOver = true;
+							}
+
+							// Scrolled off the bottom
+							if (textarea[0].scrollTop + textarea.height() > textarea[0].scrollHeight) {
+								textarea.scrollTop(textarea[0].scrollHeight);
+							}
+
+						}
+
+					}, 100);
 
 					C.interstitial.hide();
 
