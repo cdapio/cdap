@@ -120,6 +120,20 @@ task singlenode_stage_data {
     }
 }
 
+task singlenode_stage_version (type: Copy) {
+    //create version file, substituting in the teamcityBuildNumber
+    from "VERSION"
+    into "${buildDir}/singlenode"
+    def versiontxt
+    if( project.hasProperty('teamcityBuildNumber')) {
+        versiontxt = releaseVersion + "-" + teamcityBuildNumber
+    } else {
+        versiontxt = releaseVersion
+    }
+
+    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+}
+
 
 task singlenode_dist (type: Zip) {
     group = 'Continuuity'
