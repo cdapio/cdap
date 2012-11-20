@@ -4,7 +4,7 @@
 
 <div class="popup-inject-wrapper">
 {{view C.Vw.Injector}}
-<button class="btn btn-success" {{action "inject" on="click"}}>Inject</button>
+<button class="btn" {{action "inject" on="click"}}>Inject</button>
 </div>
 
 <div class="popup-icon-stream" />
@@ -25,7 +25,7 @@
 <td class="app-list-count">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></td>
 <td class="app-list-count">{{controller.current.unconsumed}}<br /><span>Events</span></td>
 <td>
-{{view C.Vw.Chart entity-type="Stream" width="300" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
+{{view C.Vw.Chart entity-type="Stream" width="306" mode="singular" metrics="stream.enqueue.stream//demo/{id}.count"}}
 </td>
 </tr>
 </tbody>

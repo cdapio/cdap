@@ -558,6 +558,12 @@ input {
 	margin: 0 !important;
 }
 
+input[type="text"] {
+	border-radius: 2px !important;
+	font-size: 12px;
+	padding: 3px 6px !important;
+}
+
 .guttered {
 	margin-right: 286px !important;
 }
