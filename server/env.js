@@ -80,10 +80,10 @@ var getNetworkIPs = (function () {
 			fs.readFile('/opt/continuuity/VERSION', 'utf8', function (error, result) {
 				if (error) {
 					console.log('Could not find VERSION file. /opt/continuuity/VERSION');
-					fs.readFile('../VERSION', 'utf8', function (error, result) {
+					fs.readFile('./VERSION', 'utf8', function (error, result) {
 
 						if (error) {
-							console.log('Could not find VERSION file. ../VERSION');
+							console.log('Could not find VERSION file. ./VERSION');
 							done('UNKNOWN');
 						} else {
 							console.log('VERSION: ', result);
