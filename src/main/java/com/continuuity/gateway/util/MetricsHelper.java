@@ -25,7 +25,7 @@ public class MetricsHelper {
 
   private String metricNamePerConnector;
   private String metricNamePerMethod;
-  private String metricNamePerScope;
+  private String metricNamePerMethodAndScope;
 
   private static String appendToMetric(String base, String specific) {
     return base + "." + specific;
@@ -53,48 +53,71 @@ public class MetricsHelper {
   }
 
   public void setMethod(String method) {
+    if (method == null) {
+      Log.warn("Attempt to set the method of a metrics helper to null in " +
+          classe.getName());
+      return;
+    }
     if (this.method != null) {
       Log.warn(String.format(
           "Attempt to change the method of a metrics helper in %s to %s " +
           "(old method is %s)", classe.getName(), this.method , method));
     }
+    // set the method and emit a "received" metric
     this.method = method;
     metricNamePerMethod = appendToMetric(metricNamePerConnector, method);
     this.meter(this.metricNamePerMethod, Status.Received);
+    // if the scope is set, create and emit a combined "received" metric
+    if (this.scope != null) {
+      metricNamePerMethodAndScope = appendToMetric(metricNamePerMethod, scope);
+      this.meter(this.metricNamePerMethodAndScope, Status.Received);
+    }
   }
 
   public void setScope(String scope) {
-    if (this.method == null) {
-      Log.warn(String.format(
-          "Attempt to set the scope of a metrics helper in %s to %s " +
-              "but the method is not set", classe.getName(), scope));
+    if (scope == null) {
+      Log.warn("Attempt to set the scope of a metrics helper to null in " +
+          classe.getName());
       return;
     }
+    if (this.scope != null) {
+      Log.warn(String.format(
+          "Attempt to change the scope of a metrics helper in %s to %s " +
+              "(old scope is %s)", classe.getName(), this.scope , scope));
+    }
+    // set the scope
     this.scope = scope;
-    metricNamePerScope = appendToMetric(metricNamePerMethod, method);
-    this.meter(this.metricNamePerScope, Status.Received);
+    // if the method is set, create and emit a combined "received" metric
+    if (this.method != null) {
+      metricNamePerMethodAndScope = appendToMetric(metricNamePerMethod, scope);
+      this.meter(this.metricNamePerMethodAndScope, Status.Received);
+    }
   }
 
   private void meter(String metric, Status status) {
     meter(metric, status, null);
   }
   private void meter(String metric, Status status, Long millis) {
-    String metricName = appendToMetric(metric, status.name());
+    String metricWithStatus = appendToMetric(metric, status.name());
     // increment gw.connector[.method[.scope]].status
-    this.metrics.meter(metricName, 1L);
+    this.metrics.meter(metricWithStatus, 1L);
     if (millis == null) return;
+    // record gw.connector[.method[.scope]].latency
+    this.metrics.histogram(
+        appendToMetric(metric, METRIC_LATENCY), millis);
     // record gw.connector[.method[.scope]].status.latency
-    this.metrics.histogram(appendToMetric(metricName, METRIC_LATENCY), millis);
+    this.metrics.histogram(
+        appendToMetric(metricWithStatus, METRIC_LATENCY), millis);
   }
 
   public void finish(Status status) {
     this.meter(METRIC_NAME_BASE, status, null);
     this.meter(metricNamePerConnector, status, null);
+    long latency = System.currentTimeMillis() - startTime;
     if (method != null) {
-      long latency = System.currentTimeMillis() - startTime;
       this.meter(metricNamePerMethod, status, latency);
       if (scope != null) {
-        this.meter(metricNamePerScope, status, latency);
+        this.meter(metricNamePerMethodAndScope, status, latency);
       }
     }
   }
