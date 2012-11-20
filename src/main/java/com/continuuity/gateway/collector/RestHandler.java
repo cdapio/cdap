@@ -106,6 +106,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int NEWID = 2;
   private static final int DEQUEUE = 3;
   private static final int META = 4;
+  private static final int PING = 5;
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -138,7 +139,11 @@ public class RestHandler extends NettyRestHandler {
         operation = ENQUEUE;
         helper.setMethod("enqueue");
       } else if (method == HttpMethod.GET) {
-        if (parameters == null || parameters.size() == 0) {
+        if ("/ping".equals(requestUri)) {
+          operation = PING;
+          helper.setMethod("ping");
+        }
+        else if (parameters == null || parameters.size() == 0) {
           operation = META;
           helper.setMethod("getQueueMeta");
         } else {
@@ -170,6 +175,13 @@ public class RestHandler extends NettyRestHandler {
         LOG.trace(
             "Received a request with query parameters, which is not supported");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
+        return;
+      }
+
+      // is this a ping? (http://gw:port/ping) if so respond OK and done
+      if (PING == operation) {
+        respondSuccess(message.getChannel(), request);
+        helper.finish(Success);
         return;
       }
 

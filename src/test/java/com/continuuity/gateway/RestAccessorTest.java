@@ -306,6 +306,10 @@ public class RestAccessorTest {
     // test one valid key
     TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
 
+    // test that ping works
+    Assert.assertEquals(200, TestUtil.sendGetRequest(
+        "http://localhost:" + port + "/ping"));
+
     // submit a request without prefix in the path -> 404 Not Found
     Assert.assertEquals(404, TestUtil.sendGetRequest(
         "http://localhost:" + port + "/somewhere"));

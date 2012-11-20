@@ -196,6 +196,14 @@ public class MonitorRestHandler extends NettyRestHandler {
       Map<String, List<String>> parameters = decoder.getParameters();
       String path = decoder.getPath();
 
+      // is this a ping? (http://gw:port/ping) if so respond OK and done
+      if ("/ping".equals(path)) {
+        helper.setMethod("ping");
+        respondSuccess(message.getChannel(), request);
+        helper.finish(Success);
+        return;
+      }
+
       // parse and verify the url path
       String appid = null, flowid = null, query = null;
       // valid paths are <prefix>/service/method?param=value&...

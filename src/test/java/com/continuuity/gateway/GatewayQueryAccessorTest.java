@@ -175,6 +175,10 @@ public class GatewayQueryAccessorTest {
     // now query the processor through gateway
     String uriPrefix = "http://localhost:" + port + prefix + path;
 
+    // test that ping works
+    sendAndExpectStatus(
+        "http://localhost:" + port + "/ping", HttpStatus.SC_OK);
+
     // test an invalid service, should return 404
     sendAndExpectStatus(uriPrefix +
         "HiUniverse/method?p1=v1&p2=v2", HttpStatus.SC_NOT_FOUND);

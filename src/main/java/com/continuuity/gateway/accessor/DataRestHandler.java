@@ -85,6 +85,7 @@ public class DataRestHandler extends NettyRestHandler {
   private static final int DELETE = 3;
   private static final int LIST = 4;
   private static final int CLEAR = 5;
+  private static final int PING = 6;
 
   @Override
   public void messageReceived(ChannelHandlerContext context,
@@ -128,7 +129,10 @@ public class DataRestHandler extends NettyRestHandler {
         } else
           operation = BAD;
       } else if (method == HttpMethod.GET) {
-        if (parameters == null || parameters.size() == 0) {
+        if ("/ping".equals(requestUri)) {
+          operation = PING;
+        }
+        else if (parameters == null || parameters.size() == 0) {
           operation = READ;
           helper.setMethod("clear");
         } else {
@@ -139,7 +143,8 @@ public class DataRestHandler extends NettyRestHandler {
             helper.setMethod("clear");
           } else
             operation = BAD;
-        } }
+        }
+      }
 
       // respond with error for bad requests
       if (operation == BAD) {
@@ -164,6 +169,13 @@ public class DataRestHandler extends NettyRestHandler {
         LOG.trace("Received a " + method +
             " request with query parameters, which is not supported");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
+        return;
+      }
+
+      // is this a ping? (http://gw:port/ping) if so respond OK and done
+      if (PING == operation) {
+        respondSuccess(message.getChannel(), request);
+        helper.finish(Success);
         return;
       }
 

@@ -130,6 +130,10 @@ public class RestCollectorTest {
     // the correct URL would be http://localhost:<port>/continuuity/destination/
     String baseUrl = collector.getHttpConfig().getBaseUrl();
 
+    // test that ping works
+    Assert.assertEquals(200, TestUtil.sendGetRequest(
+        "http://localhost:" + port + "/ping"));
+
     // submit a POST with flow/ or flow/stream as the destination -> 200
     Assert.assertEquals(200, TestUtil.sendPostRequest(baseUrl + "events/"));
     Assert.assertEquals(404, TestUtil.sendPostRequest(baseUrl + "events/more"));
