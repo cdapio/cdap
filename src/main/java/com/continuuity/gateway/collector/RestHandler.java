@@ -10,6 +10,7 @@ import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.MetricsHelper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -26,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.continuuity.gateway.util.MetricsHelper.Status.*;
 
 /**
  * This is the http request handler for the rest collector. This supports
@@ -107,283 +110,309 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void messageReceived(ChannelHandlerContext context,
                               MessageEvent message) throws Exception {
+
     HttpRequest request = (HttpRequest) message.getMessage();
-
-    LOG.trace("Request received");
-    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
-
-    // we only support POST
     HttpMethod method = request.getMethod();
-    if (method != HttpMethod.POST && method != HttpMethod.GET ) {
-      LOG.trace("Received a " + method + " request, which is not supported");
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      respondNotAllowed(message.getChannel(), allowedMethods);
-      return;
-    }
+    String requestUri = request.getUri();
 
-    // we do not support a query or parameters in the URL
-    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
-    Map<String, List<String>> parameters = decoder.getParameters();
+    LOG.trace("Request received: " + method + " " + requestUri);
+    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics,
+        this.collector.getName());
 
-    int operation = UNKNOWN;
-    if (method == HttpMethod.POST)
-      operation = ENQUEUE;
-    else if (method == HttpMethod.GET) {
-      if (parameters == null || parameters.size() == 0)
-        operation = META;
-      else {
-        List<String> qParams = parameters.get("q");
-        if (qParams != null && qParams.size() == 1) {
-          if ("newConsumer".equals(qParams.get(0)))
-            operation = NEWID;
-          else if ("dequeue".equals(qParams.get(0)))
-            operation = DEQUEUE;
-    } } }
+    try {
 
-    // respond with error for unknown requests
-    if (operation == UNKNOWN) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace("Received an unsupported " + method +
-          " request '" + request.getUri() + "'.");
-      respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
-      return;
-    }
-
-    if ((operation == ENQUEUE || operation == META) &&
-        parameters != null && !parameters.isEmpty()) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace(
-          "Received a request with query parameters, which is not supported");
-      respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
-      return;
-    }
-
-    // does the path of the URL start with the correct prefix, and is it of
-    // the form <flowname> or <flowname</<streamname> after that? Otherwise
-    // we will not accept this request.
-    String destination = null;
-    String path = decoder.getPath();
-    if (path.startsWith(this.pathPrefix)) {
-      String resourceName = path.substring(this.pathPrefix.length());
-      if (resourceName.length() > 0) {
-        int pos = resourceName.indexOf('/');
-        if (pos < 0) { // streamname
-          destination = resourceName;
-        } else if (pos + 1 == resourceName.length()) { // streamname/
-          destination = resourceName.substring(0, pos);
-        }
+      // we only support POST and GET
+      if (method != HttpMethod.POST && method != HttpMethod.GET ) {
+        LOG.trace("Received a " + method + " request, which is not supported");
+        helper.finish(BadRequest);
+        respondNotAllowed(message.getChannel(), allowedMethods);
+        return;
       }
-    }
-    if (destination == null) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace("Received a request with invalid path " + path);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-      return;
-    }
 
-    // validate the existence of the stream
-    if (!this.collector.getStreamCache().validateStream(
-        OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace("Received a request for non-existent stream " + destination);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+      // we do not support a query or parameters in the URL
+      QueryStringDecoder decoder = new QueryStringDecoder(requestUri);
+      Map<String, List<String>> parameters = decoder.getParameters();
 
-    switch(operation) {
-      case ENQUEUE: {
-        metrics.counter(this.getClass(), Constants.METRIC_ENQUEUE_REQUESTS, 1);
-        // build a new event from the request
-        EventBuilder builder = new EventBuilder();
-        // set some built-in headers
-        builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
-            this.collector.getName());
-        builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
-        // and transfer all other headers that are to be preserved
-        String prefix = destination + ".";
-        Set<String> headers = request.getHeaderNames();
-        for (String header : headers) {
-          String preservedHeader = isPreservedHeader(prefix, header);
-          if (preservedHeader != null) {
-            builder.setHeader(preservedHeader, request.getHeader(header));
+      int operation = UNKNOWN;
+      if (method == HttpMethod.POST) {
+        operation = ENQUEUE;
+        helper.setMethod("enqueue");
+      } else if (method == HttpMethod.GET) {
+        if (parameters == null || parameters.size() == 0) {
+          operation = META;
+          helper.setMethod("getQueueMeta");
+        } else {
+          List<String> qParams = parameters.get("q");
+          if (qParams != null && qParams.size() == 1) {
+            if ("newConsumer".equals(qParams.get(0))) {
+              operation = NEWID;
+              helper.setMethod("getNewId");
+            } else if ("dequeue".equals(qParams.get(0))) {
+              operation = DEQUEUE;
+              helper.setMethod("dequeue");
+            }
           }
         }
-        // read the body of the request and add it to the event
-        ChannelBuffer content = request.getContent();
-        int length = content.readableBytes();
-        if (length > 0) {
-          byte[] bytes = new byte[length];
-          content.readBytes(bytes);
-          builder.setBody(bytes);
-        }
-        Event event = builder.create();
-
-        LOG.trace("Sending event to consumer: " + event);
-        // let the consumer process the event.
-        // in case of exception, respond with internal error
-        try {
-          this.collector.getConsumer().consumeEvent(event);
-        } catch (Exception e) {
-          LOG.error("Error consuming single event: " + e.getMessage());
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          this.collector.getStreamCache().refreshStream(
-              OperationContext.DEFAULT_ACCOUNT_ID, destination);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
-        }
-        // all good - respond success
-        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-        respondSuccess(message.getChannel(), request);
-        break;
       }
-      case META: {
-        LOG.trace("Received a request for stream meta data," +
-            " which is not implemented yet.");
-        metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
+
+      // respond with error for unknown requests
+      if (operation == UNKNOWN) {
+        helper.finish(BadRequest);
+        LOG.trace("Received an unsupported " + method +
+            " request '" + request.getUri() + "'.");
         respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
         return;
       }
-      // GET means client wants to view the content of a queue.
-      // 1. obtain a consumerId with GET stream?q=newConsumer
-      // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
-      //    an HTTP header
-      case NEWID: {
-        metrics.counter(this.getClass(),
-            Constants.METRIC_CONSUMER_ID_REQUESTS, 1);
 
-        String queueURI = FlowStream.buildStreamURI(
-            Constants.defaultAccount, destination).toString();
-        QueueAdmin.GetGroupID op =
-            new QueueAdmin.GetGroupID(queueURI.getBytes());
-        long id;
-        try {
-          id = this.collector.getExecutor().
-              execute(OperationContext.DEFAULT, op);
-        } catch (Exception e) {
-          LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          this.collector.getStreamCache().refreshStream(
-              OperationContext.DEFAULT_ACCOUNT_ID, destination);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      if ((operation == ENQUEUE || operation == META) &&
+          parameters != null && !parameters.isEmpty()) {
+        helper.finish(BadRequest);
+        LOG.trace(
+            "Received a request with query parameters, which is not supported");
+        respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
+        return;
+      }
+
+      // does the path of the URL start with the correct prefix, and is it of
+      // the form <flowname> or <flowname</<streamname> after that? Otherwise
+      // we will not accept this request.
+      String destination = null;
+      String path = decoder.getPath();
+      if (path.startsWith(this.pathPrefix)) {
+        String resourceName = path.substring(this.pathPrefix.length());
+        if (resourceName.length() > 0) {
+          int pos = resourceName.indexOf('/');
+          if (pos < 0) { // streamname
+            destination = resourceName;
+          } else if (pos + 1 == resourceName.length()) { // streamname/
+            destination = resourceName.substring(0, pos);
+          }
+        }
+      }
+      if (destination == null) {
+        LOG.trace("Received a request with invalid path " + path);
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        return;
+      } else {
+        helper.setScope(destination);
+      }
+
+      // validate the existence of the stream
+      if (!this.collector.getStreamCache().validateStream(
+          OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+        helper.finish(NotFound);
+        LOG.trace("Received a request for non-existent stream " + destination);
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      switch(operation) {
+        case ENQUEUE: {
+          // build a new event from the request
+          EventBuilder builder = new EventBuilder();
+          // set some built-in headers
+          builder.setHeader(Constants.HEADER_FROM_COLLECTOR,
+              this.collector.getName());
+          builder.setHeader(Constants.HEADER_DESTINATION_STREAM, destination);
+          // and transfer all other headers that are to be preserved
+          String prefix = destination + ".";
+          Set<String> headers = request.getHeaderNames();
+          for (String header : headers) {
+            String preservedHeader = isPreservedHeader(prefix, header);
+            if (preservedHeader != null) {
+              builder.setHeader(preservedHeader, request.getHeader(header));
+            }
+          }
+          // read the body of the request and add it to the event
+          ChannelBuffer content = request.getContent();
+          int length = content.readableBytes();
+          if (length > 0) {
+            byte[] bytes = new byte[length];
+            content.readBytes(bytes);
+            builder.setBody(bytes);
+          }
+          Event event = builder.create();
+
+          LOG.trace("Sending event to consumer: " + event);
+          // let the consumer process the event.
+          // in case of exception, respond with internal error
+          try {
+            this.collector.getConsumer().consumeEvent(event);
+          } catch (Exception e) {
+            LOG.error("Error consuming single event: " + e.getMessage());
+            helper.finish(Error);
+            respondError(message.getChannel(),
+                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            // refresh cache for this stream - apparently it has disappeared
+            this.collector.getStreamCache().refreshStream(
+                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            return;
+          }
+          // all good - respond success
+          respondSuccess(message.getChannel(), request);
+          helper.finish(Success);
           break;
         }
-        byte[] responseBody = Long.toString(id).getBytes();
-        Map<String, String> headers = Maps.newHashMap();
-        headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
 
-        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-        respond(message.getChannel(), request,
-            HttpResponseStatus.CREATED, headers, responseBody);
-        break;
-      }
-      case DEQUEUE: {
-        metrics.counter(this.getClass(), Constants.METRIC_DEQUEUE_REQUESTS, 1);
-        // there must be a header with the consumer id in the request
-        String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
-        Long id = null;
-        if (idHeader == null) {
-          LOG.trace("Received a dequeue request without header " +
-              Constants.HEADER_STREAM_CONSUMER);
-        } else {
+        case META: {
+          LOG.trace("Received a request for stream meta data," +
+              " which is not implemented yet.");
+          helper.finish(BadRequest);
+          respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
+          return;
+        }
+
+        // GET means client wants to view the content of a queue.
+        // 1. obtain a consumerId with GET stream?q=newConsumer
+        // 2. dequeue an event with GET stream?q=dequeue with the consumerId as
+        //    an HTTP header
+        case NEWID: {
+          String queueURI = FlowStream.buildStreamURI(
+              Constants.defaultAccount, destination).toString();
+          QueueAdmin.GetGroupID op =
+              new QueueAdmin.GetGroupID(queueURI.getBytes());
+          long id;
           try {
-            id = Long.valueOf(idHeader);
-          } catch (NumberFormatException e) {
-            LOG.trace("Received a dequeue request with a invalid header "
-                + Constants.HEADER_STREAM_CONSUMER + ": " + e.getMessage());
-        } }
-        if (null == id) {
-          metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-          respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
-          return;
-        }
-        // valid consumer id, dequeue and return it
-        String queueURI = FlowStream.buildStreamURI(
-            Constants.defaultAccount, destination).toString();
-        // 0th instance of group 'id' of size 1
-        QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
-        // singleEntry = true means we must ack before we can see the next entry
-        QueueConfig queueConfig =
-            new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
-        QueueDequeue dequeue = new QueueDequeue(
-            queueURI.getBytes(), queueConsumer, queueConfig);
-        DequeueResult result;
-        try {
-          result = this.collector.getExecutor().
-              execute(OperationContext.DEFAULT, dequeue);
-        } catch (OperationException e) {
-          LOG.error("Error dequeueing from stream " + queueURI +
-              " with consumer " + queueConsumer + ": " + e.getMessage(), e);
-          this.collector.getStreamCache().refreshStream(
-              OperationContext.DEFAULT_ACCOUNT_ID, destination);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
-        }
-        if (result.isEmpty()) {
-          metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-          respondSuccess(message.getChannel(), request,
-              HttpResponseStatus.NO_CONTENT);
-          return;
-        }
-        // try to deserialize into an event (tuple)
-        Map<String, String> headers;
-        byte[] body;
-        try {
-          TupleSerializer serializer = new TupleSerializer(false);
-          Tuple tuple = serializer.deserialize(result.getValue());
-          headers = tuple.get("headers");
-          body = tuple.get("body");
-        } catch (Exception e) {
-          LOG.error("Exception when deserializing data from stream "
-              + queueURI + " into an event: " + e.getMessage());
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
-        }
-        // ack the entry so that the next request can see the next entry
-        QueueAck ack = new QueueAck(
-            queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
-        try {
-          this.collector.getExecutor().
-              execute(OperationContext.DEFAULT, ack);
-        } catch (Exception e) {
-          LOG.error("Ack failed to for queue " + queueURI + ", consumer "
-              + queueConsumer + " and pointer " + result.getEntryPointer() +
-              ": " + e.getMessage(), e);
-          metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-          respondError(message.getChannel(),
-              HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
+            id = this.collector.getExecutor().
+                execute(OperationContext.DEFAULT, op);
+          } catch (Exception e) {
+            LOG.error("Exception for GetGroupID: " + e.getMessage(), e);
+            helper.finish(Error);
+            this.collector.getStreamCache().refreshStream(
+                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            respondError(message.getChannel(),
+                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            break;
+          }
+          byte[] responseBody = Long.toString(id).getBytes();
+          Map<String, String> headers = Maps.newHashMap();
+          headers.put(Constants.HEADER_STREAM_CONSUMER, Long.toString(id));
+
+          respond(message.getChannel(), request,
+              HttpResponseStatus.CREATED, headers, responseBody);
+          helper.finish(Success);
+          break;
         }
 
-        // prefix each header with the destination to distinguish them from
-        // HTTP headers
-        Map<String, String> prefixedHeaders = Maps.newHashMap();
-        for (Map.Entry<String, String> header : headers.entrySet())
+        case DEQUEUE: {
+          // there must be a header with the consumer id in the request
+          String idHeader = request.getHeader(Constants.HEADER_STREAM_CONSUMER);
+          Long id = null;
+          if (idHeader == null) {
+            LOG.trace("Received a dequeue request without header " +
+                Constants.HEADER_STREAM_CONSUMER);
+          } else {
+            try {
+              id = Long.valueOf(idHeader);
+            } catch (NumberFormatException e) {
+              LOG.trace("Received a dequeue request with a invalid header "
+                  + Constants.HEADER_STREAM_CONSUMER + ": " + e.getMessage());
+            }
+          }
+          if (null == id) {
+            helper.finish(BadRequest);
+            respondError(message.getChannel(), HttpResponseStatus.BAD_REQUEST);
+            return;
+          }
+          // valid consumer id, dequeue and return it
+          String queueURI = FlowStream.buildStreamURI(
+              Constants.defaultAccount, destination).toString();
+          // 0th instance of group 'id' of size 1
+          QueueConsumer queueConsumer = new QueueConsumer(0, id, 1);
+          // singleEntry = true means we must ack before we can see the next entry
+          QueueConfig queueConfig =
+              new QueueConfig(QueuePartitioner.PartitionerType.RANDOM, true);
+          QueueDequeue dequeue = new QueueDequeue(
+              queueURI.getBytes(), queueConsumer, queueConfig);
+          DequeueResult result;
+          try {
+            result = this.collector.getExecutor().
+                execute(OperationContext.DEFAULT, dequeue);
+          } catch (OperationException e) {
+            helper.finish(Error);
+            LOG.error("Error dequeueing from stream " + queueURI +
+                " with consumer " + queueConsumer + ": " + e.getMessage(), e);
+            respondError(message.getChannel(),
+                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            // refresh the cache for this stream, it may have been deleted
+            this.collector.getStreamCache().refreshStream(
+                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+            return;
+          }
+          if (result.isEmpty()) {
+            respondSuccess(message.getChannel(), request,
+                HttpResponseStatus.NO_CONTENT);
+            helper.finish(NoData);
+            return;
+          }
+          // try to deserialize into an event (tuple)
+          Map<String, String> headers;
+          byte[] body;
+          try {
+            TupleSerializer serializer = new TupleSerializer(false);
+            Tuple tuple = serializer.deserialize(result.getValue());
+            headers = tuple.get("headers");
+            body = tuple.get("body");
+          } catch (Exception e) {
+            LOG.error("Exception when deserializing data from stream "
+                + queueURI + " into an event: " + e.getMessage());
+            helper.finish(Error);
+            respondError(message.getChannel(),
+                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            return;
+          }
+          // ack the entry so that the next request can see the next entry
+          QueueAck ack = new QueueAck(
+              queueURI.getBytes(), result.getEntryPointer(), queueConsumer);
+          try {
+            this.collector.getExecutor().
+                execute(OperationContext.DEFAULT, ack);
+          } catch (Exception e) {
+            LOG.error("Ack failed to for queue " + queueURI + ", consumer "
+                + queueConsumer + " and pointer " + result.getEntryPointer() +
+                ": " + e.getMessage(), e);
+            helper.finish(Error);
+            respondError(message.getChannel(),
+                HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            return;
+          }
+
+          // prefix each header with the destination to distinguish them from
+          // HTTP headers
+          Map<String, String> prefixedHeaders = Maps.newHashMap();
+          for (Map.Entry<String, String> header : headers.entrySet())
             prefixedHeaders.put(destination + "." + header.getKey(),
                 header.getValue());
-        // now the headers and body are ready to be sent back
-        metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
-        respond(message.getChannel(), request,
-            HttpResponseStatus.OK, prefixedHeaders, body);
-        break;
+          // now the headers and body are ready to be sent back
+          respond(message.getChannel(), request,
+              HttpResponseStatus.OK, prefixedHeaders, body);
+          helper.finish(Success);
+          break;
+        }
+        default: {
+          // this should not happen because we checked above -> internal error
+          helper.finish(Error);
+          respondError(message.getChannel(),
+              HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        }
       }
-      default: {
-        // this should not happen because we checked above -> internal error
-        metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+    } catch (Exception e) {
+      LOG.error("Exception caught for connector '" +
+          this.collector.getName() + "'. ", e.getCause());
+      helper.finish(Error);
+      if (message.getChannel().isOpen()) {
         respondError(message.getChannel(),
             HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        message.getChannel().close();
       }
     }
+
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+    MetricsHelper.meterError(metrics, this.collector.getName());
     LOG.error("Exception caught for collector '" +
         this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();

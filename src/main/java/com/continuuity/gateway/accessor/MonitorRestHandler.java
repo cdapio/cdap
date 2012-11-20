@@ -8,6 +8,7 @@ import com.continuuity.flow.manager.stubs.FlowIdentifier;
 import com.continuuity.flow.manager.stubs.FlowService;
 import com.continuuity.flow.manager.stubs.FlowStatus;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.MetricsHelper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
@@ -31,6 +32,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.continuuity.gateway.util.MetricsHelper.Status.BadRequest;
+import static com.continuuity.gateway.util.MetricsHelper.Status.Error;
+import static com.continuuity.gateway.util.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the metrics and status REST API.
@@ -175,91 +180,105 @@ public class MonitorRestHandler extends NettyRestHandler {
     String uri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + uri);
-    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
+    MetricsHelper helper = new MetricsHelper(
+        this.getClass(), this.metrics, this.accessor.getName());
 
-    // only GET is supported for now
-    if (method != HttpMethod.GET) {
-      LOG.trace("Received a " + method + " request, which is not supported");
-      respondNotAllowed(message.getChannel(), allowedMethods);
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      return;
-    }
+    try {
+      // only GET is supported for now
+      if (method != HttpMethod.GET) {
+        LOG.trace("Received a " + method + " request, which is not supported");
+        respondNotAllowed(message.getChannel(), allowedMethods);
+        helper.finish(BadRequest);
+        return;
+      }
 
-    QueryStringDecoder decoder = new QueryStringDecoder(uri);
-    Map<String, List<String>> parameters = decoder.getParameters();
-    String path = decoder.getPath();
+      QueryStringDecoder decoder = new QueryStringDecoder(uri);
+      Map<String, List<String>> parameters = decoder.getParameters();
+      String path = decoder.getPath();
 
-    // parse and verify the url path
-    String appid = null, flowid = null, query = null;
-    // valid paths are <prefix>/service/method?param=value&...
-    if (path.startsWith(this.pathPrefix)) {
-      int pos1 = path.indexOf("/", this.pathPrefix.length());
-      if (pos1 > this.pathPrefix.length()) { // appid not empty
-        int pos2 = path.indexOf("/", pos1 + 1);
-        if (pos2 > pos1 + 1) { // flowid not empty
-          int pos3 = path.indexOf("/", pos2 + 1);
-          if (pos3 < 0 && path.length() > pos2) { // method not empty, no more /
-            appid = path.substring(this.pathPrefix.length(), pos1);
-            flowid = path.substring(pos1 + 1, pos2);
-            query = path.substring(pos2 + 1);
+      // parse and verify the url path
+      String appid = null, flowid = null, query = null;
+      // valid paths are <prefix>/service/method?param=value&...
+      if (path.startsWith(this.pathPrefix)) {
+        int pos1 = path.indexOf("/", this.pathPrefix.length());
+        if (pos1 > this.pathPrefix.length()) { // appid not empty
+          int pos2 = path.indexOf("/", pos1 + 1);
+          if (pos2 > pos1 + 1) { // flowid not empty
+            int pos3 = path.indexOf("/", pos2 + 1);
+            if (pos3 < 0 && path.length() > pos2) { // method not empty, no more /
+              appid = path.substring(this.pathPrefix.length(), pos1);
+              flowid = path.substring(pos1 + 1, pos2);
+              query = path.substring(pos2 + 1);
+            }
           }
         }
       }
-    }
-    // is the path well-formed (prefix/app/flow/query?...)
-    if (appid == null) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace("Received a request with unsupported path " + uri);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-    // is the query supported (only status or metrics right now)
-    if (!("status".equals(query) || "metrics".equals(query))) {
-      metrics.meter(this.getClass(), Constants.METRIC_BAD_REQUESTS, 1);
-      LOG.trace("Received a request with unsupported query " + query);
-      respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
-    if ("status".equals(query)) {
-      FlowService.Client flowClient = this.getFlowClient();
-      FlowStatus status = flowClient.status(new DelegationToken(),
-          new FlowIdentifier(Constants.defaultAccount, appid, flowid, -1));
-      String value = status.getStatus();
-      respondSuccess(message.getChannel(), request, value.getBytes());
-
-    } else if ("metrics".equals(query)) {
-      MetricsFrontendService.Client metricsClient = this.getMetricsClient();
-      CounterRequest counterRequest = new CounterRequest(
-          new FlowArgument(Constants.defaultAccount, appid, flowid));
-      List<String> counterNames = parameters.get("counter");
-      if (counterNames != null) {
-        counterRequest.setName(counterNames);
+      // is the path well-formed (prefix/app/flow/query?...)
+      if (appid == null) {
+        helper.finish(BadRequest);
+        LOG.trace("Received a request with unsupported path " + uri);
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        return;
       }
-      List<Counter> counters = metricsClient.getCounters(counterRequest);
-      StringBuilder str = new StringBuilder();
-      boolean first = true;
-      for (Counter counter : counters) {
-        if (first) first = false; else str.append(',');
-        if (counter.isSetQualifier()) {
-          str.append(counter.getQualifier()).append(".");
+      // is the query supported (only status or metrics right now)
+      if (!("status".equals(query) || "metrics".equals(query))) {
+        helper.finish(BadRequest);
+        LOG.trace("Received a request with unsupported query " + query);
+        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      helper.setMethod("query");
+
+      if ("status".equals(query)) {
+        FlowService.Client flowClient = this.getFlowClient();
+        FlowStatus status = flowClient.status(new DelegationToken(),
+            new FlowIdentifier(Constants.defaultAccount, appid, flowid, -1));
+        String value = status.getStatus();
+        respondSuccess(message.getChannel(), request, value.getBytes());
+        helper.finish(Success);
+      } else if ("metrics".equals(query)) {
+        MetricsFrontendService.Client metricsClient = this.getMetricsClient();
+        CounterRequest counterRequest = new CounterRequest(
+            new FlowArgument(Constants.defaultAccount, appid, flowid));
+        List<String> counterNames = parameters.get("counter");
+        if (counterNames != null) {
+          counterRequest.setName(counterNames);
         }
-        str.append(counter.getName()).append('=').append(counter.getValue());
-      }
-      respondSuccess(message.getChannel(), request, str.toString().getBytes());
+        List<Counter> counters = metricsClient.getCounters(counterRequest);
+        StringBuilder str = new StringBuilder();
+        boolean first = true;
+        for (Counter counter : counters) {
+          if (first) first = false; else str.append(',');
+          if (counter.isSetQualifier()) {
+            str.append(counter.getQualifier()).append(".");
+          }
+          str.append(counter.getName()).append('=').append(counter.getValue());
+        }
+        respondSuccess(message.getChannel(), request, str.toString().getBytes());
+        helper.finish(Success);
 
-    } else {
-      // this should not happen because we checked above -> internal error
-      metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
-      respondError(message.getChannel(),
-          HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } else {
+        // this should not happen because we checked above -> internal error
+        helper.finish(Error);
+        respondError(message.getChannel(),
+            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (Exception e) {
+      LOG.error("Exception caught for connector '" +
+          this.accessor.getName() + "'. ", e.getCause());
+      helper.finish(Error);
+      if (message.getChannel().isOpen()) {
+        respondError(message.getChannel(),
+            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        message.getChannel().close();
+      }
     }
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+    MetricsHelper.meterError(metrics, this.accessor.getName());
     LOG.error("Exception caught for connector '" +
         this.accessor.getName() + "'. ", e.getCause());
     if(e.getChannel().isOpen()) {

@@ -10,6 +10,7 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
+import com.continuuity.gateway.util.MetricsHelper;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
@@ -18,6 +19,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.continuuity.gateway.util.MetricsHelper.Status.Error;
+import static com.continuuity.gateway.util.MetricsHelper.Status.NotFound;
+import static com.continuuity.gateway.util.MetricsHelper.Status.Success;
 
 /**
  * /**
@@ -71,16 +76,17 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each single event */
   public final Status append(AvroFlumeEvent event) {
-    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
-    metrics.counter(this.getClass(), Constants.METRIC_ENQUEUE_REQUESTS, 1);
+    MetricsHelper helper = new MetricsHelper(
+        this.getClass(), this.metrics, this.collector.getName(), "append");
     LOG.trace("Received event: " + event);
     try {
-      this.collector.getConsumer().consumeEvent(convertFlume2Event(event));
-      metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
+      this.collector.getConsumer().consumeEvent(
+          convertFlume2Event(event, helper));
+      helper.finish(Success);
       return Status.OK;
     } catch (Exception e) {
       LOG.warn("Error consuming single event: " + e.getMessage());
-      metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+      helper.finish(Error);
       return Status.FAILED;
     }
   }
@@ -88,16 +94,17 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each batch of events */
   public final Status appendBatch(List<AvroFlumeEvent> events) {
-    metrics.meter(this.getClass(), Constants.METRIC_REQUESTS, 1);
-    metrics.counter(this.getClass(), Constants.METRIC_BATCH_REQUESTS, 1);
+    MetricsHelper helper = new MetricsHelper(
+        this.getClass(), this.metrics, this.collector.getName(), "batch");
     LOG.trace("Received batch: " + events);
     try {
-      this.collector.getConsumer().consumeEvents(convertFlume2Event(events));
-      metrics.meter(this.getClass(), Constants.METRIC_SUCCESS, 1);
+      this.collector.getConsumer().consumeEvents(
+          convertFlume2Event(events, helper));
+      helper.finish(Success);
       return Status.OK;
     } catch (Exception e) {
       LOG.warn("Error consuming batch of events: " + e.getMessage());
-      metrics.meter(this.getClass(), Constants.METRIC_INTERNAL_ERRORS, 1);
+      helper.finish(Error);
       return Status.FAILED;
     }
   }
@@ -107,11 +114,13 @@ class FlumeAdapter implements AvroSourceProtocol {
    * and body. In addition, the collector name header is set.
    *
    * @param flumeEvent the flume event to be converted
+   * @param helper a metrics helper, if a destination is found,
+   *               the scope of this helper is updated to include it.
    * @return the resulting event
    */
-  protected Event convertFlume2Event(AvroFlumeEvent flumeEvent)
-      throws Exception
-  {
+  protected Event convertFlume2Event(AvroFlumeEvent flumeEvent,
+                                     MetricsHelper helper)
+      throws Exception {
     EventBuilder builder = new EventBuilder();
     builder.setBody(flumeEvent.getBody().array());
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
@@ -125,8 +134,10 @@ class FlumeAdapter implements AvroSourceProtocol {
     if (destination == null) {
       throw new Exception("Cannot enqueue event without destination stream");
     }
+    helper.setScope(destination);
     if (!this.collector.getStreamCache().validateStream(
         OperationContext.DEFAULT_ACCOUNT_ID, destination)) {
+      helper.finish(NotFound);
       throw new Exception("Cannot enqueue event to non-existent stream '" +
           destination + "'.");
     }
@@ -138,13 +149,16 @@ class FlumeAdapter implements AvroSourceProtocol {
    * convertFlume2Event
    *
    * @param flumeEvents the flume events to be converted
+   * @param helper a metrics helper, if a destination is found,
+   *               the scope of this helper is updated to include it.
    * @return the resulting events
    */
-  protected List<Event> convertFlume2Event(List<AvroFlumeEvent> flumeEvents)
+  protected List<Event> convertFlume2Event(List<AvroFlumeEvent> flumeEvents,
+                                           MetricsHelper helper)
   throws Exception {
     List<Event> events = new ArrayList<Event>();
     for (AvroFlumeEvent flumeEvent : flumeEvents) {
-      events.add(convertFlume2Event(flumeEvent));
+      events.add(convertFlume2Event(flumeEvent, helper));
     }
     return events;
   }
