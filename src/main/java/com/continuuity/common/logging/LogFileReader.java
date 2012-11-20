@@ -75,16 +75,18 @@ public class LogFileReader implements LogReader {
     }
 
     // open current file for reading
-    FSDataInputStream input = fileSystem.open(path);
-    // seek into latest file
-    if (seekPos > 0) {
-      input.seek(seekPos);
-    }
-
-    // read to the end of current file
     byte[] bytes = new byte[(int)bytesToRead];
-    input.readFully(bytes);
-
+    FSDataInputStream input = fileSystem.open(path);
+    try {
+      // seek into latest file
+      if (seekPos > 0) {
+        input.seek(seekPos);
+      }
+      // read to the end of current file
+      input.readFully(bytes);
+    } finally {
+      input.close();
+    }
     int pos = 0;
     if (seekPos > 0) {
       // if we seeked into the file, then we are likely in the middle of the
@@ -111,11 +113,16 @@ public class LogFileReader implements LogReader {
   private long determineTrueFileSize(Path path, FileStatus status)
       throws IOException {
     FSDataInputStream stream = fileSystem.open(path);
-    stream.seek(status.getLen());
-    // we need to read repeatedly until we reach the end of the file
-    byte[] buffer = new byte[1024 * 1024];
-    while (stream.read(buffer, 0, buffer.length) >= 0);
-    return stream.getPos();
+    try {
+      stream.seek(status.getLen());
+      // we need to read repeatedly until we reach the end of the file
+      byte[] buffer = new byte[1024 * 1024];
+      while (stream.read(buffer, 0, buffer.length) >= 0);
+      long trueSize = stream.getPos();
+      return trueSize;
+    } finally {
+      stream.close();
+    }
   }
 
   String makeFileName(int instance) {
