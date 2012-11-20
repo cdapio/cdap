@@ -131,4 +131,8 @@ public class NettyRestHandler extends SimpleChannelUpstreamHandler {
       future.addListener(ChannelFutureListener.CLOSE);
     }
   }
+
+  protected void respondToPing(Channel channel, HttpRequest request) {
+    respondSuccess(channel, request, "OK.\n".getBytes());
+  }
 }

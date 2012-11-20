@@ -199,7 +199,7 @@ public class MonitorRestHandler extends NettyRestHandler {
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(path)) {
         helper.setMethod("ping");
-        respondSuccess(message.getChannel(), request, "OK\n".getBytes());
+        respondToPing(message.getChannel(), request);
         helper.finish(Success);
         return;
       }

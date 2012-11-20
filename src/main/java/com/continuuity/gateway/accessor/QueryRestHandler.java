@@ -104,7 +104,7 @@ public class QueryRestHandler extends NettyRestHandler {
       // is this a ping? (http://gw:port/ping) if so respond OK and done
       if ("/ping".equals(uri)) {
         helper.setMethod("ping");
-        respondSuccess(message.getChannel(), request, "OK\n".getBytes());
+        respondToPing(message.getChannel(), request);
         helper.finish(Success);
         return;
       }
