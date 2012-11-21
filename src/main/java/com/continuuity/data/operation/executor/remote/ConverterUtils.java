@@ -631,6 +631,9 @@ public class ConverterUtils {
       return new TQueueMeta(true).
           setStatus(meta.getStatus()).
           setMessage(meta.getMessage());
+    } else if (meta.getValue().isHBQMeta()) {
+      return new TQueueMeta(false).
+          setMessage(meta.getValue().getJSONString());
     } else {
       return new TQueueMeta(false).
           setGlobalHeadPointer(meta.getValue().getGlobalHeadPointer()).

@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationBase;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.codehaus.jettison.json.JSONException;
 
 import com.continuuity.api.data.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
@@ -82,6 +83,7 @@ public class QueueAdmin {
     long globalHeadPointer;
     long currentWritePointer;
     GroupState [] groups;
+    String jsonString = null;
 
     public long getGlobalHeadPointer() {
       return this.globalHeadPointer;
@@ -95,6 +97,10 @@ public class QueueAdmin {
       return this.groups;
     }
 
+    public String getJSONString() {
+      return this.jsonString;
+    }
+
     public QueueMeta() { }
 
     public QueueMeta(long globalHeadPointer, long currentWritePointer,
@@ -105,25 +111,22 @@ public class QueueAdmin {
     }
 
     public QueueMeta(HBQQueueMeta queueMeta) {
-      this(queueMeta.getGlobalHeadPointer(), queueMeta.getCurrentWritePointer(),
-          convertGroupArray(queueMeta.getGroups()));
+      try {
+        this.jsonString = queueMeta.toJSON();
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
     }
 
-    private static GroupState[] convertGroupArray(
-        com.continuuity.hbase.ttqueue.internal.GroupState[] groups) {
-      GroupState [] convertedGroups = new GroupState[groups.length];
-      for (int i=0; i<groups.length; i++) {
-        convertedGroups[i] = new GroupState(groups[i].getGroupSize(),
-            new EntryPointer(groups[i].getHead().getEntryId(),
-                groups[i].getHead().getShardId()),
-            ExecutionMode.fromHBQ(groups[i].getMode()));
-      }
-      // TODO Auto-generated method stub
-      return null;
+    public boolean isHBQMeta() {
+      return this.jsonString != null;
     }
 
     @Override
     public String toString() {
+      if (this.jsonString != null) {
+        return this.jsonString;
+      }
       return Objects.toStringHelper(this)
           .add("globalHeadPointer", this.globalHeadPointer)
           .add("currentWritePointer", this.currentWritePointer)
@@ -136,6 +139,9 @@ public class QueueAdmin {
       if (object == null || !(object instanceof QueueMeta))
         return false;
       QueueMeta other = (QueueMeta)object;
+      if (this.jsonString != null) {
+        return this.jsonString.equals(other.jsonString);
+      }
       return
           this.currentWritePointer == other.currentWritePointer &&
           this.globalHeadPointer == other.globalHeadPointer &&
