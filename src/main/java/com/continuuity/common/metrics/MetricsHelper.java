@@ -71,6 +71,10 @@ public class MetricsHelper {
     }
   }
 
+  public void setScope(byte[] scope) {
+    setScope(new String(scope));
+  }
+
   public void setScope(String scope) {
     if (scope == null) {
       Log.warn("Attempt to set the scope of a metrics helper to null in " +
@@ -116,6 +120,14 @@ public class MetricsHelper {
         this.meter(metricNamePerMethodAndScope, status, latency);
       }
     }
+  }
+
+  public void success() {
+    finish(Status.Success);
+  }
+
+  public void failure() {
+    finish(Status.Error);
   }
 
   public static void meterError(CMetrics metrics, String qualifier) {
