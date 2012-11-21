@@ -3,9 +3,11 @@ package com.continuuity.common.metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.regex.Pattern;
+
 public class MetricsHelper {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(MetricsHelper.class);
 
   public enum Status {
@@ -53,14 +55,14 @@ public class MetricsHelper {
 
   public void setMethod(String method) {
     if (method == null) {
-      Log.warn("Attempt to set the method of a metrics helper to null in " +
+      LOG.warn("Attempt to set the method of a metrics helper to null in " +
           classe.getName());
       return;
     }
     if (this.method != null) {
-      Log.warn(String.format(
+      LOG.warn(String.format(
           "Attempt to change the method of a metrics helper in %s to %s " +
-          "(old method is %s)", classe.getName(), this.method , method));
+              "(old method is %s)", classe.getName(), this.method, method));
     }
     // set the method and emit a "received" metric
     this.method = method;
@@ -77,17 +79,22 @@ public class MetricsHelper {
     setScope(new String(scope));
   }
 
+  static final Pattern pattern = Pattern.compile("[:/]+");
+
   public void setScope(String scope) {
     if (scope == null) {
-      Log.warn("Attempt to set the scope of a metrics helper to null in " +
+      LOG.warn("Attempt to set the scope of a metrics helper to null in " +
           classe.getName());
       return;
     }
     if (this.scope != null) {
-      Log.warn(String.format(
+      LOG.warn(String.format(
           "Attempt to change the scope of a metrics helper in %s to %s " +
-              "(old scope is %s)", classe.getName(), this.scope , scope));
+              "(old scope is %s)", classe.getName(), this.scope, scope));
     }
+    // if (scope.contains(":"))
+    scope = pattern.matcher(scope).replaceAll(".");
+
     // set the scope
     this.scope = scope;
     // if the method is set, create and emit a combined "received" metric
