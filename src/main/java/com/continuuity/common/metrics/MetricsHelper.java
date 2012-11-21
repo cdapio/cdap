@@ -37,7 +37,9 @@ public class MetricsHelper {
     this.setQualifier(qualifier);
 
     this.scope = null;
-    this.setMethod(method);
+    if (method != null) {
+      this.setMethod(method);
+    }
   }
 
   public MetricsHelper(Class<?> caller, CMetrics metrics, String qualifier) {
