@@ -5,12 +5,12 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.MetricsHelper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.google.common.collect.Maps;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.continuuity.gateway.util.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
 /**
  * This is the http request handler for the rest collector. This supports
@@ -117,8 +117,8 @@ public class RestHandler extends NettyRestHandler {
     String requestUri = request.getUri();
 
     LOG.trace("Request received: " + method + " " + requestUri);
-    MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics,
-        this.collector.getName());
+    MetricsHelper helper = new MetricsHelper(
+        this.getClass(), this.metrics, this.collector.getMetricsQualifier());
 
     try {
 
@@ -424,7 +424,7 @@ public class RestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    MetricsHelper.meterError(metrics, this.collector.getName());
+    MetricsHelper.meterError(metrics, this.collector.getMetricsQualifier());
     LOG.error("Exception caught for collector '" +
         this.collector.getName() + "'. ", e.getCause());
     e.getChannel().close();

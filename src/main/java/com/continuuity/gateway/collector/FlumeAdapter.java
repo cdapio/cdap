@@ -7,10 +7,10 @@ package com.continuuity.gateway.collector;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
 import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.MetricsHelper;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
@@ -20,9 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.continuuity.gateway.util.MetricsHelper.Status.Error;
-import static com.continuuity.gateway.util.MetricsHelper.Status.NotFound;
-import static com.continuuity.gateway.util.MetricsHelper.Status.Success;
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
 /**
  * /**
@@ -76,13 +74,13 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each single event */
   public final Status append(AvroFlumeEvent event) {
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.collector.getName(), "append");
+    MetricsHelper helper = new MetricsHelper(this.getClass(),
+        this.metrics, this.collector.getMetricsQualifier(), "append");
     LOG.trace("Received event: " + event);
     try {
       this.collector.getConsumer().consumeEvent(
           convertFlume2Event(event, helper));
-      helper.finish(Success);
+      helper.finish(MetricsHelper.Status.Success);
       return Status.OK;
     } catch (Exception e) {
       LOG.warn("Error consuming single event: " + e.getMessage());
@@ -94,8 +92,8 @@ class FlumeAdapter implements AvroSourceProtocol {
   @Override
   /** called by the Avro Responder for each batch of events */
   public final Status appendBatch(List<AvroFlumeEvent> events) {
-    MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.collector.getName(), "batch");
+    MetricsHelper helper = new MetricsHelper(this.getClass(),
+        this.metrics, this.collector.getMetricsQualifier(), "batch");
     LOG.trace("Received batch: " + events);
     try {
       this.collector.getConsumer().consumeEvents(

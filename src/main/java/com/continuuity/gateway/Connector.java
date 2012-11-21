@@ -31,6 +31,11 @@ public abstract class Connector {
   private String name;
 
   /**
+   * The metrics qualifier to be used for this connector
+   */
+  private String metricsQualifier;
+
+  /**
    * This is our configuration
    */
   private CConfiguration myConfiguration;
@@ -78,6 +83,7 @@ public abstract class Connector {
    */
   public void setName(String name) {
     this.name = name;
+    this.metricsQualifier = Constants.GATEWAY_PREFIX + name;
   }
 
   /**
@@ -90,8 +96,17 @@ public abstract class Connector {
   }
 
   /**
+   * Get the metrics qualifier for this connector (gateway.connector.name)
+   *
+   * @return the metrics qualifier
+   */
+  public String getMetricsQualifier() {
+    return this.metricsQualifier;
+  }
+
+  /**
    * Set the service discovery client, should only be called by Gateway main
-   * @param discovery
+   * @param discovery the discovery client to use
    */
   void setServiceDiscovery(ServiceDiscovery discovery) {
     this.serviceDiscovery = discovery;

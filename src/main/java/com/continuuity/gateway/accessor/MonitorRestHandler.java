@@ -1,6 +1,7 @@
 package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.flow.manager.stubs.DelegationToken;
@@ -8,7 +9,6 @@ import com.continuuity.flow.manager.stubs.FlowIdentifier;
 import com.continuuity.flow.manager.stubs.FlowService;
 import com.continuuity.flow.manager.stubs.FlowStatus;
 import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.util.MetricsHelper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
 import com.continuuity.metrics2.thrift.CounterRequest;
@@ -33,9 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.gateway.util.MetricsHelper.Status.BadRequest;
-import static com.continuuity.gateway.util.MetricsHelper.Status.Error;
-import static com.continuuity.gateway.util.MetricsHelper.Status.Success;
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
 /**
  * This is the http request handler for the metrics and status REST API.
@@ -181,7 +179,7 @@ public class MonitorRestHandler extends NettyRestHandler {
 
     LOG.trace("Request received: " + method + " " + uri);
     MetricsHelper helper = new MetricsHelper(
-        this.getClass(), this.metrics, this.accessor.getName());
+        this.getClass(), this.metrics, this.accessor.getMetricsQualifier());
 
     try {
       // only GET is supported for now
@@ -286,7 +284,7 @@ public class MonitorRestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    MetricsHelper.meterError(metrics, this.accessor.getName());
+    MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
         this.accessor.getName() + "'. ", e.getCause());
     if(e.getChannel().isOpen()) {

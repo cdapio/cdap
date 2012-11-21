@@ -1,9 +1,9 @@
 package com.continuuity.gateway.accessor;
 
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.StackTraceUtil;
-import com.continuuity.gateway.util.MetricsHelper;
 import com.continuuity.gateway.util.NettyRestHandler;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,8 +25,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.continuuity.gateway.util.MetricsHelper.Status.*;
-import static com.continuuity.gateway.util.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
 /**
  * This is the http request handler for the query rest accessor.
@@ -90,7 +89,7 @@ public class QueryRestHandler extends NettyRestHandler {
 
     LOG.trace("Request received: " + method + " " + uri);
     MetricsHelper helper = new MetricsHelper(this.getClass(), this.metrics,
-        this.accessor.getName());
+        this.accessor.getMetricsQualifier());
 
     try {
       // only GET is supported for now
@@ -227,7 +226,7 @@ public class QueryRestHandler extends NettyRestHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
       throws Exception {
-    MetricsHelper.meterError(metrics, this.accessor.getName());
+    MetricsHelper.meterError(metrics, this.accessor.getMetricsQualifier());
     LOG.error("Exception caught for connector '" +
         this.accessor.getName() + "'. ", e.getCause());
     if(e.getChannel().isOpen()) {
