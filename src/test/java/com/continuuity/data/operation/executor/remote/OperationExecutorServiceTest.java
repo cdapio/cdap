@@ -617,7 +617,7 @@ public abstract class OperationExecutorServiceTest extends
     GetQueueInfo getQueueInfo = new GetQueueInfo(q);
     QueueInfo infoLocal = local.execute(context, getQueueInfo).getValue();
     QueueInfo infoRemote = remote.execute(context, getQueueInfo).getValue();
-    System.err.println(infoLocal);
+    //System.err.println(infoLocal);
     Assert.assertNotNull(infoLocal);
     Assert.assertNotNull(infoRemote);
     Assert.assertEquals(infoLocal, infoRemote);

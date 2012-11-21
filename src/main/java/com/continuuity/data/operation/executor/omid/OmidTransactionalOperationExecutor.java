@@ -876,7 +876,9 @@ implements TransactionalOperationExecutor {
     TTQueueTable table = getQueueTable(getQueueInfo.getQueueName());
     QueueInfo queueInfo = table.getQueueInfo(getQueueInfo.getQueueName());
     end("GetQueueInfo", begin);
-    return new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
+    return queueInfo == null ?
+        new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND) :
+        new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {

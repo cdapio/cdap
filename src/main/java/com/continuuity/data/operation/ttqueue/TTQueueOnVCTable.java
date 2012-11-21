@@ -858,18 +858,20 @@ public class TTQueueOnVCTable implements TTQueue {
 
   @Override
   public QueueInfo getQueueInfo() throws OperationException {
-    return new QueueInfo(getQueueMeta());
+    QueueMeta meta = getQueueMeta();
+    return meta == null ? null : new QueueInfo(meta);
   }
 
   private QueueMeta getQueueMeta() throws OperationException {
 
     // Get global queue state information
-    QueueMeta meta = new QueueMeta();
-    
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
-    meta.globalHeadPointer = // the next entry id
-        Bytes.toLong(this.table.get(makeRow(GLOBAL_ENTRY_HEADER),
-            GLOBAL_ENTRYID_COUNTER, dirty.getFirst()).getValue());
+    OperationResult<byte[]> result = this.table.get( // the next entry id
+        makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, dirty.getFirst());
+    if (result.isEmpty()) return null;
+
+    QueueMeta meta = new QueueMeta();
+    meta.globalHeadPointer = Bytes.toLong(result.getValue());
 
     byte [] entryWritePointerRow = makeRow(GLOBAL_ENTRY_WRITEPOINTER_HEADER);
     meta.currentWritePointer = // the current entty lock

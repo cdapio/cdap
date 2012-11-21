@@ -473,7 +473,7 @@ public class TOperationExecutorImpl
                                  TGetQueueInfo tGetQueueInfo)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper("meta", tGetQueueInfo.getQueueName());
+    MetricsHelper helper = newHelper("info", tGetQueueInfo.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TGetQueueInfo: " + tGetQueueInfo);
