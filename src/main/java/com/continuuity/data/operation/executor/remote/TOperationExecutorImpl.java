@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OpenTable;
@@ -16,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * The implementation of a thrift service for operation execution.
@@ -50,10 +54,27 @@ public class TOperationExecutorImpl
   private CMetrics metrics =  new CMetrics(MetricType.System);
 
   /** helper method to create a metrics helper */
-  MetricsHelper newHelper(String meter, String histogram) {
-    return new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, meter, histogram);
+  MetricsHelper newHelper(String method) {
+    return new MetricsHelper(
+        this.getClass(), this.metrics, "opex.service", method);
   }
+  MetricsHelper newHelper(String method, byte[] scope) {
+    MetricsHelper helper = newHelper(method);
+    setScope(helper, scope);
+    return helper;
+  }
+  MetricsHelper newHelper(String method, String scope) {
+    MetricsHelper helper = newHelper(method);
+    setScope(helper, scope);
+    return helper;
+  }
+  void setScope(MetricsHelper helper, byte[] scope) {
+    if (scope != null) helper.setScope(scope);
+  }
+  void setScope(MetricsHelper helper, String scope) {
+    if (scope != null) helper.setScope(scope);
+  }
+
   /** constructor requires the operation executor */
   public TOperationExecutorImpl(OperationExecutor opex) {
     this.opex = opex;
@@ -67,9 +88,7 @@ public class TOperationExecutorImpl
                     TWrite tWrite)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_WRITE_REQUESTS,
-        Constants.METRIC_WRITE_LATENCY);
+    MetricsHelper helper = newHelper("write", tWrite.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TWrite: " + tWrite);
@@ -94,9 +113,7 @@ public class TOperationExecutorImpl
   public void delet(TOperationContext tcontext,
                     TDelete tDelete) throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_DELETE_REQUESTS,
-        Constants.METRIC_DELETE_LATENCY);
+    MetricsHelper helper = newHelper("delete", tDelete.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TDelete: " + tDelete);
@@ -121,9 +138,7 @@ public class TOperationExecutorImpl
                         TIncrement tIncrement)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_INCREMENT_REQUESTS,
-        Constants.METRIC_INCREMENT_LATENCY);
+    MetricsHelper helper = newHelper("increment", tIncrement.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TIncrement: " + tIncrement);
@@ -148,9 +163,7 @@ public class TOperationExecutorImpl
                              TCompareAndSwap tCompareAndSwap)
       throws TException, TOperationException  {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_COMPAREANDSWAP_REQUESTS,
-        Constants.METRIC_COMPAREANDSWAP_LATENCY);
+    MetricsHelper helper = newHelper("swap", tCompareAndSwap.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TCompareAndSwap: " + tCompareAndSwap);
@@ -175,9 +188,7 @@ public class TOperationExecutorImpl
                            TQueueEnqueue tQueueEnqueue)
       throws TException, TOperationException  {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_ENQUEUE_REQUESTS,
-        Constants.METRIC_ENQUEUE_LATENCY);
+    MetricsHelper helper = newHelper("enqueue", tQueueEnqueue.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TQueueEnqueue: " + tQueueEnqueue);
@@ -202,9 +213,7 @@ public class TOperationExecutorImpl
                        TQueueAck tQueueAck)
       throws TException, TOperationException  {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_ACK_REQUESTS,
-        Constants.METRIC_ACK_LATENCY);
+    MetricsHelper helper = newHelper("ack", tQueueAck.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TQueueAck: " + tQueueAck);
@@ -231,9 +240,7 @@ public class TOperationExecutorImpl
                     List<TWriteOperation> batch)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_BATCH_REQUESTS,
-        Constants.METRIC_BATCH_LATENCY);
+    MetricsHelper helper = newHelper("batch");
 
     if (Log.isTraceEnabled())
       Log.trace("Received Batch");
@@ -286,9 +293,7 @@ public class TOperationExecutorImpl
                                  TReadKey tReadKey)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READKEY_REQUESTS,
-        Constants.METRIC_READKEY_LATENCY);
+    MetricsHelper helper = newHelper("readkey", tReadKey.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TReadKey: " + tReadKey);
@@ -299,7 +304,8 @@ public class TOperationExecutorImpl
       OperationResult<byte[]> result = this.opex.execute(context, readKey);
       TOptionalBinary tResult = wrapBinary(result);
       if (Log.isTraceEnabled()) Log.trace("ReadKey successful.");
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;
 
     } catch (OperationException e) {
@@ -315,9 +321,7 @@ public class TOperationExecutorImpl
                                  TRead tRead)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READ_REQUESTS,
-        Constants.METRIC_READ_LATENCY);
+    MetricsHelper helper = newHelper("read", tRead.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TRead: " + tRead);
@@ -329,7 +333,8 @@ public class TOperationExecutorImpl
           this.opex.execute(context, read);
       TOptionalBinaryMap tResult = wrapMap(result);
       if (Log.isTraceEnabled()) Log.trace("Read successful.");
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;
 
     } catch (OperationException e) {
@@ -345,9 +350,7 @@ public class TOperationExecutorImpl
                                          TReadAllKeys tReadAllKeys)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READALLKEYS_REQUESTS,
-        Constants.METRIC_READALLKEYS_LATENCY);
+    MetricsHelper helper = newHelper("listkeys", tReadAllKeys.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TReadAllKeys: " + tReadAllKeys);
@@ -359,7 +362,8 @@ public class TOperationExecutorImpl
           this.opex.execute(context, readAllKeys);
       TOptionalBinaryList tResult = wrapList(result);
       if (Log.isTraceEnabled()) Log.trace("ReadAllKeys successful.");
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;
 
     } catch (OperationException e) {
@@ -376,9 +380,7 @@ public class TOperationExecutorImpl
                   TReadColumnRange tReadColumnRange)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READCOLUMNRANGE_REQUESTS,
-        Constants.METRIC_READCOLUMNRANGE_LATENCY);
+    MetricsHelper helper = newHelper("range", tReadColumnRange.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TReadColumnRange: " + tReadColumnRange);
@@ -390,7 +392,8 @@ public class TOperationExecutorImpl
           this.opex.execute(context, readColumnRange);
       TOptionalBinaryMap tResult = wrapMap(result);
       if (Log.isTraceEnabled()) Log.trace("ReadColumnRange successful.");
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;
 
     } catch (OperationException e) {
@@ -408,9 +411,7 @@ public class TOperationExecutorImpl
                                 TQueueDequeue tQueueDequeue)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_DEQUEUE_REQUESTS,
-        Constants.METRIC_DEQUEUE_LATENCY);
+    MetricsHelper helper = newHelper("dequeue",tQueueDequeue.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TQueueDequeue" + tQueueDequeue.toString());
@@ -424,7 +425,8 @@ public class TOperationExecutorImpl
                   result.getStatus().name());
       }
       TDequeueResult tResult = wrap(result);
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return tResult;
 
     } catch (OperationException e) {
@@ -442,9 +444,7 @@ public class TOperationExecutorImpl
                          TGetGroupId tGetGroupId)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_GETGROUPID_REQUESTS,
-        Constants.METRIC_GETGROUPID_LATENCY);
+    MetricsHelper helper = newHelper("getid", tGetGroupId.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TGetGroupID: " + tGetGroupId);
@@ -472,9 +472,7 @@ public class TOperationExecutorImpl
                                  TGetQueueMeta tGetQueueMeta)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_GETQUEUEMETA_REQUESTS,
-        Constants.METRIC_GETQUEUEMETA_LATENCY);
+    MetricsHelper helper = newHelper("meta", tGetQueueMeta.getQueueName());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TGetQueueMeta: " + tGetQueueMeta);
@@ -485,9 +483,10 @@ public class TOperationExecutorImpl
       OperationResult<QueueAdmin.QueueMeta> queueMeta =
           this.opex.execute(context, getQueueMeta);
       if (Log.isTraceEnabled()) Log.trace("GetQueueMeta successful: " +
-                                            (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
+          (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
       TQueueMeta tQueueMeta =  wrap(queueMeta);
-      helper.success();
+
+      helper.finish(queueMeta.isEmpty() ? NoData : Success);
       return tQueueMeta;
 
     } catch (OperationException e) {
@@ -505,9 +504,7 @@ public class TOperationExecutorImpl
                           TClearFabric tClearFabric)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_CLEARFABRIC_REQUESTS,
-        Constants.METRIC_CLEARFABRIC_LATENCY);
+    MetricsHelper helper = newHelper("clear");
 
     if (Log.isTraceEnabled())
       Log.trace("Received TClearFabric: " + tClearFabric);
@@ -532,9 +529,7 @@ public class TOperationExecutorImpl
                         TOpenTable tOpenTable)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_OPENTABLE_REQUESTS,
-        Constants.METRIC_OPENTABLE_LATENCY);
+    MetricsHelper helper = newHelper("open", tOpenTable.getTable());
 
     if (Log.isTraceEnabled())
       Log.trace("Received TOpenTable: " + tOpenTable);

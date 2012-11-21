@@ -111,41 +111,4 @@ public class Constants {
   public static final String CFG_ZOOKEEPER_ENSEMBLE =
       com.continuuity.common.conf.Constants.CFG_ZOOKEEPER_ENSEMBLE;
 
-  // Metrics names used by opex service and opex client
-
-  public static final String METRIC_SUCCESS = "success";
-  public static final String METRIC_FAILURE = "failure";
-  public static final String METRIC_REQUESTS = "requests";
-  public static final String METRIC_BATCH_REQUESTS = "batchRequests";
-  public static final String METRIC_BATCH_LATENCY = "batchLatency";
-  public static final String METRIC_DEQUEUE_REQUESTS = "dequeueRequests";
-  public static final String METRIC_DEQUEUE_LATENCY = "dequeueLatency";
-  public static final String METRIC_GETGROUPID_REQUESTS = "getGroupIdRequests";
-  public static final String METRIC_GETGROUPID_LATENCY = "getGroupIdLatency";
-  public static final String METRIC_GETQUEUEMETA_REQUESTS = "getQueueMetaRequests";
-  public static final String METRIC_GETQUEUEMETA_LATENCY = "getQueueMetaLatency";
-  public static final String METRIC_CLEARFABRIC_REQUESTS = "clearFabricRequests";
-  public static final String METRIC_CLEARFABRIC_LATENCY = "clearFabricLatency";
-  public static final String METRIC_OPENTABLE_REQUESTS = "openTableRequests";
-  public static final String METRIC_OPENTABLE_LATENCY = "openTableLatency";
-  public static final String METRIC_READKEY_REQUESTS = "readKeyRequests";
-  public static final String METRIC_READKEY_LATENCY = "readKeyLatency";
-  public static final String METRIC_READ_REQUESTS = "readRequests";
-  public static final String METRIC_READ_LATENCY = "readLatency";
-  public static final String METRIC_READCOLUMNRANGE_REQUESTS = "readColumnRangeRequests";
-  public static final String METRIC_READCOLUMNRANGE_LATENCY = "readColumnRangeLatency";
-  public static final String METRIC_READALLKEYS_REQUESTS = "readAllKeysRequests";
-  public static final String METRIC_READALLKEYS_LATENCY = "readAllKeysLatency";
-  public static final String METRIC_WRITE_REQUESTS = "writeRequests";
-  public static final String METRIC_WRITE_LATENCY = "writeLatency";
-  public static final String METRIC_DELETE_REQUESTS = "deleteRequests";
-  public static final String METRIC_DELETE_LATENCY = "deleteLatency";
-  public static final String METRIC_INCREMENT_REQUESTS = "incrementRequests";
-  public static final String METRIC_INCREMENT_LATENCY = "incrementLatency";
-  public static final String METRIC_COMPAREANDSWAP_REQUESTS = "compareAndSwapRequests";
-  public static final String METRIC_COMPAREANDSWAP_LATENCY = "compareAndSwapLatency";
-  public static final String METRIC_ENQUEUE_REQUESTS = "enqueueRequests";
-  public static final String METRIC_ENQUEUE_LATENCY = "enqueueLatency";
-  public static final String METRIC_ACK_REQUESTS = "ackRequests";
-  public static final String METRIC_ACK_LATENCY = "ackLatency";
 }

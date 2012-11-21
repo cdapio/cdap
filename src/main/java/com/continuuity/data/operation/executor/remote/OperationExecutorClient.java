@@ -7,6 +7,7 @@ import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.continuuity.common.metrics.MetricsHelper.Status.*;
 
 /**
  * This class is a wrapper around the thrift opex client, it takes
@@ -39,9 +42,25 @@ public class OperationExecutorClient extends ConverterUtils {
   CMetrics metrics = new CMetrics(MetricType.System);
 
   /** helper method to create a metrics helper */
-  MetricsHelper newHelper(String meter, String histogram) {
-    return new MetricsHelper(this.metrics, this.getClass(),
-        Constants.METRIC_REQUESTS, meter, histogram);
+  MetricsHelper newHelper(String method) {
+    return new MetricsHelper(
+        this.getClass(), this.metrics, "opex.client", method);
+  }
+  MetricsHelper newHelper(String method, byte[] scope) {
+    MetricsHelper helper = newHelper(method);
+    setScope(helper, scope);
+    return helper;
+  }
+  MetricsHelper newHelper(String method, String scope) {
+    MetricsHelper helper = newHelper(method);
+    setScope(helper, scope);
+    return helper;
+  }
+  void setScope(MetricsHelper helper, byte[] scope) {
+    if (scope != null) helper.setScope(scope);
+  }
+  void setScope(MetricsHelper helper, String scope) {
+    if (scope != null) helper.setScope(scope);
   }
 
   /**
@@ -67,9 +86,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       List<WriteOperation> writes)
       throws OperationException, TException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_BATCH_REQUESTS,
-        Constants.METRIC_BATCH_LATENCY);
+    MetricsHelper helper = newHelper("batch");
 
     if (Log.isTraceEnabled())
       Log.trace("Received Batch of " + writes.size() + "WriteOperations: ");
@@ -120,9 +137,7 @@ public class OperationExecutorClient extends ConverterUtils {
                                QueueDequeue dequeue)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_DEQUEUE_REQUESTS,
-        Constants.METRIC_DEQUEUE_LATENCY);
+    MetricsHelper helper = newHelper("dequeue", dequeue.getKey());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + dequeue);
@@ -132,7 +147,9 @@ public class OperationExecutorClient extends ConverterUtils {
       TDequeueResult tDequeueResult = client.dequeue(tcontext, tDequeue);
       if (Log.isTraceEnabled()) Log.trace("TDequeue successful.");
       DequeueResult dequeueResult = unwrap(tDequeueResult);
-      helper.success();
+
+      helper.finish(dequeueResult.isEmpty() ? NoData : Success);
+
       return dequeueResult;
 
     } catch (TOperationException te) {
@@ -149,9 +166,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       QueueAdmin.GetGroupID getGroupId)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_GETGROUPID_REQUESTS,
-        Constants.METRIC_GETGROUPID_LATENCY);
+    MetricsHelper helper = newHelper("getid", getGroupId.getQueueName());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + getGroupId);
@@ -178,9 +193,7 @@ public class OperationExecutorClient extends ConverterUtils {
           QueueAdmin.GetQueueMeta getQueueMeta)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_GETQUEUEMETA_REQUESTS,
-        Constants.METRIC_GETQUEUEMETA_LATENCY);
+    MetricsHelper helper = newHelper("meta", getQueueMeta.getQueueName());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + getQueueMeta);
@@ -190,7 +203,8 @@ public class OperationExecutorClient extends ConverterUtils {
       TQueueMeta tQueueMeta = client.getQueueMeta(tcontext, tGetQueueMeta);
       if (Log.isTraceEnabled()) Log.trace("TGetQueueMeta successful.");
       OperationResult<QueueAdmin.QueueMeta> queueMeta = unwrap(tQueueMeta);
-      helper.success();
+
+      helper.finish(queueMeta.isEmpty() ? NoData : Success);
       return queueMeta;
 
     } catch (TOperationException te) {
@@ -207,9 +221,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       ClearFabric clearFabric)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_CLEARFABRIC_REQUESTS,
-        Constants.METRIC_CLEARFABRIC_LATENCY);
+    MetricsHelper helper = newHelper("clear");
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + clearFabric);
@@ -233,9 +245,7 @@ public class OperationExecutorClient extends ConverterUtils {
   public void execute(OperationContext context, OpenTable openTable)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_OPENTABLE_REQUESTS,
-        Constants.METRIC_OPENTABLE_LATENCY);
+    MetricsHelper helper = newHelper("open", openTable.getTableName());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + openTable);
@@ -260,9 +270,7 @@ public class OperationExecutorClient extends ConverterUtils {
                                          ReadKey readKey)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READKEY_REQUESTS,
-        Constants.METRIC_READKEY_LATENCY);
+    MetricsHelper helper = newHelper("readkey", readKey.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + readKey);
@@ -272,7 +280,8 @@ public class OperationExecutorClient extends ConverterUtils {
       TOptionalBinary tResult = client.readKey(tcontext, tReadKey);
       if (Log.isTraceEnabled()) Log.trace("TReadKey successful.");
       OperationResult<byte[]> result = unwrap(tResult);
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return result;
 
     } catch (TOperationException te) {
@@ -289,9 +298,7 @@ public class OperationExecutorClient extends ConverterUtils {
                                                       Read read)
       throws OperationException, TException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READ_REQUESTS,
-        Constants.METRIC_READ_LATENCY);
+    MetricsHelper helper = newHelper("read", read.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + read);
@@ -301,7 +308,8 @@ public class OperationExecutorClient extends ConverterUtils {
       TOptionalBinaryMap tResult = client.read(tcontext, tRead);
       if (Log.isTraceEnabled()) Log.trace("TRead successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return result;
 
     } catch (TOperationException te) {
@@ -318,9 +326,7 @@ public class OperationExecutorClient extends ConverterUtils {
                                                ReadAllKeys readKeys)
       throws OperationException, TException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READALLKEYS_REQUESTS,
-        Constants.METRIC_READALLKEYS_LATENCY);
+    MetricsHelper helper = newHelper("listkeys", readKeys.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + readKeys);
@@ -330,7 +336,8 @@ public class OperationExecutorClient extends ConverterUtils {
       TOptionalBinaryList tResult = client.readAllKeys(tcontext, tReadAllKeys);
       if (Log.isTraceEnabled()) Log.trace("TReadAllKeys successful.");
       OperationResult<List<byte[]>> result = unwrap(tResult);
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return result;
 
     } catch (TOperationException te) {
@@ -348,9 +355,7 @@ public class OperationExecutorClient extends ConverterUtils {
           ReadColumnRange readColumnRange)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_READCOLUMNRANGE_REQUESTS,
-        Constants.METRIC_READCOLUMNRANGE_LATENCY);
+    MetricsHelper helper = newHelper("range", readColumnRange.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received ReadColumnRange.");
@@ -361,7 +366,8 @@ public class OperationExecutorClient extends ConverterUtils {
           client.readColumnRange(tcontext, tReadColumnRange);
       if (Log.isTraceEnabled()) Log.trace("TReadColumnRange successful.");
       OperationResult<Map<byte[], byte[]>> result = unwrap(tResult);
-      helper.success();
+
+      helper.finish(result.isEmpty() ? NoData : Success);
       return result;
 
     } catch (TOperationException te) {
@@ -377,9 +383,7 @@ public class OperationExecutorClient extends ConverterUtils {
   public void execute(OperationContext context,
                       Write write) throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_WRITE_REQUESTS,
-        Constants.METRIC_WRITE_LATENCY);
+    MetricsHelper helper = newHelper("write", write.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received Write.");
@@ -403,9 +407,7 @@ public class OperationExecutorClient extends ConverterUtils {
   public void execute(OperationContext context,
                       Delete delete) throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_DELETE_REQUESTS,
-        Constants.METRIC_DELETE_LATENCY);
+    MetricsHelper helper = newHelper("delete", delete.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received Delete.");
@@ -430,9 +432,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       Increment increment)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_INCREMENT_REQUESTS,
-        Constants.METRIC_INCREMENT_LATENCY);
+    MetricsHelper helper = newHelper("increment", increment.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received Increment.");
@@ -457,9 +457,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       CompareAndSwap compareAndSwap)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_COMPAREANDSWAP_REQUESTS,
-        Constants.METRIC_COMPAREANDSWAP_LATENCY);
+    MetricsHelper helper = newHelper("swap", compareAndSwap.getTable());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received CompareAndSwap.");
@@ -484,9 +482,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       QueueEnqueue enqueue)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_ENQUEUE_REQUESTS,
-        Constants.METRIC_ENQUEUE_LATENCY);
+    MetricsHelper helper = newHelper("enqueue", enqueue.getKey());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received EnqueuePayload.");
@@ -511,9 +507,7 @@ public class OperationExecutorClient extends ConverterUtils {
                       QueueAck ack)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper(
-        Constants.METRIC_ACK_REQUESTS,
-        Constants.METRIC_ACK_LATENCY);
+    MetricsHelper helper = newHelper("ack", ack.getKey());
 
     try {
       if (Log.isTraceEnabled()) Log.trace("Received " + ack);
