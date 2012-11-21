@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+
 public class TestUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
@@ -233,6 +235,45 @@ public class TestUtil {
           headers.get(Constants.HEADER_DESTINATION_STREAM));
     Assert.assertArrayEquals(
         createMessage(messageNumber), (byte[]) tuple.get("body"));
+  }
+
+  public static void verifyQueueInfo(OperationExecutor executor,
+                                     int port, String prefix, String path,
+                                     String stream)
+      throws Exception {
+    // get the queue info from opex
+    byte[] queueName = FlowStream.buildStreamURI(
+        Constants.defaultAccount, stream).toString().getBytes();
+    OperationResult<QueueInfo> info = executor.execute(
+        OperationContext.DEFAULT, new QueueAdmin.GetQueueInfo(queueName));
+    String json = info.isEmpty() ? null : info.getValue().getJSONString();
+
+    // get the queue info via HTTP
+    String url = "http://localhost:" + port + prefix + path + stream;
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(new HttpGet(url));
+    client.getConnectionManager().shutdown();
+    String json2 = null;
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+      int length = (int)response.getEntity().getContentLength();
+      // verify that the value is actually the same
+      InputStream content = response.getEntity().getContent();
+      if (length > 0) {
+        byte[] bytes = new byte[length];
+        int bytesRead = 0;
+        while (bytesRead < length) {
+          int readNow = content.read(bytes, bytesRead, length - bytesRead);
+          if (readNow < 0)
+            Assert.fail("failed to read entire response content");
+          bytesRead += readNow;
+        }
+        Assert.assertEquals(length, bytesRead);
+        json2 = new String(bytes);
+      }
+    }
+
+    // verify they match
+    Assert.assertEquals(json, json2);
   }
 
   /**

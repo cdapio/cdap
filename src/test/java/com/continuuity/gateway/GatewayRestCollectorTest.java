@@ -118,6 +118,11 @@ public class GatewayRestCollectorTest {
     Assert.assertEquals(0, tupleWritingConsumer.eventsFailed());
     TestUtil.consumeQueueAsTuples(this.executor, stream, name, eventsToSend);
 
+    // get queue info and verify that it is equal to the native one
+    TestUtil.verifyQueueInfo(executor, port, prefix, path, stream);
+    // just for fun, verify that queue info works for non-existent streams
+    TestUtil.verifyQueueInfo(executor, port, prefix, path, "xyz");
+
     // Stop the Gateway
     theGateway.stop(false);
   }

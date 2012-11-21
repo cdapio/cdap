@@ -2,10 +2,12 @@ package com.continuuity.gateway.collector;
 
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventBuilder;
@@ -17,10 +19,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.codec.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * This is the http request handler for the rest collector. This supports
@@ -105,7 +107,7 @@ public class RestHandler extends NettyRestHandler {
   private static final int ENQUEUE = 1;
   private static final int NEWID = 2;
   private static final int DEQUEUE = 3;
-  private static final int META = 4;
+  private static final int INFO = 4;
   private static final int PING = 5;
 
   @Override
@@ -144,8 +146,8 @@ public class RestHandler extends NettyRestHandler {
           helper.setMethod("ping");
         }
         else if (parameters == null || parameters.size() == 0) {
-          operation = META;
-          helper.setMethod("getQueueMeta");
+          operation = INFO;
+          helper.setMethod("getQueueInfo");
         } else {
           List<String> qParams = parameters.get("q");
           if (qParams != null && qParams.size() == 1) {
@@ -155,6 +157,9 @@ public class RestHandler extends NettyRestHandler {
             } else if ("dequeue".equals(qParams.get(0))) {
               operation = DEQUEUE;
               helper.setMethod("dequeue");
+            } else if ("info".equals(qParams.get(0))) {
+              operation = INFO;
+              helper.setMethod("info");
             }
           }
         }
@@ -169,7 +174,7 @@ public class RestHandler extends NettyRestHandler {
         return;
       }
 
-      if ((operation == ENQUEUE || operation == META) &&
+      if ((operation == ENQUEUE || operation == INFO) &&
           parameters != null && !parameters.isEmpty()) {
         helper.finish(BadRequest);
         LOG.trace(
@@ -266,12 +271,44 @@ public class RestHandler extends NettyRestHandler {
           break;
         }
 
-        case META: {
-          LOG.trace("Received a request for stream meta data," +
-              " which is not implemented yet.");
-          helper.finish(BadRequest);
-          respondError(message.getChannel(), HttpResponseStatus.NOT_IMPLEMENTED);
-          return;
+        case INFO: {
+          String queueURI = FlowStream.buildStreamURI(
+              Constants.defaultAccount, destination).toString();
+          GetQueueInfo getInfo = new GetQueueInfo(queueURI.getBytes());
+          OperationResult<QueueInfo> info = null;
+          boolean notfound = false;
+          try {
+            info = this.collector.getExecutor().
+                execute(OperationContext.DEFAULT, getInfo);
+            notfound = info.isEmpty()
+                || info.getValue().getJSONString() == null;
+          } catch (Exception e) {
+            if (e instanceof OperationException) {
+              OperationException oe = (OperationException)e;
+              notfound = oe.getStatus() == StatusCode.QUEUE_NOT_FOUND;
+            }
+            if (!notfound) {
+              LOG.error("Exception for GetQueueInfo: " + e.getMessage(), e);
+              helper.finish(Error);
+              respondError(message.getChannel(),
+                  HttpResponseStatus.INTERNAL_SERVER_ERROR);
+              break;
+            }
+          }
+          if (notfound) {
+            respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
+            helper.finish(NotFound);
+            this.collector.getStreamCache().refreshStream(
+                OperationContext.DEFAULT_ACCOUNT_ID, destination);
+          } else {
+            byte[] responseBody = info.getValue().getJSONString().getBytes();
+            Map<String, String> headers = Maps.newHashMap();
+            headers.put(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+            respond(message.getChannel(), request,
+              HttpResponseStatus.OK, headers, responseBody);
+            helper.finish(Success);
+          }
+          break;
         }
 
         // GET means client wants to view the content of a queue.

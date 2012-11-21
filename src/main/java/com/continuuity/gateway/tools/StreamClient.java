@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -87,6 +88,7 @@ public class StreamClient {
     out.println("  " + name +
         " fetch --stream <name> --consumer <id> [ <option> ... ]");
     out.println("  " + name + " view --stream <name> [ <option> ... ]");
+    out.println("  " + name + " info --stream <name> [ <option> ... ]");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -210,7 +212,7 @@ public class StreamClient {
   }
 
   static List<String> supportedCommands =
-      Arrays.asList("send", "id", "fetch", "view");
+      Arrays.asList("send", "id", "fetch", "view", "info");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -363,8 +365,22 @@ public class StreamClient {
 
     else if ("id".equals(command)) {
       String id = getConsumerId(requestUrl);
-      System.out.println(id);
-      return "OK.";
+      if (id != null) {
+        System.out.println(id);
+        return "OK.";
+      } else {
+        return null;
+      }
+    }
+
+    else if ("info".equals(command)) {
+      String info = getQueueInfo(requestUrl);
+      if (info != null) {
+        System.out.println(info);
+        return "OK.";
+      } else {
+        return null;
+      }
     }
 
     else if ("fetch".equals(command)) {
@@ -426,7 +442,7 @@ public class StreamClient {
   }
 
   /**
-   * This implements --id, it obtains a new
+   * This implements --id, it obtains a new consumer group id
    * @param requestUrl the base url with the stream added to it
    * @return the consumer group id returned by the gateway
    */
@@ -444,6 +460,36 @@ public class StreamClient {
     }
     // this call does not respond with 200 OK, but with 201 Created
     if (!checkHttpStatus(response, HttpStatus.SC_CREATED)) return null;
+
+    // read the binary value from the HTTP response
+    byte[] binaryValue = Util.readHttpResponse(response);
+    if (binaryValue == null) {
+      System.err.println("Unexpected response without body.");
+      return null;
+    }
+    return new String(binaryValue);
+  }
+
+  /**
+   * This implements --info, it retrieves queue meta information
+   * @param requestUrl the base url with the stream added to it
+   * @return the consumer group id returned by the gateway,
+   * null in case of error
+   */
+  String getQueueInfo(String requestUrl) {
+    // prepare for HTTP
+    HttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(requestUrl);
+    HttpResponse response;
+    try {
+      response = client.execute(get);
+      client.getConnectionManager().shutdown();
+    } catch (IOException e) {
+      System.err.println("Error sending HTTP request: " + e.getMessage());
+      return null;
+    }
+    // this call does not respond with 200 OK, but with 201 Created
+    if (!checkHttpStatus(response)) return null;
 
     // read the binary value from the HTTP response
     byte[] binaryValue = Util.readHttpResponse(response);
@@ -569,16 +615,7 @@ public class StreamClient {
    * @return whether the response is as expected
    */
   boolean checkHttpStatus(HttpResponse response, int expected) {
-    if (response.getStatusLine().getStatusCode() != expected) {
-      if (verbose)
-        System.out.println(response.getStatusLine());
-      else
-        System.err.println(response.getStatusLine().getReasonPhrase());
-      return false;
-    }
-    if (verbose)
-      System.out.println(response.getStatusLine());
-    return true;
+    return checkHttpStatus(response, Collections.singletonList(expected));
   }
 
   /**
