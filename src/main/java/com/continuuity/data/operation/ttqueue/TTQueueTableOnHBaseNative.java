@@ -1,19 +1,19 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.io.IOException;
-import java.util.concurrent.ConcurrentSkipListMap;
-
+import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.table.ReadPointer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.table.ReadPointer;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentSkipListMap;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -103,8 +103,8 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   }
 
   @Override
-  public QueueMeta getQueueMeta(byte[] queueName) throws OperationException {
-    return getQueue(queueName).getQueueMeta();
+  public QueueInfo getQueueInfo(byte[] queueName) throws OperationException {
+    return getQueue(queueName).getQueueInfo();
   }
 
   @Override

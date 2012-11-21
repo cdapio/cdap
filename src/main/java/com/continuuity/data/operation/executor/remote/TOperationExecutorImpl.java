@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
@@ -9,7 +10,6 @@ import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.common.metrics.MetricType;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
 import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * The implementation of a thrift service for operation execution.
@@ -465,32 +466,32 @@ public class TOperationExecutorImpl
     }
   }
 
-  // getQueueMeta can return null, if the queue does not exist
+  // getQueueInfo can return null, if the queue does not exist
 
   @Override
-  public TQueueMeta getQueueMeta(TOperationContext tcontext,
-                                 TGetQueueMeta tGetQueueMeta)
+  public TQueueInfo getQueueInfo(TOperationContext tcontext,
+                                 TGetQueueInfo tGetQueueInfo)
       throws TException, TOperationException {
 
-    MetricsHelper helper = newHelper("meta", tGetQueueMeta.getQueueName());
+    MetricsHelper helper = newHelper("meta", tGetQueueInfo.getQueueName());
 
     if (Log.isTraceEnabled())
-      Log.trace("Received TGetQueueMeta: " + tGetQueueMeta);
+      Log.trace("Received TGetQueueInfo: " + tGetQueueInfo);
 
     try {
       OperationContext context = unwrap(tcontext);
-      QueueAdmin.GetQueueMeta getQueueMeta = unwrap(tGetQueueMeta);
-      OperationResult<QueueAdmin.QueueMeta> queueMeta =
-          this.opex.execute(context, getQueueMeta);
-      if (Log.isTraceEnabled()) Log.trace("GetQueueMeta successful: " +
-          (queueMeta.isEmpty() ? "<empty>" : queueMeta.getValue()));
-      TQueueMeta tQueueMeta =  wrap(queueMeta);
+      QueueAdmin.GetQueueInfo getQueueInfo = unwrap(tGetQueueInfo);
+      OperationResult<QueueInfo> queueInfo =
+          this.opex.execute(context, getQueueInfo);
+      if (Log.isTraceEnabled()) Log.trace("GetQueueInfo successful: " +
+          (queueInfo.isEmpty() ? "<empty>" : queueInfo.getValue()));
+      TQueueInfo tQueueInfo =  wrap(queueInfo);
 
-      helper.finish(queueMeta.isEmpty() ? NoData : Success);
-      return tQueueMeta;
+      helper.finish(queueInfo.isEmpty() ? NoData : Success);
+      return tQueueInfo;
 
     } catch (OperationException e) {
-      Log.warn("GetQueueMeta failed: " + e.getMessage());
+      Log.warn("GetQueueInfo failed: " + e.getMessage());
       Log.warn(StackTraceUtil.toStringStackTrace(e));
       helper.failure();
       throw wrap(e);

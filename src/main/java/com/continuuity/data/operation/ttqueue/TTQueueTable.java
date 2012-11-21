@@ -1,8 +1,9 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -100,7 +101,7 @@ public interface TTQueueTable {
    * @param queueName
    * @return global meta information for the queue and its groups
    */
-  public QueueMeta getQueueMeta(byte [] queueName) throws OperationException;
+  public QueueInfo getQueueInfo(byte [] queueName) throws OperationException;
 
   /**
    * Clears this queue table, completely wiping all queues.

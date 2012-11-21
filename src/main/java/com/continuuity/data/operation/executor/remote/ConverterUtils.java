@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+
 public class ConverterUtils {
 
   private static final Logger Log =
@@ -435,17 +437,17 @@ public class ConverterUtils {
         tQueueAck.getNumGroups());
   }
 
-  /** wrap a GetQueueMeta operation */
-  TGetQueueMeta wrap(QueueAdmin.GetQueueMeta getQueueMeta) {
-    return new TGetQueueMeta(
-        wrap(getQueueMeta.getQueueName()),
-        getQueueMeta.getId());
+  /** wrap a GetQueueInfo operation */
+  TGetQueueInfo wrap(QueueAdmin.GetQueueInfo getQueueInfo) {
+    return new TGetQueueInfo(
+        wrap(getQueueInfo.getQueueName()),
+        getQueueInfo.getId());
   }
-  /** unwrap a GetQueueMeta operation */
-  QueueAdmin.GetQueueMeta unwrap(TGetQueueMeta tGetQueueMeta) {
-    return new QueueAdmin.GetQueueMeta(
-        tGetQueueMeta.getId(),
-        tGetQueueMeta.getQueueName());
+  /** unwrap a GetQueueInfo operation */
+  QueueAdmin.GetQueueInfo unwrap(TGetQueueInfo tGetQueueInfo) {
+    return new QueueAdmin.GetQueueInfo(
+        tGetQueueInfo.getId(),
+        tGetQueueInfo.getQueueName());
   }
 
   /** wrap a GetGroupId operation */
@@ -562,96 +564,25 @@ public class ConverterUtils {
         config.isSingleEntry());
   }
 
-  /** wrap a (queue) execution mode. If the mode is unknown, return null. */
-  TExecutionMode wrap(ExecutionMode mode) {
-    if (ExecutionMode.SINGLE_ENTRY.equals(mode))
-      return TExecutionMode.SINGLE_ENTRY;
-    if (ExecutionMode.MULTI_ENTRY.equals(mode))
-      return TExecutionMode.MULTI_ENTRY;
-    Log.error("Internal Error: Received unknown ExecutionMode " + mode);
-    return null;
-  }
-  /** unwrap a (queue) execution mode. If the mode is unknown, return null. */
-  ExecutionMode unwrap(TExecutionMode mode) {
-    if (TExecutionMode.SINGLE_ENTRY.equals(mode))
-      return ExecutionMode.SINGLE_ENTRY;
-    if (TExecutionMode.MULTI_ENTRY.equals(mode))
-      return ExecutionMode.MULTI_ENTRY;
-    Log.error("Internal Error: Received unknown TExecutionMode " + mode);
-    return null;
-  }
-
-  /** wrap the group states of a queue meta */
-  List<TGroupState> wrap(GroupState[] groupStates) {
-    List<TGroupState> list = new ArrayList<TGroupState>(groupStates.length);
-    for (GroupState groupState : groupStates) {
-      if (groupState == null) {
-        list.add(new TGroupState(0, null, null, true));
-        continue;
-      }
-      TExecutionMode tMode = wrap(groupState.getMode());
-      if (tMode == null) {
-        list.add(new TGroupState(0, null, null, true));
-        continue;
-      }
-      list.add(new TGroupState(
-          groupState.getGroupSize(),
-          wrap(groupState.getHead()),
-          tMode, false));
-    }
-    return list;
-  }
-  /** wrap the group states of a queue meta */
-  GroupState[] unwrap(List<TGroupState> tGroupStates) {
-    ArrayList<GroupState> groups = Lists.newArrayList();
-    for (TGroupState tGroupState : tGroupStates) {
-      if (tGroupState.nulled) {
-        groups.add(null);
-        continue;
-      }
-      ExecutionMode mode = unwrap(tGroupState.getMode());
-      if (mode == null) {
-        groups.add(null);
-        continue;
-      }
-      groups.add(new GroupState(
-          tGroupState.getGroupSize(),
-          unwrapEntryPointer(tGroupState.getHead()),
-          mode));
-    }
-    return groups.toArray(new GroupState[groups.size()]);
-  }
-
   /**
    * wrap a queue meta.
    * The first field of TQueueMeta indicates whether this represents null
    */
-  TQueueMeta wrap(OperationResult<QueueAdmin.QueueMeta> meta) {
-    if (meta.isEmpty()) {
-      return new TQueueMeta(true).
-          setStatus(meta.getStatus()).
-          setMessage(meta.getMessage());
-    } else if (meta.getValue().isHBQMeta()) {
-      return new TQueueMeta(false).
-          setMessage(meta.getValue().getJSONString());
+  TQueueInfo wrap(OperationResult<QueueInfo> info) {
+    if (info.isEmpty()) {
+      return new TQueueInfo(true);
     } else {
-      return new TQueueMeta(false).
-          setGlobalHeadPointer(meta.getValue().getGlobalHeadPointer()).
-          setCurrentWritePointer(meta.getValue().getCurrentWritePointer()).
-          setGroups(wrap(meta.getValue().getGroups()));
+      return new TQueueInfo(false).
+          setJson(info.getValue().getJSONString());
     }
   }
   /** wrap a queue meta */
-  OperationResult<QueueAdmin.QueueMeta> unwrap(TQueueMeta tQueueMeta) {
-    if (tQueueMeta.isEmpty()) {
-      return new OperationResult<QueueAdmin.QueueMeta>(
-          tQueueMeta.getStatus(), tQueueMeta.getMessage());
+  OperationResult<QueueInfo> unwrap(TQueueInfo tQueueInfo) {
+    if (tQueueInfo.isEmpty()) {
+      return new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND);
     } else {
-      return new OperationResult<QueueAdmin.QueueMeta>(
-          new QueueAdmin.QueueMeta(
-              tQueueMeta.getGlobalHeadPointer(),
-              tQueueMeta.getCurrentWritePointer(),
-              unwrap(tQueueMeta.getGroups())));
+      return new OperationResult<QueueInfo>(
+          new QueueInfo(tQueueInfo.getJson()));
     }
   }
 
@@ -706,7 +637,6 @@ public class ConverterUtils {
 
   /**
    * wrap an operation exception
-   * TODO can we preserve the cause and the stack trace?
    */
   TOperationException wrap(OperationException e) {
     return new TOperationException(e.getStatus(), e.getMessage());
@@ -714,7 +644,6 @@ public class ConverterUtils {
 
   /**
    * unwrap an operation exception
-   * TODO can we preserve the cause and the stack trace?
    */
   OperationException unwrap(TOperationException te) {
     return new OperationException(te.getStatus(), te.getMessage());

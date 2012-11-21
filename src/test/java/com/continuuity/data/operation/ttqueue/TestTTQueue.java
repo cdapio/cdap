@@ -1492,7 +1492,7 @@ public abstract class TestTTQueue {
 
     // check on the queue meta
     /* temporarily disable queue meta check during hbase native transition
-    QueueMeta meta = queue.getQueueMeta();
+    QueueMeta meta = queue.getQueueInfo();
     assertEquals(numEnqueues, meta.currentWritePointer);
     assertEquals(numEnqueues, meta.globalHeadPointer);
     assertEquals(n, meta.groups.length);

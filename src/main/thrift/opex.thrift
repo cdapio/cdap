@@ -128,7 +128,6 @@ enum TDequeueStatus {
   RETRY,
 }
 
-
 struct TDequeueResult {
   1: TDequeueStatus status,
   2: TQueueEntryPointer pointer,
@@ -139,33 +138,15 @@ struct TGetGroupId {
   1: binary queueName,
 }
 
-struct TGetQueueMeta {
+struct TGetQueueInfo {
   1: binary queueName,
   2: i64 id,
 }
 
-typedef TQueueEntryPointer TEntryPointer
-
-enum TExecutionMode {
-  SINGLE_ENTRY,
-  MULTI_ENTRY,
-}
-
-struct TGroupState {
-  1: i32 groupSize,
-  2: TEntryPointer head,
-  3: TExecutionMode mode,
-  4: bool nulled,
-}
-
 // we add a virtual field "nulled" to indicate a null object
-struct TQueueMeta {
+struct TQueueInfo {
   1: bool empty,
-  2: optional i64 globalHeadPointer,
-  3: optional i64 currentWritePointer,
-  4: optional list<TGroupState> groups,
-  5: optional i32 status,
-  6: optional string message,
+  2: optional string json,
 }
 
 // using an undocumented Thrift feature: union,
@@ -241,7 +222,7 @@ service TOperationExecutor {
   // internal op ex
   TDequeueResult dequeue(1: TOperationContext context, 2: TQueueDequeue dequeue) throws (1: TOperationException ex),
   i64 getGroupId(1: TOperationContext context, 2: TGetGroupId getGroupId) throws (1: TOperationException ex),
-  TQueueMeta getQueueMeta(1: TOperationContext context, 2: TGetQueueMeta getQueueMeta) throws (1: TOperationException ex),
+  TQueueInfo getQueueInfo(1: TOperationContext context, 2: TGetQueueInfo getQueueInfo) throws (1: TOperationException ex),
   void clearFabric(1: TOperationContext context, 2: TClearFabric clearFabric) throws (1: TOperationException ex),
   void openTable(1: TOperationContext context, 2: TOpenTable openTable) throws (1: TOperationException ex),
 

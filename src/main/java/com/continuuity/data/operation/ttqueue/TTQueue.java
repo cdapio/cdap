@@ -1,10 +1,10 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.table.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.table.ReadPointer;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A Transactional Tabular Queue interface.
@@ -87,5 +87,5 @@ public interface TTQueue {
    * data available without walking the entire queue.
    * @return global meta information for this queue and its groups
    */
-  public QueueMeta getQueueMeta() throws OperationException;
+  public QueueInfo getQueueInfo() throws OperationException;
 }

@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+
 /**
  * Implementation of a single {@link TTQueue} on a single
  * {@link VersionedColumnarTable} using a multi-row, sharded schema.
@@ -855,7 +857,11 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public QueueMeta getQueueMeta() throws OperationException {
+  public QueueInfo getQueueInfo() throws OperationException {
+    return new QueueInfo(getQueueMeta());
+  }
+
+  private QueueMeta getQueueMeta() throws OperationException {
 
     // Get global queue state information
     QueueMeta meta = new QueueMeta();

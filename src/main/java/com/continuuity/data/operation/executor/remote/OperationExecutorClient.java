@@ -1,13 +1,13 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.metrics.CMetrics;
+import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.remote.stubs.*;
 import com.continuuity.data.operation.ttqueue.*;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
-import com.continuuity.common.metrics.MetricsHelper;
 import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -19,7 +19,10 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * This class is a wrapper around the thrift opex client, it takes
@@ -188,24 +191,23 @@ public class OperationExecutorClient extends ConverterUtils {
     }
   }
 
-  public OperationResult<QueueAdmin.QueueMeta>
-  execute(OperationContext context,
-          QueueAdmin.GetQueueMeta getQueueMeta)
+  public OperationResult<QueueInfo> execute(OperationContext context,
+                                            GetQueueInfo getQueueInfo)
       throws TException, OperationException {
 
-    MetricsHelper helper = newHelper("meta", getQueueMeta.getQueueName());
+    MetricsHelper helper = newHelper("info", getQueueInfo.getQueueName());
 
     try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + getQueueMeta);
+      if (Log.isTraceEnabled()) Log.trace("Received " + getQueueInfo);
       TOperationContext tcontext = wrap(context);
-      TGetQueueMeta tGetQueueMeta = wrap(getQueueMeta);
-      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetQueueMeta);
-      TQueueMeta tQueueMeta = client.getQueueMeta(tcontext, tGetQueueMeta);
-      if (Log.isTraceEnabled()) Log.trace("TGetQueueMeta successful.");
-      OperationResult<QueueAdmin.QueueMeta> queueMeta = unwrap(tQueueMeta);
+      TGetQueueInfo tGetQueueInfo = wrap(getQueueInfo);
+      if (Log.isTraceEnabled()) Log.trace("Sending " + tGetQueueInfo);
+      TQueueInfo tQueueInfo = client.getQueueInfo(tcontext, tGetQueueInfo);
+      if (Log.isTraceEnabled()) Log.trace("TGetQueueInfo successful.");
+      OperationResult<QueueInfo> queueInfo = unwrap(tQueueInfo);
 
-      helper.finish(queueMeta.isEmpty() ? NoData : Success);
-      return queueMeta;
+      helper.finish(queueInfo.isEmpty() ? NoData : Success);
+      return queueInfo;
 
     } catch (TOperationException te) {
       helper.failure();

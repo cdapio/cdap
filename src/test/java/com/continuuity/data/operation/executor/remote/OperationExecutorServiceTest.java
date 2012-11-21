@@ -14,8 +14,13 @@ import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 import static org.junit.Assert.*;
 
 public abstract class OperationExecutorServiceTest extends
@@ -608,19 +613,14 @@ public abstract class OperationExecutorServiceTest extends
     Assert.assertTrue(next22.isSuccess() && !next22.isEmpty());
     Assert.assertArrayEquals(res22.getValue(), next22.getValue());
 
-    // For now, disable this, because it is not implemented in native queues
-    // TODO reenable after native queues implement getQueueMeta
-    // get queue meta with remote and opex, verify they are equal
-    /*
-    QueueAdmin.GetQueueMeta getQueueMeta = new QueueAdmin.GetQueueMeta(q);
-    QueueAdmin.QueueMeta metaLocal =
-        local.execute(context, getQueueMeta).getValue();
-    QueueAdmin.QueueMeta metaRemote =
-        remote.execute(context, getQueueMeta).getValue();
-    Assert.assertNotNull(metaLocal);
-    Assert.assertNotNull(metaRemote);
-    Assert.assertEquals(metaLocal, metaRemote);
-    */
+    // get queue info with remote and opex, verify they are equal
+    GetQueueInfo getQueueInfo = new GetQueueInfo(q);
+    QueueInfo infoLocal = local.execute(context, getQueueInfo).getValue();
+    QueueInfo infoRemote = remote.execute(context, getQueueInfo).getValue();
+    System.err.println(infoLocal);
+    Assert.assertNotNull(infoLocal);
+    Assert.assertNotNull(infoRemote);
+    Assert.assertEquals(infoLocal, infoRemote);
   }
 
   /*

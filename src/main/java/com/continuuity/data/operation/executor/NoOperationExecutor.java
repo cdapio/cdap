@@ -9,6 +9,8 @@ import com.continuuity.data.operation.ttqueue.*;
 import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+
 /**
  * This is an implementation of OperationExecutor that does nothing but
  * return empty results. It is useful for testing and performance benchmarks.
@@ -40,12 +42,10 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueMeta>
-  execute(OperationContext context,
-          QueueAdmin.GetQueueMeta getQueueMeta) {
+  public OperationResult<QueueInfo>
+  execute(OperationContext context, QueueAdmin.GetQueueInfo getQueueInfo) {
     // pretend the queue does not exist
-    return new OperationResult<QueueAdmin.QueueMeta>(
-        StatusCode.QUEUE_NOT_FOUND);
+    return new OperationResult<QueueInfo>(StatusCode.QUEUE_NOT_FOUND);
   }
 
   @Override

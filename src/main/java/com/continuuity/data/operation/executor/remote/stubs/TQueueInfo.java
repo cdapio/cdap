@@ -27,25 +27,25 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGetQueueMeta._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TGetQueueMeta");
+public class TQueueInfo implements org.apache.thrift.TBase<TQueueInfo, TQueueInfo._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TQueueInfo");
 
-  private static final org.apache.thrift.protocol.TField QUEUE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("queueName", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField EMPTY_FIELD_DESC = new org.apache.thrift.protocol.TField("empty", org.apache.thrift.protocol.TType.BOOL, (short)1);
+  private static final org.apache.thrift.protocol.TField JSON_FIELD_DESC = new org.apache.thrift.protocol.TField("json", org.apache.thrift.protocol.TType.STRING, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new TGetQueueMetaStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new TGetQueueMetaTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new TQueueInfoStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new TQueueInfoTupleSchemeFactory());
   }
 
-  public ByteBuffer queueName; // required
-  public long id; // required
+  public boolean empty; // required
+  public String json; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    QUEUE_NAME((short)1, "queueName"),
-    ID((short)2, "id");
+    EMPTY((short)1, "empty"),
+    JSON((short)2, "json");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -60,10 +60,10 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
      */
     public static _Fields findByThriftId(int fieldId) {
       switch(fieldId) {
-        case 1: // QUEUE_NAME
-          return QUEUE_NAME;
-        case 2: // ID
-          return ID;
+        case 1: // EMPTY
+          return EMPTY;
+        case 2: // JSON
+          return JSON;
         default:
           return null;
       }
@@ -104,128 +104,116 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
   }
 
   // isset id assignments
-  private static final int __ID_ISSET_ID = 0;
+  private static final int __EMPTY_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
+  private _Fields optionals[] = {_Fields.JSON};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.QUEUE_NAME, new org.apache.thrift.meta_data.FieldMetaData("queueName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
-    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.EMPTY, new org.apache.thrift.meta_data.FieldMetaData("empty", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.JSON, new org.apache.thrift.meta_data.FieldMetaData("json", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TGetQueueMeta.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueInfo.class, metaDataMap);
   }
 
-  public TGetQueueMeta() {
+  public TQueueInfo() {
   }
 
-  public TGetQueueMeta(
-    ByteBuffer queueName,
-    long id)
+  public TQueueInfo(
+    boolean empty)
   {
     this();
-    this.queueName = queueName;
-    this.id = id;
-    setIdIsSet(true);
+    this.empty = empty;
+    setEmptyIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public TGetQueueMeta(TGetQueueMeta other) {
+  public TQueueInfo(TQueueInfo other) {
     __isset_bit_vector.clear();
     __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetQueueName()) {
-      this.queueName = org.apache.thrift.TBaseHelper.copyBinary(other.queueName);
-;
+    this.empty = other.empty;
+    if (other.isSetJson()) {
+      this.json = other.json;
     }
-    this.id = other.id;
   }
 
-  public TGetQueueMeta deepCopy() {
-    return new TGetQueueMeta(this);
+  public TQueueInfo deepCopy() {
+    return new TQueueInfo(this);
   }
 
   @Override
   public void clear() {
-    this.queueName = null;
-    setIdIsSet(false);
-    this.id = 0;
+    setEmptyIsSet(false);
+    this.empty = false;
+    this.json = null;
   }
 
-  public byte[] getQueueName() {
-    setQueueName(org.apache.thrift.TBaseHelper.rightSize(queueName));
-    return queueName == null ? null : queueName.array();
+  public boolean isEmpty() {
+    return this.empty;
   }
 
-  public ByteBuffer bufferForQueueName() {
-    return queueName;
-  }
-
-  public TGetQueueMeta setQueueName(byte[] queueName) {
-    setQueueName(queueName == null ? (ByteBuffer)null : ByteBuffer.wrap(queueName));
+  public TQueueInfo setEmpty(boolean empty) {
+    this.empty = empty;
+    setEmptyIsSet(true);
     return this;
   }
 
-  public TGetQueueMeta setQueueName(ByteBuffer queueName) {
-    this.queueName = queueName;
+  public void unsetEmpty() {
+    __isset_bit_vector.clear(__EMPTY_ISSET_ID);
+  }
+
+  /** Returns true if field empty is set (has been assigned a value) and false otherwise */
+  public boolean isSetEmpty() {
+    return __isset_bit_vector.get(__EMPTY_ISSET_ID);
+  }
+
+  public void setEmptyIsSet(boolean value) {
+    __isset_bit_vector.set(__EMPTY_ISSET_ID, value);
+  }
+
+  public String getJson() {
+    return this.json;
+  }
+
+  public TQueueInfo setJson(String json) {
+    this.json = json;
     return this;
   }
 
-  public void unsetQueueName() {
-    this.queueName = null;
+  public void unsetJson() {
+    this.json = null;
   }
 
-  /** Returns true if field queueName is set (has been assigned a value) and false otherwise */
-  public boolean isSetQueueName() {
-    return this.queueName != null;
+  /** Returns true if field json is set (has been assigned a value) and false otherwise */
+  public boolean isSetJson() {
+    return this.json != null;
   }
 
-  public void setQueueNameIsSet(boolean value) {
+  public void setJsonIsSet(boolean value) {
     if (!value) {
-      this.queueName = null;
+      this.json = null;
     }
-  }
-
-  public long getId() {
-    return this.id;
-  }
-
-  public TGetQueueMeta setId(long id) {
-    this.id = id;
-    setIdIsSet(true);
-    return this;
-  }
-
-  public void unsetId() {
-    __isset_bit_vector.clear(__ID_ISSET_ID);
-  }
-
-  /** Returns true if field id is set (has been assigned a value) and false otherwise */
-  public boolean isSetId() {
-    return __isset_bit_vector.get(__ID_ISSET_ID);
-  }
-
-  public void setIdIsSet(boolean value) {
-    __isset_bit_vector.set(__ID_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case QUEUE_NAME:
+    case EMPTY:
       if (value == null) {
-        unsetQueueName();
+        unsetEmpty();
       } else {
-        setQueueName((ByteBuffer)value);
+        setEmpty((Boolean)value);
       }
       break;
 
-    case ID:
+    case JSON:
       if (value == null) {
-        unsetId();
+        unsetJson();
       } else {
-        setId((Long)value);
+        setJson((String)value);
       }
       break;
 
@@ -234,11 +222,11 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case QUEUE_NAME:
-      return getQueueName();
+    case EMPTY:
+      return Boolean.valueOf(isEmpty());
 
-    case ID:
-      return Long.valueOf(getId());
+    case JSON:
+      return getJson();
 
     }
     throw new IllegalStateException();
@@ -251,10 +239,10 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
     }
 
     switch (field) {
-    case QUEUE_NAME:
-      return isSetQueueName();
-    case ID:
-      return isSetId();
+    case EMPTY:
+      return isSetEmpty();
+    case JSON:
+      return isSetJson();
     }
     throw new IllegalStateException();
   }
@@ -263,30 +251,30 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof TGetQueueMeta)
-      return this.equals((TGetQueueMeta)that);
+    if (that instanceof TQueueInfo)
+      return this.equals((TQueueInfo)that);
     return false;
   }
 
-  public boolean equals(TGetQueueMeta that) {
+  public boolean equals(TQueueInfo that) {
     if (that == null)
       return false;
 
-    boolean this_present_queueName = true && this.isSetQueueName();
-    boolean that_present_queueName = true && that.isSetQueueName();
-    if (this_present_queueName || that_present_queueName) {
-      if (!(this_present_queueName && that_present_queueName))
+    boolean this_present_empty = true;
+    boolean that_present_empty = true;
+    if (this_present_empty || that_present_empty) {
+      if (!(this_present_empty && that_present_empty))
         return false;
-      if (!this.queueName.equals(that.queueName))
+      if (this.empty != that.empty)
         return false;
     }
 
-    boolean this_present_id = true;
-    boolean that_present_id = true;
-    if (this_present_id || that_present_id) {
-      if (!(this_present_id && that_present_id))
+    boolean this_present_json = true && this.isSetJson();
+    boolean that_present_json = true && that.isSetJson();
+    if (this_present_json || that_present_json) {
+      if (!(this_present_json && that_present_json))
         return false;
-      if (this.id != that.id)
+      if (!this.json.equals(that.json))
         return false;
     }
 
@@ -298,30 +286,30 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
     return 0;
   }
 
-  public int compareTo(TGetQueueMeta other) {
+  public int compareTo(TQueueInfo other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    TGetQueueMeta typedOther = (TGetQueueMeta)other;
+    TQueueInfo typedOther = (TQueueInfo)other;
 
-    lastComparison = Boolean.valueOf(isSetQueueName()).compareTo(typedOther.isSetQueueName());
+    lastComparison = Boolean.valueOf(isSetEmpty()).compareTo(typedOther.isSetEmpty());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetQueueName()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queueName, typedOther.queueName);
+    if (isSetEmpty()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.empty, typedOther.empty);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    lastComparison = Boolean.valueOf(isSetJson()).compareTo(typedOther.isSetJson());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetId()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+    if (isSetJson()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.json, typedOther.json);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -343,20 +331,22 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("TGetQueueMeta(");
+    StringBuilder sb = new StringBuilder("TQueueInfo(");
     boolean first = true;
 
-    sb.append("queueName:");
-    if (this.queueName == null) {
-      sb.append("null");
-    } else {
-      org.apache.thrift.TBaseHelper.toString(this.queueName, sb);
+    sb.append("empty:");
+    sb.append(this.empty);
+    first = false;
+    if (isSetJson()) {
+      if (!first) sb.append(", ");
+      sb.append("json:");
+      if (this.json == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.json);
+      }
+      first = false;
     }
-    first = false;
-    if (!first) sb.append(", ");
-    sb.append("id:");
-    sb.append(this.id);
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -383,15 +373,15 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
     }
   }
 
-  private static class TGetQueueMetaStandardSchemeFactory implements SchemeFactory {
-    public TGetQueueMetaStandardScheme getScheme() {
-      return new TGetQueueMetaStandardScheme();
+  private static class TQueueInfoStandardSchemeFactory implements SchemeFactory {
+    public TQueueInfoStandardScheme getScheme() {
+      return new TQueueInfoStandardScheme();
     }
   }
 
-  private static class TGetQueueMetaStandardScheme extends StandardScheme<TGetQueueMeta> {
+  private static class TQueueInfoStandardScheme extends StandardScheme<TQueueInfo> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, TGetQueueMeta struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, TQueueInfo struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -401,18 +391,18 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
           break;
         }
         switch (schemeField.id) {
-          case 1: // QUEUE_NAME
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.queueName = iprot.readBinary();
-              struct.setQueueNameIsSet(true);
+          case 1: // EMPTY
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.empty = iprot.readBool();
+              struct.setEmptyIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 2: // ID
-            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-              struct.id = iprot.readI64();
-              struct.setIdIsSet(true);
+          case 2: // JSON
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.json = iprot.readString();
+              struct.setJsonIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -428,62 +418,64 @@ public class TGetQueueMeta implements org.apache.thrift.TBase<TGetQueueMeta, TGe
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, TGetQueueMeta struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, TQueueInfo struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (struct.queueName != null) {
-        oprot.writeFieldBegin(QUEUE_NAME_FIELD_DESC);
-        oprot.writeBinary(struct.queueName);
-        oprot.writeFieldEnd();
-      }
-      oprot.writeFieldBegin(ID_FIELD_DESC);
-      oprot.writeI64(struct.id);
+      oprot.writeFieldBegin(EMPTY_FIELD_DESC);
+      oprot.writeBool(struct.empty);
       oprot.writeFieldEnd();
+      if (struct.json != null) {
+        if (struct.isSetJson()) {
+          oprot.writeFieldBegin(JSON_FIELD_DESC);
+          oprot.writeString(struct.json);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
   }
 
-  private static class TGetQueueMetaTupleSchemeFactory implements SchemeFactory {
-    public TGetQueueMetaTupleScheme getScheme() {
-      return new TGetQueueMetaTupleScheme();
+  private static class TQueueInfoTupleSchemeFactory implements SchemeFactory {
+    public TQueueInfoTupleScheme getScheme() {
+      return new TQueueInfoTupleScheme();
     }
   }
 
-  private static class TGetQueueMetaTupleScheme extends TupleScheme<TGetQueueMeta> {
+  private static class TQueueInfoTupleScheme extends TupleScheme<TQueueInfo> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, TGetQueueMeta struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, TQueueInfo struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
-      if (struct.isSetQueueName()) {
+      if (struct.isSetEmpty()) {
         optionals.set(0);
       }
-      if (struct.isSetId()) {
+      if (struct.isSetJson()) {
         optionals.set(1);
       }
       oprot.writeBitSet(optionals, 2);
-      if (struct.isSetQueueName()) {
-        oprot.writeBinary(struct.queueName);
+      if (struct.isSetEmpty()) {
+        oprot.writeBool(struct.empty);
       }
-      if (struct.isSetId()) {
-        oprot.writeI64(struct.id);
+      if (struct.isSetJson()) {
+        oprot.writeString(struct.json);
       }
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, TGetQueueMeta struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, TQueueInfo struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
-        struct.queueName = iprot.readBinary();
-        struct.setQueueNameIsSet(true);
+        struct.empty = iprot.readBool();
+        struct.setEmptyIsSet(true);
       }
       if (incoming.get(1)) {
-        struct.id = iprot.readI64();
-        struct.setIdIsSet(true);
+        struct.json = iprot.readString();
+        struct.setJsonIsSet(true);
       }
     }
   }

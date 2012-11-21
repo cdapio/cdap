@@ -57,7 +57,7 @@ public class TOperationExecutor {
 
     public long getGroupId(TOperationContext context, TGetGroupId getGroupId) throws TOperationException, org.apache.thrift.TException;
 
-    public TQueueMeta getQueueMeta(TOperationContext context, TGetQueueMeta getQueueMeta) throws TOperationException, org.apache.thrift.TException;
+    public TQueueInfo getQueueInfo(TOperationContext context, TGetQueueInfo getQueueInfo) throws TOperationException, org.apache.thrift.TException;
 
     public void clearFabric(TOperationContext context, TClearFabric clearFabric) throws TOperationException, org.apache.thrift.TException;
 
@@ -93,7 +93,7 @@ public class TOperationExecutor {
 
     public void getGroupId(TOperationContext context, TGetGroupId getGroupId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getGroupId_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getQueueMeta(TOperationContext context, TGetQueueMeta getQueueMeta, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueueMeta_call> resultHandler) throws org.apache.thrift.TException;
+    public void getQueueInfo(TOperationContext context, TGetQueueInfo getQueueInfo, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getQueueInfo_call> resultHandler) throws org.apache.thrift.TException;
 
     public void clearFabric(TOperationContext context, TClearFabric clearFabric, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.clearFabric_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -451,31 +451,31 @@ public class TOperationExecutor {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getGroupId failed: unknown result");
     }
 
-    public TQueueMeta getQueueMeta(TOperationContext context, TGetQueueMeta getQueueMeta) throws TOperationException, org.apache.thrift.TException
+    public TQueueInfo getQueueInfo(TOperationContext context, TGetQueueInfo getQueueInfo) throws TOperationException, org.apache.thrift.TException
     {
-      send_getQueueMeta(context, getQueueMeta);
-      return recv_getQueueMeta();
+      send_getQueueInfo(context, getQueueInfo);
+      return recv_getQueueInfo();
     }
 
-    public void send_getQueueMeta(TOperationContext context, TGetQueueMeta getQueueMeta) throws org.apache.thrift.TException
+    public void send_getQueueInfo(TOperationContext context, TGetQueueInfo getQueueInfo) throws org.apache.thrift.TException
     {
-      getQueueMeta_args args = new getQueueMeta_args();
+      getQueueInfo_args args = new getQueueInfo_args();
       args.setContext(context);
-      args.setGetQueueMeta(getQueueMeta);
-      sendBase("getQueueMeta", args);
+      args.setGetQueueInfo(getQueueInfo);
+      sendBase("getQueueInfo", args);
     }
 
-    public TQueueMeta recv_getQueueMeta() throws TOperationException, org.apache.thrift.TException
+    public TQueueInfo recv_getQueueInfo() throws TOperationException, org.apache.thrift.TException
     {
-      getQueueMeta_result result = new getQueueMeta_result();
-      receiveBase(result, "getQueueMeta");
+      getQueueInfo_result result = new getQueueInfo_result();
+      receiveBase(result, "getQueueInfo");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.ex != null) {
         throw result.ex;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueueMeta failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getQueueInfo failed: unknown result");
     }
 
     public void clearFabric(TOperationContext context, TClearFabric clearFabric) throws TOperationException, org.apache.thrift.TException
@@ -999,38 +999,38 @@ public class TOperationExecutor {
       }
     }
 
-    public void getQueueMeta(TOperationContext context, TGetQueueMeta getQueueMeta, org.apache.thrift.async.AsyncMethodCallback<getQueueMeta_call> resultHandler) throws org.apache.thrift.TException {
+    public void getQueueInfo(TOperationContext context, TGetQueueInfo getQueueInfo, org.apache.thrift.async.AsyncMethodCallback<getQueueInfo_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getQueueMeta_call method_call = new getQueueMeta_call(context, getQueueMeta, resultHandler, this, ___protocolFactory, ___transport);
+      getQueueInfo_call method_call = new getQueueInfo_call(context, getQueueInfo, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getQueueMeta_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getQueueInfo_call extends org.apache.thrift.async.TAsyncMethodCall {
       private TOperationContext context;
-      private TGetQueueMeta getQueueMeta;
-      public getQueueMeta_call(TOperationContext context, TGetQueueMeta getQueueMeta, org.apache.thrift.async.AsyncMethodCallback<getQueueMeta_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private TGetQueueInfo getQueueInfo;
+      public getQueueInfo_call(TOperationContext context, TGetQueueInfo getQueueInfo, org.apache.thrift.async.AsyncMethodCallback<getQueueInfo_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.context = context;
-        this.getQueueMeta = getQueueMeta;
+        this.getQueueInfo = getQueueInfo;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getQueueMeta", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getQueueMeta_args args = new getQueueMeta_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getQueueInfo", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getQueueInfo_args args = new getQueueInfo_args();
         args.setContext(context);
-        args.setGetQueueMeta(getQueueMeta);
+        args.setGetQueueInfo(getQueueInfo);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public TQueueMeta getResult() throws TOperationException, org.apache.thrift.TException {
+      public TQueueInfo getResult() throws TOperationException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getQueueMeta();
+        return (new Client(prot)).recv_getQueueInfo();
       }
     }
 
@@ -1130,7 +1130,7 @@ public class TOperationExecutor {
       processMap.put("readColumnRange", new readColumnRange());
       processMap.put("dequeue", new dequeue());
       processMap.put("getGroupId", new getGroupId());
-      processMap.put("getQueueMeta", new getQueueMeta());
+      processMap.put("getQueueInfo", new getQueueInfo());
       processMap.put("clearFabric", new clearFabric());
       processMap.put("openTable", new openTable());
       return processMap;
@@ -1397,19 +1397,19 @@ public class TOperationExecutor {
       }
     }
 
-    private static class getQueueMeta<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getQueueMeta_args> {
-      public getQueueMeta() {
-        super("getQueueMeta");
+    private static class getQueueInfo<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getQueueInfo_args> {
+      public getQueueInfo() {
+        super("getQueueInfo");
       }
 
-      protected getQueueMeta_args getEmptyArgsInstance() {
-        return new getQueueMeta_args();
+      protected getQueueInfo_args getEmptyArgsInstance() {
+        return new getQueueInfo_args();
       }
 
-      protected getQueueMeta_result getResult(I iface, getQueueMeta_args args) throws org.apache.thrift.TException {
-        getQueueMeta_result result = new getQueueMeta_result();
+      protected getQueueInfo_result getResult(I iface, getQueueInfo_args args) throws org.apache.thrift.TException {
+        getQueueInfo_result result = new getQueueInfo_result();
         try {
-          result.success = iface.getQueueMeta(args.context, args.getQueueMeta);
+          result.success = iface.getQueueInfo(args.context, args.getQueueInfo);
         } catch (TOperationException ex) {
           result.ex = ex;
         }
@@ -6720,14 +6720,14 @@ public class TOperationExecutor {
             case 2: // BATCH
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list74 = iprot.readListBegin();
-                  struct.batch = new ArrayList<TWriteOperation>(_list74.size);
-                  for (int _i75 = 0; _i75 < _list74.size; ++_i75)
+                  org.apache.thrift.protocol.TList _list66 = iprot.readListBegin();
+                  struct.batch = new ArrayList<TWriteOperation>(_list66.size);
+                  for (int _i67 = 0; _i67 < _list66.size; ++_i67)
                   {
-                    TWriteOperation _elem76; // required
-                    _elem76 = new TWriteOperation();
-                    _elem76.read(iprot);
-                    struct.batch.add(_elem76);
+                    TWriteOperation _elem68; // required
+                    _elem68 = new TWriteOperation();
+                    _elem68.read(iprot);
+                    struct.batch.add(_elem68);
                   }
                   iprot.readListEnd();
                 }
@@ -6760,9 +6760,9 @@ public class TOperationExecutor {
           oprot.writeFieldBegin(BATCH_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.batch.size()));
-            for (TWriteOperation _iter77 : struct.batch)
+            for (TWriteOperation _iter69 : struct.batch)
             {
-              _iter77.write(oprot);
+              _iter69.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -6799,9 +6799,9 @@ public class TOperationExecutor {
         if (struct.isSetBatch()) {
           {
             oprot.writeI32(struct.batch.size());
-            for (TWriteOperation _iter78 : struct.batch)
+            for (TWriteOperation _iter70 : struct.batch)
             {
-              _iter78.write(oprot);
+              _iter70.write(oprot);
             }
           }
         }
@@ -6818,14 +6818,14 @@ public class TOperationExecutor {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list79 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.batch = new ArrayList<TWriteOperation>(_list79.size);
-            for (int _i80 = 0; _i80 < _list79.size; ++_i80)
+            org.apache.thrift.protocol.TList _list71 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.batch = new ArrayList<TWriteOperation>(_list71.size);
+            for (int _i72 = 0; _i72 < _list71.size; ++_i72)
             {
-              TWriteOperation _elem81; // required
-              _elem81 = new TWriteOperation();
-              _elem81.read(iprot);
-              struct.batch.add(_elem81);
+              TWriteOperation _elem73; // required
+              _elem73 = new TWriteOperation();
+              _elem73.read(iprot);
+              struct.batch.add(_elem73);
             }
           }
           struct.setBatchIsSet(true);
@@ -12671,25 +12671,25 @@ public class TOperationExecutor {
 
   }
 
-  public static class getQueueMeta_args implements org.apache.thrift.TBase<getQueueMeta_args, getQueueMeta_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueueMeta_args");
+  public static class getQueueInfo_args implements org.apache.thrift.TBase<getQueueInfo_args, getQueueInfo_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueueInfo_args");
 
     private static final org.apache.thrift.protocol.TField CONTEXT_FIELD_DESC = new org.apache.thrift.protocol.TField("context", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField GET_QUEUE_META_FIELD_DESC = new org.apache.thrift.protocol.TField("getQueueMeta", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField GET_QUEUE_INFO_FIELD_DESC = new org.apache.thrift.protocol.TField("getQueueInfo", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getQueueMeta_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getQueueMeta_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getQueueInfo_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueueInfo_argsTupleSchemeFactory());
     }
 
     public TOperationContext context; // required
-    public TGetQueueMeta getQueueMeta; // required
+    public TGetQueueInfo getQueueInfo; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       CONTEXT((short)1, "context"),
-      GET_QUEUE_META((short)2, "getQueueMeta");
+      GET_QUEUE_INFO((short)2, "getQueueInfo");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -12706,8 +12706,8 @@ public class TOperationExecutor {
         switch(fieldId) {
           case 1: // CONTEXT
             return CONTEXT;
-          case 2: // GET_QUEUE_META
-            return GET_QUEUE_META;
+          case 2: // GET_QUEUE_INFO
+            return GET_QUEUE_INFO;
           default:
             return null;
         }
@@ -12753,51 +12753,51 @@ public class TOperationExecutor {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.CONTEXT, new org.apache.thrift.meta_data.FieldMetaData("context", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TOperationContext.class)));
-      tmpMap.put(_Fields.GET_QUEUE_META, new org.apache.thrift.meta_data.FieldMetaData("getQueueMeta", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TGetQueueMeta.class)));
+      tmpMap.put(_Fields.GET_QUEUE_INFO, new org.apache.thrift.meta_data.FieldMetaData("getQueueInfo", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TGetQueueInfo.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueueMeta_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueueInfo_args.class, metaDataMap);
     }
 
-    public getQueueMeta_args() {
+    public getQueueInfo_args() {
     }
 
-    public getQueueMeta_args(
+    public getQueueInfo_args(
       TOperationContext context,
-      TGetQueueMeta getQueueMeta)
+      TGetQueueInfo getQueueInfo)
     {
       this();
       this.context = context;
-      this.getQueueMeta = getQueueMeta;
+      this.getQueueInfo = getQueueInfo;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getQueueMeta_args(getQueueMeta_args other) {
+    public getQueueInfo_args(getQueueInfo_args other) {
       if (other.isSetContext()) {
         this.context = new TOperationContext(other.context);
       }
-      if (other.isSetGetQueueMeta()) {
-        this.getQueueMeta = new TGetQueueMeta(other.getQueueMeta);
+      if (other.isSetGetQueueInfo()) {
+        this.getQueueInfo = new TGetQueueInfo(other.getQueueInfo);
       }
     }
 
-    public getQueueMeta_args deepCopy() {
-      return new getQueueMeta_args(this);
+    public getQueueInfo_args deepCopy() {
+      return new getQueueInfo_args(this);
     }
 
     @Override
     public void clear() {
       this.context = null;
-      this.getQueueMeta = null;
+      this.getQueueInfo = null;
     }
 
     public TOperationContext getContext() {
       return this.context;
     }
 
-    public getQueueMeta_args setContext(TOperationContext context) {
+    public getQueueInfo_args setContext(TOperationContext context) {
       this.context = context;
       return this;
     }
@@ -12817,27 +12817,27 @@ public class TOperationExecutor {
       }
     }
 
-    public TGetQueueMeta getGetQueueMeta() {
-      return this.getQueueMeta;
+    public TGetQueueInfo getGetQueueInfo() {
+      return this.getQueueInfo;
     }
 
-    public getQueueMeta_args setGetQueueMeta(TGetQueueMeta getQueueMeta) {
-      this.getQueueMeta = getQueueMeta;
+    public getQueueInfo_args setGetQueueInfo(TGetQueueInfo getQueueInfo) {
+      this.getQueueInfo = getQueueInfo;
       return this;
     }
 
-    public void unsetGetQueueMeta() {
-      this.getQueueMeta = null;
+    public void unsetGetQueueInfo() {
+      this.getQueueInfo = null;
     }
 
-    /** Returns true if field getQueueMeta is set (has been assigned a value) and false otherwise */
-    public boolean isSetGetQueueMeta() {
-      return this.getQueueMeta != null;
+    /** Returns true if field getQueueInfo is set (has been assigned a value) and false otherwise */
+    public boolean isSetGetQueueInfo() {
+      return this.getQueueInfo != null;
     }
 
-    public void setGetQueueMetaIsSet(boolean value) {
+    public void setGetQueueInfoIsSet(boolean value) {
       if (!value) {
-        this.getQueueMeta = null;
+        this.getQueueInfo = null;
       }
     }
 
@@ -12851,11 +12851,11 @@ public class TOperationExecutor {
         }
         break;
 
-      case GET_QUEUE_META:
+      case GET_QUEUE_INFO:
         if (value == null) {
-          unsetGetQueueMeta();
+          unsetGetQueueInfo();
         } else {
-          setGetQueueMeta((TGetQueueMeta)value);
+          setGetQueueInfo((TGetQueueInfo)value);
         }
         break;
 
@@ -12867,8 +12867,8 @@ public class TOperationExecutor {
       case CONTEXT:
         return getContext();
 
-      case GET_QUEUE_META:
-        return getGetQueueMeta();
+      case GET_QUEUE_INFO:
+        return getGetQueueInfo();
 
       }
       throw new IllegalStateException();
@@ -12883,8 +12883,8 @@ public class TOperationExecutor {
       switch (field) {
       case CONTEXT:
         return isSetContext();
-      case GET_QUEUE_META:
-        return isSetGetQueueMeta();
+      case GET_QUEUE_INFO:
+        return isSetGetQueueInfo();
       }
       throw new IllegalStateException();
     }
@@ -12893,12 +12893,12 @@ public class TOperationExecutor {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getQueueMeta_args)
-        return this.equals((getQueueMeta_args)that);
+      if (that instanceof getQueueInfo_args)
+        return this.equals((getQueueInfo_args)that);
       return false;
     }
 
-    public boolean equals(getQueueMeta_args that) {
+    public boolean equals(getQueueInfo_args that) {
       if (that == null)
         return false;
 
@@ -12911,12 +12911,12 @@ public class TOperationExecutor {
           return false;
       }
 
-      boolean this_present_getQueueMeta = true && this.isSetGetQueueMeta();
-      boolean that_present_getQueueMeta = true && that.isSetGetQueueMeta();
-      if (this_present_getQueueMeta || that_present_getQueueMeta) {
-        if (!(this_present_getQueueMeta && that_present_getQueueMeta))
+      boolean this_present_getQueueInfo = true && this.isSetGetQueueInfo();
+      boolean that_present_getQueueInfo = true && that.isSetGetQueueInfo();
+      if (this_present_getQueueInfo || that_present_getQueueInfo) {
+        if (!(this_present_getQueueInfo && that_present_getQueueInfo))
           return false;
-        if (!this.getQueueMeta.equals(that.getQueueMeta))
+        if (!this.getQueueInfo.equals(that.getQueueInfo))
           return false;
       }
 
@@ -12928,13 +12928,13 @@ public class TOperationExecutor {
       return 0;
     }
 
-    public int compareTo(getQueueMeta_args other) {
+    public int compareTo(getQueueInfo_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getQueueMeta_args typedOther = (getQueueMeta_args)other;
+      getQueueInfo_args typedOther = (getQueueInfo_args)other;
 
       lastComparison = Boolean.valueOf(isSetContext()).compareTo(typedOther.isSetContext());
       if (lastComparison != 0) {
@@ -12946,12 +12946,12 @@ public class TOperationExecutor {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetGetQueueMeta()).compareTo(typedOther.isSetGetQueueMeta());
+      lastComparison = Boolean.valueOf(isSetGetQueueInfo()).compareTo(typedOther.isSetGetQueueInfo());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetGetQueueMeta()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.getQueueMeta, typedOther.getQueueMeta);
+      if (isSetGetQueueInfo()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.getQueueInfo, typedOther.getQueueInfo);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12973,7 +12973,7 @@ public class TOperationExecutor {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getQueueMeta_args(");
+      StringBuilder sb = new StringBuilder("getQueueInfo_args(");
       boolean first = true;
 
       sb.append("context:");
@@ -12984,11 +12984,11 @@ public class TOperationExecutor {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("getQueueMeta:");
-      if (this.getQueueMeta == null) {
+      sb.append("getQueueInfo:");
+      if (this.getQueueInfo == null) {
         sb.append("null");
       } else {
-        sb.append(this.getQueueMeta);
+        sb.append(this.getQueueInfo);
       }
       first = false;
       sb.append(")");
@@ -13015,15 +13015,15 @@ public class TOperationExecutor {
       }
     }
 
-    private static class getQueueMeta_argsStandardSchemeFactory implements SchemeFactory {
-      public getQueueMeta_argsStandardScheme getScheme() {
-        return new getQueueMeta_argsStandardScheme();
+    private static class getQueueInfo_argsStandardSchemeFactory implements SchemeFactory {
+      public getQueueInfo_argsStandardScheme getScheme() {
+        return new getQueueInfo_argsStandardScheme();
       }
     }
 
-    private static class getQueueMeta_argsStandardScheme extends StandardScheme<getQueueMeta_args> {
+    private static class getQueueInfo_argsStandardScheme extends StandardScheme<getQueueInfo_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueueMeta_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueueInfo_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -13042,11 +13042,11 @@ public class TOperationExecutor {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // GET_QUEUE_META
+            case 2: // GET_QUEUE_INFO
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.getQueueMeta = new TGetQueueMeta();
-                struct.getQueueMeta.read(iprot);
-                struct.setGetQueueMetaIsSet(true);
+                struct.getQueueInfo = new TGetQueueInfo();
+                struct.getQueueInfo.read(iprot);
+                struct.setGetQueueInfoIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -13062,7 +13062,7 @@ public class TOperationExecutor {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueueMeta_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueueInfo_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -13071,9 +13071,9 @@ public class TOperationExecutor {
           struct.context.write(oprot);
           oprot.writeFieldEnd();
         }
-        if (struct.getQueueMeta != null) {
-          oprot.writeFieldBegin(GET_QUEUE_META_FIELD_DESC);
-          struct.getQueueMeta.write(oprot);
+        if (struct.getQueueInfo != null) {
+          oprot.writeFieldBegin(GET_QUEUE_INFO_FIELD_DESC);
+          struct.getQueueInfo.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -13082,35 +13082,35 @@ public class TOperationExecutor {
 
     }
 
-    private static class getQueueMeta_argsTupleSchemeFactory implements SchemeFactory {
-      public getQueueMeta_argsTupleScheme getScheme() {
-        return new getQueueMeta_argsTupleScheme();
+    private static class getQueueInfo_argsTupleSchemeFactory implements SchemeFactory {
+      public getQueueInfo_argsTupleScheme getScheme() {
+        return new getQueueInfo_argsTupleScheme();
       }
     }
 
-    private static class getQueueMeta_argsTupleScheme extends TupleScheme<getQueueMeta_args> {
+    private static class getQueueInfo_argsTupleScheme extends TupleScheme<getQueueInfo_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getQueueMeta_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueueInfo_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetContext()) {
           optionals.set(0);
         }
-        if (struct.isSetGetQueueMeta()) {
+        if (struct.isSetGetQueueInfo()) {
           optionals.set(1);
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetContext()) {
           struct.context.write(oprot);
         }
-        if (struct.isSetGetQueueMeta()) {
-          struct.getQueueMeta.write(oprot);
+        if (struct.isSetGetQueueInfo()) {
+          struct.getQueueInfo.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getQueueMeta_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueueInfo_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -13119,28 +13119,28 @@ public class TOperationExecutor {
           struct.setContextIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.getQueueMeta = new TGetQueueMeta();
-          struct.getQueueMeta.read(iprot);
-          struct.setGetQueueMetaIsSet(true);
+          struct.getQueueInfo = new TGetQueueInfo();
+          struct.getQueueInfo.read(iprot);
+          struct.setGetQueueInfoIsSet(true);
         }
       }
     }
 
   }
 
-  public static class getQueueMeta_result implements org.apache.thrift.TBase<getQueueMeta_result, getQueueMeta_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueueMeta_result");
+  public static class getQueueInfo_result implements org.apache.thrift.TBase<getQueueInfo_result, getQueueInfo_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getQueueInfo_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField EX_FIELD_DESC = new org.apache.thrift.protocol.TField("ex", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getQueueMeta_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getQueueMeta_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getQueueInfo_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getQueueInfo_resultTupleSchemeFactory());
     }
 
-    public TQueueMeta success; // required
+    public TQueueInfo success; // required
     public TOperationException ex; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -13209,18 +13209,18 @@ public class TOperationExecutor {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueMeta.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueInfo.class)));
       tmpMap.put(_Fields.EX, new org.apache.thrift.meta_data.FieldMetaData("ex", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueueMeta_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getQueueInfo_result.class, metaDataMap);
     }
 
-    public getQueueMeta_result() {
+    public getQueueInfo_result() {
     }
 
-    public getQueueMeta_result(
-      TQueueMeta success,
+    public getQueueInfo_result(
+      TQueueInfo success,
       TOperationException ex)
     {
       this();
@@ -13231,17 +13231,17 @@ public class TOperationExecutor {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getQueueMeta_result(getQueueMeta_result other) {
+    public getQueueInfo_result(getQueueInfo_result other) {
       if (other.isSetSuccess()) {
-        this.success = new TQueueMeta(other.success);
+        this.success = new TQueueInfo(other.success);
       }
       if (other.isSetEx()) {
         this.ex = new TOperationException(other.ex);
       }
     }
 
-    public getQueueMeta_result deepCopy() {
-      return new getQueueMeta_result(this);
+    public getQueueInfo_result deepCopy() {
+      return new getQueueInfo_result(this);
     }
 
     @Override
@@ -13250,11 +13250,11 @@ public class TOperationExecutor {
       this.ex = null;
     }
 
-    public TQueueMeta getSuccess() {
+    public TQueueInfo getSuccess() {
       return this.success;
     }
 
-    public getQueueMeta_result setSuccess(TQueueMeta success) {
+    public getQueueInfo_result setSuccess(TQueueInfo success) {
       this.success = success;
       return this;
     }
@@ -13278,7 +13278,7 @@ public class TOperationExecutor {
       return this.ex;
     }
 
-    public getQueueMeta_result setEx(TOperationException ex) {
+    public getQueueInfo_result setEx(TOperationException ex) {
       this.ex = ex;
       return this;
     }
@@ -13304,7 +13304,7 @@ public class TOperationExecutor {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((TQueueMeta)value);
+          setSuccess((TQueueInfo)value);
         }
         break;
 
@@ -13350,12 +13350,12 @@ public class TOperationExecutor {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getQueueMeta_result)
-        return this.equals((getQueueMeta_result)that);
+      if (that instanceof getQueueInfo_result)
+        return this.equals((getQueueInfo_result)that);
       return false;
     }
 
-    public boolean equals(getQueueMeta_result that) {
+    public boolean equals(getQueueInfo_result that) {
       if (that == null)
         return false;
 
@@ -13385,13 +13385,13 @@ public class TOperationExecutor {
       return 0;
     }
 
-    public int compareTo(getQueueMeta_result other) {
+    public int compareTo(getQueueInfo_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getQueueMeta_result typedOther = (getQueueMeta_result)other;
+      getQueueInfo_result typedOther = (getQueueInfo_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -13430,7 +13430,7 @@ public class TOperationExecutor {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getQueueMeta_result(");
+      StringBuilder sb = new StringBuilder("getQueueInfo_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -13472,15 +13472,15 @@ public class TOperationExecutor {
       }
     }
 
-    private static class getQueueMeta_resultStandardSchemeFactory implements SchemeFactory {
-      public getQueueMeta_resultStandardScheme getScheme() {
-        return new getQueueMeta_resultStandardScheme();
+    private static class getQueueInfo_resultStandardSchemeFactory implements SchemeFactory {
+      public getQueueInfo_resultStandardScheme getScheme() {
+        return new getQueueInfo_resultStandardScheme();
       }
     }
 
-    private static class getQueueMeta_resultStandardScheme extends StandardScheme<getQueueMeta_result> {
+    private static class getQueueInfo_resultStandardScheme extends StandardScheme<getQueueInfo_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueueMeta_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getQueueInfo_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -13492,7 +13492,7 @@ public class TOperationExecutor {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new TQueueMeta();
+                struct.success = new TQueueInfo();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -13519,7 +13519,7 @@ public class TOperationExecutor {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueueMeta_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getQueueInfo_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -13539,16 +13539,16 @@ public class TOperationExecutor {
 
     }
 
-    private static class getQueueMeta_resultTupleSchemeFactory implements SchemeFactory {
-      public getQueueMeta_resultTupleScheme getScheme() {
-        return new getQueueMeta_resultTupleScheme();
+    private static class getQueueInfo_resultTupleSchemeFactory implements SchemeFactory {
+      public getQueueInfo_resultTupleScheme getScheme() {
+        return new getQueueInfo_resultTupleScheme();
       }
     }
 
-    private static class getQueueMeta_resultTupleScheme extends TupleScheme<getQueueMeta_result> {
+    private static class getQueueInfo_resultTupleScheme extends TupleScheme<getQueueInfo_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getQueueMeta_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getQueueInfo_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -13567,11 +13567,11 @@ public class TOperationExecutor {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getQueueMeta_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getQueueInfo_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new TQueueMeta();
+          struct.success = new TQueueInfo();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }

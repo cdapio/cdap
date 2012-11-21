@@ -2,13 +2,14 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * A table of {@link TTQueue}s.  See that API for details.
@@ -98,8 +99,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public QueueMeta getQueueMeta(byte[] queueName) throws OperationException {
-    return getQueue(queueName).getQueueMeta();
+  public QueueInfo getQueueInfo(byte[] queueName) throws OperationException {
+    return getQueue(queueName).getQueueInfo();
   }
 
   @Override

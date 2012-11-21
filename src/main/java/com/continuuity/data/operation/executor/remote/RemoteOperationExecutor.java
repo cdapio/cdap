@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
+
 /**
  * An operation executor that delegates all operations to a remote
  * thrift service, which itself implements the operation executor
@@ -237,17 +240,16 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public OperationResult<QueueAdmin.QueueMeta>
-  execute(final OperationContext context,
-          final QueueAdmin.GetQueueMeta getQM)
+  public OperationResult<QueueInfo> execute(final OperationContext context,
+                                            final GetQueueInfo getQueueInfo)
       throws OperationException {
     return this.execute(new Operation<
-            OperationResult<QueueAdmin.QueueMeta>>("GetQueueMeta") {
+            OperationResult<QueueInfo>>("GetQueueInfo") {
           @Override
-          public OperationResult<QueueAdmin.QueueMeta>
+          public OperationResult<QueueInfo>
           execute(OperationExecutorClient client)
               throws OperationException, TException {
-            return client.execute(context, getQM);
+            return client.execute(context, getQueueInfo);
           }
         });
   }

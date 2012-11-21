@@ -17,8 +17,6 @@ import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenque
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueMeta;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
@@ -37,6 +35,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of an {@link com.continuuity.data.operation.executor.OperationExecutor}
@@ -865,16 +866,17 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public OperationResult<QueueMeta> execute(OperationContext context,
-                                            GetQueueMeta getQueueMeta)
-      throws OperationException {
+  public OperationResult<QueueAdmin.QueueInfo>
+  execute(OperationContext context, GetQueueInfo getQueueInfo)
+      throws OperationException
+  {
     initialize();
-    requestMetric("GetQueueMeta");
+    requestMetric("GetQueueInfo");
     long begin = begin();
-    TTQueueTable table = getQueueTable(getQueueMeta.getQueueName());
-    QueueMeta queueMeta = table.getQueueMeta(getQueueMeta.getQueueName());
-    end("GetQueueMeta", begin);
-    return new OperationResult<QueueMeta>(queueMeta);
+    TTQueueTable table = getQueueTable(getQueueInfo.getQueueName());
+    QueueInfo queueInfo = table.getQueueInfo(getQueueInfo.getQueueName());
+    end("GetQueueInfo", begin);
+    return new OperationResult<QueueAdmin.QueueInfo>(queueInfo);
   }
 
   ImmutablePair<ReadPointer, Long> startTransaction() {

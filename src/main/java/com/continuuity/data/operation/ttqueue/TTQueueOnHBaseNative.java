@@ -1,32 +1,20 @@
 package com.continuuity.data.operation.ttqueue;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
 import com.continuuity.data.table.ReadPointer;
-import com.continuuity.hbase.ttqueue.HBQAck;
-import com.continuuity.hbase.ttqueue.HBQDequeue;
-import com.continuuity.hbase.ttqueue.HBQDequeueResult;
-import com.continuuity.hbase.ttqueue.HBQEnqueue;
-import com.continuuity.hbase.ttqueue.HBQEnqueueResult;
-import com.continuuity.hbase.ttqueue.HBQExpirationConfig;
-import com.continuuity.hbase.ttqueue.HBQFinalize;
-import com.continuuity.hbase.ttqueue.HBQInvalidate;
-import com.continuuity.hbase.ttqueue.HBQMetaOperation;
+import com.continuuity.hbase.ttqueue.*;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
-import com.continuuity.hbase.ttqueue.HBQQueueMeta;
-import com.continuuity.hbase.ttqueue.HBQShardConfig;
-import com.continuuity.hbase.ttqueue.HBQUnack;
-import com.continuuity.hbase.ttqueue.HBReadPointer;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
  * Implementation of a single {@link TTQueue} on an HBase table using native
@@ -49,10 +37,6 @@ public class TTQueueOnHBaseNative implements TTQueue {
    * HBase table, and utilizing the specified time oracle to generate stamps for
    * dirty reads and writes.  Utilizes specified Configuration to determine
    * shard maximums.
-   * @param table
-   * @param queueName
-   * @param timeOracle
-   * @param conf
    */
   public TTQueueOnHBaseNative(final HTable table, final byte [] queueName,
       final TimestampOracle timeOracle, final Configuration conf) {
@@ -207,13 +191,13 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public QueueMeta getQueueMeta() throws OperationException {
-    if (TRACE) log("GetQueueMeta");
+  public QueueInfo getQueueInfo() throws OperationException {
+    if (TRACE) log("GetQueueInfo");
     try {
       HBQQueueMeta queueMeta = this.table.getQueueMeta(
           new HBQMetaOperation(this.queueName,
               MetaOperationType.GET_QUEUE_META));
-      return new QueueMeta(queueMeta);
+      return new QueueInfo(queueMeta);
     } catch (IOException e) {
       log("HBase exception: " + e.getMessage());
       e.printStackTrace();
