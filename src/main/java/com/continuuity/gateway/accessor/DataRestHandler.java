@@ -233,14 +233,7 @@ public class DataRestHandler extends NettyRestHandler {
         return;
       }
 
-      // check that destination is valid - for now only "default" is allowed
-      if (destination != null && !"default".equals(destination)) {
-        LOG.trace("Received a request with path " + path +
-            " for destination other than 'default'");
-        respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
-        helper.finish(NotFound);
-        return;
-      }
+      String table = "default".equals(destination) ? null : destination;
 
       // key is URL-encoded, decode it
       byte[] keyBinary = null;
@@ -255,7 +248,7 @@ public class DataRestHandler extends NettyRestHandler {
           // Get the value from the data fabric
           OperationResult<byte[]> result;
           try {
-            ReadKey read = new ReadKey(keyBinary);
+            ReadKey read = new ReadKey(table, keyBinary);
             result = this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, read);
           } catch (Exception e) {
@@ -318,7 +311,7 @@ public class DataRestHandler extends NettyRestHandler {
           }
           OperationResult<List<byte[]>> result;
           try {
-            ReadAllKeys read = new ReadAllKeys(start, limit);
+            ReadAllKeys read = new ReadAllKeys(table, start, limit);
             result = this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, read);
           } catch (Exception e) {
@@ -346,7 +339,7 @@ public class DataRestHandler extends NettyRestHandler {
         case DELETE : {
           // first perform a Read to determine whether the key exists
           try {
-            ReadKey read = new ReadKey(keyBinary);
+            ReadKey read = new ReadKey(table, keyBinary);
             OperationResult<byte[]> result =
                 this.accessor.getExecutor().
                     execute(OperationContext.DEFAULT, read);
@@ -367,7 +360,7 @@ public class DataRestHandler extends NettyRestHandler {
 
           // now that we know the key exists, delete it
           try {
-            Delete delete = new Delete(keyBinary);
+            Delete delete = new Delete(table, keyBinary);
             this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, delete);
             // deleted successfully
@@ -395,7 +388,7 @@ public class DataRestHandler extends NettyRestHandler {
           byte[] bytes = new byte[length];
           content.readBytes(bytes);
           // create a write and attempt to execute it
-          Write write = new Write(keyBinary, bytes);
+          Write write = new Write(table, keyBinary, bytes);
           try {
             this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, write);

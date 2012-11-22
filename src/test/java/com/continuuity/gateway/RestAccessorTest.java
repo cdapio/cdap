@@ -96,7 +96,7 @@ public class RestAccessorTest {
     restAccessor.start();
     // all fine
     this.accessor = restAccessor;
-    return "http://localhost:" + port + prefix + middle + "default/";
+    return "http://localhost:" + port + prefix + middle;
   }
 
   // we will need this to test the clear API
@@ -160,6 +160,7 @@ public class RestAccessorTest {
     // write value via executor, then retrieve it back via REST
     for (String[] keyValue : keyValues) {
       TestUtil.writeAndGet(this.executor, uri, keyValue[0], keyValue[1]);
+      TestUtil.writeAndGet(this.executor, uri, "tt", keyValue[0], keyValue[1]);
     }
 
     // shut it down
@@ -187,6 +188,7 @@ public class RestAccessorTest {
     // write value via REST, then retrieve it back via executor
     for (String[] keyValue : keyValues) {
       TestUtil.putAndRead(this.executor, uri, keyValue[0], keyValue[1]);
+      TestUtil.putAndRead(this.executor, uri, "tt", keyValue[0], keyValue[1]);
     }
 
     // shut it down
@@ -203,9 +205,11 @@ public class RestAccessorTest {
 
     // write value via REST, then retrieve it back via executor
     TestUtil.putAndRead(this.executor, uri, "ki", "velu");
+    TestUtil.putAndRead(this.executor, uri, "nn", "ki", "velu");
     // write new value for the same key via REST, then retrieve it
     // back via executor
     TestUtil.putAndRead(this.executor, uri, "ki", "nuvelu");
+    TestUtil.putAndRead(this.executor, uri, "nn", "ki", "nuvelu");
 
     // shut it down
     this.accessor.stop();
@@ -221,41 +225,45 @@ public class RestAccessorTest {
   public void testDelete() throws Exception {
     // configure an accessor
     String uri = setupAccessor("access.rest", "/", "table/");
+    String table = "some-table";
 
     // write a value and verify it can be read
     String key = "to be deleted";
     TestUtil.writeAndGet(this.executor, uri, key, "foo");
+    TestUtil.writeAndGet(this.executor, uri, table, key, "foo");
 
     // now delete it
     Assert.assertEquals(200, TestUtil.sendDeleteRequest(uri, key));
+    Assert.assertEquals(200, TestUtil.sendDeleteRequest(uri, table, key));
     // verify that it's gone
     Assert.assertEquals(404, TestUtil.sendGetRequest(uri, key));
+    Assert.assertEquals(404, TestUtil.sendGetRequest(uri, table, key));
     // and verify that a repeated delete fails
     Assert.assertEquals(404, TestUtil.sendDeleteRequest(uri, key));
+    Assert.assertEquals(404, TestUtil.sendDeleteRequest(uri, table, key));
 
     this.accessor.stop();
   }
 
   /**
    * Verifies the list request is working. It first inserts a few key/values
-   * and verifies that they can be read back. Then it lists all keyts and
+   * and verifies that they can be read back. Then it lists all keys and
    * verifies they are all there, exactly once.
-   * @throws Exception
+   * @param table    the name of the table to test on
    */
-  @Test
-  public void testList() throws Exception {
+  public void testList(String table) throws Exception {
     // configure an accessor
     String uri = setupAccessor("access.rest", "/", "table/");
 
     // write some values and verify they can be read
-    TestUtil.writeAndGet(this.executor, uri, "a", "bar");
+    TestUtil.writeAndGet(this.executor, uri, table, "a", "bar");
     // a should only show once in the list!
-    TestUtil.writeAndGet(this.executor, uri, "a", "foo");
-    TestUtil.writeAndGet(this.executor, uri, "b", "foo");
-    TestUtil.writeAndGet(this.executor, uri, "c", "foo");
+    TestUtil.writeAndGet(this.executor, uri, table, "a", "foo");
+    TestUtil.writeAndGet(this.executor, uri, table, "b", "foo");
+    TestUtil.writeAndGet(this.executor, uri, table, "c", "foo");
 
     // now send a list request
-    String requestUri = uri + "?q=list";
+    String requestUri = uri + (table == null ? "default" : table) + "?q=list";
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(new HttpGet(requestUri));
     client.getConnectionManager().shutdown();
@@ -286,6 +294,12 @@ public class RestAccessorTest {
     Assert.assertTrue(keys.contains("c"));
   }
 
+  @Test
+  public void testList() throws Exception {
+    testList(null);
+    testList("foo");
+  }
+
   // TODO test list before write
   // TODO test list with encoding
   // TODO test list with start/limit
@@ -305,6 +319,7 @@ public class RestAccessorTest {
 
     // test one valid key
     TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
+    baseUrl += "default/";
 
     // test that ping works
     Assert.assertEquals(200, TestUtil.sendGetRequest(
@@ -380,10 +395,10 @@ public class RestAccessorTest {
         "http://localhost:" + port + prefix + middle + "default"));
     Assert.assertEquals(400, TestUtil.sendPutRequest(
         "http://localhost:" + port + prefix + middle + "sometable"));
-    // unknown table
-    Assert.assertEquals(404, TestUtil.sendPutRequest(
+    // non-default table - this now works! (after ENG-732)
+    Assert.assertEquals(200, TestUtil.sendPutRequest(
         "http://localhost:" + port + prefix + middle + "sometable/x"));
-    Assert.assertEquals(404, TestUtil.sendPutRequest(
+    Assert.assertEquals(200, TestUtil.sendPutRequest(
         "http://localhost:" + port + prefix + middle + "sometable/pfunk"));
     // no key
     Assert.assertEquals(400, TestUtil.sendPutRequest(baseUrl));
@@ -407,7 +422,7 @@ public class RestAccessorTest {
     // test one valid key
     TestUtil.writeAndGet(this.executor, baseUrl, "x", "y");
     // submit a GET with existing key -> 200 OK
-    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
+    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "default/x"));
     // stop the connector
     this.accessor.stop();
     // verify that GET fails now. Should throw an exception
@@ -421,7 +436,7 @@ public class RestAccessorTest {
     // restart the connector
     this.accessor.start();
     // submit a GET with existing key -> 200 OK
-    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "x"));
+    Assert.assertEquals(200, TestUtil.sendGetRequest(baseUrl + "default/x"));
     // and finally shut down
     this.accessor.stop();
   }

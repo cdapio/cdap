@@ -405,22 +405,23 @@ public class TestUtil {
    * request
    *
    * @param executor the operation executor to use for access to data fabric
+   * @param table    the name of the table to test on
    * @param baseUri  The URI for get request, without the key
    * @param key      The key
    * @param value    The value
    * @throws Exception if an exception occurs
    */
-  static void writeAndGet(OperationExecutor executor,
-                          String baseUri, byte[] key, byte[] value)
-      throws Exception {
+  static void writeAndGet(OperationExecutor executor, String baseUri,
+                          String table, byte[] key, byte[] value)
+  throws Exception {
     // add the key/value to the data fabric
-    Write write = new Write(key, value);
+    Write write = new Write(table, key, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
     executor.execute(context, operations);
 
     // make a get URL
-    String getUrl = baseUri +
+    String getUrl = baseUri + (table == null ? "default" : table) + "/" +
         URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
     LOG.info("GET request URI for key '" + new String(key) + "' is " + getUrl);
 
@@ -451,8 +452,43 @@ public class TestUtil {
 
   /**
    * Verify that a given value can be retrieved for a given key via http GET
+   * request
+   *
+   * @param executor the operation executor to use for access to data fabric
+   * @param baseUri  The URI for get request, without the key
+   * @param key      The key
+   * @param value    The value
+   * @throws Exception if an exception occurs
+   */
+  static void writeAndGet(OperationExecutor executor,
+                          String baseUri, byte[] key, byte[] value)
+      throws Exception {
+    writeAndGet(executor, baseUri, null, key, value);
+  }
+
+  /**
+   * Verify that a given value can be retrieved for a given key via http GET
    * request. This converts the key and value from String to bytes and calls
    * the byte-based method writeAndGet.
+   *
+   * @param executor the operation executor to use for access to data fabric
+   * @param table    the name of the table to test on
+   * @param baseUri  The URI for get request, without the key
+   * @param key      The key
+   * @param value    The value
+   * @throws Exception if an exception occurs
+   */
+  static void writeAndGet(OperationExecutor executor, String baseUri,
+                          String table, String key, String value)
+      throws Exception {
+    writeAndGet(executor, baseUri, table, key.getBytes("ISO8859_1"),
+        value.getBytes("ISO8859_1"));
+  }
+
+  /**
+   * Verify that a given value can be retrieved for a given key via http GET
+   * request. This converts the key and value from String to bytes and calls
+   * the byte-based method writeAndGet. Uses default table
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for get request, without the key
@@ -463,8 +499,7 @@ public class TestUtil {
   static void writeAndGet(OperationExecutor executor,
                           String baseUri, String key, String value)
       throws Exception {
-    writeAndGet(executor, baseUri, key.getBytes("ISO8859_1"),
-        value.getBytes("ISO8859_1"));
+    writeAndGet(executor, baseUri, null, key, value);
   }
 
   /**
@@ -473,16 +508,17 @@ public class TestUtil {
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for PUT request, without the key
+   * @param table    the name of the table to test on
    * @param key      The key
    * @param value    The value
    * @throws Exception if an exception occurs
    */
-  static void putAndRead(OperationExecutor executor,
-                         String baseUri, byte[] key, byte[] value)
+  static void putAndRead(OperationExecutor executor, String baseUri,
+                         String table, byte[] key, byte[] value)
       throws Exception {
 
     // make a get URL
-    String putUrl = baseUri +
+    String putUrl = baseUri + (table == null ? "default" : table) + "/" +
         URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
     LOG.info("PUT request URI for key '" +
         new String(key, "ISO8859_1") + "' is " + putUrl);
@@ -514,15 +550,33 @@ public class TestUtil {
    *
    * @param executor the operation executor to use for access to data fabric
    * @param baseUri  The URI for REST request, without the key
+   * @param table    the name of the table to test on
    * @param key      The key
    * @param value    The value
    * @throws Exception if an exception occurs
    */
-  static void putAndRead(OperationExecutor executor,
-                         String baseUri, String key, String value)
+  static void putAndRead(OperationExecutor executor, String baseUri,
+                         String table, String key, String value)
       throws Exception {
-    putAndRead(executor, baseUri, key.getBytes("ISO8859_1"),
+    putAndRead(executor, baseUri, table, key.getBytes("ISO8859_1"),
         value.getBytes("ISO8859_1"));
+  }
+
+  /**
+   * Verify that a given value can be stored for a given key via http PUT
+   * request. This converts the key and value from String to bytes and calls
+   * the byte-based method putAndRead.
+   *
+   * @param executor the operation executor to use for access to data fabric
+   * @param baseUri  The URI for REST request, without the key
+   * @param key      The key
+   * @param value    The value
+   * @throws Exception if an exception occurs
+   */
+  static void putAndRead(OperationExecutor executor, String baseUri,
+                         String key, String value)
+      throws Exception {
+    putAndRead(executor, baseUri, null, key, value);
   }
 
   /**
@@ -541,12 +595,26 @@ public class TestUtil {
    * Send a GET request to the given URL and return the HTTP status
    *
    * @param baseUrl the baseURL
+   * @param table    the name of the table to test on
+   * @param key     the key to delete
+   */
+  public static int sendGetRequest(String baseUrl, String table, String key)
+      throws Exception {
+    String urlKey = URLEncoder.encode(key, "ISO8859_1");
+    String url = baseUrl + (table == null ? "default" : table) + "/" + urlKey;
+    return sendGetRequest(url);
+  }
+
+  /**
+   * Send a GET request to the given URL and return the HTTP status. Use
+   * default table.
+   *
+   * @param baseUrl the baseURL
    * @param key     the key to delete
    */
   public static int sendGetRequest(String baseUrl, String key)
       throws Exception {
-    String urlKey = URLEncoder.encode(key, "ISO8859_1");
-    return sendGetRequest(baseUrl + urlKey);
+    return sendGetRequest(baseUrl, null, key);
   }
 
   /**
@@ -566,13 +634,26 @@ public class TestUtil {
    * HTTP status
    *
    * @param baseUrl the baseURL
+   * @param table    the name of the table to test on
+   * @param key     the key to delete
+   */
+  public static int sendDeleteRequest(String baseUrl, String table, String key)
+      throws Exception {
+    String urlKey = URLEncoder.encode(key, "ISO8859_1");
+    String url = baseUrl + (table == null ? "default" : table) + "/" + urlKey;
+    return sendDeleteRequest(url);
+  }
+
+  /**
+   * Send a DELETE request to the given URL for the given key and return the
+   * HTTP status. Uses default table
+   *
+   * @param baseUrl the baseURL
    * @param key     the key to delete
    */
   public static int sendDeleteRequest(String baseUrl, String key)
       throws Exception {
-    String urlKey = URLEncoder.encode(key, "ISO8859_1");
-    String url = baseUrl + urlKey;
-    return sendDeleteRequest(url);
+    return sendDeleteRequest(baseUrl, null, key);
   }
 
   /**

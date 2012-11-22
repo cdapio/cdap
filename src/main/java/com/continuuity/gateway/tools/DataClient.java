@@ -57,6 +57,7 @@ public class DataClient {
   String value = null;           // the value to write
   String encoding = null;        // the encoding for --key and for display
                                  // of the value
+  String table = null;           // the name of the table to operate on
   boolean hexEncoded = false;    // whether --key and display of value use
                                  // hexadecimal encoding
   boolean urlEncoded = false;    // whether --key and display of value use
@@ -105,6 +106,7 @@ public class DataClient {
         "To specify the hostname to send to");
     out.println("  --connector <name>      " +
         "To specify the name of the rest connector");
+    out.println("  --table <string>        To specify a table to operate on");
     out.println("  --key <string>          To specify the key");
     out.println("  --key-file <path>       To read the binary key from a file");
     out.println("  --value <string>        To specify the value");
@@ -180,6 +182,9 @@ public class DataClient {
       } else if ("--value-file".equals(arg)) {
         if (++pos >= args.length) usage(true);
         valueFile = args[pos];
+      } else if ("--table".equals(arg)) {
+        if (++pos >= args.length) usage(true);
+        table = args[pos];
       } else if ("--start".equals(arg)) {
         if (++pos >= args.length) usage(true);
         try {
@@ -287,6 +292,8 @@ public class DataClient {
     }
     // verify that clear command specifies what to clear
     if ("clear".equals(command)) {
+      if (table != null)
+        usage("A table cannot be specified for --clear");
       if (!(clearAll || clearData || clearQueues || clearStreams ||
           clearTables || clearMeta))
         usage("You must specify what to clear - please us --all, --data, " +
@@ -467,7 +474,7 @@ public class DataClient {
     }
 
     // construct the full URL and verify its well-formedness
-    String requestUrl = baseUrl + "default";
+    String requestUrl = baseUrl + (table == null ? "default" : table);
     if (keyNeeded) requestUrl += "/" + urlEncodedKey;
     if (verbose && !"list".equals(command))
       System.out.println("Request URI is: " + requestUrl);
