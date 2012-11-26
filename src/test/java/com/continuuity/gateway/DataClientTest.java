@@ -200,4 +200,52 @@ public class DataClientTest {
     Assert.assertEquals("42", new DataClient().execute(new String[] {
         "read", "--key", "mycount", "--counter" }, configuration));
   }
+
+  String command(String table, String[] args) {
+    if (table != null) {
+      args = Arrays.copyOf(args, args.length + 2);
+      args[args.length - 2] = "--table";
+      args[args.length - 1] = table;
+    }
+    return new DataClient().execute(args, configuration);
+  }
+
+  void testReadWriteListDelete(String table) {
+    String key1 = "real";
+    String value1 = "data";
+    String key2 = "big";
+    String value2 = "time";
+    // clear everything for clean state
+    Assert.assertEquals("OK.", command(null, new String[] {
+        "clear", "--all"}));
+    // write a value
+    Assert.assertEquals("OK.", command(table, new String[] {
+        "write", "--key", key1, "--value", value1}));
+    // write another value
+    Assert.assertEquals("OK.", command(table, new String[] {
+        "write", "--key", key2, "--value", value2}));
+    // list keys and make sure it contains the exact two keys
+    String listResult = command(table, new String[] {"list"});
+    // result should be "9 bytes written"
+    Assert.assertEquals(listResult.charAt(0) - '0',
+        (key1 + "\n" + key2 + "\n").length());
+    // verify the values
+    Assert.assertEquals(value1, command(table, new String[]{
+        "read", "--key", key1}));
+    Assert.assertEquals(value2, command(table, new String[] {
+        "read", "--key", key2}));
+    // delete one key
+    Assert.assertEquals("OK.", command(table, new String[] {
+        "delete", "--key", key1}));
+    // list keys again and make sure the deleted key is gone
+    listResult = command(table, new String[] {"list"});
+    // result should be "4 bytes written"
+    Assert.assertEquals(listResult.charAt(0) - '0', (key2 + "\n").length());
+  }
+
+  @Test public void testKeyValueTables() {
+    testReadWriteListDelete(null);
+    testReadWriteListDelete("mytable");
+  }
+
 }
