@@ -9,5 +9,5 @@ MAIN_CLASS_ARGS="start"
 # Add Hadoop HDFS classpath
 EXTRA_CLASSPATH="$HBASE_HOME/conf/"
 
-JAVA_HEAPMAX=-Xmx512m
+JAVA_HEAPMAX=-Xmx1024m
 
