@@ -130,16 +130,17 @@ public class DataRestHandler extends NettyRestHandler {
       } else if (method == HttpMethod.GET) {
         if ("/ping".equals(requestUri)) {
           operation = PING;
+          helper.setMethod("ping");
         }
         else if (parameters == null || parameters.size() == 0) {
           operation = READ;
-          helper.setMethod("clear");
+          helper.setMethod("read");
         } else {
           List<String> qParams = parameters.get("q");
           if (qParams != null && qParams.size() == 1
               && "list".equals(qParams.get(0))) {
             operation = LIST;
-            helper.setMethod("clear");
+            helper.setMethod("list");
           } else
             operation = BAD;
         }
