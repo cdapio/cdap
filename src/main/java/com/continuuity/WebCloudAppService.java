@@ -6,6 +6,7 @@ package com.continuuity;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,8 @@ import java.io.InputStreamReader;
  * All output is sent to our Logging service.
  */
 public class WebCloudAppService implements Server {
+
+  private static final String NODE_JS_EXECUTABLE="node";
 
   /**
    * This is our Logger instance
@@ -40,7 +43,7 @@ public class WebCloudAppService implements Server {
     String webappMain = conf.get("webapp.main");
     logger.debug("Web app main class is " + webappMain);
     ProcessBuilder builder =
-      new ProcessBuilder("node", webappMain);
+      new ProcessBuilder(NODE_JS_EXECUTABLE, webappMain);
 
 
     // Re-direct all our stderr to stdout
@@ -91,7 +94,17 @@ public class WebCloudAppService implements Server {
         }
       }.start();
     } catch (IOException e) {
-      throw new ServerException(e.getMessage());
+      String message;
+      if (StringUtils.contains(e.getCause().getMessage(),
+                               "No such file or directory")) {
+        message="Could not find executable "+"\""+NODE_JS_EXECUTABLE+"\""+" "
+                  +"for Node.js in executable search path "
+                  +System.getenv("PATH")+".";
+      } else {
+        message=e.getMessage();
+      }
+      logger.error(message);
+      throw new ServerException(message);
     }
   }
 
