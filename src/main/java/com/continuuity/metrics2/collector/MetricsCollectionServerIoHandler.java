@@ -137,12 +137,6 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     this.mBeanServer = mBeanServer;
     this.configuration = configuration;
 
-    // By default we will send all the flow metrics to
-    // flow metrics processor. But, in case the openTSDB is
-    // enabled, then we send the flow metrics to both places.
-    MetricsProcessor flowMetricsProcessor =
-      new FlowMetricsProcessor(configuration);
-
     // Read in the processors to be used for managing system metrics.
     // If there are none defined, then we don't assign defaults. If
     // there any defined, then we create instance of processor and

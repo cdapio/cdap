@@ -19,9 +19,7 @@ import javax.management.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * An entry point for the server for collecting metrics.
@@ -31,6 +29,16 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
 
   private static final Logger
       Log = LoggerFactory.getLogger(MetricsCollectionServer.class);
+
+  /**
+   * Defines thread pool size.
+   */
+  private static final int THREAD_POOL_SIZE = 1000;
+
+  /**
+   * Defines idle thread pool size.
+   */
+  private static final int IDLE_THREAD_POOL_SIZE = 10;
 
   /**
    * Latch determining whether server has shutdown or no.
@@ -180,8 +188,11 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
       // put the executor filter after any protocol filter due to the fact that
       // protocol codec are generally CPU-bound which is the same as I/O filters.
       filterChainBuilder.addLast("threadPool",
-                                 new ExecutorFilter(Executors
-                                                      .newCachedThreadPool()));
+                                 new ExecutorFilter(new ThreadPoolExecutor(
+                                   IDLE_THREAD_POOL_SIZE, THREAD_POOL_SIZE,
+                                   5*60, TimeUnit.SECONDS,
+                                   new ArrayBlockingQueue<Runnable>(THREAD_POOL_SIZE)
+                                 )));
 
       // Set this NioSocketAcceptor's handler to the MetricCollectionServerIoHandler
       acceptor.setHandler(handler);
