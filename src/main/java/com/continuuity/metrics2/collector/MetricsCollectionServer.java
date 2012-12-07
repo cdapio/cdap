@@ -33,12 +33,17 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
   /**
    * Defines thread pool size.
    */
-  private static final int THREAD_POOL_SIZE = 1000;
+  private static final int THREAD_POOL_SIZE = 250;
 
   /**
    * Defines idle thread pool size.
    */
   private static final int IDLE_THREAD_POOL_SIZE = 10;
+
+  /**
+   * Defines queue length
+   */
+  private static final int WORKER_QUEUE_LENGTH = 100000;
 
   /**
    * Latch determining whether server has shutdown or no.
@@ -191,7 +196,7 @@ public final class MetricsCollectionServer extends AbstractRegisteredServer
                                  new ExecutorFilter(new ThreadPoolExecutor(
                                    IDLE_THREAD_POOL_SIZE, THREAD_POOL_SIZE,
                                    5*60, TimeUnit.SECONDS,
-                                   new ArrayBlockingQueue<Runnable>(THREAD_POOL_SIZE)
+                                   new ArrayBlockingQueue<Runnable>(WORKER_QUEUE_LENGTH)
                                  )));
 
       // Set this NioSocketAcceptor's handler to the MetricCollectionServerIoHandler

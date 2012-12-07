@@ -12,7 +12,6 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.common.metrics.MetricResponse;
 import com.continuuity.common.metrics.MetricType;
-import com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor;
 import com.continuuity.metrics2.collector.plugins.MetricsProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -118,7 +117,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
   /**
    * Instance of FutureReaper.
    */
-  private final FutureReaper futureReaper = new FutureReaper();
+  private static FutureReaper futureReaper = null;
 
   /**
    * Creates a new instance of {@code MetricCollectionServerIoHandler}.
@@ -152,6 +151,10 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
       }
     }
 
+    // Flag indicating if there were any FlowSystem and/or FlowUser
+    // Plugin enabled.
+    boolean enabledFlowPlugin = false;
+
     // Load processor for handling flow system metrics. If none defined,
     // we add a default processor.
     String[] klassFlowSystem = configuration.getStrings(
@@ -159,6 +162,7 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
     );
     if(klassFlowSystem != null && klassFlowSystem.length > 0) {
       for(String klass : klassFlowSystem) {
+        enabledFlowPlugin = true;
         loadCreateAndAddToList(MetricType.FlowSystem, klass);
         Log.trace("Added {} plugin for processing flow system metrics.",
                   klass);
@@ -173,14 +177,22 @@ public final class MetricsCollectionServerIoHandler extends IoHandlerAdapter
 
     if(klassFlowUser != null && klassFlowUser.length > 0) {
       for(String klass : klassFlowUser) {
+        enabledFlowPlugin = true;
         loadCreateAndAddToList(MetricType.FlowUser, klass);
         Log.trace("Added {} plugin for processing flow user metrics.",
                   klass);
       }
     }
 
-    Log.info("Starting future reaper.");
-    futureReaper.start();
+    // If there were flow plugins that were enabled, then we would
+    // want to start the future. If not, we dont.
+    if(enabledFlowPlugin) {
+      if(futureReaper != null) {
+        Log.info("Starting future reaper.");
+        futureReaper = new FutureReaper();
+        futureReaper.start();
+      }
+    }
   }
 
   private void loadCreateAndAddToList(MetricType type, String klassName)
