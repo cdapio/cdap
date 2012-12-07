@@ -45,6 +45,18 @@
         <value>127.0.0.1</value>
     </property>
 
+    <property>
+        <name>overlord.metrics.processor.plugins.flowsystem</name>
+        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
+        <description>Specifies plugins to be used for processing flow system metrics. </description>
+    </property>
+
+    <property>
+        <name>overlord.metrics.processor.plugins.flowuser</name>
+        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
+        <description>Specifies plugins to be used for processing flow user metrics. </description>
+    </property>
+
     <!--
        Metadata configuration
     -->
