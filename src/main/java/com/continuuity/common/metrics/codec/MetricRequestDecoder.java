@@ -185,9 +185,13 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     MetricRequest.Builder requestBuilder =
       new MetricRequest.Builder(true);
 
-    // Add cluster type and cluster name.
-    requestBuilder.addTag("cltype", CLUSTER_TYPE);
-    requestBuilder.addTag("clname", CLUSTER_NAME);
+    // Add cluster type and cluster name to the tags string.
+    tagsStr = String.format("%s %s=%s %s=%s",
+                            tagsStr,
+                            "cltype", CLUSTER_TYPE,
+                            "clname", CLUSTER_NAME
+    );
+
     // Extract tags.
     String rawTags = "";
     if(! tagsStr.isEmpty()) {

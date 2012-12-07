@@ -335,18 +335,6 @@
     </property>
 
     <property>
-        <name>overlord.metrics.processor.plugins.flowsystem</name>
-        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
-        <description>Specifies plugins to be used for processing flow system metrics. </description>
-    </property>
-
-    <property>
-        <name>overlord.metrics.processor.plugins.flowuser</name>
-        <value>com.continuuity.metrics2.collector.plugins.FlowMetricsProcessor</value>
-        <description>Specifies plugins to be used for processing flow user metrics. </description>
-    </property>
-
-    <property>
         <name>opentsdb.server.address</name>
         <value>localhost</value>
         <description>Specifies the open TSDB server address.</description>
