@@ -37,6 +37,16 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
   private static final Joiner TAG_JOINER
     = Joiner.on(" ");
 
+  private static final String CLUSTER_TYPE
+    = System.getenv("CLUSTER_TYPE") != null ?
+          System.getenv("CLUSTER_TYPE") :
+          "UNKNOWN";
+
+  private static final String CLUSTER_NAME
+    = System.getenv("CLUSTER_NAME") != null ?
+          System.getenv("CLUSTER_NAME") :
+          "UNKNOWN";
+
   @Override
   protected boolean doDecode(IoSession session, IoBuffer in,
                              ProtocolDecoderOutput out) throws Exception {
@@ -175,6 +185,9 @@ public class MetricRequestDecoder extends CumulativeProtocolDecoder {
     MetricRequest.Builder requestBuilder =
       new MetricRequest.Builder(true);
 
+    // Add cluster type and cluster name.
+    requestBuilder.addTag("cltype", CLUSTER_TYPE);
+    requestBuilder.addTag("clname", CLUSTER_NAME);
     // Extract tags.
     String rawTags = "";
     if(! tagsStr.isEmpty()) {
