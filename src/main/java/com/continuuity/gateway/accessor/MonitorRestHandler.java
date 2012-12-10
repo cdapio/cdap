@@ -4,10 +4,7 @@ import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.flow.manager.stubs.DelegationToken;
-import com.continuuity.flow.manager.stubs.FlowIdentifier;
-import com.continuuity.flow.manager.stubs.FlowService;
-import com.continuuity.flow.manager.stubs.FlowStatus;
+import com.continuuity.flow.manager.stubs.*;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.metrics2.thrift.Counter;
@@ -30,6 +27,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -198,6 +196,67 @@ public class MonitorRestHandler extends NettyRestHandler {
       if ("/ping".equals(path)) {
         helper.setMethod("ping");
         respondToPing(message.getChannel(), request);
+        helper.finish(Success);
+        return;
+      }
+
+      // entry point for internal continuuity metrics monitoring
+      if ("/flowmetrics".equals(path)) {
+        helper.setMethod("flowmetrics");
+
+        StringBuilder resp = new StringBuilder();
+        boolean first = true;
+
+        java.util.HashMap statuses = new HashMap();
+        Map<String, Integer> statusmetrics = new HashMap<String, Integer>();
+        // initialize zeros for the minimal set of statuses we always want to return
+        statusmetrics.put("RUNNING", 0);
+        statusmetrics.put("STOPPED", 0);
+        statusmetrics.put("DEPLOYED", 0);
+        statusmetrics.put("FAILED", 0);
+        statusmetrics.put("STARTING", 0);
+        statusmetrics.put("STOPPING", 0);
+        FlowService.Client flowClient = this.getFlowClient();
+        List<ActiveFlow> activeFlows = flowClient.getFlows(Constants.defaultAccount);
+        //iterate through flows, build up response string
+        for(ActiveFlow activeFlow : activeFlows) {
+          // increment general status metric
+          if (!"".equals(activeFlow.getCurrentState())) {
+            int count = statusmetrics.containsKey(activeFlow.getCurrentState())
+                    ? statusmetrics.get(activeFlow.getCurrentState()) : 0;
+            statusmetrics.put(activeFlow.getCurrentState(), count + 1);
+          }
+          // get flow metrics for this flow
+          MetricsFrontendService.Client metricsClient = this.getMetricsClient();
+          CounterRequest counterRequest = new CounterRequest(
+            new FlowArgument(Constants.defaultAccount, activeFlow.getApplicationId(),
+                    activeFlow.getFlowId()));
+          List<String> counterNames = parameters.get("counter");
+          if (counterNames != null) {
+            counterRequest.setName(counterNames);
+          }
+          List<Counter> counters = metricsClient.getCounters(counterRequest);
+          // append this flow's metrics to response
+          for (Counter counter : counters) {
+            if (first) first = false; else resp.append(',');
+            if (counter.isSetQualifier()) {
+              resp.append("flows.").append(activeFlow.getApplicationId()).append('.');
+              resp.append(activeFlow.getFlowId()).append('.');
+              resp.append(counter.getQualifier()).append(".");
+            }
+            resp.append(counter.getName()).append('=').append(counter.getValue());
+          }
+        }
+
+        // append general flow status metrics to response
+        for (Map.Entry<String, Integer> entry : statusmetrics.entrySet()) {
+          String key = entry.getKey();
+          int value = entry.getValue();
+          if (first) first = false; else resp.append(',');
+          resp.append("flows.").append(key.toLowerCase()).append('=').append(value);
+        }
+
+        respondSuccess(message.getChannel(), request, resp.toString().getBytes());
         helper.finish(Success);
         return;
       }
