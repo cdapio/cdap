@@ -23,6 +23,17 @@ define([], function () {
 					return;
 				}
 
+				if (response.params.exists === false) {
+					C.interstitial.label('Application not found.', {
+						action: 'Dashboard',
+						click: function () {
+							C.router.set('location', '');
+						}
+					});
+					self.__remain = Infinity;
+					return;
+				}
+
 				self.set('current', C.Mdl.Application.create(response.params));
 
 			});

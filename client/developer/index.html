@@ -195,8 +195,8 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Events per Second" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="q.ack.stream//demo/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//demo/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -420,8 +420,8 @@
         </div>
       </div>
       <div class="info-box health-box"></div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Writes per Second" metrics="dataset.write.{id}.count"}}</div>
-      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Reads per Second (All)" metrics="dataset.read.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Write Rate" metrics="dataset.write.{id}.count"}}</div>
+      <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="dataset.read.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{current.storageLabel}}<br /><span>{{current.storageUnits}}</span></div>
@@ -436,8 +436,8 @@
           <table class="table">
           <thead>
             <th colspan="2">&nbsp;</th>
-            <th style="width: 262px;">Writes per Second</th>
-            <th style="width: 262px;">Reads per Second</th>
+            <th style="width: 262px;">Write Rate</th>
+            <th style="width: 262px;">Read Rate</th>
           </thead>
           {{#each controller.types.DatasetFlow.content tagName="tbody"}}
           <tr>
