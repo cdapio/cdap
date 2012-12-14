@@ -1458,8 +1458,9 @@ ol {
 	text-transform: uppercase;
 
 	border: 2px solid #fff;
-	background-image: url(../img/flowlet-node-background.png);
-
+	background-color: #40AECF;
+	border-radius: 100%;
+	
 	width: 108px;
 	height: 108px;
 	text-align:center;

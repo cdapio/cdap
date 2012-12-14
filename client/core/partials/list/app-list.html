@@ -6,7 +6,7 @@
 <th style="text-align: center;">Flows</th>
 <th style="text-align: center;">DataSets</th>
 <th style="text-align: center;">Queries</th>
-<th style="width: 364px;">Tuples per Second</th>
+<th style="width: 364px;">Busyness</th>
 </thead>
 {{#each controller.types.Application tagName="tbody"}}
 <tr>
@@ -20,7 +20,7 @@
 <td class="app-list-count">{{counts.Flow}}</strong></td>
 <td class="app-list-count">{{counts.Dataset}}</strong></td>
 <td class="app-list-count">{{counts.Query}}</strong></td>
-<td>{{view C.Vw.Chart entity-id=id entity-type="Application" height="50" metrics="processed.count"}}</td>
+<td>{{view C.Vw.Chart entity-id=id entity-type="Application" height="50" metrics="busyness.count"}}</td>
 </tr>
 {{/each}}
 </table>

@@ -5,7 +5,7 @@
 <th colspan="2">&nbsp;</th>
 <th style="width: 100px;text-align: center;">Storage</th>
 <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Unconsumed</th>
-<th style="width: 444px;">Events per Second</th>
+<th style="width: 444px;">Arrival Rate</th>
 </thead>
 {{#each types.Stream.content tagName="tbody"}}
 <tr>
@@ -13,7 +13,7 @@
 <div class="list-health-box"></div>
 </td>
 <td class="app-list-name">
-<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Readers: {{types.StreamFlow.content.length}}</span>
+<a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Consumers: {{types.StreamFlow.content.length}}</span>
 </td>
 <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
 <td class="app-list-count">{{unconsumed}}<br /><span>Events</span></td>

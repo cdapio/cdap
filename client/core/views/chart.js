@@ -124,12 +124,12 @@ define([], function () {
 			
 		}.observes('model.__loadingData'),
 		__titles: {
-			'processed.count': 'Tuples per Second',
-			'tuples.read.count': 'Reads per Second',
+			'processed.count': 'Processing Rate',
+			'tuples.read.count': 'Read Rate',
 			'emitted.count': 'Tuples Emitted',
-			'dataops.count': 'Data Ops per Second',
+			'dataops.count': 'Data Operations',
 			'busyness': 'Busyness',
-			'flowlet.failure.count': 'Failures per Second',
+			'flowlet.failure.count': 'Failures Rate',
 			'storage.trend': 'Storage Trend'
 		},
 		__getTitle: function () {

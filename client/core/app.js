@@ -306,7 +306,7 @@ function(Models, Views, Controllers){
 					value = value / 1000000;
 					var rounded = Math.round(value * Math.pow(10, digits)) / Math.pow(10, digits);
 					value = rounded + 'M';
-				} else if (value > 10000) {
+				} else if (value > 1000) {
 					var digits = 3 - (Math.round(value / 1000) + '').length;
 					digits = digits < 0 ? 2 : digits;
 					value = value / 1000;
