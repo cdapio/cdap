@@ -3,11 +3,13 @@ package com.continuuity.performance.opex;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.continuuity.performance.benchmark.*;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
 import java.util.*;
 
 public class QueueBenchmark extends OpexBenchmark {
@@ -66,10 +68,13 @@ public class QueueBenchmark extends OpexBenchmark {
   void doEnqueue(long iteration) throws BenchmarkException {
 
     byte[] value = Bytes.toBytes(iteration);
-    QueueEnqueue enqueue = new QueueEnqueue(queueBytes, value);
+    QueueEnqueue enqueue = null;
     try {
+      enqueue = new QueueEnqueue(queueBytes, TupleMetaDataAnnotator
+                                               .EnqueuePayload.write(null,
+                                                                     value));
       opex.execute(opContext, enqueue);
-    } catch (OperationException e) {
+    } catch (Exception e) {
       Log.error("Operation " + enqueue + " failed: " + e.getMessage() +
           "(Ignoring this error)", e);
     }
