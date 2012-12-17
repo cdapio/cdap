@@ -71,7 +71,8 @@ public class QueueBenchmark extends OpexBenchmark {
     QueueEnqueue enqueue = null;
     try {
       enqueue = new QueueEnqueue(queueBytes, TupleMetaDataAnnotator
-                                               .EnqueuePayload.write(null,
+                                               .EnqueuePayload.write(new
+                                                                       HashMap<String, Long>(),
                                                                      value));
       opex.execute(opContext, enqueue);
     } catch (Exception e) {
