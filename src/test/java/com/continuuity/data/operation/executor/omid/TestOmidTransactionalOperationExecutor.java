@@ -854,8 +854,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, new Write(table, rowX, colX, valX));
 
     // verify the write can be read
-    Assert.assertArrayEquals(valX, executor.execute(
-        context, new Read(rowX, colX)).getValue().get(colX));
+    OperationResult<Map<byte[], byte[]>> result = executor.execute(context, new Read(table, rowX, colX));
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertArrayEquals(valX, result.getValue().get(colX));
 
     // open the table again
     executor.execute(context, new OpenTable(table));
