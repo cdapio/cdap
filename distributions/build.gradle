@@ -134,7 +134,8 @@ task singlenode_stage_version (type: Copy) {
     filter(ReplaceTokens, tokens: [cversion: versiontxt ])
 }
 
-
+task singlenode_dist_local (dependsOn: 'singlenode_dist'){
+}
 task singlenode_dist (type: Zip) {
     group = 'Continuuity'
     description = 'Generates the singlenode distribution zip file'
