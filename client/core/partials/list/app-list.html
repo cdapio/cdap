@@ -1,7 +1,7 @@
 {{#if types.Application.length}}
 <table class="table">
 <thead>
-<th colspan="2"></th>
+<th>&nbsp;</th>
 <th style="text-align: center;">Streams</th>
 <th style="text-align: center;">Flows</th>
 <th style="text-align: center;">DataSets</th>
@@ -10,9 +10,6 @@
 </thead>
 {{#each controller.types.Application tagName="tbody"}}
 <tr>
-<td class="list-health-cell">
-<div class="list-health-box"></div>
-</td>
 <td class="app-list-name">
 <a {{bindAttr href="href"}}>{{name}}</a>
 </td>

@@ -760,6 +760,7 @@ input[type="text"] {
 	font-size: 16px;
 	font-weight: bold;
 	line-height: 14px !important;
+	padding-left: 14px !important;
 }
 .app-list-name span {
 	color: #333;
