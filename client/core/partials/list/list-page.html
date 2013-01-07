@@ -1,9 +1,20 @@
+
+<div id="title">
+	{{view C.Vw.CreateButton entityType=entityType}} {{view C.Vw.TimeSelector}}
+	<h1>All {{title}}</h1>
+</div>
+
+<div id="info">
+  <div class="info-box sparkline-box">
+  	{{view C.Vw.Chart metrics="processed.count"}}
+  </div>
+  <div class="info-box sparkline-box">
+  	{{view C.Vw.Chart metrics="busyness" unit="percent"}}
+  </div>
+</div>
+
 <div id="panels">
 <div class="panel">
-<div class="panel-head">
-{{view C.Vw.CreateButton entityType=entityType}} {{view C.Vw.TimeSelector}}
-<div class="panel-title">All {{title}}</div>
-</div>
 {{view controller.viewType}}
 </div>
 </div>

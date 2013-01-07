@@ -2,16 +2,13 @@
 {{#if types.Flow.content.length}}
 <table class="table">
 <thead>
-<th colspan="2">&nbsp;</th>
+<th>&nbsp;</th>
 <th style="width: 100px;text-align: center;">Instances</th>
 <th style="width: 262px;">Processing Rate</th>
 <th style="width: 262px;">Busyness</th>
 </thead>
 {{#each types.Flow.content tagName="tbody"}}
 <tr>
-<td class="list-health-cell">
-<div class="list-health-box"></div>
-</td>
 <td class="app-list-name">
 <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
 </td>

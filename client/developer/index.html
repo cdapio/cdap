@@ -69,7 +69,6 @@
         <table class="dash-app-resources">
           <tbody>
             <tr>
-              <td class="dash-app-resource dash-app-resource-health"></td>
               <td class="dash-app-resource">
                 <a href="#/apps" class="dash-app-resource-app">{{controller.counts.Application}}</a>
               </td>
@@ -129,7 +128,6 @@
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
         {{view C.Vw.DropZone}}
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
@@ -194,7 +192,6 @@
           </ul>
         </div>
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Arrivals" metrics="stream.enqueue.stream//demo/{id}.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="q.ack.stream//demo/{id}.count"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
@@ -213,15 +210,12 @@
         {{#if controller.current.types.StreamFlow.content.length}}
           <table class="table">
           <thead>
-            <th colspan="2">&nbsp;</th>
+            <th>&nbsp;</th>
             <th style="width: 100px;text-align:center;">Unconsumed</th>
             <th style="width: 448px;">Read Rate</th>
           </thead>
           {{#each controller.current.types.StreamFlow.content tagName="tbody"}}
           <tr>
-            <td class="list-health-cell">
-              <div class="list-health-box"></div>
-            </td>
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{app}}</span>
             </td>
@@ -285,7 +279,6 @@
         </div>
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
     </div>
@@ -419,7 +412,6 @@
           </ul>
         </div>
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Write Rate" metrics="dataset.write.{id}.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Read Rate (All)" metrics="dataset.read.{id}.count"}}</div>
        <div class="info-box" style="padding: 0;text-align: center;">
@@ -435,15 +427,12 @@
         {{#if controller.types.DatasetFlow.content.length}}
           <table class="table">
           <thead>
-            <th colspan="2">&nbsp;</th>
+            <th>&nbsp;</th>
             <th style="width: 262px;">Write Rate</th>
             <th style="width: 262px;">Read Rate</th>
           </thead>
           {{#each controller.types.DatasetFlow.content tagName="tbody"}}
           <tr>
-            <td class="list-health-cell">
-              <div class="list-health-box"></div>
-            </td>
             <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{typeName}}</span>
             </td>
@@ -499,7 +488,6 @@
         <div class="flow-state"><strong>{{current.currentState}}</strong></div>
 
       </div>
-      <div class="info-box health-box"></div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Successful Requests" metrics="query.success.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart title="Failed Requests" metrics="query.failure.count"}}</div>
     </div>
