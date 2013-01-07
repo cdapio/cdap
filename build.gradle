@@ -1,11 +1,11 @@
 // Pull the JS plugin from a Maven Repo
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.eriwen:gradle-js-plugin:1.0.3'
-    }
+repositories {
+  mavenCentral()
+  dependencies {
+    classpath 'com.eriwen:gradle-js-plugin:1.1'
+   }
+ }
 }
 // Invoke the plugin
 apply plugin: 'js'
