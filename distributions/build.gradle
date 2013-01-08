@@ -1,17 +1,3 @@
-apply plugin: 'continuuity'
-
-buildscript {
-  apply from: 'continuuity.gradle'
-}
-
-
-/**
- * Specify all the dependencies
- */
-dependencies {
-
-}
-
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
 

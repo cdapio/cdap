@@ -1,9 +1,3 @@
-apply plugin: 'continuuity'
-
-buildscript {
-  apply from: 'continuuity.gradle'
-}
-
 /**
  * Specify all the dependencies
  */

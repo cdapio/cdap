@@ -19,7 +19,7 @@ gitRepos << new GitRepo(name: "performance");
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
     g.load();
-    try {
+	try {
         settings.include(g.getDirectory())
     }
     catch (MissingPropertyException e)
