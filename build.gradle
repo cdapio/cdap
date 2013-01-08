@@ -46,20 +46,18 @@ task thriftJavadocJar(type: Jar, dependsOn:apiJavadoc) {
 dependencies {
 
     /// Internal dependencies.
-    compile elastic([group:'com.continuuity', name: 'common', version: "${version}", changing: true],"common")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true],"data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric',classifier: 'api', version: "${version}", changing: true],"data-fabric")
-    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric',classifier: 'api', version: "${version}", changing: true],"data-fabric")
-
-    // Overlord thrift jar to be compiled.
-    compile elastic([group: 'com.continuuity', name: 'overlord',classifier: 'thrift', version: "${version}", changing: true],"overlord")
-    apiCompile elastic([group: 'com.continuuity', name: 'overlord',classifier: 'thrift', version: "${version}", changing: true],"overlord")
-
-    // Self dependencies.
+  compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    //compile elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
+    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+	
+	// Overlord thrift jar to be compiled.
     compile thriftJar.outputs.files
-
-    //clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    //clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
+	apiCompile thriftJar.outputs.files
+	
+    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
     // External dependencies.
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
@@ -105,29 +103,6 @@ jar.dependsOn logglyJar
 jar.dependsOn thriftJar
 
 
-/**
- * Generate thrift files.
- */
-//task thrift
-//thrift {
-//    group = 'Continuuity'
-//    description = 'Generates thrift stubs'
-//    files = fileTree(dir: 'src/main/thrift').matching{ include '*.thrift'}
-//    doFirst {
-//      println 'Generating thrift stubs ...'
-//    }
-//    exec {
-//        executable = 'thrift'
-//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/thrift/java', files.collect { relativePath(it)}. join(",")]
-//    }
-//    doLast {
-//      println 'Thrift stubs generation done ...'
-//    }
-//}
-
-/**
- * Exclude any config xml from jar
- */
 jar.exclude '*.xml'
 
 artifacts {
