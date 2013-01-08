@@ -19,8 +19,8 @@ if (version == null || version.isEmpty() || version == 'unspecified')
 }
 setDefault('groupId', 'com.continuuity')
 setDefault('artifactId', projectDir.name)
-setDefault('artifactoryUsername', 'gradle');
-setDefault('artifactoryPassword', '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy');
+setDefault('nexusUsername', 'gradle');
+setDefault('nexusPassword', '{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy');
 setDefault('useMavenLocal', 'true');
 
 /// Define artifact repositories.
@@ -31,24 +31,10 @@ repositories {
     }
     maven {
         credentials {
-            username artifactoryUsername
-            password artifactoryPassword
+            username nexusUsername
+            password nexusPassword
         }
-        url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
-    }
-    maven {
-        credentials {
-            username artifactoryUsername
-            password artifactoryPassword
-        }
-        url "http://repository.continuuity.com:8081/artifactory/libs-snapshot"
-    }
-    maven {
-        credentials {
-            username artifactoryUsername
-            password artifactoryPassword
-        }
-        url "http://repository.continuuity.com:8081/artifactory/libs-release"
+        url "http://nexus.continuuity.com:8081/nexus/content/groups/public"
     }
 }
 

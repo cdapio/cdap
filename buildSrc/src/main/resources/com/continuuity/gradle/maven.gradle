@@ -4,8 +4,11 @@ apply plugin: 'maven'
 uploadArchives {
     repositories {
         repositories.mavenDeployer {
-            repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
-                authentication(userName: artifactoryUsername, password: artifactoryPassword)
+            repository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/releases") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            repository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/snapshots") {
+                authentication(userName: nexusUsername, password: nexusPassword)
             }
             pom.version = version
             pom.artifactId = artifactId
