@@ -1,5 +1,7 @@
 import com.continuuity.gradle.GitRepo;
 
+evaluationDependsOnChildren()
+
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".")
 
 task gitCheckout {
@@ -57,17 +59,15 @@ task javadoc(type: Javadoc, overwrite:true) {
 	}
     group = 'Documentation' 
     description = 'Aggregates javadocs for all projects.'
-    source subprojects.collect { project ->
-        project.sourceSets.main.allJava
-    }
-    source subprojects.collect { project ->
-        project.sourceSets.api.allJava
+    doFirst{
+		source subprojects.collect { project ->
+        	if(project.plugins.findPlugin("java")){
+				project.sourceSets.main.allJava
+			}
+			[]		
+		}
     }
     destinationDir = new File(buildDir, 'javadoc')
-    // Might need a classpath
-    //classpath = files(subprojects.collect { project ->
-    //    project.sourceSets.main.compileClasspath
-    //})
 }
 
 subprojects {
