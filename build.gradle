@@ -10,9 +10,9 @@ dependencies {
 	compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 	
     // Self dependencies.
-    compile sourceSets.api.output
+    compile apiJar.outputs.files
     
-    /// External dependencies.
+	/// External dependencies.
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
     apiCompile group: 'org.jboss.netty', name: 'netty', version: '3.2.4.Final'
 
