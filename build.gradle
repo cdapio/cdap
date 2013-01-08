@@ -10,8 +10,10 @@ def hadoopVersion = '2.0.0-alpha'
 dependencies {
 
     // Self dependencies.
-    compile sourceSets.api.output
+    compile apiJar.outputs.files
 
+	compile libraries.slf4j_api
+	
     // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'com.google.guava', name: 'guava', version: '12.+'
@@ -51,7 +53,7 @@ dependencies {
     compile "org.apache.avro:avro-ipc:$avroVersion"
     compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
     compile "org.apache.flume:flume-ng-core:$flumeVersion"
-	compile elastic("org.apache.flume:flume-ng-core:$flumeVersion", "flume-ng-core")
+	compile "org.apache.flume:flume-ng-core:$flumeVersion"
 }
 
 /**
@@ -68,24 +70,5 @@ task dist(type:  Tar, dependsOn: jar) {
 artifacts {
   archives apiJavadocJar
   archives apiJar
+  'default' apiJar
 }
-
-/**
- * Generate thrift files for test only.
- */
-//task thrift
-//thrift {
-//    group = 'Continuuity'
-//    description = 'Generates thrift stubs'
-//    files = fileTree(dir: 'src/test/thrift').matching{ include '*.thrift'}
-//    doFirst {
-//      println 'Generating thrift stubs ...'
-//    }
-//    exec {
-//        executable = 'thrift'
-//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/test/java', files.collect { relativePath(it)}. join(",")]
-//    }
-//    doLast {
-//      println 'Thrift stubs generation done ...'
-//    }
-//}
