@@ -1,15 +1,3 @@
-apply plugin: 'continuuity'
-
-buildscript {
-    apply from: 'continuuity.gradle'
-}
-
-/*
-tasks.withType(Compile) { 
-    options.compilerArgs << "-Xlint:unchecked"
-} 
-*/
-
 // The versions of our dependencies
 // TODO these are also defined in gateway... how do we ensure they stay in sync
 def avroVersion = '1.6.2'
@@ -63,7 +51,7 @@ dependencies {
     compile "org.apache.avro:avro-ipc:$avroVersion"
     compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
     compile "org.apache.flume:flume-ng-core:$flumeVersion"
-
+	compile elastic("org.apache.flume:flume-ng-core:$flumeVersion", "flume-ng-core")
 }
 
 /**
