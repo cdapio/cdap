@@ -1,7 +1,7 @@
-test {
-	testLogging.showStandardStreams = false
-	jvmArgs '-Xmx512m'
-}
+apply plugin:'java'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
 
 dependencies {
     /// Internal dependencies.
@@ -22,6 +22,11 @@ dependencies {
 
     testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
     testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+}
+
+test {
+	testLogging.showStandardStreams = false
+	jvmArgs '-Xmx512m'
 }
 
 /**
