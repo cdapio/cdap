@@ -1,8 +1,4 @@
-apply plugin: 'continuuity'
-
-buildscript {
-    apply from: 'continuuity.gradle'
-}
+apply plugin:'java'
 
 sourceSets {
     // exclude the loggly appender code from overlord jar
@@ -60,10 +56,10 @@ dependencies {
     apiCompile elastic([group: 'com.continuuity', name: 'overlord',classifier: 'thrift', version: "${version}", changing: true],"overlord")
 
     // Self dependencies.
-    compile sourceSets.thrift.output
+    compile thriftJar.outputs.files
 
-    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
+    //clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    //clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
     // External dependencies.
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
