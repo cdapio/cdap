@@ -1,11 +1,15 @@
-apply plugin:'java'
-
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
+
+apply plugin:'maven'
 
 if(! project.hasProperty('releaseVersion')) {
     throw new InvalidUserDataException("Could not find releaseVersion property.  It should be specified in :distributions/gradle.properties")
 } 
+
+configurations{
+	runtime
+}
 
 gradle.taskGraph.whenReady {taskGraph ->
     if (taskGraph.hasTask(cloud_dist)) {
