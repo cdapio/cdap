@@ -12,12 +12,6 @@ dependencies {
 	cloudRuntime project(":performance")
 }
 
-task printInfo << {
-	println project.groupId
-	println project.name
-	println project.version
-}
-
 task javadoc(type: Javadoc, overwrite: true) {
     group = 'Documentation' 
     description = 'Aggregates API javadocs across all projects.'
@@ -236,12 +230,6 @@ task cloud_dist (type: Tar) {
 
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
-}
-
-task build (overwrite: true) {
-    doLast {
-        println "overwriting :distributions:build as No-Op task for CI build"
-    }
 }
 
 artifacts{
