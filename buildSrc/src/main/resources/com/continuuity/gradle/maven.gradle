@@ -7,7 +7,7 @@ uploadArchives {
             repository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/releases") {
                 authentication(userName: nexusUsername, password: nexusPassword)
             }
-            repository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/snapshots") {
+            snapshotRepository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/snapshots") {
                 authentication(userName: nexusUsername, password: nexusPassword)
             }
             pom.version = version
