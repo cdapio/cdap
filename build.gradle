@@ -1,9 +1,4 @@
 apply plugin:'java'
-// The versions of our dependencies
-// TODO these are also defined in gateway... how do we ensure they stay in sync
-def avroVersion = '1.6.2'
-def flumeVersion = '1.2+'
-def hadoopVersion = '2.0.0-alpha'
 
 /**
  * Specify all the dependencies
@@ -34,12 +29,12 @@ dependencies {
     testCompile group: 'com.sun.jersey', name: 'jersey-core', version:'1.13'
 
     // All hadoop related dependencies
-    compile "org.apache.hadoop:hadoop-common:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-annotations:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-hdfs:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-common:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-api:$hadoopVersion"
-    testCompile "org.apache.hadoop:hadoop-minicluster:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-annotations:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
+    testCompile "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
 
     // Thrift dependencies
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
@@ -49,11 +44,11 @@ dependencies {
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
 
     // flume-ng dependencies
-    compile "org.apache.avro:avro:$avroVersion"
-    compile "org.apache.avro:avro-ipc:$avroVersion"
-    compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$flumeVersion"
-	compile "org.apache.flume:flume-ng-core:$flumeVersion"
+    compile "org.apache.avro:avro:$versions.avroVersion"
+    compile "org.apache.avro:avro-ipc:$versions.avroVersion"
+    compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+	compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
 }
 
 /**
