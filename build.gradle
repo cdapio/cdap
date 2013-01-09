@@ -4,11 +4,6 @@ apply plugin: 'application'
 
 mainClassName = 'com.continuuity.gateway.runtime.Main'
 
-// The versions of our dependencies
-def avroVersion = '1.6.2'
-def flumeVersion = '1.2+'
-
-
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
 } 
@@ -23,10 +18,10 @@ dependencies {
     clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
     // External dependencies.
-    compile "org.apache.avro:avro:$avroVersion"
-    compile "org.apache.avro:avro-ipc:$avroVersion"
-    compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$flumeVersion"
+    compile "org.apache.avro:avro:$versions.avroVersion"
+    compile "org.apache.avro:avro-ipc:$versions.avroVersion"
+    compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
 }
 
 /**
