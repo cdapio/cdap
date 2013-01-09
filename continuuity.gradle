@@ -13,7 +13,7 @@ project.buildscript {
                     username "gradle"
                     password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
                 }
-                url "http://repository.continuuity.com:8081/artifactory/buildsrc"
+                url "http://nexus.continuuity.com:8081/nexus/content/groups/public"
             }
         }
         configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
