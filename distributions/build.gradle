@@ -38,131 +38,117 @@ task javadoc(type: Javadoc, overwrite: true) {
 	}
 }
 
-
-task singlenode_stage_conf (type: Copy) {
-    from project(':singlenode').tasks.getByName('stageConfSingleNode').outputs
-    into "${buildDir}/singlenode/conf" 
-}
-
-task singlenode_stage_lib (type: Copy) {
-    //from project(':singlenode').configurations.getByName('compile')
-    from project(':singlenode').configurations.getByName('runtime')
-    from project(':singlenode').tasks.getByName('jar').outputs
-    from project(':test').tasks.getByName('testJar').outputs
-    into "${buildDir}/singlenode/lib"
-    exclude 'overlord-*-loggly.jar'
-}
-
 import org.apache.tools.ant.filters.ReplaceTokens
 
-task singlenode_stage_bin (type: Copy) {
-    // include generated startscripts
-    from project(':singlenode').tasks.getByName('startScripts').outputs
-    // include project bin directories
-    from project.parent.subprojects.collect { project ->
-        project.file('bin')
-    }
-    into "${buildDir}/singlenode/bin" 
-    exclude 'node'
-    exclude 'far-server'
-    exclude 'run-java'
-    exclude 'flow-config.sh'
-    exclude 'service'
-    exclude 'dfbench'
-    exclude 'event-gen'
-    exclude 'flume-client'
-    exclude 'common*'
-    {->
-		def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-	    cp += ":\$APP_HOME/conf/"
-	    filter(ReplaceTokens, tokens: [classpath: cp])
-	}
-	
-}
 
-task singlenode_stage_docs_api (type: Copy) {
-    from javadoc.outputs 
-    into "${buildDir}/singlenode/docs/api"
-}
-
-task singlenode_stage_examples (type: Copy) {
-    from project(':singlenode').tasks.getByName('copyExamples').outputs 
-    into "${buildDir}/singlenode/examples" 
-}
-
-task singlenode_stage_root (type: Copy) {
-    from project(':singlenode').tasks.getByName('createApiJar').outputs
-    from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
-    from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
-    from project(':singlenode').files('src/dist')
-    into "${buildDir}/singlenode"
-}
-
-
-// these should be build tasks in webapp
-task singlenode_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/developer/client')
-    into "${buildDir}/singlenode/web-app/client" 
-}
-
-task singlenode_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/developer/server')
-    into "${buildDir}/singlenode/web-app/server" 
-}
-
-task singlenode_stage_data {
-    //create/include empty data directory
-    ext.dataDir = new File("${buildDir}/singlenode/data")
-    doLast {
-        ext.dataDir.mkdirs()
-    }
-}
 
 task singlenode_stage_version (type: Copy) {
     //create version file, substituting in the teamcityBuildNumber
-    from "VERSION"
-    into "${buildDir}/singlenode"
-    def versiontxt
-    if( project.hasProperty('teamcityBuildNumber')) {
-        versiontxt = releaseVersion + "-" + teamcityBuildNumber
-    } else {
-        versiontxt = releaseVersion
-    }
+    from("VERSION")
+	def versiontxt
+	if( project.hasProperty('teamcityBuildNumber')) {
+	    versiontxt = releaseVersion + "-" + teamcityBuildNumber
+	} else {
+	    versiontxt = releaseVersion
+	}
 
-    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+	filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+	
+	into "${buildDir}/singlenode"
 }
 
 task singlenode_dist_local (dependsOn: 'singlenode_dist'){
 }
+
 task singlenode_dist (type: Zip) {
+	dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
     group = 'Continuuity'
     description = 'Generates the singlenode distribution zip file'
 
-    baseName = "continuuity"
-    appendix = "developer-edition"
-    version = releaseVersion
-    //classifier = "beta"
+	//root
+	from project(':singlenode').tasks.getByName('createApiJar').outputs
+    from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
+    from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
+    from project(':singlenode').files('src/dist')
+	
+	//bin
+	// include generated startscripts
+    into ("bin"){
+		from project(':singlenode').tasks.getByName('startScripts').outputs
+	    // include project bin directories
+	    from project.parent.subprojects.collect { project ->
+	        project.file('bin')
+	    }
+	
+		exclude 'node'
+	    exclude 'far-server'
+	    exclude 'run-java'
+	    exclude 'flow-config.sh'
+	    exclude 'service'
+	    exclude 'dfbench'
+	    exclude 'event-gen'
+	    exclude 'flume-client'
+	    exclude 'common*'
+	    def cp = project(':singlenode').tasks.getByName('startScripts').classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+		cp += ":\$APP_HOME/conf/"
+		filter(ReplaceTokens, tokens: [classpath: cp])
+	}	 
+    	
+	
+    //create/include empty data directory
+	doFirst{
+		new File("${buildDir}/singlenode/data").mkdirs()
+    }
+
+	//conf
+	from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
+		into "conf"
+	}
+	
+	//distribution
+    into("lib"){
+		from project(':singlenode').configurations.getByName('runtime')
+	    from project(':singlenode').tasks.getByName('jar').outputs
+	    from project(':test').tasks.getByName('testJar').outputs
+	    exclude 'overlord-*-loggly.jar'
+	}
+	
+	//docs
+	into("docs/api"){
+	    from javadoc.outputs 		
+	}
+	
+	//examples
+	into("examples"){
+		from project(':singlenode').tasks.getByName('copyExamples').outputs 	
+	}
+	
+	//webapp
+	into ("web-app/client"){
+		from project(':web-cloud-app').file('build/developer/client')
+	}
+	
+	into("web-app/server"){
+		from project(':web-cloud-app').file('build/developer/server')	
+	}
+	
+	//classifier = "beta"
     if( project.hasProperty('teamcityBuildNumber')) {
         classifier = teamcityBuildNumber
     } else {
         classifier = ""
     }
 
-    from "${buildDir}/singlenode"
-    //into "${baseName}-${appendix}-${version}-${classifier}"
-    into "${baseName}-${appendix}-${version}"
+	baseName = "continuuity"
+	appendix = "developer-edition"
+	version = releaseVersion
 
+    into "${baseName}-${appendix}-${version}"
 }
     
 singlenode_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('singlenode_stage_') }
 }
-
-//tasks.findAll { task -> task.name.startsWith('singlenode_stage_') }.each {
-//    it.dependsOn clean
-//}
-
-
 
 /**
  * Cloud distribution
