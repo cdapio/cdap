@@ -1,6 +1,6 @@
-apply plugin:'java'
 defaultTasks 'build'
 
+task "build"
 //import our single master ant build.xml
 ant.importBuild 'build.xml'
 
@@ -12,7 +12,6 @@ examplesCompile.dependsOn ':singlenode:createApiJar'
 examplesJar.dependsOn ':singlenode:createApiJar'
 
 //set task dependencies to integrate into our master gradle build
-classes.dependsOn 'examplesCompile'
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
