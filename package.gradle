@@ -1,12 +1,6 @@
-apply plugin: 'continuuity'
-
-buildscript {
-  apply from: 'continuuity.gradle'
-}
-
+//evaluationDependsOn(":distribution")
 // import the build.gradle file for the compilation
 apply from: 'build.gradle'
-
 apply plugin: 'application'
 mainClassName = 'com.continuuity.SingleNodeMain'
 
@@ -20,16 +14,27 @@ if(! multiModule) {
 jar.exclude '*.xml'
 
 task javadoc(type: Javadoc, overwrite: true) {
-    group = 'Documentation' 
+    doFirst{
+		source project.parent.subprojects.collect { project ->
+			if(project.plugins.findPlugin("java")){
+				project.sourceSets.api.allJava
+			}
+			[]
+	    }
+		classpath = files(project.parent.subprojects.collect { project ->
+				if(project.plugins.findPlugin("java")){
+					project.sourceSets.main.compileClasspath
+				}
+				[]
+	    })
+	}
+	
+	group = 'Documentation' 
     description = 'Aggregates API javadocs across all projects.'
-    source project.parent.subprojects.collect { project ->
-	project.sourceSets.api.allJava
-    }
+   
     destinationDir = new File(buildDir, 'javadoc')
     // Might need a classpath
-    classpath = files(project.parent.subprojects.collect { project ->
-	project.sourceSets.main.compileClasspath
-    })
+    
 }
 
 // stage the singlenode conf dir
@@ -172,21 +177,28 @@ import org.apache.tools.ant.filters.ReplaceTokens
 project.parent.subprojects.each { p ->
     // skip the common bin scripts which are for distributed mode
     if (p.name != "common") {
-	if (p.file('bin').isDirectory()) {
-	    //println "configuring bin for ${p.name}"
-	    applicationDistribution.from(project(":${p.name}").file('bin')) {
-		into "bin"
-		exclude 'node'
-		exclude 'far-server'
-		exclude 'run-java'
-		exclude 'flow-config.sh'
-		exclude 'flow-client'
-		exclude 'dfbench'
-            def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-		cp += ":\$APP_HOME/conf/"
-		filter(ReplaceTokens, tokens: [classpath: cp])
-	    }
-	} 
+		if (p.file('bin').isDirectory()) {
+			println "startscript: " + p.name
+		    //println "configuring bin for ${p.name}"
+		    applicationDistribution.from(project(":${p.name}").file('bin')) {
+				into "bin"
+				exclude 'node'
+				exclude 'far-server'
+				exclude 'run-java'
+				exclude 'flow-config.sh'
+				exclude 'flow-client'
+				exclude 'dfbench'
+				{->
+					startScripts.classpath.each{
+						println "classpath: " + it
+					}
+				    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+					cp += ":\$APP_HOME/conf/"
+					filter(ReplaceTokens, tokens: [classpath: cp])
+				}
+				
+		    }
+		} 
     }         
 }
 
