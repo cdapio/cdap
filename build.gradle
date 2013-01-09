@@ -71,17 +71,6 @@ task javadoc(type: Javadoc, overwrite:true) {
 }
 
 subprojects {
-    task syncGradles {
-        group = 'Continuuity'
-        description = 'Synchronizes changes to coninuuity.gradle across all sub repositories.'
-        doLast {
-            copy {
-                from "$rootDir/buildSrc/src/main/resources/com/continuuity/gradle/continuuity.gradle"
-                into projectDir
-            }
-        }
-    }
-
     if(!Boolean.valueOf(failfast))
     {	
     	test {
