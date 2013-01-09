@@ -1,5 +1,8 @@
 import com.continuuity.gradle.GitRepo;
-
+apply from:'gradle/versioning.gradle'
+subprojects{
+	version = rootProject.version
+}
 evaluationDependsOnChildren()
 
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".")
@@ -157,8 +160,4 @@ task gitCheckoutBranch {
         }
 
     }
-}
-
-task wrapper(type:Wrapper){
-	gradleVersion = 1.3
 }
