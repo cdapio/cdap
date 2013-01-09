@@ -114,6 +114,17 @@ task singlenode_dist (type: Zip) {
 		from project(':web-cloud-app').file('build/developer/server')	
 	}
 	
+	// VERSION
+	from("VERSION"){
+		def versiontxt
+		if( project.hasProperty('teamcityBuildNumber')) {
+		    versiontxt = releaseVersion + "-" + teamcityBuildNumber
+		} else {
+		    versiontxt = releaseVersion
+		}
+		filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+	}
+	
 	//classifier = "beta"
     if( project.hasProperty('teamcityBuildNumber')) {
         classifier = teamcityBuildNumber
@@ -125,20 +136,7 @@ task singlenode_dist (type: Zip) {
 	appendix = "developer-edition"
 	version = releaseVersion
 
-	from("VERSION"){
-		def versiontxt
-		if( project.hasProperty('teamcityBuildNumber')) {
-		    versiontxt = releaseVersion + "-" + teamcityBuildNumber
-		} else {
-		    versiontxt = releaseVersion
-		}
-		filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-	}
     into "${baseName}-${appendix}-${version}"	
-}
-    
-singlenode_dist.dependsOn {
-    tasks.findAll { task -> task.name.startsWith('singlenode_stage_') }
 }
 
 /**
@@ -170,8 +168,7 @@ task cloud_stage_bin (type: Copy) {
 
 
 task cloud_stage_envconf (type: Copy) {
-
-    from project.parent.subprojects.collect { project ->
+   from project.parent.subprojects.collect { project ->
         // include [service]-env.sh
         project.file('conf')
 
@@ -232,6 +229,7 @@ task cloud_dist (type: Tar) {
     from "${buildDir}/cloud"
     into "${baseName}-${appendix}-${version}"
 }
+
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
 }
