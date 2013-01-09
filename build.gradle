@@ -1,16 +1,8 @@
-// Load the default Continuuity plugin
-apply plugin: 'continuuity'
-
 // Set up the application plugin so we can launch the Gateway from gradle
+apply plugin: 'java'
 apply plugin: 'application'
-mainClassName = 'com.continuuity.gateway.runtime.Main'
 
-/**
- * Add continuuity plugin to the classpath.
- */
-buildscript {
-    apply from: 'continuuity.gradle'
-}
+mainClassName = 'com.continuuity.gateway.runtime.Main'
 
 // The versions of our dependencies
 def avroVersion = '1.6.2'
@@ -22,25 +14,11 @@ tasks.withType(Compile) {
 } 
 
 dependencies {
-
-    /// Internal dependencies.
-    if(multiModule && ! buildingRelease)
-    {
-        compile project(":flow")
-        compile project(":flow").sourceSets.api.output
-        compile project(":data-fabric")
-        compile project(":data-fabric").sourceSets.api.output
-        compile project(":overlord")
-    }
-    else
-    {
-        compile group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'flow', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
-    }
-
+	compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
+	compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+	compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
+	compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
+	
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     clover group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
 
@@ -66,10 +44,12 @@ task generateBinDir(type: Copy) {
     include "*-client"    
     into "$buildDir/bin"
     //rename '(.*)', '$1-gen'
-    def cp = configurations.runtime.getAsPath()
-    cp += ':' + jar.outputs.getFiles().getAsPath()
+    doFirst{
+		def cp = configurations.runtime.getAsPath()
+	    cp += ':' + jar.outputs.getFiles().getAsPath()
 
-    filter(ReplaceTokens, tokens: [classpath: cp])
+	    filter(ReplaceTokens, tokens: [classpath: cp])
+	}
 }
 
 build.dependsOn generateBinDir
