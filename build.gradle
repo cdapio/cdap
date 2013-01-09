@@ -19,8 +19,8 @@ dependencies {
 	compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
 	compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 	
-    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    clover group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
+    clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
     // External dependencies.
     compile "org.apache.avro:avro:$avroVersion"
