@@ -3,9 +3,6 @@ apply plugin:'java'
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
 
-if(! multiModule) {
-    throw new InvalidUserDataException("Invalid invocation: This is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
-}
 if(! project.hasProperty('releaseVersion')) {
     throw new InvalidUserDataException("Could not find releaseVersion property.  It should be specified in :distributions/gradle.properties")
 } 
