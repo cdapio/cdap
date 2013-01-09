@@ -9,7 +9,7 @@ configurations{
 }
 
 dependencies {
-	cloudRuntime group: 'com.continuuity', name: 'performance', version: "${version}", changing: true
+	cloudRuntime project(":performance")
 }
 
 task printInfo << {
