@@ -40,26 +40,6 @@ task javadoc(type: Javadoc, overwrite: true) {
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
-
-
-task singlenode_stage_version (type: Copy) {
-    //create version file, substituting in the teamcityBuildNumber
-    from("VERSION")
-	def versiontxt
-	if( project.hasProperty('teamcityBuildNumber')) {
-	    versiontxt = releaseVersion + "-" + teamcityBuildNumber
-	} else {
-	    versiontxt = releaseVersion
-	}
-
-	filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-	
-	into "${buildDir}/singlenode"
-}
-
-task singlenode_dist_local (dependsOn: 'singlenode_dist'){
-}
-
 task singlenode_dist (type: Zip) {
 	dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
     group = 'Continuuity'
@@ -97,9 +77,11 @@ task singlenode_dist (type: Zip) {
 	
     //create/include empty data directory
 	doFirst{
-		new File("${buildDir}/singlenode/data").mkdirs()
+		new File("${buildDir}/tmp/singlenode/data").mkdirs()
     }
 
+	from("${buildDir}/tmp/singlenode/")
+	
 	//conf
 	from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
 		into "conf"
@@ -143,7 +125,16 @@ task singlenode_dist (type: Zip) {
 	appendix = "developer-edition"
 	version = releaseVersion
 
-    into "${baseName}-${appendix}-${version}"
+	from("VERSION"){
+		def versiontxt
+		if( project.hasProperty('teamcityBuildNumber')) {
+		    versiontxt = releaseVersion + "-" + teamcityBuildNumber
+		} else {
+		    versiontxt = releaseVersion
+		}
+		filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+	}
+    into "${baseName}-${appendix}-${version}"	
 }
     
 singlenode_dist.dependsOn {
