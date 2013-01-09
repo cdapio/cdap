@@ -3,20 +3,19 @@ evaluationDependsOn(':test')
 
 apply plugin:'maven'
 
-if(! project.hasProperty('releaseVersion')) {
-    throw new InvalidUserDataException("Could not find releaseVersion property.  It should be specified in :distributions/gradle.properties")
-} 
-
 configurations{
-	runtime
+	cloudRuntime //runtime deps needed for cloud dist
+	distributions
 }
 
-gradle.taskGraph.whenReady {taskGraph ->
-    if (taskGraph.hasTask(cloud_dist)) {
-        dependencies {
-            runtime group: 'com.continuuity', name: 'performance', version: "${version}", changing: true
-        }
-    }
+dependencies {
+	cloudRuntime group: 'com.continuuity', name: 'performance', version: "${version}", changing: true
+}
+
+task printInfo << {
+	println project.groupId
+	println project.name
+	println project.version
 }
 
 task javadoc(type: Javadoc, overwrite: true) {
@@ -47,8 +46,14 @@ import org.apache.tools.ant.filters.ReplaceTokens
 task singlenode_dist (type: Zip) {
 	dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
     group = 'Continuuity'
-    description = 'Generates the singlenode distribution zip file'
+    
+	baseName = "continuuity"
+	appendix = "developer-edition"
+	version = releaseVersion
+    into "${baseName}-${appendix}-${version}"	
+	description = 'Generates the singlenode distribution zip file'
 
+	//copySpec:
 	//root
 	from project(':singlenode').tasks.getByName('createApiJar').outputs
     from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
@@ -135,12 +140,7 @@ task singlenode_dist (type: Zip) {
     } else {
         classifier = ""
     }
-
-	baseName = "continuuity"
-	appendix = "developer-edition"
-	version = releaseVersion
-
-    into "${baseName}-${appendix}-${version}"	
+	ext.distName = "${baseName}-${appendix}"
 }
 
 /**
@@ -153,7 +153,7 @@ task cloud_stage_lib (type: Copy) {
     // subprojects because it results in multiple versions of same jar
     from project(':singlenode').configurations.getByName('runtime')
     // performance jar only goes in cloud_dist
-    from project.configurations.getByName('runtime')
+    from project.configurations.getByName('cloudRuntime')
     into "${buildDir}/cloud/lib"
 
 }
@@ -167,12 +167,11 @@ task cloud_stage_bin (type: Copy) {
     exclude 'node'
     def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
     filter(ReplaceTokens, tokens: [classpath: cp])
-
 }
 
 
 task cloud_stage_envconf (type: Copy) {
-   from project.parent.subprojects.collect { project ->
+    from project.parent.subprojects.collect { project ->
         // include [service]-env.sh
         project.file('conf')
 
@@ -210,7 +209,6 @@ task cloud_stage_version (type: Copy) {
     } else {
         versiontxt = releaseVersion
     }
-
     filter(ReplaceTokens, tokens: [cversion: versiontxt ])
 }
 
@@ -232,12 +230,13 @@ task cloud_dist (type: Tar) {
 
     from "${buildDir}/cloud"
     into "${baseName}-${appendix}-${version}"
+	
+	ext.distName = "${baseName}-${appendix}"
 }
 
 cloud_dist.dependsOn {
     tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
 }
-
 
 task build (overwrite: true) {
     doLast {
@@ -245,82 +244,26 @@ task build (overwrite: true) {
     }
 }
 
-// upload and archive singlenode distribution zip and rotate symlink to always point to the latest
-task upload_singlenode_dist (dependsOn: singlenode_dist) {
-    group = 'Distribution'
-    description = 'creates/archives singlenode distribution zip to configured target server'
-
-    doLast {
-        // first make sure destination 'incoming' dir exists
-        ant.sshexec(host: 'staging.continuuity.com',
-        username: 'deploy',
-        keyfile: "$System.env.HOME/.ssh/deploy_key",
-        trust: 'true',
-        verbose: 'true',
-        failonerror: 'true',
-        command: "mkdir -p distributions/${singlenode_dist.baseName}/incoming")
-
-        // upload to incoming dir
-        println "uploading ${singlenode_dist.archiveName} to staging.continuuity.com using key $System.env.HOME/.ssh/deploy_key"
-        ant.scp(file: singlenode_dist.archivePath, toDir: "deploy@staging.continuuity.com:~/distributions/${singlenode_dist.baseName}/incoming", keyfile: "$System.env.HOME/.ssh/deploy_key")
-
-        // construct cmd to move uploaded zip to /YYYY/mm/dd/, and symlink to it (replacing any previous symlinks)
-        ext.archive_cmd = 'cd distributions && YEAR=`date +%Y` && MONTH=`date +%m` && DAY=`date +%d`' + " && mkdir -p ${singlenode_dist.baseName}" + '/$YEAR/$MONTH/$DAY'
-        ext.archive_cmd += ' && mv --backup --suffix=$(date +-%H:%M:%S)' + " ${singlenode_dist.baseName}/incoming/"
-        ext.archive_cmd += "${singlenode_dist.archiveName} ${singlenode_dist.baseName}" + '/$YEAR/$MONTH/$DAY/.'
-        ext.archive_cmd += ' && ln -s $YEAR/$MONTH/$DAY/' + "${singlenode_dist.archiveName} ${singlenode_dist.baseName}" + '/latest.zip.new'
-        ext.archive_cmd += " && mv -Tf ${singlenode_dist.baseName}/latest.zip.new"
-        ext.archive_cmd += " ${singlenode_dist.baseName}/${singlenode_dist.baseName}-${singlenode_dist.appendix}-${singlenode_dist.version}.${singlenode_dist.extension}"
-        println ext.archive_cmd
-
-        // sshexec the archiving cmd
-        ant.sshexec(host: 'staging.continuuity.com',
-        username: 'deploy',
-        keyfile: "$System.env.HOME/.ssh/deploy_key",
-        trust: 'true',
-        verbose: 'true',
-        failonerror: 'true',
-        command: ext.archive_cmd)
-    }
+artifacts{
+	distributions singlenode_dist
+	distributions cloud_dist
 }
 
-
-// upload and archive cloud distribution zip and rotate symlink to always point to the latest
-task upload_cloud_dist (dependsOn: cloud_dist) {
-    group = 'Distribution'
-    description = 'creates/archives distribution zip to configured target server'
-
-    doLast {
-        // first make sure destination 'incoming' dir exists
-        ant.sshexec(host: 'staging.continuuity.com',
-        username: 'deploy',
-        keyfile: "$System.env.HOME/.ssh/deploy_key",
-        trust: 'true',
-        verbose: 'true',
-        failonerror: 'true',
-        command: "mkdir -p distributions/${cloud_dist.baseName}/incoming")
-
-        // upload to incoming dir
-        println "uploading ${cloud_dist.archiveName} to staging.continuuity.com using key $System.env.HOME/.ssh/deploy_key"
-        ant.scp(file: cloud_dist.archivePath, toDir: "deploy@staging.continuuity.com:~/distributions/${cloud_dist.baseName}/incoming", keyfile: "$System.env.HOME/.ssh/deploy_key")
-
-        // construct cmd to move uploaded zip to /YYYY/mm/dd/, and symlink to it (replacing any previous symlinks)
-        ext.archive_cmd = 'cd distributions && YEAR=`date +%Y` && MONTH=`date +%m` && DAY=`date +%d`' + " && mkdir -p ${cloud_dist.baseName}" + '/$YEAR/$MONTH/$DAY'
-        ext.archive_cmd += ' && mv --backup --suffix=$(date +-%H:%M:%S)' + " ${cloud_dist.baseName}/incoming/"
-        ext.archive_cmd += "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/$YEAR/$MONTH/$DAY/.'
-        ext.archive_cmd += ' && ln -s $YEAR/$MONTH/$DAY/' + "${cloud_dist.archiveName} ${cloud_dist.baseName}" + '/latest.zip.new'
-        ext.archive_cmd += " && mv -Tf ${cloud_dist.baseName}/latest.zip.new"
-        ext.archive_cmd += " ${cloud_dist.baseName}/${cloud_dist.baseName}-${cloud_dist.appendix}-${cloud_dist.version}.${cloud_dist.extension}"
-        println ext.archive_cmd
-
-        // sshexec the archiving cmd
-        ant.sshexec(host: 'staging.continuuity.com',
-        username: 'deploy',
-        keyfile: "$System.env.HOME/.ssh/deploy_key",
-        trust: 'true',
-        verbose: 'true',
-        failonerror: 'true',
-        command: ext.archive_cmd)
-    }
+uploadDistributions {
+	repositories {
+		repositories.mavenDeployer {
+			repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
+		    	authentication(userName: artifactoryUsername, password: artifactoryPassword)
+		    }
+			addFilter('singlenode') {artifact, file ->
+				file.name == singlenode_dist.archiveName
+			}
+			addFilter('cloud') {artifact, file ->
+				file.name == cloud_dist.archiveName
+			}
+			pom('singlenode').artifactId = singlenode_dist.distName
+			pom('cloud').artifactId = cloud_dist.distName
+		}
+	}
 }
 
