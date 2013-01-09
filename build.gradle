@@ -1,5 +1,7 @@
 import com.continuuity.gradle.GitRepo;
 apply from:'gradle/versioning.gradle'
+apply from: "gradle/dependencies.gradle"
+
 subprojects{
 	version = rootProject.version
 }

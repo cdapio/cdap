@@ -1,5 +1,4 @@
 ext.versionBase = rootProject.file("version.txt").text.trim()
-
 version = versionBase
 
 ext.finalRelease = project.hasProperty("finalRelease")
@@ -11,5 +10,3 @@ if (finalRelease) {
     //isSnapshot = true
     version += "-SNAPSHOT"
 }
-
-println "continuuity version: $version"
