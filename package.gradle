@@ -4,14 +4,12 @@ apply from: 'build.gradle'
 apply plugin: 'application'
 mainClassName = 'com.continuuity.SingleNodeMain'
 
-if(! multiModule) {
-   throw new InvalidUserDataException("Invalid invocation: SingleNode is strictly a multimodule build at the moment.  Please checkout the 'continuuity' project and build from there.")
-}
-
 /**
  * Exclude any config xml from singlenode jar
  */
 jar.exclude '*.xml'
+
+evaluationDependsOn(":flow")
 
 task javadoc(type: Javadoc, overwrite: true) {
     doFirst{
@@ -188,15 +186,9 @@ project.parent.subprojects.each { p ->
 				exclude 'flow-config.sh'
 				exclude 'flow-client'
 				exclude 'dfbench'
-				{->
-					startScripts.classpath.each{
-						println "classpath: " + it
-					}
-				    def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
-					cp += ":\$APP_HOME/conf/"
-					filter(ReplaceTokens, tokens: [classpath: cp])
-				}
-				
+				def cp = startScripts.classpath.collect { "\$APP_HOME/lib/${it.name}" }.join(':')
+				cp += ":\$APP_HOME/conf/"
+				filter(ReplaceTokens, tokens: [classpath: cp])
 		    }
 		} 
     }         
