@@ -71,14 +71,12 @@ task javadoc(type: Javadoc, overwrite:true) {
 }
 
 subprojects {
-    if(!Boolean.valueOf(failfast))
-    {	
+    if(!Boolean.valueOf(failfast)){	
     	test {
        	    ignoreFailures = true
         }
     }
 }
-
 
 task gitTagAll {
     group = 'ReleaseAdmin'
