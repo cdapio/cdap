@@ -1,3 +1,4 @@
+apply plugin:'java'
 defaultTasks 'build'
 
 //import our single master ant build.xml
