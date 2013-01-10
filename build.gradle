@@ -23,7 +23,7 @@ task gitPull {
     group = 'Git'
     description = 'Pulls the latest commits for all git repos.'
     doLast {
-        masterRepo.pull();
+        //masterRepo.pull();
         for (g in gitRepos) {
             g.pull();
         }
@@ -35,8 +35,8 @@ task gitUpdate {
     group = 'Git'
     description = 'Performs a clone, checkout, and pull on all repositories.'
     doLast {
-        masterRepo.pull();
-        for (g in gitRepos) {
+        //masterRepo.pull();
+        for (g in gradle.gitRepos) {
             g.load();
             g.checkout();
             g.pull();
@@ -48,7 +48,7 @@ task gitStatus  {
     group = 'Git'
     description = 'Checks the status of all git repos'
     doLast {
-        masterRepo.status();
+        //masterRepo.status();
         for (g in gitRepos) {
             g.status();
         }

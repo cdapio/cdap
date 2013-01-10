@@ -16,6 +16,7 @@ gitRepos << new GitRepo(name: "examples", branch: "gradle-refactoring" );
 gitRepos << new GitRepo(name: "singlenode", branch: "gradle-refactoring" );
 gitRepos << new GitRepo(name: "performance", branch: "gradle-refactoring" );
 
+gradle.ext.gitRepos = gitRepos
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
     g.load();
