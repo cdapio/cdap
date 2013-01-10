@@ -251,7 +251,7 @@ public class RemoteOperationExecutor
               throws OperationException, TException {
             return client.execute(context, getQueueInfo);
           }
-        });
+        }, this.longClientProvider);
   }
 
   @Override
