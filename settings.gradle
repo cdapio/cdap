@@ -16,28 +16,17 @@ gitRepos << new GitRepo(name: "examples", branch: "gradle-refactoring" );
 gitRepos << new GitRepo(name: "singlenode", branch: "gradle-refactoring" );
 gitRepos << new GitRepo(name: "performance", branch: "gradle-refactoring" );
 
+//workaround to share the repo definition with the rootproject that has the git tasks declared
 gradle.ext.gitRepos = gitRepos
 /// Adds separate git repo based subprojects.
 for (g in gitRepos) {
-    g.load();
-	try {
-        settings.include(g.getDirectory())
-    }
-    catch (MissingPropertyException e)
-    {
-        // This is expected when imported from the continuuity plugin.
-    }
+	g.load();
+	include(g.getDirectory())
 }
 
 project(':singlenode').buildFileName = 'package.gradle'
 
 /// Adds subprojects included in the master repository.
-try {
-    settings.include('distributions')
-    settings.include('test')
-}
-catch (MissingPropertyException e)
-{
-    // This is expected when imported from the continuuity plugin.
-}
+include('distributions')
+include('test')
 
