@@ -10,15 +10,7 @@ buildscript {
                 username "gradle"
                 password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
             }
-            url "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local/"
-        }
-        maven {
-            credentials {
-                username "gradle"
-                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
-            }
-            url "http://repository.continuuity" +
-                    ".com:8081/artifactory/remote-repos/"
+            url "http://nexus.continuuity.com:8081/nexus/content/groups/smartifacts"
         }
     }
 

@@ -231,8 +231,8 @@ artifacts{
 uploadDistributions {
 	repositories {
 		repositories.mavenDeployer {
-			repository(url: "http://repository.continuuity.com:8081/artifactory/continuuity-gradle-local") {
-		    	authentication(userName: artifactoryUsername, password: artifactoryPassword)
+			repository(url: "http://nexus.continuuity.com:8081/nexus/service/local/staging/deploy/maven2") {
+		    	authentication(userName: nexusUsername, password: nexusPassword)
 		    }
 			addFilter('singlenode') {artifact, file ->
 				file.name == singlenode_dist.archiveName
