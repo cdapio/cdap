@@ -231,9 +231,12 @@ artifacts{
 uploadDistributions {
 	repositories {
 		repositories.mavenDeployer {
-			repository(url: "http://nexus.continuuity.com:8081/nexus/service/local/staging/deploy/maven2") {
-		    	authentication(userName: nexusUsername, password: nexusPassword)
-		    }
+                        repository(url: "http://nexus.continuuity.com:8081/nexus/service/local/staging/deploy/maven2") {
+                            authentication(userName: nexusUsername, password: nexusPassword)
+                        }
+                        snapshotRepository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/snapshots") {
+                            authentication(userName: nexusUsername, password: nexusPassword)
+                        }
 			addFilter('singlenode') {artifact, file ->
 				file.name == singlenode_dist.archiveName
 			}
