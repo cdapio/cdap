@@ -6,6 +6,7 @@ apply from: "gradle/init-repositories.gradle"
 apply from: "gradle/dependencies.gradle"
 apply from: "gradle/maven.gradle"
 apply from: "gradle/sonar.gradle"
+apply from: "gradle/checkstyle.gradle"
 
 buildscript {
     repositories {
