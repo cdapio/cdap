@@ -6,6 +6,7 @@ ext {
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2+'
 versions.hadoopVersion = '2.0.0-alpha'
+versions.jerseyVersion = '1.13'
 
 librariess.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
 librariess.logback_core = "ch.qos.logback:logback-core:1.0.+"
