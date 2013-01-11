@@ -34,6 +34,19 @@ buildscript {
     }
 }
 
+
+allprojects{ proj ->
+	proj.plugins.withType(org.gradle.api.plugins.JavaPlugin){ // lazy as plugin not applied yet
+		idea {
+		 	module {
+		    	sourceDirs += sourceSets.api.java.srcDirs
+		        sourceDirs += sourceSets.api.resources.srcDirs
+		        scopes.COMPILE.plus.add(configurations.apiCompile)
+		        scopes.COMPILE.plus.add(configurations.apiRuntime)
+			}
+		}
+	}	
+}
 subprojects{
 	version = rootProject.version
 }
