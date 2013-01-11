@@ -1,20 +1,4 @@
-apply plugin: 'continuuity'
-
-buildscript {
-    apply from: 'continuuity.gradle'
-}
-
-/*
-tasks.withType(Compile) { 
-    options.compilerArgs << "-Xlint:unchecked"
-} 
-*/
-
-// The versions of our dependencies
-// TODO these are also defined in gateway... how do we ensure they stay in sync
-def avroVersion = '1.6.2'
-def flumeVersion = '1.2+'
-def hadoopVersion = '2.0.0-alpha'
+apply plugin:'java'
 
 /**
  * Specify all the dependencies
@@ -22,8 +6,9 @@ def hadoopVersion = '2.0.0-alpha'
 dependencies {
 
     // Self dependencies.
-    compile sourceSets.api.output
+    compile apiJar.outputs.files
 
+	compile librariess.slf4j_api
     // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'com.google.guava', name: 'guava', version: '12.+'
@@ -38,18 +23,18 @@ dependencies {
     // Service discovery server.
     compile group: 'javax.ws.rs', name:'jsr311-api', version:'1.1.1'
     compile group: 'org.mortbay.jetty', name:'jetty', version:'6.1.22'
-    testCompile group: 'com.sun.jersey', name: 'jersey-server', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-servlet', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-client', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-core', version:'1.13'
+    testCompile group: 'com.sun.jersey', name: 'jersey-server', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-servlet', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-client', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-core', version:"$versions.jerseyVersion"
 
     // All hadoop related dependencies
-    compile "org.apache.hadoop:hadoop-common:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-annotations:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-hdfs:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-common:$hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-api:$hadoopVersion"
-    testCompile "org.apache.hadoop:hadoop-minicluster:$hadoopVersion"
+    compile "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-annotations:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
+    compile "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
+    testCompile "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
 
     // Thrift dependencies
     compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
@@ -59,45 +44,11 @@ dependencies {
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
 
     // flume-ng dependencies
-    compile "org.apache.avro:avro:$avroVersion"
-    compile "org.apache.avro:avro-ipc:$avroVersion"
-    compile "org.apache.flume:flume-ng-sdk:$flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$flumeVersion"
-
+    compile "org.apache.avro:avro:$versions.avroVersion"
+    compile "org.apache.avro:avro-ipc:$versions.avroVersion"
+    compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+	compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
 }
 
-/**
- * Create Release TAR ball
- */
-task dist(type:  Tar, dependsOn: jar) {
-    group = 'Continuuity'
-    description = 'Generates distribution tar file.'
-    from('bin') {
-        into('common/bin')
-    }
-}
 
-artifacts {
-  archives apiJavadocJar
-  archives apiJar
-}
-
-/**
- * Generate thrift files for test only.
- */
-//task thrift
-//thrift {
-//    group = 'Continuuity'
-//    description = 'Generates thrift stubs'
-//    files = fileTree(dir: 'src/test/thrift').matching{ include '*.thrift'}
-//    doFirst {
-//      println 'Generating thrift stubs ...'
-//    }
-//    exec {
-//        executable = 'thrift'
-//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/test/java', files.collect { relativePath(it)}. join(",")]
-//    }
-//    doLast {
-//      println 'Thrift stubs generation done ...'
-//    }
-//}
