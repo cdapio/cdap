@@ -4,7 +4,6 @@ apply from: "gradle/dependencies.gradle"
 
 buildscript {
     repositories {
-        mavenLocal()
         maven {
             credentials {
                 username "gradle"
