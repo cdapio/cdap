@@ -1,9 +1,7 @@
 apply plugin: 'groovy'
-apply from: 'src/main/resources/com/continuuity/gradle/allprojects.gradle'
-apply from: 'src/main/resources/com/continuuity/gradle/maven.gradle'
+apply plugin: 'idea'
 
 dependencies {
     compile gradleApi()
-    groovy localGroovy()
-    runtime 'bmuschko:gradle-clover-plugin:0.5.2'
+    compile localGroovy()
 }

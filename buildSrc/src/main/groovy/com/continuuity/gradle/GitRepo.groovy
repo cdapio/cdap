@@ -86,7 +86,7 @@ class GitRepo {
         File gitDir = new File(destination, ".git");
         if(gitDir.exists())
         {
-            String cmd = "git pull";
+            String cmd = "git pull origin $branch";
             println "$name: $cmd";
             runCommand(cmd, destination);
         }

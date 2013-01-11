@@ -1,0 +1,23 @@
+allprojects{
+	// The contents of this file applies to all sub-projects.
+	apply plugin: 'maven'
+    project.plugins.withType(org.gradle.api.plugins.JavaPlugin){
+		uploadArchives {
+		    repositories {
+		        repositories.mavenDeployer {
+                            repository(url: "http://nexus.continuuity.com:8081/nexus/service/local/staging/deploy/maven2") {
+                                authentication(userName: nexusUsername, password: nexusPassword)
+                            }
+                            snapshotRepository(url: "http://nexus.continuuity.com:8081/nexus/content/repositories/snapshots") {
+                                authentication(userName: nexusUsername, password: nexusPassword)
+                            }
+		        }
+		    }
+		}
+
+		install {
+		    group = 'Upload'
+		}
+	
+	}
+}

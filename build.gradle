@@ -1,6 +1,39 @@
 import com.continuuity.gradle.GitRepo;
+apply from: "gradle/apply-continuuity-plugin.gradle"
+apply from: 'gradle/versioning.gradle'
+apply from: "gradle/elastic.gradle"
+apply from: "gradle/init-repositories.gradle"
+apply from: "gradle/dependencies.gradle"
+apply from: "gradle/maven.gradle"
+apply from: "gradle/sonar.gradle"
 
-apply plugin: 'continuuity'
+buildscript {
+    repositories {
+        maven {
+            credentials {
+                username "gradle"
+                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+            }
+            url "http://nexus.continuuity.com:8081/nexus/content/groups/smartifacts"
+        }
+    }
+
+    // Changes the resolution strategy for snapshot
+    configurations.classpath {
+        resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    }
+    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+    dependencies {
+        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.1-SNAPSHOT"
+    }
+}
+
+subprojects{
+	version = rootProject.version
+}
+evaluationDependsOnChildren()
 
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".")
 
@@ -8,7 +41,7 @@ task gitCheckout {
     group = 'Git'
     description = 'Checkout the specified branch.'
     doLast {
-        for (g in gitRepos) {
+        for (g in gradle.gitRepos) {
             g.checkout();
         }
     }
@@ -18,8 +51,8 @@ task gitPull {
     group = 'Git'
     description = 'Pulls the latest commits for all git repos.'
     doLast {
-        masterRepo.pull();
-        for (g in gitRepos) {
+        //masterRepo.pull();
+        for (g in gradle.gitRepos) {
             g.pull();
         }
 
@@ -30,8 +63,8 @@ task gitUpdate {
     group = 'Git'
     description = 'Performs a clone, checkout, and pull on all repositories.'
     doLast {
-        masterRepo.pull();
-        for (g in gitRepos) {
+        //masterRepo.pull();
+        for (g in gradle.gitRepos) {
             g.load();
             g.checkout();
             g.pull();
@@ -43,60 +76,53 @@ task gitStatus  {
     group = 'Git'
     description = 'Checks the status of all git repos'
     doLast {
-        masterRepo.status();
-        for (g in gitRepos) {
+        //masterRepo.status();
+        for (g in gradle.gitRepos) {
             g.status();
         }
     }
 }
 
 
-task javadoc(type: Javadoc) {
+task javadoc(type: Javadoc, overwrite:true) {
+	doFirst{
+		classpath = files(subprojects.collect { project ->
+	        project.sourceSets.main.compileClasspath
+	    })
+	}
     group = 'Documentation' 
     description = 'Aggregates javadocs for all projects.'
-    source subprojects.collect { project ->
-        project.sourceSets.main.allJava
-    }
-    source subprojects.collect { project ->
-        project.sourceSets.api.allJava
+    doFirst{
+		source subprojects.collect { project ->
+        	if(project.plugins.findPlugin("java")){
+				project.sourceSets.main.allJava
+			}
+			[]		
+		}
     }
     destinationDir = new File(buildDir, 'javadoc')
-    // Might need a classpath
-    classpath = files(subprojects.collect { project ->
-        project.sourceSets.main.compileClasspath
-    })
 }
 
 subprojects {
-    task syncGradles {
-        group = 'Continuuity'
-        description = 'Synchronizes changes to coninuuity.gradle across all sub repositories.'
-        doLast {
-            copy {
-                from "$rootDir/buildSrc/src/main/resources/com/continuuity/gradle/continuuity.gradle"
-                into projectDir
-            }
-        }
-    }
-
-    if(!Boolean.valueOf(failfast))
-    {	
+    if(!Boolean.valueOf(failfast)){	
     	test {
        	    ignoreFailures = true
         }
     }
 }
 
-
 task gitTagAll {
     group = 'ReleaseAdmin'
-    description = 'Tags continuuity master and all subproject repos locally with provided tag.  Must specify -PtagName=<tag>'
+    description = 'Tags continuuity master and all subproject repos locally ' +
+            'with provided tag.  Must specify -PtagName=<tag>'
     doLast {
         if (! project.hasProperty('tagName')) {
-            throw new InvalidUserDataException("you are trying to tag all subproject repos, but tagName property is null.  You must supply argument \"-PtagName=<tag>\"")
+            throw new InvalidUserDataException("you are trying to tag all " +
+                    "subproject repos, but tagName property is null.  " +
+                    "You must supply argument \"-PtagName=<tag>\"")
         }
         masterRepo.tag(tagName)
-        for (g in gitRepos) {
+        for (g in gradle.gitRepos) {
             g.tag(tagName)
         }
     }
@@ -105,13 +131,16 @@ task gitTagAll {
 
 task gitPushTagAll {
     group = 'ReleaseAdmin'
-    description = 'Pushes a local tag to remote repo for all continuuity master and subproject repos.  Must specify -PtagName=<tag>'
+    description = 'Pushes a local tag to remote repo for all continuuity ' +
+            'master and subproject repos.  Must specify -PtagName=<tag>'
     doLast {
         if (! project.hasProperty('tagName')) {
-            throw new InvalidUserDataException("you are trying to push a tag for all subproject repos, but tagName property is null.  You must supply argument \"-PtagName=<tag>\"")
+            throw new InvalidUserDataException("you are trying to push a " +
+                    "tag for all subproject repos, but tagName property " +
+                    "is null.  You must supply argument \"-PtagName=<tag>\"")
         }
         masterRepo.pushTag(tagName)
-        for (g in gitRepos) {
+        for (g in gradle.gitRepos) {
             g.pushTag(tagName)
         }
     }
@@ -120,13 +149,16 @@ task gitPushTagAll {
 
 task gitBranchAll {
     group = 'ReleaseAdmin'
-    description = 'Branch continuuity master and all subproject repos locally with provided branch.  Must specify -PbranchName=<branch>'
+    description = 'Branch continuuity master and all subproject repos locally ' +
+            'with provided branch.  Must specify -PbranchName=<branch>'
     doLast {
         if (! project.hasProperty('branchName')) {
-            throw new InvalidUserDataException("you are trying to branch all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+            throw new InvalidUserDataException("you are trying to branch all " +
+                    "subproject repos, but branchName property is null.  " +
+                    "You must supply argument \"-PbranchName=<branch>\"")
         }
         masterRepo.branch(branchName)
-        for (g in gitRepos) {
+        for (g in gradle.gitRepos) {
             g.branch(branchName)
         }
     }
@@ -134,13 +166,17 @@ task gitBranchAll {
 
 task gitPushBranchAll {
     group = 'ReleaseAdmin'
-    description = 'Pushes a local branch to remote repo for all continuuity master and subproject repos.  Must specify -PbranchName=<branch>'
+    description = 'Pushes a local branch to remote repo for all continuuity ' +
+            'master and subproject repos.  Must specify -PbranchName=<branch>'
     doLast {
         if (! project.hasProperty('branchName')) {
-            throw new InvalidUserDataException("you are trying to push a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+            throw new InvalidUserDataException("you are trying to push a " +
+                    "branch for all subproject repos, but branchName " +
+                    "property is null.  You must supply argument " +
+                    "\"-PbranchName=<branch>\"")
         }
         masterRepo.pushBranch(branchName)
-        for (g in gitRepos) {
+        for (g in gradle.gitRepos) {
             g.pushBranch(branchName)
         }
     }
@@ -149,10 +185,14 @@ task gitPushBranchAll {
 
 task gitCheckoutBranch {
     group = 'ReleaseAdmin'
-    description = 'Checkouts specified branch on continuuity and all subproject repos.  Must specify -PbranchName=<branch>'    
+    description = 'Checkouts specified branch on continuuity and all ' +
+            'subproject repos.  Must specify -PbranchName=<branch>'
     doLast {
         if (! project.hasProperty('branchName')) {
-            throw new InvalidUserDataException("you are trying to checkout a branch for all subproject repos, but branchName property is null.  You must supply argument \"-PbranchName=<branch>\"")
+            throw new InvalidUserDataException("you are trying to " +
+                    "checkout a branch for all subproject repos, but " +
+                    "branchName property is null.  You must supply " +
+                    "argument \"-PbranchName=<branch>\"")
         }
 
         ext.gitReposBranch = []
@@ -168,4 +208,3 @@ task gitCheckoutBranch {
 
     }
 }
-

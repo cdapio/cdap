@@ -1,0 +1,23 @@
+buildscript{
+	    repositories {
+	        mavenLocal()
+	        maven {
+	            credentials {
+	                username "gradle"
+	                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
+	            }
+	            url "http://nexus.continuuity.com:8081/nexus/content/groups/smartifacts"
+	        }
+	    }
+
+	    configurations.classpath.resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
+	    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+	    dependencies {
+	        classpath "com.continuuity.gradle:continuuity-plugin:1.0.3-SNAPSHOT"
+	    }
+}
+
+allprojects{ p ->
+	p.apply(plugin:com.continuuity.gradle.ContinuuityPlugin)
+}

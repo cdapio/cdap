@@ -1,0 +1,11 @@
+allprojects{ proj->
+	ext {
+	    elastic = {notation, pname ->
+			if (proj.rootProject.allprojects.find { it.name == pname }) {
+			    return project(":$pname")
+			  } else {
+				return dependencies.create(notation)
+			  }
+	    }
+	}	
+}

@@ -1,29 +1,14 @@
-apply plugin: 'continuuity'
-
-buildscript {
-  apply from: 'continuuity.gradle'
-}
-
+apply plugin:'java'
 /**
  * Specify all the dependencies
  */
 dependencies {
 
-    /// Internal dependencies.
-    if(multiModule && ! buildingRelease)
-    {
-        compile project(":flow")
-        compile project(":data-fabric")
-        compile project(":gateway")
-    }
-    else
-    {
-        compile group: 'com.continuuity', name: 'flow', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true
-    }
+    compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
+    compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
 }
 
 // skip the main java tasks - we only build the test jar in this module

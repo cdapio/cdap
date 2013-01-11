@@ -1,0 +1,4 @@
+continuuity/bin/* /opt/continuuity/bin
+continuuity/conf/* /opt/continuuity/conf
+continuuity/lib/* /opt/continuuity/lib
+continuuity/webapp/* /opt/continuuity/webapp
