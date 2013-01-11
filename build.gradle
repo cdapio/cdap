@@ -1,111 +1,41 @@
 apply plugin:'java'
 
-sourceSets {
-    // exclude the loggly appender code from overlord jar
-    main {
-        java {
-            exclude 'com/continuuity/log/**'
-        }
-    }
-    // isolate the loggly appender code into its own sourceset
-    loggly {
-        java {
-            srcDir 'src/main/java/com/continuuity/log'
-        }
-    }
-
-    // test sourceset still includes loggly tests, so adding a dependency
-    // via classpath
-    test {
-      compileClasspath += loggly.output
-    }
-}
-
-// Builds thrift jar related to overlord with min dependency.
-sourceSets {
-    thrift
-}
-
-task thriftJar(type: Jar) {
-    from sourceSets.thrift.output
-    classifier = "thrift"
-}
-
-task thriftJavadoc(type: Javadoc, dependsOn:thriftJar) {
-    source sourceSets.api.allJava
-    destinationDir = reporting.file("${buildDir}/thrift-docs")
-    classpath = sourceSets.thrift.compileClasspath
-}
-
-task thriftJavadocJar(type: Jar, dependsOn:apiJavadoc) {
-    classifier = "api-javadoc"
-    from thriftJavadoc.destinationDir
+smartyFacts {
+  thrift {
+    generateJavadoc = false
+    generateSource = false
+  }
 }
 
 // Specify all the dependencies.
 dependencies {
-
-    /// Internal dependencies.
+  /// Internal dependencies.
   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    //compile elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
-    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+
+  compile thriftJar.outputs.files
 	
-	// Overlord thrift jar to be compiled.
-    compile thriftJar.outputs.files
-	apiCompile thriftJar.outputs.files
-	
-    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
+  clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+  clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
-    // External dependencies.
-    compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
-    compile group: 'com.google.guava', name: 'guava', version: '11.+'
-    compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
-    compile group: 'org.apache.commons', name: 'commons-math', version: '2.+'
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
-    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
-    compile group: 'mysql', name:'mysql-connector-java', version:'5.1.21'
-    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
-    compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
-    compile group: 'org.apache.mina', name:'mina-integration-jmx', version:'2.0.4'
-    compile group: 'com.ning', name: 'async-http-client', version: '1.7.5'
-    compile group: 'org.fusesource.leveldbjni', name:'leveldbjni-all', version:'1.1'
+  // External dependencies.
+  compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
+  compile group: 'com.google.guava', name: 'guava', version: '11.+'
+  compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
+  compile group: 'org.apache.commons', name: 'commons-math', version: '2.+'
+  compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
+  compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
+  compile group: 'mysql', name:'mysql-connector-java', version:'5.1.21'
+  compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
+  compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
+  compile group: 'org.apache.mina', name:'mina-integration-jmx', version:'2.0.4'
+  compile group: 'com.ning', name: 'async-http-client', version: '1.7.5'
+  compile group: 'org.fusesource.leveldbjni', name:'leveldbjni-all', version:'1.1'
 
-    // external dependencies isolated for loggly appender
-    logglyCompile group: 'log4j', name:'log4j', version: '1.2.16'
-    logglyCompile group: 'com.google.guava', name: 'guava', version: '12.0.1'
-    logglyCompile group: 'ch.qos.logback', name: 'logback-core', version: '1.0.6'
-    logglyCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.6'
-    logglyCompile group: 'commons-codec', name: 'commons-codec', version: '1.4'
-    logglyCompile group: 'commons-io', name: 'commons-io', version: '2.1'
-    logglyCompile group: 'org.mortbay.jetty', name: 'jetty', version: '6.1.26'
-    // for javax/ws/rs/core/MediaType - common uses either jersey-core or jsr311-api
-    logglyCompile group: 'com.sun.jersey', name: 'jersey-core', version: '1.8'
-
-    // All the thrift interfaces and maintanied in a different jar with
-    // classifier thrift.
-    thriftCompile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
-    thriftCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.5.+'
-
+  // All the thrift interfaces and maintanied in a different jar with classifier thrift.
+  thriftCompile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
+  thriftCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.5.+'
 }
-
-// build a "fat" jar for loggly, containing all dependencies
-task logglyJar(type: Jar) {
-  classifier = 'loggly'
-  from sourceSets.loggly.output
-  from { configurations.logglyCompile.collect { it.isDirectory() ? it : zipTree(it) } }
-}
-
-// ensure loggly gets built with any standard 'gradle build'
-jar.dependsOn logglyJar
-jar.dependsOn thriftJar
-
 
 jar.exclude '*.xml'
-
-artifacts {
-  archives logglyJar
-  archives thriftJar
-}
