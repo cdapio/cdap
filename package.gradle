@@ -39,7 +39,6 @@ task javadoc(type: Javadoc, overwrite: true) {
 task stageConfSingleNode (type: Copy) {
     group 'Deployment'
     description "Copies src/main/resources to \$buildDir/conf for singlenode"
-    //println "staging conf for singlenode"
     from "${sourceSets.main.output.resourcesDir}"
     include 'logback.xml'
     include 'continuuity-site.xml'
@@ -176,8 +175,6 @@ project.parent.subprojects.each { p ->
     // skip the common bin scripts which are for distributed mode
     if (p.name != "common") {
 		if (p.file('bin').isDirectory()) {
-			println "startscript: " + p.name
-		    //println "configuring bin for ${p.name}"
 		    applicationDistribution.from(project(":${p.name}").file('bin')) {
 				into "bin"
 				exclude 'node'
