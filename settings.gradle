@@ -6,15 +6,15 @@ GitRepo.baseDir=rootProject.projectDir;
 
 // Declare the git repos that will comprise the master build.
 ext.gitRepos = []
-gitRepos << new GitRepo(name: "gateway", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "common", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "data-fabric", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "flow", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "overlord", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "web-cloud-app", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "examples", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "singlenode", branch: "gradle-refactoring" );
-gitRepos << new GitRepo(name: "performance", branch: "gradle-refactoring" );
+gitRepos << new GitRepo(name: "gateway");
+gitRepos << new GitRepo(name: "common");
+gitRepos << new GitRepo(name: "data-fabric");
+gitRepos << new GitRepo(name: "flow");
+gitRepos << new GitRepo(name: "overlord");
+gitRepos << new GitRepo(name: "web-cloud-app");
+gitRepos << new GitRepo(name: "examples");
+gitRepos << new GitRepo(name: "singlenode");
+gitRepos << new GitRepo(name: "performance");
 
 //workaround to share the repo definition with the rootproject that has the git tasks declared
 gradle.ext.gitRepos = gitRepos
