@@ -1,8 +1,4 @@
-apply plugin: 'continuuity'
-
-buildscript {
-    apply from: 'continuuity.gradle'
-}
+apply plugin:'java'
 
 sourceSets {
     // exclude the loggly appender code from overlord jar
@@ -50,26 +46,16 @@ task thriftJavadocJar(type: Jar, dependsOn:apiJavadoc) {
 dependencies {
 
     /// Internal dependencies.
-    if(multiModule && ! buildingRelease) {
-        compile project(":common")
-        compile project(":data-fabric")
-        compile project(":data-fabric").sourceSets.api.output
-        apiCompile project(":data-fabric").sourceSets.api.output
-
-        // Overlord thrift jar to be compiled.
-        compile project(":overlord").sourceSets.thrift.output
-        apiCompile project(":overlord").sourceSets.thrift.output
-    } else {
-        compile group: 'com.continuuity', name: 'common', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-        compile group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
-        apiCompile group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    }
-
-    // Self dependencies.
-    compile sourceSets.thrift.output
-
+  compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    //compile elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
+    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+	
+	// Overlord thrift jar to be compiled.
+    compile thriftJar.outputs.files
+	apiCompile thriftJar.outputs.files
+	
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
@@ -117,29 +103,6 @@ jar.dependsOn logglyJar
 jar.dependsOn thriftJar
 
 
-/**
- * Generate thrift files.
- */
-//task thrift
-//thrift {
-//    group = 'Continuuity'
-//    description = 'Generates thrift stubs'
-//    files = fileTree(dir: 'src/main/thrift').matching{ include '*.thrift'}
-//    doFirst {
-//      println 'Generating thrift stubs ...'
-//    }
-//    exec {
-//        executable = 'thrift'
-//        args = [ '--gen', 'java:beans, hashcode', '-out', 'src/thrift/java', files.collect { relativePath(it)}. join(",")]
-//    }
-//    doLast {
-//      println 'Thrift stubs generation done ...'
-//    }
-//}
-
-/**
- * Exclude any config xml from jar
- */
 jar.exclude '*.xml'
 
 artifacts {
