@@ -23,10 +23,10 @@ dependencies {
     // Service discovery server.
     compile group: 'javax.ws.rs', name:'jsr311-api', version:'1.1.1'
     compile group: 'org.mortbay.jetty', name:'jetty', version:'6.1.22'
-    testCompile group: 'com.sun.jersey', name: 'jersey-server', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-servlet', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-client', version:'1.13'
-    testCompile group: 'com.sun.jersey', name: 'jersey-core', version:'1.13'
+    testCompile group: 'com.sun.jersey', name: 'jersey-server', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-servlet', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-client', version:"$versions.jerseyVersion"
+    testCompile group: 'com.sun.jersey', name: 'jersey-core', version:"$versions.jerseyVersion"
 
     // All hadoop related dependencies
     compile "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
@@ -51,14 +51,4 @@ dependencies {
 	compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
 }
 
-/**
- * Create Release TAR ball
- */
-task dist(type:  Tar, dependsOn: jar) {
-    group = 'Continuuity'
-    description = 'Generates distribution tar file.'
-    from('bin') {
-        into('common/bin')
-    }
-}
 
