@@ -1,6 +1,7 @@
 apply plugin: 'groovy'
+apply plugin: 'idea'
 
 dependencies {
     compile gradleApi()
-    groovy localGroovy()
+    compile localGroovy()
 }

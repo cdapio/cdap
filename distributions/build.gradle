@@ -2,14 +2,10 @@ evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
 
 apply plugin:'maven'
+apply plugin:'ubuntu'
 
 configurations{
-	cloudRuntime //runtime deps needed for cloud dist
 	distributions
-}
-
-dependencies {
-	cloudRuntime project(":performance")
 }
 
 task javadoc(type: Javadoc, overwrite: true) {
@@ -36,6 +32,7 @@ task javadoc(type: Javadoc, overwrite: true) {
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.tasks.bundling.Compression
 
 task singlenode_dist (type: Zip) {
 	dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
@@ -43,7 +40,6 @@ task singlenode_dist (type: Zip) {
     
 	baseName = "continuuity"
 	appendix = "developer-edition"
-	version = releaseVersion
     into "${baseName}-${appendix}-${version}"	
 	description = 'Generates the singlenode distribution zip file'
 
@@ -102,10 +98,18 @@ task singlenode_dist (type: Zip) {
 	into("docs/api"){
 	    from javadoc.outputs 		
 	}
-	
+
 	//examples
 	into("examples"){
-		from project(':singlenode').tasks.getByName('copyExamples').outputs 	
+        from project(':examples').projectDir
+        exclude "README.md"
+        exclude "build/"
+        exclude ".gitignore"
+        exclude "**/*.gradle"
+        exclude "**/classes/"
+        exclude "*/*.jar"
+        exclude "TwitterScanner/"
+        exclude "PayvmentDemo/"
 	}
 	
 	//webapp
@@ -137,102 +141,89 @@ task singlenode_dist (type: Zip) {
 	ext.distName = "${baseName}-${appendix}"
 }
 
-/**
- * Cloud distribution
- */
-
-task cloud_stage_lib (type: Copy) {
-
-    // assuming dependencies are same as singlenode.  cant aggregate across
-    // subprojects because it results in multiple versions of same jar
-    from project(':singlenode').configurations.getByName('runtime')
-    // performance jar only goes in cloud_dist
-    from project.configurations.getByName('cloudRuntime')
-    into "${buildDir}/cloud/lib"
-
-}
-
-task cloud_stage_bin (type: Copy) {
-
-    from project.parent.subprojects.collect { project ->
-        project.file('bin')
-    }
-    into "${buildDir}/cloud/bin"
-    exclude 'node'
-    def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
-    filter(ReplaceTokens, tokens: [classpath: cp])
-}
-
-
-task cloud_stage_envconf (type: Copy) {
-    from project.parent.subprojects.collect { project ->
-        // include [service]-env.sh
-        project.file('conf')
-
-    }
-    include "*-env.sh"
-    into "${buildDir}/cloud/conf"
-}
-
-// these should be build tasks in webapp
-task cloud_stage_web_client (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/cloud/client')
-    into "${buildDir}/cloud/web-app/client"
-}
-
-task cloud_stage_web_server (type: Copy, dependsOn: ':web-cloud-app:build') {
-    from project(':web-cloud-app').file('build/cloud/server')
-    into "${buildDir}/cloud/web-app/server"
-}
-
-task cloud_stage_log {
-    //create/include empty log directory 
-    ext.logDir = new File("${buildDir}/cloud/logs")
-    doLast {
-        ext.logDir.mkdirs()
-    }
-}
-
-task cloud_stage_version (type: Copy) {
-    //create version file, substituting in the teamcityBuildNumber
-    from "VERSION"
-    into "${buildDir}/cloud"
-    def versiontxt
-    if( project.hasProperty('teamcityBuildNumber')) {
-        versiontxt = releaseVersion + "-" + teamcityBuildNumber
-    } else {
-        versiontxt = releaseVersion
-    }
-    filter(ReplaceTokens, tokens: [cversion: versiontxt ])
-}
-
 task cloud_dist (type: Tar) {
+    dependsOn ':web-cloud-app:build' //webapp-server stuff TODO revisit this
     group = 'Continuuity'
-    description = 'Generates the distribution tar file for the cloud'
-
-    // set compression method
     compression = Compression.GZIP
-
     baseName = "continuuity"
-    appendix = "cloud"
-    version = releaseVersion
+    appendix = "cloud-edition"
+    into "${baseName}-${appendix}-${version}"
+    description = 'Generates the cloud distribution zip file'
+
+    //distribution
+    into("lib"){
+        from project(':singlenode').configurations.getByName('runtime')
+        from tasks.findByPath(':performance:jar')
+        exclude 'overlord-*-loggly.jar'
+    }
+
+    //
+    into("bin") {
+        from project.rootProject.subprojects.collect { project ->
+            project.file('bin')
+        }
+        exclude 'node'
+        def cp = "\$CONTINUUITY_HOME/lib/*:\$CONTINUUITY_HOME/conf/"
+        filter(ReplaceTokens, tokens: [classpath: cp])
+    }
+
+    into("conf") {
+        from project.rootProject.subprojects.collect { project ->
+            // include [service]-env.sh
+            project.file('conf')
+
+        }
+        include "*-env.sh"
+    }
+
+    into("cloud/web-app/client") {
+        from project(':web-cloud-app').file('build/cloud/client')
+    }
+
+    into("cloud/web-app/server") {
+        from project(':web-cloud-app').file('build/cloud/server')
+    }
+
+    // VERSION
+    from("VERSION"){
+        def versiontxt
+        if( project.hasProperty('teamcityBuildNumber')) {
+            versiontxt = version + "-" + teamcityBuildNumber
+        } else {
+            versiontxt = version
+        }
+        filter(ReplaceTokens, tokens: [cversion: versiontxt ])
+    }
+
     if( project.hasProperty('teamcityBuildNumber')) {
         classifier = teamcityBuildNumber
     } else {
         classifier = ""
     }
-
-    from "${buildDir}/cloud"
-    into "${baseName}-${appendix}-${version}"
-	
-	ext.distName = "${baseName}-${appendix}"
+    ext.distName = "${baseName}-${appendix}"
 }
 
-cloud_dist.dependsOn {
-    tasks.findAll { task -> task.name.startsWith('cloud_stage_') }
+
+ubuntu {
+    println cloud_dist.archivePath.toURI()
+    archive = cloud_dist.archivePath.toURI()
+    releaseNotes = "Continuuity Cloud Distribution"
+    author = 'continuuity'
+    email = 'info@continuuity.com'
+    homepage = 'http://www.continuuity.com'
+    depends {
+
+    }
+    dirs {
+
+    }
 }
+
+deb.dependsOn(cloud_dist)
+
 
 artifacts{
+    // Asigning the artifact to the configuration
 	distributions singlenode_dist
 	distributions cloud_dist
 }
