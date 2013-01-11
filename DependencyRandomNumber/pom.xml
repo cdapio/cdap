@@ -13,9 +13,9 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>appfabric-api</artifactId>
-      <version>1.0.0</version>
+      <version>1.2.2</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/../../continuuity-api.jar</systemPath>
+      <systemPath>${project.basedir}/../../singlenode/build/libs/continuuity-api-1.2.2.jar</systemPath>
     </dependency>
     <!-- Add an external dependency -->
     <dependency>

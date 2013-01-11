@@ -3,7 +3,6 @@ package DependencyRandomNumber;
 import java.util.Random;
 
 import com.continuuity.api.flow.flowlet.SourceFlowlet;
-import com.continuuity.api.flow.flowlet.FlowletLaunchContext;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -24,8 +23,8 @@ public class RandomNumberSource extends SourceFlowlet {
   }
 
   @Override
-  public void initialize(FlowletContext context) {
-    super.initialize(context);
+  public void initialize() {
+    super.initialize();
     this.random = new Random();
   }
   
