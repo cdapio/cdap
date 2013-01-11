@@ -62,8 +62,3 @@ task dist(type:  Tar, dependsOn: jar) {
     }
 }
 
-artifacts {
-  archives apiJavadocJar
-  archives apiJar
-  'default' apiJar
-}
