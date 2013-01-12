@@ -36,6 +36,10 @@ sourceSets{
 	}
 }
 
+javadoc {
+  classpath += sourceSets.api.output
+}
+
 test {
 	jvmArgs '-Xmx512m'
 }
