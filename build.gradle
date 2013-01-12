@@ -1,10 +1,7 @@
 apply plugin:'java'
 
 smartyFacts {
-  thrift {
-    generateJavadoc = false
-    generateSource = false
-  }
+  thrift
 }
 
 // Specify all the dependencies.
