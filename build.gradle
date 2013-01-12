@@ -28,7 +28,7 @@ buildscript {
 
     dependencies {
         classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.4-SNAPSHOT"
-        classpath "com.continuuity.gradle:integration-test-plugin:1.0.4-SNAPSHOT"
+       // classpath "com.continuuity.gradle:integration-test-plugin:1.0.4-SNAPSHOT"
     }
 }
 
@@ -202,3 +202,4 @@ task gitCheckoutBranch {
 
     }
 }
+
