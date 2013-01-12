@@ -9,13 +9,3 @@ allprojects{
 	    configProperties.checkstyleConfigDir = configFile
 	}
 }
-/*
-plugins.withType(JavaBasePlugin) {
-    sourceSets.all { sourceSet ->
-        task "${sourceSet.getTaskName('checkstyle', 'groovy')}"(type: Checkstyle) {
-            configFile = new File(checkstyleConfigDir, "checkstyle-groovy.xml")
-            source sourceSet.allGroovy
-            classpath = sourceSet.compileClasspath
-        }
-    }
-}*/
