@@ -1,5 +1,12 @@
 apply plugin:'java'
 
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
+}
+
 dependencies {
     /// Internal dependencies.
     
