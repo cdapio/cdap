@@ -105,14 +105,6 @@ task javadoc(type: Javadoc, overwrite:true) {
     destinationDir = new File(buildDir, 'javadoc')
 }
 
-subprojects {
-    if(!Boolean.valueOf(failfast)){	
-    	test {
-       	    ignoreFailures = true
-        }
-    }
-}
-
 task gitTagAll {
     group = 'ReleaseAdmin'
     description = 'Tags continuuity master and all subproject repos locally ' +
