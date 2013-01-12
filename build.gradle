@@ -1,6 +1,17 @@
 apply plugin:'java'
 
 /**
+ * Test Runners for different environments specifying testsuites
+ */
+testrunner {
+  integration {
+     setup {
+       environment(os:"macos")
+     }
+  }
+}
+
+/**
  * Specify all the dependencies
  */
 dependencies {
@@ -8,7 +19,8 @@ dependencies {
     // Self dependencies.
     compile apiJar.outputs.files
 
-	compile librariess.slf4j_api
+    compile librariess.slf4j_api
+
     // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
     compile group: 'com.google.guava', name: 'guava', version: '12.+'
@@ -48,7 +60,7 @@ dependencies {
     compile "org.apache.avro:avro-ipc:$versions.avroVersion"
     compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
     compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
-	compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
 }
 
 
