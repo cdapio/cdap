@@ -2,8 +2,6 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
-mainClassName = 'com.continuuity.gateway.runtime.Main'
-
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
 } 
@@ -11,9 +9,10 @@ tasks.withType(Compile) {
 dependencies {
 	compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
 	compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
 	compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
 	compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
-	
+
     clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
     clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
@@ -29,23 +28,4 @@ dependencies {
  */
 jar.exclude '*.xml'
 
-
-import org.apache.tools.ant.filters.ReplaceTokens
-
-task generateBinDir(type: Copy) {
-    group "Deployment"
-    description "Generates $buildDir/bin with token-replaced scripts"
-    from "bin" 
-    include "*-client"    
-    into "$buildDir/bin"
-    //rename '(.*)', '$1-gen'
-    doFirst{
-		def cp = configurations.runtime.getAsPath()
-	    cp += ':' + jar.outputs.getFiles().getAsPath()
-
-	    filter(ReplaceTokens, tokens: [classpath: cp])
-	}
-}
-
-build.dependsOn generateBinDir
 
