@@ -7,7 +7,7 @@ dependencies {
 	compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 	
     // Self dependencies.
-    compile apiJar.outputs.files
+    //compile apiJar.outputs.files
     
 	/// External dependencies.
     apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
@@ -19,6 +19,20 @@ dependencies {
 
     testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
     testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+}
+
+sourceSets {
+    integTest {
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+sourceSets{
+	main{
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+	}
 }
 
 test {
