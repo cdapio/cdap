@@ -6,9 +6,16 @@ apply plugin:'java'
 testrunner {
   integration {
      setup {
-       environment(os:"macos")
+       environment(os:"mac os x")
      }
   }
+}
+
+smartyFacts {
+    api {
+        enableJavadoc()
+        enableSourceJar()
+    }
 }
 
 /**
@@ -20,6 +27,9 @@ dependencies {
     compile apiJar.outputs.files
 
     compile librariess.slf4j_api
+
+
+    integrationCompile apiJar.outputs.files
 
     // General dependencies
     compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'

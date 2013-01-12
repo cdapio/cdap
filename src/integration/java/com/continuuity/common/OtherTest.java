@@ -1,5 +1,6 @@
 package com.continuuity.common;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import org.junit.Test;
 
