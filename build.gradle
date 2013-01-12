@@ -1,7 +1,13 @@
 // Pull the JS plugin from a Maven Repo
 buildscript {
 repositories {
-  mavenCentral()
+  maven {
+    credentials {
+      username nexusUsername
+      password nexusPassword
+    }
+    url "http://nexus.continuuity.com:8081/nexus/content/groups/public"
+  }
   dependencies {
     classpath 'com.eriwen:gradle-js-plugin:1.1'
    }
