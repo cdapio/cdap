@@ -11,28 +11,44 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
 
-  compile thriftJar.outputs.files
-	
   clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
   clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
   // External dependencies.
-  compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
-  compile group: 'com.google.guava', name: 'guava', version: '11.+'
-  compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
-  compile group: 'org.apache.commons', name: 'commons-math', version: '2.+'
-  compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
-  compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
-  compile group: 'mysql', name:'mysql-connector-java', version:'5.1.21'
+  compile libraries.akka_actor
+  compile libraries.google_guava
+  compile libraries.google_guice
+  compile libraries.google_guava
+  compile libraries.google_gson
+  compile libraries.apache_commons_math
+  compile libraries.mysql
+  compile libraries.hsql
+  compile libraries.mina_core
+  compile libraries.mina_jmx
+  compile libraries.http_client
+
+  // Possible removal.
   compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
-  compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
-  compile group: 'org.apache.mina', name:'mina-integration-jmx', version:'2.0.4'
-  compile group: 'com.ning', name: 'async-http-client', version: '1.7.5'
   compile group: 'org.fusesource.leveldbjni', name:'leveldbjni-all', version:'1.1'
 
-  // All the thrift interfaces and maintanied in a different jar with classifier thrift.
-  thriftCompile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
-  thriftCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.5.+'
+  // Needed for compiling thrift
+  thriftCompile libraries.thrift
+  thriftCompile libraries.slf4j_api
+}
+
+sourceSets {
+  main {
+    compileClasspath += thrift.output
+    runtimeClasspath += thrift.output
+  }
+  test {
+    compileClasspath += thrift.output
+    runtimeClasspath += thrift.output
+  }
+}
+
+javadoc {
+  classpath += sourceSets.thrift.output
 }
 
 jar.exclude '*.xml'
