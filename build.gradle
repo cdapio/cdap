@@ -36,8 +36,8 @@ subprojects{
 }
 evaluationDependsOnChildren()
 
-branch = rootProject.hasProperty("branch");
-if(!branch) {
+
+if(!hasProperty("branch")) {
   branch = "master"
 }
 

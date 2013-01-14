@@ -4,8 +4,7 @@ import com.continuuity.gradle.GitRepo;
 
 GitRepo.baseDir = rootProject.projectDir;
 
-branch = rootProject.hasProperty("branch");
-if(!branch) {
+if(!hasProperty("branch")) {
   branch = "master"
 }
 
