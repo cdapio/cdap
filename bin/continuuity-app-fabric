@@ -79,27 +79,6 @@ eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_APP_FABRIC_OPTS
 PID_DIR=$APP_HOME/data
 pid=$PID_DIR/$0.pid
 
-
-#exec "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@"
-
-# nohup nice -n $HADOOP_NICENESS $hadoopScript --config $HADOOP_CONF_DIR $command "$@" > "$log" 2>&1 < /dev/null &
-
-#nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" > /dev/null 2>&1 < /dev/null &
-
-#echo $! > singlenode.pid 
-
-
-#sleep 1
-#while read LINE; do
-#  echo FOO: $LINE
-#
-#done < $APP_HOME/logs/appfabric.out
-
-sleep 4;
-#if ! ps -p $! > /dev/null ; then
-#  exit 1
-#fi
-
 # checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
 check_before_start()
 {
