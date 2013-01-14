@@ -82,6 +82,9 @@ pid=$PID_DIR/$0.pid
 # checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
 check_before_start()
 {
+  if [ ! -d "$PID_DIR" ]; then
+    mkdir -p "$PID_DIR"
+  fi
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
       echo "$0 running as process `cat $pid`. Stop it first."
