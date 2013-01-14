@@ -2,7 +2,7 @@
 /// to obtain the repository list.
 import com.continuuity.gradle.GitRepo;
 
-GitRepo.baseDir=rootProject.projectDir;
+GitRepo.baseDir = rootProject.projectDir;
 
 branch = rootProject.hasProperty("branch");
 if(!branch) {

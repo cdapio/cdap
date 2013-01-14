@@ -36,7 +36,12 @@ subprojects{
 }
 evaluationDependsOnChildren()
 
-ext.masterRepo = new GitRepo(name: "continuuity", dir: ".")
+branch = rootProject.hasProperty("branch");
+if(!branch) {
+  branch = "master"
+}
+
+ext.masterRepo = new GitRepo(name: "continuuity", dir: ".", branch: branch)
 
 task gitCheckout {
     group = 'Git'
@@ -143,16 +148,16 @@ task gitPushTagAll {
 task gitBranchAll {
     group = 'ReleaseAdmin'
     description = 'Branch continuuity master and all subproject repos locally ' +
-            'with provided branch.  Must specify -PbranchName=<branch>'
+            'with provided branch.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branchName')) {
+        if (! project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to branch all " +
-                    "subproject repos, but branchName property is null.  " +
-                    "You must supply argument \"-PbranchName=<branch>\"")
+                    "subproject repos, but branch property is null.  " +
+                    "You must supply argument \"-Pbranch=<branch>\"")
         }
-        masterRepo.branch(branchName)
+        masterRepo.branch(branch)
         for (g in gradle.gitRepos) {
-            g.branch(branchName)
+            g.branch(branch)
         }
     }
 }
@@ -160,17 +165,17 @@ task gitBranchAll {
 task gitPushBranchAll {
     group = 'ReleaseAdmin'
     description = 'Pushes a local branch to remote repo for all continuuity ' +
-            'master and subproject repos.  Must specify -PbranchName=<branch>'
+            'master and subproject repos.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branchName')) {
+        if (! project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to push a " +
-                    "branch for all subproject repos, but branchName " +
+                    "branch for all subproject repos, but branch " +
                     "property is null.  You must supply argument " +
-                    "\"-PbranchName=<branch>\"")
-        }
-        masterRepo.pushBranch(branchName)
-        for (g in gradle.gitRepos) {
-            g.pushBranch(branchName)
+                    "\"-Pbranch=<branch>\"")
+            masterRepo.pushBranch(branch)
+            for (g in gradle.gitRepos) {
+                g.pushBranch(branch)
+            }
         }
     }
 }
@@ -179,20 +184,21 @@ task gitPushBranchAll {
 task gitCheckoutBranch {
     group = 'ReleaseAdmin'
     description = 'Checkouts specified branch on continuuity and all ' +
-            'subproject repos.  Must specify -PbranchName=<branch>'
+            'subproject repos.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branchName')) {
+        if (! project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to " +
                     "checkout a branch for all subproject repos, but " +
-                    "branchName property is null.  You must supply " +
-                    "argument \"-PbranchName=<branch>\"")
+                    "branch property is null.  You must supply " +
+                    "argument \"-Pbranch=<branch>\"")
         }
 
         ext.gitReposBranch = []
-        ext.masterRepoBranch = new GitRepo(name: "continuuity", dir: ".", branch: branchName)
+        ext.masterRepoBranch = new GitRepo(name: "continuuity", dir: ".",
+                branch: branch)
         subprojects.each {project ->
             print project.name + "\n"
-            gitReposBranch << new GitRepo(name: project.name, branch: branchName)
+            gitReposBranch << new GitRepo(name: project.name, branch: branch)
         }
         masterRepoBranch.checkout();
         for (g in gitReposBranch) {
