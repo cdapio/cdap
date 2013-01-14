@@ -8,7 +8,6 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -137,7 +136,7 @@ public class TimeseriesTest {
       new Timeseries().div(ImmutableList.copyOf(A), ImmutableList.copyOf(B),
                            new Function<Double, Double>() {
                              @Override
-                             public Double apply(@Nullable Double value) {
+                             public Double apply(Double value) {
                               return value * 100;
                              }
                            });

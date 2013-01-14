@@ -8,7 +8,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +30,7 @@ public final class Timeseries {
    */
   public static class Percentage implements Function<Double, Double> {
     @Override
-    public Double apply(@Nullable Double value) {
+    public Double apply(Double value) {
       return value * 100;
     }
   }
@@ -66,7 +65,7 @@ public final class Timeseries {
                                       final ImmutableList<DataPoint> b) {
     return div(a, b, new Function<Double, Double>() {
       @Override
-      public Double apply(@Nullable Double input) {
+      public Double apply(Double input) {
         return input;
       }
     });

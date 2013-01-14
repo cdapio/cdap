@@ -22,7 +22,6 @@ import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -192,7 +191,7 @@ public class MetricsFrontendServiceImpl
         Iterable<String> iterator =
           Iterables.transform(request.getName(), new Function<String, String>() {
             @Override
-            public String apply(@Nullable String input) {
+            public String apply(String input) {
               return "'" + input + "'";
             }
           });
@@ -338,7 +337,7 @@ public class MetricsFrontendServiceImpl
             timeseries.rate(ImmutableList.copyOf(read)),
             new Function<Double, Double>() {
               @Override
-              public Double apply(@Nullable Double value) {
+              public Double apply(Double value) {
                 if(value.doubleValue() > 1) {
                   value = new Double(1);
                 }
