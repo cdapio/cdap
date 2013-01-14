@@ -8,32 +8,30 @@ smartyFacts {
 }
 
 dependencies {
-    /// Internal dependencies.
-    
-	compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-	compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+  compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+  compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 
-	/// External dependencies.
-    apiCompile group: 'com.google.guava', name: 'guava', version: '11.+'
-    apiCompile group: 'org.jboss.netty', name: 'netty', version: '3.2.4.Final'
+  apiCompile libraries.google_guava
+  apiCompile libraries.netty
 
-    compile group: 'kryo', name: 'kryo', version: '2.12'
-    compile group: 'org.hsqldb', name: 'hsqldb', version: '2.2.4'
-    compile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity') { exclude module: 'junit' }
+  compile libraries.kryo
+  compile libraries.hsql
+  compile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity') { exclude module: 'junit' }
 
-    testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
-    testCompile('org.apache.hadoop:hadoop-minicluster:2.0.0-alpha')
+  testCompile('org.apache.hbase:hbase:0.94.2.1.4.3.continuuity:tests') { exclude module: 'junit' }
+  testCompile libraries.hadoop_minicluster
 }
 
 sourceSets{
-	main{
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-	}
-	test{
-        compileClasspath += api.output
-        runtimeClasspath += api.output		
-	}
+  main{
+    compileClasspath += api.output
+    runtimeClasspath += api.output
+  }
+
+  test{
+    compileClasspath += api.output
+    runtimeClasspath += api.output		
+  }
 }
 
 javadoc {
@@ -41,11 +39,10 @@ javadoc {
 }
 
 test {
-	jvmArgs '-Xmx512m'
+  jvmArgs '-Xmx512m'
 }
 
 /**
  * Exclude any config xml from jar task
  */
 jar.exclude '*.xml'
-
