@@ -1,13 +1,72 @@
 ext {
     versions = [:]
-    librariess = [:]
+    libraries = [:]
 }
 
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2+'
 versions.hadoopVersion = '2.0.0-alpha'
 versions.jerseyVersion = '1.13'
+versions.googleGuavaVersion = '13.0.1'
+versions.netflixCuratorVersion = '1.1.+'
 
-librariess.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
-librariess.logback_core = "ch.qos.logback:logback-core:1.0.+"
-librariess.logback_classic = "ch.qos.logback:logback-classic:1.0.+"
+//--------------------------------------------------------------------------
+// Define all the global dependencies here. 
+// If you change the versions here - make sure you test 
+// all the aspects of continuuity products.
+//--------------------------------------------------------------------------
+
+libraries.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
+libraries.logback_core = "ch.qos.logback:logback-core:1.0.+"
+libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.+"
+
+// Google Libraries
+libraries.google_guava = "com.google.guava:guava:$versions.googleGuavaVersion"
+libraries.google_gson = "com.google.code.gson:gson:2.1"
+libraries.google_guice = "com.google.inject:guice:3.0-rc3"
+
+// Thrift
+libraries.thrift = "org.apache.thrift:libthrift:0.8.0"
+
+// AVRO
+libraries.avro = "org.apache.avro:avro:$versions.avroVersion"
+libraries.avro_ipc = "org.apache.avro:avro-ipc:$versions.avroVersion"
+
+// Flume NG
+libraries.flume_ng_sdk = "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
+libraries.flume_ng_core = "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+
+// Akka
+libraries.akka_actor = "com.typesafe.akka:akka-actor:2.0.3"
+
+// Netflix Curator
+libraries.netflix_curator_framework = "com.netflix.curator:curator-framework:$versions.netflixCuratorVersion"
+libraries.netflix_curator_client = "com.netflix.curator:curator-client:$versions.netflixCuratorVersion"
+libraries.netflix_curator_discovery_client = "com.netflix.curator:curator-x-discovery:$versions.netflixCuratorVersion"
+libraries.netflix_curator_discovery_server = "com.netflix.curator:curator-x-discovery-server:$versions.netflixCuratorVersion"
+libraries.netflix_curator_recipes = "com.netflix.curator:curator-recipes:$versions.netflixCuratorVersion"
+
+// Hadoop distributions
+libraries.hadoop_common = "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
+libraries.hadoop_annotations = "org.apache.hadoop:hadoop-annotations:$versions.hadoopVersion"
+libraries.hadoop_hdfs = "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
+libraries.hadoop_yarn_common = "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
+libraries.hadoop_yarn_api = "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
+libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
+
+// Jetty
+libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"
+
+// Jersey Server
+libraries.jersey_server = "com.sun.jersey:jersey-server:$versions.jerseyVersion"
+libraries.jersey_servlet = "com.sun.jersey:jersey-servlet:$versions.jerseyVersion"
+libraries.jersey_client = "com.sun.jersey:jersey-client:$versions.jerseyVersion"
+libraries.jersey_core = "com.sun.jersey:jersey-core:$versions.jerseyVersion"
+
+// Mina
+libraries.mina_core = "org.apache.mina:mina-core:2.0.4"
+
+// FindBugs / JSR-311
+libraries.findbugs_jsr311 = "javax.ws.rs:jsr311-api:1.1.1"
+
+//--------------------------------------------------------------------------
