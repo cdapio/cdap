@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+
+##############################################################################
+##
+##  continuuity-app-fabric start up script for UN*X
+##
+##############################################################################
+
+# Add default JVM options here. You can also use JAVA_OPTS and CONTINUUITY_APP_FABRIC_OPTS to pass JVM options to this script.
+DEFAULT_JVM_OPTS="-Xmx1024m"
+CONTINUUITY_APP_FABRIC_OPTS="-Djava.security.krb5.realm= -Djava.security.krb5.kdc="
+
+APP_NAME="continuuity-app-fabric"
+APP_BASE_NAME=`basename "$0"`
+
+warn ( ) {
+    echo "$*"
+}
+
+die ( ) {
+    echo
+    echo "$*"
+    echo
+    exit 1
+}
+
+
+# Attempt to set APP_HOME
+# Resolve links: $0 may be a link
+PRG="$0"
+# Need this for relative symlinks.
+while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=`dirname "$PRG"`"/$link"
+    fi
+done
+SAVED="`pwd`"
+cd "`dirname \"$PRG\"`/.." >&-
+APP_HOME="`pwd -P`"
+
+CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+        JAVACMD="$JAVA_HOME/bin/java"
+    fi
+    if [ ! -x "$JAVACMD" ] ; then
+        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+else
+    JAVACMD="java"
+    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+fi
+
+
+# Split up the JVM_OPTS And CONTINUUITY_APP_FABRIC_OPTS values into an array, following the shell quoting and substitution rules
+function splitJvmOpts() {
+    JVM_OPTS=("$@")
+}
+eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_APP_FABRIC_OPTS
+
+#echo "${JVM_OPTS[@]}"
+
+# PID Location
+PID_DIR=$APP_HOME/data
+pid=$PID_DIR/$0.pid
+
+
+#exec "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@"
+
+# nohup nice -n $HADOOP_NICENESS $hadoopScript --config $HADOOP_CONF_DIR $command "$@" > "$log" 2>&1 < /dev/null &
+
+#nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" > /dev/null 2>&1 < /dev/null &
+
+#echo $! > singlenode.pid 
+
+
+#sleep 1
+#while read LINE; do
+#  echo FOO: $LINE
+#
+#done < $APP_HOME/logs/appfabric.out
+
+sleep 4;
+#if ! ps -p $! > /dev/null ; then
+#  exit 1
+#fi
+
+# checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
+check_before_start()
+{
+  if [ -f $pid ]; then
+    if kill -0 `cat $pid` > /dev/null 2>&1; then
+      echo "$0 running as process `cat $pid`. Stop it first."
+      exit 1
+    fi
+  fi
+}
+
+# Rotates the basic start/stop logs
+rotate_log ()
+{
+    log=$1;
+    num=5;
+    if [ -n "$2" ]; then
+    num=$2
+    fi
+    if [ -f "$log" ]; then # rotate logs
+    while [ $num -gt 1 ]; do
+        prev=`expr $num - 1`
+        [ -f "$log.$prev" ] && mv -f "$log.$prev" "$log.$num"
+        num=$prev
+    done
+    mv -f "$log" "$log.$num";
+    fi
+}
+
+
+start() {
+    check_before_start
+    mkdir -p $APP_HOME/logs
+    rotate_log $APP_HOME/logs/appfabric.log
+    rotate_log $APP_HOME/logs/appfabric-debug.log
+
+    nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/appfabric.log 2>&1 < /dev/null &
+    echo $! > $pid
+
+    echo -n "starting Continuuity AppFabric (tm)"
+    while kill -0 $! ; do
+      if grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
+        echo ""
+        grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log
+        break
+      else
+        echo -n "."
+        sleep 1;
+      fi
+    done 
+}
+
+stop() {
+    if [ -f $pid ]; then
+      pidToKill=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToKill > /dev/null 2>&1; then
+        echo -n "stopping Continuuity AppFabric (tm)"
+        kill $pidToKill > /dev/null 2>&1
+        while kill -0 $pidToKill > /dev/null 2>&1;
+        do
+          echo -n "."
+          sleep 1;
+        done
+        rm $pid
+        echo
+      else
+        retval=$?
+        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
+      fi
+      rm -f $pid
+    else
+      echo nothing to stop because no pid file $pid
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+    if [ -f $pid ]; then
+      pidToCheck=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToCheck > /dev/null 2>&1; then
+        echo "$0 running as process $pidToCheck"
+      else
+        echo "pidfile exists, but process does not appear to be running"
+      fi
+    else 
+      echo "$0 is not running"
+    fi
+}
+    
+
+case "$1" in
+  start)
+    $1  
+  ;;
+  
+  stop)
+    $1
+  ;;
+
+  restart)
+    $1
+  ;;
+
+  status)
+    $1
+  ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+  ;;
+
+
+esac
+exit $? 
+
+
