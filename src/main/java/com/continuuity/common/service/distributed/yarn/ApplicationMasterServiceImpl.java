@@ -18,7 +18,6 @@ import org.apache.hadoop.yarn.util.Records;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -496,7 +495,7 @@ public class ApplicationMasterServiceImpl extends AbstractScheduledService imple
           Optional<TaskSpecification> matchingSpec = Iterators.tryFind(readyToRunQueue.values().iterator(),
             new Predicate<TaskSpecification>() {
               @Override
-              public boolean apply(@Nullable TaskSpecification input) {
+              public boolean apply(TaskSpecification input) {
                 Resource resource = container.getResource();
                 if (resource.getMemory() == input.getMemory()) {
                   LOG.trace("Found matching task specification for container {}", container.toString());

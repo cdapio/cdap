@@ -11,6 +11,9 @@ testrunner {
   }
 }
 
+/**
+ * Enabling building of other jar from common
+ */
 smartyFacts {
     api {
         enableJavadoc()
@@ -22,55 +25,43 @@ smartyFacts {
  * Specify all the dependencies
  */
 dependencies {
+    // Integration depends on apiJar
+    integrationCompile apiJar.outputs.files
 
     // Self dependencies.
     compile apiJar.outputs.files
 
-    compile librariess.slf4j_api
+    // Other dependencies
+    compile libraries.slf4j_api
+    compile libraries.google_guava
+    compile libraries.google_gson
+    compile libraries.google_guice
+    compile libraries.akka_actor
+    compile libraries.netflix_curator_framework
+    compile libraries.netflix_curator_client
+    compile libraries.netflix_curator_discovery_client
+    compile libraries.netflix_curator_discovery_server
+    compile libraries.netflix_curator_recipes
+    compile libraries.hadoop_common
+    compile libraries.hadoop_annotations
+    compile libraries.hadoop_hdfs
+    compile libraries.hadoop_yarn_common
+    compile libraries.hadoop_yarn_api
+    compile libraries.thrift
+    compile libraries.avro  
+    compile libraries.avro_ipc
+    compile libraries.flume_ng_sdk
+    compile libraries.flume_ng_core
+    compile libraries.jetty
+    compile libraries.mina_core
+    compile libraries.findbugs_jsr311
 
-
-    integrationCompile apiJar.outputs.files
-
-    // General dependencies
-    compile group: 'com.typesafe.akka', name: 'akka-actor', version: '2.0.3'
-    compile group: 'com.google.guava', name: 'guava', version: '12.+'
-    compile group: 'com.netflix.curator', name: 'curator-framework', version: '1.1.+'
-    compile group: 'com.netflix.curator', name: 'curator-client', version: '1.1.+'
-    compile group: 'com.netflix.curator', name: 'curator-x-discovery', version: '1.1.+'
-    compile group: 'com.netflix.curator', name: 'curator-x-discovery-server', version: '1.1.+'
-    compile group: 'com.netflix.curator', name: 'curator-recipes', version: '1.1.+'
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.1'
-    compile group: 'com.google.inject', name: 'guice', version: '3.0-rc3'
-
-    // Service discovery server.
-    compile group: 'javax.ws.rs', name:'jsr311-api', version:'1.1.1'
-    compile group: 'org.mortbay.jetty', name:'jetty', version:'6.1.22'
-    testCompile group: 'com.sun.jersey', name: 'jersey-server', version:"$versions.jerseyVersion"
-    testCompile group: 'com.sun.jersey', name: 'jersey-servlet', version:"$versions.jerseyVersion"
-    testCompile group: 'com.sun.jersey', name: 'jersey-client', version:"$versions.jerseyVersion"
-    testCompile group: 'com.sun.jersey', name: 'jersey-core', version:"$versions.jerseyVersion"
-
-    // All hadoop related dependencies
-    compile "org.apache.hadoop:hadoop-common:$versions.hadoopVersion"
-    compile "org.apache.hadoop:hadoop-annotations:$versions.hadoopVersion"
-    compile "org.apache.hadoop:hadoop-hdfs:$versions.hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-common:$versions.hadoopVersion"
-    compile "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
-    testCompile "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
-
-    // Thrift dependencies
-    compile group: 'org.apache.thrift', name: 'libthrift', version: '0.8.0'
+    testCompile libraries.hadoop_minicluster
+    testCompile libraries.jersey_server 
+    testCompile libraries.jersey_servlet
+    testCompile libraries.jersey_client
+    testCompile libraries.jersey_core
 
     // For metrics
-    compile group: 'org.apache.mina', name:'mina-core', version:'2.0.4'
-    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
-
-    // flume-ng dependencies
-    compile "org.apache.avro:avro:$versions.avroVersion"
-    compile "org.apache.avro:avro-ipc:$versions.avroVersion"
-    compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+    compile "com.yammer.metrics:metrics-core:2.1.+"
 }
-
-
