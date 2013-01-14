@@ -7,20 +7,19 @@ tasks.withType(Compile) {
 } 
 
 dependencies {
-	compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
-	compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-	compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
-	compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
+  compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
+  compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
-    clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
+  clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+  clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
-    // External dependencies.
-    compile "org.apache.avro:avro:$versions.avroVersion"
-    compile "org.apache.avro:avro-ipc:$versions.avroVersion"
-    compile "org.apache.flume:flume-ng-sdk:$versions.flumeVersion"
-    compile "org.apache.flume:flume-ng-core:$versions.flumeVersion"
+  compile libraries.avro
+  compile libraries.avro_ipc
+  compile libraries.flume_ng_core
+  compile libraries.flume_ng_sdk
 }
 
 /**
