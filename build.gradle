@@ -39,7 +39,8 @@ evaluationDependsOnChildren()
 
 if(!hasProperty("branch")) {
   //if branch is not passed in using -P parameter - then use the branch of continuuity repo 
-  branch = "git rev-parse --abbrev-ref HEAD".execute().text 
+  //branch = "git rev-parse --abbrev-ref HEAD".execute().text 
+   branch = "master"
 }
 
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".", branch: branch)
