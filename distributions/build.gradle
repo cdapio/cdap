@@ -51,9 +51,8 @@ task singlenode_dist (type: Zip) {
     from project(':singlenode').files('src/dist')
 	
 	//bin
-	// include generated startscripts
     into ("bin"){
-		from project(':singlenode').tasks.getByName('startScripts').outputs
+                // :singlenode/bin contains the startscript, not using startScripts task
 	    // include project bin directories
 	    from project.parent.subprojects.collect { project ->
 	        project.file('bin')
