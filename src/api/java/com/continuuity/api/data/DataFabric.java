@@ -89,4 +89,11 @@ public interface DataFabric {
   public void execute(List<WriteOperation> writes)
       throws OperationException;
 
+
+  /**
+   * Opens a table in the data fabric. The only effect of this is that if the
+   * table does not exist yet, it gets created at this time.
+   * @param name the name of the table
+   */
+  public void openTable(String name) throws OperationException;
 }

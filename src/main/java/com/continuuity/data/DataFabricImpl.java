@@ -1,6 +1,7 @@
 package com.continuuity.data;
 
 import com.continuuity.api.data.*;
+import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.executor.OperationExecutor;
 
 import java.util.List;
@@ -55,4 +56,11 @@ public class DataFabricImpl implements DataFabric {
   public void execute(List<WriteOperation> writes) throws OperationException {
     this.opex.execute(context, writes);
   }
+
+  @Override
+  public void openTable(String name) throws OperationException {
+    this.opex.execute(context, new OpenTable(name));
+  }
+
+
 }
