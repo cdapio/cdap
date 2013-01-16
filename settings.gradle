@@ -5,7 +5,9 @@ import com.continuuity.gradle.GitRepo;
 GitRepo.baseDir = rootProject.projectDir;
 
 if(!hasProperty("branch")) {
-  branch = "master"
+  //if branch is not passed in using -P parameter - then use the branch of continuuity repo 
+  //branch = "git rev-parse --abbrev-ref HEAD".execute().text
+   branch = "master"
 }
 
 println "Working on branch $branch"
