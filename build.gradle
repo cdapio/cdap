@@ -6,7 +6,7 @@ repositories {
       username nexusUsername
       password nexusPassword
     }
-    url "http://nexus.continuuity.com:8081/nexus/content/groups/public"
+    url "https://repository.continuuity.com/content/groups/public"
   }
   dependencies {
     classpath 'com.eriwen:gradle-js-plugin:1.1'
