@@ -6,7 +6,7 @@ buildscript{
 	                username "gradle"
 	                password "{DESede}Rk/0rTcxzWomG91yhihmswrLqVnA6oIy"
 	            }
-	            url "http://nexus.continuuity.com:8081/nexus/content/groups/smartifacts"
+	            url "https://repository.continuuity.com/content/groups/smartifacts"
 	        }
 	    }
 
