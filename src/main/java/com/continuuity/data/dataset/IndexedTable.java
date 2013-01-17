@@ -12,12 +12,6 @@ public class IndexedTable extends DataSet {
   private Table table, index;
   private byte[] column;
 
-  public IndexedTable(String name) {
-    super(name);
-    this.table = new Table("t_" + name);
-    this.index = new Table("i_" + name);
-  }
-
   public IndexedTable(String name, byte[] columnToIndex) {
     super(name);
     this.column = columnToIndex;
@@ -25,11 +19,11 @@ public class IndexedTable extends DataSet {
     this.index = new Table("i_" + name);
   }
 
-  @Override
-  void initialize(DataSetMeta meta) throws OperationException {
+  public IndexedTable(DataSetMeta meta) throws OperationException {
+    super(meta);
     this.column = meta.getProperty("column").getBytes();
-    this.table.initialize(meta.getMetaFor(this.table));
-    this.index.initialize(meta.getMetaFor(this.index));
+    this.table = new Table(meta.getMetaFor("t_" + this.getName()));
+    this.index = new Table(meta.getMetaFor("i_" + this.getName()));
   }
 
   @Override

@@ -11,11 +11,12 @@ public class Table extends DataSet {
     super(name);
   }
 
-  private DataFabric fabric;
-  private BatchCollector collector;
+  private DataFabric fabric = null;
+  private BatchCollector collector = null;
 
-  @Override
-  void initialize(DataSetMeta meta) throws OperationException {
+
+  public Table(DataSetMeta meta) throws OperationException {
+    super(meta);
     this.fabric.openTable(this.getName());
   }
 
@@ -42,7 +43,7 @@ public class Table extends DataSet {
   enum Mode { Sync, Async }
 
   private void execute(WriteOp op, Mode mode) throws OperationException {
-    WriteOperation operation = null;
+    WriteOperation operation;
     if (op instanceof Write) {
       Write write = (Write)op;
       operation = new com.continuuity.api.data.Write(
