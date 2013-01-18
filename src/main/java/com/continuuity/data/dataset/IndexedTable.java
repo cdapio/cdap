@@ -27,7 +27,7 @@ public class IndexedTable extends DataSet {
   }
 
   @Override
-  DataSetMeta.Builder configure() {
+  public DataSetMeta.Builder configure() {
     return new DataSetMeta.Builder(this).
         property("column", new String(this.column)).
         dataset(this.table.configure()).

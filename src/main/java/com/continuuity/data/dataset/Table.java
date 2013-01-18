@@ -49,7 +49,7 @@ public class Table extends DataSet {
   }
 
   @Override
-  DataSetMeta.Builder configure() {
+  public DataSetMeta.Builder configure() {
     return new DataSetMeta.Builder(this);
   }
 

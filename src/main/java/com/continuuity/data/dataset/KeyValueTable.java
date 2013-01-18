@@ -22,7 +22,7 @@ public class KeyValueTable extends DataSet {
   }
 
   @Override
-  DataSetMeta.Builder configure() {
+  public DataSetMeta.Builder configure() {
     return new DataSetMeta.Builder(this).
         dataset(this.table.configure());
   }
