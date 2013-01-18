@@ -1,16 +1,13 @@
 package com.continuuity.common.discovery;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.netflix.curator.x.discovery.ProviderStrategy;
 import com.netflix.curator.x.discovery.ServiceDiscovery;
 import com.netflix.curator.x.discovery.server.rest.DiscoveryContext;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
+
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * For convenience, a version of {@link DiscoveryContext} that uses a String-to-String map as the
@@ -24,7 +21,6 @@ public class ServicePayloadContext implements
   private final ServiceDiscovery<ServicePayload> serviceDiscovery;
   private final ProviderStrategy<ServicePayload> providerStrategy;
   private final int instanceRefreshMs;
-  private final ServicePayloadSerializer serializer;
 
   public ServicePayloadContext(
     ServiceDiscovery<ServicePayload> serviceDiscovery,
@@ -33,7 +29,6 @@ public class ServicePayloadContext implements
     this.serviceDiscovery = serviceDiscovery;
     this.providerStrategy = providerStrategy;
     this.instanceRefreshMs = instanceRefreshMs;
-    this.serializer = new ServicePayloadSerializer();
   }
 
   @Override
@@ -54,7 +49,6 @@ public class ServicePayloadContext implements
   @Override
   public void marshallJson(ObjectNode node, String fieldName, ServicePayload
     payload) throws Exception {
-    return;
 //    ObjectNode objectNode = node.putObject(fieldName);
 //    for(Map.Entry<String, String> entry : payload.getAll()) {
 //      objectNode.put(entry.getKey(), entry.getValue());
@@ -63,13 +57,12 @@ public class ServicePayloadContext implements
 
   @Override
   public ServicePayload unMarshallJson(JsonNode node) throws Exception {
-    ServicePayload payload = new ServicePayload();
-//    Iterator<Map.Entry<String, JsonNode>> fields = node.getFields();
+    //    Iterator<Map.Entry<String, JsonNode>> fields = node.getFields();
 //    while(fields.hasNext()) {
 //      Map.Entry<String, JsonNode> entry = fields.next();
 //      payload.add(entry.getKey(), entry.getValue().asText());
 //    }
-    return payload;
+    return new ServicePayload();
   }
 
   @Override
