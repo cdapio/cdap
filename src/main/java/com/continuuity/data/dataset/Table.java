@@ -11,12 +11,19 @@ public class Table extends DataSet {
     super(name);
   }
 
-  private DataFabric fabric;
-  private BatchCollector collector;
+  private DataFabric dataFabric = null;
+  private SimpleBatchCollectionClient collectionClient = null;
 
-  @Override
-  void initialize(DataSetMeta meta) throws OperationException {
-    this.fabric.openTable(this.getName());
+  private BatchCollector getCollector() {
+    return this.collectionClient.getCollector();
+  }
+
+  public Table(DataSetMeta meta) {
+    super(meta);
+  }
+
+  public void open() throws OperationException {
+    this.dataFabric.openTable(this.getName());
   }
 
   @Override
@@ -31,10 +38,10 @@ public class Table extends DataSet {
   public OperationResult<Map<byte[], byte[]>> read(Read read)
       throws OperationException {
     if (read.columns != null) {
-      return this.fabric.read(new com.continuuity.api.data.Read(
+      return this.dataFabric.read(new com.continuuity.api.data.Read(
           this.tableName(), read.row, read.columns));
     } else {
-      return this.fabric.read(new ReadColumnRange(
+      return this.dataFabric.read(new ReadColumnRange(
           this.tableName(), read.row, read.startCol, read.stopCol));
     }
   }
@@ -42,7 +49,7 @@ public class Table extends DataSet {
   enum Mode { Sync, Async }
 
   private void execute(WriteOp op, Mode mode) throws OperationException {
-    WriteOperation operation = null;
+    WriteOperation operation;
     if (op instanceof Write) {
       Write write = (Write)op;
       operation = new com.continuuity.api.data.Write(
@@ -68,9 +75,9 @@ public class Table extends DataSet {
     }
 
     if (mode.equals(Mode.Async)) {
-      this.collector.add(operation);
+      this.getCollector().add(operation);
     } else {
-      this.fabric.execute(Collections.singletonList(operation));
+      this.dataFabric.execute(Collections.singletonList(operation));
     }
   }
 

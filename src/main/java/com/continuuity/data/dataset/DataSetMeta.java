@@ -19,8 +19,8 @@ public class DataSetMeta {
   public String getProperty(String key) {
     return properties.get(key);
   }
-  public DataSetMeta getMetaFor(DataSet dataset) {
-    return dataSetMetas.get(dataset.getName());
+  public DataSetMeta getMetaFor(String dsName) {
+    return dataSetMetas.get(dsName);
   }
 
   private DataSetMeta(String name, String type,

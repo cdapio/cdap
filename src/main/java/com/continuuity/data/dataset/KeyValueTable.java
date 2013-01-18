@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class KeyValueTable extends DataSet {
 
+  static final byte[] KEY_COLUMN = { 'k', 'e', 'y' };
+
   private Table table;
 
   public KeyValueTable(String name) {
@@ -14,11 +16,9 @@ public class KeyValueTable extends DataSet {
     this.table = new Table("kv_" + name);
   }
 
-  static final byte[] KEY_COLUMN = { 'k', 'e', 'y' };
-
-  @Override
-  void initialize(DataSetMeta meta) throws OperationException {
-    this.table.initialize(meta.getMetaFor(this.table));
+  public KeyValueTable(DataSetMeta meta) throws OperationException {
+    super(meta);
+    this.table = new Table(meta.getMetaFor("kv_" + this.getName()));
   }
 
   @Override
