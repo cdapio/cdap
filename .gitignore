@@ -32,6 +32,7 @@ clover.license
 /singlenode
 /data
 /performance
+/manager
 
 # Ignore Node stuff
 npm*
