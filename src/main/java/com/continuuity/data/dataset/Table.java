@@ -11,13 +11,19 @@ public class Table extends DataSet {
     super(name);
   }
 
-  private DataFabric fabric = null;
-  private BatchCollector collector = null;
+  private DataFabric dataFabric = null;
+  private SimpleBatchCollectionClient collectionClient = null;
 
+  private BatchCollector getCollector() {
+    return this.collectionClient.getCollector();
+  }
 
-  public Table(DataSetMeta meta) throws OperationException {
+  public Table(DataSetMeta meta) {
     super(meta);
-    this.fabric.openTable(this.getName());
+  }
+
+  public void open() throws OperationException {
+    this.dataFabric.openTable(this.getName());
   }
 
   @Override
@@ -32,10 +38,10 @@ public class Table extends DataSet {
   public OperationResult<Map<byte[], byte[]>> read(Read read)
       throws OperationException {
     if (read.columns != null) {
-      return this.fabric.read(new com.continuuity.api.data.Read(
+      return this.dataFabric.read(new com.continuuity.api.data.Read(
           this.tableName(), read.row, read.columns));
     } else {
-      return this.fabric.read(new ReadColumnRange(
+      return this.dataFabric.read(new ReadColumnRange(
           this.tableName(), read.row, read.startCol, read.stopCol));
     }
   }
@@ -69,9 +75,9 @@ public class Table extends DataSet {
     }
 
     if (mode.equals(Mode.Async)) {
-      this.collector.add(operation);
+      this.getCollector().add(operation);
     } else {
-      this.fabric.execute(Collections.singletonList(operation));
+      this.dataFabric.execute(Collections.singletonList(operation));
     }
   }
 

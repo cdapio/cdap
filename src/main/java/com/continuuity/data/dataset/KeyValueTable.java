@@ -16,9 +16,9 @@ public class KeyValueTable extends DataSet {
     this.table = new Table("kv_" + name);
   }
 
-  KeyValueTable(DataSetMeta meta) throws OperationException {
+  public KeyValueTable(DataSetMeta meta) throws OperationException {
     super(meta);
-    this.table = new Table(meta.getMetaFor(this.getName()));
+    this.table = new Table(meta.getMetaFor("kv_" + this.getName()));
   }
 
   @Override
