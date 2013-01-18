@@ -8,6 +8,7 @@ versions.flumeVersion = '1.2+'
 versions.hadoopVersion = '2.0.0-alpha'
 versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
+versions.googleGuice = '3.0'
 versions.netflixCuratorVersion = '1.1.+'
 versions.minaVersion = '2.0.4'
 
@@ -24,7 +25,8 @@ libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.+"
 // Google Libraries
 libraries.google_guava = "com.google.guava:guava:$versions.googleGuavaVersion"
 libraries.google_gson = "com.google.code.gson:gson:2.1"
-libraries.google_guice = "com.google.inject:guice:3.0-rc3"
+libraries.google_guice = "com.google.inject:guice:$versions.googleGuice"
+libraries.google_guice_multibindings = "com.google.inject.extensions:guice-multibindings:$versions.googleGuice"
 
 // Thrift
 libraries.thrift = "org.apache.thrift:libthrift:0.8.0"
