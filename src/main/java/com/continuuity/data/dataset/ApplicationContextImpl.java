@@ -15,14 +15,22 @@ public class ApplicationContextImpl
   private DataFabric fabric;
   private BatchCollectionClient collectionClient;
 
-  Map<String, DataSetMeta> datasets = new HashMap<String, DataSetMeta>();
+  private Map<String, DataSetMeta> datasets =
+      new HashMap<String, DataSetMeta>();
 
-  void logAndThrow(String message, Object[] params, Throwable e)
+  void logAndThrow(Throwable e, String message, Object... params)
       throws DataSetInstantiationException {
-    String msg = String.format("Error instantiating data set: %s. %s",
+    if (e == null) {
+      String msg = String.format("Error instantiating data set: %s.",
+          String.format(message, params));
+      // TODO log the message;
+      throw new DataSetInstantiationException(msg);
+    } else {
+      String msg = String.format("Error instantiating data set: %s. %s",
         String.format(message, params), e.getMessage());
-    // log the message;
-    throw new DataSetInstantiationException(msg, e);
+      // TODO log the message;
+      throw new DataSetInstantiationException(msg, e);
+    }
   }
 
   public
@@ -32,8 +40,7 @@ public class ApplicationContextImpl
     // find the data set meta data
     DataSetMeta meta = this.datasets.get(name);
     if (meta == null) {
-      logAndThrow("No data set named %s declared for application.",
-          new Object[] { name }, null);
+      logAndThrow(null, "No data set named %s declared for application.", name);
       return null; // unreachable but code inspection does not know
     }
 
@@ -42,8 +49,7 @@ public class ApplicationContextImpl
     try {
       dsClass = Class.forName(className);
     } catch (ClassNotFoundException e) {
-      logAndThrow("Data set class %s not found",
-          new Object[] { className }, e);
+      logAndThrow(e, "Data set class %s not found", className);
       return null; // unreachable but code inspection does not know
     }
 
@@ -52,20 +58,16 @@ public class ApplicationContextImpl
       ds = dsClass.getConstructor(DataSetMeta.class).newInstance(meta);
 
     } catch (InvocationTargetException e) {
-      logAndThrow("Exception from constructor for %s",
-          new Object[] { className }, e.getTargetException());
+      logAndThrow(e.getTargetException(), "Exception from constructor for %s", className);
 
     } catch (NoSuchMethodException e) {
-      logAndThrow("Data set class %s does not declare constructor from " +
-          "DataSetMeta", new Object[] { className }, e );
+      logAndThrow(e, "Data set class %s does not declare constructor from DataSetMeta", className);
 
     } catch (InstantiationException e) {
-      logAndThrow("Data set class %s is not instantiable",
-          new Object[] { className }, e );
+      logAndThrow(e, "Data set class %s is not instantiable", className);
 
     } catch (IllegalAccessException e) {
-      logAndThrow("Constructor from DataSetMeta is not accessible in data " +
-          "set class %s", new Object[] { className }, e );
+      logAndThrow(e, "Constructor from DataSetMeta is not accessible in data set class %s", className);
     }
     this.injectDataFabric(ds);
     return this.convert(ds, className);
@@ -78,9 +80,8 @@ public class ApplicationContextImpl
       return (T)o;
     }
     catch (ClassCastException e) {
-      logAndThrow("Incompatible assignment of dataset of type %s",
-          new Object[] { className }, e );
-      return null;
+      logAndThrow(e, "Incompatible assignment of dataset of type %s", className);
+      return null; // unreachable but Java does not know
     }
   }
 
@@ -102,8 +103,7 @@ public class ApplicationContextImpl
         try {
           fieldValue = field.get(obj);
         } catch (IllegalAccessException e) {
-          logAndThrow("Cannot access field %s of data set class %s",
-              new Object[] { field.getName(), objClass.getName() }, e);
+          logAndThrow(e, "Cannot access field %s of data set class %s", field.getName(), objClass.getName());
         }
         injectDataFabric(fieldValue);
       }
@@ -118,8 +118,7 @@ public class ApplicationContextImpl
       dataFabricField.setAccessible(true);
       dataFabricField.set(table, this.fabric);
     } catch (Exception e) {
-      logAndThrow("Cannot access field dataFabric of class Table",
-          new Object[] {}, e);
+      logAndThrow(e, "Cannot access field dataFabric of class Table");
     }
     // inject the batch collection client
     try {
@@ -127,8 +126,7 @@ public class ApplicationContextImpl
       collectionField.setAccessible(true);
       collectionField.set(table, this.collectionClient);
     } catch (Exception e) {
-      logAndThrow("Cannot access field collectionClient of class Table",
-          new Object[] {}, e);
+      logAndThrow(e, "Cannot access field collectionClient of class Table");
     }
   }
 
