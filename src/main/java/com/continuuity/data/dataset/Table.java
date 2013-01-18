@@ -5,12 +5,34 @@ import com.continuuity.api.data.*;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * This is the DataSet implementation of named tables. Other DataSets can be
+ * defined by embedding instances Table (and other DataSets).
+ *
+ * A Table can execute operations on its data, including read, write,
+ * delete etc. These operations can be performed in one of two ways:
+ * <li>Synchronously: The operation is executed immediately against the
+ *   data fabric, in its own transaction. This is supported for all types
+ *   of operations. </li>
+ * <li>Asynchronously: The operation is staged for execution as part of
+ *   the transaction of the context in which this data set was
+ *   instantiated (a flowlet, or a procedure). In this case,
+ *   the actual execution is delegated to the context. This is useful
+ *   when multiple operations, possibly over multiple table,
+ *   must be performed atomically. This is only supported for write
+ *   operations.</li>
+ *
+ * The Table relies on injection of the data fabric by the execution context.
+ * (@see DataSet).
+ */
 public class Table extends DataSet {
 
+  /** construct by name */
   public Table(String name) {
     super(name);
   }
 
+  // these two must be injected through the execution context
   private DataFabric dataFabric = null;
   private SimpleBatchCollectionClient collectionClient = null;
 
