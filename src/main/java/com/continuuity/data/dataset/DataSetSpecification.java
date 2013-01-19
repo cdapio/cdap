@@ -4,22 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A DataSetMeta is a hierarchical meta data object that contains all
+ * A DataSetSpecification is a hierarchical meta data object that contains all
  * meta data needed to instantiate a data set at runtime. It is hierarchical
- * because it also contains the meta data for any embedded data sets that are
- * used in the implementation of the data set. DataSetMeta consists of:
- * <li>fixed meta fields such as the name and the type (the class) of a
+ * because it also contains the specification for any embedded data sets that
+ * are used in the implementation of the data set. DataSetSpecification
+ * consists of:
+ * <li>fixed fields such as the name and the type (the class) of a
  *   data set</li>
  * <li>custom string properties that vary from data set to data set,
  *   and that the data set implementation depends on</li>
- * <li>a DataSetMeta for each embedded data set. For instance,
+ * <li>a DataSetSpecification for each embedded data set. For instance,
  *   if a data set implements an indexed table using two base Tables,
- *   one for the data and one for the index, then these two tables their
- *   own meta data, which is carried along with the meta data for the
+ *   one for the data and one for the index, then these two tables have
+ *   their own spec, which must be carried along with the spec for the
  *   indexed table.</li>
- * DataSetMeta uses a builder pattern for construction.
+ * DataSetSpecification uses a builder pattern for construction.
  */
-public final class DataSetMeta {
+public final class DataSetSpecification {
 
   /** the name of the data set */
   private final String name;
@@ -28,7 +29,7 @@ public final class DataSetMeta {
   /** the custom properties of the data set */
   private final Map<String, String> properties;
   /** the meta data for embedded data sets */
-  private final Map<String, DataSetMeta> dataSetMetas;
+  private final Map<String, DataSetSpecification> dataSetSpecs;
 
   /** returns the name of the data set */
   public String getName() {
@@ -50,39 +51,40 @@ public final class DataSetMeta {
   }
 
   /**
-   * get the meta data for an embedded data set
+   * get the specification for an embedded data set
    * @param dsName the name of the embedded data set
-   * @return the meta data for the named embedded data set,
+   * @return the specification for the named embedded data set,
    *    or null if not found.
    */
-  public DataSetMeta getMetaFor(String dsName) {
-    return dataSetMetas.get(dsName);
+  public DataSetSpecification getSpecificationFor(String dsName) {
+    return dataSetSpecs.get(dsName);
   }
 
   /** private constructor, only to be used by the builder */
-  private DataSetMeta(String name, String type,
-                      Map<String, String> properties,
-                      Map<String, DataSetMeta> dataSetMetas) {
+  private DataSetSpecification(String name, String type,
+                               Map<String, String> properties,
+                               Map<String, DataSetSpecification> dataSetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = properties;
-    this.dataSetMetas = dataSetMetas;
+    this.dataSetSpecs = dataSetSpecs;
   }
 
-  /** A Builder to construct DataSetMeta instances */
+  /** A Builder to construct DataSetSpecification instances */
   public final static class Builder {
     // private fields
     private String name;
     private String type;
     private Map<String, String> properties
         = new HashMap<String, String>();
-    private Map<String, DataSetMeta> dataSetMetas
-        = new HashMap<String, DataSetMeta>();
+    private Map<String, DataSetSpecification> dataSetSpecs
+        = new HashMap<String, DataSetSpecification>();
 
     /**
-     * Constructor from the data set that the meta data is for,
+     * Constructor from the data set that the specification is for,
      * looks up and sets the name and the class of that data set.
-     * @param dataset The data set for which a DataSetMeta is to be built
+     * @param dataset The data set for which a DataSetSpecification is to be
+     *                built
      */
     public Builder(DataSet dataset) {
       this.name = dataset.getName();
@@ -101,26 +103,26 @@ public final class DataSetMeta {
     }
 
     /**
-     * Add meta data for an embedded data set. Takes a builder and uses
-     * that to create the DataSetMeta, then extracts the name from that meta
-     * data.
+     * Add a specification for an embedded data set. Takes a builder and uses
+     * that to create the DataSetSpecification, then extracts the name from
+     * that specification.
      * @param builder a builder populated with all meta data
      * @return this builder object to allow chaining
      */
-    public Builder dataset(DataSetMeta.Builder builder) {
-      DataSetMeta meta = builder.create();
-      this.dataSetMetas.put(meta.getName(), meta);
+    public Builder dataset(DataSetSpecification.Builder builder) {
+      DataSetSpecification spec = builder.create();
+      this.dataSetSpecs.put(spec.getName(), spec);
       return this;
     }
 
     /**
-     * Create a DataSetMeta from this builder, using the private DataSetMeta
+     * Create a DataSetSpecification from this builder, using the private DataSetSpecification
      * constructor.
-     * @return a complete DataSetMeta
+     * @return a complete DataSetSpecification
      */
-    public DataSetMeta create() {
-      return new DataSetMeta(this.name, this.type, this.properties,
-          this.dataSetMetas);
+    public DataSetSpecification create() {
+      return new DataSetSpecification(this.name, this.type, this.properties,
+          this.dataSetSpecs);
     }
   }
 

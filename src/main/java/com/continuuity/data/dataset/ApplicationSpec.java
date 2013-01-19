@@ -6,7 +6,7 @@ import java.util.List;
 public class ApplicationSpec {
 
   private String name;
-  private List<DataSetMeta> datasets = new LinkedList<DataSetMeta>();
+  private List<DataSetSpecification> datasets = new LinkedList<DataSetSpecification>();
 
   public ApplicationSpec dataset(DataSet dataset) {
     this.datasets.add(dataset.configure().create());
@@ -18,7 +18,7 @@ public class ApplicationSpec {
     return this;
   }
 
-  public List<DataSetMeta> getDatasets() {
+  public List<DataSetSpecification> getDatasets() {
     return this.datasets;
   }
 
