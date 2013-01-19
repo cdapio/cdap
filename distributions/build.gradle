@@ -1,5 +1,6 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
+evaluationDependsOn(':performance')
 
 apply plugin:'maven'
 apply plugin:'ubuntu'

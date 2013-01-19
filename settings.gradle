@@ -24,6 +24,7 @@ gitRepos << new GitRepo(name: "examples", branch: branch);
 gitRepos << new GitRepo(name: "singlenode", branch: branch);
 gitRepos << new GitRepo(name: "performance", branch: branch);
 gitRepos << new GitRepo(name: "manager", branch: branch);
+gitRepos << new GitRepo(name: "wallboard", branch: branch);
 
 //workaround to share the repo definition with the rootproject that has the git tasks declared
 gradle.ext.gitRepos = gitRepos
