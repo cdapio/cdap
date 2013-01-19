@@ -33,6 +33,7 @@ clover.license
 /data
 /performance
 /manager
+/wallboard
 
 # Ignore Node stuff
 npm*
