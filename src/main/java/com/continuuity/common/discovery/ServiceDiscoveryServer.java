@@ -11,11 +11,8 @@ import com.netflix.curator.framework.CuratorFrameworkFactory;
 import com.netflix.curator.retry.RetryUntilElapsed;
 import com.netflix.curator.x.discovery.ServiceDiscovery;
 import com.netflix.curator.x.discovery.ServiceDiscoveryBuilder;
-import com.netflix.curator.x.discovery.server.contexts.MapDiscoveryContext;
-import com.netflix.curator.x.discovery.server.entity
-  .JsonServiceInstanceMarshaller;
-import com.netflix.curator.x.discovery.server.entity
-  .JsonServiceInstancesMarshaller;
+import com.netflix.curator.x.discovery.server.entity.JsonServiceInstanceMarshaller;
+import com.netflix.curator.x.discovery.server.entity.JsonServiceInstancesMarshaller;
 import com.netflix.curator.x.discovery.server.entity.JsonServiceNamesMarshaller;
 import com.netflix.curator.x.discovery.strategies.RandomStrategy;
 import com.sun.jersey.api.core.DefaultResourceConfig;
@@ -26,10 +23,8 @@ import org.mortbay.jetty.servlet.ServletHolder;
 
 import javax.ws.rs.core.Application;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**

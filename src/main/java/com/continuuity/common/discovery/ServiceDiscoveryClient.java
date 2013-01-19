@@ -2,19 +2,13 @@ package com.continuuity.common.discovery;
 
 import com.continuuity.common.zookeeper.ZookeeperClientProvider;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
+import com.google.common.collect.ImmutableList;
 import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.CuratorFrameworkFactory;
-import com.netflix.curator.retry.RetryNTimes;
 import com.netflix.curator.x.discovery.*;
 import com.netflix.curator.x.discovery.details.InstanceProvider;
-import org.mortbay.log.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.*;
 
 /**
@@ -23,19 +17,22 @@ import java.util.*;
  * around the Netflix curator for managing states.
  */
 public class ServiceDiscoveryClient implements Closeable {
-  private final String connectionString;
-  private static ServiceDiscovery<ServicePayload> discovery = null;
   public static final String SERVICE_PATH = "/continuuity/system/services";
-  private static final int numberOfRetry = 100;
-  private static final int timeBetweenRetries = 1000;
-  private static boolean started = false;
+
+  private static final int NUMBER_OF_RETRY = 100;
+  private static final int TIME_BETWEEN_RETRIES = 1000;
+
+  private final String connectionString;
+  private ServiceDiscovery<ServicePayload> discovery;
+
+  private boolean started;
   private CuratorFramework client;
 
   /**
    * Constructs a service registration using an connection string.
    *
    * @param connectionString the connect string to ZK ensemble.
-   * @throws IOException
+   * @throws ServiceDiscoveryClientException
    */
   public ServiceDiscoveryClient(String connectionString) throws ServiceDiscoveryClientException {
     connectionString = Preconditions.checkNotNull(connectionString);
@@ -51,9 +48,7 @@ public class ServiceDiscoveryClient implements Closeable {
     try {
       // Create a curator client.
       client = ZookeeperClientProvider.getClient(
-        connectionString,
-        numberOfRetry,
-        timeBetweenRetries
+        connectionString, NUMBER_OF_RETRY, TIME_BETWEEN_RETRIES
       );
 
       // Create a service discovery that allocated ServiceProviders.
@@ -146,13 +141,11 @@ public class ServiceDiscoveryClient implements Closeable {
    * @throws ServiceDiscoveryClientException
    */
   public int getProviderCount(String name) throws ServiceDiscoveryClientException {
-    int count = 0;
     try {
-      count =  discovery.queryForInstances(name).size();
+      return discovery.queryForInstances(name).size();
     } catch (Exception e) {
       throw new ServiceDiscoveryClientException(e);
     }
-    return count;
   }
 
   /**
@@ -176,11 +169,7 @@ public class ServiceDiscoveryClient implements Closeable {
       }
 
       // Applying the strategy provided, get one instance to connect to.
-      ServiceInstance<ServicePayload> instance = strategy.getInstance(provider);
-
-      // Get an instance based on the strategy for choosing.
-      instance = strategy.getInstance(provider);
-      return instance;
+      return strategy.getInstance(provider);
     } catch (Exception e) {
       throw new ServiceDiscoveryClientException(e.getMessage());
     }
@@ -209,14 +198,15 @@ public class ServiceDiscoveryClient implements Closeable {
    */
   public ServiceProvider getServiceProvider(String name)
     throws ServiceDiscoveryClientException {
-    return new ServiceProvider(name);
+    return new ServiceProvider(name, discovery);
   }
 
   public static class ServiceProvider
     implements InstanceProvider<ServicePayload> {
-    Collection<ServiceInstance<ServicePayload>> instances;
 
-    public ServiceProvider(final String name)
+    private final Collection<ServiceInstance<ServicePayload>> instances;
+
+    public ServiceProvider(String name, ServiceDiscovery<ServicePayload> discovery)
         throws ServiceDiscoveryClientException {
       try {
         instances = discovery.queryForInstances(name);
@@ -227,7 +217,7 @@ public class ServiceDiscoveryClient implements Closeable {
     @Override
     public List<ServiceInstance<ServicePayload>> getInstances()
       throws Exception {
-      return new ArrayList<ServiceInstance<ServicePayload>>(instances);
+      return ImmutableList.copyOf(instances);
     }
   }
 
