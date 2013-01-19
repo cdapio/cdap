@@ -6,6 +6,10 @@ import com.continuuity.api.data.WriteOperation;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * simplest possible implementation of a batch collector. Flow can implement
+ * this with its output collector.
+ */
 public class SimpleBatchCollector implements BatchCollector {
 
   List<WriteOperation> ops = new LinkedList<WriteOperation>();

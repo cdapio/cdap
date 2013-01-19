@@ -53,12 +53,11 @@ public class Test {
     ApplicationSpec spec = app.configure();
 
     // create an app context for running a procedure
-    ApplicationContextImpl appContext = new ApplicationContextImpl();
+    ExecutionContextImpl appContext = new ExecutionContextImpl();
     appContext.setDataFabric(fabric);
     appContext.setBatchCollectionClient(collectionClient);
-    for (DataSetMeta meta : spec.getDatasets()) {
-      appContext.addDataSet(meta);
-    }
+    appContext.setDataSets(spec.getDatasets());
+
 
     // create a procedure and configure it
     proc.initialize(appContext);

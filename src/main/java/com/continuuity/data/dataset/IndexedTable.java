@@ -19,16 +19,16 @@ public class IndexedTable extends DataSet {
     this.index = new Table("i_" + name);
   }
 
-  public IndexedTable(DataSetMeta meta) throws OperationException {
-    super(meta);
-    this.column = meta.getProperty("column").getBytes();
-    this.table = new Table(meta.getMetaFor("t_" + this.getName()));
-    this.index = new Table(meta.getMetaFor("i_" + this.getName()));
+  public IndexedTable(DataSetSpecification spec) throws OperationException {
+    super(spec);
+    this.column = spec.getProperty("column").getBytes();
+    this.table = new Table(spec.getSpecificationFor("t_" + this.getName()));
+    this.index = new Table(spec.getSpecificationFor("i_" + this.getName()));
   }
 
   @Override
-  public DataSetMeta.Builder configure() {
-    return new DataSetMeta.Builder(this).
+  public DataSetSpecification.Builder configure() {
+    return new DataSetSpecification.Builder(this).
         property("column", new String(this.column)).
         dataset(this.table.configure()).
         dataset(this.index.configure());

@@ -16,14 +16,14 @@ public class KeyValueTable extends DataSet {
     this.table = new Table("kv_" + name);
   }
 
-  public KeyValueTable(DataSetMeta meta) throws OperationException {
-    super(meta);
-    this.table = new Table(meta.getMetaFor("kv_" + this.getName()));
+  public KeyValueTable(DataSetSpecification spec) throws OperationException {
+    super(spec);
+    this.table = new Table(spec.getSpecificationFor("kv_" + this.getName()));
   }
 
   @Override
-  public DataSetMeta.Builder configure() {
-    return new DataSetMeta.Builder(this).
+  public DataSetSpecification.Builder configure() {
+    return new DataSetSpecification.Builder(this).
         dataset(this.table.configure());
   }
 

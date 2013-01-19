@@ -5,6 +5,7 @@ import com.continuuity.api.data.OperationResult;
 
 import java.util.Map;
 
+/** sample procedure (query provider) to illustrate the use of data sets */
 public class MyProcedure {
 
   KeyValueTable numbers;
@@ -13,7 +14,7 @@ public class MyProcedure {
   static final byte[] phoneCol = { 'p', 'h', 'o', 'n', 'e' };
   static final byte[] nameCol = { 'n', 'a', 'm', 'e' };
 
-  public void initialize(ApplicationContextImpl cxt)
+  public void initialize(ExecutionContextImpl cxt)
       throws DataSetInstantiationException, OperationException {
 
     numbers = cxt.getDataSet("phoneTable");
