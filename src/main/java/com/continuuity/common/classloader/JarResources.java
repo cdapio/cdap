@@ -1,11 +1,18 @@
 package com.continuuity.common.classloader;
 
+import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * JarResources: JarResources maps all resources included in a
@@ -16,11 +23,8 @@ public final class JarResources {
   private static final Logger LOG = LoggerFactory.getLogger(JarResources.class);
 
   // jar resource mapping tables
-  private Hashtable htSizes=new Hashtable();
-  private Hashtable htJarContents=new Hashtable();
-
-  // a jar file
-  private String jarFileName;
+  private final Map<String, byte[]> entryContents = Maps.newHashMap();
+  private final Manifest manifest;
 
   /**
    * creates a JarResources. It extracts all resources from a Jar
@@ -28,8 +32,16 @@ public final class JarResources {
    * @param jarFileName a jar or zip file
    */
   public JarResources(String jarFileName) throws JarResourceException {
-    this.jarFileName=jarFileName;
-    init();
+    manifest = init(jarFileName);
+  }
+
+  /**
+   * Returns the {@link Manifest} object if it presents in the jar file, or {@code null} otherwise.
+   *
+   * @see java.util.jar.JarFile#getManifest()
+   */
+  public Manifest getManifest() {
+    return manifest;
   }
 
   /**
@@ -38,60 +50,54 @@ public final class JarResources {
    */
   public byte[] getResource(String name) {
     LOG.trace("Resource name = " + name);
-    return (byte[])htJarContents.get(name);
+    return entryContents.get(name);
   }
 
   /**
    * initializes internal hash tables with Jar file resources.
    */
-  @SuppressWarnings("unchecked")
-  private void init() throws JarResourceException {
+  private Manifest init(String jarFileName) throws JarResourceException {
     try {
       // extracts just sizes only.
-      ZipFile zf=new ZipFile(jarFileName);
-      Enumeration e=zf.entries();
+      JarFile zf = new JarFile(jarFileName);
+      try {
+        Enumeration<JarEntry> entries = zf.entries();
 
-      while (e.hasMoreElements()) {
-        ZipEntry ze=(ZipEntry)e.nextElement();
-        LOG.trace(dumpZipEntry(ze));
-        htSizes.put(ze.getName(),new Integer((int)ze.getSize()));
-      }
-      zf.close();
-
-      // extract resources and put them into the hashtable.
-      FileInputStream fis=new FileInputStream(jarFileName);
-      BufferedInputStream bis=new BufferedInputStream(fis);
-      ZipInputStream zis=new ZipInputStream(bis);
-      ZipEntry ze=null;
-      while ((ze=zis.getNextEntry())!=null) {
-        if (ze.isDirectory()) {
-          continue;
-        }
-
-        LOG.trace("ze.getName()="+ze.getName()+
-              ","+"getSize()="+ze.getSize() );
-
-        int size=(int)ze.getSize();
-        // -1 means unknown size.
-        if (size==-1){
-          size=((Integer)htSizes.get(ze.getName())).intValue();
-        }
-
-        byte[] b=new byte[(int)size];
-        int rb=0;
-        int chunk=0;
-        while (((int)size - rb) > 0){
-          chunk=zis.read(b,rb,(int)size - rb);
-          if (chunk==-1){
-            break;
+        while (entries.hasMoreElements()) {
+          JarEntry ze = entries.nextElement();
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(dumpJarEntry(ze));
           }
-          rb+=chunk;
-        }
 
-        // add to internal resource hashtable
-        htJarContents.put(ze.getName(),b);
-        LOG.trace(ze.getName() + " rb=" + rb + ",size=" + size + ",csize="
-                    + ze.getCompressedSize());
+          if (ze.isDirectory()) {
+            continue;
+          }
+          if (ze.getSize() > Integer.MAX_VALUE) {
+            throw new JarResourceException("Jar entry is too big to fit in memory.");
+          }
+
+          InputStream is = zf.getInputStream(ze);
+          try {
+            byte[] bytes;
+            if (ze.getSize() < 0) {
+              bytes = ByteStreams.toByteArray(is);
+            } else {
+              bytes = new byte[(int)ze.getSize()];
+              ByteStreams.readFully(is, bytes);
+            }
+            // add to internal resource hashtable
+            entryContents.put(ze.getName(), bytes);
+            LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize="
+                        + ze.getCompressedSize());
+
+          } finally {
+            is.close();
+          }
+        }
+        return zf.getManifest();
+
+      } finally {
+        zf.close();
       }
     } catch (NullPointerException e){
       LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
@@ -107,30 +113,27 @@ public final class JarResources {
 
   /**
    * Dumps a zip entry into a string.
-   * @param ze a ZipEntry
+   * @param ze a JarEntry
    */
-  private String dumpZipEntry(ZipEntry ze) {
-    StringBuffer sb=new StringBuffer();
+  private String dumpJarEntry(JarEntry ze) {
+    StringBuilder sb=new StringBuilder();
     if (ze.isDirectory()) {
       sb.append("d ");
     } else {
       sb.append("f ");
     }
 
-    if (ze.getMethod()==ZipEntry.STORED) {
+    if (ze.getMethod()==JarEntry.STORED) {
       sb.append("stored   ");
     } else {
       sb.append("defalted ");
     }
 
-    sb.append(ze.getName());
-    sb.append("\t");
-    sb.append(""+ze.getSize());
-    if (ze.getMethod()==ZipEntry.DEFLATED) {
-      sb.append("/"+ze.getCompressedSize());
+    sb.append(ze.getName()).append("\t").append(ze.getSize());
+    if (ze.getMethod()==JarEntry.DEFLATED) {
+      sb.append("/").append(ze.getCompressedSize());
     }
 
     return (sb.toString());
   }
-
 }
