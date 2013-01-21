@@ -9,12 +9,7 @@ import java.util.Set;
  * Defines the payload that is placed for every service.
  */
 public class ServicePayload {
-  private Map<String, String> values = Maps.newHashMap();
-
-  /**
-   * Default constructor
-   */
-  public ServicePayload() {}
+  private final Map<String, String> values = Maps.newHashMap();
 
   /**
    * Adds a key and value as service payload.
