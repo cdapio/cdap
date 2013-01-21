@@ -18,7 +18,7 @@ public class KeyValueTable extends DataLib {
   /**
    * Constructs a key-value table with the specified name and using the
    * specified context.
-   * @param dataSetId Specifies the dataset Id.
+   * @param dataSetId Specifies the com.continuuity.data.dataset Id.
    */
   public KeyValueTable(String dataSetId) {
     super(dataSetId, "KeyValueTable");

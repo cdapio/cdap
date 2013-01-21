@@ -1,5 +1,8 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
+
 import java.util.LinkedList;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data;
 
 import java.util.HashMap;
 import java.util.Map;

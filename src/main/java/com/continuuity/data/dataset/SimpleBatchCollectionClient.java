@@ -16,7 +16,8 @@ public class SimpleBatchCollectionClient implements BatchCollectionClient {
     this.collector = collector;
   }
 
-  BatchCollector getCollector() {
+  @Override
+  public BatchCollector getCollector() {
     return this.collector;
   }
 }

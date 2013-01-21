@@ -188,12 +188,12 @@ implements TransactionalOperationExecutor {
   }
 
   private void namedTableMetric_read(String tableName) {
-    streamMetric.meter("dataset.read." + tableName, 1);
+    streamMetric.meter("com.continuuity.data.dataset.read." + tableName, 1);
   }
   
   private void namedTableMetric_write(String tableName, int dataSize) {
-    streamMetric.meter("dataset.write." + tableName, 1);
-    streamMetric.meter("dataset.storage." + tableName, dataSize);
+    streamMetric.meter("com.continuuity.data.dataset.write." + tableName, 1);
+    streamMetric.meter("com.continuuity.data.dataset.storage." + tableName, dataSize);
   }
   
   /* -------------------  end metrics ---------------- */
