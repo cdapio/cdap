@@ -1,5 +1,7 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.set;
 
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 

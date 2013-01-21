@@ -1,6 +1,13 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.set.IndexedTable;
+import com.continuuity.api.data.set.KeyValueTable;
+
 public class MyApplication {
+
+  public interface IndexedTableFactory {
+    IndexedTable create(String name, byte[] bytes);
+  }
 
   public ApplicationSpec configure() {
 

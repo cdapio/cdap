@@ -9,5 +9,6 @@ package com.continuuity.api.data;
 public interface BatchCollectionClient {
 
   public void setCollector(BatchCollector collector);
+  public BatchCollector getCollector();
 
 }

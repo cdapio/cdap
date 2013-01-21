@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data;
 
 /**
  * This is the abstract base class for all data sets. A data set is an

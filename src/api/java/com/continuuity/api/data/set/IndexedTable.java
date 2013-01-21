@@ -1,5 +1,7 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.set;
 
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.StatusCode;
@@ -7,23 +9,32 @@ import com.continuuity.data.operation.StatusCode;
 import java.util.Arrays;
 import java.util.Map;
 
+
 public class IndexedTable extends DataSet {
 
+  private String tableName, indexName;
   private Table table, index;
   private byte[] column;
 
-  public IndexedTable(String name, byte[] columnToIndex) {
-    super(name);
-    this.column = columnToIndex;
-    this.table = new Table("t_" + name);
-    this.index = new Table("i_" + name);
+  private void init(String name, byte[] column) {
+    this.tableName = "t_" + name;
+    this.indexName = "i_" + name;
+    this.column = column;
   }
 
+  @SuppressWarnings("unused")
   public IndexedTable(DataSetSpecification spec) throws OperationException {
     super(spec);
-    this.column = spec.getProperty("column").getBytes();
-    this.table = new Table(spec.getSpecificationFor("t_" + this.getName()));
-    this.index = new Table(spec.getSpecificationFor("i_" + this.getName()));
+    this.init(this.getName(), spec.getProperty("column").getBytes());
+    this.table = new Table(spec.getSpecificationFor(this.tableName));
+    this.index = new Table(spec.getSpecificationFor(this.indexName));
+  }
+
+  public IndexedTable(String name, byte[] columnToIndex) {
+    super(name);
+    this.init(name, columnToIndex);
+    this.table = new Table(this.tableName);
+    this.index = new Table(this.indexName);
   }
 
   @Override

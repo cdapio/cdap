@@ -1,7 +1,11 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.set.IndexedTable;
+import com.continuuity.api.data.set.KeyValueTable;
+import com.continuuity.api.data.set.Table;
 
 import java.util.Map;
 
@@ -14,7 +18,7 @@ public class MyProcedure {
   static final byte[] phoneCol = { 'p', 'h', 'o', 'n', 'e' };
   static final byte[] nameCol = { 'n', 'a', 'm', 'e' };
 
-  public void initialize(ExecutionContextImpl cxt)
+  public void initialize(ExecutionContext cxt)
       throws DataSetInstantiationException, OperationException {
 
     numbers = cxt.getDataSet("phoneTable");
