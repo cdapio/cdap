@@ -1,10 +1,8 @@
 package com.continuuity.common.discovery;
 
-import com.google.gson.Gson;
+import com.continuuity.common.serializer.JSONSerializer;
 import com.netflix.curator.x.discovery.ServiceInstance;
 import com.netflix.curator.x.discovery.details.InstanceSerializer;
-
-import java.nio.charset.Charset;
 
 /**
  * ServicePayload serializer.
@@ -12,15 +10,8 @@ import java.nio.charset.Charset;
 public class ServicePayloadSerializer implements
   InstanceSerializer<ServicePayload> {
 
-  /**
-   * Charset used for json encode/decode.
-   */
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
-  /**
-   * Instance of gson that is used to serialize the {@link ServicePayload}
-   */
-  private final Gson gson = new Gson();
+  private final JSONSerializer<ServiceInstance<ServicePayload>> serializer =
+    new JSONSerializer<ServiceInstance<ServicePayload>>();
 
   /**
    * Serialize an instance into bytes
@@ -31,7 +22,7 @@ public class ServicePayloadSerializer implements
    */
   @Override
   public byte[] serialize(ServiceInstance<ServicePayload> instance) throws Exception {
-    return gson.toJson(instance).getBytes(UTF8);
+    return serializer.serialize(instance);
   }
 
   /**
@@ -44,6 +35,6 @@ public class ServicePayloadSerializer implements
   @Override
   @SuppressWarnings("unchecked")
   public ServiceInstance<ServicePayload> deserialize(byte[] bytes) throws Exception {
-    return gson.fromJson(new String(bytes, UTF8), ServiceInstance.class);
+    return serializer.deserialize(bytes, ServiceInstance.class);
   }
 }

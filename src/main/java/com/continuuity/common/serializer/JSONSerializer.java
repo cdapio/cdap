@@ -3,6 +3,8 @@ package com.continuuity.common.serializer;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import java.nio.charset.Charset;
+
 /**
  * Serializes and Deserializes data as and from JSON.
  * <p>
@@ -10,20 +12,22 @@ import com.google.gson.JsonSyntaxException;
  *   deserializer. It operates on object of type T.
  * </p>
  */
-public class JSONSerializer<T> {
+public final class JSONSerializer<T> {
+
+  /**
+   * Charset used for json encode/decode.
+   */
+  private static final Charset UTF8 = Charset.forName("UTF-8");
+
   /**
    * Instance of gson for serializing and deserializing instance of T.
    */
-  public final transient Gson gson;
-  {
-    gson = new Gson();
-  }
+  private final Gson gson = new Gson();
 
   /**
    * Raised when there is issue with serialization or deserialization.
    * The message explains why.
    */
-  @SuppressWarnings("serial")
   public static class JSONSerializationException extends RuntimeException {
     public JSONSerializationException(String msg) {
       super(msg);
@@ -38,8 +42,7 @@ public class JSONSerializer<T> {
    */
   public final byte[] serialize(T object) throws JSONSerializationException {
     try {
-      String json = gson.toJson((T) object);
-      return json.getBytes();
+      return gson.toJson(object).getBytes(UTF8);
     } catch (Exception e) {
       throw new JSONSerializationException(e.getMessage());
     }
@@ -54,8 +57,7 @@ public class JSONSerializer<T> {
    */
   public final <T> T deserialize(byte[] object, Class<T> clazz) throws JSONSerializationException {
     try {
-      T o = gson.fromJson(new String(object), clazz);
-      return o;
+      return gson.fromJson(new String(object, UTF8), clazz);
     } catch (JsonSyntaxException e) {
       throw new JSONSerializationException(e.getMessage());
     }
