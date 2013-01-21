@@ -4,7 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.StatusCode;
+import com.continuuity.api.data.StatusCode;
 
 import java.util.Arrays;
 import java.util.Map;
