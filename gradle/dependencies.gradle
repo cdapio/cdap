@@ -26,6 +26,7 @@ libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.+"
 libraries.google_guava = "com.google.guava:guava:$versions.googleGuavaVersion"
 libraries.google_gson = "com.google.code.gson:gson:2.1"
 libraries.google_guice = "com.google.inject:guice:$versions.googleGuice"
+libraries.google_guice_assistedinject = "com.google.inject.extensions:guice-assistedinject:$versions.googleGuice"
 libraries.google_guice_multibindings = "com.google.inject.extensions:guice-multibindings:$versions.googleGuice"
 
 // Thrift
