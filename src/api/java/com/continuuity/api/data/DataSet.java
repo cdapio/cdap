@@ -44,5 +44,5 @@ public abstract class DataSet {
    * (@see DataSet(DataSetSpecification)).
    * @return a builder that has all meta data needed for runtime instantiation
    */
-  public abstract DataSetSpecification.Builder configure();
+  public abstract DataSetSpecification configure();
 }

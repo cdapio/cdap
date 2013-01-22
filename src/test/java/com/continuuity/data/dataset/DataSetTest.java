@@ -27,7 +27,7 @@ public class DataSetTest {
     private List<DataSetSpecification> datasets = new LinkedList<DataSetSpecification>();
 
     public ApplicationSpec dataset(DataSet dataset) {
-      this.datasets.add(dataset.configure().create());
+      this.datasets.add(dataset.configure());
       return this;
     }
 

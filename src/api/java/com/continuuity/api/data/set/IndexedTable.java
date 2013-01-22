@@ -38,11 +38,12 @@ public class IndexedTable extends DataSet {
   }
 
   @Override
-  public DataSetSpecification.Builder configure() {
+  public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
         property("column", new String(this.column)).
         dataset(this.table.configure()).
-        dataset(this.index.configure());
+        dataset(this.index.configure()).
+        create();
   }
 
   static final byte[] EXISTS = { 'x' };

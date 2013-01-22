@@ -39,8 +39,8 @@ public class Table extends DataSet {
   }
 
   @Override
-  public DataSetSpecification.Builder configure() {
-    return new DataSetSpecification.Builder(this);
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this).create();
   }
 
   /**
