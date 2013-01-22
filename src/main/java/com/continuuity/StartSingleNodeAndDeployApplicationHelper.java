@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 // TODO: looks like very generic: rename?
-public class StartSingleNodeAndDeployApplicationHelper {
+public final class StartSingleNodeAndDeployApplicationHelper {
 
   public static final String ARG_APPFABRIC_SINGLENODE_DEPLOY_COMMAND =
     "appfabric.singlenode.deploy.command";
@@ -29,13 +29,12 @@ public class StartSingleNodeAndDeployApplicationHelper {
     errorTailer.start();
     outputTailer.start();
 
-    int exitVal = proc.waitFor();
-    System.out.println("Finished deploy, exit code: " + exitVal);
+    System.out.println("Finished deploy, exit code: " + proc.waitFor());
   }
 
-  private static class StreamTailer extends Thread {
-    InputStream is;
-    String type;
+  private static final class StreamTailer extends Thread {
+    private InputStream is;
+    private String type;
 
     StreamTailer(InputStream is, String type) {
       this.is = is;
@@ -52,6 +51,7 @@ public class StartSingleNodeAndDeployApplicationHelper {
         }
 
       } catch (IOException ioe) {
+        System.out.println("Tailing output failed for type: " + type + ". You may not see new output from this stream");
         ioe.printStackTrace();
         // DO NOTHING
       }
