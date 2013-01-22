@@ -26,6 +26,8 @@ import java.util.Map;
  */
 public class Table extends DataSet {
 
+  // this is the Table that executed the actual operations. using a delegate
+  // allows us to inject a different implementation.
   private Table delegate = null;
 
   /** construct by name */
@@ -51,18 +53,33 @@ public class Table extends DataSet {
     return this.getName();
   }
 
+  /** sets the Table to which all operations are delegated */
   public void setDelegate(Table table) {
     this.delegate = table;
   }
 
-  public OperationResult<Map<byte[], byte[]>> read(@SuppressWarnings("unused") Read op) throws
+  /**
+   * Perform a read as a synchronous operation.
+   * @param read a Read operation
+   * @return the result of the read
+   * @throws OperationException if the operation fails
+   */
+  public OperationResult<Map<byte[], byte[]>> read(@SuppressWarnings("unused") Read read) throws
       OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    return this.delegate.read(op);
+    return this.delegate.read(read);
   }
 
+  /**
+   * Add a write operation to the current transaction. The execution is
+   * deferred until the time when the current transaction is executed and
+   * (asynchronously) committed as a batch, by the executing context (a
+   * flowlet or a query etc.)
+   * @param op The write operation
+   * @throws OperationException if something goes wrong
+   */
   public void stage(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -70,6 +87,13 @@ public class Table extends DataSet {
     this.delegate.stage(op);
   }
 
+  /**
+   * Perform a write operation synchronously. It is executed immediately in
+   * its own transaction, outside of the current transaction of the
+   * execution context (flowlet, query, etc.).
+   * @param op The write operation
+   * @throws OperationException if something goes wrong
+   */
   public void exec(WriteOperation op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
@@ -77,6 +101,15 @@ public class Table extends DataSet {
     this.delegate.exec(op);
   }
 
+  /**
+   * Returns a "closure", that is an encapsulated operation that,
+   * when executed, returns a value that can be used by another operation.
+   * The only supported type of closure at this time is an Incrememt: it
+   * returns a long value, which can be used as a field value in a tuple.
+   * @param op the increment operation, must be on a single column.
+   * @return a closure encapsulating the increment operation
+   * @throws OperationException if something goes wrong
+   */
   public Closure closure(Increment op) throws OperationException {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");

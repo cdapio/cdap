@@ -40,12 +40,6 @@ public class CoreTable extends Table {
     this.dataFabric.openTable(this.getName());
   }
 
-  /**
-   * Perform a read as a synchronous operation.
-   * @param read a Read operation
-   * @return the result of the read
-   * @throws OperationException if the operation fails
-   */
   @Override
   public OperationResult<Map<byte[], byte[]>> read(Read read)
       throws OperationException {
