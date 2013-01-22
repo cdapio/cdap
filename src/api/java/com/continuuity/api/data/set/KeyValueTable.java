@@ -24,9 +24,9 @@ public class KeyValueTable extends DataSet {
   }
 
   @Override
-  public DataSetSpecification.Builder configure() {
+  public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        dataset(this.table.configure());
+        dataset(this.table.configure()).create();
   }
 
   public byte[] read(byte[] key) throws OperationException {
