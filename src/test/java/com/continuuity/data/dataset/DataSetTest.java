@@ -154,7 +154,7 @@ public class DataSetTest {
     for (DataSetSpecification spec : appSpec.getDatasets()) {
       Gson gson = new Gson();
       String json = gson.toJson(spec);
-      System.out.println("JSON: " + json);
+      //System.out.println("JSON: " + json);
       DataSetSpecification spec1 = gson.fromJson(json, DataSetSpecification.class);
       Assert.assertEquals(spec, spec1);
     }
