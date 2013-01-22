@@ -24,7 +24,7 @@ import java.util.Map;
  * to pass in data fabric runtime, no exposure of the developer to the raw
  * data fabric, he only interacts with data sets).
  */
-public class DataSetInstantiator {
+public class DataSetInstantiator implements DataSetContext {
 
   private static final Logger Log =
       LoggerFactory.getLogger(DataSetInstantiator.class);
@@ -79,7 +79,7 @@ public class DataSetInstantiator {
    *  @param dataSetName the name of the data set to instantiate
    */
   public
-  <T extends DataSet> T instantiate(String dataSetName)
+  <T extends DataSet> T getDataSet(String dataSetName)
       throws DataSetInstantiationException, OperationException {
 
     // find the data set specification
