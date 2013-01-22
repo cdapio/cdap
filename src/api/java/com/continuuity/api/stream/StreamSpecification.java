@@ -5,11 +5,17 @@ import java.util.Map;
 /*
  * Specification for {@code Stream}
   */
-public class StreamSpecification {
+public final class StreamSpecification {
 
   private long ttl;
   private long maxSize;
   private Map<String,String> metaData;
+  private String name;
+
+
+  private void setName(String name) {
+    this.name = name;
+  }
 
   private void setTTL(long ttl) {
     this.ttl = ttl;
@@ -20,11 +26,39 @@ public class StreamSpecification {
     this.maxSize = maxSize;
   }
 
-
   private void setMetaData (Map<String,String> metaData ) {
     this.metaData = metaData;
    }
 
+  /*
+   * Returns the name of the Stream
+   */
+  public String getName(){
+    return this.name;
+  }
+
+  /*
+   * Returns ttl of the Stream
+   */
+  public long getTTL() {
+    return this.ttl;
+  }
+
+
+  /*
+   * Returns the MaxSize of the stream
+   */
+  public long getMaxSize() {
+    return this.maxSize;
+  }
+
+
+  /*
+   * Returns metaData of the stream
+   */
+  public Map<String,String> getMetaData(){
+    return this.metaData;
+  }
 
   //Instantiate object using Builder
   private StreamSpecification(){}
@@ -38,6 +72,20 @@ public class StreamSpecification {
     private long ttl = -1 ;
     private long maxSize = -1 ;
     private Map<String,String> metaData;
+    private String name;
+
+
+    /*
+     * Adds name parameter to Streams
+     * @param name: stream name
+     * @return Builder instance
+     */
+    public Builder setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+
 
     /*
      * Adds ttl parameter to Streams
@@ -72,13 +120,13 @@ public class StreamSpecification {
       return this;
     }
 
-
     /*
      * Create {@code StreamSpecification}
      * @return object of {@code StreamSpecification}
      */
     public StreamSpecification create() {
       StreamSpecification specification = new StreamSpecification();
+      specification.setName(name);
       specification.setMaxSize(this.maxSize);
       specification.setMetaData(this.metaData);
       specification.setTTL(this.ttl);
