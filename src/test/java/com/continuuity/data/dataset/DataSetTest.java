@@ -72,7 +72,7 @@ public class DataSetTest {
     static final byte[] phoneCol = { 'p', 'h', 'o', 'n', 'e' };
     static final byte[] nameCol = { 'n', 'a', 'm', 'e' };
 
-    public void initialize(ExecutionContext cxt)
+    public void initialize(DataSetContext cxt)
         throws DataSetInstantiationException, OperationException {
 
       numbers = cxt.getDataSet("phoneTable");
