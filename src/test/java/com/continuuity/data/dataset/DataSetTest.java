@@ -9,7 +9,7 @@ import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -17,55 +17,29 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static junit.framework.Assert.assertEquals;
+
 public class DataSetTest {
 
-  static class ApplicationSpec {
+  private static List<DataSetSpecification> configure() {
 
-    private String name;
-    private List<DataSetSpecification> datasets = new LinkedList<DataSetSpecification>();
+    // a key value table mapping name to phone number
+    KeyValueTable numbers = new KeyValueTable("phoneTable");
 
-    public ApplicationSpec dataset(DataSet dataset) {
-      this.datasets.add(dataset.configure());
-      return this;
-    }
+    // an indexed tables allowing forward and reverse lookup
+    IndexedTable idxNumbers = new IndexedTable("phoneIndex",
+        new byte[] { 'p', 'h', 'o', 'n', 'e' });
 
-    public ApplicationSpec name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    public List<DataSetSpecification> getDatasets() {
-      return this.datasets;
-    }
-
-    public String getName() {
-      return name;
-    }
+    return Lists.newArrayList(
+        numbers.configure(),
+        idxNumbers.configure());
   }
 
-  static public class MyApplication {
-
-    public ApplicationSpec configure() {
-
-      // a key value table mapping name to phone number
-      KeyValueTable numbers = new KeyValueTable("phoneTable");
-
-      // an indexed tables allowing forward and reverse lookup
-      IndexedTable idxNumbers = new IndexedTable("phoneIndex",
-          new byte[] { 'p', 'h', 'o', 'n', 'e' });
-
-      return new ApplicationSpec().
-          name("phoneNumbers").
-          dataset(numbers).
-          dataset(idxNumbers);
-    }
-  }
-
-  /** sample procedure (query provider) to illustrate the use of data sets */
+  /** sample procedure to illustrate the use of data sets */
   public static class MyProcedure {
 
     KeyValueTable numbers;
@@ -110,22 +84,13 @@ public class DataSetTest {
     }
   }
 
-
   static MyProcedure proc = new MyProcedure();
   static SimpleBatchCollectionClient collectionClient = new
       SimpleBatchCollectionClient();
   static OperationExecutor executor;
   static DataFabric fabric;
-  static ApplicationSpec appSpec;
-
-  private static void assertEquals(Object expected, Object actual) {
-    if (!Objects.equal(expected, actual)) {
-      System.err.println("Error: expected " +
-          (expected == null ? "<null>" : expected.toString())
-          + " but actual is " +
-          (actual == null ? "<null>" : actual.toString()));
-    }
-  }
+  static List<DataSetSpecification> specs;
+  static DataSetInstantiator instantiator;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -135,15 +100,14 @@ public class DataSetTest {
     executor = injector.getInstance(OperationExecutor.class);
     fabric = new DataFabricImpl(executor, OperationContext.DEFAULT);
 
-    // create an app and let it configure itself
-    MyApplication app = new MyApplication();
-    appSpec = app.configure();
+    // configure a couple of data sets
+    specs = configure();
 
     // create an app context for running a procedure
-    DataSetInstantiator instantiator = new DataSetInstantiator();
+    instantiator = new DataSetInstantiator();
     instantiator.setDataFabric(fabric);
     instantiator.setBatchCollectionClient(collectionClient);
-    instantiator.setDataSets(appSpec.getDatasets());
+    instantiator.setDataSets(specs);
 
     // create a procedure and configure it
     proc.initialize(instantiator);
@@ -151,7 +115,7 @@ public class DataSetTest {
 
   @Test
   public void testToAndFromJSon() {
-    for (DataSetSpecification spec : appSpec.getDatasets()) {
+    for (DataSetSpecification spec : specs) {
       Gson gson = new Gson();
       String json = gson.toJson(spec);
       //System.out.println("JSON: " + json);
@@ -165,6 +129,69 @@ public class DataSetTest {
     // try some procedure methods
     doOne("billy", "408-123-4567");
     doOne("jimmy", "415-987-4321");
+  }
+
+  @Test(expected = ClassCastException.class)
+  public void testInstantiateWrongClass() throws Exception {
+    @SuppressWarnings("unused")
+    KeyValueTable kvTable = instantiator.getDataSet("phoneIndex");
+  }
+
+  @Test(expected = DataSetInstantiationException.class)
+  public void testInstantiateNonExistent() throws Exception {
+    @SuppressWarnings("unused")
+    KeyValueTable kvTable = instantiator.getDataSet("phonetab");
+  }
+
+  // this dataset is missing the constructor from data set spec
+  static class Incomplete extends DataSet {
+    public Incomplete(String name) {
+      super(name);
+    }
+    @Override
+    public DataSetSpecification configure() {
+      return new DataSetSpecification.Builder(this).
+          dataset(new Table("t_" + getName()).configure()).
+          create();
+    }
+  }
+
+  @Test(expected = DataSetInstantiationException.class)
+  public void testMissingConstructor() throws Exception {
+    // configure an incomplete data set and add it to an instantiator
+    DataSetSpecification spec = new Incomplete("dummy").configure();
+    DataSetInstantiator inst = new DataSetInstantiator();
+    inst.setDataFabric(fabric);
+    inst.setBatchCollectionClient(collectionClient);
+    inst.setDataSets(Collections.singletonList(spec));
+    // try to instantiate the incomplete data set
+    @SuppressWarnings("unused")
+    Incomplete ds = inst.getDataSet("dummy");
+  }
+
+  // this class' data set spec constructor throws an exception
+  static class Throwing extends Incomplete {
+    public Throwing(String name) {
+      super(name);
+    }
+    @SuppressWarnings("unused")
+    public Throwing(DataSetSpecification spec) {
+      super(spec.getName());
+      throw new IllegalArgumentException("don't ever call me!");
+    }
+  }
+
+  @Test(expected = DataSetInstantiationException.class)
+  public void testThrowingConstructor() throws Exception {
+    // configure an incomplete data set and add it to an instantiator
+    DataSetSpecification spec = new Throwing("dummy").configure();
+    DataSetInstantiator inst = new DataSetInstantiator();
+    inst.setDataFabric(fabric);
+    inst.setBatchCollectionClient(collectionClient);
+    inst.setDataSets(Collections.singletonList(spec));
+    // try to instantiate the incomplete data set
+    @SuppressWarnings("unused")
+    Throwing ds = inst.getDataSet("dummy");
   }
 
   private void doOne(String name, String number) throws OperationException {
