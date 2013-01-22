@@ -80,6 +80,9 @@ implements TransactionalOperationExecutor {
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
+  static final byte DATA = (byte)0x00; // regular data
+  static final byte DELETE_VERSION = (byte)0x01; // delete of a specific version
+  static final byte DELETE_ALL = (byte)0x02; // delete of all versions of a cell up to specific version
 
   // Metrics
 
@@ -210,10 +213,7 @@ implements TransactionalOperationExecutor {
       ImmutablePair<byte[], OrderedVersionedColumnarTable>> namedTables;
 
   // method to find - and if necessary create - a table
-  OrderedVersionedColumnarTable findRandomTable(
-      OperationContext context, String name)
-
-      throws OperationException {
+  OrderedVersionedColumnarTable findRandomTable(OperationContext context, String name) throws OperationException {
 
     // check whether it is one of the default tables these are always
     // pre-loaded at initializaton and we can just return them
@@ -524,8 +524,7 @@ implements TransactionalOperationExecutor {
       if (write instanceof QueueEnqueue) {
         processEnqueue((QueueEnqueue)write, incrementResults);
       }
-      WriteTransactionResult writeTxReturn =
-          dispatchWrite(context, write, pointer);
+      WriteTransactionResult writeTxReturn = dispatchWrite(context, write, pointer);
 
       if (!writeTxReturn.success) {
         // Write operation failed
@@ -702,19 +701,17 @@ implements TransactionalOperationExecutor {
         "Unknown write operation " + write.getClass().getName());
   }
 
-  WriteTransactionResult write(OperationContext context, Write write,
-      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+  WriteTransactionResult write(OperationContext context, Write write, ImmutablePair<ReadPointer,Long> pointer)
+    throws OperationException {
     initialize();
     requestMetric("Write");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, write.getTable());
-    table.put(write.getKey(), write.getColumns(),
-        pointer.getSecond(), write.getValues());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
+    table.put(write.getKey(), write.getColumns(), pointer.getSecond(), write.getValues());
     end("Write", begin);
     namedTableMetric_write(write.getTable(), write.getSize());
-    return new WriteTransactionResult(
-        new Delete(write.getTable(), write.getKey(), write.getColumns()));
+//    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
+    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
   }
 
   WriteTransactionResult write(OperationContext context, Delete delete,

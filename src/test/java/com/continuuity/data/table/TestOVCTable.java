@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,6 +24,7 @@ import static org.junit.Assert.*;
 public abstract class TestOVCTable {
 
   // TODO: As part of ENG-211, add testing of HBaseOVCTable
+  private static final Logger Log = LoggerFactory.getLogger(TestOVCTable.class);
 
   private OrderedVersionedColumnarTable table;
   private OVCTableHandle tableHandle;
@@ -39,10 +42,9 @@ public abstract class TestOVCTable {
   protected abstract OVCTableHandle getTableHandle();
 
   private static final byte [] COL = new byte [] { (byte)0 };
-  private static final MemoryReadPointer RP_MAX =
-      new MemoryReadPointer(Long.MAX_VALUE);
+  private static final MemoryReadPointer RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
 
-  @Test
+  @Test @Ignore
   public void testSimpleReadWrite() throws OperationException {
 
     byte [] row = Bytes.toBytes("testSimpleReadWrite");
@@ -56,7 +58,7 @@ public abstract class TestOVCTable {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testClearVerySimply() throws OperationException {
     byte [] row = Bytes.toBytes("testClear");
 
@@ -95,8 +97,9 @@ public abstract class TestOVCTable {
     // insert a version of every column, two at a time
     long version = 10L;
     for (int i=0;i<ncols;i+=2) {
-      this.table.put(row, new byte [][] { columns[i], columns[i+1] }, version,
-          new byte [][] { values[i], values[i+1] });
+      Log.error("Adding column/value pairs {}/{} and {}/{} to HBase",
+                new Object[]{columns[i], values[i], columns[i + 1], values[i + 1]});
+      this.table.put(row, new byte [][] {columns[i], columns[i+1]}, version, new byte [][] {values[i], values[i+1]});
     }
 
     // read them all back at once using all the various read apis
@@ -119,8 +122,7 @@ public abstract class TestOVCTable {
 
     // getWV(row,col)
     for(int i=0;i<ncols;i++) {
-      ImmutablePair<byte[],Long> valueAndVersion =
-          this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
+      ImmutablePair<byte[],Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(valueAndVersion.getFirst(), values[i]));
       assertEquals(new Long(version), valueAndVersion.getSecond());
     }
@@ -148,13 +150,13 @@ public abstract class TestOVCTable {
       idx++;
     }
 
-    // get(row,cols[ncols])
+    // get(row,cols[ncols]), , RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
     colMap = this.table.get(row, columns, RP_MAX).getValue();
     assertEquals(ncols, colMap.size());
     idx=0;
     for (Map.Entry<byte[], byte[]> entry : colMap.entrySet()) {
       assertTrue(Bytes.equals(entry.getKey(), columns[idx]));
-      assertTrue(Bytes.equals(entry.getValue(), values[idx]));
+      assertTrue(Bytes.equals(entry.getValue(), values[idx]));  // fails here!
       idx++;
     }
 
@@ -206,7 +208,7 @@ public abstract class TestOVCTable {
     assertEquals(ncols - 10, colMap.size());
   }
 
-  @Test
+  @Test @Ignore
   public void testReadColumnRange() throws OperationException {
 
     byte [] row = Bytes.toBytes("testReadColumnRange");
@@ -296,7 +298,7 @@ public abstract class TestOVCTable {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testColumnRangeWithVersions() throws OperationException {
     byte [] row = Bytes.toBytes("testColumnRangeWithVersions");
     byte [] one = { 1 };
@@ -342,7 +344,7 @@ public abstract class TestOVCTable {
     Assert.assertArrayEquals(one, colMap.get(colD));
   }
 
-  @Test
+  @Test @Ignore
   public void testSimpleIncrement() throws OperationException {
 
     byte [] row = Bytes.toBytes("testSimpleIncrement");
@@ -353,7 +355,7 @@ public abstract class TestOVCTable {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testMultiColumnIncrement() throws OperationException {
 
     byte [] row = Bytes.toBytes("testMultiColumnIncrement");
@@ -389,7 +391,7 @@ public abstract class TestOVCTable {
     }
   }
 
-  @Test
+  @Test @Ignore
   public void testSimpleCompareAndSwap() throws OperationException {
 
     byte [] row = Bytes.toBytes("testSimpleCompareAndSwap");
@@ -414,7 +416,7 @@ public abstract class TestOVCTable {
     this.table.compareAndSwap(row, COL, valueTwo, valueOne, RP_MAX, 2L);
   }
 
-  @Test
+  @Test @Ignore
   public void testNullCompareAndSwaps() throws OperationException {
 
     byte [] row = Bytes.toBytes("testNullCompareAndSwaps");
@@ -455,7 +457,7 @@ public abstract class TestOVCTable {
     assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
   }
 
-  @Test
+  @Test @Ignore
   public void testCompareAndSwapsWithReadWritePointers()
       throws OperationException {
 
@@ -526,7 +528,7 @@ public abstract class TestOVCTable {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testIncrementsSupportReadAndWritePointers()
       throws OperationException {
 
@@ -580,7 +582,7 @@ public abstract class TestOVCTable {
         new MemoryReadPointer(3L), 3L));
   }
 
-  @Test
+  @Test @Ignore
   public void testIncrementCASIncrementWithSameTimestamp()
       throws OperationException {
     byte [] row = Bytes.toBytes("testICASIWSTS");
@@ -606,7 +608,7 @@ public abstract class TestOVCTable {
         this.table.get(row, COL, new MemoryReadPointer(3L)).getValue()));
     
   }
-  @Test
+  @Test @Ignore
   public void testSameVersionOverwritesExisting() throws OperationException {
 
     byte [] row = Bytes.toBytes("testSVOEKey");
@@ -664,7 +666,7 @@ public abstract class TestOVCTable {
         new MemoryReadPointer(9L)).getValue()));
   }
 
-  @Test
+  @Test @Ignore
   public void testDeleteBehavior() throws OperationException {
 
     byte [] row = Bytes.toBytes("testDeleteBehavior");
@@ -749,7 +751,7 @@ public abstract class TestOVCTable {
 
   }
 
-  @Test
+  @Test @Ignore
   public void testGetAllKeys() throws OperationException {
 
     // list when empty

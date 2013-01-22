@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.*;
 
@@ -462,6 +463,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(dequeueResult.isEmpty());
 
     // Incremented value should be 5
+    // Mario, look at this one!
     assertEquals(5L, Bytes.toLong(
         executor.execute(context, new ReadKey(key)).getValue()));
 
