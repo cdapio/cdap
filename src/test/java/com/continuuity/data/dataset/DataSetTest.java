@@ -10,8 +10,10 @@ import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -114,6 +116,7 @@ public class DataSetTest {
       SimpleBatchCollectionClient();
   static OperationExecutor executor;
   static DataFabric fabric;
+  static ApplicationSpec appSpec;
 
   private static void assertEquals(Object expected, Object actual) {
     if (!Objects.equal(expected, actual)) {
@@ -134,16 +137,27 @@ public class DataSetTest {
 
     // create an app and let it configure itself
     MyApplication app = new MyApplication();
-    ApplicationSpec spec = app.configure();
+    appSpec = app.configure();
 
     // create an app context for running a procedure
     DataSetInstantiator instantiator = new DataSetInstantiator();
     instantiator.setDataFabric(fabric);
     instantiator.setBatchCollectionClient(collectionClient);
-    instantiator.setDataSets(spec.getDatasets());
+    instantiator.setDataSets(appSpec.getDatasets());
 
     // create a procedure and configure it
     proc.initialize(instantiator);
+  }
+
+  @Test
+  public void testToAndFromJSon() {
+    for (DataSetSpecification spec : appSpec.getDatasets()) {
+      Gson gson = new Gson();
+      String json = gson.toJson(spec);
+      //System.out.println("JSON: " + json);
+      DataSetSpecification spec1 = gson.fromJson(json, DataSetSpecification.class);
+      Assert.assertEquals(spec, spec1);
+    }
   }
 
   @Test
