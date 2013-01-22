@@ -137,13 +137,13 @@ public class DataSetTest {
     ApplicationSpec spec = app.configure();
 
     // create an app context for running a procedure
-    ExecutionContextImpl appContext = new ExecutionContextImpl();
-    appContext.setDataFabric(fabric);
-    appContext.setBatchCollectionClient(collectionClient);
-    appContext.setDataSets(spec.getDatasets());
+    DataSetInstantiator instantiator = new DataSetInstantiator();
+    instantiator.setDataFabric(fabric);
+    instantiator.setBatchCollectionClient(collectionClient);
+    instantiator.setDataSets(spec.getDatasets());
 
     // create a procedure and configure it
-    proc.initialize(appContext);
+    proc.initialize(instantiator);
   }
 
   @Test
