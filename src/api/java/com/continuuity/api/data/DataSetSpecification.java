@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Objects;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,6 +70,31 @@ public final class DataSetSpecification {
     this.type = type;
     this.properties = properties;
     this.dataSetSpecs = dataSetSpecs;
+  }
+
+  /**
+   * Equality
+   */
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+    if (!(other instanceof DataSetSpecification)) {
+      return false;
+    }
+    DataSetSpecification ds = (DataSetSpecification)other;
+    return this.getName().equals(ds.getName())
+        && this.getType().equals(ds.getType())
+        && this.properties.equals(ds.properties)
+        && this.dataSetSpecs.equals(ds.dataSetSpecs);
+  }
+
+  /**
+   * hash value
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(this.name, this.type, this.properties, this.dataSetSpecs);
   }
 
   /** A Builder to construct DataSetSpecification instances */
