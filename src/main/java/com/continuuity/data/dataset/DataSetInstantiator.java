@@ -1,8 +1,7 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.BatchCollectionClient;
-import com.continuuity.api.data.DataFabric;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.*;
+import com.continuuity.api.data.set.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public class DataSetInstantiator {
   /**
    * Set the batch collection client. This must be shared with the execution
    * driver of the program (e.g. flow) where the data set will be used. This
-   * batch collection client is injected into each dataset, and the driver
+   * batch collection client is injected into each com.continuuity.data.dataset, and the driver
    * (e.g. flowlet driver) must use it to change the batch collector for each
    * new transactions (e.g. a flowlet driver would set a new output collector
    * each tuple that is processed).
@@ -143,7 +142,7 @@ public class DataSetInstantiator {
       return (T)o;
     }
     catch (ClassCastException e) {
-      throw logAndException(e, "Incompatible assignment of dataset of type %s", className);
+      throw logAndException(e, "Incompatible assignment of com.continuuity.data.dataset of type %s", className);
     }
   }
 
@@ -160,7 +159,7 @@ public class DataSetInstantiator {
    * potential change of the API. Thus, even though reflection is "dirty" it
    * keeps the DataSet API itself clean.
    *
-   * @param obj The dataset to inject into
+   * @param obj The com.continuuity.data.dataset to inject into
    * @throws DataSetInstantiationException If any of the reflection magic goes wrong
    * @throws OperationException If a table cannot to opened
    */
@@ -168,10 +167,10 @@ public class DataSetInstantiator {
       throws DataSetInstantiationException, OperationException {
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
-      Table table = (Table)obj;
-      injectFields(table);
+      // this sets the delegate table of the Table to a new CoreTable
+      CoreTable coreTable = CoreTable.setCoreTable((Table)obj, this.fabric, this.collectionClient);
       // also ensure that the table exists in the data fabric
-      table.open();
+      coreTable.open();
       return;
     }
     // otherwise recur through all fields of type DataSet
@@ -188,32 +187,6 @@ public class DataSetInstantiator {
         }
         injectDataFabric(fieldValue);
       }
-    }
-  }
-
-  /**
-   * Inject the two data fabric fields into a Table data set
-   * @param table The table to be injected into
-   * @throws DataSetInstantiationException if any of the reflection magic
-   * goes wrong.
-   */
-  private void injectFields(Table table)
-      throws DataSetInstantiationException {
-    // inject the data fabric
-    try {
-      Field dataFabricField = Table.class.getDeclaredField("dataFabric");
-      dataFabricField.setAccessible(true);
-      dataFabricField.set(table, this.fabric);
-    } catch (Exception e) {
-      throw logAndException(e, "Cannot access field dataFabric of class Table");
-    }
-    // inject the batch collection client
-    try {
-      Field collectionField = Table.class.getDeclaredField("collectionClient");
-      collectionField.setAccessible(true);
-      collectionField.set(table, this.collectionClient);
-    } catch (Exception e) {
-      throw logAndException(e, "Cannot access field collectionClient of class Table");
     }
   }
 

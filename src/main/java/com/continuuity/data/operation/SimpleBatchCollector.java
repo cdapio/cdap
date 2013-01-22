@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.data.operation;
 
 import com.continuuity.api.data.BatchCollector;
 import com.continuuity.api.data.WriteOperation;

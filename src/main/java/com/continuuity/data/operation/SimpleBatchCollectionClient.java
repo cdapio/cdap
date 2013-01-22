@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.data.operation;
 
 import com.continuuity.api.data.BatchCollectionClient;
 import com.continuuity.api.data.BatchCollector;
@@ -16,7 +16,8 @@ public class SimpleBatchCollectionClient implements BatchCollectionClient {
     this.collector = collector;
   }
 
-  BatchCollector getCollector() {
+  @Override
+  public BatchCollector getCollector() {
     return this.collector;
   }
 }

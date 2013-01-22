@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data;
 
 /**
  * This is the abstract base class for all data sets. A data set is an
@@ -44,5 +44,5 @@ public abstract class DataSet {
    * (@see DataSet(DataSetSpecification)).
    * @return a builder that has all meta data needed for runtime instantiation
    */
-  public abstract DataSetSpecification.Builder configure();
+  public abstract DataSetSpecification configure();
 }

@@ -1,8 +1,7 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.set;
 
 import com.continuuity.api.data.*;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -27,18 +26,11 @@ import java.util.Map;
  */
 public class Table extends DataSet {
 
+  private Table delegate = null;
+
   /** construct by name */
   public Table(String name) {
     super(name);
-  }
-
-  // these two must be injected through the execution context
-  private DataFabric dataFabric = null;
-  private SimpleBatchCollectionClient collectionClient = null;
-
-  /** helper method to get the batch collector from the collection client */
-  private BatchCollector getCollector() {
-    return this.collectionClient.getCollector();
   }
 
   /** runtime initialization, only calls the super class */
@@ -46,97 +38,50 @@ public class Table extends DataSet {
     super(spec);
   }
 
-  /**
-   * open the table in the data fabric, to ensure it exists
-   * @throws OperationException if something goes wrong
-   */
-  public void open() throws OperationException {
-    this.dataFabric.openTable(this.getName());
-  }
-
   @Override
-  public DataSetSpecification.Builder configure() {
-    return new DataSetSpecification.Builder(this);
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this).create();
   }
 
   /**
    * helper to return the name of the physical table. currently the same as
    * the name of the (Table) data set.
    */
-  private String tableName() {
+  protected String tableName() {
     return this.getName();
   }
 
-  /**
-   * Perform a read as a synchronous operation.
-   * @param read a Read operation
-   * @return the result of the read
-   * @throws OperationException if the operation fails
-   */
-  public OperationResult<Map<byte[], byte[]>> read(Read read)
-      throws OperationException {
-    if (read.columns != null) {
-      return this.dataFabric.read(new com.continuuity.api.data.Read(
-          this.tableName(), read.row, read.columns));
-    } else {
-      return this.dataFabric.read(new ReadColumnRange(
-          this.tableName(), read.row, read.startCol, read.stopCol));
-    }
+  public void setDelegate(Table table) {
+    this.delegate = table;
   }
 
-  /** helper enum */
-  enum Mode { Sync, Async }
-
-  /**
-   * Perform a write operation. If the mode is synchronous, then the write is
-   * executed immediately in its own transaction, if it is asynchronous, the
-   * write is appended to the current transaction, which will be committed
-   * by the executing agent.
-   * @param op The write operation
-   * @param mode The execution mode
-   * @throws OperationException if something goes wrong
-   */
-  private void execute(WriteOperation op, Mode mode) throws OperationException {
-    com.continuuity.api.data.WriteOperation operation;
-    if (op instanceof Write) {
-      Write write = (Write)op;
-      operation = new com.continuuity.api.data.Write(
-          this.tableName(), write.row, write.columns, write.values);
+  public OperationResult<Map<byte[], byte[]>> read(@SuppressWarnings("unused") Read op) throws
+      OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
-    else if (op instanceof Delete) {
-      Delete delete = (Delete)op;
-      operation = new com.continuuity.api.data.Delete(
-          this.tableName(), delete.row, delete.columns);
-    }
-    else if (op instanceof Increment) {
-      Increment increment = (Increment)op;
-      operation = new com.continuuity.api.data.Increment(
-          this.tableName(), increment.row, increment.columns, increment.values);
-    }
-    else if (op instanceof Swap) {
-      Swap swap = (Swap)op;
-      operation = new CompareAndSwap(
-          this.tableName(), swap.row, swap.column, swap.expected, swap.value);
-    }
-    else { // can't happen but...
-      return;
-    }
-
-    if (mode.equals(Mode.Async)) {
-      this.getCollector().add(operation);
-    } else {
-      this.dataFabric.execute(Collections.singletonList(operation));
-    }
+    return this.delegate.read(op);
   }
 
-  /** perform an asynchronous write operation (@see execute()) */
   public void stage(WriteOperation op) throws OperationException {
-    execute(op, Mode.Async);
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.stage(op);
   }
 
-  /** perform a synchronous write operation (@see execute()) */
   public void exec(WriteOperation op) throws OperationException {
-    execute(op, Mode.Sync);
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    this.delegate.exec(op);
+  }
+
+  public Closure closure(Increment op) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.closure(op);
   }
 
   /**
@@ -144,10 +89,26 @@ public class Table extends DataSet {
    * row of the table.
    */
   public static class Read {
-    byte[] row;
-    byte[][] columns;
-    byte[] startCol;
-    byte[] stopCol;
+    protected byte[] row;
+    protected byte[][] columns;
+    protected byte[] startCol;
+    protected byte[] stopCol;
+
+    public byte[] getRow() {
+      return row;
+    }
+
+    public byte[][] getColumns() {
+      return columns;
+    }
+
+    public byte[] getStartCol() {
+      return startCol;
+    }
+
+    public byte[] getStopCol() {
+      return stopCol;
+    }
 
     /**
      * Read a several columns
@@ -186,16 +147,30 @@ public class Table extends DataSet {
   }
 
   /** common interface for all write operations */
-  public static interface WriteOperation {
+  public static abstract class WriteOperation {
+    byte[] row;
+    public WriteOperation(byte[] row) {
+      this.row = row;
+    }
+    public byte[] getRow() {
+      return this.row;
+    }
   }
 
   /**
    * A write to a table. It can write one more columns of a row
    */
-  public static class Write implements WriteOperation {
-    byte[] row;
+  public static class Write extends WriteOperation {
     byte[][] columns;
     byte[][] values;
+
+    public byte[][] getColumns() {
+      return columns;
+    }
+
+    public byte[][] getValues() {
+      return values;
+    }
 
     /**
      * Write several columns. columns must have exactly the same length as
@@ -205,7 +180,7 @@ public class Table extends DataSet {
      * @param values an array of values to be written
      */
     public Write(byte[] row, byte[][] columns, byte[][] values) {
-      this.row = row;
+      super(row);
       this.columns = columns;
       this.values = values;
     }
@@ -228,10 +203,17 @@ public class Table extends DataSet {
    * increment does not exist prior to the operation, then it will be set to
    * the value to increment.
    */
-  public static class Increment implements WriteOperation {
-    byte[] row;
+  public static class Increment extends WriteOperation {
     byte[][] columns;
     long[] values;
+
+    public byte[][] getColumns() {
+      return columns;
+    }
+
+    public long[] getValues() {
+      return values;
+    }
 
     /**
      * Increment several columns. columns must have exactly the same length as
@@ -242,7 +224,7 @@ public class Table extends DataSet {
      * @param values the increment values
      */
     public Increment(byte[] row, byte[][] columns, long[] values) {
-      this.row = row;
+      super(row);
       this.columns = columns;
       this.values = values;
     }
@@ -262,9 +244,12 @@ public class Table extends DataSet {
    * A Delete removes one or more columns from a row. Note that to delete an
    * entire row, the caller needs to know the columns that exist.
    */
-  public static class Delete implements WriteOperation {
-    byte[] row;
+  public static class Delete extends WriteOperation {
     byte[][] columns;
+
+    public byte[][] getColumns() {
+      return columns;
+    }
 
     /**
      * Delete several columns
@@ -272,7 +257,7 @@ public class Table extends DataSet {
      * @param columns the column keys of the columns to be deleted
      */
     public Delete(byte[] row, byte[][] columns) {
-      this.row = row;
+      super(row);
       this.columns = columns;
     }
 
@@ -291,11 +276,22 @@ public class Table extends DataSet {
    * write a new value to the columns. It it does not match, the operation
    * fails.
    */
-  public static class Swap implements WriteOperation {
-    byte[] row;
+  public static class Swap extends WriteOperation {
     byte[] column;
     byte[] expected;
     byte[] value;
+
+    public byte[] getColumn() {
+      return column;
+    }
+
+    public byte[] getExpected() {
+      return expected;
+    }
+
+    public byte[] getValue() {
+      return value;
+    }
 
     /**
      * Swap constructor.
@@ -306,7 +302,7 @@ public class Table extends DataSet {
      * @param value the new value. If null, then the column is deleted.
      */
     public Swap(byte[] row, byte[] column, byte[] expected, byte[] value) {
-      this.row = row;
+      super(row);
       this.column = column;
       this.expected = expected;
       this.value = value;

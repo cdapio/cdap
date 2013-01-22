@@ -1,5 +1,7 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data.set;
 
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 
@@ -22,9 +24,9 @@ public class KeyValueTable extends DataSet {
   }
 
   @Override
-  public DataSetSpecification.Builder configure() {
+  public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        dataset(this.table.configure());
+        dataset(this.table.configure()).create();
   }
 
   public byte[] read(byte[] key) throws OperationException {

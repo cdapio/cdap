@@ -1,4 +1,4 @@
-package com.continuuity.data.dataset;
+package com.continuuity.api.data;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -92,6 +92,19 @@ public final class DataSetSpecification {
     }
 
     /**
+     * Constructor from an existing data set spec. This allows adding
+     * properties to an existing spec, for instance when extending an
+     * existing data set class.
+     * @param spec the existing data set spec
+     */
+    public Builder(DataSetSpecification spec) {
+      this.name = spec.getName();
+      this.type = spec.getType();
+      this.properties = spec.properties;
+      this.dataSetSpecs = spec.dataSetSpecs;
+    }
+
+    /**
      * Add a custom property
      * @param key the name of the custom property
      * @param value the value of the custom property
@@ -106,11 +119,10 @@ public final class DataSetSpecification {
      * Add a specification for an embedded data set. Takes a builder and uses
      * that to create the DataSetSpecification, then extracts the name from
      * that specification.
-     * @param builder a builder populated with all meta data
+     * @param spec a full data set spec for the embedded data set
      * @return this builder object to allow chaining
      */
-    public Builder dataset(DataSetSpecification.Builder builder) {
-      DataSetSpecification spec = builder.create();
+    public Builder dataset(DataSetSpecification spec) {
       this.dataSetSpecs.put(spec.getName(), spec);
       return this;
     }
