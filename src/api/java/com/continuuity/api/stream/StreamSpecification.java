@@ -1,13 +1,15 @@
 package com.continuuity.api.stream;
 
+import java.util.Map;
 
-
-// Specification for Stream
+/*
+ * Specification for {@code Stream}
+  */
 public class StreamSpecification {
 
   private long ttl;
   private long maxSize;
-  private String metaData;
+  private Map<String,String> metaData;
 
   private void setTTL(long ttl) {
     this.ttl = ttl;
@@ -19,7 +21,7 @@ public class StreamSpecification {
   }
 
 
-  private void setMetaData (String metaData ) {
+  private void setMetaData (Map<String,String> metaData ) {
     this.metaData = metaData;
    }
 
@@ -35,7 +37,7 @@ public class StreamSpecification {
 
     private long ttl = -1 ;
     private long maxSize = -1 ;
-    private String metaData;
+    private Map<String,String> metaData;
 
     /*
      * Adds ttl parameter to Streams
@@ -65,7 +67,7 @@ public class StreamSpecification {
      * @return Builder instance
      */
 
-    public Builder setMetaData (String metaData) {
+    public Builder setMetaData (Map<String,String> metaData) {
       this.metaData = metaData;
       return this;
     }
