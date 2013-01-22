@@ -2,12 +2,23 @@ package com.continuuity.test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import com.continuuity.api.data.*;
+import com.continuuity.api.query.QueryProvider;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.ServiceDiscoveryClient;
+import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.common.logging.LocalLogDispatcher;
 import com.continuuity.flow.common.FlowLogTag;
-import com.continuuity.flow.common.GenericDataSetRegistry;
 
+import com.google.common.collect.Multimap;
+import com.netflix.curator.x.discovery.ServiceInstance;
+import com.netflix.curator.x.discovery.strategies.RandomStrategy;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.Request;
+import com.ning.http.client.RequestBuilder;
+import com.ning.http.client.Response;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -30,6 +41,8 @@ import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
+import com.continuuity.flow.FlowTestHelper.TestQueryHandle;
+import com.continuuity.flow.FlowTestHelper.TestDataSetRegistry;
 import com.continuuity.flow.definition.api.FlowDefinition;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.FlowletContextImpl;
@@ -52,7 +65,7 @@ import com.google.inject.Injector;
  *       TestFlowHandle flowHandle = startFlow(flow);
  *       assertTrue(flowHandle.getReason(), flowHandle.isSuccess());
  *       // Flow started successfully
- *       flowHandle.stopFlow();
+ *       flowHandle.stop();
  *     }
  *
  *   }
@@ -131,7 +144,7 @@ public abstract class FabricTestBase {
    */
   protected DataSetRegistry getDataSetRegistry() {
     if(dataSetRegistry == null) {
-      dataSetRegistry = new GenericDataSetRegistry(
+      dataSetRegistry = new TestDataSetRegistry(
         executor,
         fabric,
         null,
@@ -177,7 +190,7 @@ public abstract class FabricTestBase {
    * Check the status of the flow and whether it started properly using
    * {@link TestFlowHandle#isSuccess()}.
    * <p>
-   * Always stop the flow using {@link TestFlowHandle#stopFlow()}.
+   * Always stop the flow using {@link TestFlowHandle#stop()}.
    * @param flow the flow to start
    * @return handle to running flow
    */
@@ -211,6 +224,86 @@ public abstract class FabricTestBase {
    */
   protected BatchCollectionRegistry getRegistry() {
     return context;
+  }
+
+  /**
+   * Starts the specified query.
+   * <p>
+   * Check the status of the query and whether it started properly using
+   * {@link com.continuuity.flow.FlowTestHelper.TestQueryHandle#isSuccess()}.
+   * <p>
+   * Always stop the query using {@link com.continuuity.flow.FlowTestHelper.TestQueryHandle#stop()}.
+   * @param queryProvider the query to start
+   * @return handle to running query
+   */
+  protected TestQueryHandle startQuery(QueryProvider queryProvider) {
+    return FlowTestHelper.startQuery(queryProvider, conf, executor);
+  }
+
+  /**
+   * Runs the specified methodName on the query queryName with the given parameters
+   * @return result of the query execution
+   */
+  protected QueryResult runQuery(String queryName, String methodName, Multimap<String, String> parameters)
+    throws OperationException {
+    String connectionString = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    if(connectionString == null) {
+      throw new IllegalStateException(
+        String.format("Not able to get Zookeeper server information. Is the query %s started?", queryName));
+    }
+    try {
+      ServiceDiscoveryClient discoveryClient = new ServiceDiscoveryClient(connectionString);
+      ServiceInstance<ServicePayload> serviceInstance =
+        discoveryClient.getInstance(String.format("query.%s", queryName), new RandomStrategy<ServicePayload>());
+      if(serviceInstance == null) {
+        throw new IllegalStateException(
+          String.format("Not able to get query information. Is the query %s started?", queryName));
+      }
+      RequestBuilder requestBuilder = new RequestBuilder("GET").setUrl(
+        String.format("http://%s:%d/rest-query/%s/%s", serviceInstance.getAddress(), serviceInstance.getPort(),
+                      queryName, methodName));
+      for(Map.Entry<String, String> parameter : parameters.entries()) {
+        requestBuilder.addQueryParameter(parameter.getKey(), parameter.getValue());
+      }
+      Request request = requestBuilder.build();
+      LOG.info(String.format("Running query - %s", request.getUrl()));
+      AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
+      Future<Response> future = asyncHttpClient.executeRequest(request);
+      Response response = future.get();
+      return new QueryResult(response.getStatusCode(), response.getResponseBody());
+    } catch (Exception e) {
+      LOG.error(String.format("Exception while trying to run query %s.%s: ", queryName, methodName), e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Encapsulates the result of a query execution
+  **/
+  public static class QueryResult {
+    final int returnCode;
+    final String content;
+
+    public QueryResult(int returnCode, String content) {
+      this.returnCode = returnCode;
+      this.content = content;
+    }
+
+    /**
+     * Returns HTTP return code obtained while running the query
+     * @return HTTP return code
+    **/
+    public int getReturnCode() {
+      return returnCode;
+    }
+
+    /**
+     * Returns the JSON respresentation of query output
+     * @return Query output
+    **/
+    public String getContent() {
+      return content;
+    }
   }
 
 //  private TestGatewayHandle queryGatewayHandle = null;

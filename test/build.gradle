@@ -9,6 +9,15 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
+
+    compile libraries.jetty
+    compile libraries.netflix_curator_framework
+    compile libraries.netflix_curator_client
+    compile libraries.netflix_curator_discovery_client
+    compile libraries.netflix_curator_discovery_server
+    compile libraries.netflix_curator_recipes
+    compile libraries.hadoop_hdfs
+    compile libraries.http_client
 }
 
 // skip the main java tasks - we only build the test jar in this module
