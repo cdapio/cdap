@@ -1,9 +1,6 @@
 package com.continuuity.api.data.set;
 
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.*;
 
 import java.util.Map;
 
@@ -78,6 +75,13 @@ public class Table extends DataSet {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     this.delegate.exec(op);
+  }
+
+  public Closure closure(Increment op) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.closure(op);
   }
 
   /**

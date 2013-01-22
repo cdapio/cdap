@@ -2,6 +2,7 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.*;
 import com.continuuity.api.data.set.Table;
+import com.continuuity.data.operation.IncrementClosure;
 
 import java.util.Collections;
 import java.util.Map;
@@ -112,5 +113,12 @@ public class CoreTable extends Table {
   public void exec(WriteOperation op) throws OperationException {
     execute(op, Mode.Sync);
   }
+
+  @Override
+  public Closure closure(Increment increment) {
+    return new IncrementClosure(new com.continuuity.api.data.Increment
+        (this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues()));
+  }
+
 
 }
