@@ -4,7 +4,7 @@ package com.continuuity.api.data.dataset.table;
  * A Delete removes one or more columns from a row. Note that to delete an
  * entire row, the caller needs to know the columns that exist.
  */
-public class Delete extends WriteOperation {
+public class Delete extends AbstractWriteOperation {
   protected byte[][] columns;
 
   /** get the columns to delete */

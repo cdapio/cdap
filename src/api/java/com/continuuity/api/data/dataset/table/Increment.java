@@ -7,7 +7,7 @@ package com.continuuity.api.data.dataset.table;
  * increment does not exist prior to the operation, then it will be set to
  * the value to increment.
  */
-public class Increment extends WriteOperation {
+public class Increment extends AbstractWriteOperation {
   protected byte[][] columns;
   protected long[] values;
 

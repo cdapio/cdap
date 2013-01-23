@@ -5,7 +5,6 @@ import com.continuuity.api.data.*;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
@@ -63,7 +62,7 @@ public class DataSetTest {
       byte[][] cols = { phoneCol, nameCol };
       byte[][] vals = { phon, key };
 
-      numbers.write(key, phon);
+      numbers.exec(new KeyValueTable.WriteKey(key, phon));
       idxNumbers.write(new Write(key, cols, vals));
     }
 
@@ -144,42 +143,17 @@ public class DataSetTest {
     KeyValueTable kvTable = instantiator.getDataSet("phonetab");
   }
 
-  // this dataset is missing the constructor from data set spec
-  static class Incomplete extends DataSet {
-    public Incomplete(String name) {
-      super(name);
-    }
-    @Override
-    public DataSetSpecification configure() {
-      return new DataSetSpecification.Builder(this).
-          dataset(new Table("t_" + getName()).configure()).
-          create();
-    }
-  }
-
   @Test(expected = DataSetInstantiationException.class)
   public void testMissingConstructor() throws Exception {
     // configure an incomplete data set and add it to an instantiator
-    DataSetSpecification spec = new Incomplete("dummy").configure();
+    DataSetSpecification spec = new IncompleteDataSet("dummy").configure();
     DataSetInstantiator inst = new DataSetInstantiator();
     inst.setDataFabric(fabric);
     inst.setBatchCollectionClient(collectionClient);
     inst.setDataSets(Collections.singletonList(spec));
     // try to instantiate the incomplete data set
     @SuppressWarnings("unused")
-    Incomplete ds = inst.getDataSet("dummy");
-  }
-
-  // this class' data set spec constructor throws an exception
-  static class Throwing extends Incomplete {
-    public Throwing(String name) {
-      super(name);
-    }
-    @SuppressWarnings("unused")
-    public Throwing(DataSetSpecification spec) {
-      super(spec.getName());
-      throw new IllegalArgumentException("don't ever call me!");
-    }
+    IncompleteDataSet ds = inst.getDataSet("dummy");
   }
 
   @Test(expected = DataSetInstantiationException.class)

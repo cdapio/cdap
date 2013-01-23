@@ -3,7 +3,7 @@ package com.continuuity.api.data.dataset.table;
 /**
  * A write to a table. It can write one more columns of a row
  */
-public class Write extends WriteOperation {
+public class Write extends AbstractWriteOperation {
   protected byte[][] columns;
   protected byte[][] values;
 

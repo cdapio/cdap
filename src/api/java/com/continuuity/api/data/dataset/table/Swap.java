@@ -5,7 +5,7 @@ package com.continuuity.api.data.dataset.table;
  * write a new value to the columns. It it does not match, the operation
  * fails.
  */
-public class Swap extends WriteOperation {
+public class Swap extends AbstractWriteOperation {
 
   protected byte[] column;
   protected byte[] expected;
