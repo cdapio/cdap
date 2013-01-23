@@ -27,6 +27,7 @@ struct Stream {
    4: optional i64 capacityInBytes,
    5: optional i64 expiryInSeconds,
    6: optional bool exists = true,
+   7: optional string specification,
 }
 
 /**
@@ -50,6 +51,7 @@ struct Dataset {
    3: optional string description,
    4: optional string type,
    5: optional bool exists = true,
+   6: optional string specification,
 }
 
 /**
