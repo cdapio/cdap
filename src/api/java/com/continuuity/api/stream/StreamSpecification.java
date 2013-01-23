@@ -25,7 +25,7 @@ public final class StreamSpecification {
 
     /**
      * Adds name parameter to Streams
-     * @param name: stream name
+     * @param name stream name
      * @return Builder instance
      */
     public Builder setName(final String name) {
@@ -35,7 +35,7 @@ public final class StreamSpecification {
 
     /**
      * Create {@code StreamSpecification}
-     * @return object of {@code StreamSpecification}
+     * @return Instance of {@code StreamSpecification}
      */
     public StreamSpecification create() {
       StreamSpecification specification = new StreamSpecification(name);
