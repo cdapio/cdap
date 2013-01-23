@@ -158,11 +158,12 @@ public class TTQueueOnVCTable implements TTQueue {
     this.table.put(shardMetaRow, GLOBAL_SHARD_META, dirty.getSecond(),
         shardMeta.getBytes());
     // Increment entry write pointer (release shard lock)
-    long newWritePointer = this.table.increment(entryWritePointerRow,
-        GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, 1, dirty.getFirst(),
-        dirty.getSecond());
+    this.table.dumpColumn(entryWritePointerRow,GLOBAL_ENTRYID_WRITEPOINTER_COUNTER);
+    long newWritePointer = this.table.increment(entryWritePointerRow, GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, 1,
+                                                                     dirty.getFirst(), dirty.getSecond());  //fails
     log("Updated shard meta (" + shardMeta + ") and incremented write " +
         "pointer to " + newWritePointer);
+    this.table.dumpColumn(entryWritePointerRow,GLOBAL_ENTRYID_WRITEPOINTER_COUNTER);
 
     // If we moved shards, insert end-of-shard entry in previously active shard
     if (movedShards) {

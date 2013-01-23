@@ -811,4 +811,6 @@ implements OrderedVersionedColumnarTable {
     Log.error(msg, e);
     throw new OperationException(StatusCode.SQL_ERROR, msg, e);
   }
+  public void dumpColumn(byte[] row, byte[] column) throws OperationException {
+  }
 }
