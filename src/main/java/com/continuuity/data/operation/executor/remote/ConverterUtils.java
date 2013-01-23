@@ -50,7 +50,7 @@ public class ConverterUtils {
     return list;
   }
   /** unwrap an array of longs from a list of Long objects */
-  long[] unwrap(List<Long> list) {
+  long[] unwrapAmounts(List<Long> list) {
     long[] longs = new long[list.size()];
     int i = 0;
     for (Long value : list)
@@ -279,7 +279,7 @@ public class ConverterUtils {
         tIncrement.isSetTable() ? tIncrement.getTable() : null,
         tIncrement.getKey(),
         unwrap(tIncrement.getColumns()),
-        unwrap(tIncrement.getAmounts()));
+        unwrapAmounts(tIncrement.getAmounts()));
   }
 
   /** wrap a CompareAndSwap operation */
