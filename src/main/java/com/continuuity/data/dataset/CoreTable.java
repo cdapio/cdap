@@ -1,7 +1,20 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.*;
-import com.continuuity.api.data.set.Table;
+
+import com.continuuity.api.data.BatchCollectionClient;
+import com.continuuity.api.data.BatchCollector;
+import com.continuuity.api.data.Closure;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.data.operation.IncrementClosure;
 
 import java.util.Collections;
