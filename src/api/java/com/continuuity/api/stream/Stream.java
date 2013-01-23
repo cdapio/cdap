@@ -16,7 +16,8 @@ public final class Stream {
     this.name = name;
   }
 
- /** Configures { @code Stream } by returning a {@code StreamSpecification}
+ /**
+  * Configures { @code Stream } by returning a {@code StreamSpecification}
   *
   * @return Instance of {@code StreamSpecification}
   *
