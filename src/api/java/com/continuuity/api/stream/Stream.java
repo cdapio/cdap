@@ -18,7 +18,7 @@ public final class Stream {
 
  /** Configures { @code Stream } by returning a {@code StreamSpecification}
   *
-  * return an instance of {@code StreamSpecification }
+  * @return Instance of {@code StreamSpecification}
   *
   */
   public StreamSpecification configure() {
