@@ -4,12 +4,12 @@ import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
-import com.continuuity.passport.core.service.Service;
+import com.continuuity.passport.core.service.PassportService;
 
 /**
  * PassportService implementation
  */
-public class PassportService implements Service {
+public class PassportServiceImpl implements PassportService {
   @Override
   public boolean registerAccount(Account account, User owner) throws RuntimeException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
