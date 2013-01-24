@@ -29,7 +29,7 @@ public interface Service {
    * Delete an {@code Account} in the system
    * @param accountId account to be deleted
    * @param credentials credentials of the owner of the account
-   * @return
+   * @return boolean status of deletion
    * @throws RuntimeException
    */
 
@@ -83,7 +83,7 @@ public interface Service {
    * @param accountId
    * @param credentials
    * @param component
-   * @return
+   * @return updateStatus
    * @throws RuntimeException
    */
   public boolean updateComponent( String accountId, Credentials credentials, Component component ) throws RuntimeException;
