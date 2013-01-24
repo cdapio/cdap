@@ -10,6 +10,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.common.logging.LocalLogDispatcher;
+import com.continuuity.test.FlowTestHelper;
 import com.continuuity.flow.common.FlowLogTag;
 
 import com.google.common.collect.Multimap;
