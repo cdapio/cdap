@@ -51,7 +51,8 @@ abstract public class MetaDataStoreTest {
   }
 
   // test that consecutive writes overwrite
-  @Test public void testOverwrite() throws Exception {
+  @Test
+  public void testOverwrite() throws Exception {
     testOneAddGet(false, "a", null, "x", "1", "a", "b", "p", new byte[]{'q'});
     testOneAddGet(true, "a", null, "x", "1", "a", "c", "p", new byte[]{'r'});
     testOneAddGet(false, "a", "b", "x", "1", "a", "b", "p", new byte[]{'q'});
@@ -59,7 +60,8 @@ abstract public class MetaDataStoreTest {
   }
 
   // test that update with fewer columns deletes old columns
-  @Test public void testFewerFields() throws Exception {
+  @Test
+  public void testFewerFields() throws Exception {
     testOneAddGet(false, "a", null, "y", "1", "a", "b", "p", new byte[]{'q'});
     testOneAddGet(true, "a", null, "y", "1", "a", "c", null, null);
   }
@@ -268,11 +270,17 @@ abstract public class MetaDataStoreTest {
   public void testConcurrentUpdateField() throws Exception {
     System.out.println("testUpdateField:");
     // create a meta data entry with two fields, one text one bin
-    MetaDataEntry entry =
-        new MetaDataEntry(context.getAccount(), null, "test", "abc");
+    //                        MetaDataEntry(account, application=null, type="test", id="abc")
+    MetaDataEntry entry = new MetaDataEntry(context.getAccount(), null, "test", "abc");
     entry.addField("text", "0");
     entry.addField("bin", Bytes.toBytes(0));
     mds.add(context, entry);
+    //tableName = "meta"
+    //family = ?
+    //byte[] rowkey = _metadata_'\0'+<account>, i.e.
+    //byte[] column = <type>'\0'<application>'\0'<id> or <type>'\0''\0'<id>, i.e. test'\0''\0'abc
+    //value = serialized MetaDataEntry object
+    //      = account, application, id, type, Map<String, String> textFields, Map<String, byte[]> binaryFields
 
     // start two threads that loop n times
     //   - each attempts to update one of the fields
@@ -288,17 +296,27 @@ abstract public class MetaDataStoreTest {
         int value = 1;
         for (int i = 1; i <= 1000; i++) {
           try {
-            mds.updateField(context, context.getAccount(), null, "test", "abc",
-                "text", Integer.toString(value), 0);
+            //context, account, application=null, type="test", id="abc", field="text", newValue, retryAttempts=0
+            //row-key=_metadata_'\0'+<account>
+            //column=test'\0''\0'abc
+            //table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
+            //bytes[] value = result.getValue().get(column);
+            //MetaDataEntry entry = deserialized value
+            //change textfields map in entry
+            //bytes[] newValue = serialized entry
+            //table.compareAndSwap(row, column, value, newValue, readPointer, writeVersion)
+            mds.updateField(context, context.getAccount(), null, "test", "abc", "text", Integer.toString(value), 0);
             value++;
           } catch (OperationException e) {
+//            System.err.println("Status of OperationException = "+e.getStatus());
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-              // System.out.println("Conflict for text " + i + ": " + value);
+//              System.err.println("Conflict for text " + i + ": " + value);
               textConflicts.incrementAndGet();
             } else {
               Assert.fail(e.getMessage());
             }
           } catch (Exception e) {
+//            e.printStackTrace();
             Assert.fail(e.getMessage());
           }
         }
@@ -310,17 +328,19 @@ abstract public class MetaDataStoreTest {
         int value = 1;
         for (int i = 1; i <= 1000; i++) {
           try {
-            mds.updateField(context, context.getAccount(), null, "test", "abc",
-                "bin", Bytes.toBytes(value), 0);
+            //context, account, application=null, type="test", id="abc", field="bin", newValue, retryAttempts=0
+            mds.updateField(context, context.getAccount(), null, "test", "abc", "bin", Bytes.toBytes(value), 0);
             value++;
           } catch (OperationException e) {
+//            System.err.println("Status of OperationException = "+e.getStatus());
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-              // System.out.println("Conflict for binary " + i + ": " + value);
+//              System.err.println("Conflict for binary " + i + ": " + value);
               binaryConflicts.incrementAndGet();
             } else
               Assert.fail(e.getMessage());
           } catch (Exception e) {
-            Assert.fail(e.getMessage());
+//            e.printStackTrace();
+            Assert.fail(e.getMessage());  // fails
           }
         }
       }
@@ -337,13 +357,11 @@ abstract public class MetaDataStoreTest {
     Assert.assertNotNull(entry);
     String text = entry.getTextField("text");
     byte[] binary = entry.getBinaryField("bin");
-    System.out.println("text: " + text + ", " + textConflicts.get() +
-        " conflicts");
-    System.out.println("binary: " + Arrays.toString(binary) + ", " +
-        "" + binaryConflicts.get() + " conflicts");
+    System.out.println("text: " + text + ", " + textConflicts.get() + " conflicts");
+    System.out.println("binary: " + Arrays.toString(binary) + ", " + binaryConflicts.get() + " conflicts");
 
     Assert.assertEquals(1000, Integer.parseInt(text) + textConflicts.get());
-    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());
+    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());  // fails
   }
 
   class TextThread extends Thread {

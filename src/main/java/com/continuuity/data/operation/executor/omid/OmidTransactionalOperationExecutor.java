@@ -402,26 +402,22 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, readKeys.getTable());
-    List<byte[]> result = table.getKeys(readKeys.getLimit(),
-        readKeys.getOffset(), this.oracle.getReadPointer());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
+    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
     end("ReadKey", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
       throws OperationException {
     initialize();
     requestMetric("Read");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, read.getTable());
-    OperationResult<Map<byte[], byte[]>> result = table.get(
-        read.getKey(), read.getColumns(), this.oracle.getReadPointer());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
+    OperationResult<Map<byte[], byte[]>> result =
+      table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
     end("Read", begin);
     namedTableMetric_read(read.getTable());
     return result;

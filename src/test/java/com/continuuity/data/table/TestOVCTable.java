@@ -682,40 +682,30 @@ public abstract class TestOVCTable {
     this.table.put(row, COL, 1L, Bytes.toBytes(1L));
     this.table.put(row, COL, 3L, Bytes.toBytes(3L));
     this.table.put(row, COL, 2L, Bytes.toBytes(2L));
-    Log.error("Added three values 1,2,3");
-    this.table.dumpColumn(row,COL);
 
     // Read value, should be 3
     assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
     // Point delete at 2
     this.table.delete(row, COL, 2L);
-    Log.error("Deleted value 2");
-    this.table.dumpColumn(row,COL);
 
     // Read value, should be 3
     assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
     // Point delete at 3
     this.table.delete(row, COL, 3L);
-    Log.error("Deleted value 3");
-    this.table.dumpColumn(row,COL);
 
     // Read value, should be 1 (2 and 3 point deleted)
     assertEquals(1L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
     // DeleteAll at 3
     this.table.deleteAll(row, COL, 3L);
-    Log.error("Deleted all values at version 3");
-    this.table.dumpColumn(row,COL);
 
     // Read value, should not exist
     assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
 
     // Write at 3 (trying to overwrite existing deletes @ 3)
     this.table.put(row, COL, 3L, Bytes.toBytes(3L));
-    Log.error("Put value 3 with version 3");
-    this.table.dumpColumn(row,COL);
 
     // Read value
     // If writes can overwrite deletes at the same timestamp:
@@ -726,8 +716,6 @@ public abstract class TestOVCTable {
 
     // Undelete the delete all at 3
     this.table.undeleteAll(row, COL, 3L);
-    Log.error("Undeleted all at version 3");
-    this.table.dumpColumn(row,COL);
 
     // There is still a point delete at 3, should uncover 1
     assertEquals(1L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));

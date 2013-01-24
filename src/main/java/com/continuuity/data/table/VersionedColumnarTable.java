@@ -216,6 +216,4 @@ public interface VersionedColumnarTable {
    * Clears this table, completely wiping all data irrecoverably.
    */
   public void clear() throws OperationException;
-
-  public void dumpColumn(byte[] row, byte[] column) throws OperationException;
 }

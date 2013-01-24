@@ -773,6 +773,4 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
         .add("numlocks", this.locks.size())
         .toString();
   }
-  public void dumpColumn(byte[] row, byte[] column) throws OperationException {
-  }
 }

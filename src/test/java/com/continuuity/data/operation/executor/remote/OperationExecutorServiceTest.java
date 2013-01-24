@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
 
@@ -287,7 +288,7 @@ public abstract class OperationExecutorServiceTest extends
 
   /** clear the tables, then write a batch of keys, then readAllKeys */
   @Test
-  public void testWriteBatchThenReadAllKeys() throws Exception  {
+  public void testWriteBatchThenReadAllKeys() throws Exception  { // fails
     // clear all data, otherwise we will get keys from other tests
     // mingled into the responses for ReadAllKeys
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -305,16 +306,15 @@ public abstract class OperationExecutorServiceTest extends
     writes.add(new Write("d".getBytes(), "x".getBytes(), "4".getBytes()));
     writes.add(new Write("e".getBytes(), "y".getBytes(), "5".getBytes()));
     writes.add(new Write("f".getBytes(), "z".getBytes(), "6".getBytes()));
-    writes.add(new Write("g".getBytes(),
-        new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
-        new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
+    writes.add(new Write("g".getBytes(), new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
+                                         new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
     remote.execute(context, writes);
 
     // readAllKeys with > number of writes
     readAllKeys = new ReadAllKeys(0, 10);
     keys = remote.execute(context, readAllKeys).getValue();
     Assert.assertNotNull(keys);
-    Assert.assertEquals(7, keys.size());
+    Assert.assertEquals(7, keys.size());  // fails
 
     // readAllKeys with < number of writes
     readAllKeys = new ReadAllKeys(0, 5);
