@@ -12,4 +12,5 @@ public class StatusCode {
   public static final int KEY_NOT_FOUND = 404;
   public static final int COLUMN_NOT_FOUND = 405;
 
+  public static final int ILLEGAL_INCREMENT = 2000;
 }
