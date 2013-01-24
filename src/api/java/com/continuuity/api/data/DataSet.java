@@ -21,19 +21,29 @@ package com.continuuity.api.data;
  */
 public abstract class DataSet {
 
+  // the name of the data set (instance)
   private final String name;
 
-  /** get the name of this data set */
+  /**
+   * Get the name of this data set
+   * @return the name of the data set
+   */
   public final String getName() {
     return this.name;
   }
 
-  /** base constructor that only sets the name of the data set */
+  /**
+   * Base constructor that only sets the name of the data set
+   * @param name the name of the data set
+   */
   public DataSet(String name) {
     this.name = name;
   }
 
-  /** constructor to instantiate the data set at runtime */
+  /**
+   * Constructor to instantiate the data set at runtime
+   * @param spec the data set specification for this data set
+   */
   public DataSet(DataSetSpecification spec) {
     this(spec.getName());
   }
@@ -41,8 +51,9 @@ public abstract class DataSet {
   /**
    * This method is called at deployment time and must return the complete
    * specification that is needed to instantiate the data set at runtime
-   * (@see DataSet(DataSetSpecification)).
-   * @return a builder that has all meta data needed for runtime instantiation
+   * (@see #DataSet(DataSetSpecification)).
+   * @return a data set spec that has all meta data needed for runtime
+   *         instantiation
    */
   public abstract DataSetSpecification configure();
 }

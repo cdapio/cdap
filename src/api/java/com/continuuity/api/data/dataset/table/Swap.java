@@ -7,21 +7,35 @@ package com.continuuity.api.data.dataset.table;
  */
 public class Swap extends AbstractWriteOperation {
 
+  // the column to swap
   protected byte[] column;
+  // the expected value
   protected byte[] expected;
+  // the new value
   protected byte[] value;
 
-  /** get  the column to compare and swap */
+  /**
+   * Get the column to compare and swap
+   * @return the column key
+   */
   public byte[] getColumn() {
     return column;
   }
 
-  /** get the expected value for that column */
+  /**
+   * Get the expected value for that column. If this is null,
+   * then the column must not exist for the operation to succeed.
+   * @return the expected value
+   */
   public byte[] getExpected() {
     return expected;
   }
 
-  /** get the new value for the column */
+  /**
+   * Get the new value for the column. If this returns null,
+   * then the column will be deleted in case of success.
+   * @return the new value
+   */
   public byte[] getValue() {
     return value;
   }
