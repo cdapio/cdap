@@ -53,7 +53,7 @@ public class User  {
   /**
    * get all the authorities that the user is a part of
    * authorities define the account id and role the user has on the account
-   * @return
+   * @return ImmutableSet of authority
    */
   public ImmutableSet<Authority> getAuthorities() {
     return ImmutableSet.copyOf(this.authorities);
