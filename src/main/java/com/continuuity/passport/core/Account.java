@@ -13,9 +13,13 @@ import java.util.Set;
 public class Account {
 
   private String accountId;
+
   private String name;
+
   private Set<User.UserRole> userRoles;
+
   private Set<Component> components = new HashSet<Component>();
+
   //TODO: Add billing info
 
   private void addUserRoles(User.UserRole role) {
