@@ -22,14 +22,12 @@ public class IndexedTableTest extends DataSetTestBase {
   static byte[] keyAA = { 'a', 'a' };
   static byte[] keyB = { 'b' };
   static byte[] keyC = { 'c' };
-  static byte[] keyD = { 'd' };
   static byte[] valA = { 'a' };
   static byte[] valAA = { 'a', 'a' };
   static byte[] valAB = { 'a', 'b' };
   static byte[] valB = { 'b' };
   static byte[] valBB = { 'b', 'b' };
   static byte[] valC = { 'c' };
-  static byte[] valD = { 'd' };
   static byte[] idx1 = { '1' };
   static byte[] idx2 = { '2' };
   static byte[] idx3 = { '3' };
