@@ -1,17 +1,6 @@
 apply plugin:'java'
 
 /**
- * Test Runners for different environments specifying testsuites
- */
-testrunner {
-  integration {
-    setup {
-      environment(os:"mac os x")
-    }
-  }
-}
-
-/**
  * Enabling building of other jar from common
  */
 smartyFacts {
