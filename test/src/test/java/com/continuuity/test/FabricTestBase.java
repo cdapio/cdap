@@ -10,6 +10,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
 import com.continuuity.common.discovery.ServicePayload;
 import com.continuuity.common.logging.LocalLogDispatcher;
+import com.continuuity.test.FlowTestHelper;
 import com.continuuity.flow.common.FlowLogTag;
 
 import com.google.common.collect.Multimap;
@@ -39,10 +40,9 @@ import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.flow.FlowTestHelper;
-import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
-import com.continuuity.flow.FlowTestHelper.TestQueryHandle;
-import com.continuuity.flow.FlowTestHelper.TestDataSetRegistry;
+import com.continuuity.test.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.FlowTestHelper.TestQueryHandle;
+import com.continuuity.test.FlowTestHelper.TestDataSetRegistry;
 import com.continuuity.flow.definition.api.FlowDefinition;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.FlowletContextImpl;
@@ -230,9 +230,9 @@ public abstract class FabricTestBase {
    * Starts the specified query.
    * <p>
    * Check the status of the query and whether it started properly using
-   * {@link com.continuuity.flow.FlowTestHelper.TestQueryHandle#isSuccess()}.
+   * {@link FlowTestHelper.TestQueryHandle#isSuccess()}.
    * <p>
-   * Always stop the query using {@link com.continuuity.flow.FlowTestHelper.TestQueryHandle#stop()}.
+   * Always stop the query using {@link FlowTestHelper.TestQueryHandle#stop()}.
    * @param queryProvider the query to start
    * @return handle to running query
    */
