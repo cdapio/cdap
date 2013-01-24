@@ -20,6 +20,6 @@ public class HBaseSerializingMetaDataStoreTest extends
   /**
    * Currently not working.  Will be fixed in ???-???.
    */
-  @Override @Test @Ignore
-  public void testConcurrentUpdate() throws Exception {  }
+//  @Override @Test @Ignore
+//  public void testConcurrentUpdate() throws Exception {  }
 }
