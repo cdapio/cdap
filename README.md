@@ -11,13 +11,13 @@ Glossary:
 
 
 Features of passport service:
-   - Account registration
-   - User authentication
-   - Account/User management
-   - Registering and un-registering account components
-       * DataSets
-       * VPCs
-   - Managing ACLs for Account components
+	- Account registration
+	- User authentication
+	- Account/User management
+	- Registering and un-registering account components
+       		* DataSets
+       		* VPCs
+   	- Managing ACLs for Account components
 
 
 Design Thoughts:
@@ -33,28 +33,28 @@ Design Thoughts:
        
 
 Account Datamodel:
-  - Account 
-        - AccountName
-        - AccountID
-        - UserRoles: Set of Userid and Roles
-           - UserID
-           - Role: {Owner, Admin, User}
-        - Billing info - To be updated
-        - Components: Set of Components 
-           - Component Type
-           - Component Id
-           - Component ACL: Set of UserId and ACL
-              -UserID
-              -ACL : {ALL, READ, READ_WRITE_DELETE}
+	- Account 
+        	- AccountName
+        	- AccountID
+        	- UserRoles: Set of Userid and Roles
+           		- UserID
+           		- Role: {Owner, Admin, User}
+        	- Billing info - To be updated
+       		- Components: Set of Components 
+           		- Component Type
+           		- Component Id
+           		- Component ACL: Set of UserId and ACL
+              			- UserID
+              			- ACL : {ALL, READ, READ_WRITE_DELETE}
         
 User Datamodel: 
-  - User
-      - User ID
-      - FirstName
-      - LastName
-      - EmailId
-      - Password
-      - Authority: Set of Accountids and Roles
-         - AccountID
-         - Role: {Owner, Admin, User}
+	- User
+      		- User ID
+      		- FirstName
+      		- LastName
+      		- EmailId
+      		- Password
+      		- Authority: Set of Accountids and Roles
+         		- AccountID
+         		- Role: {Owner, Admin, User}
               
