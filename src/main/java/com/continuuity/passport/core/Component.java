@@ -1,5 +1,6 @@
 package com.continuuity.passport.core;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class Component {
   }
 
   public Set<ComponentACL> getComponentACLs() {
-    return this.acls;
+    return Collections.unmodifiableSet(this.acls);
   }
 
   public void addComponentAcl(ComponentACL acl) {
