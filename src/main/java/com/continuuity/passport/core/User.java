@@ -1,5 +1,7 @@
 package com.continuuity.passport.core;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -48,8 +50,13 @@ public class User  {
     return emailId;
   }
 
-  public Set<Authority> getAuthorities() {
-    return Collections.unmodifiableSet(this.authorities);
+  /**
+   * get all the authorities that the user is a part of
+   * authorities define the account id and role the user has on the account
+   * @return
+   */
+  public ImmutableSet<Authority> getAuthorities() {
+    return ImmutableSet.copyOf(this.authorities);
   }
 
   private void addAuthority(Authority authority){

@@ -2,6 +2,7 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
@@ -18,7 +19,7 @@ public interface AccountDAO {
 
   public boolean removeComponent(Account account, Component component) throws RuntimeException;
 
-  public Set<Component> getComponents(String accountId);
+  public ImmutableSet<Component> getComponents(String accountId);
 
   public boolean deleteAccount(Account account) throws RuntimeException;
 

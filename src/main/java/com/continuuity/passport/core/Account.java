@@ -1,5 +1,7 @@
 package com.continuuity.passport.core;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +18,6 @@ public class Account {
   private Set<Component> components = new HashSet<Component>();
   //TODO: Add billing info
 
-
   private void addUserRoles(User.UserRole role) {
     this.userRoles.add(role);
   }
@@ -25,8 +26,12 @@ public class Account {
     return this.userRoles;
   }
 
-  public Set<Component> getComponents() {
-    return this.getComponents();
+  /**
+   * getComponents for the account
+   * @return ImmutableSet of Component
+   */
+  public ImmutableSet<Component> getComponents() {
+    return ImmutableSet.copyOf(this.getComponents());
   }
 
   private void addComponent(Component c) {
