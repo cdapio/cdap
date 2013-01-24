@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import au.com.bytecode.opencsv.CSVParser;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
@@ -135,18 +136,24 @@ public class ClusterWriterFlow implements Flow {
       // Grab CSV string from event-stream tuple
       String csvEventString = new String((byte[])tuple.get("body"));
 
+      getFlowletContext().getLogger().debug(
+          "ClusterSource Received Event: " + csvEventString);
+
       // Parse as CSV
       String [] parsed = null;
       try {
         parsed = this.parser.parseLine(csvEventString);
         if (parsed.length != 3) throw new IOException();
       } catch (IOException e) {
+        getFlowletContext().getLogger().error(
+            "Error parsing cluster CSV line: " + csvEventString);
         throw new RuntimeException("Invalid input string: " + csvEventString);
       }
 
       // Check if special flag to reset clusters exists
       if (parsed[0].equals(Constants.CLUSTER_RESET_FLAG)) {
         // CSV = reset_clusters,max_cluster_id,"msg"
+        getFlowletContext().getLogger().debug("Received Cluster RESET");
         Tuple resetTuple = new TupleBuilder()
             .set("maxClusterId", Integer.valueOf(parsed[1]))
             .set("msg", parsed[2])
@@ -156,12 +163,18 @@ public class ClusterWriterFlow implements Flow {
       }
 
       // Format of CSV string is: clusterid,category,weight
-      Tuple clusterTuple = new TupleBuilder()
-          .set("clusterId", Integer.valueOf(parsed[0]))
-          .set("category", parsed[1])
-          .set("weight", Double.valueOf(parsed[2]))
-          .create();
-      collector.add("writer_output", clusterTuple);
+      try {
+        Tuple clusterTuple = new TupleBuilder()
+            .set("clusterId", Integer.valueOf(parsed[0]))
+            .set("category", parsed[1])
+            .set("weight", Double.valueOf(parsed[2]))
+            .create();
+        collector.add("writer_output", clusterTuple);
+      } catch (NumberFormatException nfe) {
+        getFlowletContext().getLogger().error(
+            "Error parsing numeric field in CSV line:" + csvEventString, nfe);
+        throw nfe;
+      }
     }
 
     @Override
@@ -173,7 +186,9 @@ public class ClusterWriterFlow implements Flow {
     public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
         FailureReason reason) {
       numFailures++;
-      System.out.println("Flowet Failed : " + reason.toString() + ", retrying");
+      getFlowletContext().getLogger().error(
+          "ClusterSource Flowet Failed : " + reason.toString() +
+          ", retrying");
       return FailureHandlingPolicy.RETRY;
     }
 
@@ -224,11 +239,23 @@ public class ClusterWriterFlow implements Flow {
       String category = tuple.get("category");
       Double weight = tuple.get("weight");
       this.clusterTable.writeCluster(clusterId, category, weight);
+      getFlowletContext().getLogger().debug(
+          "Writing cluster (id=" + clusterId + ", category=" +
+              category + ", weight=" + weight);
     }
 
     @Override
     public void onSuccess(Tuple tuple, TupleContext context) {
       numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      getFlowletContext().getLogger().error(
+          "ClusterWriter Flowet Processing Failed : " +
+              reason.toString() + ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
 
   }
@@ -262,12 +289,28 @@ public class ClusterWriterFlow implements Flow {
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
       Integer maxClusterId = tuple.get("maxClusterId");
-      this.clusterTable.resetClusters(maxClusterId);
+      try {
+        this.clusterTable.resetClusters(maxClusterId);
+      } catch (OperationException e) {
+        getFlowletContext().getLogger().error("Error resetting clusters", e);
+        return;
+      }
+      getFlowletContext().getLogger().info(
+          "Resetting clusters using maxId " + maxClusterId);
     }
 
     @Override
     public void onSuccess(Tuple tuple, TupleContext context) {
       numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      getFlowletContext().getLogger().error(
+          "ClusterReset Flowet Processing Failed : " + reason.toString() +
+          ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
 
   }

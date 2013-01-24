@@ -9,16 +9,12 @@ import java.util.PriorityQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable.Counter;
 import com.continuuity.api.data.util.Bytes;
 import com.continuuity.api.data.util.Helpers;
-import com.payvment.continuuity.Constants;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 
 /**
@@ -35,22 +31,22 @@ public class ClusterFeedReader {
   private static final Logger LOG =
       LoggerFactory.getLogger(ClusterFeedReader.class);
 
-  private final DataFabric fabric;
+  private final ActivityFeedTable activityFeedTable;
 
   private final ClusterTable clusterTable;
 
   private final SortedCounterTable topScoreTable;
 
   public ClusterFeedReader(ClusterTable clusterTable,
-      SortedCounterTable topScoreTable, DataFabric fabric) {
+      SortedCounterTable topScoreTable, ActivityFeedTable activityFeedTable) {
     this.clusterTable = clusterTable;
     this.topScoreTable = topScoreTable;
-    this.fabric = fabric;
+    this.activityFeedTable = activityFeedTable;
   }
 
-  public ActivityFeed getActivityFeed(int clusterId, int limit)
+  public ActivityFeed getActivityFeed(String country, int clusterId, int limit)
       throws OperationException {
-    return getActivityFeed(clusterId, limit, Long.MAX_VALUE, 0L);
+    return getActivityFeed(country, clusterId, limit, Long.MAX_VALUE, 0L);
   }
 
   /**
@@ -59,6 +55,7 @@ public class ClusterFeedReader {
    * the specified limit.
    * <p>
    * See {@link ActivityFeed} javadoc for JSON format.
+   * @param country the country code
    * @param clusterId cluster id
    * @param limit maximum entries
    * @param maxStamp maximum stamp, exclusive
@@ -66,7 +63,7 @@ public class ClusterFeedReader {
    * @return activity feed of product entries in descending time order
    * @throws OperationException
    */
-  public ActivityFeed getActivityFeed(int clusterId, int limit,
+  public ActivityFeed getActivityFeed(String country, int clusterId, int limit,
       long maxStamp, long minStamp) throws OperationException {
     // Read cluster info
     Map<String,Double> clusterInfo = this.clusterTable.readCluster(clusterId);
@@ -79,17 +76,12 @@ public class ClusterFeedReader {
     // starting from max_stamp to min_stamp (but each reversed)
     List<CachingActivityFeedScanner> scanners =
         new ArrayList<CachingActivityFeedScanner>(clusterInfo.size());
-    // ReadColumnRange start is inclusive but we want exclusive, so if the start
-    // is non-zero, subtract one
-    long exclusiveStamp = Helpers.reverse(maxStamp);
-    if (exclusiveStamp != 0) exclusiveStamp--;
-    byte [] startColumn = Bytes.toBytes(exclusiveStamp);
-    byte [] stopColumn = Bytes.toBytes(Helpers.reverse(minStamp));
     for (Map.Entry<String,Double> entry : clusterInfo.entrySet()) {
       String category = entry.getKey();
       Double weight = entry.getValue(); // TODO: Do something with weight
       CachingActivityFeedScanner scanner = new CachingActivityFeedScanner(
-          this.fabric, category, weight, startColumn, stopColumn, limit);
+          this.activityFeedTable, country, category, weight, maxStamp, minStamp,
+          limit);
       scanners.add(scanner);
     }
     // Heap merge (PriQueue) across all scanners
@@ -130,6 +122,7 @@ public class ClusterFeedReader {
    * popular products can be paged using limit and offset.
    * <p>
    * See {@link PopularFeed} javadoc for JSON format.
+   * @param country the country code
    * @param clusterId cluster id
    * @param numHours number of hours (must be >= 1)
    * @param limit maximum number of products to return
@@ -137,10 +130,10 @@ public class ClusterFeedReader {
    * @return feed of products in descending popularity order
    * @throws OperationException
    */
-  public PopularFeed getPopularFeed(int clusterId, int numHours,
+  public PopularFeed getPopularFeed(String country, int clusterId, int numHours,
       int limit, int offset) throws OperationException {
-    return getPopularFeed(clusterId, Helpers.hour(System.currentTimeMillis()),
-        numHours, limit, offset);
+    return getPopularFeed(country, clusterId,
+        Helpers.hour(System.currentTimeMillis()), numHours, limit, offset);
   }
 
   /**
@@ -150,6 +143,7 @@ public class ClusterFeedReader {
    * currentHour rather than actual currentHour.
    * <p>
    * See {@link PopularFeed} javadoc for JSON format.
+   * @param country the country code
    * @param clusterId cluster id
    * @param currentHour the current hour, in epoch millis
    * @param numHours number of hours (must be >= 1)
@@ -158,8 +152,9 @@ public class ClusterFeedReader {
    * @return feed of products in descending popularity order
    * @throws OperationException
    */
-  public PopularFeed getPopularFeed(int clusterId, long currentHour,
-      int numHours, int limit, int offset) throws OperationException {
+  public PopularFeed getPopularFeed(String country, int clusterId,
+      long currentHour, int numHours, int limit, int offset)
+          throws OperationException {
     int n = limit + offset;
     if (numHours < 1 || limit < 1 || offset < 0) {
       throw new OperationException(StatusCode.KEY_NOT_FOUND,
@@ -182,14 +177,13 @@ public class ClusterFeedReader {
       Double weight = entry.getValue(); // TODO: Do something with weight
       List<Long> hours = new ArrayList<Long>(numHours);
       for (int i=0; i<numHours; i++) {
-        Long hour = currentHour - (i * 3600000);
-        hours.add(hour);
+        hours.add(currentHour - (i * 3600000));
       }
       // Iterate hours
       for (Long hour : hours) {
         // Grab top counters for this category and this hour
         List<Counter> topCounters = this.topScoreTable.readTopCounters(
-          Bytes.add(Bytes.toBytes(hour), Bytes.toBytes(category)), n);
+            PopularFeed.makeRow(hour, country, category), n);
         for (Counter counter : topCounters) {
           // Add each counter to pop feed
           popFeed.addEntry(Bytes.toLong(counter.getName()), counter.getCount());
@@ -244,20 +238,21 @@ public class ClusterFeedReader {
    */
   private class CachingActivityFeedScanner {
 
-    final DataFabric fabric;
+    final ActivityFeedTable table;
+
+    final String country;
 
     final String category;
 
     final Double weight;
 
-    final byte [] startColumn;
+    long maxStamp;
 
-    final byte [] stopColumn;
+    final long minStamp;
 
     @SuppressWarnings("unused")
     final int limit;
 
-    @SuppressWarnings("unused")
     final int pageSize;
 
     /**
@@ -276,14 +271,15 @@ public class ClusterFeedReader {
     private final LinkedList<ActivityFeedEntry> cache =
         new LinkedList<ActivityFeedEntry>();
 
-    CachingActivityFeedScanner(DataFabric fabric, String category,
-        Double weight, byte[] startColumn, byte[] stopColumn, int limit)
+    CachingActivityFeedScanner(ActivityFeedTable table, String country,
+        String category, Double weight, long maxStamp, long minStamp, int limit)
             throws OperationException {
-      this.fabric = fabric;
+      this.table = table;
+      this.country = country;
       this.category = category;
       this.weight = weight;
-      this.startColumn = startColumn;
-      this.stopColumn = stopColumn;
+      this.maxStamp = maxStamp;
+      this.minStamp = minStamp;
       this.limit = limit;
       this.pageSize = limit;
       fillCache();
@@ -319,26 +315,22 @@ public class ClusterFeedReader {
      */
     private boolean fillCache() throws OperationException {
       if (cacheFillEnd) return false;
-      // Perform read from startColumn to stopColumn
-      // TODO: Need to use a limit=pageSize here or we read the whole thing!
-      ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
-          ActivityFeed.makeActivityFeedRow(this.category),
-          this.startColumn, this.stopColumn);
-      OperationResult<Map<byte[],byte[]>> result = this.fabric.read(read);
-      if (result.isEmpty()) {
+      List<ActivityFeedEntry> entries = this.table.readEntries(
+          country, category, pageSize, maxStamp, minStamp);
+      if (entries.isEmpty()) {
         cacheFillEnd = true;
         return false;
       }
       // Iterate result and add feed entries
-      for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
-        byte [] column = entry.getKey();
-        byte [] value = entry.getValue();
-        ActivityFeedEntry feedEntry = new ActivityFeedEntry(column, value);
+      for (ActivityFeedEntry feedEntry : entries) {
         this.cache.add(feedEntry);
       }
-      // Didn't use limit so we are at the end of the cache fill
-      // In future, check if num entries > pageSize
-      cacheFillEnd = true;
+      // If result is less than a page, we reached the end of the feed
+      if (entries.size() < pageSize) {
+        cacheFillEnd = true;
+      }
+      // Update the maxStamp to point to the timestamp of the last entry
+      this.maxStamp = entries.get(entries.size() - 1).timestamp;
       return true;
     }
   }

@@ -17,6 +17,8 @@ public class SocialAction {
   
   public Long store_id;
   
+  public String [] country;
+
   public String category;
   
   public Long actor_id;
@@ -24,12 +26,13 @@ public class SocialAction {
   public SocialAction() {}
   
   public SocialAction(Long id, Long date, String type, Long product_id,
-      Long store_id, String category, Long actor_id) {
+      Long store_id, String [] country, String category, Long actor_id) {
     this.id = id;
     this.date = date;
     this.type = type;
     this.product_id = product_id;
     this.store_id = store_id;
+    this.country = country;
     this.category = category;
     this.actor_id = actor_id;
   }
@@ -45,10 +48,26 @@ public class SocialAction {
         "\"date\":\"" + this.date + "\"," +
         "\"product_id\":\"" + this.product_id + "\"," +
         "\"store_id\":\"" + this.store_id + "\"," +
+        "\"country\":" + toJson(this.country) + "," +
         "\"category\":\"" + this.category + "\"," +
         "\"actor_id\":\"" + this.actor_id + "\"}";
   }
   
+  public static String toJson(String [] country) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("[");
+    boolean first = true;
+    for (String c : country) {
+      if (first) first = false;
+      else sb.append(",");
+      sb.append("\"");
+      sb.append(c);
+      sb.append("\"");
+    }
+    sb.append("]");
+    return sb.toString();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof SocialAction)) return false;
@@ -60,6 +79,10 @@ public class SocialAction {
     if (store_id != oSA.store_id) return false;
     if (actor_id != oSA.actor_id) return false;
     if (!category.equals(oSA.category)) return false;
+    if (country.length != oSA.country.length) return false;
+    for (int i=0; i<country.length; i++) {
+      if (!country[i].equals(oSA.country[i])) return false;
+    }
     return true;
   }
   

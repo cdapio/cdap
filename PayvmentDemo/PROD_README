@@ -1,0 +1,25 @@
+---
+Payvment Production Cluster of the Continuuity AppFabric
+---
+
+The production cluster is a multi-node, fully distributed instance of the
+Continuuity App Fabric.
+
+AppFabric Hostname
+payvment.continuuity.com
+
+AppFabric UI
+http://payvment.continuuity.com
+
+payvment/pvrealtime123!
+
+
+USING EXISTING TOOLS
+--------------------
+
+The write_clusters, write_actions, and send_actions scripts can be used both
+for your local developer instance as well as cloud instances.  All you need
+to do is point it to the proper hostname, for example:
+
+	export GATEWAY_HOSTNAME=payvment.continuuity.com
+	$LISH_APP_HOME/bin/write_clusters_to_stream.sh src/test/resources/sample-clusters.csv

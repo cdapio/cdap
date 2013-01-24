@@ -115,10 +115,6 @@ public class ActivityFeed {
     return this.activity.size();
   }
 
-  public static byte [] makeActivityFeedRow(String category) {
-    return Bytes.add(Bytes.toBytes("activityFeed"), Bytes.toBytes(category));
-  }
-
   private static final Gson gson = new Gson();
 
   /**
@@ -157,6 +153,12 @@ public class ActivityFeed {
     }
 
     public ActivityFeedEntry addEntry(Long product_id, Long score) {
+      for (Product product : products) {
+        if (product_id == product.product_id) {
+          product.score += score;
+          return this;
+        }
+      }
       this.products.add(new Product(product_id, score));
       return this;
     }
