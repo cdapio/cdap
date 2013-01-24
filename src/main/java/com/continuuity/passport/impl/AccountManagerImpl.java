@@ -9,7 +9,7 @@ import com.continuuity.passport.dal.db.UserDBAccess;
 import java.util.Map;
 
 /**
- * AccountManager manages all the operations from the Passport Service
+ * AccountManager manages all the operations from the Passport PassportService
  * This implementation is specific to Database Data acccessObjects
  */
 public class AccountManagerImpl implements  AccountManager {

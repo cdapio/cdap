@@ -9,11 +9,9 @@ import java.lang.RuntimeException;
 
 
 /**
- * Interface to manage various entities and components in the continuuity system
- *
+ * Interface to manage various entities and components in the continuuity system.
  */
-
-public interface Service {
+public interface PassportService {
 
   /**
    * Register an {@code Account} in the system
@@ -40,6 +38,7 @@ public interface Service {
    * @param credentials user credentials
    * @return boolean authentication status
    * @throws RuntimeException
+   *
    */
   public boolean authenticateUser ( Credentials credentials) throws RuntimeException;
 
@@ -54,7 +53,6 @@ public interface Service {
    */
 
   public boolean authenticateComponent ( String accountId, String componentId, Credentials credentials) throws RuntimeException;
-
 
 
   /**
