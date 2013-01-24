@@ -32,6 +32,9 @@ import java.util.Map;
  *    }
  *   });
  * </pre>
+ *
+ * @deprecated This class has concurrency issue that could make instance of this class not able to stop.
+ *             Also the listeners map is not concurrent safe to modify.
  */
 public class CommandPortServer {
   private static final Logger Log = LoggerFactory.getLogger(CommandPortServer.class);
