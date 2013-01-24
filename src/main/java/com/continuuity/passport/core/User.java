@@ -1,5 +1,6 @@
 package com.continuuity.passport.core;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,7 +49,7 @@ public class User  {
   }
 
   public Set<Authority> getAuthorities() {
-    return this.authorities;
+    return Collections.unmodifiableSet(this.authorities);
   }
 
   private void addAuthority(Authority authority){
