@@ -54,3 +54,7 @@ User Datamodel:
       - LastName
       - EmailId
       - Password
+      - Authority: Set of Accountids and Roles
+         - AccountID
+         - Role: {Owner, Admin, User}
+              
