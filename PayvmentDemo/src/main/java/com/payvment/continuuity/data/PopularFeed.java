@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.data.util.Helpers;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -114,5 +116,23 @@ public class PopularFeed {
     public boolean equals(Object o) {
       return this.compareTo((PopularFeedEntry)o) == 0;
     }
+  }
+
+  /**
+   * Returns the row key for the specified hour, country, and category popular
+   * feed bucket.
+   * @param hour the epoch hour (should be divisible by 3600000)
+   * @param country the country code
+   * @param category the category string
+   * @return row key
+   */
+  public static byte [] makeRow(Long hour, String country, String category) {
+    if (!hour.equals(Helpers.hour(hour))) {
+      System.err.println("Hour in popular feed invalid (" + hour + " not " +
+          Helpers.hour(hour) + ")");
+      assert false;
+    }
+    return Bytes.add(Bytes.toBytes(hour), Bytes.toBytes(country),
+        Bytes.toBytes(category)); 
   }
 }

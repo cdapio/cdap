@@ -19,12 +19,12 @@ import com.continuuity.api.data.util.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
-import com.continuuity.flow.FlowTestHelper;
-import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.FlowTestHelper;
+import com.continuuity.test.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.google.gson.Gson;
-import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ActivityFeedTable;
 import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.ProductFeedEntry;
 
@@ -54,10 +54,12 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     Long now = System.currentTimeMillis();
     Long product_id = 1L;
     Long store_id = 2L;
+    String [] country = new String [] { "US", "UK" };
     String category = "Housewares";
     String name = "Green Widget";
     ProductFeedEntry productMeta =
-        new ProductFeedEntry(product_id, store_id, now, category, name, 3.5);
+        new ProductFeedEntry(product_id, store_id, now, country, category,
+            name, 3.5);
     String productMetaJson = productMeta.toJson();
 
     // Write json to input stream
@@ -97,9 +99,7 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
 
     // Verify the product total score has increased to 1
     assertEquals(new Long(1),
-        allTimeScoreTable.readSingleKey(
-            Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
-                Bytes.toBytes(product_id))));
+        allTimeScoreTable.readSingleKey(Bytes.toBytes(product_id)));
 
     // Verify the hourly score has been incremented to type score increase
     List<Counter> counters = topScoreTable.readTopCounters(
@@ -109,8 +109,9 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
     assertEquals(new Long(1), counters.get(0).getCount());
 
     // Verify a new entry has been made in activity feed
-    ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
-        ActivityFeed.makeActivityFeedRow(category), null, null);
+    ReadColumnRange read = new ReadColumnRange(
+        ActivityFeedTable.ACTIVITY_FEED_TABLE,
+        ActivityFeedTable.makeActivityFeedRow("US", category), null, null);
     OperationResult<Map<byte[],byte[]>> result =
         getDataFabric().read(read);
     assertFalse(result.isEmpty());
@@ -131,11 +132,12 @@ public class TestProductFeedFlow extends PayvmentBaseFlowTest {
 
     String exampleProductMetaJson =
         "{\"@id\":\"6709879\"," +
-            "\"category\":\"Dresses\"," +
-            "\"name\":\"Sleeveless Black Sequin Dress\"," +
-            "\"last_modified\":\"1348074421000\"," +
-            "\"store_id\":\"164341\"," +
-            "\"score\":\"1.3\"}";
+        "\"country\":[\"US\",\"UK\"]," +
+        "\"category\":\"Dresses\"," +
+        "\"name\":\"Sleeveless Black Sequin Dress\"," +
+        "\"last_modified\":\"1348074421000\"," +
+        "\"store_id\":\"164341\"," +
+        "\"score\":\"1.3\"}";
 
     String processedJsonString =
         ProductFeedParserFlowlet.preProcessSocialActionJSON(

@@ -16,6 +16,8 @@ public class ProductFeedEntry implements SimpleSerializable {
 
   public Long date;
 
+  public String [] country;
+
   public String category;
 
   public String name;
@@ -25,10 +27,11 @@ public class ProductFeedEntry implements SimpleSerializable {
   public ProductFeedEntry() {}
 
   public ProductFeedEntry(Long product_id, Long store_id, Long date,
-      String category, String name, Double score) {
+      String [] country, String category, String name, Double score) {
     this.product_id = product_id;
     this.store_id = store_id;
     this.date = date;
+    this.country = country;
     this.category = category;
     this.name = name;
     this.score = score;
@@ -37,13 +40,19 @@ public class ProductFeedEntry implements SimpleSerializable {
   @Override
   public byte [] toBytes() {
     int len = 3 * Bytes.SIZEOF_LONG + Bytes.SIZEOF_DOUBLE +
-        2 * Bytes.SIZEOF_INT + this.category.length() + this.name.length();
+        3 * Bytes.SIZEOF_INT + this.category.length() + this.name.length();
+    for (String c : country) len += Bytes.SIZEOF_INT + c.length();
     byte [] bytes = new byte[len];
     int idx = 0;
     idx = Bytes.putLong(bytes, idx, this.product_id);
     idx = Bytes.putLong(bytes, idx, this.store_id);
     idx = Bytes.putLong(bytes, idx, this.date);
     idx = Bytes.putDouble(bytes, idx, this.score);
+    idx = Bytes.putInt(bytes, idx, this.country.length);
+    for (String c : country) {
+      idx = Bytes.putInt(bytes, idx, c.length());
+      idx = Bytes.putBytes(bytes, idx, Bytes.toBytes(c), 0, c.length());
+    }
     idx = Bytes.putInt(bytes, idx, this.category.length());
     idx = Bytes.putBytes(bytes, idx,
         Bytes.toBytes(this.category), 0, this.category.length());
@@ -61,6 +70,12 @@ public class ProductFeedEntry implements SimpleSerializable {
     this.store_id = Bytes.toLong(bytes, idx); idx += Bytes.SIZEOF_LONG;
     this.date = Bytes.toLong(bytes, idx); idx += Bytes.SIZEOF_LONG;
     this.score = Bytes.toDouble(bytes, idx); idx += Bytes.SIZEOF_DOUBLE;
+    int numCountries = Bytes.toInt(bytes, idx); idx += Bytes.SIZEOF_INT;
+    this.country = new String[numCountries];
+    for (int i=0; i<numCountries; i++) {
+      int len = Bytes.toInt(bytes, idx); idx += Bytes.SIZEOF_INT;
+      this.country[i] = Bytes.toString(bytes, idx, len); idx += len;
+    }
     int len = Bytes.toInt(bytes, idx); idx += Bytes.SIZEOF_INT;
     this.category = Bytes.toString(bytes, idx, len); idx += len;
     len = Bytes.toInt(bytes, idx); idx += Bytes.SIZEOF_INT;
@@ -75,6 +90,7 @@ public class ProductFeedEntry implements SimpleSerializable {
   public String toJson() {
     return
         "{\"@id\":\"" + this.product_id + "\"," +
+        "\"country\":" + SocialAction.toJson(country) + "," +
         "\"category\":\"" + this.category + "\"," +
         "\"name\":\"" + this.name + "\"," +
         "\"last_modified\":\"" + this.date + "\"," +

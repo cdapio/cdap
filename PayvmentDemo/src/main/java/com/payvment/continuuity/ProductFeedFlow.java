@@ -1,7 +1,6 @@
 package com.payvment.continuuity;
 
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Write;
 import com.continuuity.api.data.lib.CounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Bytes;
@@ -16,8 +15,8 @@ import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
-import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ActivityFeedTable;
 import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.ProductFeedEntry;
 
@@ -122,8 +121,7 @@ public class ProductFeedFlow implements Flow {
       // Add one to item score and pass-thru
       Increment itemScoreInc =
           this.allTimeScoreTable.generateSingleKeyIncrement(
-              Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
-                  Bytes.toBytes(productMeta.product_id)), 1L);
+                  Bytes.toBytes(productMeta.product_id), 1L);
       tupleBuilder.set("all-time-score", itemScoreInc);
       
       // Update time bucketed top-score table, also put increment into tuple
@@ -155,12 +153,17 @@ public class ProductFeedFlow implements Flow {
 
     private SortedCounterTable topScoreTable;
 
+    private ActivityFeedTable activityFeedTable;
+    
     @Override
     public void initialize() {
       this.topScoreTable = new SortedCounterTable("topScores",
           new SortedCounterTable.SortedCounterConfig());
       getFlowletContext().getDataSetRegistry().registerDataSet(
           this.topScoreTable);
+      this.activityFeedTable = new ActivityFeedTable();
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.activityFeedTable);
     }
 
     @Override
@@ -176,10 +179,9 @@ public class ProductFeedFlow implements Flow {
       // Insert feed entry
       ActivityFeedEntry feedEntry = new ActivityFeedEntry(productMeta.date,
           productMeta.store_id, productMeta.product_id, allTimeScore);
-      Write feedEntryWrite = new Write(Constants.ACTIVITY_FEED_TABLE,
-          ActivityFeed.makeActivityFeedRow(productMeta.category),
-          feedEntry.getColumn(), feedEntry.getValue());
-      collector.add(feedEntryWrite);
+      for (String country : productMeta.country) {
+        activityFeedTable.writeEntry(country, productMeta.category, feedEntry);
+      }
 
       // Let top score perform any additional indexing increments
       this.topScoreTable.performSecondaryCounterIncrements(
