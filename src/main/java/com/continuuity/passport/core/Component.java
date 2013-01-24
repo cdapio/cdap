@@ -11,22 +11,28 @@ import java.util.Set;
  */
 public class Component {
 
-  public enum ComponentType { DATASET, VPC}
+  public enum Type { DATASET, VPC}
   private String name;
-  private ComponentType componentType;
+  private Type componentType;
   private String id;
   private Set<ComponentACL> acls = new HashSet<ComponentACL>();
 
-  public void setComponentType(ComponentType c) {
-    this.componentType = componentType;
-  }
-
-  public void setName(String name) {
+  public Component(String name, String id, Type type){
     this.name = name;
+    this.id = id;
+    this.componentType = type;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public String getName() {
+    return name;
+  }
+
+  public Type getComponentType() {
+    return componentType;
+  }
+
+  public String getId() {
+    return id;
   }
 
   /**
