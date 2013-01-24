@@ -1,9 +1,11 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.*;
-import com.continuuity.api.data.set.IndexedTable;
-import com.continuuity.api.data.set.KeyValueTable;
-import com.continuuity.api.data.set.Table;
+import com.continuuity.api.data.dataset.IndexedTable;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
@@ -20,8 +22,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static junit.framework.Assert.assertEquals;
 
 public class DataSetTest {
 
@@ -62,8 +62,8 @@ public class DataSetTest {
       byte[][] cols = { phoneCol, nameCol };
       byte[][] vals = { phon, key };
 
-      numbers.write(key, phon);
-      idxNumbers.write(new Table.Write(key, cols, vals));
+      numbers.exec(new KeyValueTable.WriteKey(key, phon));
+      idxNumbers.write(new Write(key, cols, vals));
     }
 
     public String getPhoneNumber(String name) throws OperationException {
@@ -73,7 +73,7 @@ public class DataSetTest {
 
     public String getNameByNumber(String number) throws OperationException {
       OperationResult<Map<byte[],byte[]>> result =
-          this.idxNumbers.readBy(new Table.Read(number.getBytes(), nameCol));
+          this.idxNumbers.readBy(new Read(number.getBytes(), nameCol));
       if (!result.isEmpty()) {
         byte[] bytes = result.getValue().get(nameCol);
         if (bytes != null) {
@@ -143,42 +143,17 @@ public class DataSetTest {
     KeyValueTable kvTable = instantiator.getDataSet("phonetab");
   }
 
-  // this dataset is missing the constructor from data set spec
-  static class Incomplete extends DataSet {
-    public Incomplete(String name) {
-      super(name);
-    }
-    @Override
-    public DataSetSpecification configure() {
-      return new DataSetSpecification.Builder(this).
-          dataset(new Table("t_" + getName()).configure()).
-          create();
-    }
-  }
-
   @Test(expected = DataSetInstantiationException.class)
   public void testMissingConstructor() throws Exception {
     // configure an incomplete data set and add it to an instantiator
-    DataSetSpecification spec = new Incomplete("dummy").configure();
+    DataSetSpecification spec = new IncompleteDataSet("dummy").configure();
     DataSetInstantiator inst = new DataSetInstantiator();
     inst.setDataFabric(fabric);
     inst.setBatchCollectionClient(collectionClient);
     inst.setDataSets(Collections.singletonList(spec));
     // try to instantiate the incomplete data set
     @SuppressWarnings("unused")
-    Incomplete ds = inst.getDataSet("dummy");
-  }
-
-  // this class' data set spec constructor throws an exception
-  static class Throwing extends Incomplete {
-    public Throwing(String name) {
-      super(name);
-    }
-    @SuppressWarnings("unused")
-    public Throwing(DataSetSpecification spec) {
-      super(spec.getName());
-      throw new IllegalArgumentException("don't ever call me!");
-    }
+    IncompleteDataSet ds = inst.getDataSet("dummy");
   }
 
   @Test(expected = DataSetInstantiationException.class)
@@ -199,12 +174,12 @@ public class DataSetTest {
     collectionClient.setCollector(collector);
     proc.addToPhonebook(name, number);
     String number1 = proc.getPhoneNumber(name);
-    assertEquals(number, number1);
+    Assert.assertEquals(number, number1);
     String name1 = proc.getNameByNumber(number);
-    assertEquals(null, name1);
+    Assert.assertEquals(null, name1);
     executor.execute(OperationContext.DEFAULT, collector.getWrites());
     String name2 = proc.getNameByNumber(number);
-    assertEquals(name, name2);
+    Assert.assertEquals(name, name2);
   }
 
 }
