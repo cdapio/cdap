@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.*;
 
@@ -462,6 +463,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(dequeueResult.isEmpty());
 
     // Incremented value should be 5
+    // Mario, look at this one!
     assertEquals(5L, Bytes.toLong(
         executor.execute(context, new ReadKey(key)).getValue()));
 
@@ -816,7 +818,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     writes.add(new Write(rowX, colX, valX1));
     writes.add(new Increment(tableA, rowY, colY, 1L));
     writes.add(new Delete(tableB, rowZ, colZ));
-    writes.add(new CompareAndSwap(tableA, rowX, colX, valX, null)); // fails
+    writes.add(new CompareAndSwap(tableA, rowX, colX, valX, null));
     try {
       executor.execute(context, writes);
       fail("Expected compare-and-swap to fail batch.");

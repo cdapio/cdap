@@ -4,7 +4,7 @@
 package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
+import com.continuuity.data.engine.hbase.HBaseNativeOVCTable.IOExceptionHandler;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
 import com.google.inject.Inject;
@@ -45,10 +45,10 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   @Override
   public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
       throws OperationException {
-    HBaseOVCTable table = null;
+    HBaseNativeOVCTable table = null;
     try {
       createTable(tableName, FAMILY);
-      table = new HBaseOVCTable(this.conf, tableName, FAMILY,
+      table = new HBaseNativeOVCTable(this.conf, tableName, FAMILY,
           new HBaseIOExceptionHandler());
     } catch (IOException e) {
       exceptionHandler.handle(e);
@@ -60,7 +60,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     try {
       if (this.admin.tableExists(tableName)) {
-        return new HBaseOVCTable(this.conf, tableName, FAMILY,
+        return new HBaseNativeOVCTable(this.conf, tableName, FAMILY,
             new HBaseIOExceptionHandler());
       }
     } catch (IOException e) {

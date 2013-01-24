@@ -9,6 +9,7 @@ import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
