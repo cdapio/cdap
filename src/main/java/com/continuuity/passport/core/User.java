@@ -27,16 +27,18 @@ public class User  {
     private String accountId;
   }
 
-
   private String firstName;
+
   private String lastName;
+
   private String emailId;
-  private String password;
+
+  private String saltedHashedPassword;
 
   private Set<Authority> authorities = new HashSet<Authority>();
 
   public String getPassword() {
-    return password;
+    return saltedHashedPassword;
   }
   public String getFirstName() {
     return firstName;
@@ -55,7 +57,7 @@ public class User  {
    * authorities define the account id and role the user has on the account
    * @return ImmutableSet of authority
    */
-  public ImmutableSet<Authority> getAuthorities() {
+  public Set<Authority> getAuthorities() {
     return ImmutableSet.copyOf(this.authorities);
   }
 

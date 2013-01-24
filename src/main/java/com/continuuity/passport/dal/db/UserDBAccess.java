@@ -7,28 +7,64 @@ import java.util.Map;
 
 
 /**
- *
+ *  Implementation of UserDataAccess object using database as the persistence store
  */
 
 public class UserDBAccess implements UserDAO {
 
-  private Map<String,String> configuration;
-  public UserDBAccess(Map<String, String> configuration) {
+  private final Map<String,String> configuration;
+
+  public UserDBAccess(final Map<String, String> configuration){
     this.configuration = configuration;
   }
 
+  /**
+   * Create User in the System
+   *
+   * @param id   User id
+   * @param user Instance of {@code User}
+   * @return boolean
+   * @throws RuntimeException
+   */
   @Override
   public boolean createUser(String id, User user) throws RuntimeException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  /**
+   * Update User params
+   *
+   * @param id   userId
+   * @param user Instance of {@code User}
+   * @return
+   * @throws RuntimeException
+   */
   @Override
   public boolean updateUser(String id, User user) throws RuntimeException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  /**
+   * Delete User
+   *
+   * @param id userId
+   * @return
+   * @throws RuntimeException
+   */
   @Override
-  public boolean deleteUser(String id, User user) throws RuntimeException {
+  public boolean deleteUser(String id) throws RuntimeException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  /**
+   * Get User
+   *
+   * @param userId String
+   * @return Instance of {@code User}
+   * @throws RuntimeException
+   */
+  @Override
+  public User getUser(String userId) throws RuntimeException {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

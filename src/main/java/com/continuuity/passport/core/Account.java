@@ -12,9 +12,11 @@ import java.util.Set;
 
 public class Account {
 
+
   private String accountId;
 
   private String name;
+
 
   private Set<User.UserRole> userRoles;
 
@@ -27,14 +29,14 @@ public class Account {
   }
 
   public Set<User.UserRole> getUserRoles() {
-    return this.userRoles;
+    return ImmutableSet.copyOf(this.userRoles);
   }
 
   /**
    * getComponents for the account
    * @return ImmutableSet of Component
    */
-  public ImmutableSet<Component> getComponents() {
+  public Set<Component> getComponents() {
     return ImmutableSet.copyOf(this.getComponents());
   }
 

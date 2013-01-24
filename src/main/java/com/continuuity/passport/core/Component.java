@@ -39,7 +39,7 @@ public class Component {
    * getACLs for the component
    * @return ImmutableSet of ComponentACL
    */
-  public ImmutableSet<ComponentACL> getComponentACLs() {
+  public Set<ComponentACL> getComponentACLs() {
     return ImmutableSet.copyOf(this.acls);
   }
 
