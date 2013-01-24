@@ -1,5 +1,6 @@
 package com.continuuity.common.service;
 
+import com.google.common.util.concurrent.Service;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -41,6 +44,7 @@ public class CommandPortServiceTest {
                                                   .addCommandHandler("increment", "Increments a counter", handler)
                                                   .build();
 
+    final CountDownLatch stopLatch = new CountDownLatch(1);
     server.startAndWait();
     Thread t = new Thread() {
       @Override
@@ -49,6 +53,8 @@ public class CommandPortServiceTest {
           server.serve();
         } catch (IOException e) {
           LOG.error(e.getMessage(), e);
+        } finally {
+          stopLatch.countDown();
         }
       }
     };
@@ -76,6 +82,8 @@ public class CommandPortServiceTest {
       server.stopAndWait();
     }
 
-    Assert.assertTrue(handler.getCounter() == 10);
+    Assert.assertEquals(10, handler.getCounter());
+    Assert.assertTrue(stopLatch.await(3, TimeUnit.SECONDS));
+    Assert.assertEquals(Service.State.TERMINATED, server.state());
   }
 }
