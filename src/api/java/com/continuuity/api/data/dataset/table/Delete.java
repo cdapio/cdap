@@ -5,9 +5,13 @@ package com.continuuity.api.data.dataset.table;
  * entire row, the caller needs to know the columns that exist.
  */
 public class Delete extends AbstractWriteOperation {
+  // the columns to be deleted
   protected byte[][] columns;
 
-  /** get the columns to delete */
+  /**
+   * get the columns to delete
+   * @return the column keys of the columns to be deleted
+   */
   public byte[][] getColumns() {
     return columns;
   }

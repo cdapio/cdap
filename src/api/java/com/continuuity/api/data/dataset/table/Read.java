@@ -5,27 +5,44 @@ package com.continuuity.api.data.dataset.table;
  * one row of the table.
  */
 public class Read {
+  // the row key of the row to read
   protected byte[] row;
+  // the column keys of the columns to read
   protected byte[][] columns;
+  // the start of the column range to read
   protected byte[] startCol;
+  // the end (exclusive) of the column range
   protected byte[] stopCol;
 
-  /** get the row key */
+  /**
+   * Get the row key
+   * @return the row key of the operation
+   */
   public byte[] getRow() {
     return row;
   }
 
-  /** get the columns to read */
+  /**
+   * Get the columns to read. If this returns null, then the read is for a
+   * range of columns.
+   * @return the keys of the columns to read.
+   */
   public byte[][] getColumns() {
     return columns;
   }
 
-  /** get the start of the column range to read */
+  /**
+   * Get the start of the column range to read
+   * @return the start of the column range
+   */
   public byte[] getStartCol() {
     return startCol;
   }
 
-  /** get the end (exclusive) of the column range to read */
+  /**
+   * Get the end (exclusive) of the column range to read
+   * @return the end of the column range
+   */
   public byte[] getStopCol() {
     return stopCol;
   }

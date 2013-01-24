@@ -9,27 +9,53 @@ import com.continuuity.api.data.dataset.table.Write;
 import java.util.Arrays;
 import java.util.Map;
 
-
+/**
+ * This data set implements a table that can be accessed via secondary key.
+ * The secondary key need not be unique, but a read by secondary key will
+ * only return the value with the least primary key.
+ *
+ * This data set uses two tables - the actual data table,
+ * and a second table for the index. All operations are performed
+ * asynchronously, as part of the enclosing transaction (some operations
+ * require multiple writes, and we want to make sure they are all committed
+ * together).
+ */
 public class IndexedTable extends DataSet {
 
+  // the names of the two undelying tables
   private String tableName, indexName;
+  // the two underlying tables
   private Table table, index;
+  // the secondary index column
   private byte[] column;
 
+  // the property name for the secondary index column in the data set spec
+  private String indexColumnProperty = "colum";
+
+  /**
+   * helper method for both constructors to set the names of the underlying
+   * two tables
+   */
   private void init(String name, byte[] column) {
     this.tableName = "t_" + name;
     this.indexName = "i_" + name;
     this.column = column;
   }
 
+  /** runtime constructor from data set spec */
   @SuppressWarnings("unused")
   public IndexedTable(DataSetSpecification spec) throws OperationException {
     super(spec);
-    this.init(this.getName(), spec.getProperty("column").getBytes());
+    this.init(this.getName(), spec.getProperty(indexColumnProperty).getBytes());
     this.table = new Table(spec.getSpecificationFor(this.tableName));
     this.index = new Table(spec.getSpecificationFor(this.indexName));
   }
 
+  /**
+   * configuration time constructor
+   * @param name the name of the table
+   * @param columnToIndex the name of the secondary index column
+   */
   public IndexedTable(String name, byte[] columnToIndex) {
     super(name);
     this.init(name, columnToIndex);
@@ -40,19 +66,39 @@ public class IndexedTable extends DataSet {
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        property("column", new String(this.column)).
+        property(indexColumnProperty, new String(this.column)).
         dataset(this.table.configure()).
         dataset(this.index.configure()).
         create();
   }
 
+  // the value in the index. the index will have a row for every secondary
+  // key that exists. That row has a column with the column key of the row
+  // key of every row with that secondary key. The column must have a value,
+  // we use the value 'x', but iy could be any value.
   static final byte[] EXISTS = { 'x' };
 
+  /**
+   * Read by primary key
+   * @param read the read operation, as if it were on a non-indexed table
+   * @return the result of the read on the underlying primary table
+   * @throws OperationException if the operation fails
+   */
   public OperationResult<Map<byte[], byte[]>> read(Read read)
       throws OperationException {
     return this.table.read(read);
   }
 
+  /**
+   * Read by secondary key.
+   * @param read The read operation, as if it were on the non-indexed table,
+   *             but with the secondary key as the row key of the Read.
+   * @return an empty result if no row has that secondary key. If there is a
+   * matching row, the result is the same as a read with the row key of the
+   * first row that has this secondary key. The columns are the same as if
+   * the read was performed on a non-indexed table.
+   * @throws OperationException if the operation goes wrong
+   */
   public OperationResult<Map<byte[], byte[]>> readBy(Read read)
       throws OperationException {
     // read the entire row of the index for the given key
@@ -84,6 +130,12 @@ public class IndexedTable extends DataSet {
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.ENTRY_NOT_FOUND);
   }
 
+  /**
+   * A write to an indexed table. This is the same as on an indexed table,
+   * except that additional work is done to maintain the index.
+   * @param write The write operatiojn
+   * @throws OperationException if the operation goes wrong
+   */
   public void write(Write write) throws OperationException {
     // first read the existing row to find its current value of the index col
     Read firstRead = new Read(write.getRow(), this.column);
@@ -129,6 +181,11 @@ public class IndexedTable extends DataSet {
     }
   }
 
+  /**
+   * Perform a delete by primary key.
+   * @param delete The delete operation, as if it were on a non-indexed table
+   * @throws OperationException if the operation goes wrong
+   */
   public void delete(Delete delete) throws OperationException {
     // first read the existing row to find its current value of the index col
     Read firstRead = new Read(delete.getRow(), this.column);
@@ -153,6 +210,14 @@ public class IndexedTable extends DataSet {
     }
   }
 
+  /**
+   * Perform a swap operation by primary key.
+   * @param swap The swap operation, as if it were on a non-indexed table.
+   *             Note that if the swap is on the secondary key column,
+   *             then the index must be updated; otherwise this is a
+   *             pass-through to the underlying table.
+   * @throws OperationException if the operation goes wrong
+   */
   public void swap(Swap swap) throws OperationException {
     // if the swap is on a column other than the column key, then
     // the index is not affected - just execute the swap.

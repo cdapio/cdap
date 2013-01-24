@@ -8,7 +8,7 @@ public interface DataSetRegistry {
   /**
    * Registers a DataLib.
    *
-   * @param dataLib To be registered for com.continuuity.data.dataset.
+   * @param dataLib To be registered for dataset.
    * @return Registered DataLib.
    */
   public DataLib registerDataSet(DataLib dataLib);

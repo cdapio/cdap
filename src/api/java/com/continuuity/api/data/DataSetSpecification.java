@@ -24,21 +24,27 @@ import java.util.Map;
  */
 public final class DataSetSpecification {
 
-  /** the name of the data set */
+  // the name of the data set
   private final String name;
-  /** the class name of the data set */
+  // the class name of the data set
   private final String type;
-  /** the custom properties of the data set */
+  // the custom properties of the data set
   private final Map<String, String> properties;
-  /** the meta data for embedded data sets */
+  // the meta data for embedded data sets
   private final Map<String, DataSetSpecification> dataSetSpecs;
 
-  /** returns the name of the data set */
+  /**
+   * returns the name of the data set
+   * @return the name of the data set
+   */
   public String getName() {
     return this.name;
   }
 
-  /** returns the class name of the data set */
+  /**
+   * returns the class name of the data set
+   * @return the class name of the data set
+   */
   public String getType() {
     return this.type;
   }
@@ -62,7 +68,13 @@ public final class DataSetSpecification {
     return dataSetSpecs.get(dsName);
   }
 
-  /** private constructor, only to be used by the builder */
+
+  /** private constructor, only to be used by the builder
+   * @param name the name of the data set
+   * @param type the class name of the data set
+   * @param properties the custom properties
+   * @param dataSetSpecs the specs of embedded data sets
+   */
   private DataSetSpecification(String name, String type,
                                Map<String, String> properties,
                                Map<String, DataSetSpecification> dataSetSpecs) {
