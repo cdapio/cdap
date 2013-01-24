@@ -5,9 +5,9 @@ apply plugin:'java'
  */
 testrunner {
   integration {
-     setup {
-       environment(os:"mac os x")
-     }
+    setup {
+      environment(os:"mac os x")
+    }
   }
 }
 
@@ -15,20 +15,23 @@ testrunner {
  * Enabling building of other jar from common
  */
 smartyFacts {
-    api {
-        enableJavadoc()
-        enableSourceJar()
-    }
+  api {
+    enableJavadoc()
+    enableSourceJar()
+  }
 }
 
 /**
  * Specify all the dependencies
  */
 dependencies {
-    // Integration depends on apiJar
-    integrationCompile apiJar.outputs.files
 
-    // Self dependencies.
-    compile apiJar.outputs.files
+  compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+
+  // Integration depends on apiJar
+  integrationCompile apiJar.outputs.files
+
+  // Self dependencies.
+  compile apiJar.outputs.files
 
 }
