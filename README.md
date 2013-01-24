@@ -3,7 +3,7 @@ Passport service is a service to manage account, account related components and 
 
 **Glossary:**
 - User: Entity that interacts with continuuity systems: creating VPC instance, deploying code, managing dataset acls, etc
-- Account: 
+- Account: Account identifies a customer that can provision VPC, set ACLs on datasets and manage users within the accounts
 - DataSet: A collection of data that logically belongs together, with methods to manipulate the data. 
 - VPC (Virtual private cloud): A deployment of the app fabric platform dedicated to a single customer.
 
