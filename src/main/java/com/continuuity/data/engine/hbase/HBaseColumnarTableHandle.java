@@ -5,7 +5,7 @@ package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
+import com.continuuity.data.engine.hbase.HBaseNativeOVCTable.IOExceptionHandler;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.SimpleColumnarTableHandle;
@@ -26,7 +26,7 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
   private final HBaseAdmin admin;
   
   private static final IOExceptionHandler exceptionHandler =
-      new HBaseOVCTable.ToOperationExceptionHandler();
+      new HBaseNativeOVCTable.ToOperationExceptionHandler();
 
   private static final byte [] FAMILY = Bytes.toBytes("fam");
 
@@ -41,13 +41,13 @@ public class HBaseColumnarTableHandle extends SimpleColumnarTableHandle {
   @Override
   public ColumnarTable createNewTable(byte[] tableName,
       TimestampOracle timeOracle) throws OperationException {
-    HBaseOVCTable table = null;
+    HBaseNativeOVCTable table = null;
     try {
       createTable(tableName);
     } catch (IOException e) {
       exceptionHandler.handle(e);
     }
-    table = new HBaseOVCTable(conf, tableName, FAMILY,
+    table = new HBaseNativeOVCTable(conf, tableName, FAMILY,
           exceptionHandler);
     return new ColumnarOnVersionedColumnarTable(table, timeOracle);
   }

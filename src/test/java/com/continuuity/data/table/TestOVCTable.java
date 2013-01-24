@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  */
 public abstract class TestOVCTable {
 
-  // TODO: As part of ENG-211, add testing of HBaseOVCTable
+  // TODO: As part of ENG-211, add testing of HBaseNativeOVCTable
   private static final Logger Log = LoggerFactory.getLogger(TestOVCTable.class);
 
   protected OrderedVersionedColumnarTable table;

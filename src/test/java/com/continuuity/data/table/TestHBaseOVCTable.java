@@ -54,6 +54,9 @@ public class TestHBaseOVCTable extends TestOVCTable {
 
   // Tests that produce different expected results on Vanilla HBase
 
+  /**
+   * Currently produces different results on Vanilla HBase.  Will be fixed in ???-???.
+   */
   @Override @Test
   public void testMultiColumnReadsAndWrites() throws OperationException {
 
