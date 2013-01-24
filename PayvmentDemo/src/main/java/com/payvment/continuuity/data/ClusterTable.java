@@ -21,9 +21,20 @@ public class ClusterTable extends DataLib {
     super(CLUSTER_TABLE, CLUSTER_TABLE);
   }
 
-  public void resetClusters(int maxClusterNumber) {
+  public void resetClusters(int maxClusterNumber) throws OperationException {
     for (int i=1;i<=maxClusterNumber;i++) {
-      getCollector().add(new Delete(makeRow(i)));
+      // short-term fix because Delete of a row does not work right now
+      Map<String,Double> cluster = readCluster(i);
+      if (cluster == null) return;
+      byte [][] columns = new byte[cluster.size()][];
+      int j = 0;
+      for (String category : cluster.keySet()) {
+        columns[j++] = Bytes.toBytes(category);
+      }
+      getCollector().add(new Delete(getDataSetId(), makeRow(i), columns));
+
+      // TODO: Use the below delete once row deletes are working
+      // getCollector().add(new Delete(getDataSetId(), makeRow(i)));
     }
   }
 

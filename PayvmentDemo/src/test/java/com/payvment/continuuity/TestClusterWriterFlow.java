@@ -128,6 +128,13 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
       Thread.sleep(500);
     }
     
+    // Try to read clusters, all should be null
+    assertNull(clusterTable.readCluster(1));
+    assertNull(clusterTable.readCluster(2));
+    assertNull(clusterTable.readCluster(3));
+    assertNull(clusterTable.readCluster(4));
+    assertNull(clusterTable.readCluster(5));
+    
     // Stop flow
     assertTrue(FlowTestHelper.stopFlow(flowHandle));
   }

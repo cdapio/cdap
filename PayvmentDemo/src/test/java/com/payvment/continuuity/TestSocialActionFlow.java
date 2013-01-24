@@ -23,11 +23,10 @@ import com.continuuity.flow.FlowTestHelper;
 import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.google.gson.Gson;
-import com.payvment.continuuity.SocialActionFlow;
-import com.payvment.continuuity.SocialActionParserFlowlet;
-import com.payvment.continuuity.data.ActivityFeed;
-import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ActivityFeedTable;
+import com.payvment.continuuity.data.PopularFeed;
+import com.payvment.continuuity.data.ProductTable;
 import com.payvment.continuuity.entity.SocialAction;
 import com.payvment.continuuity.entity.SocialAction.SocialActionType;
 
@@ -45,6 +44,8 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     SortedCounterTable topScoreTable = new SortedCounterTable("topScores",
         new SortedCounterTable.SortedCounterConfig());
     getDataSetRegistry().registerDataSet(topScoreTable);
+    ActivityFeedTable activityFeedTable = new ActivityFeedTable();
+    getDataSetRegistry().registerDataSet(activityFeedTable);
     
     // Instantiate product feed flow
     SocialActionFlow socialActionFlow = new SocialActionFlow();
@@ -61,9 +62,10 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     Long store_id = 4L;
     String type = "yay-exp-action";
     String category = "Sports";
+    String [] country = new String [] { "US", "UK" };
     Long typeScoreIncrease = SocialActionType.fromString(type).getScore();
     SocialAction socialAction = new SocialAction(event_id, now, type,
-        product_id, store_id, category, user_id);
+        product_id, store_id, country, category, user_id);
     String socialActionJson = socialAction.toJson();
     
     // Write json to input stream
@@ -105,20 +107,18 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
     
     // Verify the product total score has increased to type score increase
     assertEquals(typeScoreIncrease,
-        allTimeScoreTable.readSingleKey(
-            Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
-                Bytes.toBytes(product_id))));
+        allTimeScoreTable.readSingleKey(Bytes.toBytes(product_id)));
     
     // Verify the hourly score has been incremented to type score increase
     List<Counter> counters = topScoreTable.readTopCounters(
-        Bytes.add(Bytes.toBytes(Helpers.hour(now)),
-            Bytes.toBytes(category)), 10);
+        PopularFeed.makeRow(Helpers.hour(now), "US", category), 10);
     assertEquals(1, counters.size());
     assertEquals(typeScoreIncrease, counters.get(0).getCount());
     
     // Verify a new entry has been made in activity feed
-    ReadColumnRange read = new ReadColumnRange(Constants.ACTIVITY_FEED_TABLE,
-        ActivityFeed.makeActivityFeedRow(category), null, null);
+    ReadColumnRange read = new ReadColumnRange(
+        ActivityFeedTable.ACTIVITY_FEED_TABLE,
+        ActivityFeedTable.makeActivityFeedRow("US", category), null, null);
     OperationResult<Map<byte[],byte[]>> result =
         getDataFabric().read(read);
     assertFalse(result.isEmpty());
@@ -143,6 +143,7 @@ public class TestSocialActionFlow extends PayvmentBaseFlowTest {
         "\"date\":\"1348074421000\"," +
         "\"product_id\":\"164341\"," +
         "\"store_id\":\"312\"," +
+        "\"country\":[\"US\",\"UK\"]," +
         "\"category\":\"Sports\"," +
         "\"actor_id\":\"54321\"}";
     

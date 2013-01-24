@@ -1,6 +1,8 @@
 package com.payvment.continuuity;
 
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -8,6 +10,7 @@ import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.payvment.continuuity.entity.SocialAction;
 
 /**
@@ -45,8 +48,15 @@ public class SocialActionParserFlowlet extends ComputeFlowlet {
     jsonEventString = preProcessSocialActionJSON(jsonEventString);
 
     // Parse social action JSON using GSON
-    SocialAction action =
-        this.gson.fromJson(jsonEventString, SocialAction.class);
+    SocialAction action = null;
+    try {
+      action =
+          this.gson.fromJson(jsonEventString, SocialAction.class);
+    } catch (JsonParseException jpe) {
+      getFlowletContext().getLogger().error(
+          "Error parsing JSON input string (" + jsonEventString + ")");
+      throw jpe;
+    }
 
     // Define and emit output tuple
     Tuple outputTuple = new TupleBuilder().set("action", action).create();
@@ -56,6 +66,15 @@ public class SocialActionParserFlowlet extends ComputeFlowlet {
   @Override
   public void onSuccess(Tuple tuple, TupleContext context) {
     numProcessed++;
+  }
+
+  @Override
+  public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+      FailureReason reason) {
+    getFlowletContext().getLogger().error(
+        "SocialActionParser Flowet Processing Failed : " + reason.toString() +
+        ", retrying");
+    return FailureHandlingPolicy.RETRY;
   }
 
   static String preProcessSocialActionJSON(String jsonEventString) {

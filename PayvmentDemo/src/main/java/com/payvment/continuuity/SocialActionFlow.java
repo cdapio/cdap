@@ -2,7 +2,6 @@ package com.payvment.continuuity;
 
 
 import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Write;
 import com.continuuity.api.data.lib.CounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Bytes;
@@ -10,6 +9,8 @@ import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
+import com.continuuity.api.flow.flowlet.FailureReason;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -17,8 +18,9 @@ import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
-import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
+import com.payvment.continuuity.data.ActivityFeedTable;
+import com.payvment.continuuity.data.PopularFeed;
 import com.payvment.continuuity.entity.SocialAction;
 
 /**
@@ -105,8 +107,10 @@ public class SocialActionFlow implements Flow {
     // Wire up the remaining flowlet connections
     // (parser to processor, processor to updaters)
     specifier.connection("action_parser", "action_processor");
-    specifier.connection("action_processor", "activity_feed_updater");
-    specifier.connection("action_processor", "popular_feed_updater");
+    specifier.connection("action_processor", "activity",
+        "activity_feed_updater", "in");
+    specifier.connection("action_processor", "popular",
+        "popular_feed_updater", "in");
   }
 
   /**
@@ -119,21 +123,36 @@ public class SocialActionFlow implements Flow {
       new TupleSchemaBuilder().add("action", SocialAction.class).create();
 
   /**
-   * Tuple schema used between {@link SocialActionProcessorFlowlet} and the two
-   * connecting Flowlets, {@link ActivityFeedUpdaterFlowlet} and
-   * {@link PopularFeedUpdaterFlowlet}.
+   * Tuple schema used between {@link SocialActionProcessorFlowlet} and the
+   * activity feed Flowlet, {@link ActivityFeedUpdaterFlowlet}.
    * <p>
    * Schema contains a {@link SocialAction} object, the score increase for this
-   * event, and Long values derived from the results of counter increment
-   * operations performed by the processor.  Specifically, these values are the
-   * all-time total score and the hourly score of the product in the social
-   * action. 
+   * event, the country, and the Long value derived from the result of the
+   * counter increment operation performed by the processor.  Specifically, this
+   * value is the all-time score of the product in the social action. 
    */
-  public static final TupleSchema PROCESSED_ACTION_TUPLE_SCHEMA =
+  public static final TupleSchema PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA =
       new TupleSchemaBuilder()
           .add("action", SocialAction.class)
           .add("score-increase", Long.class)
           .add("all-time-score", Long.class)
+          .create();
+
+  /**
+   * Tuple schema used between {@link SocialActionProcessorFlowlet} and the
+   * popular feed Flowlet, {@link PopularFeedUpdaterFlowlet}.
+   * <p>
+   * Schema contains a {@link SocialAction} object, the score increase for this
+   * event, the country, and the Long value derived from the result of the
+   * counter increment operation performed by the processor.  Specifically, this
+   * value is the hourly score of the product in the social action for the
+   * category and country. 
+   */
+  public static final TupleSchema PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA =
+      new TupleSchemaBuilder()
+          .add("action", SocialAction.class)
+          .add("score-increase", Long.class)
+          .add("country", String.class)
           .add("hourly-score", Long.class)
           .create();
 
@@ -152,9 +171,11 @@ public class SocialActionFlow implements Flow {
       // Input schema is a social action
       configurator.getDefaultTupleInputStream()
           .setSchema(SOCIAL_ACTION_TUPLE_SCHEMA);
-      // Output schema contains action, category, score, Increment pass-thrus
-      configurator.getDefaultTupleOutputStream()
-          .setSchema(PROCESSED_ACTION_TUPLE_SCHEMA);
+      // Output schemas contains action, country, score, Increment pass-thrus
+      configurator.addTupleOutputStream("activity")
+          .setSchema(PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA);
+      configurator.addTupleOutputStream("popular")
+          .setSchema(PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA);
     }
 
     private CounterTable productActionCountTable;
@@ -181,36 +202,62 @@ public class SocialActionFlow implements Flow {
     public void process(Tuple tuple, TupleContext context,
         OutputCollector collector) {
       SocialAction action = tuple.get("action");
-      TupleBuilder tupleBuilder = new TupleBuilder();
-      tupleBuilder.set("action", action);
+      
+      // Determine score increase
+      Long scoreIncrease = 0L;
+      try {
+        scoreIncrease = action.getSocialActionType().getScore();
+      } catch (IllegalArgumentException iae) {
+        getFlowletContext().getLogger().error(
+            "SocialActionProcessor Flowet received unknown action type: " +
+                action.type);
+        return;
+      }
       
       // Update product action count table async
       this.productActionCountTable.incrementCounterSet(
           Bytes.toBytes(action.product_id), Bytes.toBytes(action.type), 1L);
       
-      // Determine score increase
-      Long scoreIncrease = action.getSocialActionType().getScore();
-      tupleBuilder.set("score-increase", scoreIncrease);
-      
       // Update all-time score, but put increment into tuple for pass-thru
       Increment allTimeScore = allTimeScoreTable.generateSingleKeyIncrement(
-          Bytes.add(Constants.PRODUCT_ALL_TIME_PREFIX,
-              Bytes.toBytes(action.product_id)), scoreIncrease);
+              Bytes.toBytes(action.product_id), scoreIncrease);
+      
+      // Create and emit activity tuple
+      TupleBuilder tupleBuilder = new TupleBuilder();
+      tupleBuilder.set("action", action);
+      tupleBuilder.set("score-increase", scoreIncrease);
       tupleBuilder.set("all-time-score", allTimeScore);
+      collector.add("activity", tupleBuilder.create());
       
-      // Update time bucketed top-score table, also put increment into tuple
-      Increment topScoreHourly = topScoreTable.generatePrimaryCounterIncrement(
-          Bytes.add(Bytes.toBytes(Helpers.hour(action.date)),
-              Bytes.toBytes(action.category)),
+      // For each country, update time bucketed top-score table, put increment
+      // into tuple and emit a tuple for each country
+      for (String country : action.country) {
+        Increment topScoreHourly =
+            topScoreTable.generatePrimaryCounterIncrement(
+                PopularFeed.makeRow(Helpers.hour(action.date),
+                    country, action.category),
           Bytes.toBytes(action.product_id), scoreIncrease);
-      tupleBuilder.set("hourly-score", topScoreHourly);
-      
-      collector.add(tupleBuilder.create());
+        tupleBuilder = new TupleBuilder();
+        tupleBuilder.set("action", action);
+        tupleBuilder.set("score-increase", scoreIncrease);
+        tupleBuilder.set("country", country);
+        tupleBuilder.set("hourly-score", topScoreHourly);
+        collector.add("popular", tupleBuilder.create());
+      }
     }
 
     @Override
     public void onSuccess(Tuple tuple, TupleContext context) {
       numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      getFlowletContext().getLogger().error(
+          "SocialActionProcessor Flowet Processing Failed : " +
+              reason.toString() + ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
   }
 
@@ -227,8 +274,17 @@ public class SocialActionFlow implements Flow {
     public void configure(StreamsConfigurator configurator) {
       // Input schema contains action and Increment pass-thrus
       configurator.getDefaultTupleInputStream()
-          .setSchema(PROCESSED_ACTION_TUPLE_SCHEMA);
+          .setSchema(PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA);
       // No output
+    }
+
+    private ActivityFeedTable activityFeedTable;
+
+    @Override
+    public void initialize() {
+      this.activityFeedTable = new ActivityFeedTable();
+      getFlowletContext().getDataSetRegistry().registerDataSet(
+          this.activityFeedTable);
     }
 
     @Override
@@ -236,28 +292,35 @@ public class SocialActionFlow implements Flow {
         OutputCollector collector) {
       Long scoreIncrease = tuple.get("score-increase");
       Long allTimeScore = tuple.get("all-time-score");
-      Long hourlyScore = tuple.get("hourly-score");
-      if (!shouldInsertFeedEntry(scoreIncrease, allTimeScore, hourlyScore)) {
+      if (!shouldInsertFeedEntry(scoreIncrease, allTimeScore)) {
         return;
       }
       // Insert feed entry
       SocialAction action = tuple.get("action");
       ActivityFeedEntry feedEntry = new ActivityFeedEntry(action.date,
           action.store_id, action.product_id, allTimeScore);
-      Write feedEntryWrite = new Write(Constants.ACTIVITY_FEED_TABLE,
-          ActivityFeed.makeActivityFeedRow(action.category),
-          feedEntry.getColumn(), feedEntry.getValue());
-      collector.add(feedEntryWrite);
+      for (String country : action.country) {
+        activityFeedTable.writeEntry(country, action.category, feedEntry);
+      }
     }
     
     private static boolean shouldInsertFeedEntry(Long scoreIncrease,
-        Long allTimeScore, Long hourlyScore) {
+        Long allTimeScore) {
       return true;
     }
 
     @Override
     public void onSuccess(Tuple tuple, TupleContext context) {
       numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      getFlowletContext().getLogger().error(
+          "ActivityFeedUpdater Flowet Processing Failed : " +
+              reason.toString() + ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
   }
 
@@ -274,7 +337,7 @@ public class SocialActionFlow implements Flow {
     public void configure(StreamsConfigurator configurator) {
       // Input schema contains action and Increment pass-thrus
       configurator.getDefaultTupleInputStream()
-          .setSchema(PROCESSED_ACTION_TUPLE_SCHEMA);
+          .setSchema(PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA);
       // No output
     }
 
@@ -294,16 +357,26 @@ public class SocialActionFlow implements Flow {
       Long scoreIncrease = tuple.get("score-increase");
       Long hourlyScore = tuple.get("hourly-score");
       SocialAction action = tuple.get("action");
+      String country = tuple.get("country");
       // Let top score perform any additional indexing increments
       this.topScoreTable.performSecondaryCounterIncrements(
-          Bytes.add(Bytes.toBytes(Helpers.hour(action.date)),
-              Bytes.toBytes(action.category)),
+          PopularFeed.makeRow(Helpers.hour(action.date), country,
+              action.category),
           Bytes.toBytes(action.product_id), scoreIncrease, hourlyScore);
     }
 
     @Override
     public void onSuccess(Tuple tuple, TupleContext context) {
       numProcessed++;
+    }
+
+    @Override
+    public FailureHandlingPolicy onFailure(Tuple tuple, TupleContext context,
+        FailureReason reason) {
+      getFlowletContext().getLogger().error(
+          "PopularFeedUpdater Flowet Processing Failed : " +
+              reason.toString() + ", retrying");
+      return FailureHandlingPolicy.RETRY;
     }
   }
 }
