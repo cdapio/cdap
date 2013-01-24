@@ -709,8 +709,8 @@ public abstract class TestOVCTable {
     // If writes can overwrite deletes at the same timestamp:
     // assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
     // Currently, a delete cannot be overwritten on the same version:
-//    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());   //fails
-    assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());   //fails
+    //assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
     // Undelete the delete all at 3
     this.table.undeleteAll(row, COL, 3L);

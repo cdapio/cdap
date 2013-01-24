@@ -184,9 +184,7 @@ public class TestHBaseOVCTable extends TestOVCTable {
     assertEquals(ncols - 15, colMap.size());
   }
 
-  // Tests that do not work on HBase
-
-  @Override @Test @Ignore
+  @Override @Test
   public void testDeleteBehavior() throws OperationException {
 
     byte [] row = Bytes.toBytes("testDeleteBehavior");
@@ -271,6 +269,8 @@ public class TestHBaseOVCTable extends TestOVCTable {
     assertEquals(4L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
   }
+
+  // Tests that do not work on HBase
 
   /**
    * Currently not working.  Will be fixed in ENG-421.
