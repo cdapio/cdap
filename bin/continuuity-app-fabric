@@ -77,7 +77,8 @@ eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_APP_FABRIC_OPTS
 
 # PID Location
 PID_DIR=$APP_HOME/data
-pid=$PID_DIR/$0.pid
+BASENAME=${PRG##*/}
+pid=$PID_DIR/$BASENAME.pid
 
 # checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
 check_before_start()
