@@ -13,14 +13,40 @@ import java.util.Set;
  */
 public interface AccountDAO {
 
+  /**
+   * Create Account in the system
+   * @param accountId accountID
+   * @param account Instance of {@code Account}
+   * @return
+   * @throws RuntimeException
+   */
   public boolean createAccount(String accountId, Account account) throws RuntimeException;
 
-  public boolean addComponent(String account, Component component) throws RuntimeException;
+  /**
+   * Delete Account in the system
+   * @param accountId AccountId to be deleted
+   * @return
+   * @throws RuntimeException
+   */
+  public boolean deleteAccount(String accountId) throws RuntimeException;
 
-  public boolean removeComponent(Account account, Component component) throws RuntimeException;
+  /**
+   * GetAccount
+   * @param accountId AccountId requested
+   * @return
+   * @throws RuntimeException
+   */
+  public Account getAccount(String accountId) throws RuntimeException;
 
-  public ImmutableSet<Component> getComponents(String accountId);
 
-  public boolean deleteAccount(Account account) throws RuntimeException;
+  /**
+   * AccountId to be updated
+   * @param accountId AccountId
+   * @param account Instance of {@code Account}
+   * @return
+   * @throws RuntimeException
+   */
+  public Account updateAccount(String accountId, Account account) throws RuntimeException;
+
 
 }

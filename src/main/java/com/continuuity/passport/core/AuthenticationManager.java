@@ -10,6 +10,4 @@ public interface AuthenticationManager  {
 
   public boolean authenticateComponent ( String accountId, String componentId, Credentials credentials) throws RuntimeException;
 
-
-
 }
