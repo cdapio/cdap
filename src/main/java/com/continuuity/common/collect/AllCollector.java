@@ -1,9 +1,9 @@
 package com.continuuity.common.collect;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.ObjectArrays;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This collector will collect until it runs out of memory, it
@@ -11,9 +11,9 @@ import java.util.ArrayList;
  */
 public class AllCollector<Element> implements Collector<Element> {
 
-  private ArrayList<Element> elements = Lists.newArrayList();
+  private final List<Element> elements = Lists.newArrayList();
 
-  Class<Element> clazz;
+  private final Class<Element> clazz;
 
   public AllCollector(Class<Element> clazz) {
     this.clazz = clazz;
@@ -26,9 +26,8 @@ public class AllCollector<Element> implements Collector<Element> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public Element[] finish() {
-    Element[] array = (Element[]) Array.newInstance(this.clazz, elements.size());
+    Element[] array = ObjectArrays.newArray(clazz, elements.size());
     return elements.toArray(array);
   }
 }
