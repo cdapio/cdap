@@ -1,6 +1,8 @@
 package com.continuuity.common.collect;
 
-import java.lang.reflect.Array;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ObjectArrays;
+
 import java.util.Arrays;
 
 /**
@@ -8,13 +10,14 @@ import java.util.Arrays;
  * never return false, but keeps a bound on the memory it uses.
  */
 public class LastNCollector<Element> implements Collector<Element> {
-  private Element[] elements;
+  private final Class<Element> clazz;
+  private final Element[] elements;
   private int count = 0;
 
-  @SuppressWarnings("unchecked")
   public LastNCollector(int n, Class<Element> clazz) {
-    if (n < 1) throw new IllegalArgumentException("n must be greater han 0");
-    elements = (Element[]) Array.newInstance(clazz, n);
+    Preconditions.checkArgument(n > 0, "n must be greater than 0");
+    this.clazz = clazz;
+    elements = ObjectArrays.newArray(clazz, n);
   }
 
   @Override
@@ -29,10 +32,10 @@ public class LastNCollector<Element> implements Collector<Element> {
     if (count < elements.length) {
       return Arrays.copyOf(elements, count);
     } else {
-      // it would be nice to use new Element[] but type erasure prevents that
-      Element[] array = Arrays.copyOf(elements, elements.length);
-      for (int i = 0; i < elements.length; i++)
-        array[i] = elements[(count + i) % elements.length];
+      int mod = count % elements.length;
+      Element[] array = ObjectArrays.newArray(clazz, elements.length);
+      System.arraycopy(elements, mod, array, 0, elements.length - mod);
+      System.arraycopy(elements, 0, array, elements.length - mod, mod);
       return array;
     }
   }
