@@ -8,15 +8,23 @@ package com.continuuity.api.data.dataset.table;
  * the value to increment.
  */
 public class Increment extends AbstractWriteOperation {
+  // the columns to be incremented
   protected byte[][] columns;
+  // the values to increment by
   protected long[] values;
 
-  /** get the columns to increment */
+  /**
+   * Get the columns to increment
+   * @return the column keys of the columns to be incremented
+   */
   public byte[][] getColumns() {
     return columns;
   }
 
-  /** get the increment values */
+  /**
+   * Get the increment values
+   * @return the values by which each row is to be incremented
+   */
   public long[] getValues() {
     return values;
   }

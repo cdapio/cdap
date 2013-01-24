@@ -4,11 +4,11 @@ import com.continuuity.api.data.BatchCollectionClient;
 import com.continuuity.api.data.BatchCollector;
 
 /**
- * helper class for the prupose of demonstration. flow can define its own
- * implementation of this, using its output collector.
+ * Simplest possible implementation of a BatchCollectionClient
  */
 public class SimpleBatchCollectionClient implements BatchCollectionClient {
 
+  // the current batch collector
   BatchCollector collector = null;
 
   @Override

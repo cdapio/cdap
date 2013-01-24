@@ -16,12 +16,12 @@ public abstract class DataLib implements BatchCollectionClient {
   private BatchCollector collector;
 
   /**
-   * Id of com.continuuity.data.dataset.
+   * Id of dataset.
    */
   private final String dataSetId;
 
   /**
-   * Type of com.continuuity.data.dataset.
+   * Type of dataset.
    */
   private final String dataSetType;
 
@@ -48,14 +48,14 @@ public abstract class DataLib implements BatchCollectionClient {
   }
 
   /**
-   * @return com.continuuity.data.dataset id.
+   * @return dataset id.
    */
   public final String getDataSetId() {
     return dataSetId;
   }
 
   /**
-   * @return com.continuuity.data.dataset type.
+   * @return dataset type.
    */
   public final String getDataSetType() {
     return dataSetType;

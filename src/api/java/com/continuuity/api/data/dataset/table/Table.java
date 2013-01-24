@@ -30,12 +30,18 @@ public class Table extends DataSet {
   // allows us to inject a different implementation.
   private Table delegate = null;
 
-  /** construct by name */
+  /**
+   * Constructor by name
+   * @param name the name of the table
+   */
   public Table(String name) {
     super(name);
   }
 
-  /** runtime initialization, only calls the super class */
+  /**
+   * Runtime initialization, only calls the super class
+   * @param spec the data set spec for this data set
+   */
   public Table(DataSetSpecification spec) {
     super(spec);
   }
@@ -48,12 +54,17 @@ public class Table extends DataSet {
   /**
    * helper to return the name of the physical table. currently the same as
    * the name of the (Table) data set.
+   * @return the name of the underlying table in the data fabric
    */
   protected String tableName() {
     return this.getName();
   }
 
-  /** sets the Table to which all operations are delegated */
+  /**
+   * sets the Table to which all operations are delegated. This can be used
+   * to inject different implementations.
+   * @param table the implementation to delegate to
+   */
   public void setDelegate(Table table) {
     this.delegate = table;
   }
