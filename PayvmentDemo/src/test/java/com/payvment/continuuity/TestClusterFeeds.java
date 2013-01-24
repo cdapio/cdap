@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.lib.SortedCounterTable;
-import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.FlowTestHelper.TestFlowHandle;
 import com.continuuity.test.FabricTestBase;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
@@ -293,7 +293,9 @@ public class TestClusterFeeds extends FabricTestBase {
     activityEntries = activityFeed.getEntireFeed();
     assertEquals(3, activityEntries.size());
     assertDescendingTime(activityEntries);
-     
+
+    clusterWriterFlowHandle.stop();
+    socialActionFlowHandle.stop();
   }
 
   private void assertDescendingScore(List<PopularFeedEntry> popEntries) {

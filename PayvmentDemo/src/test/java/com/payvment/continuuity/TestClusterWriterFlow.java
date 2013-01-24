@@ -7,11 +7,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
+import com.continuuity.test.info.ComputeFlowletTestInfo;
 import org.junit.Test;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.flow.FlowTestHelper;
-import com.continuuity.flow.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.FlowTestHelper;
+import com.continuuity.test.FlowTestHelper.TestFlowHandle;
 import com.payvment.continuuity.data.ClusterTable;
 
 public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
@@ -31,25 +32,34 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     // Start the flow
     TestFlowHandle flowHandle = startFlow(clusterWriterFlow);
     assertTrue(flowHandle.isSuccess());
+    assertTrue(flowHandle.isRunning());
+
+    // Get Flowlet TestInfo objects
+    ComputeFlowletTestInfo clusterSourceParserInfo = flowHandle.getComputeFlowletTestInfo("cluster_source_parser");
+    assertNotNull(clusterSourceParserInfo);
+    ComputeFlowletTestInfo clusterWriterInfo = flowHandle.getComputeFlowletTestInfo("cluster_writer");
+    assertNotNull(clusterWriterInfo);
+    ComputeFlowletTestInfo clusterResetInfo = flowHandle.getComputeFlowletTestInfo("cluster_reset");
+    assertNotNull(clusterResetInfo);
 
     // Generate a clear event and wait for it to be processed
-    int numParsed = ClusterWriterFlow.ClusterSourceParser.numProcessed;
-    int numReset = ClusterWriterFlow.ClusterReset.numProcessed;
-    int numWritten = ClusterWriterFlow.ClusterWriter.numProcessed;
+    int numParsed = clusterSourceParserInfo.getNumProcessed();
+    int numReset = clusterResetInfo.getNumProcessed();
+    int numWritten = clusterWriterInfo.getNumProcessed();
     writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
     numParsed++;
     numReset++;
-    while (ClusterWriterFlow.ClusterSourceParser.numProcessed < numParsed) {
+    while (clusterSourceParserInfo.getNumProcessed() < numParsed) {
       System.out.println("Waiting for parsing flowlet to process tuple");
       Thread.sleep(500);
     }
-    while (ClusterWriterFlow.ClusterReset.numProcessed < numReset) {
+    while (clusterResetInfo.getNumProcessed() < numReset) {
       System.out.println("Waiting for reset flowlet to process tuple");
       Thread.sleep(500);
     }
     
     // Writer flowlet should not have received anything
-    assertEquals(numWritten, ClusterWriterFlow.ClusterWriter.numProcessed);
+    assertEquals(numWritten, clusterWriterInfo.getNumProcessed());
     
     // Ensure no clusters in table
     for (int i=0; i<10; i++) {
@@ -73,7 +83,7 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     numWritten += 12;
     
     // Wait for them to be written
-    while (ClusterWriterFlow.ClusterWriter.numProcessed < numWritten) {
+    while (clusterWriterInfo.getNumProcessed() < numWritten) {
       System.out.println("Waiting for writer flowlet to process tuples");
       Thread.sleep(500);
     }
@@ -119,11 +129,11 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
     numParsed++;
     numReset++;
-    while (ClusterWriterFlow.ClusterSourceParser.numProcessed < numParsed) {
+    while (clusterSourceParserInfo.getNumProcessed() < numParsed) {
       System.out.println("Waiting for parsing flowlet to process tuple");
       Thread.sleep(500);
     }
-    while (ClusterWriterFlow.ClusterReset.numProcessed < numReset) {
+    while (clusterResetInfo.getNumProcessed() < numReset) {
       System.out.println("Waiting for reset flowlet to process tuple");
       Thread.sleep(500);
     }
