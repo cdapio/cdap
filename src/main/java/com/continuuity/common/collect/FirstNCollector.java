@@ -1,6 +1,8 @@
 package com.continuuity.common.collect;
 
-import java.lang.reflect.Array;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ObjectArrays;
+
 import java.util.Arrays;
 
 /**
@@ -8,13 +10,12 @@ import java.util.Arrays;
  * false after N elements have been collected
  */
 public class FirstNCollector<Element> implements Collector<Element> {
-  private Element[] elements;
-  private int count = 0;
+  private final Element[] elements;
+  private int count;
 
-  @SuppressWarnings("unchecked")
   public FirstNCollector(int n, Class<Element> clazz) {
-    if (n < 1) throw new IllegalArgumentException("n must be greater han 0");
-    elements = (Element[]) Array.newInstance(clazz, n);
+    Preconditions.checkArgument(n > 0, "n must be greater than 0");
+    elements = ObjectArrays.newArray(clazz, n);
   }
 
   @Override
