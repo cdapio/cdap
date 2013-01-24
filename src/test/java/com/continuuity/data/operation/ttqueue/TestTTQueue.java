@@ -1229,7 +1229,7 @@ public abstract class TestTTQueue {
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
 
     // Should have dequeued n entries
-    assertEquals(n, dequeued.size()); // fails
+    assertEquals(n, dequeued.size());
 
     // And dequeuedEntries should be >= n
     assertTrue("Expected dequeued >= n (dequeued=" + dequeueReturns.get() +

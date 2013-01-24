@@ -308,7 +308,6 @@ abstract public class MetaDataStoreTest {
             mds.updateField(context, context.getAccount(), null, "test", "abc", "text", Integer.toString(value), 0);
             value++;
           } catch (OperationException e) {
-//            System.err.println("Status of OperationException = "+e.getStatus());
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
 //              System.err.println("Conflict for text " + i + ": " + value);
               textConflicts.incrementAndGet();
@@ -332,15 +331,13 @@ abstract public class MetaDataStoreTest {
             mds.updateField(context, context.getAccount(), null, "test", "abc", "bin", Bytes.toBytes(value), 0);
             value++;
           } catch (OperationException e) {
-//            System.err.println("Status of OperationException = "+e.getStatus());
             if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
-//              System.err.println("Conflict for binary " + i + ": " + value);
+              //System.err.println("Conflict for binary " + i + ": " + value);
               binaryConflicts.incrementAndGet();
             } else
               Assert.fail(e.getMessage());
           } catch (Exception e) {
-//            e.printStackTrace();
-            Assert.fail(e.getMessage());  // fails
+            Assert.fail(e.getMessage());
           }
         }
       }
@@ -361,7 +358,7 @@ abstract public class MetaDataStoreTest {
     System.out.println("binary: " + Arrays.toString(binary) + ", " + binaryConflicts.get() + " conflicts");
 
     Assert.assertEquals(1000, Integer.parseInt(text) + textConflicts.get());
-    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());  // fails
+    Assert.assertEquals(1000, Bytes.toInt(binary) + binaryConflicts.get());
   }
 
   class TextThread extends Thread {

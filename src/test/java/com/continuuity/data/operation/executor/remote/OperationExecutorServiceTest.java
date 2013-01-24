@@ -288,7 +288,7 @@ public abstract class OperationExecutorServiceTest extends
 
   /** clear the tables, then write a batch of keys, then readAllKeys */
   @Test
-  public void testWriteBatchThenReadAllKeys() throws Exception  { // fails
+  public void testWriteBatchThenReadAllKeys() throws Exception  {
     // clear all data, otherwise we will get keys from other tests
     // mingled into the responses for ReadAllKeys
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -314,7 +314,7 @@ public abstract class OperationExecutorServiceTest extends
     readAllKeys = new ReadAllKeys(0, 10);
     keys = remote.execute(context, readAllKeys).getValue();
     Assert.assertNotNull(keys);
-    Assert.assertEquals(7, keys.size());  // fails
+    Assert.assertEquals(7, keys.size());
 
     // readAllKeys with < number of writes
     readAllKeys = new ReadAllKeys(0, 5);

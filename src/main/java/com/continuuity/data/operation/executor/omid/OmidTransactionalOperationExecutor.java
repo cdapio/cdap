@@ -80,9 +80,6 @@ implements TransactionalOperationExecutor {
 
   static int MAX_DEQUEUE_RETRIES = 200;
   static long DEQUEUE_RETRY_SLEEP = 5;
-  static final byte DATA = (byte)0x00; // regular data
-  static final byte DELETE_VERSION = (byte)0x01; // delete of a specific version
-  static final byte DELETE_ALL = (byte)0x02; // delete of all versions of a cell up to specific version
 
   // Metrics
 

@@ -159,7 +159,7 @@ public class TTQueueOnVCTable implements TTQueue {
         shardMeta.getBytes());
     // Increment entry write pointer (release shard lock)
     long newWritePointer = this.table.increment(entryWritePointerRow, GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, 1,
-                                                                     dirty.getFirst(), dirty.getSecond());  //fails
+                                                                     dirty.getFirst(), dirty.getSecond());
     log("Updated shard meta (" + shardMeta + ") and incremented write " +
         "pointer to " + newWritePointer);
 

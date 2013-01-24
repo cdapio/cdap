@@ -25,13 +25,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
+//we need to create another class with old HBaseOVCTable and call it HBasePatchOVCTable
 public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   private static final Logger Log = LoggerFactory.getLogger(HBaseOVCTable.class);
 
-  //we should use enums
+  //we should use enums :)
   static final byte DATA = (byte)0x00; // regular data
   static final byte DELETE_VERSION = (byte)0x01; // delete of a specific version
-  static final byte DELETE_ALL = (byte)0x02; // delete of all versions of a cell up to specific version
+  static final byte DELETE_ALL = (byte)0x02; // delete of all older versions of a column
   static final byte[] DELETE_VERSION_VALUE = new byte[] {DELETE_VERSION};
   static final byte[] DELETE_ALL_VALUE = new byte[] {DELETE_ALL};
 
@@ -779,5 +780,4 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
       this.exceptionHandler.handle(e);
     }
   }
-
 }
