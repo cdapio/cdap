@@ -1,26 +1,24 @@
-passport
-========
-
 Passport service is a service to manage account, account related components and entities.
+==========================================================================================
 
-Glossary:
+**Glossary:**
 - User: Entity that interacts with continuuity systems: creating VPC instance, deploying code, managing dataset acls, etc
 - Account: 
 - DataSet: A collection of data that logically belongs together, with methods to manipulate the data. 
 - VPC (Virtual private cloud): A deployment of the app fabric platform dedicated to a single customer.
 
 
-Features of passport service:
+**Features of passport service:**
 - Account registration
 - User authentication
 - Account/User management
 - Registering and un-registering account components
-	* DataSets
-        * VPCs
+  - DataSets
+  - VPCs
 - Managing ACLs for Account components
 
 
-Design Thoughts:
+**Design Thoughts:**
 
 - Core Java API 
 	- Implements the account, account component, account entites management
@@ -32,7 +30,7 @@ Design Thoughts:
 
        
 
-Account Datamodel:
+**Account Datamodel:**
 - Account 
 	- AccountName
        	- AccountID
@@ -47,7 +45,7 @@ Account Datamodel:
               		- UserID
               		- ACL : {ALL, READ, READ_WRITE_DELETE}
         
-User Datamodel: 
+**User Datamodel:** 
 - User
 	- User ID
         - FirstName
