@@ -46,8 +46,8 @@ public class TableTest extends DataSetTestBase {
     table = instantiator.getDataSet("test");
   }
 
-  void verifyColumns(OperationResult<Map<byte[], byte[]>> result,
-                     byte[][] columns, byte[][] expected) {
+  public static void verifyColumns(OperationResult<Map<byte[], byte[]>> result,
+                                   byte[][] columns, byte[][] expected) {
     Assert.assertEquals(columns.length, expected.length);
     Assert.assertFalse(result.isEmpty());
     Assert.assertNotNull(result.getValue());
@@ -57,8 +57,8 @@ public class TableTest extends DataSetTestBase {
     }
   }
 
-  void verifyColumn(OperationResult<Map<byte[], byte[]>> result,
-                    byte[] column, byte[] expected) {
+  public static void verifyColumn(OperationResult<Map<byte[], byte[]>> result,
+                                  byte[] column, byte[] expected) {
     verifyColumns(result, new byte[][]{column}, new byte[][]{expected});
   }
 
@@ -71,16 +71,18 @@ public class TableTest extends DataSetTestBase {
     verifyColumns(result, columns, expectedBytes);
   }
 
-  void verifyColumn(OperationResult<Map<byte[], byte[]>> result,
-                    byte[] column, long expected) {
+  public static void verifyColumn(OperationResult<Map<byte[], byte[]>> result,
+                                  byte[] column, long expected) {
     verifyColumn(result, column, Bytes.toBytes(expected));
   }
 
-  void verifyNull(OperationResult<Map<byte[], byte[]>> result, byte[] column) {
+  public static void verifyNull(OperationResult<Map<byte[], byte[]>> result,
+                                byte[] column) {
     verifyNull(result, new byte[][] { column });
   }
 
-  void verifyNull(OperationResult<Map<byte[], byte[]>> result, byte[][] columns) {
+  public static void verifyNull(OperationResult<Map<byte[], byte[]>> result,
+                                byte[][] columns) {
     Assert.assertTrue(columns.length > 0);
     Assert.assertTrue(result.isEmpty());
   }
