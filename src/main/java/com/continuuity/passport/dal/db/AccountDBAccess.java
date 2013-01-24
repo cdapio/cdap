@@ -3,6 +3,7 @@ package com.continuuity.passport.dal.db;
 import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.dal.AccountDAO;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Set;
@@ -20,12 +21,12 @@ public class AccountDBAccess implements AccountDAO {
 
   @Override
   public boolean createAccount(String accountId, Account account) throws RuntimeException {
-    /**
-     * Access pattern
-     * DBConnectionManager.getInstance().getConnection();
-     * use the connection to execute
-     * getConnection() method is synchronized
-     */
+    //
+    // Access pattern
+    // DBConnectionManager.getInstance().getConnection();
+    // use the connection to execute
+    // getConnection() method is synchronized
+    //
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -40,7 +41,7 @@ public class AccountDBAccess implements AccountDAO {
   }
 
   @Override
-  public Set<Component> getComponents(String accountId) {
+  public ImmutableSet<Component> getComponents(String accountId) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

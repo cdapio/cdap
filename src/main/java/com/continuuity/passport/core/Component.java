@@ -1,5 +1,7 @@
 package com.continuuity.passport.core;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,8 +29,12 @@ public class Component {
     this.id = id;
   }
 
-  public Set<ComponentACL> getComponentACLs() {
-    return Collections.unmodifiableSet(this.acls);
+  /**
+   * getACLs for the component
+   * @return ImmutableSet of ComponentACL
+   */
+  public ImmutableSet<ComponentACL> getComponentACLs() {
+    return ImmutableSet.copyOf(this.acls);
   }
 
   public void addComponentAcl(ComponentACL acl) {

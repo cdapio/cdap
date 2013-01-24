@@ -17,9 +17,6 @@ dependencies {
 
   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
 
-  // Integration depends on apiJar
-  integrationCompile apiJar.outputs.files
-
   // Self dependencies.
   compile apiJar.outputs.files
 
