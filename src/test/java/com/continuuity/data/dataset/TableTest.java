@@ -317,4 +317,28 @@ public class TableTest extends DataSetTestBase {
     verifyColumn(result, col3, val3);
   }
 
+  @Test
+  public void testTableWithoutDelegateCantOperate() throws OperationException {
+    Table t = new Table("xyz");
+    try {
+      t.read(new Read(key1, col1));
+      Assert.fail("Read should throw an exception when called before runtime");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    try {
+      t.exec(new Write(key1, col1, val1));
+      Assert.fail("Write should throw an exception when called before runtime");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    try {
+      t.stage(new Write(key1, col1, val1));
+      Assert.fail("Stage should throw an exception when called before " +
+          "runtime");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+  }
+
 }
