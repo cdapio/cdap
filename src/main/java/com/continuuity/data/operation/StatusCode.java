@@ -12,8 +12,6 @@ public class StatusCode extends com.continuuity.api.data.StatusCode {
   public static final int ILLEGAL_COMMIT = 1007;
   public static final int ILLEGAL_ABORT = 1008;
 
-  public static final int ILLEGAL_INCREMENT = 2000;
-
   public static final int INTERNAL_ERROR = 5000;
   public static final int SQL_ERROR = 5001;
   public static final int HBASE_ERROR = 5002;
