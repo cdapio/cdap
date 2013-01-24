@@ -1,4 +1,4 @@
-package com.continuuity.passport.data.access.layer;
+package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.User;
 

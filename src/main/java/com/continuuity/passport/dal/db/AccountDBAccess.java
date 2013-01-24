@@ -1,8 +1,8 @@
-package com.continuuity.passport.data.access.layer.db;
+package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
-import com.continuuity.passport.data.access.layer.AccountDAO;
+import com.continuuity.passport.dal.AccountDAO;
 
 import java.util.Map;
 import java.util.Set;

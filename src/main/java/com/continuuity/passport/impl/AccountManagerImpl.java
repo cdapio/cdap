@@ -1,10 +1,10 @@
 package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.*;
-import com.continuuity.passport.data.access.layer.AccountDAO;
-import com.continuuity.passport.data.access.layer.UserDAO;
-import com.continuuity.passport.data.access.layer.db.AccountDBAccess;
-import com.continuuity.passport.data.access.layer.db.UserDBAccess;
+import com.continuuity.passport.dal.AccountDAO;
+import com.continuuity.passport.dal.UserDAO;
+import com.continuuity.passport.dal.db.AccountDBAccess;
+import com.continuuity.passport.dal.db.UserDBAccess;
 
 import java.util.Map;
 
