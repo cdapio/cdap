@@ -36,7 +36,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Status registerComponents(String accountId, Credentials credentials, Component component) throws RuntimeException {
+  public Status registerComponents(String accountId, Credentials credentials, Component component)
+                                                                            throws RuntimeException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -50,7 +51,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Status unRegisterComponent(String accountId, Credentials credentials, Component component) throws RuntimeException {
+  public Status unRegisterComponent(String accountId, Credentials credentials, Component component)
+                                                                             throws RuntimeException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -75,7 +77,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Status updateComponent(String accountId, Credentials credentials, Component component) throws RuntimeException {
+  public Status updateComponent(String accountId, Credentials credentials, Component component)
+                                                                          throws RuntimeException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
