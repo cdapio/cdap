@@ -4,8 +4,9 @@ import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
+import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.service.DataManagementService;
-import com.continuuity.passport.core.service.Status;
+import com.continuuity.passport.core.status.Status;
 
 /**
  *
@@ -19,10 +20,10 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @param account Account information
    * @param owner   Owner of the account
    * @return Instance of {@code Status}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
-  public Status registerAccount(Account account, User owner) throws RuntimeException {
+  public Status registerAccount(Account account, User owner) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -33,11 +34,11 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @param credentials
    * @param component
    * @return Instance of {@code Status}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
   public Status registerComponents(String accountId, Credentials credentials, Component component)
-                                                                            throws RuntimeException {
+                                                                            throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -48,11 +49,11 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @param credentials
    * @param component
    * @return Instance of {@code Status}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
   public Status unRegisterComponent(String accountId, Credentials credentials, Component component)
-                                                                             throws RuntimeException {
+                                                                             throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -62,10 +63,10 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @param accountId   account to be deleted
    * @param credentials credentials of the owner of the account
    * @return Instance of {@code Status}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
-  public Status deleteAccount(String accountId, Credentials credentials) throws RuntimeException {
+  public Status deleteAccount(String accountId, Credentials credentials) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -74,11 +75,11 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @param credentials
    * @param component
    * @return Instance of {@code Status}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
   public Status updateComponent(String accountId, Credentials credentials, Component component)
-                                                                          throws RuntimeException {
+                                                                          throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

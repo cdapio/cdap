@@ -1,6 +1,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.core.User;
+import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.dal.UserDAO;
 
 import java.util.Map;
@@ -23,11 +24,11 @@ public class UserDBAccess implements UserDAO {
    *
    * @param id   User id
    * @param user Instance of {@code User}
-   * @return boolean
-   * @throws RuntimeException
+   * @return boolean status of creating user
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean createUser(String id, User user) throws RuntimeException {
+  public boolean createUser(String id, User user) throws RetryException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -36,11 +37,11 @@ public class UserDBAccess implements UserDAO {
    *
    * @param id   userId
    * @param user Instance of {@code User}
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of update user
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean updateUser(String id, User user) throws RuntimeException {
+  public boolean updateUser(String id, User user) throws RetryException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -48,11 +49,11 @@ public class UserDBAccess implements UserDAO {
    * Delete User
    *
    * @param id userId
-   * @return
-   * @throws RuntimeException
+   * @return  status of delete user
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean deleteUser(String id) throws RuntimeException {
+  public boolean deleteUser(String id) throws RetryException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -61,10 +62,10 @@ public class UserDBAccess implements UserDAO {
    *
    * @param userId String
    * @return Instance of {@code User}
-   * @throws RuntimeException
+   * @throws {@code RetryException}
    */
   @Override
-  public User getUser(String userId) throws RuntimeException {
+  public User getUser(String userId) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

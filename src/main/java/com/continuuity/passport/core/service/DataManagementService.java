@@ -4,6 +4,8 @@ import com.continuuity.passport.core.Account;
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
+import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.status.Status;
 
 /**
  *
@@ -17,7 +19,7 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerAccount(Account account, User owner) throws RuntimeException;
+  public Status registerAccount(Account account, User owner) throws RetryException;
 
 
   /**
@@ -29,7 +31,7 @@ public interface DataManagementService {
    * @throws RuntimeException
    */
   public Status registerComponents( String accountId, Credentials credentials, Component component)
-                                                                           throws RuntimeException;
+                                                                           throws RetryException;
 
   /**
    *  Unregister a {@code Component} in the system
@@ -40,7 +42,7 @@ public interface DataManagementService {
    * @throws RuntimeException
    */
   public Status unRegisterComponent (String accountId, Credentials credentials, Component component)
-                                                                           throws RuntimeException;
+                                                                           throws RetryException;
 
   /**
    * Delete an {@code Account} in the system
@@ -49,8 +51,7 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-
-  public Status deleteAccount (String accountId, Credentials credentials) throws RuntimeException;
+  public Status deleteAccount (String accountId, Credentials credentials) throws RetryException;
 
 
   /**
@@ -62,7 +63,7 @@ public interface DataManagementService {
    * @throws RuntimeException
    */
   public Status updateComponent( String accountId, Credentials credentials, Component component )
-                                                                            throws RuntimeException;
+                                                                            throws RetryException;
 
   /**
    * get User Object
