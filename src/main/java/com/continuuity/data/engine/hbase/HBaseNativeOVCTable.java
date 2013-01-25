@@ -24,35 +24,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
-public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
+//public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
+public class HBaseNativeOVCTable extends HBaseOVCTable {
 
-  private static final Logger Log =
-    LoggerFactory.getLogger(HBaseNativeOVCTable.class);
-
-  private final HTable readTable;
-  private final LinkedList<HTable> writeTables;
-  private final Configuration conf;
-  private final byte[] tableName;
-  private final byte[] family;
-
-  private final IOExceptionHandler exceptionHandler;
+  private static final Logger Log = LoggerFactory.getLogger(HBaseNativeOVCTable.class);
 
   public HBaseNativeOVCTable(Configuration conf, final byte[] tableName, final byte[] family,
-                             IOExceptionHandler exceptionHandler)
-    throws OperationException {
-    try {
-      this.readTable = new HTable(conf, tableName);
-      this.writeTables = new LinkedList<HTable>();
-      this.writeTables.add(new HTable(conf, tableName));
-      this.writeTables.add(new HTable(conf, tableName));
-      this.conf = conf;
-      this.tableName = tableName;
-      this.family = family;
-      this.exceptionHandler = exceptionHandler;
-    } catch (IOException e) {
-      exceptionHandler.handle(e);
-      throw new InternalError("this point should never be reached.");
-    }
+                             IOExceptionHandler exceptionHandler) throws OperationException {
+    super(conf, tableName, family, exceptionHandler);
   }
 
   private synchronized HTable getWriteTable() throws IOException {
@@ -66,8 +45,7 @@ public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void put(byte[] row, byte[] column, long version, byte[] value)
-    throws OperationException {
+  public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
@@ -80,8 +58,7 @@ public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void put(byte[] row, byte[][] columns, long version, byte[][] values)
-    throws OperationException {
+  public void put(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
     assert (columns.length == values.length);
     HTable writeTable = null;
     try {
@@ -99,8 +76,7 @@ public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
-  public void delete(byte[] row, byte[] column, long version)
-    throws OperationException {
+  public void delete(byte[] row, byte[] column, long version) throws OperationException {
     HTable writeTable = null;
     try {
       writeTable = getWriteTable();
@@ -250,11 +226,6 @@ public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
     }
     // as fall-back return "not found".
     return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
-  }
-
-  private long getMaxStamp(ReadPointer readPointer) {
-    return readPointer.getMaximum() == Long.MAX_VALUE ?
-      readPointer.getMaximum() : readPointer.getMaximum() + 1;
   }
 
   @Override
@@ -471,47 +442,4 @@ public class HBaseNativeOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
-  @Override
-  public void clear() throws OperationException {
-    try {
-      HBaseAdmin hba = new HBaseAdmin(conf);
-      HTableDescriptor htd = hba.getTableDescriptor(tableName);
-      hba.disableTable(tableName);
-      hba.deleteTable(tableName);
-      hba.createTable(htd);
-    } catch(IOException ioe) {
-      this.exceptionHandler.handle(ioe);
-    }
-  }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow,
-                      ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(byte[] startRow, byte[] stopRow,
-                      byte[][] columns, ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  @Override
-  public Scanner scan(ReadPointer readPointer) {
-    throw new UnsupportedOperationException("Scans currently not supported");
-  }
-
-  public static interface IOExceptionHandler {
-    public void handle(IOException e) throws OperationException;
-  }
-
-  public static class ToOperationExceptionHandler implements
-    IOExceptionHandler {
-    @Override
-    public void handle(IOException e) throws OperationException {
-      String msg = "HBase IO exception: " + e.getMessage();
-      Log.error(msg, e);
-      throw new OperationException(StatusCode.HBASE_ERROR, msg, e);
-    }
-  }
 }

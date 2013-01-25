@@ -36,13 +36,13 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
   static final byte[] DELETE_VERSION_VALUE = new byte[] {DELETE_VERSION};
   static final byte[] DELETE_ALL_VALUE = new byte[] {DELETE_ALL};
 
-  private final HTable readTable;
-  private final LinkedList<HTable> writeTables;
-  private final Configuration conf;
-  private final byte[] tableName;
-  private final byte[] family;
+  protected final HTable readTable;
+  protected final LinkedList<HTable> writeTables;
+  protected final Configuration conf;
+  protected final byte[] tableName;
+  protected final byte[] family;
 
-  private final IOExceptionHandler exceptionHandler;
+  protected final IOExceptionHandler exceptionHandler;
 
   public HBaseOVCTable(Configuration conf,
                        final byte [] tableName,
@@ -365,7 +365,7 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     return new OperationResult<byte[]>(StatusCode.COLUMN_NOT_FOUND);
   }
 
-  private long getMaxStamp(ReadPointer readPointer) {
+  protected long getMaxStamp(ReadPointer readPointer) {
     return readPointer.getMaximum() == Long.MAX_VALUE ? readPointer.getMaximum() : readPointer.getMaximum() + 1;
   }
 

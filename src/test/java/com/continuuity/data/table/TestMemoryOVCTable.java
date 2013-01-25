@@ -10,7 +10,7 @@ public class TestMemoryOVCTable extends TestOVCTable {
       Guice.createInjector(new DataFabricModules().getInMemoryModules());
 
   @Override
-  protected OVCTableHandle getTableHandle() {
+  protected OVCTableHandle injectTableHandle() {
     return injector.getInstance(OVCTableHandle.class);
   }
 

@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
+public class TestHBaseNativeOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   private static Injector injector;
 
@@ -27,7 +27,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
     try {
       HBaseTestBase.startHBase();
       CConfiguration conf = CConfiguration.create();
-      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
       injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
       executor = (OmidTransactionalOperationExecutor)injector.getInstance(
           Key.get(OperationExecutor.class,
@@ -66,8 +66,8 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   /**
    * Currently not working.  Will be fixed in ???-???.
    */
-  @Test @Override @Ignore
-  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
+//  @Test @Override @Ignore
+//  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
 
   /**
    * Currently not working.  Will be fixed in ENG-421.
