@@ -45,19 +45,6 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
-    HTable writeTable = null;
-    try {
-      writeTable = getWriteTable();
-      writeTable.put(new Put(row).add(this.family, column, version, value));
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
-    }
-  }
-
-  @Override
   public void put(byte[] row, byte[][] columns, long version, byte[][] values) throws OperationException {
     assert (columns.length == values.length);
     HTable writeTable = null;
@@ -76,18 +63,8 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void delete(byte[] row, byte[] column, long version) throws OperationException {
-    HTable writeTable = null;
-    try {
-      writeTable = getWriteTable();
-      Delete delete = new Delete(row);
-      delete.deleteColumn(this.family, column, version);
-      writeTable.delete(delete);
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
-    }
+  public void put(byte[] row, byte[] column, long version, byte[] value) throws OperationException {
+    put(row, new byte[][]{column}, version, new byte[][]{value});
   }
 
   @Override
@@ -108,19 +85,8 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void deleteAll(byte[] row, byte[] column, long version)
-    throws OperationException {
-    HTable writeTable = null;
-    try {
-      writeTable = getWriteTable();
-      Delete delete = new Delete(row);
-      delete.deleteColumns(this.family, column, version);
-      writeTable.delete(delete);
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
-    }
+  public void delete(byte[] row, byte[] column, long version) throws OperationException {
+    delete(row, new byte[][]{column}, version);
   }
 
   @Override
@@ -141,19 +107,8 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public void undeleteAll(byte[] row, byte[] column, long version)
-    throws OperationException {
-    HTable writeTable = null;
-    try {
-      writeTable = getWriteTable();
-      Delete delete = new Delete(row);
-      delete.undeleteColumns(this.family, column, version);
-      writeTable.delete(delete);
-    } catch (IOException e) {
-      this.exceptionHandler.handle(e);
-    } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
-    }
+  public void deleteAll(byte[] row, byte[] column, long version) throws OperationException {
+    deleteAll(row, new byte[][]{column}, version);
   }
 
   @Override
@@ -174,8 +129,12 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>>
-  get(byte[] row, ReadPointer readPointer) throws OperationException {
+  public void undeleteAll(byte[] row, byte[] column, long version) throws OperationException {
+    undeleteAll(row, new byte[][]{column}, version);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> get(byte[] row, ReadPointer readPointer) throws OperationException {
     try {
       Get get = new Get(row);
       get.addFamily(this.family);
@@ -203,8 +162,7 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
-  public OperationResult<byte[]>
-  get(byte[] row, byte[] column, ReadPointer readPointer)
+  public OperationResult<byte[]> get(byte[] row, byte[] column, ReadPointer readPointer)
     throws OperationException {
     try {
       Get get = new Get(row);
