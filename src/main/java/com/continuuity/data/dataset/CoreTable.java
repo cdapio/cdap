@@ -1,14 +1,39 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.*;
-import com.continuuity.api.data.set.Table;
+
+import com.continuuity.api.data.BatchCollectionClient;
+import com.continuuity.api.data.BatchCollector;
+import com.continuuity.api.data.Closure;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.data.operation.IncrementClosure;
 
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * The runtime implementation of the Table data set.
+ */
 public class CoreTable extends Table {
 
+  /**
+   * Given a Table, create a new CoreTable and make it the delegate for that
+   * table.
+   *
+   * @param table the original table
+   * @param fabric the data fabric
+   * @param client the batch collection client
+   * @return the new CoreTable
+   */
   public static CoreTable setCoreTable(Table table, DataFabric fabric,
                                        BatchCollectionClient client) {
     CoreTable coreTable = new CoreTable(table, fabric, client);
@@ -16,6 +41,12 @@ public class CoreTable extends Table {
     return coreTable;
   }
 
+  /**
+   * private constructor, only to be called from @see #setCoreTable().
+   * @param table the original table
+   * @param fabric the data fabric
+   * @param client the batch collection client
+   */
   private CoreTable(Table table,
                    DataFabric fabric,
                    BatchCollectionClient client) {
@@ -24,22 +55,28 @@ public class CoreTable extends Table {
     this.collectionClient = client;
   }
 
+  // the data fabric to use for executing synchronous operations
   private DataFabric dataFabric = null;
+  // the batch collection client for executing asynchronous operations
   private BatchCollectionClient collectionClient = null;
 
-  /** helper method to get the batch collector from the collection client */
+  /**
+   * helper method to get the batch collector from the collection client
+   * @return the current batch collector
+   */
   private BatchCollector getCollector() {
     return this.collectionClient.getCollector();
   }
 
   /**
-   * open the table in the data fabric, to ensure it exists
+   * open the table in the data fabric, to ensure it exists and is accessible.
    * @throws OperationException if something goes wrong
    */
   public void open() throws OperationException {
     this.dataFabric.openTable(this.getName());
   }
 
+  // synchronous read
   @Override
   public OperationResult<Map<byte[], byte[]>> read(Read read)
       throws OperationException {
@@ -51,7 +88,8 @@ public class CoreTable extends Table {
           this.tableName(), read.getRow(), read.getStartCol(), read.getStopCol()));
     }
   }
-  /** helper enum */
+
+  // helper enum
   enum Mode { Sync, Async }
 
   /**
@@ -96,18 +134,19 @@ public class CoreTable extends Table {
     }
   }
 
-  /** perform an asynchronous write operation (@see execute()) */
+  // perform an asynchronous write operation (see execute())
   @Override
   public void stage(WriteOperation op) throws OperationException {
     execute(op, Mode.Async);
   }
 
-  /** perform a synchronous write operation (@see execute()) */
+  // perform a synchronous write operation (see execute())
   @Override
   public void exec(WriteOperation op) throws OperationException {
     execute(op, Mode.Sync);
   }
 
+  // get a closure for an increment
   @Override
   public Closure closure(Increment increment) {
     return new IncrementClosure(new com.continuuity.api.data.Increment

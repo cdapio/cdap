@@ -12,6 +12,14 @@ public class HBaseSerializingMetaDataStoreTest extends
     mds = new SerializingMetaDataStore(opex);
   }
 
+  // Tests that do not work on HBase
+
   @Override @Test @Ignore
   public void testConcurrentSwapField() throws Exception {  }
+
+  /**
+   * Currently not working.  Will be fixed in ???-???.
+   */
+//  @Override @Test @Ignore
+//  public void testConcurrentUpdate() throws Exception {  }
 }

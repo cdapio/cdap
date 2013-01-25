@@ -188,12 +188,12 @@ implements TransactionalOperationExecutor {
   }
 
   private void namedTableMetric_read(String tableName) {
-    streamMetric.meter("com.continuuity.data.dataset.read." + tableName, 1);
+    streamMetric.meter("dataset.read." + tableName, 1);
   }
   
   private void namedTableMetric_write(String tableName, int dataSize) {
-    streamMetric.meter("com.continuuity.data.dataset.write." + tableName, 1);
-    streamMetric.meter("com.continuuity.data.dataset.storage." + tableName, dataSize);
+    streamMetric.meter("dataset.write." + tableName, 1);
+    streamMetric.meter("dataset.storage." + tableName, dataSize);
   }
   
   /* -------------------  end metrics ---------------- */
@@ -210,10 +210,7 @@ implements TransactionalOperationExecutor {
       ImmutablePair<byte[], OrderedVersionedColumnarTable>> namedTables;
 
   // method to find - and if necessary create - a table
-  OrderedVersionedColumnarTable findRandomTable(
-      OperationContext context, String name)
-
-      throws OperationException {
+  OrderedVersionedColumnarTable findRandomTable(OperationContext context, String name) throws OperationException {
 
     // check whether it is one of the default tables these are always
     // pre-loaded at initializaton and we can just return them
@@ -402,26 +399,22 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, readKeys.getTable());
-    List<byte[]> result = table.getKeys(readKeys.getLimit(),
-        readKeys.getOffset(), this.oracle.getReadPointer());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
+    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
     end("ReadKey", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
-                                                      Read read)
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
       throws OperationException {
     initialize();
     requestMetric("Read");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, read.getTable());
-    OperationResult<Map<byte[], byte[]>> result = table.get(
-        read.getKey(), read.getColumns(), this.oracle.getReadPointer());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
+    OperationResult<Map<byte[], byte[]>> result =
+      table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
     end("Read", begin);
     namedTableMetric_read(read.getTable());
     return result;
@@ -524,8 +517,7 @@ implements TransactionalOperationExecutor {
       if (write instanceof QueueEnqueue) {
         processEnqueue((QueueEnqueue)write, incrementResults);
       }
-      WriteTransactionResult writeTxReturn =
-          dispatchWrite(context, write, pointer);
+      WriteTransactionResult writeTxReturn = dispatchWrite(context, write, pointer);
 
       if (!writeTxReturn.success) {
         // Write operation failed
@@ -702,19 +694,17 @@ implements TransactionalOperationExecutor {
         "Unknown write operation " + write.getClass().getName());
   }
 
-  WriteTransactionResult write(OperationContext context, Write write,
-      ImmutablePair<ReadPointer,Long> pointer) throws OperationException {
+  WriteTransactionResult write(OperationContext context, Write write, ImmutablePair<ReadPointer,Long> pointer)
+    throws OperationException {
     initialize();
     requestMetric("Write");
     long begin = begin();
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, write.getTable());
-    table.put(write.getKey(), write.getColumns(),
-        pointer.getSecond(), write.getValues());
+    OrderedVersionedColumnarTable table = this.findRandomTable(context, write.getTable());
+    table.put(write.getKey(), write.getColumns(), pointer.getSecond(), write.getValues());
     end("Write", begin);
     namedTableMetric_write(write.getTable(), write.getSize());
-    return new WriteTransactionResult(
-        new Delete(write.getTable(), write.getKey(), write.getColumns()));
+//    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
+    return new WriteTransactionResult(new Delete(write.getTable(), write.getKey(), write.getColumns()));
   }
 
   WriteTransactionResult write(OperationContext context, Delete delete,

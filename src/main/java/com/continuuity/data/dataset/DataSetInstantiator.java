@@ -1,7 +1,8 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.*;
-import com.continuuity.api.data.set.Table;
+import com.continuuity.api.data.dataset.table.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

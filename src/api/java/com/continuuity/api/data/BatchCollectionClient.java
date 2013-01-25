@@ -8,7 +8,16 @@ package com.continuuity.api.data;
  */
 public interface BatchCollectionClient {
 
+  /**
+   * Set a new batch collector
+   * @param collector the new batch collector
+   */
   public void setCollector(BatchCollector collector);
+
+  /**
+   * Get the current batch collector
+   * @return the current batch collector
+   */
   public BatchCollector getCollector();
 
 }
