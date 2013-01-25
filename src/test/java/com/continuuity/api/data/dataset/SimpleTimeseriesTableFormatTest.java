@@ -23,7 +23,7 @@ public class SimpleTimeseriesTableFormatTest {
 
     long ts = System.currentTimeMillis();
     byte[][] tags = { tag1, tag2, tag3 };
-    byte[] columnName = SimpleTimeseriesTable.getColumnName(ts, tags);
+    byte[] columnName = SimpleTimeseriesTable.createColumnName(ts, tags);
 
     byte[] tag4 = Bytes.toBytes("34");
 
@@ -44,7 +44,7 @@ public class SimpleTimeseriesTableFormatTest {
   @Test
   public void testColumnNameFormatWithNoTags() {
     long ts = System.currentTimeMillis();
-    byte[] columnName = SimpleTimeseriesTable.getColumnName(ts, new byte[0][]);
+    byte[] columnName = SimpleTimeseriesTable.createColumnName(ts, new byte[0][]);
     Assert.assertEquals(ts, SimpleTimeseriesTable.parseTimeStamp(columnName));
     Assert.assertFalse(SimpleTimeseriesTable.hasTags(columnName));
     Assert.assertFalse(SimpleTimeseriesTable.containsTags(columnName, new byte[][]{ Bytes.toBytes("tag") }));
@@ -63,30 +63,31 @@ public class SimpleTimeseriesTableFormatTest {
 
     // * If the timestamps fall into same time interval then row keys are same
     Assert.assertArrayEquals(
-                              SimpleTimeseriesTable.getRow(key, ts1, timeIntervalPerRow),
-                             SimpleTimeseriesTable.getRow(key, ts1 + timeIntervalPerRow / 2, timeIntervalPerRow));
+                              SimpleTimeseriesTable.createRow(key, ts1, timeIntervalPerRow),
+                             SimpleTimeseriesTable.createRow(key, ts1 + timeIntervalPerRow / 2, timeIntervalPerRow));
     // * If the timestamps don't fall into same time interval then row keys are different
     Assert.assertFalse(Arrays.equals(
-                                      SimpleTimeseriesTable.getRow(key, ts1, timeIntervalPerRow),
-                             SimpleTimeseriesTable.getRow(key, ts1 + timeIntervalPerRow * 2, timeIntervalPerRow)));
+                                      SimpleTimeseriesTable.createRow(key, ts1, timeIntervalPerRow),
+                             SimpleTimeseriesTable.createRow(key, ts1 + timeIntervalPerRow * 2, timeIntervalPerRow)));
 
     // * If timestamp A > timestamp B then row key A > row key B (we will have some optimization logic based on that)
     Assert.assertTrue(Bytes.compareTo(
-                                       SimpleTimeseriesTable.getRow(key, ts1, timeIntervalPerRow),
-                                    SimpleTimeseriesTable.getRow(key, ts1 + timeIntervalPerRow * 5, timeIntervalPerRow)) < 0);
+                                       SimpleTimeseriesTable.createRow(key, ts1, timeIntervalPerRow),
+                                    SimpleTimeseriesTable.createRow(key, ts1 + timeIntervalPerRow * 5,
+                                                                    timeIntervalPerRow)) < 0);
 
     // * For different keys the constructed rows are different
     byte[] key2 = Bytes.toBytes("key2");
     Assert.assertFalse(Arrays.equals(
-                                      SimpleTimeseriesTable.getRow(key, ts1, timeIntervalPerRow),
-                                     SimpleTimeseriesTable.getRow(key2, ts1, timeIntervalPerRow)));
+                                      SimpleTimeseriesTable.createRow(key, ts1, timeIntervalPerRow),
+                                     SimpleTimeseriesTable.createRow(key2, ts1, timeIntervalPerRow)));
 
     // * We can get all possible rows for a given time interval with getRowsForInterval
     List<byte[]> rows = new ArrayList<byte[]>();
     long startTime = timeIntervalPerRow * 4;
     long endTime = timeIntervalPerRow * 100;
     for (long i = startTime; i <= endTime; i += timeIntervalPerRow / 10) {
-      byte[] row = SimpleTimeseriesTable.getRow(key, i, timeIntervalPerRow);
+      byte[] row = SimpleTimeseriesTable.createRow(key, i, timeIntervalPerRow);
       if (rows.size() == 0 || !Arrays.equals(rows.get(rows.size() - 1), row)) {
         rows.add(row);
       }
