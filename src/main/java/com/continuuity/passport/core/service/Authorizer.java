@@ -19,9 +19,9 @@ public interface Authorizer  {
    * @param component Component for which authorization is requested
    * @param aclType ACL requested on the component
    * @param credentials UserCredentials that authenticates the user
-   * @return
+   * @return Instance of {@code DelegationToken}
    */
-  boolean isAuthorized (User user, Account account, Component component, ComponentACL.Type aclType,
+  DelegationToken authorize (User user, Account account, Component component, ComponentACL.Type aclType,
                                                     Credentials credentials );
 
 }
