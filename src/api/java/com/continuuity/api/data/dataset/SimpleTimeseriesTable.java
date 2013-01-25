@@ -12,6 +12,7 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.util.Bytes;
+import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,13 +21,6 @@ import java.util.Map;
 
 /**
  * Provides simple implementation of time series table.
- * <p>
- * The implementation (incl. the format of the stored data) is heavily affected by underlying {@link Table} API. In
- * particular the implementation is constrained by the absence of <code>readHigherOrEq()</code> method in
- * {@link Table} API, which would return next row with key greater or equals to the given.<br/>
- * This is first cut implementation with a room for many improvements (please see TODOs in the code). The client code
- * should not rely on the implementation details: they can be changed without a notice.
- * </p>
  * <p>
  * The easiest way to give an insight of the implementation details is to describe the format it which data is
  * stored:
@@ -91,16 +85,32 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * NOTE: This implementation does NOT address RegionServer hotspotting issue that appears when writing rows with
+ * NOTES:
+ * <ul>
+ *   <li>
+ *    1. This implementation does NOT address RegionServer hotspotting issue that appears when writing rows with
  *       monotonically increasing/decreasing keys into HBase. Which is relevant for HBase-based back-end.
  *       To avoid this problem user should NOT write all data under same metric key. In general, writes will be as
  *       distributed as the amount of different metric keys the data is written for. Having one metric key would mean
  *       hitting single RegionServer at any given point of time with all writes. Which is usually NOT desired.
+ *   </li>
+ *   <li>
+ *    2. The current implementation (incl. the format of the stored data) is heavily affected by {@link Table} API which
+ *       is used under the hood. In particular the implementation is constrained by the absence of
+ *       <code>readHigherOrEq()</code> method in {@link Table} API, which would return next row with key greater or
+ *       equals to the given.<br/>
+ *   </li>
+ *   <li>
+ *    3. The client code should not rely on the implementation details: they can be changed without a notice.
+ *   </li>
+ * </ul>
  * </p>
  */
 public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
-  // 1 hour
+  // 1 hour. See class javadoc for description. Can be overridden by client code.
   public static final int DEFAULT_TIME_INTERVAL_PER_ROW = 60 * 60 * 1000;
+
+  private static final String ATTR_TIME_INTERVAL_TO_STORE_PER_ROW = "timeIntervalToStorePerRow";
 
   // This is a hard limit on the number of rows to scan per read. This is safety-check, not intended to rely on in user
   // code. We need this check in current implementation and this may change when we have readHigherOrEq() mentioned
@@ -119,7 +129,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   @SuppressWarnings("unused")
   public SimpleTimeseriesTable(DataSetSpecification spec) throws OperationException {
     super(spec);
-    this.init(this.getName(), Long.valueOf(spec.getProperty("timeIntervalToStorePerRow")));
+    this.init(this.getName(), Long.valueOf(spec.getProperty(ATTR_TIME_INTERVAL_TO_STORE_PER_ROW)));
     this.table = new Table(spec.getSpecificationFor(this.tableName));
   }
 
@@ -152,27 +162,25 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   }
 
   /**
-   * Writes entry. See {@link TimeseriesTable#write(Entry)} for more details on usage.
+   * Writes entry synchronously. See {@link TimeseriesTable#write(Entry)} for more details on usage.
    * @param entry to write
    * @throws OperationException
    */
   @Override
   public void write(Entry entry) throws OperationException {
-    // Note: no need to validate entry as long as its fullness enforced by its constructor
-    // Please see the class javadoc for details on the stored data format.
-
-    byte[] row = getRow(entry.getKey(), entry.getTimestamp(), timeIntervalToStorePerRow);
-
-    // Note: we could move sorting code to Entry, but we didn't as we use same ctor when reading and we don't need to sort
-    //       during reading (they are already sorted asc according to storage format).
-    byte[][] tags = entry.getTags().clone();
-    sortTags(tags);
-
-    byte[] columnName = getColumnName(entry.getTimestamp(), tags);
-    Write write = new Write(row, columnName, entry.getValue());
-
-    // TODO: should be stage() actually, but tests will fail.
+    Write write = createWrite(entry);
     table.exec(write);
+  }
+
+  /**
+   * Writes entry asynchronously. See {@link TimeseriesTable#stage(Entry)} for more details on usage.
+   * @param entry to write
+   * @throws OperationException
+   */
+  @Override
+  public void stage(Entry entry) throws OperationException {
+    Write write = createWrite(entry);
+    table.stage(write);
   }
 
   /**
@@ -194,12 +202,12 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   @Override
   public List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) throws OperationException {
     // validating params
-    validateTimeRange(startTime, endTime);
+    Preconditions.checkArgument(startTime < endTime, "Provided time range condition is incorrect: startTime > endTime");
 
     // Note: do NOT use tags when calculating start/stop column keys due to the column name format
-    byte[] startColumnName = getColumnNameFirstPart(startTime);
+    byte[] startColumnName = createColumnNameFirstPart(startTime);
     // +1 here is because we want inclusive behaviour on both ends, while Table API excludes end column
-    byte[] endColumnName = getColumnNameFirstPart(endTime + 1);
+    byte[] endColumnName = createColumnNameFirstPart(endTime + 1);
 
     // logic which filters entries by tags (used in loop below) relies on provided tags to be in sorted asc order
     tags = tags.clone();
@@ -245,22 +253,31 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     return resultList;
   }
 
+  private Write createWrite(final Entry entry) {
+    // Note: no need to validate entry as long as its fullness enforced by its constructor
+    // Please see the class javadoc for details on the stored data format.
+
+    byte[] row = createRow(entry.getKey(), entry.getTimestamp(), timeIntervalToStorePerRow);
+
+    // Note: we could move sorting code to Entry, but we didn't as we use same ctor when reading and we don't need to
+    // sort during reading (they are already sorted asc according to storage format).
+    byte[][] tags = entry.getTags().clone();
+    sortTags(tags);
+
+    byte[] columnName = createColumnName(entry.getTimestamp(), tags);
+    return new Write(row, columnName, entry.getValue());
+  }
+
   private void init(String name, long timeIntervalToStorePerRow) {
     this.tableName = "ts_" + name;
     this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
-  }
-
-  private void validateTimeRange(long startTime, long endTime) {
-    if (startTime > endTime) {
-      throw new IllegalArgumentException("Provided time range condition is incorrect: startTime > endTime");
-    }
   }
 
   private int applyLimitOnRowsToRead(final long timeIntervalsCount) {
     return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ ) ? MAX_ROWS_TO_SCAN_PER_READ : (int) timeIntervalsCount;
   }
 
-  static byte[] getRow(final byte[] key, final long timestamp, long timeIntervalToStorePerRow) {
+  static byte[] createRow(final byte[] key, final long timestamp, long timeIntervalToStorePerRow) {
     return Bytes.add(key, Bytes.toBytes(getRowKeyTimestampPart(timestamp, timeIntervalToStorePerRow)));
   }
 
@@ -272,21 +289,22 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     Arrays.sort(tags, Bytes.BYTES_COMPARATOR);
   }
 
-  static byte[] getColumnName(long timestamp, byte[][] tags) {
+  static byte[] createColumnName(long timestamp, byte[][] tags) {
     // Column name has the following format: <entry_timestamp><encoded_entry_tags>.
     // <entry_timestamp> is 8-byte encoded long: user-provided entry timestamp.
     // <encoded_entry_tags> is an encoded user-provided entry tags list. It has the following format:
     // [<tag_length><tag_value>]*, where tag length is 4-byte encoded int length of the tag and tags are sorted in asc
     // order. Sorting is needed for efficient filtering based on provided tags during reading.
 
-    // TODO: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array objects
+    // TODO: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
+    //       objects
 
     // TODO: possible perf provement: we can actually store just the diff from the timestamp encoded in the row key and
     //       by doing that reduce the footprint of every stored entry
     // TODO: consider different column name format: we may want to know "sooner" how many there are tags to make other
     //       parts of the code run faster and avoid creating too many array objects. This may be easily doable as column
     //       name is immutable.
-    byte[] columnName = getColumnNameFirstPart(timestamp);
+    byte[] columnName = createColumnNameFirstPart(timestamp);
     for (byte[] tag : tags) {
       // TODO: possible perf improvement: use compressed int (see Bytes.vintToByte()) or at least Bytes.toBytes(short)
       //       which should be well enough
@@ -296,7 +314,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     return columnName;
   }
 
-  private static byte[] getColumnNameFirstPart(final long timestamp) {
+  private static byte[] createColumnNameFirstPart(final long timestamp) {
     return Bytes.toBytes(timestamp);
   }
 
@@ -311,7 +329,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
                                             // zero-based
                                             final int intervalIndex,
                                             final long timeIntervalToStorePerRow) {
-    return getRow(key, timeRangeStart + intervalIndex * timeIntervalToStorePerRow, timeIntervalToStorePerRow);
+    return createRow(key, timeRangeStart + intervalIndex * timeIntervalToStorePerRow, timeIntervalToStorePerRow);
   }
 
 
