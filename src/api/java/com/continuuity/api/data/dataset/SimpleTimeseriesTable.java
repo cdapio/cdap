@@ -246,13 +246,14 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     return resultList;
   }
 
-  private Write createWrite(final Entry entry) {// Note: no need to validate entry as long as its fullness enforced by its constructor
+  private Write createWrite(final Entry entry) {
+    // Note: no need to validate entry as long as its fullness enforced by its constructor
     // Please see the class javadoc for details on the stored data format.
 
     byte[] row = createRow(entry.getKey(), entry.getTimestamp(), timeIntervalToStorePerRow);
 
-    // Note: we could move sorting code to Entry, but we didn't as we use same ctor when reading and we don't need to sort
-    //       during reading (they are already sorted asc according to storage format).
+    // Note: we could move sorting code to Entry, but we didn't as we use same ctor when reading and we don't need to
+    // sort during reading (they are already sorted asc according to storage format).
     byte[][] tags = entry.getTags().clone();
     sortTags(tags);
 
@@ -288,7 +289,8 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     // [<tag_length><tag_value>]*, where tag length is 4-byte encoded int length of the tag and tags are sorted in asc
     // order. Sorting is needed for efficient filtering based on provided tags during reading.
 
-    // TODO: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array objects
+    // TODO: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
+    //       objects
 
     // TODO: possible perf provement: we can actually store just the diff from the timestamp encoded in the row key and
     //       by doing that reduce the footprint of every stored entry
