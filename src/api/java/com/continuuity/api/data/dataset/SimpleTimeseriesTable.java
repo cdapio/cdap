@@ -12,9 +12,9 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.util.Bytes;
-import scala.actors.threadpool.Arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
