@@ -43,7 +43,7 @@ public abstract class DataLib implements BatchCollectionClient {
   /**
    * @return Instance of collector for batching operations to Data Fabric.
    */
-  protected final BatchCollector getCollector() {
+  public final BatchCollector getCollector() {
     return collector;
   }
 

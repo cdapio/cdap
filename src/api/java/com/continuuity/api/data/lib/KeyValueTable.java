@@ -31,7 +31,7 @@ public class KeyValueTable extends DataLib {
    * value is an empty value, otherwise, value is returned.
    * @param key key to read
    * @return value of key, null if key-value does not exist
-   * @throws com.continuuity.api.data.OperationException
+   * @throws OperationException
    */
   public byte [] read(byte [] key) throws OperationException {
     OperationResult<Map<byte[],byte[]>> result =

@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mortbay.log.Log;
 import scala.actors.threadpool.Arrays;
 
@@ -305,9 +306,8 @@ public abstract class OperationExecutorServiceTest extends
     writes.add(new Write("d".getBytes(), "x".getBytes(), "4".getBytes()));
     writes.add(new Write("e".getBytes(), "y".getBytes(), "5".getBytes()));
     writes.add(new Write("f".getBytes(), "z".getBytes(), "6".getBytes()));
-    writes.add(new Write("g".getBytes(),
-        new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
-        new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
+    writes.add(new Write("g".getBytes(), new byte[][] { "x".getBytes(), "y".getBytes(), "z".getBytes() },
+                                         new byte[][] { "7".getBytes(), "8".getBytes(), "9".getBytes() }));
     remote.execute(context, writes);
 
     // readAllKeys with > number of writes

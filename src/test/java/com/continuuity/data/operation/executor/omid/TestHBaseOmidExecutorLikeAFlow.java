@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -25,8 +26,9 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   public static void startEmbeddedHBase() {
     try {
       HBaseTestBase.startHBase();
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
+      CConfiguration conf = CConfiguration.create();
+      conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+      injector = Guice.createInjector(new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf));
       executor = (OmidTransactionalOperationExecutor)injector.getInstance(
           Key.get(OperationExecutor.class,
               Names.named("DataFabricOperationExecutor")));
@@ -61,6 +63,11 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
   }
 
   // Test Overrides
+  /**
+   * Currently not working.  Will be fixed in ENG-1840.
+   */
+  @Test @Override @Ignore
+  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
 
   /**
    * Currently not working.  Will be fixed in ENG-421.

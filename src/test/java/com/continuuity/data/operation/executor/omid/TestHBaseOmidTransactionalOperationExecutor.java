@@ -13,7 +13,7 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class TestHBaseOmidTransactionalOperationExecutor
+public class  TestHBaseOmidTransactionalOperationExecutor
 extends TestOmidTransactionalOperationExecutor {
 
   private static Injector injector;

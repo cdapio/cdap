@@ -29,6 +29,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
   }
 
   private static byte[] makeRowKey(String account) {
+    //please, cache rowkey (byte[]) based on account!
     StringBuilder str = new StringBuilder();
     str.append(rowkeyPrefix);
     str.append('\0');
@@ -352,8 +353,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
       // read meta data entry
       Read read = new Read(tableName, rowkey, column);
-      OperationResult<Map<byte[], byte[]>> result =
-          opex.execute(context, read);
+      OperationResult<Map<byte[], byte[]>> result = opex.execute(context, read);
 
       // throw exception if not existing
       if (result.isEmpty())
@@ -418,8 +418,7 @@ public class SerializingMetaDataStore implements MetaDataStore {
 
       // write w/ compareAndSwap
       try {
-        CompareAndSwap compareAndSwap = new CompareAndSwap(
-            tableName, rowkey, column, bytes, newBytes);
+        CompareAndSwap compareAndSwap = new CompareAndSwap(tableName, rowkey, column, bytes, newBytes);
         opex.execute(context, compareAndSwap);
         return;
       } catch (OperationException e) {

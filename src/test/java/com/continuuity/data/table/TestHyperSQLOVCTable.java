@@ -11,7 +11,7 @@ public class TestHyperSQLOVCTable extends TestOVCTable {
   // Guice.createInjector(new DataFabricLocalModule());
 
   @Override
-  protected OVCTableHandle getTableHandle() {
+  protected OVCTableHandle injectTableHandle() {
     return injector.getInstance(OVCTableHandle.class);
   }
 

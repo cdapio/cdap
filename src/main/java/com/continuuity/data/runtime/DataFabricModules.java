@@ -41,13 +41,11 @@ public class DataFabricModules extends RuntimeModule {
       return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(TimestampOracle.class).
-          to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
+        bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
         bind(TransactionOracle.class).to(MemoryOracle.class);
         bind(OVCTableHandle.class).to(MemoryOVCTableHandle.class);
         bind(ColumnarTableHandle.class).to(MemoryColumnarTableHandle.class);
-        bind(OperationExecutor.class).
-          to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
+        bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
       }
     };
   }
