@@ -1,10 +1,6 @@
 package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.Account;
-import com.continuuity.passport.core.Component;
-import com.google.common.collect.ImmutableSet;
-
-import java.util.Set;
 
 
 /**

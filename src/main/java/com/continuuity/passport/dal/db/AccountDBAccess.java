@@ -1,12 +1,9 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.core.Account;
-import com.continuuity.passport.core.Component;
 import com.continuuity.passport.dal.AccountDAO;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  *  AccountDAO implementation that uses database as the persistence store
