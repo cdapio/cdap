@@ -1,8 +1,5 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Account;
-import com.continuuity.passport.core.Component;
-import com.continuuity.passport.core.ComponentACL;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
 
