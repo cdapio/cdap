@@ -37,7 +37,7 @@ public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
   public void testConcurrentSwapField() throws Exception {  }
 
   /**
-   * Currently not working.  Will be fixed in ???-???.
+   * Currently not working.  Will be fixed in ENG-1840.
    */
   @Override @Test @Ignore
   public void testConcurrentUpdate() throws Exception {  }

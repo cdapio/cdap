@@ -51,15 +51,13 @@ public class  TestHBaseOVCTable extends TestOVCTable {
 
   @Override
   protected OVCTableHandle injectTableHandle() {
-    OVCTableHandle th = injector.getInstance(OVCTableHandle.class);
-    System.err.println("Table handle class is "+th.getName());
-    return th;
+    return injector.getInstance(OVCTableHandle.class);
   }
 
   // Tests that produce different expected results on Vanilla HBase
 
   /**
-   * Currently produces different results on Vanilla HBase.  Will be fixed in ???-???.
+   * Currently produces different results on Vanilla HBase.  Will be fixed in ENG-1840.
    */
   @Override @Test
   public void testMultiColumnReadsAndWrites() throws OperationException {
@@ -191,6 +189,9 @@ public class  TestHBaseOVCTable extends TestOVCTable {
     assertEquals(ncols - 15, colMap.size());
   }
 
+  /**
+   * Currently produces different results on Vanilla HBase.  Will be fixed in ENG-1840.
+   */
   @Override @Test
   public void testDeleteBehavior() throws OperationException {
 

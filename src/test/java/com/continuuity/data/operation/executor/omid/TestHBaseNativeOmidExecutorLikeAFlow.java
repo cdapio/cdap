@@ -62,13 +62,6 @@ public class TestHBaseNativeOmidExecutorLikeAFlow extends TestOmidExecutorLikeAF
     return 100;
   }
 
-  // Test Overrides
-  /**
-   * Currently not working.  Will be fixed in ???-???.
-   */
-//  @Test @Override @Ignore
-//  public void testThreadedProducersAndThreadedConsumers() throws Exception {}
-
   /**
    * Currently not working.  Will be fixed in ENG-421.
    */

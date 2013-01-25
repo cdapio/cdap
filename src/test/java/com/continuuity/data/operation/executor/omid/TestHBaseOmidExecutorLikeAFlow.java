@@ -64,7 +64,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
 
   // Test Overrides
   /**
-   * Currently not working.  Will be fixed in ???-???.
+   * Currently not working.  Will be fixed in ENG-1840.
    */
   @Test @Override @Ignore
   public void testThreadedProducersAndThreadedConsumers() throws Exception {}
