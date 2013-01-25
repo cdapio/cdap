@@ -16,15 +16,13 @@ public class Status {
     USER_AUTHENTICATION_FAILED
   }
 
-  private Value value;
+  private final Value value;
 
-  private String reason;
+  private final String reason;
 
-  public Status(Value value) {
-    this.reason = StringUtils.EMPTY;
-    this.value = value;
+  public Status( final Value value) {
+    this (value, "");
   }
-
 
   public Status(Value value, String reason) {
     this.reason = reason;
