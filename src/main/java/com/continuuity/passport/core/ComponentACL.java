@@ -4,7 +4,8 @@ package com.continuuity.passport.core;
  * Defines Access control for each object
  */
 public class ComponentACL {
-  public enum Type { READ, READ_WRITE, READ_WRITE_DELETE}
+  public enum Type {READ, READ_WRITE, READ_WRITE_DELETE}
+
   private Type acl;
   private String userId;
 

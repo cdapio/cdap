@@ -1,10 +1,9 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.ComponentACL;
 
 /**
- *  DelegationToken class - to grant access to ACLs
+ * DelegationToken class - to grant access to ACLs
  */
 public class DelegationToken {
 
@@ -20,7 +19,8 @@ public class DelegationToken {
 
   private ComponentACL.Type acl;
 
-  public DelegationToken(String userId, String accountId, String componentId, ComponentACL.Type acl, AccessType accessType) {
+  public DelegationToken(String userId, String accountId, String componentId, ComponentACL.Type acl,
+                         AccessType accessType) {
     this.type = accessType;
     this.userId = userId;
     this.accountId = accountId;

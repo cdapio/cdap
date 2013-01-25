@@ -28,8 +28,8 @@ public class AuthorizerImpl implements Authorizer {
    * @throws {@code RetryException}
    */
   @Override
-  public DelegationToken authorize(User user, Account account, Component component,
-                                         ComponentACL.Type aclType, Credentials credentials) throws RetryException {
+  public DelegationToken authorize(User user, Account account, Component component, ComponentACL.Type aclType,
+                                   Credentials credentials) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

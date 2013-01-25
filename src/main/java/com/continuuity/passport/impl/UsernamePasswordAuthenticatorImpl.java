@@ -3,8 +3,8 @@ package com.continuuity.passport.impl;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.exceptions.RetryException;
-import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.core.service.Authenticator;
+import com.continuuity.passport.core.status.AuthenticationStatus;
 
 /**
  * Implementation of Authenticator that authenticates for Simple UserNamePassword authentication

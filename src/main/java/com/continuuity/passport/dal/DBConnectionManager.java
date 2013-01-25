@@ -13,20 +13,20 @@ import java.util.Map;
 
 public class DBConnectionManager {
 
-  private DBConnectionPoolManager poolManager ;
+  private DBConnectionPoolManager poolManager;
 
   private DBConnectionManager(Map<String, String> config) {
   }
 
   public synchronized Connection getConnection() throws SQLException {
-    if(poolManager != null) {
+    if (poolManager != null) {
       return poolManager.getValidConnection();
     }
     return null;
   }
 
 
-  DBConnectionManager getInstance () {
+  DBConnectionManager getInstance() {
     return null; //TODO: Add single instance creation
   }
 }

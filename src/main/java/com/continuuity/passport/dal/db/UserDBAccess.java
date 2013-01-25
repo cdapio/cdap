@@ -8,14 +8,14 @@ import java.util.Map;
 
 
 /**
- *  Implementation of UserDataAccess object using database as the persistence store
+ * Implementation of UserDataAccess object using database as the persistence store
  */
 
 public class UserDBAccess implements UserDAO {
 
-  private final Map<String,String> configuration;
+  private final Map<String, String> configuration;
 
-  public UserDBAccess(final Map<String, String> configuration){
+  public UserDBAccess(final Map<String, String> configuration) {
     this.configuration = configuration;
   }
 
@@ -49,7 +49,7 @@ public class UserDBAccess implements UserDAO {
    * Delete User
    *
    * @param id userId
-   * @return  status of delete user
+   * @return status of delete user
    * @throws {@code RetryException}
    */
   @Override

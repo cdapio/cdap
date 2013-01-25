@@ -37,8 +37,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws {@code RetryException}
    */
   @Override
-  public Status registerComponents(String accountId, Credentials credentials, Component component)
-                                                                            throws RetryException {
+  public Status registerComponents(String accountId, Credentials credentials,
+                                   Component component) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -52,8 +52,8 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws {@code RetryException}
    */
   @Override
-  public Status unRegisterComponent(String accountId, Credentials credentials, Component component)
-                                                                             throws RetryException {
+  public Status unRegisterComponent(String accountId, Credentials credentials,
+                                    Component component) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -78,8 +78,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws {@code RetryException}
    */
   @Override
-  public Status updateComponent(String accountId, Credentials credentials, Component component)
-                                                                          throws RetryException {
+  public Status updateComponent(String accountId, Credentials credentials, Component component) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

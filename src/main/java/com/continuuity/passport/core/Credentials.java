@@ -5,7 +5,7 @@ package com.continuuity.passport.core;
  * Designed to be used for userCredentials, dataSetCrendentials   etc
  */
 
-public abstract class Credentials  {
+public abstract class Credentials {
 
   private String type;
 
@@ -13,7 +13,7 @@ public abstract class Credentials  {
     return type;
   }
 
-  public void setClientType(String type){
+  public void setClientType(String type) {
     this.type = type;
   }
 

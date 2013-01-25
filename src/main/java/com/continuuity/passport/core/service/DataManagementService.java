@@ -14,8 +14,9 @@ public interface DataManagementService {
 
   /**
    * Register an {@code Account} in the system
-   * @param account  Account information
-   * @param owner  Owner of the account
+   *
+   * @param account Account information
+   * @param owner   Owner of the account
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
@@ -24,37 +25,6 @@ public interface DataManagementService {
 
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
-   * @throws RuntimeException
-   */
-  public Status registerComponents( String accountId, Credentials credentials, Component component)
-                                                                           throws RetryException;
-
-  /**
-   *  Unregister a {@code Component} in the system
-   * @param accountId
-   * @param credentials
-   * @param component
-   * @return Instance of {@code Status}
-   * @throws RuntimeException
-   */
-  public Status unRegisterComponent (String accountId, Credentials credentials, Component component)
-                                                                           throws RetryException;
-
-  /**
-   * Delete an {@code Account} in the system
-   * @param accountId account to be deleted
-   * @param credentials credentials of the owner of the account
-   * @return Instance of {@code Status}
-   * @throws RuntimeException
-   */
-  public Status deleteAccount (String accountId, Credentials credentials) throws RetryException;
-
-
-  /**
    *
    * @param accountId
    * @param credentials
@@ -62,21 +32,55 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status updateComponent( String accountId, Credentials credentials, Component component )
-                                                                            throws RetryException;
+  public Status registerComponents(String accountId, Credentials credentials,
+                                   Component component) throws RetryException;
+
+  /**
+   * Unregister a {@code Component} in the system
+   *
+   * @param accountId
+   * @param credentials
+   * @param component
+   * @return Instance of {@code Status}
+   * @throws RuntimeException
+   */
+  public Status unRegisterComponent(String accountId, Credentials credentials,
+                                    Component component) throws RetryException;
+
+  /**
+   * Delete an {@code Account} in the system
+   *
+   * @param accountId   account to be deleted
+   * @param credentials credentials of the owner of the account
+   * @return Instance of {@code Status}
+   * @throws RuntimeException
+   */
+  public Status deleteAccount(String accountId, Credentials credentials) throws RetryException;
+
+
+  /**
+   * @param accountId
+   * @param credentials
+   * @param component
+   * @return Instance of {@code Status}
+   * @throws RuntimeException
+   */
+  public Status updateComponent(String accountId, Credentials credentials, Component component) throws RetryException;
 
   /**
    * get User Object
+   *
    * @param userId Id that defines the user
    * @return Instance of {@code User}
    */
-  public User getUser(String userId) ;
+  public User getUser(String userId);
 
   /**
    * GetAccount object
+   *
    * @param accountId Id of the account
    * @return Instance of {@code Account}
    */
-  public Account getAccount (String accountId);
+  public Account getAccount(String accountId);
 
 }

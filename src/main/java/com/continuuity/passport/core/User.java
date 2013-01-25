@@ -8,11 +8,10 @@ import java.util.Set;
 
 /**
  * Identifies User entity in the system
- *
  */
 
-public class User  {
-  public enum RoleType{OWNER,ADMIN,USER}
+public class User {
+  public enum RoleType {OWNER, ADMIN, USER}
 
   public class UserRole {
 
@@ -39,6 +38,7 @@ public class User  {
   public String getPassword() {
     return saltedHashedPassword;
   }
+
   public String getFirstName() {
     return firstName;
   }
@@ -54,13 +54,14 @@ public class User  {
   /**
    * get all the authorities that the user is a part of
    * authorities define the account id and role the user has on the account
+   *
    * @return ImmutableSet of authority
    */
   public Set<Authority> getAuthorities() {
     return ImmutableSet.copyOf(this.authorities);
   }
 
-  private void addAuthority(Authority authority){
+  private void addAuthority(Authority authority) {
     this.authorities.add(authority);
   }
 
