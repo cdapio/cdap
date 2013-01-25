@@ -8,7 +8,7 @@ import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.service.Authorizer;
 
 /**
- *
+ * Implementation of Authorizer
  */
 public class AuthorizerImpl implements Authorizer {
 

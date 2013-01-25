@@ -28,7 +28,8 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerComponents( String accountId, Credentials credentials, Component component) throws RuntimeException;
+  public Status registerComponents( String accountId, Credentials credentials, Component component)
+                                                                           throws RuntimeException;
 
   /**
    *  Unregister a {@code Component} in the system
@@ -38,7 +39,8 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status unRegisterComponent (String accountId, Credentials credentials, Component component) throws RuntimeException;
+  public Status unRegisterComponent (String accountId, Credentials credentials, Component component)
+                                                                           throws RuntimeException;
 
   /**
    * Delete an {@code Account} in the system
@@ -59,7 +61,8 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status updateComponent( String accountId, Credentials credentials, Component component ) throws RuntimeException;
+  public Status updateComponent( String accountId, Credentials credentials, Component component )
+                                                                            throws RuntimeException;
 
   /**
    * get User Object

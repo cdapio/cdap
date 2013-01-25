@@ -21,6 +21,7 @@ public interface Authorizer  {
    * @param credentials UserCredentials that authenticates the user
    * @return
    */
-  boolean isAuthorized (User user, Account account, Component component, ComponentACL.Type aclType, Credentials credentials );
+  boolean isAuthorized (User user, Account account, Component component, ComponentACL.Type aclType,
+                                                    Credentials credentials );
 
 }
