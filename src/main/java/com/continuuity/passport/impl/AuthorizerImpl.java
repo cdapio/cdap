@@ -7,7 +7,6 @@ import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.service.Authorizer;
-import com.continuuity.passport.core.service.DelegationToken;
 
 /**
  * Implementation of Authorizer
