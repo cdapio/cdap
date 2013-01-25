@@ -2,12 +2,15 @@
  * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.api.data.set;
+package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.util.Bytes;
 import scala.actors.threadpool.Arrays;
 
@@ -166,7 +169,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     sortTags(tags);
 
     byte[] columnName = getColumnName(entry.getTimestamp(), tags);
-    Table.Write write = new Table.Write(row, columnName, entry.getValue());
+    Write write = new Write(row, columnName, entry.getValue());
 
     // TODO: should be stage() actually, but tests will fail.
     table.exec(write);
@@ -214,7 +217,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     for (int i = 0; i < timeIntervalsCount; i++) {
       byte[] row = getRowOfKthInterval(key, startTime, i, timeIntervalToStorePerRow);
 
-      Table.Read read = new Table.Read(row,
+      Read read = new Read(row,
                                        // we only need to set left bound on the first row: others cannot have records
                                        // with the timestamp less than startTime
                                        (i == 0) ? startColumnName : null,

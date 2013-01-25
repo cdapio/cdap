@@ -2,7 +2,7 @@
  * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.api.data.set;
+package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.OperationException;
 
@@ -32,7 +32,7 @@ public interface TimeseriesTable {
    *
    * @return list of entries that satisfy provided conditions.
    *         TODO: any guarantees on the order of entries in the list? See TODO in the SimpleTimeseries implementation
-   * @throws OperationException when underlying {@link Table} throws one
+   * @throws OperationException when underlying {@link com.continuuity.api.data.dataset.table.Table} throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
   List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) throws OperationException;
