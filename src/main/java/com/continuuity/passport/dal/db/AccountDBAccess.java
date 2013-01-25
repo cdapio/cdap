@@ -1,6 +1,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.passport.core.Account;
+import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.dal.AccountDAO;
 
 import java.util.Map;
@@ -21,11 +22,11 @@ public class AccountDBAccess implements AccountDAO {
    *
    * @param accountId accountID
    * @param account   Instance of {@code Account}
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of account creation
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean createAccount(String accountId, Account account) throws RuntimeException {
+  public boolean createAccount(String accountId, Account account) throws RetryException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -33,11 +34,11 @@ public class AccountDBAccess implements AccountDAO {
    * Delete Account in the system
    *
    * @param accountId AccountId to be deleted
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of account deletion
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean deleteAccount(String accountId) throws RuntimeException {
+  public boolean deleteAccount(String accountId) throws RetryException {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -45,11 +46,11 @@ public class AccountDBAccess implements AccountDAO {
    * GetAccount
    *
    * @param accountId AccountId requested
-   * @return
-   * @throws RuntimeException
+   * @return {@code Account}
+   * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(String accountId) throws RuntimeException {
+  public Account getAccount(String accountId) throws RetryException {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -58,11 +59,11 @@ public class AccountDBAccess implements AccountDAO {
    *
    * @param accountId AccountId
    * @param account   Instance of {@code Account}
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of account update
+   * @throws {@code RetryException}
    */
   @Override
-  public Account updateAccount(String accountId, Account account) throws RuntimeException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public boolean updateAccount(String accountId, Account account) throws RetryException {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

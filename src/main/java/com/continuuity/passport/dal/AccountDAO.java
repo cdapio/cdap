@@ -1,6 +1,7 @@
 package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.Account;
+import com.continuuity.passport.core.exceptions.RetryException;
 
 
 /**
@@ -13,36 +14,36 @@ public interface AccountDAO {
    * Create Account in the system
    * @param accountId accountID
    * @param account Instance of {@code Account}
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of account creation
+   * @throws {@code RetryException}
    */
-  public boolean createAccount(String accountId, Account account) throws RuntimeException;
+  public boolean createAccount(String accountId, Account account) throws RetryException;
 
   /**
    * Delete Account in the system
    * @param accountId AccountId to be deleted
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of account deletion
+   * @throws {@code RetryException}
    */
-  public boolean deleteAccount(String accountId) throws RuntimeException;
+  public boolean deleteAccount(String accountId) throws RetryException;
 
   /**
    * GetAccount
    * @param accountId AccountId requested
-   * @return
-   * @throws RuntimeException
+   * @return {@code Account}
+   * @throws {@code RetryException}
    */
-  public Account getAccount(String accountId) throws RuntimeException;
+  public Account getAccount(String accountId) throws RetryException;
 
 
   /**
    * AccountId to be updated
    * @param accountId AccountId
    * @param account Instance of {@code Account}
-   * @return
-   * @throws RuntimeException
+   * @return boolean status of update
+   * @throws {@code RetryException}
    */
-  public Account updateAccount(String accountId, Account account) throws RuntimeException;
+  public boolean updateAccount(String accountId, Account account) throws RetryException;
 
 
 }

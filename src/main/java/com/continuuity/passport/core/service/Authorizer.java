@@ -5,6 +5,7 @@ import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.ComponentACL;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
+import com.continuuity.passport.core.exceptions.RetryException;
 
 /**
  *
@@ -22,6 +23,6 @@ public interface Authorizer  {
    * @return Instance of {@code DelegationToken}
    */
   DelegationToken authorize (User user, Account account, Component component, ComponentACL.Type aclType,
-                                                    Credentials credentials );
+                                                    Credentials credentials ) throws RetryException;
 
 }

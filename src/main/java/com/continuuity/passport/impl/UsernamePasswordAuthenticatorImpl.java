@@ -2,6 +2,8 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
+import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.core.service.Authenticator;
 
 /**
@@ -14,10 +16,11 @@ public class UsernamePasswordAuthenticatorImpl implements Authenticator {
    *
    * @param user        User to be authenticated
    * @param credentials UserCredentials that authenticates the user
-   * @return
+   * @return {@code AuthenticationStatus}
+   * @throws {@code RetryException}
    */
   @Override
-  public boolean authenticate(User user, Credentials credentials) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  public AuthenticationStatus authenticate(User user, Credentials credentials) throws RetryException {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
