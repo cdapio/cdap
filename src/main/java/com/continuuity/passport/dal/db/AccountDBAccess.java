@@ -7,13 +7,13 @@ import com.continuuity.passport.dal.AccountDAO;
 import java.util.Map;
 
 /**
- *  AccountDAO implementation that uses database as the persistence store
+ * AccountDAO implementation that uses database as the persistence store
  */
 public class AccountDBAccess implements AccountDAO {
 
- private final Map<String,String> configuration;
+  private final Map<String, String> configuration;
 
-  public AccountDBAccess(final Map<String, String> configuration){
+  public AccountDBAccess(final Map<String, String> configuration) {
     this.configuration = configuration;
   }
 

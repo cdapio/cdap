@@ -10,13 +10,14 @@ import java.util.Set;
  */
 public class Component {
 
-  public enum Type { DATASET, VPC}
+  public enum Type {DATASET, VPC}
+
   private String name;
   private Type componentType;
   private String id;
   private Set<ComponentACL> acls = new HashSet<ComponentACL>();
 
-  public Component(String name, String id, Type type){
+  public Component(String name, String id, Type type) {
     this.name = name;
     this.id = id;
     this.componentType = type;
@@ -36,6 +37,7 @@ public class Component {
 
   /**
    * getACLs for the component
+   *
    * @return ImmutableSet of ComponentACL
    */
   public Set<ComponentACL> getComponentACLs() {

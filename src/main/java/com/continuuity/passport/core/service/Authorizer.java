@@ -10,19 +10,20 @@ import com.continuuity.passport.core.exceptions.RetryException;
 /**
  *
  */
-public interface Authorizer  {
+public interface Authorizer {
 
   /**
    * Authorize component for the user with the request ACLType
    * Example: Authorize User: Foo to DataSet: Bar with ACL: READ
-   * @param user User requesting authorization
-   * @param account Account that owns the dataSet
-   * @param component Component for which authorization is requested
-   * @param aclType ACL requested on the component
+   *
+   * @param user        User requesting authorization
+   * @param account     Account that owns the dataSet
+   * @param component   Component for which authorization is requested
+   * @param aclType     ACL requested on the component
    * @param credentials UserCredentials that authenticates the user
    * @return Instance of {@code DelegationToken}
    */
-  DelegationToken authorize (User user, Account account, Component component, ComponentACL.Type aclType,
-                                                    Credentials credentials ) throws RetryException;
+  DelegationToken authorize(User user, Account account, Component component, ComponentACL.Type aclType,
+                            Credentials credentials) throws RetryException;
 
 }

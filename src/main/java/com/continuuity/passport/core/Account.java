@@ -34,6 +34,7 @@ public class Account {
 
   /**
    * getComponents for the account
+   *
    * @return ImmutableSet of Component
    */
   public Set<Component> getComponents() {
@@ -44,8 +45,8 @@ public class Account {
     this.components.add(c);
   }
 
-   public static class Builder {
+  public static class Builder {
     //TODO: Add Builders to create build the object
-   }
+  }
 
 }

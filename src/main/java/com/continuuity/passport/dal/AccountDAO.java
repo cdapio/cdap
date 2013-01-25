@@ -5,15 +5,16 @@ import com.continuuity.passport.core.exceptions.RetryException;
 
 
 /**
- *     Data Access interface for account
- *     Manage all account related activity
+ * Data Access interface for account
+ * Manage all account related activity
  */
 public interface AccountDAO {
 
   /**
    * Create Account in the system
+   *
    * @param accountId accountID
-   * @param account Instance of {@code Account}
+   * @param account   Instance of {@code Account}
    * @return boolean status of account creation
    * @throws {@code RetryException}
    */
@@ -21,6 +22,7 @@ public interface AccountDAO {
 
   /**
    * Delete Account in the system
+   *
    * @param accountId AccountId to be deleted
    * @return boolean status of account deletion
    * @throws {@code RetryException}
@@ -29,6 +31,7 @@ public interface AccountDAO {
 
   /**
    * GetAccount
+   *
    * @param accountId AccountId requested
    * @return {@code Account}
    * @throws {@code RetryException}
@@ -38,8 +41,9 @@ public interface AccountDAO {
 
   /**
    * AccountId to be updated
+   *
    * @param accountId AccountId
-   * @param account Instance of {@code Account}
+   * @param account   Instance of {@code Account}
    * @return boolean status of update
    * @throws {@code RetryException}
    */
