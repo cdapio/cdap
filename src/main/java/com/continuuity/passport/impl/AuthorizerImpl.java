@@ -25,8 +25,8 @@ public class AuthorizerImpl implements Authorizer {
    * @return
    */
   @Override
-  public boolean isAuthorized(User user, Account account, Component component, ComponentACL.Type aclType, Credentials
-    credentials) {
+  public boolean isAuthorized(User user, Account account, Component component,
+                                         ComponentACL.Type aclType, Credentials credentials) {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
