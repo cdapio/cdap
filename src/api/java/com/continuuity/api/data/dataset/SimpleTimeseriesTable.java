@@ -22,13 +22,6 @@ import java.util.Map;
 /**
  * Provides simple implementation of time series table.
  * <p>
- * The implementation (incl. the format of the stored data) is heavily affected by underlying {@link Table} API. In
- * particular the implementation is constrained by the absence of <code>readHigherOrEq()</code> method in
- * {@link Table} API, which would return next row with key greater or equals to the given.<br/>
- * This is first cut implementation with a room for many improvements (please see TODOs in the code). The client code
- * should not rely on the implementation details: they can be changed without a notice.
- * </p>
- * <p>
  * The easiest way to give an insight of the implementation details is to describe the format it which data is
  * stored:
  * </p>
@@ -92,11 +85,25 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * NOTE: This implementation does NOT address RegionServer hotspotting issue that appears when writing rows with
+ * NOTES:
+ * <ul>
+ *   <li>
+ *    1. This implementation does NOT address RegionServer hotspotting issue that appears when writing rows with
  *       monotonically increasing/decreasing keys into HBase. Which is relevant for HBase-based back-end.
  *       To avoid this problem user should NOT write all data under same metric key. In general, writes will be as
  *       distributed as the amount of different metric keys the data is written for. Having one metric key would mean
  *       hitting single RegionServer at any given point of time with all writes. Which is usually NOT desired.
+ *   </li>
+ *   <li>
+ *    2. The current implementation (incl. the format of the stored data) is heavily affected by {@link Table} API which
+ *       is used under the hood. In particular the implementation is constrained by the absence of
+ *       <code>readHigherOrEq()</code> method in {@link Table} API, which would return next row with key greater or
+ *       equals to the given.<br/>
+ *   </li>
+ *   <li>
+ *    3. The client code should not rely on the implementation details: they can be changed without a notice.
+ *   </li>
+ * </ul>
  * </p>
  */
 public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
