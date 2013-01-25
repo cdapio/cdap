@@ -13,13 +13,16 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
+/**
+ *
+ */
+public class HBaseNativeSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
 
   @BeforeClass
   public static void setupOpex() throws Exception {
     HBaseTestBase.startHBase();
     CConfiguration conf = CConfiguration.create();
-    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, false);
+    conf.setBoolean(DataFabricDistributedModule.CONF_ENABLE_NATIVE_QUEUES, true);
     DataFabricDistributedModule module = new DataFabricDistributedModule(HBaseTestBase.getConfiguration(),conf);
     Injector injector = Guice.createInjector(module);
     opex = injector.getInstance(Key.get(OperationExecutor.class, Names.named("DataFabricOperationExecutor")));
@@ -31,14 +34,8 @@ public class HBaseSerializingMetaDataStoreTest extends HBaseMetaDataStoreTest {
     HBaseTestBase.stopHBase();
   }
 
-  // Tests that do not work on Vanilla HBase
+  // Tests that do not work on patched HBase (called HBaseNative)
 
   @Override @Test @Ignore
   public void testConcurrentSwapField() throws Exception {  }
-
-  /**
-   * Currently not working.  Will be fixed in ENG-1840.
-   */
-  @Override @Test @Ignore
-  public void testConcurrentUpdate() throws Exception {  }
 }

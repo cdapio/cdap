@@ -31,15 +31,18 @@ public abstract class TestOVCTable {
 
   protected static final Random r = new Random();
 
+  protected OVCTableHandle getTableHandle() {
+    return this.tableHandle;
+  }
+
   @Before
   public void initialize() throws OperationException {
     System.out.println("\n\nBeginning test\n\n");
-    this.tableHandle = getTableHandle();
-    this.table = this.tableHandle.getTable(
-        Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
+    this.tableHandle = injectTableHandle();
+    this.table = this.tableHandle.getTable(Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
   }
 
-  protected abstract OVCTableHandle getTableHandle();
+  protected abstract OVCTableHandle injectTableHandle();
 
   protected static final byte [] COL = new byte [] { (byte)0 };
   protected static final MemoryReadPointer RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
@@ -831,7 +834,7 @@ public abstract class TestOVCTable {
         if (number != this.lastCreated) {
           byte[] tableName = Integer.toString(this.trigger.get()).getBytes();
           try {
-            tableHandle.getTable(tableName);
+            getTableHandle().getTable(tableName);
           } catch (Exception e) {
             failed.set(true);
             e.printStackTrace();

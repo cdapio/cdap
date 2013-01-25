@@ -4,11 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.engine.hbase.HBaseNativeOVCTableHandle;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
-import com.continuuity.data.engine.memory.oracle
-         .MemoryStrictlyMonotonicTimeOracle;
+import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid
-         .OmidTransactionalOperationExecutor;
+import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;

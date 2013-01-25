@@ -32,7 +32,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   public static final String CONF_ENABLE_NATIVE_QUEUES =
       "fabric.queue.hbase.native";
   
-  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = false;
+  private static final boolean CONF_ENABLE_NATIVE_QUEUES_DEFAULT = true;
 
   /**
    * Create a module with default configuration for HBase and Continuuity
@@ -87,8 +87,7 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
     // Check if native hbase queue handle should be used
-    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES,
-        CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
+    if (conf.getBoolean(CONF_ENABLE_NATIVE_QUEUES, CONF_ENABLE_NATIVE_QUEUES_DEFAULT)) {
       ovcTableHandle = HBaseNativeOVCTableHandle.class;
     }
     Log.info("Table Handle is " + ovcTableHandle.getName());
@@ -96,31 +95,22 @@ public class DataFabricDistributedModule extends AbstractModule {
     // Bind our implementations
 
     // Bind remote operation executor
-    bind(OperationExecutor.class)
-        .to(RemoteOperationExecutor.class)
-        .in(Singleton.class);
+    bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
 
     // For data fabric, bind to Omid and HBase
-    bind(OperationExecutor.class)
-        .annotatedWith(Names.named("DataFabricOperationExecutor"))
-        .to(OmidTransactionalOperationExecutor.class)
-        .in(Singleton.class);
+    bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
+        .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
     bind(OVCTableHandle.class).to(ovcTableHandle);
 
     // For now, just bind to in-memory omid oracles
-    bind(TimestampOracle.class).
-        to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
+    bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
     bind(TransactionOracle.class).to(MemoryOracle.class);
 
     // Bind HBase configuration into ovctable
-    bind(Configuration.class)
-        .annotatedWith(Names.named("HBaseOVCTableHandleConfig"))
-        .toInstance(hbaseConf);
+    bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleConfig")).toInstance(hbaseConf);
 
     // Bind our configurations
-    bind(CConfiguration.class)
-        .annotatedWith(Names.named("RemoteOperationExecutorConfig"))
-        .toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
   }
 
   public CConfiguration getConfiguration() {
