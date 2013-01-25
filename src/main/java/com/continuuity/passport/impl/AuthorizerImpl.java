@@ -6,6 +6,7 @@ import com.continuuity.passport.core.ComponentACL;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.service.Authorizer;
+import com.continuuity.passport.core.service.DelegationToken;
 
 /**
  * Implementation of Authorizer
@@ -22,11 +23,11 @@ public class AuthorizerImpl implements Authorizer {
    * @param component   Component for which authorization is requested
    * @param aclType     ACL requested on the component
    * @param credentials UserCredentials that authenticates the user
-   * @return
+   * @return Instance of {@code DelegationToken}
    */
   @Override
-  public boolean isAuthorized(User user, Account account, Component component,
+  public DelegationToken authorize(User user, Account account, Component component,
                                          ComponentACL.Type aclType, Credentials credentials) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }
