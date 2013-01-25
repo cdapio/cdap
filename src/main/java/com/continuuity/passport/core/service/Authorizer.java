@@ -26,4 +26,50 @@ public interface Authorizer {
   DelegationToken authorize(User user, Account account, Component component, ComponentACL.Type aclType,
                             Credentials credentials) throws RetryException;
 
+  /**
+   * DelegationToken class - to grant access to ACLs
+   */
+  class DelegationToken {
+
+    public enum AccessType {ACCESS, NO_ACCESS}
+
+    private AccessType type;
+
+    private String userId;
+
+    private String accountId;
+
+    private String componentId;
+
+    private ComponentACL.Type acl;
+
+    public DelegationToken(String userId, String accountId, String componentId, ComponentACL.Type acl,
+                           AccessType accessType) {
+      this.type = accessType;
+      this.userId = userId;
+      this.accountId = accountId;
+      this.componentId = componentId;
+      this.acl = acl;
+    }
+
+    public AccessType getType() {
+      return type;
+    }
+
+    public String getUserId() {
+      return userId;
+    }
+
+    public String getAccountId() {
+      return accountId;
+    }
+
+    public String getComponentId() {
+      return componentId;
+    }
+
+    public ComponentACL.Type getAcl() {
+      return acl;
+    }
+  }
 }

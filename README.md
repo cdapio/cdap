@@ -22,7 +22,7 @@ Passport service is a service to manage account, account related components and 
 
 - Core Java API 
 	- Implements the account, account component, account entites management
-- Thrift wrapper for the API
+- RPC wrapper for the API
 	- Generates Client and Server code and wraps the functionality
 - HTTP wrapper for the API
 	- Implement ReST API on top of the java API to be accessed by web clients
