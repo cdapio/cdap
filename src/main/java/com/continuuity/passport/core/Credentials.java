@@ -13,7 +13,7 @@ public abstract class Credentials {
     return type;
   }
 
-  public void setClientType(String type) {
+  public void setClientType( final String type) {
     this.type = type;
   }
 

@@ -12,15 +12,26 @@ public class Component {
 
   public enum Type {DATASET, VPC}
 
-  private String name;
-  private Type componentType;
-  private String id;
-  private Set<ComponentACL> acls = new HashSet<ComponentACL>();
+  private final  String name;
 
-  public Component(String name, String id, Type type) {
+  private final  Type componentType;
+
+  private final String id;
+
+  private final Set<ComponentACL> acls;
+
+  public Component( final String name,  final String id,  final Type type,  final Set<ComponentACL> acls) {
     this.name = name;
     this.id = id;
     this.componentType = type;
+    this.acls = acls;
+  }
+
+  public Component( final String name,  final String id,  final Type type) {
+    this.name = name;
+    this.id = id;
+    this.componentType = type;
+    this.acls = new HashSet<ComponentACL>();
   }
 
   public String getName() {
@@ -44,9 +55,5 @@ public class Component {
     return ImmutableSet.copyOf(this.acls);
   }
 
-  public void addComponentAcl(ComponentACL acl) {
-    this.acls.add(acl);
-
-  }
 
 }
