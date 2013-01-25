@@ -33,15 +33,15 @@ public interface Authorizer {
 
     public enum AccessType {ACCESS, NO_ACCESS}
 
-    private AccessType type;
+    private final AccessType type;
 
-    private String userId;
+    private final String userId;
 
-    private String accountId;
+    private final String accountId;
 
-    private String componentId;
+    private final String componentId;
 
-    private ComponentACL.Type acl;
+    private final ComponentACL.Type acl;
 
     public DelegationToken(String userId, String accountId, String componentId, ComponentACL.Type acl,
                            AccessType accessType) {

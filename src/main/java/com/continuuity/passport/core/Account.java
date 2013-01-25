@@ -13,20 +13,21 @@ import java.util.Set;
 public class Account {
 
 
-  private String accountId;
+  private final String accountId;
 
-  private String name;
+  private final String name;
 
+  private final Set<User.UserRole> userRoles;
 
-  private Set<User.UserRole> userRoles;
+  private final Set<Component> components = new HashSet<Component>();
 
-  private Set<Component> components = new HashSet<Component>();
+  public Account( final String accountId,  final String name,  final Set<User.UserRole> userRoles) {
+    this.accountId = accountId;
+    this.name = name;
+    this.userRoles = userRoles;
+  }
 
   //TODO: Add billing info
-
-  private void addUserRoles(User.UserRole role) {
-    this.userRoles.add(role);
-  }
 
   public Set<User.UserRole> getUserRoles() {
     return ImmutableSet.copyOf(this.userRoles);
@@ -41,9 +42,6 @@ public class Account {
     return ImmutableSet.copyOf(this.getComponents());
   }
 
-  private void addComponent(Component c) {
-    this.components.add(c);
-  }
 
   public static class Builder {
     //TODO: Add Builders to create build the object

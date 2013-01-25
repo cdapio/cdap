@@ -6,10 +6,10 @@ package com.continuuity.passport.core;
 public class ComponentACL {
   public enum Type {READ, READ_WRITE, READ_WRITE_DELETE}
 
-  private Type acl;
-  private String userId;
+  private final Type acl;
+  private final String userId;
 
-  public ComponentACL(Type acl, String userId) {
+  public ComponentACL( final Type acl,  final String userId) {
     this.acl = acl;
     this.userId = userId;
   }
