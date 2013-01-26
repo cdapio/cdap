@@ -1,54 +1,54 @@
-apply plugin:'java'
+apply plugin: 'java'
 
 smartyFacts {
-  thrift
+    thrift
 }
 
 // Specify all the dependencies.
 dependencies {
-  /// Internal dependencies.
-  compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-  compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+    /// Internal dependencies.
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
 
-  clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-  clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
+    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
-  // External dependencies.
-  compile libraries.akka_actor
-  compile libraries.google_guava
-  compile libraries.google_guice
-  compile libraries.google_guava
-  compile libraries.google_gson
-  compile libraries.apache_commons_math
-  compile libraries.mysql
-  compile libraries.hsql
-  compile libraries.mina_core
-  compile libraries.mina_jmx
-  compile libraries.http_client
+    // External dependencies.
+    compile libraries.akka_actor
+    compile libraries.google_guava
+    compile libraries.google_guice
+    compile libraries.google_guava
+    compile libraries.google_gson
+    compile libraries.apache_commons_math
+    compile libraries.mysql
+    compile libraries.hsql
+    compile libraries.mina_core
+    compile libraries.mina_jmx
+    compile libraries.http_client
 
-  // Possible removal.
-  compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.+'
-  compile group: 'org.fusesource.leveldbjni', name:'leveldbjni-all', version:'1.1'
+    // Possible removal.
+    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
+    compile group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.1'
 
-  // Needed for compiling thrift
-  thriftCompile libraries.thrift
-  thriftCompile libraries.slf4j_api
+    // Needed for compiling thrift
+    thriftCompile libraries.thrift
+    thriftCompile libraries.slf4j_api
 }
 
 sourceSets {
-  main {
-    compileClasspath += thrift.output
-    runtimeClasspath += thrift.output
-  }
-  test {
-    compileClasspath += thrift.output
-    runtimeClasspath += thrift.output
-  }
+    main {
+        compileClasspath += thrift.output
+        runtimeClasspath += thrift.output
+    }
+    test {
+        compileClasspath += thrift.output
+        runtimeClasspath += thrift.output
+    }
 }
 
 javadoc {
-  classpath += sourceSets.thrift.output
+    classpath += sourceSets.thrift.output
 }
 
 jar.exclude '*.xml'
