@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Provides simple implementation of time series table.
  * <p>
- * The easiest way to give an insight of the implementation details is to describe the format it which data is
+ * The easiest way to give an insight of the usage details is to describe the format it which data is
  * stored:
  * </p>
  * <ul>
@@ -68,17 +68,6 @@ import java.util.Map;
  * "time interval to store per row = [1..10] * (average size of the time range to be read)".
  *
  * <p>
- * Row keys in underlying table have the following format: <code>&lt;entry_key>&lt;interval_timestamp></code>.
- * <code>entry_key</code> is a user-provided entry key value.
- * <code>interval_timestamp</code> is 8-byte encoded long which defines interval timestamp start.
- * </p>
- * <p>
- * Column name has the following format: <code>&lt;entry_timestamp>&lt;encoded_entry_tags></code>.
- * <code>&lt;entry_timestamp></code> is 8-byte encoded long: user-provided entry timestamp.
- * <code>&lt;encoded_entry_tags></code> is an encoded user-provided entry tags list.
- * </p>
- *
- * <p>
  * Due to the data format used for storing, filtering by tags during reading is done on client-side (not on a cluster).
  * At the same time filtering by entries keys happens on the server side which is much more performance efficient.
  * Depending on the use-case you may want to push some of the tags you would use into the entry key for faster reading.
@@ -107,7 +96,9 @@ import java.util.Map;
  * </p>
  */
 public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
-  // 1 hour. See class javadoc for description. Can be overridden by client code.
+  /**
+   * 1 hour. See class javadoc for description. Can be overridden by client code.
+    */
   public static final int DEFAULT_TIME_INTERVAL_PER_ROW = 60 * 60 * 1000;
 
   private static final String ATTR_TIME_INTERVAL_TO_STORE_PER_ROW = "timeIntervalToStorePerRow";
@@ -213,9 +204,6 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     tags = tags.clone();
     sortTags(tags);
 
-    // TODO: We'd really love to have readHigherOrEq() method in table API that would return next row with key >= given.
-    //       This would make algo much more efficient. While we don't have that, we have go with this uglier version.
-
     // calculating time intervals (i.e. rows, as one row = one time interval) to fetch
     long timeIntervals = getTimeIntervalsCount(startTime, endTime, timeIntervalToStorePerRow);
     int timeIntervalsCount = applyLimitOnRowsToRead(timeIntervals);
@@ -238,7 +226,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
         for (Map.Entry<byte[], byte[]> cv : result.getValue().entrySet()) {
           // note: we don't need to check time interval as we enforce it thru start/stop columns on Read, but we need
           //       to filter by tags
-          // TODO: possible perf improvement: we can do tags match and Entry parsing at the same time, i.e. in on pass
+          // hint: possible perf improvement: we can do tags match and Entry parsing at the same time, i.e. in on pass
           if (containsTags(cv.getKey(), tags)) {
             Entry entry = parse(key, cv.getKey(), cv.getValue());
             resultList.add(entry);
@@ -246,9 +234,6 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
         }
       }
     }
-
-    // TODO: sort result list? Does table.read returns columns in sorted order in Map? Doubt it since
-    //       it doesn't return SortedMap
 
     return resultList;
   }
@@ -277,6 +262,12 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ ) ? MAX_ROWS_TO_SCAN_PER_READ : (int) timeIntervalsCount;
   }
 
+  /**
+   * Row keys in underlying table have the following format: <code>&lt;entry_key>&lt;interval_timestamp></code>.
+   * <code>entry_key</code> is a user-provided entry key value.
+   * <code>interval_timestamp</code> is 8-byte encoded long which defines interval timestamp start.<br/>
+   * I.e. rows are stored in ascending time order.
+   */
   static byte[] createRow(final byte[] key, final long timestamp, long timeIntervalToStorePerRow) {
     return Bytes.add(key, Bytes.toBytes(getRowKeyTimestampPart(timestamp, timeIntervalToStorePerRow)));
   }
@@ -289,24 +280,24 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
     Arrays.sort(tags, Bytes.BYTES_COMPARATOR);
   }
 
+  /** Column name has the following format: <entry_timestamp><encoded_entry_tags>.
+   * <entry_timestamp> is 8-byte encoded long: user-provided entry timestamp.
+   * <encoded_entry_tags> is an encoded user-provided entry tags list. It has the following format:
+   * [<tag_length><tag_value>]*, where tag length is 4-byte encoded int length of the tag and tags are sorted in asc
+   * order. Sorting is needed for efficient filtering based on provided tags during reading.
+   */
   static byte[] createColumnName(long timestamp, byte[][] tags) {
-    // Column name has the following format: <entry_timestamp><encoded_entry_tags>.
-    // <entry_timestamp> is 8-byte encoded long: user-provided entry timestamp.
-    // <encoded_entry_tags> is an encoded user-provided entry tags list. It has the following format:
-    // [<tag_length><tag_value>]*, where tag length is 4-byte encoded int length of the tag and tags are sorted in asc
-    // order. Sorting is needed for efficient filtering based on provided tags during reading.
-
-    // TODO: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
+    // hint: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
     //       objects
 
-    // TODO: possible perf provement: we can actually store just the diff from the timestamp encoded in the row key and
+    // hint: possible perf provement: we can actually store just the diff from the timestamp encoded in the row key and
     //       by doing that reduce the footprint of every stored entry
-    // TODO: consider different column name format: we may want to know "sooner" how many there are tags to make other
+    // hint: consider different column name format: we may want to know "sooner" how many there are tags to make other
     //       parts of the code run faster and avoid creating too many array objects. This may be easily doable as column
     //       name is immutable.
     byte[] columnName = createColumnNameFirstPart(timestamp);
     for (byte[] tag : tags) {
-      // TODO: possible perf improvement: use compressed int (see Bytes.vintToByte()) or at least Bytes.toBytes(short)
+      // hint: possible perf improvement: use compressed int (see Bytes.vintToByte()) or at least Bytes.toBytes(short)
       //       which should be well enough
       columnName = Bytes.add(columnName, Bytes.toBytes(tag.length), tag);
     }
