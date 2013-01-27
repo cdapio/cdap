@@ -1,6 +1,7 @@
 package com.payvment.continuuity;
 
 import com.continuuity.test.FlowTestHelper;
+import com.continuuity.test.query.info.QueryTestInfo;
 import com.google.common.collect.ImmutableMultimap;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeedTable;
@@ -13,20 +14,22 @@ import org.junit.Test;
  */
 public class TestClusterFeedQueryProvider extends PayvmentBaseFlowTest {
   @Test
-  public void testQueryProvider() throws Exception{
-    ClusterFeedQueryProvider qp = new ClusterFeedQueryProvider();
-    FlowTestHelper.TestQueryHandle queryHandle = startQuery(qp);
+  public void testQueryProvider() throws Exception {
+    FlowTestHelper.TestQueryHandle queryHandle = startQuery(ClusterFeedQueryProvider.class);
     Assert.assertTrue(queryHandle.isSuccess());
     Assert.assertTrue(queryHandle.isRunning());
 
+    QueryTestInfo queryTestInfo = queryHandle.getQueryTestInfo("feedreader");
+
     populateActivityFeed();
 
-    QueryResult queryResult = runQuery("feedreader", "readactivity",
-             ImmutableMultimap.<String, String>of("clusterid", "1", "limit", "10", "country", "us"));
+    QueryResult queryResult = runQuery("feedreader", "readactivity", ImmutableMultimap.<String,
+      String>of("clusterid", "1", "limit", "10", "country", "us"));
+    Assert.assertEquals(1, queryTestInfo.getNumQueries());
     Assert.assertEquals(200, queryResult.getReturnCode());
     Assert.assertEquals("{\"activity\":[{\"timestamp\":12347,\"store_id\":101,\"products\":[{\"product_id\":1011," +
-                          "\"score\":6},{\"product_id\":1011,\"score\":5},{\"product_id\":1011,\"score\":1}]}]}",
-                        queryResult.getContent());
+                          "" + "\"score\":6},{\"product_id\":1011,\"score\":5},{\"product_id\":1011," +
+                          "\"score\":1}]}]}", queryResult.getContent());
     queryHandle.stop();
     Assert.assertFalse(queryHandle.isRunning());
   }

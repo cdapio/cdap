@@ -1,24 +1,22 @@
 package com.payvment.continuuity;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.test.FlowTestHelper;
+import com.continuuity.test.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.flow.info.ComputeFlowletTestInfo;
+import com.payvment.continuuity.data.ClusterTable;
+import org.junit.Test;
+
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Map;
-
-import com.continuuity.test.info.ComputeFlowletTestInfo;
-import org.junit.Test;
-
-import com.continuuity.api.data.OperationException;
-import com.continuuity.test.FlowTestHelper;
-import com.continuuity.test.FlowTestHelper.TestFlowHandle;
-import com.payvment.continuuity.data.ClusterTable;
-
 public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
 
-  private static final String CLEAR_CSV =
-      "reset_clusters,10,\"from unit test\"";
+  private static final String CLEAR_CSV = "reset_clusters,10,\"from unit test\"";
 
   @Test(timeout = 20000)
   public void testClusterWriterFlow() throws Exception {
@@ -26,11 +24,8 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     ClusterTable clusterTable = new ClusterTable();
     getDataSetRegistry().registerDataSet(clusterTable);
 
-    // Instantiate cluster writer feed flow
-    ClusterWriterFlow clusterWriterFlow = new ClusterWriterFlow();
-
     // Start the flow
-    TestFlowHandle flowHandle = startFlow(clusterWriterFlow);
+    TestFlowHandle flowHandle = startFlow(ClusterWriterFlow.class);
     assertTrue(flowHandle.isSuccess());
     assertTrue(flowHandle.isRunning());
 
@@ -57,15 +52,15 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
       System.out.println("Waiting for reset flowlet to process tuple");
       Thread.sleep(500);
     }
-    
+
     // Writer flowlet should not have received anything
     assertEquals(numWritten, clusterWriterInfo.getNumProcessed());
-    
+
     // Ensure no clusters in table
-    for (int i=0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       assertNull(clusterTable.readCluster(i));
     }
-    
+
     // Generate and insert some clusters
     writeCluster(1, "Sports", 0.0001);
     writeCluster(1, "Kitchen Appliances", 0.321);
@@ -81,30 +76,30 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     writeCluster(4, "Sports", 0.82);
     numParsed += 12;
     numWritten += 12;
-    
+
     // Wait for them to be written
     while (clusterWriterInfo.getNumProcessed() < numWritten) {
       System.out.println("Waiting for writer flowlet to process tuples");
       Thread.sleep(500);
     }
-    
+
     // Verify clusters in table
-    
+
     // Cluster 1
-    Map<String,Double> cluster = clusterTable.readCluster(1);
+    Map<String, Double> cluster = clusterTable.readCluster(1);
     assertNotNull(cluster);
     assertEquals(3, cluster.size());
     assertTrue(cluster.containsKey("Sports"));
     assertTrue(cluster.containsKey("Kitchen Appliances"));
     assertTrue(cluster.containsKey("Televisions"));
-    
+
     // Cluster 2
     cluster = clusterTable.readCluster(2);
     assertNotNull(cluster);
     assertEquals(2, cluster.size());
     assertTrue(cluster.containsKey("Housewares"));
     assertTrue(cluster.containsKey("Pottery"));
-    
+
     // Cluster 3
     cluster = clusterTable.readCluster(3);
     assertNotNull(cluster);
@@ -112,7 +107,7 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     assertTrue(cluster.containsKey("Cutlery"));
     assertTrue(cluster.containsKey("Knives"));
     assertTrue(cluster.containsKey("Hatchets"));
-    
+
     // Cluster 4
     cluster = clusterTable.readCluster(4);
     assertNotNull(cluster);
@@ -124,7 +119,7 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
 
     // Cluster 5 should not exist
     assertNull(clusterTable.readCluster(5));
-    
+
     // Generate a clear event, ensure no clusters in table
     writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
     numParsed++;
@@ -137,22 +132,21 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
       System.out.println("Waiting for reset flowlet to process tuple");
       Thread.sleep(500);
     }
-    
+
     // Try to read clusters, all should be null
     assertNull(clusterTable.readCluster(1));
     assertNull(clusterTable.readCluster(2));
     assertNull(clusterTable.readCluster(3));
     assertNull(clusterTable.readCluster(4));
     assertNull(clusterTable.readCluster(5));
-    
+
     // Stop flow
     assertTrue(FlowTestHelper.stopFlow(flowHandle));
   }
 
-  private void writeCluster(int cluster, String category, double weight)
-      throws OperationException {
-    writeToStream(ClusterWriterFlow.inputStream,
-        new String("" + cluster + ",\"" + category + "\"," + weight).getBytes());
+  private void writeCluster(int cluster, String category, double weight) throws OperationException {
+    writeToStream(ClusterWriterFlow.inputStream, new String("" + cluster + ",\"" + category + "\"," +
+                                                              "" + weight).getBytes());
   }
 
 }
