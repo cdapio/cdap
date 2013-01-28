@@ -14,7 +14,7 @@ buildscript{
 	    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
 	    dependencies {
-	        classpath "com.continuuity.gradle:continuuity-plugin:1.0.5-SNAPSHOT"
+	        classpath "com.continuuity.gradle:continuuity-plugin:1.0.7-SNAPSHOT"
 		}
 }
 
