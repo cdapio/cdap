@@ -31,11 +31,7 @@ import com.continuuity.flow.flowlet.internal.FlowletContextImpl;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Gateway;
 import com.continuuity.test.FlowTestHelper.TestDataSetRegistry;
-import com.continuuity.test.FlowTestHelper.TestFlowHandle;
-import com.continuuity.test.FlowTestHelper.TestQueryHandle;
-import com.continuuity.test.internal.info.TestInfo;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Guice;
@@ -145,7 +141,7 @@ public abstract class AppFabricTestBase {
     Map<String, List<Throwable>> exceptionsMap = Maps.newHashMap();
     for(TestFlowHandle flowHandle : flowHandles) {
       // Verify there are no exceptions thrown in the Flowlets
-      List<Throwable> exceptions = getFlowExceptions(flowHandle);
+      List<Throwable> exceptions = FlowTestHelper.getAllExceptions(flowHandle);
       if(!exceptions.isEmpty()) {
         exceptionsMap.put(flowHandle.getFlowName(), exceptions);
       }
@@ -153,9 +149,9 @@ public abstract class AppFabricTestBase {
     }
     for(TestQueryHandle queryHandle : queryHandles) {
       // Verify there are no exceptions thrown in QueryProvider
-      List<Throwable> exceptions = getFlowExceptions(queryHandle);
+      List<Throwable> exceptions = FlowTestHelper.getAllExceptions(queryHandle);
       if(!exceptions.isEmpty()) {
-        exceptionsMap.put(queryHandle.getFlowName(), exceptions);
+        exceptionsMap.put(queryHandle.getQueryName(), exceptions);
       }
       queryHandle.stop();
     }
@@ -261,9 +257,9 @@ public abstract class AppFabricTestBase {
    * Starts the specified query.
    * <p/>
    * Check the status of the query and whether it started properly using
-   * {@link FlowTestHelper.TestQueryHandle#isSuccess()}.
+   * {@link TestQueryHandle#isSuccess()}.
    * <p/>
-   * Always stop the query using {@link FlowTestHelper.TestQueryHandle#stop()}.
+   * Always stop the query using {@link TestQueryHandle#stop()}.
    *
    * @param queryProviderClass the query to start
    * @return handle to running query
@@ -284,19 +280,19 @@ public abstract class AppFabricTestBase {
     String connectionString = conf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
     if (connectionString == null) {
       throw new IllegalStateException(String.format("Not able to get Zookeeper server information. Is the query %s " +
-                                                      "started?", queryHandle.getFlowName()));
+                                                      "started?", queryHandle.getQueryName()));
     }
     try {
       ServiceDiscoveryClient discoveryClient = new ServiceDiscoveryClient(connectionString);
       ServiceInstance<ServicePayload> serviceInstance = discoveryClient.getInstance(
-        String.format("query.%s",queryHandle.getFlowName()), new RandomStrategy<ServicePayload>());
+        String.format("query.%s",queryHandle.getQueryName()), new RandomStrategy<ServicePayload>());
       if (serviceInstance == null) {
         throw new IllegalStateException(String.format("Not able to get query information. Is the query %s started?",
-                                                      queryHandle.getFlowName()));
+                                                      queryHandle.getQueryName()));
       }
       RequestBuilder requestBuilder = new RequestBuilder("GET").setUrl(
         String.format("http://%s:%d/rest-query/%s/%s", serviceInstance.getAddress(), serviceInstance.getPort(),
-                                                                              queryHandle.getFlowName(), methodName));
+                                                                              queryHandle.getQueryName(), methodName));
       for (Map.Entry<String, String> parameter : parameters.entries()) {
         requestBuilder.addQueryParameter(parameter.getKey(), parameter.getValue());
       }
@@ -319,9 +315,9 @@ public abstract class AppFabricTestBase {
       }
 
       // Check if any exceptions were thrown when query was run in QueryProvider
-      List<Throwable> exceptions = getFlowExceptions(queryHandle);
+      List<Throwable> exceptions = FlowTestHelper.getAllExceptions(queryHandle);
       if(!exceptions.isEmpty()) {
-        failTestsIfExceptions(ImmutableMap.of(queryHandle.getFlowName(), exceptions), null);
+        failTestsIfExceptions(ImmutableMap.of(queryHandle.getQueryName(), exceptions), null);
       }
 
       // If the QueryProvider did not throw any exceptions, then throw AsyncHttpClient's exception if any
@@ -332,12 +328,12 @@ public abstract class AppFabricTestBase {
       // Response should not be null if AsyncHttpClient has not thrown any exception
       if(response == null) {
         throw new IllegalStateException(
-          String.format("Internal Error! Not able to fetch response from query %s.", queryHandle.getFlowName()));
+          String.format("Internal Error! Not able to fetch response from query %s.", queryHandle.getQueryName()));
       }
 
       return new QueryResult(response.getStatusCode(), response.getResponseBody());
     } catch (Exception e) {
-      LOG.error(String.format("Exception while trying to run query %s.%s: ", queryHandle.getFlowName(), methodName), e);
+      LOG.error(String.format("Exception while trying to run query %s.%s: ", queryHandle.getQueryName(), methodName), e);
       throw new RuntimeException(e);
     }
   }
@@ -381,7 +377,7 @@ public abstract class AppFabricTestBase {
     long execTime = 0L;
     long sleep = 500L;
     do {
-      List<Throwable> exceptions = getFlowExceptions(flowHandle);
+      List<Throwable> exceptions = FlowTestHelper.getAllExceptions(flowHandle);
       if(!exceptions.isEmpty()) {
         failTestsIfExceptions(ImmutableMap.of(flowHandle.getFlowName(), exceptions), null);
       }
@@ -397,17 +393,6 @@ public abstract class AppFabricTestBase {
   public void waitForCondition(TestFlowHandle flowHandle, String message, Condition condition) throws InterruptedException {
     waitForCondition(flowHandle, message, -1L, condition);
   }
-  static List<Throwable> getFlowExceptions(TestFlowHandle flowHandle) {
-    List<Throwable> exceptions = Lists.newArrayList();
-    for(String flowlet : flowHandle.getFlowletNames()) {
-      TestInfo testInfo = flowHandle.getTestInfo(flowlet);
-      if(testInfo != null) {
-        exceptions.addAll(testInfo.popExceptions());
-      }
-    }
-    return exceptions;
-  }
-
   static void failTestsIfExceptions(Map<String, List<Throwable>> exceptionsMap, String message) {
     if(!exceptionsMap.isEmpty()) {
       StringWriter stringWriter = new StringWriter();
