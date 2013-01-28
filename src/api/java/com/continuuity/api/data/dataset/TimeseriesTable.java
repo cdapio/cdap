@@ -21,7 +21,6 @@ public interface TimeseriesTable {
    */
   void write(Entry entry) throws OperationException;
 
-  // TODO: leave one write operation (after adding notion of write mode in DataSet API)
   /**
    * Stores entry in dataset. This write operation is executed asynchronously.
    * See {@link Entry} for more details.
@@ -41,7 +40,7 @@ public interface TimeseriesTable {
    *        NOTE: return entries contain all tags that were providing during writing, NOT passed with this param.
    *
    * @return list of entries that satisfy provided conditions.
-   *         TODO: any guarantees on the order of entries in the list? See TODO in the SimpleTimeseries implementation
+   *
    * @throws OperationException when underlying {@link com.continuuity.api.data.dataset.table.Table} throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
@@ -54,7 +53,6 @@ public interface TimeseriesTable {
     private byte[] key;
     private byte[] value;
     private long timestamp;
-    // TODO: use set?
     private byte[][] tags;
 
     /**
