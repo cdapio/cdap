@@ -2,7 +2,7 @@ package com.payvment.continuuity;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.test.FlowTestHelper;
-import com.continuuity.test.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.TestFlowHandle;
 import com.continuuity.test.flow.info.ComputeFlowletTestInfo;
 import com.payvment.continuuity.data.ClusterTable;
 import org.junit.Test;

@@ -3,7 +3,7 @@ package com.payvment.continuuity;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.test.AppFabricTestBase;
-import com.continuuity.test.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.TestFlowHandle;
 import com.payvment.continuuity.data.ActivityFeed;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ActivityFeedTable;

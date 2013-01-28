@@ -1,6 +1,7 @@
 package com.payvment.continuuity;
 
 import com.continuuity.test.FlowTestHelper;
+import com.continuuity.test.TestQueryHandle;
 import com.continuuity.test.query.info.QueryTestInfo;
 import com.google.common.collect.ImmutableMultimap;
 import com.payvment.continuuity.data.ActivityFeed;
@@ -15,7 +16,7 @@ import org.junit.Test;
 public class TestClusterFeedQueryProvider extends PayvmentBaseFlowTest {
   @Test
   public void testQueryProvider() throws Exception {
-    FlowTestHelper.TestQueryHandle queryHandle = startQuery(ClusterFeedQueryProvider.class);
+    TestQueryHandle queryHandle = startQuery(ClusterFeedQueryProvider.class);
     Assert.assertTrue(queryHandle.isSuccess());
     Assert.assertTrue(queryHandle.isRunning());
 

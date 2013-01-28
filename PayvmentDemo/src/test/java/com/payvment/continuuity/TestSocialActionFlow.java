@@ -11,7 +11,7 @@ import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.test.FlowTestHelper;
-import com.continuuity.test.FlowTestHelper.TestFlowHandle;
+import com.continuuity.test.TestFlowHandle;
 import com.google.gson.Gson;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 import com.payvment.continuuity.data.ActivityFeedTable;
