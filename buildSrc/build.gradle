@@ -3,7 +3,5 @@ apply plugin: 'idea'
 
 dependencies {
     compile gradleApi()
-    // Removing localGroovy since a transitive dependency to groovy is getting included in all generated poms.
-//  Removing localGroovy did not cause any issue when project is built locally
-//    compile localGroovy()
+    compile localGroovy()
 }
