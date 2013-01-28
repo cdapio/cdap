@@ -30,6 +30,12 @@ dependencies {
     clover elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
 
     /// External dependencies.
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
     compile libraries.thrift
     compile libraries.akka_actor
     compile libraries.kryo
