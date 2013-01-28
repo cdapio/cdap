@@ -16,6 +16,14 @@ dependencies {
   clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
   clover elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
 
+  compile libraries.slf4j_api
+  compile libraries.logback_core
+  compile libraries.logback_classic
+  compile libraries.google_guice
+
+  testCompile libraries.mockito_core
+  testCompile libraries.junit
+
   compile libraries.avro
   compile libraries.avro_ipc
   compile libraries.flume_ng_core
