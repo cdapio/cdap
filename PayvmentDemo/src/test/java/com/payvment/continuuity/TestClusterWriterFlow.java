@@ -30,28 +30,35 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     assertTrue(flowHandle.isRunning());
 
     // Get Flowlet TestInfo objects
-    ComputeFlowletTestInfo clusterSourceParserInfo = flowHandle.getComputeFlowletTestInfo("cluster_source_parser");
+    final ComputeFlowletTestInfo clusterSourceParserInfo = flowHandle.getComputeFlowletTestInfo("cluster_source_parser");
     assertNotNull(clusterSourceParserInfo);
-    ComputeFlowletTestInfo clusterWriterInfo = flowHandle.getComputeFlowletTestInfo("cluster_writer");
+    final ComputeFlowletTestInfo clusterWriterInfo = flowHandle.getComputeFlowletTestInfo("cluster_writer");
     assertNotNull(clusterWriterInfo);
-    ComputeFlowletTestInfo clusterResetInfo = flowHandle.getComputeFlowletTestInfo("cluster_reset");
+    final ComputeFlowletTestInfo clusterResetInfo = flowHandle.getComputeFlowletTestInfo("cluster_reset");
     assertNotNull(clusterResetInfo);
 
     // Generate a clear event and wait for it to be processed
     int numParsed = clusterSourceParserInfo.getNumProcessed();
     int numReset = clusterResetInfo.getNumProcessed();
     int numWritten = clusterWriterInfo.getNumProcessed();
+
     writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
-    numParsed++;
-    numReset++;
-    while (clusterSourceParserInfo.getNumProcessed() < numParsed) {
-      System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(500);
-    }
-    while (clusterResetInfo.getNumProcessed() < numReset) {
-      System.out.println("Waiting for reset flowlet to process tuple");
-      Thread.sleep(500);
-    }
+    final int numParsed1 = ++numParsed;
+    final int numReset1 = ++numReset;
+    waitForCondition(flowHandle, "Waiting for parsing flowlet to process tuple",
+                     new Condition() {
+                       @Override
+                       public boolean evaluate() {
+                         return clusterSourceParserInfo.getNumProcessed() >= numParsed1;
+                       }
+                     });
+    waitForCondition(flowHandle, "Waiting for reset flowlet to process tuple",
+                     new Condition() {
+                       @Override
+                       public boolean evaluate() {
+                         return clusterResetInfo.getNumProcessed() >= numReset1;
+                       }
+                     });
 
     // Writer flowlet should not have received anything
     assertEquals(numWritten, clusterWriterInfo.getNumProcessed());
@@ -77,11 +84,15 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
     numParsed += 12;
     numWritten += 12;
 
+    final int numWritten2 = numWritten;
     // Wait for them to be written
-    while (clusterWriterInfo.getNumProcessed() < numWritten) {
-      System.out.println("Waiting for writer flowlet to process tuples");
-      Thread.sleep(500);
-    }
+    waitForCondition(flowHandle, "Waiting for writer flowlet to process tuples",
+                     new Condition() {
+                       @Override
+                       public boolean evaluate() {
+                         return clusterWriterInfo.getNumProcessed() >= numWritten2;
+                       }
+                     });
 
     // Verify clusters in table
 
@@ -122,16 +133,22 @@ public class TestClusterWriterFlow extends PayvmentBaseFlowTest {
 
     // Generate a clear event, ensure no clusters in table
     writeToStream(ClusterWriterFlow.inputStream, CLEAR_CSV.getBytes());
-    numParsed++;
-    numReset++;
-    while (clusterSourceParserInfo.getNumProcessed() < numParsed) {
-      System.out.println("Waiting for parsing flowlet to process tuple");
-      Thread.sleep(500);
-    }
-    while (clusterResetInfo.getNumProcessed() < numReset) {
-      System.out.println("Waiting for reset flowlet to process tuple");
-      Thread.sleep(500);
-    }
+    final int numParsed3 = ++numParsed;
+    final int numReset3 = ++numReset;
+    waitForCondition(flowHandle, "Waiting for parsing flowlet to process tuple",
+                     new Condition() {
+                       @Override
+                       public boolean evaluate() {
+                         return clusterSourceParserInfo.getNumProcessed() >= numParsed3;
+                       }
+                     });
+    waitForCondition(flowHandle, "Waiting for reset flowlet to process tuple",
+                     new Condition() {
+                       @Override
+                       public boolean evaluate() {
+                         return clusterResetInfo.getNumProcessed() >= numReset3;
+                       }
+                     });
 
     // Try to read clusters, all should be null
     assertNull(clusterTable.readCluster(1));

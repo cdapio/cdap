@@ -23,7 +23,7 @@ public class TestClusterFeedQueryProvider extends PayvmentBaseFlowTest {
 
     populateActivityFeed();
 
-    QueryResult queryResult = runQuery("feedreader", "readactivity", ImmutableMultimap.<String,
+    QueryResult queryResult = runQuery(queryHandle, "readactivity", ImmutableMultimap.<String,
       String>of("clusterid", "1", "limit", "10", "country", "us"));
     Assert.assertEquals(1, queryTestInfo.getNumQueries());
     Assert.assertEquals(200, queryResult.getReturnCode());
