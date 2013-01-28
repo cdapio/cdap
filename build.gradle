@@ -10,6 +10,14 @@ dependencies {
    clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}"], "data-fabric")
    testCompile('org.apache.hbase:hbase:0.94.2.1.3.4.continuuity:tests') { exclude module: 'junit' }
    testCompile libraries.hadoop_minicluster
+   compile libraries.slf4j_api
+   compile libraries.logback_core
+   compile libraries.logback_classic
+   compile libraries.google_guice
+
+   testCompile libraries.mockito_core
+   testCompile libraries.junit
+
 }
 
 /**
