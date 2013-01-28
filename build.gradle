@@ -33,6 +33,14 @@ dependencies {
 
     // Other dependencies
     compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+    compile libraries.slf4j_api
     compile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guice
