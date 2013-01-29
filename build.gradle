@@ -22,6 +22,7 @@ dependencies {
    compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+   compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
    apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true],"common")
 
@@ -35,6 +36,8 @@ dependencies {
    compile libraries.kryo
    compile libraries.google_gson
    compile libraries.google_guice
+   compile libraries.google_guice_assistedinject
+   compile libraries.google_guice_multibindings
    compile libraries.google_guava
    compile libraries.mysql
    compile libraries.hsql
