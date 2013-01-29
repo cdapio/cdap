@@ -14,6 +14,13 @@ dependencies {
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
     clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
+    compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+
     // External dependencies.
     compile libraries.akka_actor
     compile libraries.google_guava
