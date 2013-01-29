@@ -11,6 +11,14 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
   compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
 
+  compile libraries.slf4j_api
+  compile libraries.logback_core
+  compile libraries.logback_classic
+  compile libraries.google_guice
+
+  testCompile libraries.mockito_core
+  testCompile libraries.junit
+
   apiCompile libraries.google_guava
   apiCompile libraries.netty
 
