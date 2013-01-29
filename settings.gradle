@@ -23,7 +23,7 @@ gitRepos << new GitRepo(name: "web-cloud-app", branch: branch);
 gitRepos << new GitRepo(name: "examples", branch: branch);
 gitRepos << new GitRepo(name: "singlenode", branch: branch);
 gitRepos << new GitRepo(name: "performance", branch: branch);
-gitRepos << new GitRepo(name: "manager", branch: branch);
+gitRepos << new GitRepo(name: "app-fabric", branch: branch);
 gitRepos << new GitRepo(name: "wallboard", branch: branch);
 gitRepos << new GitRepo(name: "passport", branch: branch);
 

@@ -33,6 +33,7 @@ clover.license
 /data
 /performance
 /manager
+/app-fabric
 /wallboard
 
 # Ignore Node stuff
