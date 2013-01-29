@@ -59,6 +59,11 @@ class GitRepo {
             println "$name: $cmd";
             runCommand(cmd);
         }
+        if (branch == null || branch.isEmpty()) {
+            String cmd = "git rev-parse --abbrev-ref HEAD"
+            println "$name: $cmd"
+            branch = runCommand(cmd, destination);
+        }
     }
 
     /**
@@ -173,7 +178,7 @@ class GitRepo {
      * @param cmd   the command to run.
      * @param dir   the working directory to use.
      */
-    private void runCommand (String cmd, File dir = null)
+    private String runCommand (String cmd, File dir = null)
     {
         ProcessBuilder processBuilder = new ProcessBuilder(shell, shellOption, cmd)
         if(dir != null)
@@ -184,9 +189,13 @@ class GitRepo {
         Process p = processBuilder.start();
         BufferedReader cmdOut = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String errline = ""
+        StringBuilder outputBuilder = new StringBuilder();
+        String separator = "";
         while((errline = cmdOut.readLine()) != null)
         {
             println errline;
+            outputBuilder.append(errline).append(separator);
+            separator = "\n";
         }
         if(p.waitFor() != 0)
         {
@@ -198,6 +207,7 @@ class GitRepo {
             }
             throw new Exception("Command failed: $cmd");
         }
+        return outputBuilder.toString();
     }
 
     /**
