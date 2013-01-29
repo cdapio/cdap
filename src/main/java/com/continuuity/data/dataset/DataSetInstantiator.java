@@ -74,6 +74,23 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   /**
+   * Add one data set spec to this instantiator.
+   * @param spec the data set specification
+   */
+  public void addDataSet(DataSetSpecification spec) {
+    this.datasets.put(spec.getName(), spec);
+  }
+
+  /**
+   * Find out whether the instantiator has a spec for a named data set
+   * @param name the name of the data set
+   * @return whether the instantiator knows the spec for the data set
+   */
+  public boolean hasDataSet(String name) {
+    return this.datasets.containsKey(name);
+  }
+
+  /**
    *  The main value of this class: Creates a new instance of a data set, as
    *  specified by the matching data set spec, and injects the data fabric
    *  runtime into the new data set.
