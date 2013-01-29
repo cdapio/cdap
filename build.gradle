@@ -1,14 +1,14 @@
-apply plugin:'java'
+apply plugin: 'java'
 
 /**
  * Test Runners for different environments specifying testsuites
  */
 testrunner {
-  integration {
-     setup {
-       environment(os:"mac os x")
-     }
-  }
+    integration {
+        setup {
+            environment(os: "mac os x")
+        }
+    }
 }
 
 /**
@@ -33,6 +33,14 @@ dependencies {
 
     // Other dependencies
     compile libraries.slf4j_api
+    compile libraries.logback_core
+    compile libraries.logback_classic
+    compile libraries.google_guice
+
+    testCompile libraries.mockito_core
+    testCompile libraries.junit
+
+    compile libraries.slf4j_api
     compile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guice
@@ -48,7 +56,7 @@ dependencies {
     compile libraries.hadoop_yarn_common
     compile libraries.hadoop_yarn_api
     compile libraries.thrift
-    compile libraries.avro  
+    compile libraries.avro
     compile libraries.avro_ipc
     compile libraries.flume_ng_sdk
     compile libraries.flume_ng_core
@@ -57,11 +65,11 @@ dependencies {
     compile libraries.findbugs_jsr311
 
     testCompile libraries.hadoop_minicluster
-    testCompile libraries.jersey_server 
+    testCompile libraries.jersey_server
     testCompile libraries.jersey_servlet
     testCompile libraries.jersey_client
     testCompile libraries.jersey_core
 
     // For metrics
-    compile "com.yammer.metrics:metrics-core:2.1.+"
+    compile "com.yammer.metrics:metrics-core:2.1.5"
 }
