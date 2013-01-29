@@ -27,20 +27,20 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
     dependencies {
-        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.5-SNAPSHOT"
+        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.6-SNAPSHOT"
     }
 }
 
-subprojects{
-  version = rootProject.version
+subprojects {
+    version = rootProject.version
 }
 evaluationDependsOnChildren()
 
 
-if(!hasProperty("branch")) {
-  //if branch is not passed in using -P parameter - then use the branch of continuuity repo 
-  //branch = "git rev-parse --abbrev-ref HEAD".execute().text 
-   branch = "master"
+if (!hasProperty("branch")) {
+    //if branch is not passed in using -P parameter - then use the branch of continuuity repo
+    //branch = "git rev-parse --abbrev-ref HEAD".execute().text
+    branch = "master"
 }
 
 ext.masterRepo = new GitRepo(name: "continuuity", dir: ".", branch: branch)
@@ -80,7 +80,7 @@ task gitUpdate {
     }
 }
 
-task gitStatus  {
+task gitStatus {
     group = 'Git'
     description = 'Checks the status of all git repos'
     doLast {
@@ -92,21 +92,21 @@ task gitStatus  {
 }
 
 
-task javadoc(type: Javadoc, overwrite:true) {
-	doFirst{
-		classpath = files(subprojects.collect { project ->
-	        project.sourceSets.main.compileClasspath
-	    })
-	}
-    group = 'Documentation' 
+task javadoc(type: Javadoc, overwrite: true) {
+    doFirst {
+        classpath = files(subprojects.collect { project ->
+            project.sourceSets.main.compileClasspath
+        })
+    }
+    group = 'Documentation'
     description = 'Aggregates javadocs for all projects.'
-    doFirst{
-		source subprojects.collect { project ->
-        	if(project.plugins.findPlugin("java")){
-				project.sourceSets.main.allJava
-			}
-			[]		
-		}
+    doFirst {
+        source subprojects.collect { project ->
+            if (project.plugins.findPlugin("java")) {
+                project.sourceSets.main.allJava
+            }
+            []
+        }
     }
     destinationDir = new File(buildDir, 'javadoc')
 }
@@ -116,7 +116,7 @@ task gitTagAll {
     description = 'Tags continuuity master and all subproject repos locally ' +
             'with provided tag.  Must specify -PtagName=<tag>'
     doLast {
-        if (! project.hasProperty('tagName')) {
+        if (!project.hasProperty('tagName')) {
             throw new InvalidUserDataException("you are trying to tag all " +
                     "subproject repos, but tagName property is null.  " +
                     "You must supply argument \"-PtagName=<tag>\"")
@@ -134,7 +134,7 @@ task gitPushTagAll {
     description = 'Pushes a local tag to remote repo for all continuuity ' +
             'master and subproject repos.  Must specify -PtagName=<tag>'
     doLast {
-        if (! project.hasProperty('tagName')) {
+        if (!project.hasProperty('tagName')) {
             throw new InvalidUserDataException("you are trying to push a " +
                     "tag for all subproject repos, but tagName property " +
                     "is null.  You must supply argument \"-PtagName=<tag>\"")
@@ -152,7 +152,7 @@ task gitBranchAll {
     description = 'Branch continuuity master and all subproject repos locally ' +
             'with provided branch.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branch')) {
+        if (!project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to branch all " +
                     "subproject repos, but branch property is null.  " +
                     "You must supply argument \"-Pbranch=<branch>\"")
@@ -169,7 +169,7 @@ task gitPushBranchAll {
     description = 'Pushes a local branch to remote repo for all continuuity ' +
             'master and subproject repos.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branch')) {
+        if (!project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to push a " +
                     "branch for all subproject repos, but branch " +
                     "property is null.  You must supply argument " +
@@ -188,7 +188,7 @@ task gitCheckoutBranch {
     description = 'Checkouts specified branch on continuuity and all ' +
             'subproject repos.  Must specify -Pbranch=<branch>'
     doLast {
-        if (! project.hasProperty('branch')) {
+        if (!project.hasProperty('branch')) {
             throw new InvalidUserDataException("you are trying to " +
                     "checkout a branch for all subproject repos, but " +
                     "branch property is null.  You must supply " +
@@ -198,7 +198,7 @@ task gitCheckoutBranch {
         ext.gitReposBranch = []
         ext.masterRepoBranch = new GitRepo(name: "continuuity", dir: ".",
                 branch: branch)
-        subprojects.each {project ->
+        subprojects.each { project ->
             print project.name + "\n"
             gitReposBranch << new GitRepo(name: project.name, branch: branch)
         }

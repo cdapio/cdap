@@ -34,6 +34,7 @@ clover.license
 /performance
 /manager
 /wallboard
+/passport
 
 # Ignore Node stuff
 npm*
