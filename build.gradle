@@ -1,0 +1,9 @@
+apply plugin: 'java'
+
+smartyFacts {
+}
+
+// Specify all the dependencies.
+dependencies {
+    compile libraries.slf4j_api
+}
