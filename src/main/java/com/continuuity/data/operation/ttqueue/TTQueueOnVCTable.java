@@ -92,7 +92,7 @@ public class TTQueueOnVCTable implements TTQueue {
         "ttqueue.entry.semiacked.max",
         10 * 1000); // 10 second default
   }
-
+  //Mario, look at the next method!
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
       throws OperationException {
@@ -158,9 +158,8 @@ public class TTQueueOnVCTable implements TTQueue {
     this.table.put(shardMetaRow, GLOBAL_SHARD_META, dirty.getSecond(),
         shardMeta.getBytes());
     // Increment entry write pointer (release shard lock)
-    long newWritePointer = this.table.increment(entryWritePointerRow,
-        GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, 1, dirty.getFirst(),
-        dirty.getSecond());
+    long newWritePointer = this.table.increment(entryWritePointerRow, GLOBAL_ENTRYID_WRITEPOINTER_COUNTER, 1,
+                                                                     dirty.getFirst(), dirty.getSecond());
     log("Updated shard meta (" + shardMeta + ") and incremented write " +
         "pointer to " + newWritePointer);
 

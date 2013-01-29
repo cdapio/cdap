@@ -23,14 +23,12 @@ import java.io.IOException;
 
 public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
-  private static final Logger Log
-      = LoggerFactory.getLogger(HBaseOVCTableHandle.class);
+  private static final Logger Log = LoggerFactory.getLogger(HBaseOVCTableHandle.class);
 
   protected final Configuration conf;
   protected final HBaseAdmin admin;
 
-  protected static final IOExceptionHandler exceptionHandler =
-      new HBaseIOExceptionHandler();
+  protected static final IOExceptionHandler exceptionHandler = new HBaseIOExceptionHandler();
 
   protected static final byte [] FAMILY = Bytes.toBytes("fam");
 
@@ -42,26 +40,26 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     this.admin = new HBaseAdmin(conf);
   }
 
+  protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
+    return new HBaseOVCTable(this.conf, tableName, FAMILY, new HBaseIOExceptionHandler());
+  }
+
   @Override
-  public OrderedVersionedColumnarTable createNewTable(byte[] tableName)
-      throws OperationException {
-    HBaseOVCTable table = null;
+  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
     try {
       createTable(tableName, FAMILY);
-      table = new HBaseOVCTable(this.conf, tableName, FAMILY,
-          new HBaseIOExceptionHandler());
+      return createOVCTable(tableName);
     } catch (IOException e) {
       exceptionHandler.handle(e);
     }
-    return table;
+    return null;
   }
 
   @Override
   public OrderedVersionedColumnarTable openTable(byte[] tableName) throws OperationException {
     try {
       if (this.admin.tableExists(tableName)) {
-        return new HBaseOVCTable(this.conf, tableName, FAMILY,
-            new HBaseIOExceptionHandler());
+        return createOVCTable(tableName);
       }
     } catch (IOException e) {
       exceptionHandler.handle(e);
@@ -69,11 +67,9 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
     return null;
   }
 
-  protected HTable createTable(byte [] tableName, byte [] family)
-      throws IOException {
+  protected HTable createTable(byte [] tableName, byte [] family) throws IOException {
     if (this.admin.tableExists(tableName)) {
-      Log.debug("Attempt to creating table '" + tableName + "', " +
-          "which already exists. Opening existing table instead.");
+      Log.debug("Attempt to creating table '" + tableName + "', which already exists. Opening existing table instead.");
       return new HTable(this.conf, tableName);
     }
     HTableDescriptor htd = new HTableDescriptor(tableName);

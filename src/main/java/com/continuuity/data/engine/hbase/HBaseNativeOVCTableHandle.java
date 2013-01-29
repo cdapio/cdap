@@ -7,6 +7,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
+import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.hbase.ttqueue.HBQConstants;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -23,9 +24,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
       new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
   
   @Inject
-  public HBaseNativeOVCTableHandle(
-      @Named("HBaseOVCTableHandleConfig")Configuration conf)
-          throws IOException {
+  public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleConfig")Configuration conf) throws IOException {
     super(conf);
   }
 
@@ -35,8 +34,23 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   }
 
   @Override
-  public TTQueueTable getQueueTable(byte[] queueTableName)
-      throws OperationException {
+  protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
+    return new HBaseNativeOVCTable(this.conf, tableName, FAMILY, new HBaseIOExceptionHandler());
+  }
+
+  @Override
+  public OrderedVersionedColumnarTable createNewTable(byte[] tableName) throws OperationException {
+    try {
+      createTable(tableName, FAMILY);
+      return createOVCTable(tableName);
+    } catch (IOException e) {
+      exceptionHandler.handle(e);
+    }
+    return null;
+  }
+
+  @Override
+  public TTQueueTable getQueueTable(byte[] queueTableName) throws OperationException {
     TTQueueTable queueTable = this.queueTables.get(queueTableName);
     if (queueTable != null) return queueTable;
     HTable table = getHTable(queueOVCTable, HBQConstants.HBQ_FAMILY);
@@ -48,8 +62,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
   }
   
   @Override
-  public TTQueueTable getStreamTable(byte[] streamTableName)
-      throws OperationException {
+  public TTQueueTable getStreamTable(byte[] streamTableName) throws OperationException {
     TTQueueTable streamTable = this.streamTables.get(streamTableName);
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
@@ -60,8 +73,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     return existing != null ? existing : streamTable;
   }
 
-  public HTable getHTable(byte[] tableName, byte[] family)
-      throws OperationException {
+  public HTable getHTable(byte[] tableName, byte[] family) throws OperationException {
     HTable table = this.htables.get(tableName);
     if (table != null) return table;
     try {

@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,26 +23,29 @@ import static org.junit.Assert.*;
  */
 public abstract class TestOVCTable {
 
-  // TODO: As part of ENG-211, add testing of HBaseOVCTable
+  // TODO: As part of ENG-211, add testing of HBaseNativeOVCTable
+  private static final Logger Log = LoggerFactory.getLogger(TestOVCTable.class);
 
-  private OrderedVersionedColumnarTable table;
+  protected OrderedVersionedColumnarTable table;
   private OVCTableHandle tableHandle;
 
-  private static final Random r = new Random();
+  protected static final Random r = new Random();
+
+  protected OVCTableHandle getTableHandle() {
+    return this.tableHandle;
+  }
 
   @Before
   public void initialize() throws OperationException {
     System.out.println("\n\nBeginning test\n\n");
-    this.tableHandle = getTableHandle();
-    this.table = this.tableHandle.getTable(
-        Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
+    this.tableHandle = injectTableHandle();
+    this.table = this.tableHandle.getTable(Bytes.toBytes("TestOVCTable" + Math.abs(r.nextInt())));
   }
 
-  protected abstract OVCTableHandle getTableHandle();
+  protected abstract OVCTableHandle injectTableHandle();
 
-  private static final byte [] COL = new byte [] { (byte)0 };
-  private static final MemoryReadPointer RP_MAX =
-      new MemoryReadPointer(Long.MAX_VALUE);
+  protected static final byte [] COL = new byte [] { (byte)0 };
+  protected static final MemoryReadPointer RP_MAX = new MemoryReadPointer(Long.MAX_VALUE);
 
   @Test
   public void testSimpleReadWrite() throws OperationException {
@@ -95,8 +100,7 @@ public abstract class TestOVCTable {
     // insert a version of every column, two at a time
     long version = 10L;
     for (int i=0;i<ncols;i+=2) {
-      this.table.put(row, new byte [][] { columns[i], columns[i+1] }, version,
-          new byte [][] { values[i], values[i+1] });
+      this.table.put(row, new byte [][] {columns[i], columns[i+1]}, version, new byte [][] {values[i], values[i+1]});
     }
 
     // read them all back at once using all the various read apis
@@ -119,8 +123,7 @@ public abstract class TestOVCTable {
 
     // getWV(row,col)
     for(int i=0;i<ncols;i++) {
-      ImmutablePair<byte[],Long> valueAndVersion =
-          this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
+      ImmutablePair<byte[],Long> valueAndVersion = this.table.getWithVersion(row, columns[i], RP_MAX).getValue();
       assertTrue(Bytes.equals(valueAndVersion.getFirst(), values[i]));
       assertEquals(new Long(version), valueAndVersion.getSecond());
     }
@@ -197,13 +200,17 @@ public abstract class TestOVCTable {
     colMap = this.table.get(row, RP_MAX).getValue();
     assertEquals(ncols - 15, colMap.size());
 
-    // undelete the second 5
+    // undelete the second 5 with old code
+    // with new code, undeleteAll would not restore puts from same transation !!
+    // so, with new code
     subCols = Arrays.copyOfRange(columns, 5, 10);
     this.table.undeleteAll(row, subCols, version);
 
-    // get returns 10 less
+    // get returns 10 less for old code
+    // get returns 15 less for new code
     colMap = this.table.get(row, RP_MAX).getValue();
     assertEquals(ncols - 10, colMap.size());
+    //assertEquals(ncols - 15, colMap.size());
   }
 
   @Test
@@ -705,7 +712,8 @@ public abstract class TestOVCTable {
     // If writes can overwrite deletes at the same timestamp:
     // assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX)));
     // Currently, a delete cannot be overwritten on the same version:
-    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());
+    assertTrue(this.table.get(row, COL, RP_MAX).isEmpty());   //fails
+    //assertEquals(3L, Bytes.toLong(this.table.get(row, COL, RP_MAX).getValue()));
 
     // Undelete the delete all at 3
     this.table.undeleteAll(row, COL, 3L);
@@ -826,7 +834,7 @@ public abstract class TestOVCTable {
         if (number != this.lastCreated) {
           byte[] tableName = Integer.toString(this.trigger.get()).getBytes();
           try {
-            tableHandle.getTable(tableName);
+            getTableHandle().getTable(tableName);
           } catch (Exception e) {
             failed.set(true);
             e.printStackTrace();
