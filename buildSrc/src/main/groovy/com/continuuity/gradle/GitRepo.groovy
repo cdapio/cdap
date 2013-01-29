@@ -55,7 +55,7 @@ class GitRepo {
         File destination = new File(baseDir, dir);
         if(!destination.exists())
         {
-            String cmd = "git clone -vv --branch $branch $origin $destination.canonicalPath";
+            String cmd = "git clone -vv --branch master $origin $destination.canonicalPath";
             println "$name: $cmd";
             runCommand(cmd);
         }
