@@ -18,7 +18,7 @@ public class OddOrEven extends ComputeFlowlet {
   public void configure(final FlowletSpecifier specifier) {
     TupleSchema schema = new TupleSchemaBuilder().add("number", Integer.class).create();
     specifier.getDefaultFlowletInput().setSchema(schema);
-    specifier.addFlowletInput("odd").setSchema(schema);
+    specifier.getDefaultFlowletOutput().setSchema(schema);
     specifier.addFlowletOutput("even").setSchema(schema);
   }
 
@@ -28,7 +28,7 @@ public class OddOrEven extends ComputeFlowlet {
     if(num.intValue() % 2 == 0) {
       collector.add("even", tuple);
     } else {
-      collector.add("odd", tuple);
+      collector.add(tuple);
     }
   }
 }
