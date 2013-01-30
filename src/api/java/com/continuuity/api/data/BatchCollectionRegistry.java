@@ -7,6 +7,9 @@ package com.continuuity.api.data;
  */
 public interface BatchCollectionRegistry {
 
-  /** adds a batch collection client to the registry */
+  /**
+   * Adds a batch collection client to the registry
+   * @param client {@link com.continuuity.api.data.BatchCollectionClient}
+   */
   public void register(BatchCollectionClient client);
 }

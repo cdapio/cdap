@@ -1,7 +1,7 @@
 /**
- * This package implements named table using {@link com.continuuity.api.api.DataSet} APIs
+ * This package implements named table using {@link com.continuuity.api.api.DataSet} APIs.
  * A table can execute read, write, delete operations. The operations can happen synchronously or asynchronously:
-* <li>Synchronously: The operation is executed immediately against the
+ * <li>Synchronously: The operation is executed immediately against the
  *   data fabric, in its own transaction. This is supported for all types
  *   of operations. </li>
  * <li>Asynchronously: The operation is staged for execution as part of
