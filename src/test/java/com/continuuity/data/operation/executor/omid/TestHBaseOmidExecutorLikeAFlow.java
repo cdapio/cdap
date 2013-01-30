@@ -73,7 +73,7 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
    * Currently not working.  Will be fixed in ENG-1840.
    */
 //  @Test @Override @Ignore
-//  public void testConcurrentEnqueueDequeue() throws Exception {}
+  public void testConcurrentEnqueueDequeue() throws Exception {}
   /**
    * Currently not working.  Will be fixed in ENG-421.
    */
