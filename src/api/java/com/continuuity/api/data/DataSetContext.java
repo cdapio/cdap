@@ -13,11 +13,10 @@ public interface DataSetContext {
    *         cannot be instantiated, for instance, its class cannot be loaded,
    *         its class is missing the runtime constructor (@see
    *         Dataset#DataSet(DataSetSpecification)), or the constructor throws
-   *         an exception.
-   * @throws OperationException if the data set cannot be opened, for instance,
+   *         an exception. Also if a data set cannot be opened, for instance,
    *         if we fail to access one of the underlying Tables in the data
    *         fabric.
    */
   public <T extends DataSet> T getDataSet(String name)
-      throws DataSetInstantiationException, OperationException;
+      throws DataSetInstantiationException;
 }
