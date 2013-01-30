@@ -91,7 +91,7 @@ public class Table extends DataSet {
    * @param op The write operation
    * @throws OperationException if something goes wrong
    */
-  public void stage(WriteOperation op) throws OperationException {
+  public void stage(WriteOperation op) {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }

@@ -98,7 +98,7 @@ public class DataSetInstantiator implements DataSetContext {
    */
   public
   <T extends DataSet> T getDataSet(String dataSetName)
-      throws DataSetInstantiationException, OperationException {
+    throws DataSetInstantiationException {
 
     // find the data set specification
     DataSetSpecification spec = this.datasets.get(dataSetName);
@@ -178,17 +178,21 @@ public class DataSetInstantiator implements DataSetContext {
    * keeps the DataSet API itself clean.
    *
    * @param obj The com.continuuity.data.dataset to inject into
-   * @throws DataSetInstantiationException If any of the reflection magic goes wrong
-   * @throws OperationException If a table cannot to opened
+   * @throws DataSetInstantiationException If any of the reflection magic
+   *         goes wrong, or a table cannot be opened
    */
-  private void injectDataFabric(Object obj)
-      throws DataSetInstantiationException, OperationException {
+  private void injectDataFabric(Object obj) throws DataSetInstantiationException{
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
       // this sets the delegate table of the Table to a new CoreTable
       CoreTable coreTable = CoreTable.setCoreTable((Table)obj, this.fabric, this.collectionClient);
       // also ensure that the table exists in the data fabric
-      coreTable.open();
+      try {
+        coreTable.open();
+      } catch (OperationException e) {
+        throw new DataSetInstantiationException(
+          "Failed to open table '" + coreTable.getName() + "'.", e);
+      }
       return;
     }
     // otherwise recur through all fields of type DataSet
