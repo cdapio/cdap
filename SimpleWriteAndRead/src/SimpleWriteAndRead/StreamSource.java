@@ -8,13 +8,13 @@ import java.util.HashMap;
 public class StreamSource extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema out = new TupleSchemaBuilder().
         add("title", String.class).
         add("text", String.class).
         create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
-    configurator.getDefaultTupleInputStream().setSchema(TupleSchema.EVENT_SCHEMA);
+    specifier.getDefaultFlowletOutput().setSchema(out);
+    specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
   }
 
   @Override

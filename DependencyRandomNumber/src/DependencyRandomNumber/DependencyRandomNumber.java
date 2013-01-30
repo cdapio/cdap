@@ -4,11 +4,11 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 
 /**
- * Main class of the DependencyRandomNumber Flow.
+ * CountCounts class of the DependencyRandomNumber Flow.
  * 
  * Defines the meta-data, flowlets, and flow connections.
  */
-public class Main implements Flow {
+public class DependencyRandomNumber implements Flow {
   public void configure(FlowSpecifier specifier) {
     /* Set the meta-data of the flow */
     specifier.name("DependencyRandomNumber");

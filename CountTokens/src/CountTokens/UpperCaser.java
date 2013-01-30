@@ -6,13 +6,13 @@ import com.continuuity.api.flow.flowlet.builders.*;
 public class UpperCaser extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema schema = new TupleSchemaBuilder().
         add("field", String.class).
         add("word", String.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(schema);
-    configurator.getDefaultTupleOutputStream().setSchema(schema);
+    specifier.getDefaultFlowletInput().setSchema(schema);
+    specifier.getDefaultFlowletOutput().setSchema(schema);
   }
 
   @Override
