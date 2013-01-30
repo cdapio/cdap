@@ -121,7 +121,7 @@ public class CoreTable extends Table {
           this.tableName(), swap.getRow(), swap.getColumn(), swap.getExpected(), swap.getValue());
     }
     else { // can't happen but...
-      throw new InternalError("Received an operation of unknown type " + op.getClass().getName());
+      throw new IllegalArgumentException("Received an operation of unknown type " + op.getClass().getName());
     }
     return operation;
   }
