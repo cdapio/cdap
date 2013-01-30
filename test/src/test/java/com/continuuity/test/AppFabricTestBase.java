@@ -1,6 +1,10 @@
 package com.continuuity.test;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.BatchCollectionRegistry;
+import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.DataSetRegistry;
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.Tuple;
@@ -106,7 +110,7 @@ public abstract class AppFabricTestBase {
                                                     "flowlet", 1);
 
   private static final FlowletContext context = new FlowletContextImpl(executor, OperationContext.DEFAULT, 1, "id",
-                                                                       Collections.EMPTY_SET, // no data sets...
+                                                                       Collections.<String>emptySet(), // no data sets...
                                                                        new FlowLogTag(ACCOUNT, APPLICATION, "flow",
                                                                                       "runid"),
                                                                        new LocalLogDispatcher(conf),

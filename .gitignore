@@ -36,6 +36,8 @@ clover.license
 /app-fabric
 /wallboard
 /passport
+/watchdog
+/tools
 
 # Ignore Node stuff
 npm*
