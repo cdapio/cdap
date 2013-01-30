@@ -99,4 +99,6 @@ libraries.kryo = "kryo:kryo:2.12"
 // CGlib
 libraries.cglib_no_dep = "cglib:cglib-nodep:2.2.2"
 
+libraries.continuuity_eclipse_plugin  = "com.continuuity:eclipse:1.0.0"
+
 //--------------------------------------------------------------------------

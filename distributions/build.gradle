@@ -50,6 +50,8 @@ task singlenode_dist (type: Zip) {
     from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
     from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
     from project(':singlenode').files('src/dist')
+    from project(':singlenode').configurations.runtime.files { it.name == 'eclipse' }
+
 	
 	//bin
     into ("bin"){
@@ -92,6 +94,8 @@ task singlenode_dist (type: Zip) {
 	    from project(':singlenode').tasks.getByName('jar').outputs
 	    from project(':test').tasks.getByName('testJar').outputs
 	    exclude 'overlord-*-loggly.jar'
+            println "Including continuuity"
+            include "com.continuuity:eclipse:1.0.0"
 	}
 	
 	//docs
