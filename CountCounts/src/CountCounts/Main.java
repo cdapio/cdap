@@ -13,7 +13,7 @@ public class Main implements Application {
   public ApplicationSpecification configure() {
     return ApplicationSpecification.builder()
       .addFlow(CountCounts.class)
-      .addStream(new Stream("test"))
+      .addStream(new Stream("text"))
       .create();
   }
 }
