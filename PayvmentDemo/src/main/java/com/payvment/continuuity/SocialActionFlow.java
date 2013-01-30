@@ -11,8 +11,8 @@ import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
@@ -167,14 +167,14 @@ public class SocialActionFlow implements Flow {
     static int numErrors = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Input schema is a social action
-      configurator.getDefaultTupleInputStream()
+      configurator.getDefaultFlowletInput()
           .setSchema(SOCIAL_ACTION_TUPLE_SCHEMA);
       // Output schemas contains action, country, score, Increment pass-thrus
-      configurator.addTupleOutputStream("activity")
+      configurator.addFlowletOutput("activity")
           .setSchema(PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA);
-      configurator.addTupleOutputStream("popular")
+      configurator.addFlowletOutput("popular")
           .setSchema(PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA);
     }
 
@@ -271,9 +271,9 @@ public class SocialActionFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Input schema contains action and Increment pass-thrus
-      configurator.getDefaultTupleInputStream()
+      configurator.getDefaultFlowletInput()
           .setSchema(PROCESSED_ACTION_ACTIVITY_TUPLE_SCHEMA);
       // No output
     }
@@ -334,9 +334,9 @@ public class SocialActionFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Input schema contains action and Increment pass-thrus
-      configurator.getDefaultTupleInputStream()
+      configurator.getDefaultFlowletInput()
           .setSchema(PROCESSED_ACTION_POPULAR_TUPLE_SCHEMA);
       // No output
     }
