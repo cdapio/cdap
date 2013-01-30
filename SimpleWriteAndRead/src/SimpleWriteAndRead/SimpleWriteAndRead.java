@@ -1,0 +1,19 @@
+package SimpleWriteAndRead;
+
+import com.continuuity.api.flow.Flow;
+import com.continuuity.api.flow.FlowSpecifier;
+
+public class SimpleWriteAndRead implements Flow {
+  public void configure(FlowSpecifier specifier) {
+    specifier.name("SimpleWriteAndRead");
+    specifier.email("me@continuuity.com");
+    specifier.application("End2End");
+    specifier.stream("text");
+    specifier.flowlet("source", StreamSource.class, 1);
+    specifier.flowlet("writer", WriterFlowlet.class, 1);
+    specifier.flowlet("reader", ReaderFlowlet.class, 1);
+    specifier.input("text", "source");
+    specifier.connection("source", "writer");
+    specifier.connection("writer", "reader");
+  }
+}

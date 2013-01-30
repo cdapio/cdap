@@ -5,6 +5,7 @@ package com.continuuity.examples.twitter;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
@@ -14,7 +15,6 @@ import twitter4j.conf.ConfigurationBuilder;
 
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.SourceFlowlet;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 
@@ -30,13 +30,13 @@ public class TwitterGenerator extends SourceFlowlet {
    * schema is going to be so that downstream flowlets can adhere to our
    * contract.
    *
-   * @param configurator Stream configuration
+   * @param specifier Flowlet specifier.
    */
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
 
     // Configure the Schema for our output stream
-    configurator.getDefaultTupleOutputStream().setSchema(
+    specifier.getDefaultFlowletOutput().setSchema(
         TwitterFlow.TWEET_SCHEMA);
 
   }

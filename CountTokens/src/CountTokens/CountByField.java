@@ -7,12 +7,12 @@ import com.continuuity.api.flow.flowlet.builders.*;
 public class CountByField extends ComputeFlowlet
 {
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("field", String.class).
         add("word", String.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
   }
 
   @Override

@@ -23,11 +23,11 @@ public class NumberSplitter extends ComputeFlowlet {
   }
 
   @Override
-  public void configure(StreamsConfigurator streamsConfigurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema inout = new TupleSchemaBuilder().
         add("number", Integer.class).
         create();
-    streamsConfigurator.getDefaultTupleInputStream().setSchema(inout);
-    streamsConfigurator.getDefaultTupleOutputStream().setSchema(inout);
+    specifier.getDefaultFlowletInput().setSchema(inout);
+    specifier.getDefaultFlowletOutput().setSchema(inout);
   }
 }

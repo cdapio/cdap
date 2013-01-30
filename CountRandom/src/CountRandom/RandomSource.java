@@ -31,11 +31,11 @@ public class RandomSource extends SourceFlowlet {
   }
 
   @Override
-  public void configure(StreamsConfigurator streamsConfigurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema out = new TupleSchemaBuilder().
         add("number", Integer.class).
         create();
-    streamsConfigurator.getDefaultTupleOutputStream().setSchema(out);
+    specifier.getDefaultFlowletOutput().setSchema(out);
     this.random = new Random(System.currentTimeMillis());
   }
 }
