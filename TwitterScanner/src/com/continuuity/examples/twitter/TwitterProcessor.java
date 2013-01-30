@@ -12,8 +12,8 @@ import com.continuuity.api.data.lib.CounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
@@ -21,10 +21,10 @@ import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 public class TwitterProcessor extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
-    configurator.getDefaultTupleInputStream().setSchema(
+  public void configure(FlowletSpecifier specifier) {
+    specifier.getDefaultFlowletInput().setSchema(
         TwitterFlow.TWEET_SCHEMA);
-    configurator.getDefaultTupleOutputStream().setSchema(
+    specifier.getDefaultFlowletOutput().setSchema(
         TwitterFlow.POST_PROCESS_SCHEMA);
   }
 

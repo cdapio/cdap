@@ -7,17 +7,17 @@ import com.continuuity.api.flow.flowlet.builders.*;
 public class WriterFlowlet extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("title", String.class).
         add("text", String.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
 
     TupleSchema out = new TupleSchemaBuilder().
         add("key", byte[].class).
         create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
+    specifier.getDefaultFlowletOutput().setSchema(out);
   }
 
   @Override

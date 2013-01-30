@@ -9,11 +9,11 @@ public class Incrementer extends ComputeFlowlet
   static byte[] keyTotal = "countSink".getBytes();
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier configurator) {
     TupleSchema in = new TupleSchemaBuilder().
         add("count", Integer.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    configurator.getDefaultFlowletInput().setSchema(in);
   }
 
   @Override

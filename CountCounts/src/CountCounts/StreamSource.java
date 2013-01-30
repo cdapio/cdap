@@ -11,12 +11,12 @@ public class StreamSource extends ComputeFlowlet {
   static byte[] keyTotal = "countSource".getBytes();
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema out = new TupleSchemaBuilder().
         add("text", String.class).
         create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
-    configurator.getDefaultTupleInputStream().setSchema(TupleSchema.EVENT_SCHEMA);
+    specifier.getDefaultFlowletOutput().setSchema(out);
+    specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
   }
 
   @Override

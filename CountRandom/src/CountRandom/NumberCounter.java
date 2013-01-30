@@ -14,11 +14,11 @@ public class NumberCounter extends ComputeFlowlet {
   }
 
   @Override
-  public void configure(StreamsConfigurator streamsConfigurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("number", Integer.class).
         create();
-    streamsConfigurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
   }
 
 }

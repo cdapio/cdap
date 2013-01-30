@@ -1,8 +1,8 @@
 package CountOddAndEven;
 
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.SourceFlowlet;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
@@ -34,9 +34,9 @@ public class RandomNumberGenerator extends SourceFlowlet {
   }
 
   @Override
-  public void configure(StreamsConfigurator streamsConfigurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema out = new TupleSchemaBuilder().add("number", Integer.class).create();
-    streamsConfigurator.getDefaultTupleOutputStream().setSchema(out);
+    specifier.getDefaultFlowletOutput().setSchema(out);
     this.random = new Random(System.currentTimeMillis());
   }
 }

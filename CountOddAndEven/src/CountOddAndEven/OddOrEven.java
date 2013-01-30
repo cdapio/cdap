@@ -1,8 +1,8 @@
 package CountOddAndEven;
 
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
@@ -15,11 +15,11 @@ import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 public class OddOrEven extends ComputeFlowlet {
 
   @Override
-  public void configure(final StreamsConfigurator configurator) {
+  public void configure(final FlowletSpecifier specifier) {
     TupleSchema schema = new TupleSchemaBuilder().add("number", Integer.class).create();
-    configurator.getDefaultTupleInputStream().setSchema(schema);
-    configurator.addTupleInputStream("odd").setSchema(schema);
-    configurator.addTupleOutputStream("even").setSchema(schema);
+    specifier.getDefaultFlowletInput().setSchema(schema);
+    specifier.addFlowletInput("odd").setSchema(schema);
+    specifier.addFlowletOutput("even").setSchema(schema);
   }
 
   @Override

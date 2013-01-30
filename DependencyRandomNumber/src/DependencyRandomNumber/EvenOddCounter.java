@@ -7,11 +7,11 @@ import com.continuuity.api.flow.flowlet.builders.*;
 public class EvenOddCounter extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("randomNumber", Long.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
   }
 
   @Override
