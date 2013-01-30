@@ -89,19 +89,16 @@ public class CoreTable extends Table {
     }
   }
 
-  // helper enum
-  enum Mode { Sync, Async }
-
   /**
    * Perform a write operation. If the mode is synchronous, then the write is
    * executed immediately in its own transaction, if it is asynchronous, the
    * write is appended to the current transaction, which will be committed
    * by the executing agent.
-   * @param op The write operation
-   * @param mode The execution mode
-   * @throws com.continuuity.api.data.OperationException if something goes wrong
+   *
+   * @param op a table write operation
+   * @return the corresponding data fabric operation
    */
-  private void execute(WriteOperation op, Mode mode) throws OperationException {
+  private com.continuuity.api.data.WriteOperation toOperation(WriteOperation op) {
     com.continuuity.api.data.WriteOperation operation;
     if (op instanceof Write) {
       Write write = (Write)op;
@@ -124,26 +121,21 @@ public class CoreTable extends Table {
           this.tableName(), swap.getRow(), swap.getColumn(), swap.getExpected(), swap.getValue());
     }
     else { // can't happen but...
-      return;
+      throw new InternalError("Received an operation of unknown type " + op.getClass().getName());
     }
-
-    if (mode.equals(Mode.Async)) {
-      this.getCollector().add(operation);
-    } else {
-      this.dataFabric.execute(Collections.singletonList(operation));
-    }
+    return operation;
   }
 
-  // perform an asynchronous write operation (see execute())
+  // perform an asynchronous write operation (see toOperation())
   @Override
-  public void stage(WriteOperation op) throws OperationException {
-    execute(op, Mode.Async);
+  public void stage(WriteOperation op) {
+    this.getCollector().add(toOperation(op));
   }
 
-  // perform a synchronous write operation (see execute())
+  // perform a synchronous write operation (see toOperation())
   @Override
   public void exec(WriteOperation op) throws OperationException {
-    execute(op, Mode.Sync);
+    this.dataFabric.execute(Collections.singletonList(toOperation(op)));
   }
 
   // get a closure for an increment
