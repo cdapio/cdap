@@ -8,16 +8,16 @@ import java.lang.String;
 public class WordCounter extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("text", String.class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
 
     TupleSchema out = new TupleSchemaBuilder().
         add("count", Integer.class).
         create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
+    specifier.getDefaultFlowletOutput().setSchema(out);
   }
 
   @Override

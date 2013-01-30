@@ -9,11 +9,11 @@ import javax.management.OperationsException;
 public class ReaderFlowlet extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema in = new TupleSchemaBuilder().
         add("key", byte[].class).
         create();
-    configurator.getDefaultTupleInputStream().setSchema(in);
+    specifier.getDefaultFlowletInput().setSchema(in);
   }
 
   @Override

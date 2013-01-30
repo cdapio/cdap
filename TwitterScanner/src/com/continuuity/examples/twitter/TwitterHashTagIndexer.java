@@ -6,16 +6,16 @@ package com.continuuity.examples.twitter;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 
 public class TwitterHashTagIndexer extends ComputeFlowlet {
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
-    configurator.getDefaultTupleInputStream().setSchema(
+  public void configure(FlowletSpecifier specifier) {
+    specifier.getDefaultFlowletInput().setSchema(
         TwitterFlow.POST_PROCESS_SCHEMA);
   }
 
