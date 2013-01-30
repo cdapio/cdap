@@ -577,6 +577,8 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
+    TTQueueOnVCTable.TRACE=true;
+
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
@@ -660,6 +662,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
 
     // Should have dequeued n entries
+    TTQueueOnVCTable.TRACE=false;
     assertEquals(n, dequeued.size());  // fails expected:<100> but was:<63>
     
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
