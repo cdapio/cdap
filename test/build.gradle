@@ -4,12 +4,9 @@ apply plugin:'java'
  */
 dependencies {
 
-    //compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
-    //compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
-   //compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    //compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
 
+    // Workaround to include sub project dependencies
     compile (project(":flow")){
         artifact { artifact ->
             artifact.name = project(":flow").name
