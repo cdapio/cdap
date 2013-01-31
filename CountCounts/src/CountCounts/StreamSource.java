@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class StreamSource extends ComputeFlowlet {
 
-  static byte[] keyTotal = "countSource".getBytes();
+  static String keyTotal = ":sourceTotal:";
 
   @Override
   public void configure(FlowletSpecifier specifier) {
@@ -19,12 +19,20 @@ public class StreamSource extends ComputeFlowlet {
     specifier.getDefaultFlowletInput().setSchema(TupleSchema.EVENT_SCHEMA);
   }
 
+  CounterTable counters;
+
+  @Override
+  public void initialize() {
+    super.initialize();
+    this.counters = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     byte[] body = tuple.get("body");
     String text = body == null ? null :new String(body);
 
@@ -32,15 +40,14 @@ public class StreamSource extends ComputeFlowlet {
         set("text", text).
         create();
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+    }
     outputCollector.add(output);
 
     if (Common.count) {
       // emit an increment for the total number of documents ingested
-      Increment increment = new Increment(keyTotal, 1);
-      outputCollector.add(increment);
+      this.counters.increment(keyTotal);
     }
   }
 }
