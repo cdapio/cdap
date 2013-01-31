@@ -11,6 +11,7 @@ public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.builder()
+      .setApplicationName("RandomAppDemo")
       .addFlow(DependencyRandomNumber.class)
       .create();
   }

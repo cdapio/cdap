@@ -12,6 +12,7 @@ public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.builder()
+      .setApplicationName("CountAppDemo")
       .addFlow(CountAndFilterWords.class)
       .addStream(new Stream("text"))
       .create();
