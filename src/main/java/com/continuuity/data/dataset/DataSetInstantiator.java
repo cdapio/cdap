@@ -36,6 +36,8 @@ public class DataSetInstantiator implements DataSetContext {
   private BatchCollectionClient collectionClient;
   // the class loader to use for data set classes
   private ClassLoader classLoader;
+  // whether instantiated data sets should be read-only
+  private boolean readOnly = false;
 
   private Map<String, DataSetSpecification> datasets =
       new HashMap<String, DataSetSpecification>();
@@ -56,26 +58,12 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   /**
-   * Set the batch collection client. This must be shared with the execution
-   * driver of the program (e.g. flow) where the data set will be used. This
-   * batch collection client is injected into each data set, and the driver
-   * (e.g. flowlet driver) must use it to change the batch collector for each
-   * new transactions (e.g. a flowlet driver would set a new output collector
-   * each tuple that is processed).
-   * @param client The batch collection client to inject
+   * Set the read/only flag. If this is true, then the tables injected into each
+   * dataset will be ReadOnlyTable's, otherwise they will be ReadWriteTable's.
+   * Default is false.
    */
-  public void setBatchCollectionClient(BatchCollectionClient client) {
-    this.collectionClient = client;
-  }
-
-  /**
-   * Set the Data Fabric to inject into each data set. The data fabric has
-   * an operation context and the operation executor, and it is used for all
-   * synchronous operations that a data set performs.
-   * @param fabric the data fabric to inject
-   */
-  public void setDataFabric(DataFabric fabric) {
-    this.fabric = fabric;
+  public void setReadOnly() {
+    this.readOnly = true;
   }
 
   /**
@@ -205,14 +193,16 @@ public class DataSetInstantiator implements DataSetContext {
   private void injectDataFabric(Object obj) throws DataSetInstantiationException{
     // for base data set types, directly inject the df fields
     if (obj instanceof Table) {
-      // this sets the delegate table of the Table to a new CoreTable
-      CoreTable coreTable = CoreTable.setCoreTable((Table)obj, this.fabric, this.collectionClient);
+      // this sets the delegate table of the Table to a new ReadWriteTable
+      RuntimeTable runtimeTable = this.readOnly
+        ? ReadOnlyTable.setReadOnlyTable((Table)obj, this.fabric)
+        : ReadWriteTable.setReadWriteTable((Table)obj, this.fabric, this.collectionClient);
       // also ensure that the table exists in the data fabric
       try {
-        coreTable.open();
+        runtimeTable.open();
       } catch (OperationException e) {
         throw new DataSetInstantiationException(
-          "Failed to open table '" + coreTable.getName() + "'.", e);
+          "Failed to open table '" + runtimeTable.getName() + "'.", e);
       }
       return;
     }
