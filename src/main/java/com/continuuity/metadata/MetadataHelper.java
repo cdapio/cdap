@@ -304,6 +304,8 @@ public class MetadataHelper {
         entry.addField(FieldTypes.Dataset.DESCRIPTION, dataset.getDescription());
       if (dataset.isSetType())
         entry.addField(FieldTypes.Dataset.TYPE, dataset.getType());
+      if (dataset.isSetSpecification())
+        entry.addField(FieldTypes.Dataset.SPECIFICATION, dataset.getSpecification());
       return entry;
     }
 
@@ -316,6 +318,8 @@ public class MetadataHelper {
       if (description != null) dataset.setDescription(description);
       String type = entry.getTextField(FieldTypes.Dataset.TYPE);
       if (type != null) dataset.setType(type);
+      String spec = entry.getTextField(FieldTypes.Dataset.SPECIFICATION);
+      if (spec != null) dataset.setSpecification(spec);
       return dataset;
     }
 
@@ -338,6 +342,8 @@ public class MetadataHelper {
           status, dataset.getDescription(), existing.getDescription());
       if (status.equals(CompareStatus.DIFF)) return status;
       status = compareAlso(status, dataset.getType(), existing.getType());
+      if (status.equals(CompareStatus.DIFF)) return status;
+      status = compareAlso(status, dataset.getSpecification(), existing.getSpecification());
       return status;
     }
 
