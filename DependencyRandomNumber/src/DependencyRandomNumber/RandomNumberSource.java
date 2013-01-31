@@ -2,9 +2,9 @@ package DependencyRandomNumber;
 
 import java.util.Random;
 
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.SourceFlowlet;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
@@ -15,11 +15,11 @@ public class RandomNumberSource extends SourceFlowlet {
   private Random random;
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier specifier) {
     TupleSchema out = new TupleSchemaBuilder().
         add("randomNumber", Long.class).
         create();
-    configurator.getDefaultTupleOutputStream().setSchema(out);
+    specifier.getDefaultFlowletOutput().setSchema(out);
   }
 
   @Override
