@@ -1,6 +1,6 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.MetaDataEntry;
+import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.metadata.thrift.*;
 import com.google.common.collect.Lists;
 
