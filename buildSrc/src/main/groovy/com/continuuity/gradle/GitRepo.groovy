@@ -55,11 +55,15 @@ class GitRepo {
         File destination = new File(baseDir, dir);
         if(!destination.exists())
         {
+            // If local repo doesn't exists and no branch has been passed in, use master branch
+            if (branch == null || branch.isEmpty()) {
+                branch = "master";
+            }
             String cmd = "git clone -vv --branch $branch $origin $destination.canonicalPath";
             println "$name: $cmd";
             runCommand(cmd);
-        }
-        if (branch == null || branch.isEmpty()) {
+        } else if (branch == null || branch.isEmpty()) {
+            // If local repo already exists and no branch has been passed in, use the local branch
             String cmd = "git rev-parse --abbrev-ref HEAD"
             println "$name: $cmd"
             branch = runCommand(cmd, destination);
