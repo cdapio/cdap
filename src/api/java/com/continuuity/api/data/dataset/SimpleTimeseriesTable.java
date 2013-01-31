@@ -77,7 +77,7 @@ import java.util.Map;
  * NOTES:
  * <ul>
  *   <li>
- *    1. This implementation does NOT address RegionServer hotspotting issue that appears when writing rows with
+ *    1. This implementation does NOT address RegionServer hot-spotting issue that appears when writing rows with
  *       monotonically increasing/decreasing keys into HBase. Which is relevant for HBase-based back-end.
  *       To avoid this problem user should NOT write all data under same metric key. In general, writes will be as
  *       distributed as the amount of different metric keys the data is written for. Having one metric key would mean

@@ -258,7 +258,7 @@ implements TransactionalOperationExecutor {
         if (e.getStatus() == StatusCode.WRITE_CONFLICT) {
           // If C-a-S failed with write conflict, then some other process (or
           // thread) has concurrently attempted the same and wins.
-          return waitForTableToMaterializeInMeta(context, name, meta);
+          return waitForTableToMaterializeInMeta(context, name, newMeta);
         }
         else throw e;
       }
@@ -298,7 +298,7 @@ implements TransactionalOperationExecutor {
       ImmutablePair<byte[], OrderedVersionedColumnarTable> nameAndTable =
           this.namedTables.get(tableKey);
       if (nameAndTable == null) {
-        throw new InternalError("In-memory entry went from non-null to null " +
+        throw new RuntimeException("In-memory entry went from non-null to null " +
             "for named table \"" + tableKey.getSecond() + "\"");
       }
       if (nameAndTable.getSecond() != null) {
@@ -324,13 +324,13 @@ implements TransactionalOperationExecutor {
       if ("ready".equals(meta.getTextField("status"))) {
         byte[] actualName = meta.getBinaryField("actual");
         if (actualName == null)
-          throw new InternalError("Encountered meta data entry of type " +
+          throw new RuntimeException("Encountered meta data entry of type " +
               "\"namedTable\" without actual name for table name \"" +
               name +"\".");
         OrderedVersionedColumnarTable table =
             getTableHandle().getTable(actualName);
         if (table == null)
-          throw new InternalError("table handle \"" + getTableHandle()
+          throw new RuntimeException("table handle \"" + getTableHandle()
               .getName() + "\": getTable returned null for actual table name "
               + "\"" + new String(actualName) + "\"");
 
@@ -346,7 +346,7 @@ implements TransactionalOperationExecutor {
       // An actual name and status Pending: The table is being created. Loop
       // and repeat MDS read until status is Ready and see previous case
       else if (!"pending".equals(meta.getTextField("status"))) {
-        throw new InternalError("Found meta data entry with unkown status " +
+        throw new RuntimeException("Found meta data entry with unkown status " +
             Objects.toStringHelper(meta.getTextField("status")));
       }
 
@@ -360,10 +360,16 @@ implements TransactionalOperationExecutor {
       // reread the meta data, hopefully it has changed to ready
       meta = this.metaStore.get(
           context, context.getAccount(), null, "namedTable", name);
-      if (meta == null)
-        throw new InternalError("Meta data entry went from non-null to null " +
+      if (meta == null) {
+        // this should never happen - we only enter this method in two cases:
+        // 1. there is already an entry, but it might be pending
+        // 2. we encountered a read conflict when attempting to create it
+        //    - hence this get must see that conflicting write
+        // TODO what if someone deleted it after the write conflict happened?
+        // TODO what if the write conflict was caused by a delete?
+        throw new RuntimeException("Meta data entry went from non-null to null " +
             "for table \"" + name + "\"");
-
+      }
       // TODO should this time out after some time or number of attempts?
     }
   }

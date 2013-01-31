@@ -5,6 +5,7 @@ import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -41,7 +42,8 @@ public class DataSetTestBase {
   public static void setupDataFabric() {
     // use Guice to inject an in-memory opex
     final Injector injector =
-        Guice.createInjector(new DataFabricModules().getInMemoryModules());
+      // Guice.createInjector(new DataFabricModules().getInMemoryModules());
+      Guice.createInjector(new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
     OperationExecutor executor = injector.getInstance(OperationExecutor.class);
     // and create a data fabric with the default operation context
     fabric = new DataFabricImpl(executor, OperationContext.DEFAULT);
@@ -66,7 +68,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator(fabric, collectionClient);
+    instantiator = new DataSetInstantiator(fabric, collectionClient, null);
     instantiator.setDataSets(specs);
   }
 

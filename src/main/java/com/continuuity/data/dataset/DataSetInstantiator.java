@@ -34,6 +34,8 @@ public class DataSetInstantiator implements DataSetContext {
   private DataFabric fabric;
   // the batch collection client
   private BatchCollectionClient collectionClient;
+  // the class loader to use for data set classes
+  private ClassLoader classLoader;
 
   private Map<String, DataSetSpecification> datasets =
       new HashMap<String, DataSetSpecification>();
@@ -42,17 +44,21 @@ public class DataSetInstantiator implements DataSetContext {
    * a constructor from data fabric and collection client
    * @param fabric the data fabric
    * @param collectionClient the collection client to use for all data sets
+   * @param classLoader the class loader to use for loading data set classes.
+   *                    If null, then the default class loader is used
    */
   public DataSetInstantiator(DataFabric fabric,
-                             BatchCollectionClient collectionClient) {
+                             BatchCollectionClient collectionClient,
+                             ClassLoader classLoader) {
     this.fabric = fabric;
     this.collectionClient = collectionClient;
+    this.classLoader = classLoader;
   }
 
   /**
    * Set the batch collection client. This must be shared with the execution
    * driver of the program (e.g. flow) where the data set will be used. This
-   * batch collection client is injected into each com.continuuity.data.dataset, and the driver
+   * batch collection client is injected into each data set, and the driver
    * (e.g. flowlet driver) must use it to change the batch collector for each
    * new transactions (e.g. a flowlet driver would set a new output collector
    * each tuple that is processed).
@@ -121,7 +127,11 @@ public class DataSetInstantiator implements DataSetContext {
     String className = spec.getType();
     Class<?> dsClass;
     try {
-      dsClass = Class.forName(className);
+      if (this.classLoader != null) {
+        dsClass = classLoader.loadClass(className);
+      } else {
+        dsClass = Class.forName(className);
+      }
     } catch (ClassNotFoundException e) {
       throw logAndException(e, "Data set class %s not found", className);
     }

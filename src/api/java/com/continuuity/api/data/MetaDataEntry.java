@@ -7,15 +7,30 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Class that stores the meta data entries
+ */
 public class MetaDataEntry {
 
   private String account; // can never be null or empty
+
   private String application; // can be null but never empty
+
   private String id; // can never be null or empty
+
   private String type; // can never be null or empty
+
   private Map<String, String> textFields;
+
   private Map<String, byte[]> binaryFields;
 
+  /**
+   * Constructor
+   * @param account account id related to the meta data entry
+   * @param application application id related to the meta data entry
+   * @param type Type Meta data type
+   * @param id Meta data id
+   */
   public MetaDataEntry(String account, String application,
                        String type, String id) {
     if (account == null)
@@ -40,6 +55,11 @@ public class MetaDataEntry {
     this.binaryFields = Maps.newTreeMap();
   }
 
+  /**
+   * Adds a field to the metadata
+   * @param field field name
+   * @param value field value
+   */
   public void addField(String field, String value) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
@@ -50,6 +70,12 @@ public class MetaDataEntry {
     this.textFields.put(field, value);
   }
 
+
+  /**
+   * Adds a field to the metadata
+   * @param field field name
+   * @param value field value
+   */
   public void addField(String field, byte[] value) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
@@ -60,41 +86,82 @@ public class MetaDataEntry {
     this.binaryFields.put(field, value);
   }
 
+  /**
+   * Get Account id
+   * @return id
+   */
   public String getAccount() {
     return account;
   }
 
+  /**
+   * Get Application Id
+   * @return application id
+   */
   public String getApplication() {
     return application;
   }
 
+  /**
+   * Get Metadata id
+   * @return metadata id
+   */
   public String getId() {
     return this.id;
   }
 
+  /**
+   * Get Metadata type
+   * @return metadata type
+   */
   public String getType() {
     return this.type;
   }
 
+  /**
+   * Returns Field value as a String
+   * @param field field key
+   * @return value
+   */
   public String getTextField(String field) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
     return this.textFields.get(field);
   }
 
+
+  /**
+   * Returns binary field value
+   * @param field field key
+   * @return value
+   */
   public byte[] getBinaryField(String field) {
     if (field == null)
       throw new IllegalArgumentException("field cannot be null");
     return this.binaryFields.get(field);
   }
 
+  /**
+   * Returns all text key fields
+   * @return Set of keys
+   */
   public Set<String> getTextFields() {
     return this.textFields.keySet();
   }
+
+  /**
+   * Returns all binary key fields
+   * @return Set of keys
+   */
   public Set<String> getBinaryFields() {
     return this.binaryFields.keySet();
   }
 
+  /**
+   * Comparison function
+   * @param o
+   * @return
+   */
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MetaDataEntry)) return false;
@@ -115,6 +182,10 @@ public class MetaDataEntry {
     return true;
   }
 
+  /**
+   * Serialize account, application, type and id and return it as String
+   * @return
+   */
   public String toString() {
     return Objects.toStringHelper(this)
         .add("account", account)
