@@ -6,7 +6,7 @@ import com.continuuity.api.flow.flowlet.builders.*;
 
 public class Incrementer extends ComputeFlowlet
 {
-  static byte[] keyTotal = "countSink".getBytes();
+  static String keyTotal = ":sinkTotal:";
 
   @Override
   public void configure(FlowletSpecifier configurator) {
@@ -16,27 +16,35 @@ public class Incrementer extends ComputeFlowlet
     configurator.getDefaultFlowletInput().setSchema(in);
   }
 
+  CounterTable counters;
+
+  @Override
+  public void initialize() {
+    super.initialize();
+    this.counters = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     Integer count = tuple.get("count");
-    if (count == null) return;
+    if (count == null) {
+      return;
+    }
     String key = Integer.toString(count);
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting " +
           "Increment for " + key);
-
+    }
     // emit an increment for the number of words in this document
-    Increment increment = new Increment(key.getBytes(), 1);
-    outputCollector.add(increment);
+    this.counters.increment(key);
 
     if (Common.count) {
       // emit an increment for the total number of documents counted
-      increment = new Increment(keyTotal, 1);
-      outputCollector.add(increment);
+      this.counters.increment(keyTotal);
     }
   }
 }
