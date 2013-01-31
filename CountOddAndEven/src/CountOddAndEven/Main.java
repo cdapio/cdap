@@ -10,7 +10,7 @@ public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.builder()
-      .setApplicationName("CountAppDemo")
+      .setApplicationName("CountOddAndEvenDemo")
       .addFlow(CountOddAndEven.class)
       .create();
   }

@@ -11,7 +11,7 @@ public class Main implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.builder()
-      .setApplicationName("CountAppDemo")
+      .setApplicationName("CountTokensDemo")
       .addFlow(CountTokens.class)
       .addStream(new Stream("text"))
       .create();
