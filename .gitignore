@@ -38,6 +38,7 @@ clover.license
 /passport
 /watchdog
 /tools
+/web-app
 
 # Ignore Node stuff
 npm*
