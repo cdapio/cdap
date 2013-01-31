@@ -1,5 +1,6 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.Operation;
@@ -79,6 +80,15 @@ public class KeyValueTable extends DataSet {
    */
   public void stage(KeyOperation op) {
     this.table.stage(op);
+  }
+
+  /**
+   * Get a closure for an increment operation
+   * @param increment the increment operation.
+   * @return a closure encapsulating the increment operation
+   */
+  public Closure closure(IncrementKey increment) {
+    return this.table.closure(increment);
   }
 
   /**
