@@ -1,4 +1,6 @@
-package com.continuuity.api.data;
+package com.continuuity.data;
+
+import com.continuuity.api.data.BatchCollector;
 
 /**
  * This interface defines a methods to provide a client

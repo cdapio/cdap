@@ -1,4 +1,7 @@
-package com.continuuity.api.data;
+package com.continuuity.data.metadata;
+
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
 
 import java.util.List;
 import java.util.Map;
@@ -14,7 +17,7 @@ public interface MetaDataStore {
    * adds a new entry with conflict resolution.
    * @param context the OperationContext of the caller
    * @param entry the meta data entry to write
-   * @throws OperationException with status WRITE_CONFLICT if an entry with
+   * @throws com.continuuity.api.data.OperationException with status WRITE_CONFLICT if an entry with
    * the name and type already exists for the same account and app,
    * also throws OperationException for other data fabric problems.
    */

@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data;
 
 /**
  * A batch collection registry is used to manage the clients that need
@@ -9,7 +9,7 @@ public interface BatchCollectionRegistry {
 
   /**
    * Adds a batch collection client to the registry
-   * @param client {@link com.continuuity.api.data.BatchCollectionClient}
+   * @param client {@link BatchCollectionClient}
    */
   public void register(BatchCollectionClient client);
 }

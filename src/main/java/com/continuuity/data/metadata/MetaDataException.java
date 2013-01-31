@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.metadata;
 
 
 public class MetaDataException extends Exception {

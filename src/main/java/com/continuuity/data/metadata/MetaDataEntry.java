@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.metadata;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
