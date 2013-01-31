@@ -159,8 +159,8 @@ public class MetaDataEntry {
 
   /**
    * Comparison function
-   * @param o
-   * @return
+   * @param o  Object to be compared
+   * @return boolean true if the objects passed is equal, false otherwise
    */
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -183,8 +183,9 @@ public class MetaDataEntry {
   }
 
   /**
-   * Serialize account, application, type and id and return it as String
-   * @return
+   * Returns String representation of the MetaDataEntry object. The value returned contains accountId, applicationId,
+   * metadata type and metadata id.
+   * @return a String representation of the object
    */
   public String toString() {
     return Objects.toStringHelper(this)
