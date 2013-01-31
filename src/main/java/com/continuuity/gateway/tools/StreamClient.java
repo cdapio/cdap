@@ -79,7 +79,8 @@ public class StreamClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    String name = System.getProperty("script").replaceAll("[./]", "");
+    String name = "stream-client";
+    if (System.getProperty("script") != null) name = System.getProperty("script").replaceAll("[./]", "");
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
