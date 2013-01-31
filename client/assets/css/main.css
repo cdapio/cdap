@@ -43,6 +43,9 @@ body {
 	width: 400px;
 	margin: 0px 0 0 -200px;
 }
+.modal {
+	margin-top: 0px;
+}
 
 a, a:visited {
 	color: #555;
