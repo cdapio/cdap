@@ -500,6 +500,12 @@ public class MetadataService extends MetadataHelper
   }
 
   @Override
+  public boolean updateApplication(Account account, Application application)
+    throws MetadataServiceException, TException {
+    return update(applicationHelper, account, application);
+  }
+
+  @Override
   public boolean deleteApplication(Account account, Application application)
       throws MetadataServiceException, TException {
     return delete(applicationHelper, account, application);
