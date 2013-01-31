@@ -1,52 +1,26 @@
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.util.Bytes;
-import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.SimpleBatchCollectionClient;
-import com.continuuity.data.operation.SimpleBatchCollector;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.google.common.collect.Lists;
+import com.continuuity.data.dataset.DataSetTestBase;
 import com.google.gson.Gson;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class SimpleTimeseriesTableTest {
+public class SimpleTimeseriesTableTest extends DataSetTestBase {
   private static SimpleTimeseriesTable table;
-  static SimpleBatchCollectionClient collectionClient = new SimpleBatchCollectionClient();
-  static OperationExecutor executor;
-  static DataFabric fabric;
-  static List<DataSetSpecification> specs;
-  static DataSetInstantiator instantiator;
 
   @BeforeClass
-  public static void setup() throws Exception {
-    final Injector injector =
-        Guice.createInjector(new DataFabricModules().getInMemoryModules());
-
-    executor = injector.getInstance(OperationExecutor.class);
-    fabric = new DataFabricImpl(executor, OperationContext.DEFAULT);
-
-    // configure a couple of data sets
-    specs = Lists.newArrayList(new SimpleTimeseriesTable("metricsTable").configure());
-
-    // create an app context for running a procedure
-    instantiator = new DataSetInstantiator();
-    instantiator.setDataFabric(fabric);
-    instantiator.setBatchCollectionClient(collectionClient);
-    instantiator.setDataSets(specs);
-
+  public static void configure() throws Exception {
+    DataSet metricsTable = new SimpleTimeseriesTable("metricsTable");
+    setupInstantiator(Collections.singletonList(metricsTable));
     table = instantiator.getDataSet("metricsTable");
   }
 
@@ -63,8 +37,8 @@ public class SimpleTimeseriesTableTest {
 
   @Test
   public void testDataSet() throws Exception {
-    SimpleBatchCollector collector = new SimpleBatchCollector();
-    collectionClient.setCollector(collector);
+
+    newCollector();
 
     byte[] metric1 = Bytes.toBytes("metric1");
     byte[] metric2 = Bytes.toBytes("metric2");
@@ -115,8 +89,8 @@ public class SimpleTimeseriesTableTest {
     // whole interval is searched
     assertReadResult(table.read(metric1, ts, ts + 5 * hour), m1e1, m1e2, m1e3, m1e4, m1e5);
     assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag2), m1e1, m1e4);
-    assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag4), new SimpleTimeseriesTable.Entry[0]);
-    assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag2, tag4), new SimpleTimeseriesTable.Entry[0]);
+    assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag4));
+    assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag2, tag4));
     // This is extreme case, should not be really used by anyone. Still we want to test that it won't fail. It returns
     // nothing because there's hard limit on the number of rows traversed during the read.
     assertReadResult(table.read(metric1, 0, Long.MAX_VALUE));
@@ -134,9 +108,7 @@ public class SimpleTimeseriesTableTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTimeRangeCondition() throws OperationException {
-    SimpleBatchCollector collector = new SimpleBatchCollector();
-    collectionClient.setCollector(collector);
-
+    newCollector();
     long ts = System.currentTimeMillis();
     table.read(Bytes.toBytes("any"), ts, ts - 100);
   }

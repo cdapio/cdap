@@ -39,6 +39,17 @@ public class DataSetInstantiator implements DataSetContext {
       new HashMap<String, DataSetSpecification>();
 
   /**
+   * a constructor from data fabric and collection client
+   * @param fabric the data fabric
+   * @param collectionClient the collection client to use for all data sets
+   */
+  public DataSetInstantiator(DataFabric fabric,
+                             BatchCollectionClient collectionClient) {
+    this.fabric = fabric;
+    this.collectionClient = collectionClient;
+  }
+
+  /**
    * Set the batch collection client. This must be shared with the execution
    * driver of the program (e.g. flow) where the data set will be used. This
    * batch collection client is injected into each com.continuuity.data.dataset, and the driver
