@@ -85,7 +85,7 @@ public class SampleQueryTest extends AppFabricTestBase {
 
     // submit a query for a method that does not match the row value
     queryResult = runQuery(queryHandle, "abc", ImmutableMultimap.<String, String>of());
-    Assert.assertEquals(200, queryResult.getReturnCode());
+    Assert.assertEquals(500, queryResult.getReturnCode());
     Assert.assertEquals("No Match.", queryResult.getContent());
   }
 
