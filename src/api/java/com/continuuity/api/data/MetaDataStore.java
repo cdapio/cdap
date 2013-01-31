@@ -3,6 +3,9 @@ package com.continuuity.api.data;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Interface that defines CRUD opertions on MetaDataStore
+ */
 public interface MetaDataStore {
 
   public final int DEFAULT_RETRIES_ON_CONFLICT = 3;
