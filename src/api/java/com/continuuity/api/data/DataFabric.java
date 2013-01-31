@@ -3,6 +3,9 @@ package com.continuuity.api.data;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This is the abstract base class for data fabric.
+ */
 public interface DataFabric {
 
   /**

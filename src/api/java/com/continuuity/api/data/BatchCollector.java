@@ -8,7 +8,10 @@ package com.continuuity.api.data;
  */
 public interface BatchCollector {
 
-  /** add an operation to the batch of writes being collected */
+  /**
+   * Add an operation to the batch of writes being collected.
+   * @param write {@link com.continuuity.api.data.WriteOperation}
+   */
   void add(WriteOperation write);
 
 }
