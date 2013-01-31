@@ -3,7 +3,7 @@
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
-script=$0
+script=`basename $0`
 
 # Need this for relative symlinks.
 while [ -h "$PRG" ] ; do
@@ -15,6 +15,7 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
+
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
