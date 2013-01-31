@@ -84,9 +84,9 @@ import java.util.Map;
  *       hitting single RegionServer at any given point of time with all writes. Which is usually NOT desired.
  *   </li>
  *   <li>
- *    2. The current implementation (incl. the format of the stored data) is heavily affected by {@link Table} API which
+ *    2. The current implementation (incl. the format of the stored data) is heavily affected by {@link com.continuuity.api.data.dataset.table.Table} API which
  *       is used under the hood. In particular the implementation is constrained by the absence of
- *       <code>readHigherOrEq()</code> method in {@link Table} API, which would return next row with key greater or
+ *       <code>readHigherOrEq()</code> method in {@link com.continuuity.api.data.dataset.table.Table} API, which would return next row with key greater or
  *       equals to the given.<br/>
  *   </li>
  *   <li>
@@ -177,8 +177,8 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   /**
    * Reads entries of a time range. See {@link TimeseriesTable#read(byte[], long, long, byte[]...)} for more details
    * on usage.<br/>
-   * NOTE: There's a hard limit on the max number of time intervals to be scanned during read.
-   *       {@see MAX_ROWS_TO_SCAN_PER_READ}.
+   * NOTE: There's a hard limit on the max number of time intervals to be scanned during read. Defined in
+   * MAX_ROWS_TO_SCAN_PER_READ parameter.
    *
    * @param key key of the entries to read
    * @param startTime defines start of the time range to read, inclusive.
@@ -187,7 +187,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
    *        NOTE: return entries contain all tags that were providing during writing, NOT passed with this param.
    *
    * @return list of entries that satisfy provided conditions.
-   * @throws OperationException when underlying {@link Table} throws one
+   * @throws OperationException when underlying table throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
   @Override

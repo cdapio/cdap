@@ -41,7 +41,7 @@ public interface TimeseriesTable {
    *
    * @return list of entries that satisfy provided conditions.
    *
-   * @throws OperationException when underlying {@link com.continuuity.api.data.dataset.table.Table} throws one
+   * @throws OperationException when underlying table throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
   List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) throws OperationException;
