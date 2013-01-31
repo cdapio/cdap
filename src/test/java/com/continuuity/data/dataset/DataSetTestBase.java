@@ -66,9 +66,7 @@ public class DataSetTestBase {
       specs.add(dataset.configure());
     }
     // create an instantiator the resulting list of data set specs
-    instantiator = new DataSetInstantiator();
-    instantiator.setDataFabric(fabric);
-    instantiator.setBatchCollectionClient(collectionClient);
+    instantiator = new DataSetInstantiator(fabric, collectionClient);
     instantiator.setDataSets(specs);
   }
 
