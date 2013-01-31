@@ -130,7 +130,7 @@ define([], function () {
 			'dataops.count': 'Data Operations',
 			'busyness': 'Busyness',
 			'flowlet.failure.count': 'Failures Rate',
-			'storage.trend': 'Storage Trend'
+			'storage.trend': 'Storage'
 		},
 		__getTitle: function () {
 

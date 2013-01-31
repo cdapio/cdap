@@ -2,7 +2,7 @@
 {{#if types.Query.content.length}}
 <table class="table">
 <thead>
-<th>&nbsp;</th>
+<th style="padding-left: 14px;">Procedures</th>
 <th style="width: 100px;text-align: center;">Instances</th>
 <th style="width: 212px;">Request Rate</th>
 <th style="width: 212px;">Error Rate</th>
@@ -22,10 +22,9 @@
 {{else}}
 <div class="object-list-empty">
 <div class="object-list-empty-content">
-No Queries.
-<br /><span>Add a Query by uploading a JAR file.</span>
+No QueryProviders.
+<br /><span>Add QueryProviders by uploading an Application JAR.</span>
 </div>
 </div>
 {{/if}}
-
 {{view C.Vw.QueryDetail viewName="query-detail"}}

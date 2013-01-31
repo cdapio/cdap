@@ -410,7 +410,7 @@ try {
 
 	};
 
-	this.upload = function (req, res, app, file, socket) {
+	this.upload = function (req, res, file, socket) {
 
 		var self = this;
 		var auth_token = new flowservices_types.DelegationToken({ token: null });
@@ -444,7 +444,7 @@ try {
 			var FAR = thrift.createClient(FARService, conn);
 			FAR.init(auth_token, new flowservices_types.ResourceInfo({
 				'accountId': accountId,
-				'applicationId': app,
+				'applicationId': 'nil',
 				'filename': file,
 				'size': data.length,
 				'modtime': new Date().getTime()

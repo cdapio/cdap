@@ -15,15 +15,15 @@ define([], function () {
 		},
 		__plurals: {
 			'Application': 'Applications',
-			'Flow': 'Flows',
-			'Stream': 'Streams',
-			'Query': 'Queries',
-			'Dataset': 'Datasets'
+			'Flow': 'Process',
+			'Stream': 'Collect',
+			'Query': 'Query',
+			'Dataset': 'Store'
 		},
 		title: function () {
 			return this.__plurals[this.get('entityType')];
 		}.property('entityType'),
-		getObjects: function (type, callback, appId) {
+		getObjects: function (type, callback, appId, arg) {
 
 			var self = this;
 			this.set('entityType', type);
@@ -37,7 +37,7 @@ define([], function () {
 
 				if (error) {
 					if (typeof callback === 'function') {
-						callback([]);
+						callback([], arg);
 					} else {
 						C.interstitial.label(error);
 					}
@@ -48,7 +48,7 @@ define([], function () {
 						objects[i] = C.Mdl[type].create(objects[i]);
 					}
 					if (typeof params[1] === 'function') { // For you
-						callback(objects);
+						callback(objects, arg);
 
 					} else { // For me
 

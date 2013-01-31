@@ -37,11 +37,11 @@ body {
 }
 
 .modal.fade.in {
-	top: 40%;
+	top: 25%;
 }
 .modal.narrow {
 	width: 400px;
-	margin: -250px 0 0 -200px;
+	margin: 0px 0 0 -200px;
 }
 
 a, a:visited {
@@ -71,11 +71,11 @@ a, a:visited {
 
 #logo {
 	background-image: url(../img/logo.png);
-	background-position: center center;
+	background-position: center bottom;
 	background-repeat: no-repeat;
 	width: 200px;
-	height: 60px;
-	padding: 36px 0px;
+	height: 59px;
+	padding: 40px 0px 0px;
 	display: block;
 }
 
@@ -94,8 +94,18 @@ a, a:visited {
 	margin-left: 8px;
 }
 
+#nav ul li.overview {
+	margin-bottom: 16px;
+	border-bottom: 1px dotted #3c495c;
+	padding-bottom: 16px;
+	margin-right: 10px;
+	border-top: 1px dotted #3c495c;
+	padding-top: 16px;
+}
+
 #nav ul li {
 	margin-bottom: 16px;
+	padding-left: 18px;
 }
 
 #nav ul li .nav-link {
@@ -347,7 +357,7 @@ h1 span {
 	border-top: 0;
 	font-family: "Condensed";
 	font-size: 12px;
-	color: #77878b;
+	color: #9EAEB2;
 	text-transform: uppercase;
 	
 	padding: 2px 4px;
@@ -529,9 +539,9 @@ text {
 }
 .info-box .drop-zone {
 	margin: 17px 0px;
+	width: 228px;
 }
 .drop-zone {
-	width: 228px;
 	color: #777;
 	text-align: center;
 	line-height: 52px;
@@ -654,11 +664,11 @@ input[type="text"] {
 }
 
 .dash-app-resource-flow {
-	background-position: 0px -64px;
+	background-position: 0px -130px;
 }
 
 .dash-app-resource-stream {
-	background-position: 0px -130px;
+	background-position: 0px -64px;
 }
 
 .dash-app-resource-app {

@@ -21,7 +21,6 @@ define([], function () {
 			this.set('current', Em.Object.create({
 				addMetricName: function (metric) {
 					this.get('metricNames')[metric] = 1;
-					console.log(metric);
 				},
 				metricNames: {},
 				metricData: Em.Object.create()
@@ -32,18 +31,18 @@ define([], function () {
 				while (i--) {
 					objects[i] = C.Mdl['Application'].create(objects[i]);
 
-					C.Ctl.List.getObjects('Stream', function (obj) {
-						objects[i + 1].set('counts.Stream', obj.length);
-					}, objects[i].id);
-					C.Ctl.List.getObjects('Flow', function (obj) {
-						objects[i + 1].set('counts.Flow', obj.length);
-					}, objects[i].id);
-					C.Ctl.List.getObjects('Dataset', function (obj) {
-						objects[i + 1].set('counts.Dataset', obj.length);
-					}, objects[i].id);
-					C.Ctl.List.getObjects('Query', function (obj) {
-						objects[i + 1].set('counts.Query', obj.length);
-					}, objects[i].id);
+					C.Ctl.List.getObjects('Stream', function (obj, arg) {
+						objects[arg].set('counts.Stream', obj.length);
+					}, objects[i].id, i);
+					C.Ctl.List.getObjects('Flow', function (obj, arg) {
+						objects[arg].set('counts.Flow', obj.length);
+					}, objects[i].id, i);
+					C.Ctl.List.getObjects('Dataset', function (obj, arg) {
+						objects[arg].set('counts.Dataset', obj.length);
+					}, objects[i].id, i);
+					C.Ctl.List.getObjects('Query', function (obj, arg) {
+						objects[arg].set('counts.Query', obj.length);
+					}, objects[i].id, i);
 
 				}
 				self.get('types.Application').pushObjects(objects);
