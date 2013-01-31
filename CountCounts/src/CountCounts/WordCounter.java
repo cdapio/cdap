@@ -23,9 +23,9 @@ public class WordCounter extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     final String delimiters = "[ .-]";
     int count = 0;
     String str = (String)tuple.get("text");
@@ -37,9 +37,9 @@ public class WordCounter extends ComputeFlowlet {
         set("count", count).
         create();
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+    }
     outputCollector.add(output);
   }
 

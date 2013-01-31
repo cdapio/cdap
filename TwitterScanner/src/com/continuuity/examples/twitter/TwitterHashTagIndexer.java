@@ -3,7 +3,6 @@
  */
 package com.continuuity.examples.twitter;
 
-import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.util.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
@@ -23,10 +22,7 @@ public class TwitterHashTagIndexer extends ComputeFlowlet {
 
   @Override
   public void initialize() {
-    this.topHashTags = (SortedCounterTable)
-        getFlowletContext().getDataSetRegistry().registerDataSet(
-            new SortedCounterTable("topHashTags",
-            new SortedCounterTable.SortedCounterConfig()));
+    this.topHashTags = getFlowletContext().getDataSet(TwitterFlow.topHashTags);
   }
 
   @Override

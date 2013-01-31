@@ -1,6 +1,7 @@
 package SimpleWriteAndRead;
 
 import com.continuuity.api.data.*;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
@@ -20,6 +21,13 @@ public class WriterFlowlet extends ComputeFlowlet {
     specifier.getDefaultFlowletOutput().setSchema(out);
   }
 
+  KeyValueTable kvTable;
+
+  @Override
+  public void initialize() {
+    this.kvTable = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext,
                       OutputCollector outputCollector) {
@@ -33,8 +41,9 @@ public class WriterFlowlet extends ComputeFlowlet {
     if (params.length != 2) return;
     byte [] key = params[0].getBytes();
     byte [] value = params[1].getBytes();
-    Write write = new Write(key, value);
-    outputCollector.add(write);
+
+    this.kvTable.stage(new KeyValueTable.WriteKey(key, value));
+
     Tuple outputTuple = new TupleBuilder().
           set("key", key).
           create();

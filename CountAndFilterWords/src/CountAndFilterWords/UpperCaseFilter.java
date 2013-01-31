@@ -19,21 +19,25 @@ public class UpperCaseFilter extends ComputeFlowlet {
 
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     String word = tuple.get("word");
-    if (word == null) return;
+    if (word == null) {
+      return;
+    }
     // filter words that are not upper-cased
-    if (!Character.isUpperCase(word.charAt(0))) return;
+    if (!Character.isUpperCase(word.charAt(0))) {
+      return;
+    }
 
     Tuple output = new TupleBuilder().
         set("word", word).
         create();
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+    }
     outputCollector.add(output);
   }
 }

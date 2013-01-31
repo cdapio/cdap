@@ -14,7 +14,9 @@ public class Main implements Application {
     return ApplicationSpecification.builder()
       .setApplicationName("CountCountsDemo")
       .addFlow(CountCounts.class)
+      .addQuery(CountQuery.class)
       .addStream(new Stream("text"))
+      .addDataSet(new CounterTable(Common.tableName))
       .create();
   }
 }
