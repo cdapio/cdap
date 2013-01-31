@@ -1,7 +1,7 @@
 package com.continuuity.data.dataset;
 
 
-import com.continuuity.api.data.BatchCollectionClient;
+import com.continuuity.data.BatchCollectionClient;
 import com.continuuity.api.data.BatchCollector;
 import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.CompareAndSwap;

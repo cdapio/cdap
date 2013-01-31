@@ -3,10 +3,24 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.CompareAndSwap;
+import com.continuuity.api.data.Delete;
+import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.Operation;
+import com.continuuity.api.data.OperationContext;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.api.data.Read;
+import com.continuuity.api.data.ReadAllKeys;
+import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.api.data.ReadKey;
+import com.continuuity.api.data.Write;
+import com.continuuity.api.data.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.metadata.MetaDataEntry;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.*;
 import com.continuuity.data.operation.StatusCode;

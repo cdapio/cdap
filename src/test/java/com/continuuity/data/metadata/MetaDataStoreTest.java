@@ -1,7 +1,5 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.api.data.MetaDataEntry;
-import com.continuuity.api.data.MetaDataStore;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;

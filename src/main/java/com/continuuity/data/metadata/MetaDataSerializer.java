@@ -4,8 +4,6 @@
 
 package com.continuuity.data.metadata;
 
-import com.continuuity.api.data.MetaDataEntry;
-import com.continuuity.api.data.MetaDataException;
 import com.continuuity.common.conf.Constants;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
