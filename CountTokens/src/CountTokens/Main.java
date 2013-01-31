@@ -1,5 +1,6 @@
 package CountTokens;
 
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
 import com.continuuity.api.stream.Stream;
@@ -15,6 +16,7 @@ public class Main implements Application {
       .setApplicationName("CountTokensDemo")
       .addFlow(CountTokens.class)
       .addStream(new Stream("text"))
+      .addDataSet(new KeyValueTable(Common.tableName))
       .create();
   }
 }
