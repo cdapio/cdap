@@ -4,11 +4,58 @@ apply plugin:'java'
  */
 dependencies {
 
-    compile elastic([group: 'com.continuuity', name: 'flow', version: "${version}", changing: true], "flow")
-    compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-    compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
     compile elastic([group: 'com.continuuity', name: 'gateway', version: "${version}", changing: true], "gateway")
+
+    // Workaround to include sub project dependencies
+    compile (project(":flow")){
+        artifact { artifact ->
+            artifact.name = project(":flow").name
+            artifact.type = 'jar'
+            artifact.classifier = 'testhelper'
+        }
+        artifact { artifact ->
+            artifact.name = project(":flow").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":flow").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":data-fabric")){
+        artifact { artifact ->
+            artifact.name = project(":data-fabric").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":data-fabric").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":common")){
+        artifact { artifact ->
+            artifact.name = project(":common").name
+            artifact.type = 'jar'
+            artifact.classifier = 'api'
+        }
+        artifact { artifact ->
+            artifact.name = project(":common").name
+            artifact.type = 'jar'
+        }
+    }
+    compile (project(":overlord")){
+        artifact { artifact ->
+            artifact.name = project(":overlord").name
+            artifact.type = 'jar'
+            artifact.classifier = 'thrift'
+        }
+        artifact { artifact ->
+            artifact.name = project(":overlord").name
+            artifact.type = 'jar'
+        }
+    }
 
     compile libraries.jetty
     compile libraries.netflix_curator_framework
@@ -16,13 +63,13 @@ dependencies {
     compile libraries.netflix_curator_discovery_client
     compile libraries.netflix_curator_discovery_server
     compile libraries.netflix_curator_recipes
-    compile libraries.hadoop_hdfs
     compile libraries.http_client
     compile libraries.slf4j_api
     compile libraries.logback_core
     compile libraries.logback_classic
     testCompile libraries.mockito_core
     testCompile libraries.junit
+    testCompile libraries.cglib_no_dep
 }
 
 // skip the main java tasks - we only build the test jar in this module
