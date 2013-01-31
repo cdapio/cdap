@@ -238,7 +238,12 @@ implements OrderedVersionedColumnarTable {
         ImmutablePair<Long, byte[]> latest =
             filteredLatest(result, readPointer);
         if (latest != null) {
-          newAmount += Bytes.toLong(latest.getSecond());
+          try {
+            newAmount += Bytes.toLong(latest.getSecond());
+          } catch(IllegalArgumentException e) {
+            throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
+                                         e.getMessage(), e);
+          }
         }
         ps.close();
       } catch (SQLException e) {
