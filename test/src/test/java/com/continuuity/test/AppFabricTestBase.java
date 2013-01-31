@@ -2,7 +2,10 @@ package com.continuuity.test;
 
 import com.continuuity.api.data.BatchCollectionRegistry;
 import com.continuuity.api.data.DataFabric;
+import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetRegistry;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
@@ -18,8 +21,10 @@ import com.continuuity.common.logging.LocalLogDispatcher;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.ClearFabric.ToClear;
+import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
@@ -30,10 +35,14 @@ import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.FlowletContextImpl;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.test.FlowTestHelper.TestDataSetRegistry;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.netflix.curator.x.discovery.ServiceInstance;
@@ -118,12 +127,17 @@ public abstract class AppFabricTestBase {
 
   private static final DataFabric fabric = context.getDataFabric();
 
+  private static final MetadataService mds = new MetadataService(executor);
+
   private static Gateway queryGateway = null;
 
   private static DataSetRegistry dataSetRegistry = null;
 
   private final static BlockingQueue<TestFlowHandle> flowHandles = new LinkedBlockingQueue<TestFlowHandle>();
   private final static BlockingQueue<TestQueryHandle> queryHandles = new LinkedBlockingQueue<TestQueryHandle>();
+
+  private static final DataSetInstantiator instantiator =
+    new DataSetInstantiator(fabric, new SimpleBatchCollectionClient());
 
   @BeforeClass
   public final static void clearFabricBeforeTestClass() throws OperationException {
@@ -253,6 +267,36 @@ public abstract class AppFabricTestBase {
    */
   protected BatchCollectionRegistry getRegistry() {
     return context;
+  }
+
+  /**
+   * Register a data set in the meta data service. This must be done for every data set used in a flow or query
+   * @param dataset the data set to be registered
+   * @throws Exception if something goes wrong
+   */
+  public void registerDataSet(DataSet dataset) throws Exception {
+    DataSetSpecification spec = dataset.configure();
+    Dataset ds = new Dataset(spec.getName());
+    ds.setName(spec.getName());
+    ds.setType(spec.getType());
+    String json = new Gson().toJson(spec);
+    ds.setSpecification(json);
+    mds.assertDataset(new Account(ACCOUNT), ds);
+    instantiator.addDataSet(spec);
+  }
+
+  /**
+   * Get a runtime instance of a named data set. This does exactly the same as the method of the same name in
+   * QueryProviderContext and FlowletContext.
+   * @param dataSetName The data set name
+   * @param <T> The type of the data set
+   * @return a new instance of the data set with data fabric injected
+   * @throws DataSetInstantiationException if some of the instantiation magic goes wrong.
+   */
+  public
+  <T extends DataSet> T getDataSet(String dataSetName)
+    throws DataSetInstantiationException {
+    return instantiator.getDataSet(dataSetName);
   }
 
   /**
