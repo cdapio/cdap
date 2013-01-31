@@ -1,6 +1,6 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.BatchCollectionClient;
+import com.continuuity.data.BatchCollectionClient;
 import com.continuuity.api.data.BatchCollector;
 
 /**

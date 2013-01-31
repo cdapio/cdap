@@ -7,6 +7,8 @@ import com.continuuity.api.data.*;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.metadata.MetaDataEntry;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.*;
 import com.continuuity.data.operation.StatusCode;

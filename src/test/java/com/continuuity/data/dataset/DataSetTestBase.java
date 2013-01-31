@@ -1,12 +1,12 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.*;
+import com.continuuity.data.BatchCollectionClient;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricLocalModule;
-import com.continuuity.data.runtime.DataFabricModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

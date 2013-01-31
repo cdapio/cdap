@@ -1,7 +1,5 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.api.data.MetaDataEntry;
-import com.continuuity.api.data.MetaDataException;
 import org.junit.Assert;
 import org.junit.Test;
 

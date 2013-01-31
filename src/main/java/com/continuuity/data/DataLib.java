@@ -1,4 +1,7 @@
-package com.continuuity.api.data;
+package com.continuuity.data;
+
+import com.continuuity.api.data.BatchCollector;
+import com.continuuity.api.data.DataFabric;
 
 /**
  *

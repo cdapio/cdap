@@ -3,6 +3,7 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.*;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.data.BatchCollectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,7 +196,7 @@ public class DataSetInstantiator implements DataSetContext {
     if (obj instanceof Table) {
       // this sets the delegate table of the Table to a new ReadWriteTable
       RuntimeTable runtimeTable = this.readOnly
-        ? ReadOnlyTable.setReadOnlyTable((Table)obj, this.fabric)
+        ? ReadOnlyTable.setReadOnlyTable((Table) obj, this.fabric)
         : ReadWriteTable.setReadWriteTable((Table)obj, this.fabric, this.collectionClient);
       // also ensure that the table exists in the data fabric
       try {
