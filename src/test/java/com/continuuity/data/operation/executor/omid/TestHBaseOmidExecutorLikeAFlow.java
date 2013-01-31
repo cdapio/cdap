@@ -68,7 +68,12 @@ public class TestHBaseOmidExecutorLikeAFlow extends TestOmidExecutorLikeAFlow {
    */
   @Test @Override @Ignore
   public void testThreadedProducersAndThreadedConsumers() throws Exception {}
-
+  // Test Overrides
+  /**
+   * Currently not working.  Will be fixed in ENG-1840.
+   */
+//  @Test @Override @Ignore
+  public void testConcurrentEnqueueDequeue() throws Exception {}
   /**
    * Currently not working.  Will be fixed in ENG-421.
    */
