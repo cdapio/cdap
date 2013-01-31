@@ -8,7 +8,6 @@
  * <blockquote>
  *   <pre>
  *     public MyApplication implements Application {
- *       @Override
  *       public ApplicationSpecification configure() {
  *         MyDataSet myDataset = new MyDataset("my");
  *         TimeseriesDataSet timeseriesDataset = new TimeseriesDataSet("mytimeseries");
