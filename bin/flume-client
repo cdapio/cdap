@@ -3,6 +3,8 @@
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
+script=$0
+
 # Need this for relative symlinks.
 while [ -h "$PRG" ] ; do
     ls=`ls -ld "$PRG"`
@@ -17,4 +19,4 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
-java -cp @classpath@ com.continuuity.gateway.tools.FlumeClient "$@"
+java -cp @classpath@ -Dscript=$script com.continuuity.gateway.tools.FlumeClient "$@"

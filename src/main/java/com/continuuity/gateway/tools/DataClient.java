@@ -89,7 +89,7 @@ public class DataClient {
    */
   void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    String name = this.getClass().getSimpleName();
+    String name = System.getProperty("script").replace(".","/").replace("/","");
     Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " read --key <string> [ <options> ]");
