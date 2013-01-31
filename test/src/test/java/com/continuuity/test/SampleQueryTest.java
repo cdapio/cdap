@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMultimap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
@@ -45,7 +46,10 @@ public class SampleQueryTest extends AppFabricTestBase {
     @Override
     public QueryProviderResponse process(String method, Map<String, String> arguments) {
       try {
-        kvTable.exec(new KeyValueTable.WriteKey(row, Bytes.toBytes(method)));
+        byte[] value = kvTable.read(row);
+        if (!Arrays.equals(Bytes.toBytes(method), value)) {
+          return new QueryProviderResponse(QueryProviderResponse.Status.FAILED, "No Match.", "No Match.");
+        }
       } catch (OperationException e) {
         return new QueryProviderResponse(QueryProviderResponse.Status.FAILED, "Failed.", e.getMessage());
       }
@@ -66,18 +70,23 @@ public class SampleQueryTest extends AppFabricTestBase {
     // normally, this would be done by the app fabric when the application gets deployed
     registerDataSet(new KeyValueTable("simple"));
 
+    // get a runtime instance of the data set and write a row
+    KeyValueTable kv = getDataSet("simple");
+    kv.exec(new KeyValueTable.WriteKey(HelloWorldQueryProvider.row, Bytes.toBytes("xyz")));
+
     // start the query provider
     TestQueryHandle queryHandle = startQuery(HelloWorldQueryProvider.class);
     assertTrue(queryHandle.isRunning());
 
-    // submit a query, verif that it returns correct status and content
+    // submit a query, verify that it returns correct status and content
     QueryResult queryResult = runQuery(queryHandle, "xyz", ImmutableMultimap.<String, String>of("a","b"));
     Assert.assertEquals(200, queryResult.getReturnCode());
     Assert.assertEquals("method : xyz [ a=b ] ", queryResult.getContent());
 
-    // get a runtime instance of the data set and read back the row written by the query provider
-    KeyValueTable kv = getDataSet("simple");
-    Assert.assertArrayEquals(Bytes.toBytes("xyz"), kv.read(HelloWorldQueryProvider.row));
+    // submit a query for a method that does not match the row value
+    queryResult = runQuery(queryHandle, "abc", ImmutableMultimap.<String, String>of());
+    Assert.assertEquals(500, queryResult.getReturnCode());
+    Assert.assertEquals("No Match.", queryResult.getContent());
   }
 
 }
