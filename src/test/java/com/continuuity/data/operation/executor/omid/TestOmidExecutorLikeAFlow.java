@@ -577,6 +577,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
   @Test
   public void testConcurrentEnqueueDequeue() throws Exception {
+
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
 
     final OmidTransactionalOperationExecutor executorFinal = this.executor;
@@ -585,11 +586,11 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Create and start a thread that dequeues in a loop
     final QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    final QueueConfig config = new QueueConfig(
-        PartitionerType.RANDOM, true);
+    final QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
     final AtomicBoolean stop = new AtomicBoolean(false);
     final Set<byte[]> dequeued = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
     final AtomicLong numEmpty = new AtomicLong(0);
+
     Thread dequeueThread = new Thread() {
       @Override
       public void run() {
@@ -597,8 +598,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         while (lastSuccess || !stop.get()) {
           DequeueResult result;
           try {
-            result = executorFinal.execute(context,
-                  new QueueDequeue(queueName, consumer, config));
+            result = executorFinal.execute(context, new QueueDequeue(queueName, consumer, config));
           } catch (OperationException e) {
             System.out.println("DequeuePayload failed! " + e.getMessage());
             return;
@@ -606,8 +606,7 @@ public abstract class TestOmidExecutorLikeAFlow {
           if (result.isSuccess()) {
             dequeued.add(result.getValue());
             try {
-              executorFinal.execute(context, new QueueAck(
-                  queueName, result.getEntryPointer(), consumer));
+              executorFinal.execute(context, new QueueAck(queueName, result.getEntryPointer(), consumer));
               lastSuccess = true;
             } catch (OperationException e) {
               fail("Exception for QueueAck");
@@ -643,8 +642,7 @@ public abstract class TestOmidExecutorLikeAFlow {
       public void run() {
         for (int i=0; i<n; i++) {
           try {
-            executorFinal.execute(context,
-                new QueueEnqueue(queueName, Bytes.toBytes(i)));
+            executorFinal.execute(context, new QueueEnqueue(queueName, Bytes.toBytes(i)));
           } catch (OperationException e) {
             fail("Exception for QueueEnqueue " + i);
           }
@@ -663,7 +661,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         dequeued.size() + ", Number of empty returns is " + numEmpty.get());
 
     // Should have dequeued n entries
-    assertEquals(n, dequeued.size());
+    assertEquals(n, dequeued.size());  // fails expected:<100> but was:<63>
     
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }

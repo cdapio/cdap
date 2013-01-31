@@ -2,6 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.Operation;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.*;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class KeyValueTable extends DataSet {
 
   // the fixed single column to use for the key
-  static final byte[] KEY_COLUMN = { 'k', 'e', 'y' };
+  static final byte[] KEY_COLUMN = Operation.KV_COL;
 
   // the underlying table
   private Table table;
@@ -36,7 +37,7 @@ public class KeyValueTable extends DataSet {
    *         the data fabric
    */
   @SuppressWarnings("unused")
-  public KeyValueTable(DataSetSpecification spec) throws OperationException {
+  public KeyValueTable(DataSetSpecification spec) {
     super(spec);
     this.table = new Table(spec.getSpecificationFor("kv_" + this.getName()));
   }
@@ -76,7 +77,7 @@ public class KeyValueTable extends DataSet {
    * @param op the write operation
    * @throws OperationException if the operation fails
    */
-  public void stage(KeyOperation op) throws OperationException {
+  public void stage(KeyOperation op) {
     this.table.stage(op);
   }
 
@@ -95,7 +96,7 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * A operation to write a new value for a given key
+   * An operation to write a new value for a given key
    */
   public static class WriteKey extends Write implements KeyOperation {
     public WriteKey(byte[] key, byte[] value) {
@@ -104,7 +105,19 @@ public class KeyValueTable extends DataSet {
   }
 
   /**
-   * A operation to delete a given key
+   * An operation to increment the value for a given key
+   */
+  public static class IncrementKey extends Increment implements KeyOperation {
+    public IncrementKey(byte[] key, long value) {
+      super(key, KEY_COLUMN, value);
+    }
+    public IncrementKey(byte[] key) {
+      this(key, 1L);
+    }
+  }
+
+  /**
+   * An operation to delete a given key
    */
   public static class DeleteKey extends Delete implements KeyOperation {
     public DeleteKey(byte[] key) {
