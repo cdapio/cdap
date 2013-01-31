@@ -3,11 +3,14 @@ define([
 	], function () {
 	
 	return Em.View.extend({
-		template: Em.Handlebars.compile('Drop a JAR to Deploy'),
 		classNames: ['drop-zone'],
 		init: function () {
 			this._super();
 			this.set('controller', C.Ctl.Upload);
+
+			this.set('template', Em.Handlebars.compile('Drop a JAR to ' + 
+				(this.get('uploadType') || 'Deploy')));
+
 		},
 		didInsertElement: function () {
 

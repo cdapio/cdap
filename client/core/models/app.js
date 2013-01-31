@@ -16,12 +16,14 @@ define([], function () {
 
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
-		},
-		counts: {
-			Stream: 0,
-			Flow: 0,
-			Dataset: 0,
-			Query: 0
+
+			this.set('counts', {
+				Stream: 0,
+				Flow: 0,
+				Dataset: 0,
+				Query: 0
+			});
+
 		},
 		addMetricName: function (name) {
 
