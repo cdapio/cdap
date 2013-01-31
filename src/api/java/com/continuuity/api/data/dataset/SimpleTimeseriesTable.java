@@ -153,7 +153,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   }
 
   /**
-   * Writes entry synchronously. See {@link TimeseriesTable#write(Entry)} for more details on usage.
+   * Writes entry synchronously. See {@link com.continuuity.api.data.dataset.TimeseriesTable#write(Entry)} for more details on usage.
    * @param entry to write
    * @throws OperationException
    */
@@ -164,7 +164,7 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   }
 
   /**
-   * Writes entry asynchronously. See {@link TimeseriesTable#stage(Entry)} for more details on usage.
+   * Writes entry asynchronously. See {@link com.continuuity.api.data.dataset.TimeseriesTable#stage(Entry)} for more details on usage.
    * @param entry to write
    * @throws OperationException
    */
@@ -175,7 +175,8 @@ public class SimpleTimeseriesTable extends DataSet implements TimeseriesTable {
   }
 
   /**
-   * Reads entries of a time range. See {@link TimeseriesTable#read(byte[], long, long, byte[]...)} for more details
+   * Reads entries of a time range.
+   * See {@code com.continuuity.api.data.dataset.TimeseriesTable#read(byte[], long, long, byte[]...)} for more details
    * on usage.<br/>
    * NOTE: There's a hard limit on the max number of time intervals to be scanned during read. Defined in
    * MAX_ROWS_TO_SCAN_PER_READ parameter.

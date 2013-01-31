@@ -1,5 +1,9 @@
 package com.continuuity.api.data;
 
+/**
+ * Store OperationResult
+ * @param <ReturnType>
+ */
 public class OperationResult<ReturnType> {
 
   /** whether the result has a value */

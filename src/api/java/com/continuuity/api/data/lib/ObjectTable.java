@@ -47,7 +47,7 @@ public class ObjectTable<T extends SimpleSerializable> extends DataLib {
   /**
    * Update object
    * @param id id of the object to be updated
-   * @param T instance of the data that is updated
+   * @param t instance of the data that is updated
    */
   public void updateObject(byte [] id, T t) {
     Write write = new Write(getDataSetId(), id, COLUMN, t.toBytes());
