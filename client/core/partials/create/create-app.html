@@ -4,35 +4,10 @@
 </div>
 <div class="modal-loading"></div>
 <div class="modal-body">
-<table style="width: 100%">
-<tr>
-<td style="width: 150px;">
-Display Name
-</td>
-<td>
-{{view C.Vw.TextField valueBinding="form.name" }}
-</td>
-</tr>
-<tr>
-<td>
-Identifier
-</td>
-<td>
-{{view Ember.TextField valueBinding="form.id" change=idChanged}}
-</td>
-</tr>
-<tr>
-<td>
-Description
-</td>
-<td>
-{{view Ember.TextArea valueBinding="form.description"}}
-</td>
-</tr>
+{{view C.Vw.DropZone uploadType="Create"}}
 </table>
 <div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
 </div>
 <div class="modal-footer">
 <button {{action "hide" on="click"}} class="btn">Cancel</a>
-<button {{action "submit" on="click"}} class="btn">Okay</a>
 </div>

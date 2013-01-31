@@ -458,30 +458,33 @@ function(Models, Views, Controllers){
 		if (pending[response.id] &&
 			typeof pending[response.id][0] === 'function') {
 
-			toAverage.push(new Date().getTime() - pending[response.id][2]);
+			if (window.ENV.isCloud) {
 
-			if (toAverage.length > averageOver) {
-				toAverage.shift();
-			}
+				toAverage.push(new Date().getTime() - pending[response.id][2]);
 
-			var i = toAverage.length, sum = 0;
-			while (i--) {
-				sum += toAverage[i];
-			}
+				if (toAverage.length > averageOver) {
+					toAverage.shift();
+				}
 
-			if(sum / toAverage.length > maxResponseTime) {
+				var i = toAverage.length, sum = 0;
+				while (i--) {
+					sum += toAverage[i];
+				}
 
-				clearTimeout(warningTimeout);
-				$('#warning').fadeIn();
-				warningTimeout = null;
+				if(sum / toAverage.length > maxResponseTime) {
 
-			} else {
+					clearTimeout(warningTimeout);
+					$('#warning').fadeIn();
+					warningTimeout = null;
 
-				if (warningTimeout === null) {
-					warningTimeout = setTimeout(function () {
-						$('#warning').fadeOut();
-						warningTimeout = null;
-					}, 1000);
+				} else {
+
+					if (warningTimeout === null) {
+						warningTimeout = setTimeout(function () {
+							$('#warning').fadeOut();
+							warningTimeout = null;
+						}, 1000);
+					}
 				}
 			}
 

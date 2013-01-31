@@ -2,9 +2,10 @@
 <div class="popup-container">
 <div class="popup-close" {{action close on="click"}}>×</div>
 
-<div class="popup-inject-wrapper">
+<div class="popup-inject-wrapper" style="line-height: 10px;color: #CA6767;">
 {{view C.Vw.Injector}}
 <button class="btn" {{action "inject" on="click"}}>Inject</button>
+<br /><span style="font-size:10px;">Warning: This will be delivered to all attached processors.</span>
 </div>
 
 <div class="popup-icon-stream" />

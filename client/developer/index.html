@@ -28,12 +28,11 @@
  <div id="nav">
     <a href="#" id="logo"></a>
     <ul>
-      <li><a class="nav-link nav-dash" href="#">Dashboard</a></li>
-      <li><a class="nav-link nav-apps" href="#/apps">Applications</a></li>
-      <li><a class="nav-link nav-streams" href="#/streams">Streams</a></li>
-      <li><a class="nav-link nav-flows" href="#/flows">Flows</a></li>
-      <li><a class="nav-link nav-datasets" href="#/data">Datasets</a></li>
-      <li><a class="nav-link nav-queries" href="#/queries">Queries</a></li>
+      <li class="overview"><a class="nav-link nav-dash" href="#">Dashboard</a></li>
+      <li><a class="nav-link nav-streams" href="#/streams">Collect</a></li>
+      <li><a class="nav-link nav-flows" href="#/flows">Process</a></li>
+      <li><a class="nav-link nav-datasets" href="#/data">Store</a></li>
+      <li><a class="nav-link nav-queries" href="#/queries">Query</a></li>
     </ul>
   </div>
 
@@ -65,18 +64,15 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Account Summary</div></div>
+        <div class="panel-head"><div class="panel-title">Overview</div></div>
         <table class="dash-app-resources">
           <tbody>
             <tr>
               <td class="dash-app-resource">
-                <a href="#/apps" class="dash-app-resource-app">{{controller.counts.Application}}</a>
+                <a href="#/streams" class="dash-app-resource-stream">{{controller.counts.Stream}}</a>
               </td>
               <td class="dash-app-resource">
                 <a href="#/flows" class="dash-app-resource-flow">{{controller.counts.Flow}}</a>
-              </td>
-              <td class="dash-app-resource">
-                <a href="#/streams" class="dash-app-resource-stream">{{controller.counts.Stream}}</a>
               </td>
               <td class="dash-app-resource">
                 <a href="#/data" class="dash-app-resource-dataset">{{controller.counts.Dataset}}</a>
@@ -124,7 +120,7 @@
         </div>
       </div>
       <div class="info-box" style="float: right;border: 0;padding-right: 0;">
-        {{view C.Vw.DropZone}}
+        {{view C.Vw.DropZone uploadType="Update"}}
       </div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="processed.count"}}</div>
       <div class="info-box sparkline-box">{{view C.Vw.Chart metrics="busyness" unit="percent"}}</div>
@@ -136,7 +132,7 @@
 
     <div id="panels">
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Streams</div></div>
+        <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{view C.Vw.StreamList}}
       </div>
       <div class="panel">
@@ -149,13 +145,13 @@
               <button {{action stopAllFlows on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
-          <div class="panel-title">Flows</div>
+          <div class="panel-title">Process</div>
         </div>
         {{view C.Vw.FlowList}}
 
       </div>
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Datasets</div></div>
+        <div class="panel-head"><div class="panel-title">Store</div></div>
         {{view C.Vw.DatasetList}}
       </div>
       <div class="panel">
@@ -167,7 +163,7 @@
               <button {{action stopAllQueries on="click"}} class="btn">Stop</button>
             </div>
           {{/if}}
-          <div class="panel-title">Queries</div>
+          <div class="panel-title">Query</div>
         </div>
         {{view C.Vw.QueryList}}
       </div>
@@ -350,34 +346,36 @@
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
+        <div id="object-list">
+          {{#if content.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 215px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            {{#each content tagName="tbody"}}
+              <tr class="run-list" {{action "loadRun" on="click"}} {{bindAttr id="runId"}}>
+                <td>{{started}}</td>
+                <td>{{ended}}</td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+              This Flow has not completed a run yet.
+            </div>
+          {{/if}}
+        </div>
+      </div>
+      <div class="panel">
         <div id="flowviz-container" class="flowviz-fade">
           {{view C.Vw.Visualizer viewName="visualizer"}}
         </div>
       </div>
-      <div class="panel">
-      <div id="object-list">
-        {{#if content.length}}
-          <table class="table table-condensed">
-          <thead>
-            <tr><th style="width: 215px;">Started</th>
-            <th>Ended</th>
-            <th style="width:250px;">Result</th>
-            </tr>
-          </thead>
-          {{#each content tagName="tbody"}}
-            <tr class="run-list" {{action "loadRun" on="click"}} {{bindAttr id="runId"}}>
-              <td>{{started}}</td>
-              <td>{{ended}}</td>
-              <td>{{detail}}</td>
-            </tr>
-          {{/each}}
-          </table>
-        {{else}}
-          <div class="object-list-empty">
-            This flow has not completed a run yet.
-          </div>
-        {{/if}}
-        </div></div></div>
+    </div>
     </div>
     <div id="flowlet-container">
       <div id="flowlet-popup">
