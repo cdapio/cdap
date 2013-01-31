@@ -9,6 +9,7 @@ public class SimpleWriteAndRead implements Flow {
     specifier.email("me@continuuity.com");
     specifier.application("End2End");
     specifier.stream("text");
+    specifier.dataset(Common.tableName);
     specifier.flowlet("source", StreamSource.class, 1);
     specifier.flowlet("writer", WriterFlowlet.class, 1);
     specifier.flowlet("reader", ReaderFlowlet.class, 1);

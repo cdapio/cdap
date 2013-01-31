@@ -1,6 +1,7 @@
 package SimpleWriteAndRead;
 
 import com.continuuity.api.data.*;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
@@ -16,6 +17,13 @@ public class ReaderFlowlet extends ComputeFlowlet {
     specifier.getDefaultFlowletInput().setSchema(in);
   }
 
+  KeyValueTable kvTable;
+
+  @Override
+  public void initialize() {
+    this.kvTable = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext,
                       OutputCollector outputCollector) {
@@ -25,19 +33,16 @@ public class ReaderFlowlet extends ComputeFlowlet {
 
     // perform inline read of key
     byte [] key = tuple.get("key");
-    ReadKey read = new ReadKey(key);
-    DataFabric fabric =
-      getFlowletContext().getDataFabric();
     try {
-      OperationResult<byte []> value = fabric.read(read);
+      byte [] value = this.kvTable.read(key);
 
       if (Common.debug) {
-        if (value.isEmpty()) {
+        if (value == null) {
           System.out.println(this.getClass().getSimpleName() +
               ": No value read for key (" + new String(key) + ")");
         } else {
           System.out.println(this.getClass().getSimpleName() +
-              ": Read value (" + new String(value.getValue()) +
+              ": Read value (" + new String(value) +
               ") for key (" + new String(key) + ")");
         }
       }
