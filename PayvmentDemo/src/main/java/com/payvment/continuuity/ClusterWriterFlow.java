@@ -1,23 +1,22 @@
 package com.payvment.continuuity;
 
-import java.io.IOException;
-
 import au.com.bytecode.opencsv.CSVParser;
-
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FailureHandlingPolicy;
 import com.continuuity.api.flow.flowlet.FailureReason;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 import com.payvment.continuuity.data.ClusterTable;
+
+import java.io.IOException;
 
 /**
  * Flow application used to process clusters of categories.  These clusters
@@ -108,21 +107,21 @@ public class ClusterWriterFlow implements Flow {
     static int numFailures = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
 
       // Apply default stream schema to default tuple input stream
       configurator
-          .getDefaultTupleInputStream()
+          .getDefaultFlowletInput()
           .setSchema(TupleSchema.EVENT_SCHEMA);
 
       // Apply internal cluster tuple schema to writer output stream
       configurator
-          .addTupleOutputStream("writer_output")
-          .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
+        .addFlowletOutput("writer_output")
+        .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
 
       // Apply simple reset tuple schema to reset output stream
       configurator
-          .addTupleOutputStream("reset_output")
+          .addFlowletOutput("reset_output")
           .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
 
     }
@@ -215,10 +214,10 @@ public class ClusterWriterFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Apply cluster tuple schema to default tuple input stream
       configurator
-          .getDefaultTupleInputStream()
+          .getDefaultFlowletInput()
           .setSchema(CLUSTER_PARSER_TO_WRITER_SCHEMA);
       // No output stream
     }
@@ -268,10 +267,10 @@ public class ClusterWriterFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Apply cluster tuple schema to default tuple input stream
       configurator
-          .getDefaultTupleInputStream()
+          .getDefaultFlowletInput()
           .setSchema(CLUSTER_PARSER_TO_RESET_SCHEMA);
       // No output stream
     }

@@ -1,8 +1,8 @@
 package com.payvment.continuuity;
 
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
@@ -15,15 +15,15 @@ public class ProductFeedParserFlowlet extends ComputeFlowlet {
   static int numProcessed = 0;
 
   @Override
-  public void configure(StreamsConfigurator configurator) {
+  public void configure(FlowletSpecifier configurator) {
     // Apply default stream schema to default tuple input stream
     configurator
-        .getDefaultTupleInputStream()
+        .getDefaultFlowletInput()
         .setSchema(TupleSchema.EVENT_SCHEMA);
 
     // Apply internal follow-event tuple schema to output stream
     configurator
-        .getDefaultTupleOutputStream()
+        .getDefaultFlowletOutput()
         .setSchema(ProductFeedFlow.PRODUCT_META_TUPLE_SCHEMA);
   }
 

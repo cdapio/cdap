@@ -17,7 +17,7 @@ public class CountOddAndEven implements Flow {
 
     // Configure all the edges.
     specifier.connection("NumGenerator", "OddOrEven");
-    specifier.connection("OddOrEven", "odd", "OddCounter", "in");
+    specifier.connection("OddOrEven", "out", "OddCounter", "in");
     specifier.connection("OddOrEven", "even", "EvenCounter", "in");
   }
 }
