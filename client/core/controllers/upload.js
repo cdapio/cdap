@@ -81,6 +81,8 @@ define([], function () {
 						this.processing = false;
 						this.set('warningMessage', response.message);
 
+						$('.modal').modal('hide');
+
 						C.Vw.Modal.show(
 							"Deployment Error",
 							response.message, function () {
