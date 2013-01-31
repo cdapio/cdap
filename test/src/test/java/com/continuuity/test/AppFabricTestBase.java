@@ -123,7 +123,7 @@ public abstract class AppFabricTestBase {
                                                                        new FlowLogTag(ACCOUNT, APPLICATION, "flow",
                                                                                       "runid"),
                                                                        new LocalLogDispatcher(conf),
-                                                                       new CMetrics(MetricType.FlowUser, group));
+                                                                       new CMetrics(MetricType.FlowUser, group), null);
 
   private static final DataFabric fabric = context.getDataFabric();
 
@@ -137,7 +137,7 @@ public abstract class AppFabricTestBase {
   private final static BlockingQueue<TestQueryHandle> queryHandles = new LinkedBlockingQueue<TestQueryHandle>();
 
   private static final DataSetInstantiator instantiator =
-    new DataSetInstantiator(fabric, new SimpleBatchCollectionClient());
+    new DataSetInstantiator(fabric, new SimpleBatchCollectionClient(), null);
 
   @BeforeClass
   public final static void clearFabricBeforeTestClass() throws OperationException {
