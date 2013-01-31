@@ -32,6 +32,7 @@ public class FieldTypes {
     public static final String ID = "dataset";
     public static final String NAME = "name";
     public static final String DESCRIPTION = "description";
+    public static final String SPECIFICATION = "specification";
     public static final String TYPE = "type";
   }
 
