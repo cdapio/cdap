@@ -415,10 +415,27 @@ public abstract class AppFabricTestBase {
     }
   }
 
+  /**
+   * A class representing a condition to evaluate
+   */
   public interface Condition {
+    /**
+     * Override this function to specify the condition to be evaluated
+     * @return true if condition is true, false otherwise
+     */
     boolean evaluate();
   }
 
+  /**
+   * Waits for a condition to be true. The condition is checked every 500 ms.
+   * It also monitors the flow represented by the flowHandle and fails the test if the flowlets in the flow
+   * throw any exception while waiting on the condition.
+   * It also prints out a message every time it wakes up.
+   * @param flowHandle handle of the flow that needs to be monitored
+   * @param message message to be printed periodically when waiting
+   * @param timeoutMs time after which wait is timed-out
+   * @param condition the condition to wait on
+   */
   public void waitForCondition(TestFlowHandle flowHandle, String message, long timeoutMs, Condition condition) throws InterruptedException {
     long execTime = 0L;
     long sleep = 500L;
@@ -436,6 +453,15 @@ public abstract class AppFabricTestBase {
     } while(!condition.evaluate());
   }
 
+  /**
+   * Waits for a condition to be true indefinitely. The condition is checked every 500 ms.
+   * It also monitors the flow represented by the flowHandle and fails the test if the flowlets in the flow
+   * throw any exception while waiting on the condition.
+   * It also prints out a message every time it wakes up.
+   * @param flowHandle handle of the flow that needs to be monitored
+   * @param message message to be printed periodically when waiting
+   * @param condition the condition to wait on
+   */
   public void waitForCondition(TestFlowHandle flowHandle, String message, Condition condition) throws InterruptedException {
     waitForCondition(flowHandle, message, -1L, condition);
   }
