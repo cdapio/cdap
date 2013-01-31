@@ -13,6 +13,11 @@ public class Main implements Application {
     return ApplicationSpecification.builder()
       .setApplicationName("TwitterApp")
       .addFlow(TwitterFlow.class)
+      .addQuery(TwitterQuery.class)
+      .addDataSet(new SortedCounterTable(TwitterFlow.topUsers, new SortedCounterTable.SortedCounterConfig()))
+      .addDataSet(new SortedCounterTable(TwitterFlow.topHashTags, new SortedCounterTable.SortedCounterConfig()))
+      .addDataSet(new CounterTable(TwitterFlow.wordCounts))
+      .addDataSet(new CounterTable(TwitterFlow.hashTagWordAssocs))
       .create();
   }
 }

@@ -5,7 +5,6 @@ package com.continuuity.examples.twitter;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
@@ -13,6 +12,7 @@ import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.SourceFlowlet;
 import com.continuuity.api.flow.flowlet.Tuple;
