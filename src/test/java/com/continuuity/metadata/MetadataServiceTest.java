@@ -188,7 +188,7 @@ public class MetadataServiceTest {
   }
 
   /**
-   * Tests creation of a stream.
+   * Tests creation of a application.
    * @throws Exception
    */
   @Test
@@ -201,7 +201,37 @@ public class MetadataServiceTest {
   }
 
   /**
-   * Tests deletion of a stream.
+   * Tests update of a application
+   * @throws Exception
+   */
+  @Test
+  public void testUpdateApplication() throws Exception {
+    Application application = new Application("app1");
+    application.setName("Application 1");
+    application.setDescription("Test application");
+
+    // Create application for first time.
+    Assert.assertTrue(mds.createApplication(account, application));
+    Assert.assertTrue(mds.getApplications(account).size() > 0);
+
+    // We check what's in there.
+    String beforeUpdateDescription = mds.getApplication(account, new Application("app1")).getDescription();
+    Assert.assertTrue("Test application".equals(beforeUpdateDescription));
+
+    // Now, we change the application description.
+    Application updateApplication = new Application("app1");
+    updateApplication.setDescription("Test updating application");
+    updateApplication.setName("Application 1");
+    Assert.assertTrue(mds.updateApplication(account, updateApplication));
+    String afterUpdateDescription = mds.getApplication(account, new Application("app1")).getDescription();
+
+    // We validate that it's updated.
+    Assert.assertTrue("Test updating application".equals(afterUpdateDescription));
+  }
+
+
+  /**
+   * Tests deletion of a application.
    * @throws Exception
    */
   @Test

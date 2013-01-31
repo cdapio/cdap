@@ -192,6 +192,16 @@ service MetadataService {
     throws (1: MetadataServiceException e),
 
   /**
+   * Updates an existing application
+   *
+   * @return true if update was successfull, otherwise false.
+   * @throws MetadataServiceException thrown when there is issue with updating
+   * metadata store entry for the application.
+   */
+  bool updateApplication(1: Account account, 2: Application application)
+    throws (1: MetadataServiceException e),
+
+  /**
    * Deletes an application if exists.
    *
    * @return true if application was deleted successfully or did not exists to
