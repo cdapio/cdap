@@ -5,7 +5,8 @@ import com.continuuity.api.flow.ApplicationSpecification;
 import com.continuuity.api.stream.Stream;
 
 /**
- * CountAppDemo application that contains multiple flows attached to a stream named "text"
+ * CountTokensDemo application contains a flow {@code CountTokens} and is attached
+ * to a stream named "text"
  */
 public class Main implements Application {
   @Override
