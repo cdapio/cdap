@@ -121,7 +121,7 @@ public class Table extends DataSet {
    * @return a closure encapsulating the increment operation
    * @throws OperationException if something goes wrong
    */
-  public Closure closure(Increment op) throws OperationException {
+  public Closure closure(Increment op) {
     if (null == this.delegate) {
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
