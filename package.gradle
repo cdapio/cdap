@@ -12,26 +12,27 @@ jar.exclude '*.xml'
 evaluationDependsOn(":flow")
 
 task javadoc(type: Javadoc, overwrite: true) {
-    doFirst{
-		source project.parent.subprojects.collect { project ->
-			if(project.plugins.findPlugin("java")){
-				project.sourceSets.api.allJava
-			}
-			[]
-	    }
-		classpath = files(project.parent.subprojects.collect { project ->
-				if(project.plugins.findPlugin("java")){
-					project.sourceSets.main.compileClasspath
-				}
-				[]
-	    })
-	}
-	
-	group = 'Documentation' 
-    description = 'Aggregates API javadocs across all projects.'
+  source project.parent.subprojects.collect { proj ->
+   if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
+     return proj.sourceSets.api.allJava
+   }else{
+    return []       
+   }
+  }
+  doFirst{
+    classpath = files(project.parent.subprojects.collect { project ->
+    if(project.plugins.findPlugin("java")){
+      return  project.sourceSets.main.compileClasspath
+    }else{
+      return []
+    }
+   })
+  }	
+  group = 'Documentation' 
+  description = 'Aggregates API javadocs across all projects.'
    
-    destinationDir = new File(buildDir, 'javadoc')
-    // Might need a classpath
+  destinationDir = new File(buildDir, 'javadoc')
+  // Might need a classpath
     
 }
 
