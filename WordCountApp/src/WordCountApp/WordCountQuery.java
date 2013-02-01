@@ -18,7 +18,7 @@ public class WordCountQuery extends QueryProvider {
   @Override
   public void configure(QuerySpecifier specifier) {
     specifier.provider(WordCountQuery.class);
-    specifier.service("wordcount");
+    specifier.service("WordCountQuery");
     specifier.timeout(10000);
     specifier.type(QueryProviderContentType.JSON);
     specifier.dataset("wordStats");

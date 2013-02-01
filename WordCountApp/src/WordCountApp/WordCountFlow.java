@@ -31,7 +31,7 @@ public class WordCountFlow implements Flow {
   @Override
   public void configure(FlowSpecifier specifier) {
     // Specify meta data fields
-    specifier.name("WordCounter");
+    specifier.name("WordCountProcessor");
     specifier.email("demo@continuuity.com");
     specifier.application("WordCountApp");
 
