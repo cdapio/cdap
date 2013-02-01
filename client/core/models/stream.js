@@ -122,7 +122,6 @@ define([], function () {
 		metricNames: null,
 		type: 'Stream',
 		plural: 'Streams',
-		types: Em.Object.create(),
 		href: function () {
 			return '#/streams/' + this.get('id');
 		}.property().cacheable(),
@@ -132,6 +131,8 @@ define([], function () {
 			this.set('metricData', Em.Object.create());
 			this.set('metricNames', {});
 			
+			this.set('types', Em.Object.create());
+
 			if (!this.get('id')) {
 				this.set('id', this.get('name'));
 			}
