@@ -2,7 +2,7 @@ package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.StatusCode;
