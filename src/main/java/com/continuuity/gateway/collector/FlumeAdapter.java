@@ -4,7 +4,7 @@
 
 package com.continuuity.gateway.collector;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
