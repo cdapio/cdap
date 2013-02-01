@@ -53,11 +53,11 @@ function(Models, Views, Controllers){
 			},
 			breadcrumbs: Em.ArrayProxy.create({
 				names: {
-					'flows': 'Flows',
+					'flows': 'Process',
 					'upload': 'Upload',
 					'apps': 'Applications',
-					'streams': 'Streams',
-					'data': 'Datasets'
+					'streams': 'Collect',
+					'data': 'Store'
 				},
 				content: function () {
 
@@ -78,13 +78,14 @@ function(Models, Views, Controllers){
 						var flow = path[path.length - 1].split(':')[1];
 						return [
 							{
-								name: 'Applications',
-								href: '#/apps'
-							}, {
 								name: this.names[app] || app,
 								href: '#/apps/' + app
 							}
 						];
+					}
+					/** Hax. If it's an App, don't link to AppList. **/
+					if (path[1] === 'apps') {
+						return [];
 					}
 					/** End Hax. **/
 
