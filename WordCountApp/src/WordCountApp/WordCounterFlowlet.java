@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package WordCountApp;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
