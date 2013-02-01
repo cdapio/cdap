@@ -1,7 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.OperationBase;
 import com.google.common.base.Objects;
 
 import java.util.Collections;

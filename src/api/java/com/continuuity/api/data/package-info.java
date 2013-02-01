@@ -2,15 +2,15 @@
  * This package contains all public Data Access APIs.
  *
  * All data access is performed through the creation and execution of
- * {@link com.continuuity.api.data.Operation}s, of which there are two primary
- * types, {@link com.continuuity.api.data.ReadOperation} and
- * {@link com.continuuity.api.data.WriteOperation}.
+ * {@link com.continuuity.data.operation.Operation}s, of which there are two primary
+ * types, {@link com.continuuity.data.operation.ReadOperation} and
+ * {@link com.continuuity.data.operation.WriteOperation}.
  * 
  * Operations are executed through two primary pathways: a synchronous read
  * path and an asynchronous write path.
  * 
  * Read operations are performed one-at-a-time and inline within a flowlet
- * via the {@link com.continuuity.api.data.DataFabric}. The result of the
+ * via the {@link com.continuuity.data.DataFabric}. The result of the
  * operation is returned from the executor.
  * 
  * For example, a flowlet might receive a tuple containing the user id of a
@@ -107,30 +107,30 @@
  * 
  * <b>Read Operations</b>
  * 
- * {@link com.continuuity.api.data.Read} is used to perform point reads on a
+ * {@link com.continuuity.data.operation.Read} is used to perform point reads on a
  * single key-value or a discrete set of columns in a single columnar row.
  * 
- * {@link com.continuuity.api.data.ReadKey} is used to perform a point read on
+ * {@link com.continuuity.data.operation.ReadKey} is used to perform a point read on
  * a single key of a stored key-value.
  * 
- * {@link com.continuuity.api.data.ReadColumnRange} is used to read a range of
+ * {@link com.continuuity.data.operation.ReadColumnRange} is used to read a range of
  * columns within a single columnar row.
  * 
- * {@link com.continuuity.api.data.ReadAllKeys} is used to scan the list of all
+ * {@link com.continuuity.data.operation.ReadAllKeys} is used to scan the list of all
  * keys and rows.
  * 
  * <b>Write Operations</b>
  * 
- * {@link com.continuuity.api.data.Write} is used to perform all simple
+ * {@link com.continuuity.data.operation.Write} is used to perform all simple
  * key-value and columnar write operations.
  * 
- * {@link com.continuuity.api.data.Delete} is used to perform all simple
+ * {@link com.continuuity.data.operation.Delete} is used to perform all simple
  * key-value and columnar delete operations.
  * 
- * {@link com.continuuity.api.data.Increment} is used to perform an atomic
+ * {@link com.continuuity.data.operation.Increment} is used to perform an atomic
  * increment operation of a key-value or a column.
  * 
- * {@link com.continuuity.api.data.CompareAndSwap} is used to perform an atomic
+ * {@link com.continuuity.data.operation.CompareAndSwap} is used to perform an atomic
  * compare-and-swap operation of a key-value or a column.
  * 
  */

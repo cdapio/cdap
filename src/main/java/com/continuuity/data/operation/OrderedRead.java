@@ -1,8 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.OperationBase;
-import com.continuuity.api.data.ReadOperation;
-
 public class OrderedRead implements ReadOperation {
 
   /** Unique id for the operation */

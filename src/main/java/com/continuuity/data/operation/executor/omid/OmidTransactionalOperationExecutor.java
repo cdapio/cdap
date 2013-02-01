@@ -3,19 +3,19 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.Delete;
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.Operation;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.Read;
-import com.continuuity.api.data.ReadAllKeys;
-import com.continuuity.api.data.ReadColumnRange;
-import com.continuuity.api.data.ReadKey;
-import com.continuuity.api.data.Write;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadAllKeys;
+import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;

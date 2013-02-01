@@ -4,6 +4,7 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.*;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.data.BatchCollectionClient;
+import com.continuuity.data.DataFabric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

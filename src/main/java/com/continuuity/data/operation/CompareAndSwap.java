@@ -2,7 +2,7 @@
  * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
-package com.continuuity.api.data;
+package com.continuuity.data.operation;
 
 import com.google.common.base.Objects;
 

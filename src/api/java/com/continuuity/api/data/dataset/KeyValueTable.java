@@ -3,10 +3,15 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.Operation;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.*;
+import com.continuuity.api.data.dataset.table.Delete;
+import com.continuuity.api.data.dataset.table.Increment;
+import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Swap;
+import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.api.data.dataset.table.WriteOperation;
 
 import java.util.Map;
 
@@ -17,7 +22,7 @@ import java.util.Map;
 public class KeyValueTable extends DataSet {
 
   // the fixed single column to use for the key
-  static final byte[] KEY_COLUMN = Operation.KV_COL;
+  static final byte[] KEY_COLUMN = { 'c' };
 
   // the underlying table
   private Table table;

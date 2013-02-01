@@ -1,7 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.Delete;
-
 /**
  * Undelete of a Delete.
  */

@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.operation;
 
 /**
  * An {@link Operation} that reads and returns data.

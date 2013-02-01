@@ -1,7 +1,5 @@
 package com.continuuity.data;
 
-import com.continuuity.api.data.BatchCollector;
-
 /**
  * This interface defines a methods to provide a client
  * with a new batch collector and to get the current batch collector.

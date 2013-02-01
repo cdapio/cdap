@@ -1,8 +1,8 @@
 package com.continuuity.data.operation.executor;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.WriteOperation;
 
 import java.util.List;
 

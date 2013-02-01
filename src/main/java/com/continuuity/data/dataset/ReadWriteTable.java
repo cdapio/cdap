@@ -2,10 +2,10 @@ package com.continuuity.data.dataset;
 
 
 import com.continuuity.data.BatchCollectionClient;
-import com.continuuity.api.data.BatchCollector;
+import com.continuuity.data.BatchCollector;
 import com.continuuity.api.data.Closure;
-import com.continuuity.api.data.CompareAndSwap;
-import com.continuuity.api.data.DataFabric;
+import com.continuuity.data.DataFabric;
+import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
@@ -68,21 +68,21 @@ public class ReadWriteTable extends ReadOnlyTable {
    * @param op a table write operation
    * @return the corresponding data fabric operation
    */
-  private com.continuuity.api.data.WriteOperation toOperation(WriteOperation op) {
-    com.continuuity.api.data.WriteOperation operation;
+  private com.continuuity.data.operation.WriteOperation toOperation(WriteOperation op) {
+    com.continuuity.data.operation.WriteOperation operation;
     if (op instanceof Write) {
       Write write = (Write)op;
-      operation = new com.continuuity.api.data.Write(
+      operation = new com.continuuity.data.operation.Write(
           this.tableName(), write.getRow(), write.getColumns(), write.getValues());
     }
     else if (op instanceof Delete) {
       Delete delete = (Delete)op;
-      operation = new com.continuuity.api.data.Delete(
+      operation = new com.continuuity.data.operation.Delete(
           this.tableName(), delete.getRow(), delete.getColumns());
     }
     else if (op instanceof Increment) {
       Increment increment = (Increment)op;
-      operation = new com.continuuity.api.data.Increment(
+      operation = new com.continuuity.data.operation.Increment(
           this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues());
     }
     else if (op instanceof Swap) {
@@ -111,7 +111,7 @@ public class ReadWriteTable extends ReadOnlyTable {
   // get a closure for an increment
   @Override
   public Closure closure(Increment increment) {
-    return new IncrementClosure(new com.continuuity.api.data.Increment
+    return new IncrementClosure(new com.continuuity.data.operation.Increment
         (this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues()));
   }
 

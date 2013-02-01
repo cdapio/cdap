@@ -1,6 +1,6 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.DataFabric;
+import com.continuuity.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Table;
 

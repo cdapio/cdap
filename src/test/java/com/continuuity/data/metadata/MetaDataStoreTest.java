@@ -1,6 +1,6 @@
 package com.continuuity.data.metadata;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.StatusCode;

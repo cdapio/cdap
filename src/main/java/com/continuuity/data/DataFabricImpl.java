@@ -1,7 +1,16 @@
 package com.continuuity.data;
 
 import com.continuuity.api.data.*;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
 
 import java.util.List;

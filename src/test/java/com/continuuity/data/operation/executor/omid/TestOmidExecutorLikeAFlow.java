@@ -2,6 +2,12 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
