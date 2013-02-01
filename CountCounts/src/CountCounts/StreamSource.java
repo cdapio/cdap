@@ -1,10 +1,13 @@
 package CountCounts;
 
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
-
-import java.util.HashMap;
+import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
+import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.TupleSchema;
+import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class StreamSource extends ComputeFlowlet {
 

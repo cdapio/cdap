@@ -3,7 +3,7 @@ package CountAndFilterWords;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
-import com.continuuity.api.stream.Stream;
+import com.continuuity.api.data.stream.Stream;
 
 /**
  * CountAndFilterWordsDemo application contains a flow {@code CountAndFilterWords} and is attached
