@@ -1,6 +1,6 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 
 /**
  * Constants is a utility class that contains a set of universal constants
