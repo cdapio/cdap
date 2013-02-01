@@ -52,13 +52,11 @@ define([
 		},
 		injectValue: null,
 		inject: function () {
-			
+
 			var payload = this.get('injectValue');
 			var flow = C.Ctl.Flow.current.get('id');
-			var stream = '';
-			if (C.Ctl.Flow.current.get('flowStreams')) {
-				stream = C.Ctl.Flow.current.get('flowStreams')[0].name;
-			}
+
+			var stream = this.get('controller').get('current').id;
 
 			this.set('injectValue', '');
 
