@@ -27,7 +27,7 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
     dependencies {
-        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.7-SNAPSHOT"
+        classpath "be.thinkerit.gradle:ubuntu-packager-plugin:1.0.9-SNAPSHOT"
     }
 }
 
