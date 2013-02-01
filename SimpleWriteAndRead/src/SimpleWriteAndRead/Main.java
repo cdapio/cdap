@@ -3,7 +3,7 @@ package SimpleWriteAndRead;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
-import com.continuuity.api.stream.Stream;
+import com.continuuity.api.data.stream.Stream;
 
 /**
  * DataFabricDemo application is a application with a single flow that demonstrates

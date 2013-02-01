@@ -2,7 +2,7 @@ package CountCounts;
 
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
-import com.continuuity.api.stream.Stream;
+import com.continuuity.api.data.stream.Stream;
 
 /**
  * CountCountsDemo application contains a flow {@code CountCounts} and is attached
