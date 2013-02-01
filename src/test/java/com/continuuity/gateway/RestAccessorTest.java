@@ -1,9 +1,9 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.ReadKey;
+import com.continuuity.data.operation.ReadKey;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;

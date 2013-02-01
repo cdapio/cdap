@@ -1,7 +1,7 @@
 package com.continuuity.gateway.consumer;
 
-import com.continuuity.api.data.OperationContext;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;

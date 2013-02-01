@@ -1,6 +1,6 @@
 package com.continuuity.gateway.collector;
 
-import com.continuuity.api.data.OperationContext;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.Event;
