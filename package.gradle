@@ -111,8 +111,8 @@ task copyExamples (type: Copy) {
     exclude "**/*.gradle"
     exclude "**/classes/"
     exclude "*/*.jar"
-    exclude "TwitterScanner/"
     exclude "PayvmentDemo/"
+    exclude "DependencyRandomNumber/"
 }
 applicationDistribution.from(copyExamples) {
     into "examples"

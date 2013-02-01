@@ -25,7 +25,6 @@ dependencies {
  
         // Add eclipse plugin dependency to package this with continuuity-developer edition
         runtime libraries.continuuity_eclipse_plugin
-
 }
 
 /**
