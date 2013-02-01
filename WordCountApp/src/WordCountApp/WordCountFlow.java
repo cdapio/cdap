@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package WordCountApp;
 
 
 import com.continuuity.api.flow.Flow;
@@ -28,13 +28,19 @@ import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
  * output from the WordCounter and update the unique number of words seen.
  */
 public class WordCountFlow implements Flow {
-
   @Override
   public void configure(FlowSpecifier specifier) {
     // Specify meta data fields
-    specifier.name("WordCounter");
+    specifier.name("WordCountFlow");
     specifier.email("demo@continuuity.com");
-    
+    specifier.application("WordCountApp");
+
+    // Specify all the dataset.
+    specifier.dataset("wordStats");
+    specifier.dataset("wordCounts");
+    specifier.dataset("uniqueCount");
+    specifier.dataset("wordAssocs");
+
     // Specify flowlets
     specifier.flowlet("Splitter", WordSplitterFlowlet.class, 1);
     specifier.flowlet("Counter", WordCounterFlowlet.class, 1);
@@ -43,7 +49,7 @@ public class WordCountFlow implements Flow {
 
     // Specify input stream
     specifier.input("wordStream", "Splitter");
-    
+
     // Connect flowlets
     specifier.connection("Splitter", "wordArrays", "Associater", "in");
     specifier.connection("Splitter", "words", "Counter", "in");

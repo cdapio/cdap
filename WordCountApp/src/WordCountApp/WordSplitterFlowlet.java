@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package WordCountApp;
 
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
