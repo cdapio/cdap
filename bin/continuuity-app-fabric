@@ -81,8 +81,7 @@ BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
 # checks if there exists a PID that is already running. If it is, then it fails with exit code of 1.
-check_before_start()
-{
+check_before_start() {
   if [ ! -d "$PID_DIR" ]; then
     mkdir -p "$PID_DIR"
   fi
@@ -95,8 +94,7 @@ check_before_start()
 }
 
 # Rotates the basic start/stop logs
-rotate_log ()
-{
+rotate_log () {
     log=$1;
     num=5;
     if [ -n "$2" ]; then
@@ -112,6 +110,13 @@ rotate_log ()
     fi
 }
 
+# Copyright message
+print_copyright() {
+    echo "======================================================================================"
+    echo "Continuuity AppFabric (tm) - Copyright 2012-2013 Continuuity,Inc. All Rights Reserved."
+    echo "======================================================================================"
+}
+
 
 start() {
     check_before_start
@@ -122,7 +127,8 @@ start() {
     nohup "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" com.continuuity.SingleNodeMain "$@" >> $APP_HOME/logs/appfabric.log 2>&1 < /dev/null &
     echo $! > $pid
 
-    echo -n "starting Continuuity AppFabric (tm)"
+    print_copyright
+    echo -n "Starting Continuuity AppFabric (tm)"
     while kill -0 $! ; do
       if grep 'AppFabric started successfully' $APP_HOME/logs/appfabric.log > /dev/null 2>&1; then
         echo ""
@@ -140,7 +146,8 @@ stop() {
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
       if kill -0 $pidToKill > /dev/null 2>&1; then
-        echo -n "stopping Continuuity AppFabric (tm)"
+        print_copyright
+        echo -n "Stopping Continuuity AppFabric (tm)"
         kill $pidToKill > /dev/null 2>&1
         while kill -0 $pidToKill > /dev/null 2>&1;
         do
