@@ -321,7 +321,7 @@ h1 span {
 	margin-bottom: 20px;
 }
 .panel-title {
-	font-size: 28px;
+	font-size: 25px;
 	font-weight: 100;
 	letter-spacing: 0.08em;
 	line-height: normal;
@@ -1471,12 +1471,12 @@ ol {
 	color: #fff;
 	text-transform: uppercase;
 
-	border: 2px solid #fff;
+	border: 4px solid #70CDEB;
 	background-color: #40AECF;
 	border-radius: 100%;
-	
-	width: 108px;
-	height: 108px;
+	width: 104px;
+	height: 104px;
+
 	text-align:center;
 	z-index:20; 
 
@@ -1553,6 +1553,7 @@ ol {
 	height: 108px;
 	padding-right: 22px;
 	width: 86px;
+	border: 0;
 }
 .window.source .window-input {
 	background-image: url(../img/stream-input.png);

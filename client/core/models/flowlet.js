@@ -117,7 +117,6 @@ define([], function () {
 						C.Vw.Informer.show(error, 'alert-error');
 					} else {
 						current.set('instances', instances);
-						C.Vw.Informer.show('Successfully set the instances for "' + flowlet + '" to ' + instances + '.', 'alert-success');
 					}
 
 					C.interstitial.hide('inst');
