@@ -1,4 +1,8 @@
-package com.continuuity.examples.wordcount;
+package WordCountApp;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
@@ -7,22 +11,21 @@ import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 
-public class UniqueCounterFlowlet extends ComputeFlowlet {
+public class WordAssociaterFlowlet extends ComputeFlowlet {
 
   @Override
   public void configure(FlowletSpecifier specifier) {
-    specifier.getDefaultFlowletInput()
-        .setSchema(UniqueCountTable.UNIQUE_COUNT_TABLE_TUPLE_SCHEMA);
+    specifier.getDefaultFlowletInput().setSchema(
+        WordCountFlow.SPLITTER_ASSOCIATER_SCHEMA);
   }
-  
-  private UniqueCountTable uniqueCountTable;
+
+  private WordAssocTable wordAssocTable;
 
   @Override
   public void initialize() {
     try {
-      this.uniqueCountTable = getFlowletContext().getDataSet("uniqueCount");
+      this.wordAssocTable = getFlowletContext().getDataSet("wordAssocs");
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }
@@ -30,11 +33,16 @@ public class UniqueCounterFlowlet extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext context,
       OutputCollector collector) {
+    String [] words = tuple.get("wordArray");
+    
     try {
-      this.uniqueCountTable.updateUniqueCount(tuple);
+
+      // Store word associations
+      Set<String> wordSet = new TreeSet<String>(Arrays.asList(words));
+      this.wordAssocTable.writeWordAssocs(wordSet);
+
     } catch (OperationException e) {
       // Fail the process() call if we get an exception
-      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }

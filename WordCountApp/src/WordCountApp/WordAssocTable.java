@@ -1,4 +1,4 @@
-package com.continuuity.examples.wordcount;
+package WordCountApp;
 
 import java.util.Iterator;
 import java.util.Map;
