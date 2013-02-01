@@ -94,6 +94,7 @@ task singlenode_dist (type: Zip) {
 	    from project(':singlenode').tasks.getByName('jar').outputs
 	    from project(':test').tasks.getByName('testJar').outputs
 	    exclude 'overlord-*-loggly.jar'
+	    exclude 'cglib-*v2*.jar'
 	}
 	
 	//docs
