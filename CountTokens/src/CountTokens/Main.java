@@ -3,7 +3,7 @@ package CountTokens;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
-import com.continuuity.api.stream.Stream;
+import com.continuuity.api.data.stream.Stream;
 
 /**
  * CountTokensDemo application contains a flow {@code CountTokens} and is attached
