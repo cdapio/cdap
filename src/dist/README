@@ -1,5 +1,5 @@
 Continuuity AppFabric (tm) Developer Edition
-Copyright (c) to Continuuity Inc, 2012. All rights reserved.
+Copyright (c) to Continuuity Inc, 2013. All rights reserved.
 ================================================================================
 
 AppFabric Developer Edition is a fully functioning stand alone edition of the
@@ -21,12 +21,12 @@ Once you have installed the prerequisites, you should unzip the AppFabric
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-developer-edition-1.2.0-beta.zip
+  %> unzip /tmp/continuuity-developer-suite-1.3.0.zip
 
 You are now ready to start AppFabric. Do so by running the
 'continuuity-app-fabric' script in the $APP_FABRIC_DIR/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-developer-edition-1.2.0-beta
+  %> cd ~/Projects/continuuity-developer-suite-1.3.0
   %> bin/continuuity-app-fabric
 
 
@@ -34,7 +34,7 @@ Directory Structure
 ===================
 The directory structure for AppFabric is shown below.
 
-continuuity-developer-edition-1.2.0-beta
+continuuity-developer-suite-1.3.0
  |-- README                                                          (this file)
  |-- LICENSE                                     (the Developer Edition license)
  |-- continuuity-api.jar                             (the API jar for AppFabric)
