@@ -50,7 +50,7 @@ task singlenode_dist (type: Zip) {
     from project(':singlenode').tasks.getByName('createApiSourceJar').outputs
     from project(':singlenode').tasks.getByName('createApiJavadocJar').outputs
     from project(':singlenode').files('src/dist')
-    from project(':singlenode').configurations.runtime.files { (it.name == 'continuuity-eclipse-plugin') || (it.name == 'junit') }
+    from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
 
 	
 	//bin
