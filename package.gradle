@@ -14,7 +14,6 @@ evaluationDependsOn(":flow")
 task javadoc(type: Javadoc, overwrite: true) {
   source project.parent.subprojects.collect { proj ->
    if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
-     println "found api in " + proj.name
      return proj.sourceSets.api.allJava
    }else{
     return []       
