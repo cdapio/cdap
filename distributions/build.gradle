@@ -110,8 +110,9 @@ task singlenode_dist (type: Zip) {
         exclude "**/*.gradle"
         exclude "**/classes/"
         exclude "*/*.jar"
-        exclude "TwitterScanner/"
         exclude "PayvmentDemo/"
+        exclude "DependencyRandomNumber/"
+        exclude "TwitterScanner/"
 	}
 	
 	//webapp
