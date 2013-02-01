@@ -77,6 +77,13 @@ define([], function () {
 				
 			});
 
+			this.set('__cxn', {});
+			this.set('__columns', {});
+			this.set('__rowCounter', {});
+			this.set('__location', {});
+			this.set('__inserted', {});
+			this.set('__numColumns', 0);
+
 		},
 
 		drawGraph: function () {
@@ -105,10 +112,8 @@ define([], function () {
 				this.__insert(flowSources[i].id);
 			}
 
-			if (flowSources.length === 0) {
-				this.__insert(null);
-			}
-
+			this.__insert(null);
+			
 			// Vertically center nodes
 			var maxHeight = 0, childViews, num, diff, el,
 				id, k, columns = this.get('childViews');
@@ -136,14 +141,6 @@ define([], function () {
 				}
 			}
 		},
-
-		__cxn: {},
-		__columns: {},
-		__rowCounter: {},
-		__location: {},
-		__numColumns: 0,
-
-		__inserted: {},
 
 		__insert: function (id) {
 			
