@@ -2,7 +2,9 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.*;
 import com.continuuity.data.BatchCollectionClient;
+import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabricImpl;
+import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;
 import com.continuuity.data.operation.SimpleBatchCollector;
 import com.continuuity.data.operation.executor.OperationExecutor;

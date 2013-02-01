@@ -2,8 +2,6 @@ package com.continuuity.data.operation;
 
 import java.util.Comparator;
 
-import com.continuuity.api.data.WriteOperation;
-
 /**
  * Comparator of {@link WriteOperation}s that orders them in ascending
  * priority order (lower numbers order first).

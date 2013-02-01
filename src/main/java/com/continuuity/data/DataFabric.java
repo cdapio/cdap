@@ -1,4 +1,15 @@
-package com.continuuity.api.data;
+package com.continuuity.data;
+
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
 
 import java.util.List;
 import java.util.Map;
@@ -9,7 +20,7 @@ import java.util.Map;
 public interface DataFabric {
 
   /**
-   * Executes a {@link com.continuuity.api.data.ReadKey} operation.
+   * Executes a {@link com.continuuity.data.operation.ReadKey} operation.
    * @param read the operation
    * @return a result object containing the value that was stored for
    *      the requested key. If the key is not found, the result will
@@ -22,7 +33,7 @@ public interface DataFabric {
       throws OperationException;
 
   /**
-   * Executes a {@link com.continuuity.api.data.Read} operation.
+   * Executes a {@link com.continuuity.data.operation.Read} operation.
    * @param read the operation
    * @return a result object containing a map of columns to values if the key
    *    is found. If the key is not found, the result will be empty and the
@@ -66,7 +77,7 @@ public interface DataFabric {
   public void execute(Increment inc) throws OperationException;
 
   /**
-   * Performs a {@link CompareAndSwap} operation.
+   * Performs a {@link com.continuuity.data.operation.CompareAndSwap} operation.
    * @param cas the operation
    * @throws OperationException if execution failed
    */

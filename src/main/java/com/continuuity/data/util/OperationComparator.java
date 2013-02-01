@@ -2,7 +2,7 @@ package com.continuuity.data.util;
 
 import java.util.Comparator;
 
-import com.continuuity.api.data.Operation;
+import com.continuuity.data.operation.Operation;
 
 /**
  * Comparator for Operations.

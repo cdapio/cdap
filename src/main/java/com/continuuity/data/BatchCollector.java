@@ -1,4 +1,6 @@
-package com.continuuity.api.data;
+package com.continuuity.data;
+
+import com.continuuity.data.operation.WriteOperation;
 
 /**
  * This interface is an abstraction for an agent that collects write
@@ -10,7 +12,7 @@ public interface BatchCollector {
 
   /**
    * Add an operation to the batch of writes being collected.
-   * @param write {@link com.continuuity.api.data.WriteOperation}
+   * @param write {@link com.continuuity.data.operation.WriteOperation}
    */
   void add(WriteOperation write);
 

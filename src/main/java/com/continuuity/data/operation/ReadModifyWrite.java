@@ -1,8 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.ConditionalWriteOperation;
-import com.continuuity.api.data.OperationBase;
-
 public class ReadModifyWrite implements ConditionalWriteOperation {
 
   /** Unique id for the operation */
