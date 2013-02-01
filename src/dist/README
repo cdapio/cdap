@@ -39,27 +39,27 @@ continuuity-developer-suite-1.3.0
  |-- LICENSE                                     (the Developer Edition license)
  |-- continuuity-api.jar                             (the API jar for AppFabric)
  |-- bin                                               (execution/tools scripts)
- | |-- continuuity-app-fabric
- | |-- data-format
- | |-- stream-client
- | |-- data-client
- | |-- flow-client
- | |-- query-client
+ | |-- continuuity-app-fabric                     (Single-Node AppFabric Daemon)
+ | |-- data-format                                (Single-Node Data Format Tool)
+ | |-- stream-client                                (Command-Line Stream Client)
+ | |-- data-client                                 (Command-Line Dataset Client)
+ | |-- flow-client                                    (Command-Line Flow Client)
+ | |-- query-client                                  (Command-Line Query Client)
  |-- lib
  |-- docs
  | |-- api                                                        (api javadocs)
  |-- conf                                                  (configuration files)
- | |-- logback.xml
- | |-- continuuity-site.xml
+ | |-- logback.xml                     (Single-Node AppFabric Log Configuration)
+ | |-- continuuity-site.xml                (Single-Node AppFabric Configuration)
  |-- web-app                                          (AppFabric UI application)
  |-- examples                                             (example applications)
- | |-- CountTokens
- | |-- CountAndFilterWords
- | |-- CountRandom
- | |-- CountCounts
- | |-- DependencyRandomNumber
- | |-- SimpleWriteAndRead
- | |-- build.xml
+ | |-- CountTokens                          (Sample String Counting Application)
+ | |-- CountAndFilterWords                      (Sample Word Filter Application)
+ | |-- CountRandom                          (Sample Random Number Generator App)
+ | |-- CountCounts                           (Sample Number Counter Application)
+ | |-- DependencyRandomNumber           (Sample Application w/ Extra Dependency)         
+ | |-- SimpleWriteAndRead                     (Sample Dataset using Application)          
+ | |-- build.xml                           (Ant build.xml for building examples) 
 
 Further Information
 ===================
