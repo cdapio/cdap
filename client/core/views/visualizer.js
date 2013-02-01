@@ -4,11 +4,12 @@ define([], function () {
 	var COLUMN_WIDTH = 226;
 
 	//** Begin Hax
-	function ___fixConnections (flowSource) {
+	function ___fixConnections () {
 		// Adapt connection format
 		var hasSource = false,
 			cx = this.get('controller').current.connections,
 			conns = {};
+
 		for (var i = 0; i < cx.length; i ++) {
 			if (!cx[i].from.flowlet) {
 				hasSource = true;
@@ -16,7 +17,7 @@ define([], function () {
 			if (!conns[cx[i].to.flowlet]) {
 				conns[cx[i].to.flowlet] = [];
 			}
-			conns[cx[i].to.flowlet].push(cx[i].from.flowlet || flowSource.name);
+			conns[cx[i].to.flowlet].push(cx[i].from.flowlet || cx[i].from.stream);
 		}
 
 		var flowlets = this.get('controller').types.Flowlet;
@@ -59,6 +60,7 @@ define([], function () {
 			this.sourcespec = {
 				endpoint: 'Dot',
 				paintStyle : { radius:1, fillStyle:"#89b086" },
+				maxConnections:-1,
 				isSource:true
 			};
 
@@ -79,28 +81,29 @@ define([], function () {
 
 		drawGraph: function () {
 
-			var flowSource = null;
+			var flowSources = [];
 
 			// Insert input stream node
 			if (this.get('controller').current.flowStreams.length) {
-
+				var source;
 				var fs = this.get('controller').current.flowStreams;
 				for (var i = 0; i < fs.length; i ++) {
-
-					var flowSource = this.get('controller').get_flowlet(fs[i].name);
-					this.__append(flowSource, 0);
-
+					source = this.get('controller').get_flowlet(fs[i].name);
+					flowSources.push(source);
+					this.__append(source, 0);
 				}
 
 			}
 
 			//** Begin Hax
-			this.__cxn = ___fixConnections.call(this, flowSource);
+			this.__cxn = ___fixConnections.call(this);
 			___fixStreams.call(this);
 			//** End Hax
 
-			// Kickoff node insertions
-			this.__insert(flowSource ? flowSource.id : null);
+			// Kickoff node insertions. Needs to be done for each source.
+			for (var i = 0; i < flowSources.length; i ++) {
+				this.__insert(flowSources[i].id);
+			}
 
 			// Vertically center nodes
 			var maxHeight = 0, childViews, num, diff, el,
@@ -136,6 +139,8 @@ define([], function () {
 		__location: {},
 		__numColumns: 0,
 
+		__inserted: {},
+
 		__insert: function (id) {
 			
 			var id2, k;
@@ -151,8 +156,12 @@ define([], function () {
 				for (id2 in this.__cxn) {
 					for (k = 0; k < this.__cxn[id2].length; k ++) {
 						if (this.__cxn[id2][k] === id) {
-							this.__append(this.get('controller').get_flowlet(id2), this.__location[id].col + 1);
-							this.__insert(id2);
+							if (!this.__inserted[id2]) {
+								this.__append(this.get('controller').get_flowlet(id2), this.__location[id].col + 1);
+								this.__inserted[id2] = 1;
+
+								this.__insert(id2);
+							}
 						}
 					}
 				}
