@@ -1,7 +1,7 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.Write;
+import com.continuuity.data.operation.Write;
 import com.continuuity.performance.benchmark.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
