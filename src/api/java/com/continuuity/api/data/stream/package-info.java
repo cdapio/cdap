@@ -24,4 +24,4 @@
  * </blockquote>
  *
  */
-  package com.continuuity.api.stream;
+  package com.continuuity.api.data.stream;

@@ -1,7 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
-import com.continuuity.api.data.OperationBase;
-import com.continuuity.api.data.ReadOperation;
+import com.continuuity.data.operation.OperationBase;
+import com.continuuity.data.operation.ReadOperation;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.operation.ttqueue.internal.GroupState;
 import com.continuuity.hbase.ttqueue.HBQQueueMeta;

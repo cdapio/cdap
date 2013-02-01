@@ -1,6 +1,11 @@
 package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.*;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 
@@ -25,7 +30,7 @@ public interface WriteOperationExecutor {
                       Delete delete) throws OperationException;
 
   /**
-   * Performs an {@link Increment} operation.
+   * Performs an {@link com.continuuity.data.operation.Increment} operation.
    * @param inc the operation
    * @throws OperationException if execution failed
    */
@@ -33,7 +38,7 @@ public interface WriteOperationExecutor {
                       Increment inc) throws OperationException;
 
   /**
-   * Performs a {@link CompareAndSwap} operation.
+   * Performs a {@link com.continuuity.data.operation.CompareAndSwap} operation.
    * @param cas the operation
    * @throws OperationException if execution failed
    */

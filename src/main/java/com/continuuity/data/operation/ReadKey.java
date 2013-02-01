@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.operation;
 
 /**
  * Read the value of a single key.

@@ -1,7 +1,6 @@
 package com.continuuity.data.operation;
 
 import com.continuuity.api.data.Closure;
-import com.continuuity.api.data.Increment;
 
 /**
  * A closure that represents an increment

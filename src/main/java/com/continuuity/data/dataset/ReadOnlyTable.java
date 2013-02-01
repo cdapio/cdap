@@ -1,10 +1,10 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.Closure;
-import com.continuuity.api.data.DataFabric;
+import com.continuuity.data.DataFabric;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.ReadColumnRange;
+import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
@@ -46,7 +46,7 @@ public class ReadOnlyTable extends RuntimeTable {
   public OperationResult<Map<byte[], byte[]>> read(Read read)
     throws OperationException {
     if (read.getColumns() != null) {
-      return this.getDataFabric().read(new com.continuuity.api.data.Read(this.tableName(), read.getRow(),
+      return this.getDataFabric().read(new com.continuuity.data.operation.Read(this.tableName(), read.getRow(),
                                                                          read.getColumns()));
     } else {
       return this.getDataFabric().read(new ReadColumnRange(this.tableName(), read.getRow(), read.getStartCol(),

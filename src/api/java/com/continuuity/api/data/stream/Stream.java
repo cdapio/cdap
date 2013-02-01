@@ -1,4 +1,4 @@
-package com.continuuity.api.stream;
+package com.continuuity.api.data.stream;
 
 /**
  *  Streams are the primary means for pushing data from external systems

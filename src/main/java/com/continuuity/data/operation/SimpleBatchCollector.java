@@ -1,7 +1,6 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.BatchCollector;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.BatchCollector;
 
 import java.util.LinkedList;
 import java.util.List;

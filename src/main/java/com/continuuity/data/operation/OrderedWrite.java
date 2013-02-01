@@ -1,8 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.OperationBase;
-import com.continuuity.api.data.WriteOperation;
-
 public class OrderedWrite implements WriteOperation {
   /** Unique id for the operation */
   private final long id = OperationBase.getId();

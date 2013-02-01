@@ -1,4 +1,4 @@
-package com.continuuity.api.data;
+package com.continuuity.data.operation;
 
 /**
  * Write the value of a key or the values of columns in a row.

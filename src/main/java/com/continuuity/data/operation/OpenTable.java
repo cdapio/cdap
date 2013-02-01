@@ -1,8 +1,5 @@
 package com.continuuity.data.operation;
 
-import com.continuuity.api.data.Operation;
-import com.continuuity.api.data.OperationBase;
-
 public class OpenTable implements Operation {
 
   /** Unique id for the operation */

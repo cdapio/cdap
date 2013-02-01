@@ -1,7 +1,7 @@
 package com.continuuity.data.lib;
 
-import com.continuuity.api.data.ReadOperation;
-import com.continuuity.api.data.WriteOperation;
+import com.continuuity.data.operation.ReadOperation;
+import com.continuuity.data.operation.WriteOperation;
 
 public class CounterSet implements Library {
 
