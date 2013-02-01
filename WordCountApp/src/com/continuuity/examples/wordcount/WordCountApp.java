@@ -3,7 +3,7 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.Application;
 import com.continuuity.api.flow.ApplicationSpecification;
-import com.continuuity.api.stream.Stream;
+import com.continuuity.api.data.stream.Stream;
 
 public class WordCountApp implements Application {
   @Override
