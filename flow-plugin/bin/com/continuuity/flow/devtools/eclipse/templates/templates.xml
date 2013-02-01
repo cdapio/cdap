@@ -60,7 +60,7 @@ NAME CDATA #REQUIRED
   	</EXT_DEPENDENCIES>
   	<DESCRIPTION>This template creates a Continuuity Simple Flow project </DESCRIPTION>
   	<IMPORTS>
-		<IMPORT>com.continuuity.api.data.Increment</IMPORT>
+		<IMPORT>com.continuuity.data.operation.Increment</IMPORT>
 		<IMPORT>com.continuuity.api.flow.Flow</IMPORT>
 		<IMPORT>com.continuuity.api.flow.FlowSpecifier</IMPORT>
 		<IMPORT>com.continuuity.api.flow.flowlet.AbstractComputeFlowlet</IMPORT>
