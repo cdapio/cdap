@@ -5,6 +5,7 @@ import org.apache.avro.AvroRemoteException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +21,8 @@ public class FlumeLogAdapter implements AvroSourceProtocol {
     = LoggerFactory.getLogger(FlumeLogAdapter.class);
   private LogCollector collector;
 
-  public FlumeLogAdapter(CConfiguration config) throws IOException {
-    this.collector = new LogCollector(config);
+  public FlumeLogAdapter(CConfiguration config, Configuration hConfig) throws IOException {
+    this.collector = new LogCollector(config, hConfig);
   }
 
   private static Map<String, String>

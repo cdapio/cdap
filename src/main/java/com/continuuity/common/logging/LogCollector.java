@@ -3,6 +3,7 @@ package com.continuuity.common.logging;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ public class LogCollector {
   ConcurrentMap<String, LogWriter> loggers = Maps.newConcurrentMap();
 
   private final String pathPrefix;
+  private final Configuration hConfig;
   private final CConfiguration config;
   private FileSystem fs = null;
 
@@ -28,7 +30,7 @@ public class LogCollector {
     if (fs == null) {
       synchronized(this) {
         if (fs == null) {
-          fs = FileSystem.get(config);
+          fs = FileSystem.get(hConfig);
           // TODO horrible! what worth is the FileSystem abstraction then?
           // not sure why this is, but the local file system's hflush() does
           // not appear to work. Using the raw local file system fixes it.
@@ -40,9 +42,11 @@ public class LogCollector {
     return fs;
   }
 
-  public LogCollector(CConfiguration config) {
+  public LogCollector(CConfiguration config, Configuration hConfig) {
     this.pathPrefix = config.get(Constants.CFG_LOG_COLLECTION_ROOT,
         Constants.DEFAULT_LOG_COLLECTION_ROOT);
+    this.hConfig = hConfig;
+
     this.config = config;
     LOG.info("Root directory for log collection is " + pathPrefix);
   }

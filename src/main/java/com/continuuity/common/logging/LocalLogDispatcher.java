@@ -3,9 +3,7 @@ package com.continuuity.common.logging;
 import com.continuuity.api.common.LogDispatcher;
 import com.continuuity.api.common.LogTag;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.AbstractLogDispatcher;
-import com.continuuity.common.logging.LogCollector;
-import com.continuuity.common.logging.LogEvent;
+import org.apache.hadoop.conf.Configuration;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,12 +13,14 @@ import java.util.Date;
  */
 public class LocalLogDispatcher extends AbstractLogDispatcher {
   private final CConfiguration configuration;
+  private final Configuration hConfiguration;
   private final LogCollector collector;
   private final SimpleDateFormat date;
 
   public LocalLogDispatcher(CConfiguration configuration) {
     this.configuration = configuration;
-    this.collector = new LogCollector(configuration);
+    this.hConfiguration = new Configuration();
+    this.collector = new LogCollector(configuration, hConfiguration);
     this.date = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
   }
 
