@@ -4,7 +4,7 @@
 
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 

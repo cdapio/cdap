@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
@@ -8,7 +9,6 @@ import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.hbase.ttqueue.*;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
    * shard maximums.
    */
   public TTQueueOnHBaseNative(final HTable table, final byte [] queueName,
-      final TimestampOracle timeOracle, final Configuration conf) {
+      final TimestampOracle timeOracle, final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
     this.timeOracle = timeOracle;

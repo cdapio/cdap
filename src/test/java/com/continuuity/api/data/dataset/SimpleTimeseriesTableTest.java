@@ -4,7 +4,7 @@ import com.continuuity.api.data.DataFabric;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationContext;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.data.DataFabricImpl;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data.operation.SimpleBatchCollectionClient;

@@ -4,7 +4,7 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.BeforeClass;

@@ -11,7 +11,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.continuuity.api.data.*;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 
 /**
  * Table of sets of counters that support reading in descending value order.

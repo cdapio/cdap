@@ -4,6 +4,7 @@
 package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.engine.hbase.HBaseOVCTable.IOExceptionHandler;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.SimpleOVCTableHandle;
@@ -25,7 +26,8 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
   private static final Logger Log = LoggerFactory.getLogger(HBaseOVCTableHandle.class);
 
-  protected final Configuration conf;
+  protected final CConfiguration conf;
+  protected final Configuration hConf;
   protected final HBaseAdmin admin;
 
   protected static final IOExceptionHandler exceptionHandler = new HBaseIOExceptionHandler();
@@ -34,14 +36,16 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
 
   @Inject
   public HBaseOVCTableHandle(
-      @Named("HBaseOVCTableHandleConfig")Configuration conf)
+      @Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
+      @Named("HBaseOVCTableHandleHConfig")Configuration hConf)
           throws IOException {
     this.conf = conf;
-    this.admin = new HBaseAdmin(conf);
+    this.hConf = hConf;
+    this.admin = new HBaseAdmin(hConf);
   }
 
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseOVCTable(this.conf, tableName, FAMILY, new HBaseIOExceptionHandler());
+    return new HBaseOVCTable(this.hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
   }
 
   @Override
@@ -70,7 +74,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
   protected HTable createTable(byte [] tableName, byte [] family) throws IOException {
     if (this.admin.tableExists(tableName)) {
       Log.debug("Attempt to creating table '" + tableName + "', which already exists. Opening existing table instead.");
-      return new HTable(this.conf, tableName);
+      return new HTable(this.hConf, tableName);
     }
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor hcd = new HColumnDescriptor(family);
@@ -108,7 +112,7 @@ public class HBaseOVCTableHandle extends SimpleOVCTableHandle {
         throw e;
       }
     }
-    return new HTable(this.conf, tableName);
+    return new HTable(this.hConf, tableName);
   }
 
   @Override

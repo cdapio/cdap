@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.ReadPointer;
@@ -22,16 +23,18 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
 
   private final HTable table;
   private final TimestampOracle timeOracle;
-  private final Configuration conf;
+  private final Configuration hbaseConf;
+  private final CConfiguration conf;
 
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
   public TTQueueTableOnHBaseNative(HTable table,
-      TimestampOracle timeOracle, Configuration conf) {
+      TimestampOracle timeOracle, CConfiguration conf, Configuration hbaseConf) {
     this.table = table;
     this.timeOracle = timeOracle;
     this.conf = conf;
+    this.hbaseConf = hbaseConf;
   }
 
   private TTQueue getQueue(byte [] queueName) {
@@ -110,7 +113,7 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   @Override
   public void clear() throws OperationException {
     try {
-      HBaseAdmin hba = new HBaseAdmin(this.conf);
+      HBaseAdmin hba = new HBaseAdmin(this.hbaseConf);
       HTableDescriptor htd = hba.getTableDescriptor(this.table.getTableName());
       hba.disableTable(this.table.getTableName());
       hba.deleteTable(this.table.getTableName());

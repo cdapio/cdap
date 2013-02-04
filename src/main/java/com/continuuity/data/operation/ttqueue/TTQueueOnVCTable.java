@@ -2,6 +2,7 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -14,7 +15,6 @@ import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroup
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
@@ -79,7 +79,7 @@ public class TTQueueOnVCTable implements TTQueue {
    */
   public TTQueueOnVCTable(final VersionedColumnarTable table,
       final byte [] queueName, final TimestampOracle timeOracle,
-      final Configuration conf) {
+      final CConfiguration conf) {
     this.table = table;
     this.queueName = queueName;
     this.timeOracle = timeOracle;
