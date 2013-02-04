@@ -2,7 +2,7 @@ package com.continuuity.test;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.query.QueryProvider;
 import com.continuuity.api.query.QueryProviderContentType;
 import com.continuuity.api.query.QueryProviderResponse;
