@@ -3,7 +3,7 @@ package com.payvment.continuuity;
 import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.lib.CounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;

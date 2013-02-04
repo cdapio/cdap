@@ -5,7 +5,7 @@ package com.continuuity.examples.twitter;
 
 import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
