@@ -2,6 +2,7 @@ package com.continuuity.common.logging;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -23,7 +24,7 @@ public class LogCollectorTest {
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
-  private void testCollection(CConfiguration config) throws IOException {
+  private void testCollection(CConfiguration config, Configuration hConfig) throws IOException {
 
     String logtag = "a:b:c";
     int lengthOfOne = String.format("%s [%s] %s\n", logtag, "ERROR",
@@ -34,7 +35,7 @@ public class LogCollectorTest {
     // space for an extra message.
     config.setInt(LogConfiguration.CFG_ROLL_INSTANCES, 3);
     config.setInt(LogConfiguration.CFG_ROLL_THRESHOLD, 10 * lengthOfOne + 2);
-    LogCollector collector = new LogCollector(config);
+    LogCollector collector = new LogCollector(config, hConfig);
 
     // write 5 messages, they should all be in the same file
     for (int i = 0; i < 5; i++) {
@@ -54,7 +55,7 @@ public class LogCollectorTest {
     Assert.assertEquals(5, lines.size());
 
     // test that we can also read with another instance of the collector
-    LogCollector collector2 = new LogCollector(config);
+    LogCollector collector2 = new LogCollector(config, hConfig);
     // this should return only one message
     lines = collector2.tail(logtag, lengthOfOne + 10);
     Assert.assertEquals(1, lines.size());
@@ -102,7 +103,7 @@ public class LogCollectorTest {
 
     // close the log collector and reopen it
     collector.close();
-    collector = new LogCollector(config);
+    collector = new LogCollector(config, hConfig);
 
     // verify that the state is the same with the new collector
     lines = collector.tail(logtag, 27 * lengthOfOne + 10);
@@ -123,7 +124,7 @@ public class LogCollectorTest {
     // log when re-opening the collector and lose one file (11 messages)
     // TODO how terrible! it defeats the purpose of the FileSystem abstraction
     // TODO fix this as soon as append works for local fs
-    if (FileSystem.get(config) instanceof LocalFileSystem) {
+    if (FileSystem.get(hConfig) instanceof LocalFileSystem) {
       Assert.assertEquals(15, lines.size());
       for (int i = 0; i < 15; i++) {
         Assert.assertTrue(lines.get(i).contains(makeMessage(i + 22)));
@@ -145,7 +146,8 @@ public class LogCollectorTest {
     CConfiguration config = CConfiguration.create();
     config.set(Constants.CFG_LOG_COLLECTION_ROOT, prefix.getAbsolutePath());
 
-    testCollection(config);
+    Configuration hConf = new Configuration();
+    testCollection(config, hConf);
   }
 
   @Test
@@ -159,9 +161,10 @@ public class LogCollectorTest {
       System.setProperty("test.cache.data", dfsPath.toString());
 
       System.err.println("Starting up Mini HDFS cluster...");
+      Configuration hConf = new Configuration();
       CConfiguration conf = CConfiguration.create();
       //conf.setInt("dfs.block.size", 1024*1024);
-      dfsCluster = new MiniDFSCluster.Builder(conf)
+      dfsCluster = new MiniDFSCluster.Builder(hConf)
           .nameNodePort(0)
           .numDataNodes(1)
           .format(true)
@@ -172,12 +175,11 @@ public class LogCollectorTest {
       System.err.println("Mini HDFS is started.");
 
       // Add HDFS info to conf
-
-      conf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
+      hConf.set("fs.defaultFS", dfsCluster.getFileSystem().getUri().toString());
       // set a root directory for log collection
       conf.set(Constants.CFG_LOG_COLLECTION_ROOT, "/logtemp");
 
-      testCollection(conf);
+      testCollection(conf, hConf);
     } finally {
       if (dfsCluster != null) {
         System.err.println("Shutting down Mini HDFS cluster...");

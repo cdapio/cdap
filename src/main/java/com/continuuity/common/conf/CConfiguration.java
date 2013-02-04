@@ -1,8 +1,5 @@
 package com.continuuity.common.conf;
 
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,8 +13,6 @@ import org.slf4j.LoggerFactory;
  * properties, therefore you will not be able to access them until you
  * have called one of the getXXX methods at least once.
  */
-@InterfaceAudience.Public
-@InterfaceStability.Stable
 public class CConfiguration extends Configuration {
   @SuppressWarnings("unused")
   private static final Logger LOG =
@@ -37,4 +32,4 @@ public class CConfiguration extends Configuration {
     return conf;
   }
 
-} // end of CConfiguration class
+}

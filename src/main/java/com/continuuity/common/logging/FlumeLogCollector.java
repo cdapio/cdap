@@ -6,6 +6,7 @@ import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.source.avro.AvroSourceProtocol;
+import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +21,11 @@ public class FlumeLogCollector {
       .getLogger(FlumeLogCollector.class);
 
   private CConfiguration config;
+  private Configuration hConfig;
 
-  public FlumeLogCollector(CConfiguration config) {
+  public FlumeLogCollector(CConfiguration config, Configuration hConfig) {
     this.config = config;
+    this.hConfig = hConfig;
     this.port = config.getInt(Constants.CFG_LOG_COLLECTION_PORT,
         Constants.DEFAULT_LOG_COLLECTION_PORT);
     this.threads = config.getInt(Constants.CFG_LOG_COLLECTION_THREADS,
@@ -43,7 +46,7 @@ public class FlumeLogCollector {
     // implementation.
     this.server = new NettyServer(
         new SpecificResponder(AvroSourceProtocol.class,
-            new FlumeLogAdapter(config)),
+            new FlumeLogAdapter(config, hConfig)),
         new InetSocketAddress(this.port),
         // in order to control the number of netty worker threads, we
         // must create and pass in the server channel factory explicitly
@@ -59,7 +62,9 @@ public class FlumeLogCollector {
   public static void main(String[] args) {
     try {
       CConfiguration configuration = CConfiguration.create();
-      new FlumeLogCollector(configuration).start();
+      Configuration hConfiguration = new Configuration();
+
+      new FlumeLogCollector(configuration, hConfiguration).start();
     } catch (Exception e) {
       LOG.error("Failed to start Log Collection Source: " + e.getMessage(), e);
       System.err.println("Error: " + e.getMessage());
