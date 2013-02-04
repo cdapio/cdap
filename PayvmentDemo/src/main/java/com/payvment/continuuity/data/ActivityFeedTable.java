@@ -9,7 +9,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.ReadColumnRange;
 import com.continuuity.api.data.Write;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 

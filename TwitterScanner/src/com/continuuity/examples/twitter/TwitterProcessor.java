@@ -10,7 +10,7 @@ import com.continuuity.api.data.Increment;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.lib.CounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;

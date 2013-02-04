@@ -13,7 +13,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.data.lib.SortedCounterTable.Counter;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.util.Helpers;
 import com.payvment.continuuity.data.ActivityFeed.ActivityFeedEntry;
 
