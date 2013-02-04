@@ -1,6 +1,7 @@
 package DependencyRandomNumber;
 
 import com.continuuity.api.data.*;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.*;
 import com.continuuity.api.flow.flowlet.builders.*;
 
@@ -14,23 +15,27 @@ public class EvenOddCounter extends ComputeFlowlet {
     specifier.getDefaultFlowletInput().setSchema(in);
   }
 
+  KeyValueTable counters;
+  static final byte[] keyEven = "even".getBytes();
+  static final byte[] keyOdd = "odd".getBytes();
+
+  @Override
+  public void initialize() {
+    this.counters = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext,
       OutputCollector outputCollector) {
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() +
-          ": Received tuple " + tuple);
-
+    if (Common.debug) {
+      System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
+    }
     // count the number of odd or even numbers
     long randomNumber = ((Long)tuple.get("randomNumber")).longValue();
     boolean isEven = (randomNumber % 2) == 0;
-    
-    // generate an increment operation
-    Increment increment;
-    if (isEven) increment = new Increment("even".getBytes(), 1);
-    else increment = new Increment("odd".getBytes(), 1);
-    
+    // determine the key for an increment operation
+    byte[] key = isEven ? keyEven : keyOdd;
     // emit the increment operation
-    outputCollector.add(increment);
+    this.counters.stage(new KeyValueTable.IncrementKey(key, 1));
   }
 }

@@ -4,14 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.lib.CounterTable;
-import com.continuuity.api.data.lib.SortedCounterTable;
-import com.continuuity.api.data.lib.SortedCounterTable.Counter;
 import com.continuuity.api.query.QueryProvider;
 import com.continuuity.api.query.QueryProviderContentType;
 import com.continuuity.api.query.QueryProviderResponse;
 import com.continuuity.api.query.QueryProviderResponse.Status;
 import com.continuuity.api.query.QuerySpecifier;
+
+import static com.continuuity.examples.twitter.SortedCounterTable.Counter;
 
 public class TwitterQuery extends QueryProvider {
 
@@ -19,35 +18,23 @@ public class TwitterQuery extends QueryProvider {
   public void configure(QuerySpecifier specifier) {
     specifier.service("twitter");
     specifier.timeout(20000);
+    specifier.dataset(TwitterFlow.topHashTags);
+    specifier.dataset(TwitterFlow.wordCounts);
+    specifier.dataset(TwitterFlow.hashTagWordAssocs);
     specifier.type(QueryProviderContentType.JSON);
     specifier.provider(TwitterQuery.class);
   }
 
-  private CounterTable wordCounts;
-
   private SortedCounterTable topHashTags;
 
-  @SuppressWarnings("unused")
-  private SortedCounterTable topUsers;
-
+  private CounterTable wordCounts;
   private CounterTable hashTagWordAssocs;
 
   @Override
   public void initialize() {
-    this.wordCounts = (CounterTable)
-        getQueryProviderContext().getDataSetRegistry().registerDataSet(
-            new CounterTable("wordCounts"));
-    this.topHashTags = (SortedCounterTable)
-        getQueryProviderContext().getDataSetRegistry().registerDataSet(
-            new SortedCounterTable("topHashTags",
-            new SortedCounterTable.SortedCounterConfig()));
-    this.topUsers = (SortedCounterTable)
-        getQueryProviderContext().getDataSetRegistry().registerDataSet(
-            new SortedCounterTable("topUsers",
-            new SortedCounterTable.SortedCounterConfig()));
-    this.hashTagWordAssocs = (CounterTable)
-        getQueryProviderContext().getDataSetRegistry().registerDataSet(
-            new CounterTable("hashTagWordAssocs"));
+    this.topHashTags = getQueryProviderContext().getDataSet(TwitterFlow.topHashTags);
+    this.wordCounts = getQueryProviderContext().getDataSet(TwitterFlow.wordCounts);
+    this.hashTagWordAssocs = getQueryProviderContext().getDataSet(TwitterFlow.hashTagWordAssocs);
   }
 
   @Override
@@ -66,8 +53,7 @@ public class TwitterQuery extends QueryProvider {
     StringBuilder sb = new StringBuilder();
     sb.append("{tags:[");
     try {
-      List<Counter> topTags =
-          this.topHashTags.readTopCounters(TwitterFlow.HASHTAG_SET, limit);
+      List<Counter> topTags = this.topHashTags.readTopCounters(TwitterFlow.HASHTAG_SET, limit);
       boolean first = true;
       for (Counter topTag : topTags) {
         String tag = new String(topTag.getName());

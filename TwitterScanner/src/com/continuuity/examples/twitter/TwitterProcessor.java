@@ -3,13 +3,8 @@
  */
 package com.continuuity.examples.twitter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.continuuity.api.data.Increment;
+import com.continuuity.api.data.Closure;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.lib.CounterTable;
-import com.continuuity.api.data.lib.SortedCounterTable;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecifier;
@@ -17,6 +12,9 @@ import com.continuuity.api.flow.flowlet.OutputCollector;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TwitterProcessor extends ComputeFlowlet {
 
@@ -28,30 +26,19 @@ public class TwitterProcessor extends ComputeFlowlet {
         TwitterFlow.POST_PROCESS_SCHEMA);
   }
 
-  private CounterTable wordCounts;
-
   private SortedCounterTable topHashTags;
-
   private SortedCounterTable topUsers;
 
+  private CounterTable wordCounts;
   private CounterTable hashTagWordAssocs;
 
   @Override
   public void initialize() {
-    this.wordCounts = (CounterTable)
-        getFlowletContext().getDataSetRegistry().registerDataSet(
-            new CounterTable("wordCounts"));
-    this.topHashTags = (SortedCounterTable)
-        getFlowletContext().getDataSetRegistry().registerDataSet(
-            new SortedCounterTable("topHashTags",
-            new SortedCounterTable.SortedCounterConfig()));
-    this.topUsers = (SortedCounterTable)
-        getFlowletContext().getDataSetRegistry().registerDataSet(
-            new SortedCounterTable("topUsers",
-            new SortedCounterTable.SortedCounterConfig()));
-    this.hashTagWordAssocs = (CounterTable)
-        getFlowletContext().getDataSetRegistry().registerDataSet(
-            new CounterTable("hashTagWordAssocs"));
+    this.topHashTags = getFlowletContext().getDataSet(TwitterFlow.topHashTags);
+    this.topUsers = getFlowletContext().getDataSet(TwitterFlow.topUsers);
+
+    this.wordCounts = getFlowletContext().getDataSet(TwitterFlow.wordCounts);
+    this.hashTagWordAssocs = getFlowletContext().getDataSet(TwitterFlow.hashTagWordAssocs);
   }
 
   @Override
@@ -72,11 +59,11 @@ public class TwitterProcessor extends ComputeFlowlet {
     for (String word : goodWords) {
       if (word.startsWith("#")) {
         // Track top hash tags
-        Increment increment = topHashTags.generatePrimaryCounterIncrement(
+        Closure closure = topHashTags.generatePrimaryCounterIncrement(
             TwitterFlow.HASHTAG_SET, Bytes.toBytes(word), 1L);
         Tuple outTuple = new TupleBuilder()
             .set("name", word)
-            .set("value", increment)
+            .set("value", closure)
             .create();
         collector.add(outTuple);
         // And for every hash tag, track word associations
@@ -92,18 +79,16 @@ public class TwitterProcessor extends ComputeFlowlet {
         }
       } else {
         // Track word counts
-        Increment increment = wordCounts.generateCounterSetIncrement(
-            TwitterFlow.WORD_SET, Bytes.toBytes(word), 1L);
-        collector.add(increment);
+        wordCounts.incrementCounterSet(TwitterFlow.WORD_SET, Bytes.toBytes(word), 1L);
       }
     }
 
     // Track top users
-    Increment increment = topUsers.generatePrimaryCounterIncrement(
+    Closure closure = topUsers.generatePrimaryCounterIncrement(
         TwitterFlow.USER_SET, Bytes.toBytes(tweet.getUser()), 1L);
     Tuple outTuple = new TupleBuilder()
         .set("name", tweet.getUser())
-        .set("value", increment)
+        .set("value", closure)
         .create();
     
     collector.add(outTuple);

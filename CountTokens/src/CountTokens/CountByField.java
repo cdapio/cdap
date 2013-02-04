@@ -1,8 +1,13 @@
 package CountTokens;
 
-import com.continuuity.api.data.Increment;
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
+import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.TupleSchema;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class CountByField extends ComputeFlowlet
 {
@@ -15,18 +20,30 @@ public class CountByField extends ComputeFlowlet
     specifier.getDefaultFlowletInput().setSchema(in);
   }
 
+  KeyValueTable counters;
+
+  @Override
+  public void initialize() {
+    this.counters = getFlowletContext().getDataSet(Common.tableName);
+  }
+
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     String token = tuple.get("word");
-    if (token == null) return;
+    if (token == null) {
+      return;
+    }
     String field = tuple.get("field");
-    if (field != null) token = field + ":" + token;
+    if (field != null) {
+      token = field + ":" + token;
+    }
 
-    if (Common.debug)
-      System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
-    outputCollector.add(new Increment(token.getBytes(), 1));
+    if (Common.debug) {
+       System.out.println(this.getClass().getSimpleName() + ": Emitting Increment for " + token);
+    }
+    this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(), 1));
   }
 }

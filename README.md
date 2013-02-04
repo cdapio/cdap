@@ -79,6 +79,13 @@ TwitterScanner:
 ---------------
 - A simple flow with a source flowlet that reads tweets.
 
+WordCount:
+-----------
+- A wordcount application is a very simple application that does the word counting
+and also tracks the word associations and unique words seen on the stream. It 
+demonstrates the power of using Datasets and how they can be used to simplify storing more
+complex data.
+
 DependencyRandomNumber:
 -----------------------
 - This flow is built with Maven rather than Ant and includes an external

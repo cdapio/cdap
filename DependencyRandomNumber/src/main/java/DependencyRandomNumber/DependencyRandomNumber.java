@@ -14,7 +14,10 @@ public class DependencyRandomNumber implements Flow {
     specifier.name("DependencyRandomNumber");
     specifier.email("me@continuuity.com");
     specifier.application("End2End");
-    
+
+    /* Declare all data sets used in this flow */
+    specifier.dataset(Common.tableName);
+
     /* Declare all the Flowlets within this Flow */
     specifier.flowlet("random-number-gen", RandomNumberSource.class, 1);
     specifier.flowlet("even-odd-counter", EvenOddCounter.class, 1);

@@ -9,6 +9,7 @@ public class CountAndFilterWords implements Flow {
     specifier.email("me@continuuity.com");
     specifier.application("End2End");
     specifier.stream("text");
+    specifier.dataset(Common.counterTableName);
     specifier.flowlet("source", StreamSource.class, 1);
     specifier.flowlet("split-words", Tokenizer.class, 1);
     specifier.flowlet("upper-filter", UpperCaseFilter.class, 1);

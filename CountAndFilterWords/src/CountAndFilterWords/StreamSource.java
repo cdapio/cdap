@@ -20,9 +20,9 @@ public class StreamSource extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     HashMap<String, String> headers = tuple.get("headers");
     byte[] body = tuple.get("body");
     String title = headers.get("title");
@@ -33,9 +33,9 @@ public class StreamSource extends ComputeFlowlet {
         set("text", text).
         create();
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+    }
     outputCollector.add(output);
   }
 }

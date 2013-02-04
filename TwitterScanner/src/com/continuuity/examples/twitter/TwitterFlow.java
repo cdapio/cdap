@@ -11,6 +11,11 @@ import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 public class TwitterFlow implements Flow {
 
+  public static final String topUsers = "topUsers";
+  public static final String topHashTags = "topHashTags";
+  public static final String wordCounts = "wordCounts";
+  public static final String hashTagWordAssocs = "hashTagWordAssocs";
+
   public static final TupleSchema TWEET_SCHEMA =
       new TupleSchemaBuilder().add("tweet", Tweet.class).create();
 
@@ -37,6 +42,12 @@ public class TwitterFlow implements Flow {
     flowSpecifier.name("TwitterScanner");
     flowSpecifier.email("dev@continuuity.com");
     flowSpecifier.application("Twitter Demo");
+
+    // add the sorted counters data set
+    flowSpecifier.dataset(topHashTags);
+    flowSpecifier.dataset(topUsers);
+    flowSpecifier.dataset(wordCounts);
+    flowSpecifier.dataset(hashTagWordAssocs);
 
     // Now wire up the Flow for real
     flowSpecifier.flowlet("StreamReader", TwitterGenerator.class, 1);

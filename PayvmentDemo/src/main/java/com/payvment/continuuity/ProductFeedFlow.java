@@ -8,8 +8,8 @@ import com.continuuity.api.data.util.Helpers;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
 import com.continuuity.api.flow.flowlet.OutputCollector;
-import com.continuuity.api.flow.flowlet.StreamsConfigurator;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.TupleContext;
 import com.continuuity.api.flow.flowlet.TupleSchema;
@@ -67,12 +67,12 @@ public class ProductFeedFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Input schema is product meta
-      configurator.getDefaultTupleInputStream()
+      configurator.getDefaultFlowletInput()
           .setSchema(PRODUCT_META_TUPLE_SCHEMA);
       // Output schema is product meta and update count
-      configurator.getDefaultTupleOutputStream()
+      configurator.getDefaultFlowletOutput()
           .setSchema(PROCESSED_PRODUCT_TUPLE_SCHEMA);
     }
 
@@ -144,9 +144,9 @@ public class ProductFeedFlow implements Flow {
     static int numProcessed = 0;
 
     @Override
-    public void configure(StreamsConfigurator configurator) {
+    public void configure(FlowletSpecifier configurator) {
       // Input schema is product meta and update count
-      configurator.getDefaultTupleInputStream()
+      configurator.getDefaultFlowletInput()
           .setSchema(PROCESSED_PRODUCT_TUPLE_SCHEMA);
       // No output
     }

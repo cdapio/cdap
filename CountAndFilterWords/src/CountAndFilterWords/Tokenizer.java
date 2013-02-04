@@ -24,15 +24,18 @@ public class Tokenizer extends ComputeFlowlet {
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
     final String[] fields = { "title", "text" };
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
-    for (String field : fields)
+    }
+    for (String field : fields) {
       tokenize((String)tuple.get(field), field, outputCollector);
+    }
   }
 
   void tokenize(String str, String field, OutputCollector outputCollector) {
-    if (str == null) return;
+    if (str == null) {
+      return;
+    }
     final String delimiters = "[ .-]";
     String[] tokens = str.split(delimiters);
 
@@ -43,9 +46,9 @@ public class Tokenizer extends ComputeFlowlet {
           set("word", token).
           create();
 
-      if (Common.debug)
+      if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+      }
       outputCollector.add(output);
     }
   }

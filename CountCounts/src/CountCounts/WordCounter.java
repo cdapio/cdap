@@ -1,7 +1,13 @@
 package CountCounts;
 
-import com.continuuity.api.flow.flowlet.*;
-import com.continuuity.api.flow.flowlet.builders.*;
+import com.continuuity.api.flow.flowlet.ComputeFlowlet;
+import com.continuuity.api.flow.flowlet.FlowletSpecifier;
+import com.continuuity.api.flow.flowlet.OutputCollector;
+import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.api.flow.flowlet.TupleContext;
+import com.continuuity.api.flow.flowlet.TupleSchema;
+import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
+import com.continuuity.api.flow.flowlet.builders.TupleSchemaBuilder;
 
 import java.lang.String;
 
@@ -23,9 +29,9 @@ public class WordCounter extends ComputeFlowlet {
   @Override
   public void process(Tuple tuple, TupleContext tupleContext, OutputCollector outputCollector) {
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Received tuple " + tuple);
-
+    }
     final String delimiters = "[ .-]";
     int count = 0;
     String str = (String)tuple.get("text");
@@ -37,9 +43,9 @@ public class WordCounter extends ComputeFlowlet {
         set("count", count).
         create();
 
-    if (Common.debug)
+    if (Common.debug) {
       System.out.println(this.getClass().getSimpleName() + ": Emitting tuple " + output);
-
+    }
     outputCollector.add(output);
   }
 
