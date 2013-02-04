@@ -381,6 +381,12 @@ function(Models, Views, Controllers){
 			window.ENV.version = env.version;
 			C.debug('Environment set to "' + env.name + '", version ' + env.version);
 
+			if (window.location.search === '?demo') {
+				window.ENV.isCloud = false;
+			} else {
+				window.ENV.isCloud = true;
+			}
+
 			if (env.version !== 'UNKNOWN') {
 				$('#footer').append(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
 			}
