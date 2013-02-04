@@ -8,7 +8,7 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 
 import java.util.ArrayList;
 import java.util.Comparator;
