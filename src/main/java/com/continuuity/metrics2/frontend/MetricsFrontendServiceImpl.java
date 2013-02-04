@@ -17,6 +17,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.thrift.TException;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
 import org.slf4j.Logger;
@@ -87,7 +88,11 @@ public class MetricsFrontendServiceImpl
       poolManager = new DBConnectionPoolManager(jdbcDataSource, 40);
     }
     DBUtils.createMetricsTables(getConnection(), this.type);
-    collector = new LogCollector(configuration);
+    // It seems like not a good idea to pass hadoop config that way.
+    // But using log collector here is bad anyways: overlord should not use logCollector
+    // as a library, but rather should talk to it thru remote API.
+    // This is going to be extracted anyways
+    collector = new LogCollector(configuration, new Configuration());
   }
 
   /**
