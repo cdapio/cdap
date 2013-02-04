@@ -1,5 +1,5 @@
 /*
- * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
  *
  * The original Apache 2.0 licensed code was changed by Continuuity Inc.
  */
