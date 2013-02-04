@@ -40,7 +40,7 @@ task singlenode_dist (type: Zip) {
     group = 'Continuuity'
     
 	baseName = "continuuity"
-	appendix = "developer-edition"
+	appendix = "developer-suite"
     into "${baseName}-${appendix}-${version}"	
 	description = 'Generates the singlenode distribution zip file'
 
@@ -94,6 +94,7 @@ task singlenode_dist (type: Zip) {
 	    from project(':singlenode').tasks.getByName('jar').outputs
 	    from project(':test').tasks.getByName('testJar').outputs
 	    exclude 'overlord-*-loggly.jar'
+	    exclude 'cglib-*v2*.jar'
 	}
 	
 	//docs
@@ -110,8 +111,9 @@ task singlenode_dist (type: Zip) {
         exclude "**/*.gradle"
         exclude "**/classes/"
         exclude "*/*.jar"
-        exclude "TwitterScanner/"
         exclude "PayvmentDemo/"
+        exclude "DependencyRandomNumber/"
+        exclude "TwitterScanner/"
 	}
 	
 	//webapp

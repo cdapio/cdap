@@ -63,13 +63,13 @@ dependencies {
     compile libraries.netflix_curator_discovery_client
     compile libraries.netflix_curator_discovery_server
     compile libraries.netflix_curator_recipes
-    compile libraries.hadoop_hdfs
     compile libraries.http_client
     compile libraries.slf4j_api
     compile libraries.logback_core
     compile libraries.logback_classic
     testCompile libraries.mockito_core
     testCompile libraries.junit
+    testCompile libraries.cglib_no_dep
 }
 
 // skip the main java tasks - we only build the test jar in this module
