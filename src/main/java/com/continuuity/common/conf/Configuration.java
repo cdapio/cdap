@@ -1,5 +1,7 @@
 /*
  * com.continuuity - Copyright (c) 2012 Continuuity Inc. All rights reserved.
+ *
+ * The original Apache 2.0 licensed code was changed by Continuuity Inc.
  */
 
 package com.continuuity.common.conf;
