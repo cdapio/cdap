@@ -158,8 +158,13 @@ public class DataFabricSingleModule extends AbstractModule {
     bind(OVCTableHandle.class).to(ovcTableHandle);
 
     // Bind HBase configuration into ovctable
+    bind(CConfiguration.class)
+        .annotatedWith(Names.named("HBaseOVCTableHandleCConfig"))
+        .toInstance(conf);
+
+    // Bind HBase configuration into ovctable
     bind(Configuration.class)
-        .annotatedWith(Names.named("HBaseOVCTableHandleConfig"))
+        .annotatedWith(Names.named("HBaseOVCTableHandleHConfig"))
         .toInstance(hbaseConf);
 
     // Bind our configurations

@@ -4,6 +4,7 @@
 package com.continuuity.data.engine.hbase;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.operation.ttqueue.TTQueueTableOnHBaseNative;
@@ -24,8 +25,9 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
       new ConcurrentSkipListMap<byte[],HTable>(Bytes.BYTES_COMPARATOR);
   
   @Inject
-  public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleConfig")Configuration conf) throws IOException {
-    super(conf);
+  public HBaseNativeOVCTableHandle(@Named("HBaseOVCTableHandleCConfig")CConfiguration conf,
+                                   @Named("HBaseOVCTableHandleHConfig")Configuration hConf) throws IOException {
+    super(conf, hConf);
   }
 
   @Override
@@ -35,7 +37,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
 
   @Override
   protected HBaseOVCTable createOVCTable(byte[] tableName) throws OperationException {
-    return new HBaseNativeOVCTable(this.conf, tableName, FAMILY, new HBaseIOExceptionHandler());
+    return new HBaseNativeOVCTable(this.hConf, tableName, FAMILY, new HBaseIOExceptionHandler());
   }
 
   @Override
@@ -55,7 +57,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     if (queueTable != null) return queueTable;
     HTable table = getHTable(queueOVCTable, HBQConstants.HBQ_FAMILY);
     
-    queueTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf);
+    queueTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf, hConf);
     TTQueueTable existing = this.queueTables.putIfAbsent(
         queueTableName, queueTable);
     return existing != null ? existing : queueTable;
@@ -67,7 +69,7 @@ public class HBaseNativeOVCTableHandle extends HBaseOVCTableHandle {
     if (streamTable != null) return streamTable;
     HTable table = getHTable(streamOVCTable, HBQConstants.HBQ_FAMILY);
     
-    streamTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf);
+    streamTable = new TTQueueTableOnHBaseNative(table, timeOracle, conf, hConf);
     TTQueueTable existing = this.streamTables.putIfAbsent(
         streamTableName, streamTable);
     return existing != null ? existing : streamTable;

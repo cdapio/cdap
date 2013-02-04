@@ -5,7 +5,7 @@ import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
