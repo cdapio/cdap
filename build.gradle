@@ -16,50 +16,47 @@ smartyFacts {
  */
 dependencies {
 
-   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
-   compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
-   compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
-   compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
-   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
-   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-   compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
+//   compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+//   compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+//   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+//   compile elastic([group: 'com.continuuity', name: 'flow', classifier: 'api', version: "${version}", changing: true], "flow")
    apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
-   apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true],"common")
+//   apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true],"common")
 
     // Clover dependency
-    clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
-    clover elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
+//   clover elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
+//   clover elastic([group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true], "overlord")
 
    /// External dependencies.
-   compile libraries.thrift
-   compile libraries.akka_actor
-   compile libraries.kryo
+//   compile libraries.thrift
+//   compile libraries.akka_actor
+//   compile libraries.kryo
    compile libraries.google_gson
    compile libraries.google_guice
    compile libraries.google_guice_assistedinject
    compile libraries.google_guice_multibindings
    compile libraries.google_guava
-   compile libraries.mysql
-   compile libraries.hsql
-   compile libraries.http_client
-   compile libraries.avro
-   compile libraries.avro_ipc
-   compile libraries.flume_ng_sdk
-   compile libraries.flume_ng_core
-   compile libraries.apache_commons_cli
-   compile libraries.apache_commons_logging
-   compile libraries.apache_commons_math
-   compile libraries.apache_commons_io
-   compile libraries.slf4j_api
-   compile libraries.logback_core
-   compile libraries.logback_classic
-   testCompile libraries.mockito_core
-   testCompile libraries.junit
+//   compile libraries.mysql
+//   compile libraries.hsql
+//   compile libraries.http_client
+//   compile libraries.avro
+//   compile libraries.avro_ipc
+//   compile libraries.flume_ng_sdk
+//   compile libraries.flume_ng_core
+//   compile libraries.apache_commons_cli
+//   compile libraries.apache_commons_logging
+//   compile libraries.apache_commons_math
+//   compile libraries.apache_commons_io
+//   compile libraries.slf4j_api
+//   compile libraries.logback_core
+//   compile libraries.logback_classic
+//   testCompile libraries.mockito_core
+//   testCompile libraries.junit
 
-    // We need to remove dependency on these.
-    compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
-    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
-    compile group: 'junit', name: 'junit', version: '4.10'
+//    // We need to remove dependency on these.
+//    compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
+//    compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
+    testCompile group: 'junit', name: 'junit', version: '4.10'
 }
 
 // Includes API output to main and test source sets.
