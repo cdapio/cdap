@@ -11,21 +11,21 @@ smartyFacts {
 }
 
 /**
- * Specify all the dependencies
+ * Specify all the dependencies for smartyFacts & main.
  */
 dependencies {
-  // Dependencies for API
+  // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
 
-  // Dependencies
+  // Dependencies required by main.
   compile libraries.google_gson
   compile libraries.google_guice
   compile libraries.google_guice_assistedinject
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
 
-  // Test
-  testCompile group: 'junit', name: 'junit', version: '4.10'
+  // Test dependencies
+  testCompile libraries.junit
 }
 
 /**
@@ -33,12 +33,12 @@ dependencies {
  */
 sourceSets {
   main {
-    compileClasspath += api.output
-    runtimeClasspath += api.output
+    compileClasspath += (api.output)
+    runtimeClasspath += (api.output)
   }
   test {
-    compileClasspath += api.output
-    runtimeClasspath += api.output
+    compileClasspath += (api.output)
+    runtimeClasspath += (api.output)
   }
 }
 
@@ -46,7 +46,7 @@ sourceSets {
  * Generates API javadoc.
  */
 javadoc {
-  classpath += sourceSets.api.output
+  classpath += (sourceSets.api.output)
 }
 
 /**
