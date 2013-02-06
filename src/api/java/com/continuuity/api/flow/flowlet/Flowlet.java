@@ -32,8 +32,7 @@ public interface Flowlet {
 
   /**
    * Destroy is the last thing that gets called before the flowlet is
-   * shutdown. So, if there any cleanups then they can be specified here. The
-   * base implementation does nothing
+   * shutdown. So, if there any cleanups then they can be specified here.
    *
    * <p>
    *   {@link #destroy()} will be called only when there are no more events beings processed

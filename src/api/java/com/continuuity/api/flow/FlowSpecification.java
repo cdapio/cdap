@@ -526,8 +526,8 @@ public final class FlowSpecification {
             type = flowletDef.getInputs().get(ANY_INPUT);
             targetInput = ANY_INPUT;
           }
-          Preconditions.checkArgument(StreamEvent.class.equals(type.getRawType()), "Cannot cannot stream %s to " +
-            "flowlet %s", fromStream, flowletName);
+          Preconditions.checkArgument(StreamEvent.class.equals(type.getRawType()),
+                                      "Cannot cannot stream %s to flowlet %s", fromStream, flowletName);
           connections.add(new FlowletConnection(FlowletConnection.SourceType.STREAM, "", flowletName, fromStream,
                                                 targetInput));
 
