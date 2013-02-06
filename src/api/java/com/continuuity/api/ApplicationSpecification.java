@@ -14,30 +14,6 @@ import java.util.Map;
 
 /**
  * This class provides an specification of an application to be executed within AppFabric.
- *
- * <p>
- * Example usage
- *   <pre>
- *   public MyApplication implements Application {
- *
- *     public ApplicationSpecification configure() {
- *
- *       return ApplicationSpecification.builder()
- *             .setName("myFirstApp")
- *             .setDescription("This is my first application")
- *             .withStream().add(new Stream("text"))
- *                          .add(new Stream("log"))
- *             .withDataSet().add(new KeyValueTable("mytable"))
- *                           .add(new SimpleTimeseriesTable("tstable"))
- *             .withFlow().add(new MyFirstFlow())
- *                        .add(new LogProcessFlow())
- *             .withProcedure().add(new KeyValueLookupProcedure())
- *                             .add(new LogProcedure())
- *             .build();
- *     }
- *   }
- *   </pre>
- * </p>
  */
 public final class ApplicationSpecification {
 

@@ -127,14 +127,23 @@ public final class FlowSpecification {
       inspectFlowlet(flowlet.getClass());
     }
 
+    /**
+     * @return Number of instances configured for this flowlet.
+     */
     public int getInstances() {
       return instances;
     }
 
+    /**
+     * @return Specification of Flowlet
+     */
     public FlowletSpecification getFlowletSpec() {
       return flowletSpec;
     }
 
+    /**
+     * @return Specification for resource.
+     */
     public ResourceSpecification getResourceSpec() {
       return resourceSpec;
     }
@@ -152,7 +161,6 @@ public final class FlowSpecification {
   }
 
   public static final class Builder {
-
     private String name;
     private String description;
     private final Set<String> streams = Sets.newHashSet();
