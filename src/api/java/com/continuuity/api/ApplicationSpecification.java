@@ -248,6 +248,11 @@ public final class ApplicationSpecification {
      */
     public final class MoreStream implements StreamAdder, AfterStream {
 
+      /**
+       * Adds more {@link Stream} to application.
+       * @param stream The {@link Stream} to be included in the application.
+       * @return An instance of {@link MoreStream}
+       */
       @Override
       public MoreStream add(Stream stream) {
         Preconditions.checkArgument(stream != null, "Stream cannot be null.");
@@ -256,11 +261,19 @@ public final class ApplicationSpecification {
         return this;
       }
 
+      /**
+       * Sets if the {@link Application} has dataset or no.
+       * @return An instance of {@link MoreDataSet}
+       */
       @Override
       public DataSetAdder withDataSet() {
         return new MoreDataSet();
       }
 
+      /**
+       * Defines what needs to happen after adding {@link DataSet}
+       * @return An instance of {@link MoreDataSet}
+       */
       @Override
       public AfterDataSet noDataSet() {
         return new MoreDataSet();
@@ -305,6 +318,11 @@ public final class ApplicationSpecification {
      */
     public final class MoreDataSet implements DataSetAdder, AfterDataSet {
 
+      /**
+       * Adds a {@link DataSet} to the {@link Application}
+       * @param dataSet to be added to {@link Application}
+       * @return An instance of {@link MoreDataSet}
+       */
       @Override
       public MoreDataSet add(DataSet dataSet) {
         Preconditions.checkArgument(dataSet != null, "DataSet cannot be null.");
@@ -313,11 +331,19 @@ public final class ApplicationSpecification {
         return this;
       }
 
+      /**
+       * Defines that {@link Application} has a {@link Flow} that is defined after {@link DataSet}
+       * @return An instance of {@link FlowAdder}
+       */
       @Override
       public FlowAdder withFlow() {
         return new MoreFlow();
       }
 
+      /**
+       * Defines that {@link Application} has no {@link Flow}
+       * @return An instance of {@link AfterFlow}
+       */
       @Override
       public AfterFlow noFlow() {
         return new MoreFlow();
@@ -362,6 +388,11 @@ public final class ApplicationSpecification {
      */
     public final class MoreFlow implements FlowAdder, AfterFlow {
 
+      /**
+       * Adds a {@link Flow} to an {@link Application}
+       * @param flow The {@link Flow} to be included in the application.
+       * @return An instance of {@link MoreFlow} allowing to add more {@link Flow} to {@link Application}
+       */
       @Override
       public MoreFlow add(Flow flow) {
         Preconditions.checkArgument(flow != null, "Flow cannot be null.");
@@ -370,11 +401,19 @@ public final class ApplicationSpecification {
         return this;
       }
 
+      /**
+       * After {@link Flow} has been added, next step is to add {@link Procedure}
+       * @return An instance of {@link MoreProcedure}
+       */
       @Override
       public ProcedureAdder withProcedure() {
         return new MoreProcedure();
       }
 
+      /**
+       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}
+       * @return An instance of {@link AfterProcedure} defining next steps in builder.
+       */
       @Override
       public AfterProcedure noProcedure() {
         return new MoreProcedure();
@@ -413,6 +452,11 @@ public final class ApplicationSpecification {
      */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
+      /**
+       * Adds a {@link Procedure} to the {@link Application}
+       * @param procedure The {@link Procedure} to be included in the application.
+       * @return An instance of {@link MoreProcedure}
+       */
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
@@ -421,6 +465,10 @@ public final class ApplicationSpecification {
         return this;
       }
 
+      /**
+       * Defines a builder for {@link FlowSpecification}
+       * @return An instance of {@link FlowSpecification}
+       */
       @Override
       public ApplicationSpecification build() {
         return new ApplicationSpecification(name, description,
