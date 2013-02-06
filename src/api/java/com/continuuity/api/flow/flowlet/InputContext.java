@@ -5,8 +5,13 @@ package com.continuuity.api.flow.flowlet;
  * to {@link Flowlet} for processing.
  */
 public interface InputContext {
-
+  /**
+   * @return Name of the input the event was read from.
+   */
   String getName();
 
+  /**
+   * @return Number of attempts made to process the event, if {@link FailurePolicy} is set to RETRY else zero.
+   */
   int getRetryCount();
 }

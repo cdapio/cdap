@@ -119,21 +119,41 @@ public final class ResourceSpecification {
       this.afterFunc = afterFunc;
     }
 
+    /**
+     * Sets number of CPU required by this flowlet.
+     * @param cpu number of CPUs
+     * @return this builder.
+     */
     public Builder setCpu(int cpu) {
       this.cpu = cpu;
       return this;
     }
 
+    /**
+     * Sets amount of memory in MB required by this flowlet.
+     * @param memoryInMB required by this flowlet.
+     * @return this builder.
+     */
     public Builder setMemoryInMB(int memoryInMB) {
       this.memory = memoryInMB;
       return this;
     }
 
+    /**
+     * Sets up the UpLink for this Flowlet in Mbps.
+     * @param uplinkInMbps required by this flowlet.
+     * @return this builder.
+     */
     public Builder setUplinkInMbps(int uplinkInMbps) {
       this.uplink = uplinkInMbps;
       return this;
     }
 
+    /**
+     * Sets up the Downlink for this flowlet in Mbps.
+     * @param downlinkInMbps required by this flowlet.
+     * @return this builder.
+     */
     public Builder setDownlinkInMbps(int downlinkInMbps) {
       this.downlink = downlinkInMbps;
       return this;
