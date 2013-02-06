@@ -7,7 +7,7 @@ import com.continuuity.data.util.TupleMetaDataAnnotator;
 import com.continuuity.performance.benchmark.*;
 import com.esotericsoftware.minlog.Log;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.util.Bytes;
+import com.continuuity.common.utils.Bytes;
 
 import java.io.IOException;
 import java.util.*;
