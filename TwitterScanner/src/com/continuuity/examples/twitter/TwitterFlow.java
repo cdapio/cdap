@@ -3,7 +3,7 @@
  */
 package com.continuuity.examples.twitter;
 
-import com.continuuity.api.data.util.Bytes;
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecifier;
 import com.continuuity.api.flow.flowlet.TupleSchema;
