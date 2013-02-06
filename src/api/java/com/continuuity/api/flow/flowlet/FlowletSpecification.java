@@ -1,5 +1,7 @@
 package com.continuuity.api.flow.flowlet;
 
+import com.google.common.base.Preconditions;
+
 /**
  *
  */
@@ -37,12 +39,14 @@ public final class FlowletSpecification {
     }
 
     public DescriptionSetter setName(String name) {
+      Preconditions.checkArgument(name != null, "Name cannot be null.");
       this.name = name;
       return new DescriptionSetter();
     }
 
     public final class DescriptionSetter {
       public AfterDescription setDescription(String description) {
+        Preconditions.checkArgument(description != null, "Description cannot be null.");
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -51,6 +55,7 @@ public final class FlowletSpecification {
     public final class AfterDescription {
 
       public AfterDescription setFailurePolicy(FailurePolicy policy) {
+        Preconditions.checkArgument(policy != null, "FailurePolicy cannot be null");
         failurePolicy = policy;
         return this;
       }
