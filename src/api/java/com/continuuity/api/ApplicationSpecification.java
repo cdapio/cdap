@@ -8,6 +8,7 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -162,6 +163,7 @@ public final class ApplicationSpecification {
      * @return A {@link DescriptionSetter} for setting description.
      */
     public DescriptionSetter setName(String name) {
+      Preconditions.checkArgument(name != null, "Name cannot be null.");
       this.name = name;
       return new DescriptionSetter();
     }
@@ -178,6 +180,7 @@ public final class ApplicationSpecification {
        * @return A {@link AfterDescription} for defining streams in the application.
        */
       public AfterDescription setDescription(String description) {
+        Preconditions.checkArgument(description != null, "Description cannot be null.");
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -247,6 +250,7 @@ public final class ApplicationSpecification {
 
       @Override
       public MoreStream add(Stream stream) {
+        Preconditions.checkArgument(stream != null, "Stream cannot be null.");
         StreamSpecification spec = stream.configure();
         streams.put(spec.getName(), spec);
         return this;
@@ -303,6 +307,7 @@ public final class ApplicationSpecification {
 
       @Override
       public MoreDataSet add(DataSet dataSet) {
+        Preconditions.checkArgument(dataSet != null, "DataSet cannot be null.");
         DataSetSpecification spec = dataSet.configure();
         dataSets.put(spec.getName(), spec);
         return this;
@@ -359,6 +364,7 @@ public final class ApplicationSpecification {
 
       @Override
       public MoreFlow add(Flow flow) {
+        Preconditions.checkArgument(flow != null, "Flow cannot be null.");
         FlowSpecification spec = flow.configure();
         flows.put(spec.getName(), spec);
         return this;
@@ -409,6 +415,7 @@ public final class ApplicationSpecification {
 
       @Override
       public MoreProcedure add(Procedure procedure) {
+        Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
         ProcedureSpecification spec = procedure.configure();
         procedures.put(spec.getName(), spec);
         return this;

@@ -1,5 +1,7 @@
 package com.continuuity.api.procedure;
 
+import com.google.common.base.Preconditions;
+
 /**
  * This class defines an specification for a {@link Procedure}.
  * An {@link Procedure} runtime attributes are always defined using this class.
@@ -47,6 +49,7 @@ public class ProcedureSpecification {
      * @return instance of this {@link Builder}
      */
     public DescriptionSetter setName(String name) {
+      Preconditions.checkArgument(name != null, "Name cannot be null.");
       this.name = name;
       return new DescriptionSetter();
     }
@@ -62,6 +65,7 @@ public class ProcedureSpecification {
        * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
+        Preconditions.checkArgument(description != null, "Description cannot be null.");
         Builder.this.description = description;
         return new AfterDescription();
       }
