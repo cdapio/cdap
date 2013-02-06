@@ -1,5 +1,6 @@
 package com.continuuity.api.data.util;
 
+import com.continuuity.api.common.Bytes;
 
 public class Helpers {
 

@@ -39,7 +39,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    */
   public DataFabricDistributedModule() {
     this.conf = loadConfiguration();
-    this.hbaseConf = HBaseConfiguration.create(conf);
+    this.hbaseConf = HBaseConfiguration.create();
   }
 
   /**
@@ -66,7 +66,7 @@ public class DataFabricDistributedModule extends AbstractModule {
    * be used both for HBase and for Continuuity
    */
   public DataFabricDistributedModule(CConfiguration conf) {
-    this.hbaseConf = new Configuration(conf);
+    this.hbaseConf = new Configuration();
     this.conf = conf;
   }
 
@@ -107,7 +107,10 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TransactionOracle.class).to(MemoryOracle.class);
 
     // Bind HBase configuration into ovctable
-    bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleConfig")).toInstance(hbaseConf);
+    bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
+
+    // Bind Continuuity configuration into ovctable
+    bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(conf);
 
     // Bind our configurations
     bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
