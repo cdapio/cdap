@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api;
 
 import com.continuuity.api.data.DataSet;
@@ -196,7 +200,7 @@ public final class ApplicationSpecification {
        *
        * @return A {@link StreamAdder} for adding {@link Stream} to the application.
        */
-      public StreamAdder withStream() {
+      public StreamAdder withStreams() {
         return new MoreStream();
       }
 
@@ -233,7 +237,7 @@ public final class ApplicationSpecification {
        *
        * @return A {@link DataSetAdder} for adding {@link DataSet} to the application.
        */
-      DataSetAdder withDataSet();
+      DataSetAdder withDataSets();
 
       /**
        * Declares that there is no {@link DataSet} in the application.
@@ -266,7 +270,7 @@ public final class ApplicationSpecification {
        * @return An instance of {@link MoreDataSet}
        */
       @Override
-      public DataSetAdder withDataSet() {
+      public DataSetAdder withDataSets() {
         return new MoreDataSet();
       }
 
@@ -303,7 +307,7 @@ public final class ApplicationSpecification {
        *
        * @return A {@link FlowAdder} for adding {@link Flow} to the application.
        */
-      FlowAdder withFlow();
+      FlowAdder withFlows();
 
       /**
        * Declares that there is no {@link Flow} in the application.
@@ -336,7 +340,7 @@ public final class ApplicationSpecification {
        * @return An instance of {@link FlowAdder}
        */
       @Override
-      public FlowAdder withFlow() {
+      public FlowAdder withFlows() {
         return new MoreFlow();
       }
 
@@ -373,7 +377,7 @@ public final class ApplicationSpecification {
        *
        * @return A {@link ProcedureAdder} for adding {@link Procedure} to the application.
        */
-      ProcedureAdder withProcedure();
+      ProcedureAdder withProcedures();
 
       /**
        * Declares that there is no {@link Procedure} in the application.
@@ -406,7 +410,7 @@ public final class ApplicationSpecification {
        * @return An instance of {@link MoreProcedure}
        */
       @Override
-      public ProcedureAdder withProcedure() {
+      public ProcedureAdder withProcedures() {
         return new MoreProcedure();
       }
 

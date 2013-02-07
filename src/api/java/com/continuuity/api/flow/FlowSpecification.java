@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.flow;
 
 import com.continuuity.api.annotation.DataSet;
@@ -36,7 +40,7 @@ import java.util.Set;
  *        .setDescription("Token counting flow")
  *        .withDataset().add("token")
  *        .withStream().add("text")
- *        .withFlowlet().add("source", StreamSource.class, 1).apply()
+ *        .withFlowlets().add("source", StreamSource.class, 1).apply()
  *                      .add("tokenizer", Tokenizer.class, 1).setCpu(1).setMemoryInMB(100).apply()
  *                      .add("count", CountByField.class, 1).apply()
  *        .withInput().add("text", "source")
@@ -339,7 +343,7 @@ public final class FlowSpecification {
       /**
        * @return An instance of {@link FlowletAdder} for adding flowlets to specification.
        */
-      public FlowletAdder withFlowlet() {
+      public FlowletAdder withFlowlets() {
         return new MoreFlowlet();
       }
     }

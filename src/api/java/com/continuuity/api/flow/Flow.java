@@ -1,4 +1,10 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.flow;
+
+import com.continuuity.api.Processor;
 
 /**
  * Flow is a collection of {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets} that are
@@ -12,8 +18,7 @@ package com.continuuity.api.flow;
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
  */
-public interface Flow {
-
+public interface Flow extends Processor {
   /**
    * Configure the {@link Flow} by returning an {@link FlowSpecification}.
    *
