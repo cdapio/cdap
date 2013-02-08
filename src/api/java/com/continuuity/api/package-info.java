@@ -41,17 +41,19 @@
  * </p>
  *
  * <h1>Flow</h1>
- * A {@link Flow} is type of Processor that enables real time processing of events as a DAG. A {@link Flow} is set of
- * {@link com.continuuity.api.flow.flowlet.Flowlet} connected by queues.
+ * A {@link Flow} is type of Processor that enables real time processing of events as a DAG.
+ * A {@link com.continuuity.api.flow.Flow} is set of {@link com.continuuity.api.flow.flowlet.Flowlet}
+ * connected by queues.
  * <p>
- *   In order to define a {@link Flow}, you need to extends from {@link Flow} interface.
+ *   In order to define a {@link com.continuuity.api.flow.Flow}, you need to extends
+ *   from {@link com.continuuity.api.flow.Flow} interface.
  * </p>
  * <h2>Flowlet</h2>
- * {@link Flowlet} is a indivisble unit of a {@link Flow} that defines a business logic for processing events received
- * on input and also can emit new events on the output for downstream processing. There are two types of
- * {@link com.continuuity.api.flow.flowlet.Flowlet}
+ * {@link com.continuuity.api.flow.flowlet.Flowlet} is a indivisble unit of a {@link com.continuuity.api.flow.Flow}
+ * that defines a business logic for processing events received on input and also can emit new events on the output
+ * for downstream processing. There are two types of {@link com.continuuity.api.flow.flowlet.Flowlet}.
  * <ul>
- *   <li>Generic Flowlet</li> &
+ *   <li>Generic Flowlet</li>
  *   <li>Typed Flowlet</li>
  * </ul>
  * <h3>Generic Flowlet</h3>
@@ -62,16 +64,18 @@
  *   Example of flowlet that is generic:
  *   <p>
  *     <pre>
+ *       {@code
  *       public class SentimentAnalyzer extends AbstractFlowlet {
  *
  *          FlowletSpecification configure() {
  *            return FlowletSpecification.builder()
- *                      .set
+ *                      .set(...)
  *          }
- *          @Process
+ *
  *          public void process(Tuple tuple) {
  *            ....
  *          }
+ *       }
  *       }
  *     </pre>
  *   </p>
@@ -122,7 +126,7 @@
  *   Defining a <code>WordCountApplication</code>
  *   <pre>
  *     public class WordCountApplication implements Application {
- *       @Override
+ *       {@literal @Override}
  *       public ApplicationSpecification configure() {
  *         return ApplicationSpecification.builder()
  *            .setName("WordCountApplication")
@@ -188,10 +192,10 @@
  *   <code>MyRecord</code>
  *   <pre>
  *     public class Tokenizer extends AbstractFlowlet {
- *       @Output
+ *       {@literal @Output}
  *       private OutputEmitter<Map<String, String>> output;
  *
- *       @Process
+ *       {@literal @Process}
  *       public void tokenizer(MyRecord data) {
  *         tokenize(data.getTitle(), "title");
  *         tokenize(data.getText(), "text");
@@ -213,10 +217,10 @@
  * <p>
  *   <pre>
  *     public class TokenCounter implements AbstractFlowlet {
- *       @DataSet("mydataset")
+ *       {@literal @DataSet("mydataset")}
  *       private KeyValueTable counters;
  *
- *       @Process
+ *       {@literal @Process}
  *       public void process(Map<String, String> fields) {
  *         String word = fields.get("word");
  *         if(token == null) {
