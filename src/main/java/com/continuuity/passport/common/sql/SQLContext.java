@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class SQLContext {
 
+  public enum QueryType {SELECT, DELETE, UPDATE, INSERT}
   private Connection connection;
 
   private String tableName;
@@ -17,8 +18,19 @@ public class SQLContext {
 
   private List<Object> parameters;
 
-  SQLContext(Connection connection) {
+  private  QueryType type;
+
+  public String getTableName() {
+    return tableName;
+  }
+
+  public QueryType getType() {
+    return type;
+  }
+
+  SQLContext(Connection connection, QueryType type) {
     this.connection = connection;
+    this.type = type;
     this.parameters = new ArrayList<Object>();
     this.query = new StringBuffer();
   }

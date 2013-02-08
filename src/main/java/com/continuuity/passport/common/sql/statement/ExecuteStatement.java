@@ -17,7 +17,7 @@ public class ExecuteStatement extends StatementBase implements ExecuteClause {
    * @throws SQLException
    */
   @Override
-  public boolean execute() throws SQLException {
+  public boolean run() throws SQLException {
     PreparedStatement statement = null;
     try{
       statement = getConnection().prepareStatement(getQuery().toString());

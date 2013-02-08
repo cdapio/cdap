@@ -1,11 +1,14 @@
 package com.continuuity.passport.common.sql;
 
 import com.continuuity.passport.common.sql.clause.ColumnSelectionClause;
+import com.continuuity.passport.common.sql.clause.ExecuteClause;
 import com.continuuity.passport.common.sql.clause.InsertColumns;
 import com.continuuity.passport.common.sql.clause.QueryClause;
 import com.continuuity.passport.common.sql.clause.SQLChain;
+import com.continuuity.passport.common.sql.clause.WhereClause;
 import com.continuuity.passport.common.sql.statement.ColumnSelectStatement;
 import com.continuuity.passport.common.sql.statement.InsertColumnsStatement;
+import com.continuuity.passport.common.sql.statement.WhereStatement;
 
 import java.sql.Connection;
 import java.util.List;
@@ -33,7 +36,7 @@ public class SQLChainImpl implements SQLChain {
    */
   @Override
   public InsertColumns insert(String table) {
-      SQLContext context = new SQLContext(connection);
+      SQLContext context = new SQLContext(connection, SQLContext.QueryType.INSERT);
       context.getQuery().append("INSERT INTO "+ table + " ");
       InsertColumnsStatement columns = new InsertColumnsStatement();
       columns.setContext(context);
@@ -47,11 +50,22 @@ public class SQLChainImpl implements SQLChain {
    */
   @Override
   public ColumnSelectionClause<QueryClause<List<Map<String, Object>>>> select(String table) {
-    SQLContext context = new SQLContext(connection);
+    SQLContext context = new SQLContext(connection,SQLContext.QueryType.SELECT);
     context.getQuery().append("SELECT ");
     context.setTable(table);
 
     ColumnSelectStatement statement = new ColumnSelectStatement();
+    statement.setContext(context);
+    return statement;
+
+  }
+
+  @Override
+  public WhereClause<ExecuteClause> delete(String table){
+    SQLContext context = new SQLContext(connection,SQLContext.QueryType.DELETE);
+    context.getQuery().append(" DELETE FROM "+table);
+
+    WhereStatement statement = new WhereStatement();
     statement.setContext(context);
     return statement;
 

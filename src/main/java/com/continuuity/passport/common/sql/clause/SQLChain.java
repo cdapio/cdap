@@ -25,4 +25,15 @@ public interface SQLChain {
    * @return Instance of {@code ColumSelectionClause}
    */
   public ColumnSelectionClause<QueryClause<List<Map<String, Object>>>> select(String table);
+
+  /**
+   * DELETE clause
+   * @param table table name
+   * @return Instance of {@code WhereClause}
+   */
+  public WhereClause<ExecuteClause> delete(String table);
+
+
+
 }
+

@@ -1,12 +1,13 @@
 package com.continuuity.passport.common.sql.statement;
 
+import com.continuuity.passport.common.sql.SQLContext;
 import com.continuuity.passport.common.sql.clause.RelationClause;
 
  /**
   * Specify constraints in the query
   * Only single constraint is supported for now
   */
-public class RelationStatement extends StatementBase implements RelationClause {
+public class RelationStatement<T> extends StatementBase implements RelationClause {
 
 
    /**
@@ -15,13 +16,12 @@ public class RelationStatement extends StatementBase implements RelationClause {
     * @return T
     */
   @Override
-  public Object equal(Object value) {
+  public T equal(Object value) {
     query().append(" = ?");
     addParameter(value);
 
-    SelectStatement statement = new SelectStatement();
-    statement.setContext(getContext());
-    return statement;
+    return getStatement();
+
   }
 
 
@@ -31,14 +31,13 @@ public class RelationStatement extends StatementBase implements RelationClause {
     * @return T
     */
   @Override
-  public Object lessThan(Object value) {
+  public T lessThan(Object value) {
 
     query().append(" < ?");
     addParameter(value);
 
-    SelectStatement statement = new SelectStatement();
-    statement.setContext(getContext());
-    return statement;
+    return getStatement();
+
   }
 
 
@@ -48,12 +47,27 @@ public class RelationStatement extends StatementBase implements RelationClause {
     * @return T
     */
   @Override
-  public Object greaterThan(Object value) {
+  public T greaterThan(Object value) {
     query().append(" > ?");
     addParameter(value);
 
-    SelectStatement statement = new SelectStatement();
-    statement.setContext(getContext());
-    return statement;
+    return getStatement();
+
   }
+
+   //TODO: MOve this to a helper function
+   private T getStatement(){
+     StatementBase statement = null;
+
+     if (getType().equals(SQLContext.QueryType.SELECT)) {
+       statement = new SelectStatement();
+       statement.setContext(getContext());
+     }
+     else if (getType().equals(SQLContext.QueryType.DELETE)){
+       statement = new ExecuteStatement() ;
+       statement.setContext(getContext());
+     }
+
+     return (T) statement;
+   }
 }

@@ -43,4 +43,8 @@ public abstract class StatementBase {
     return sqlContext.getTable();
   }
 
+  public SQLContext.QueryType getType() {
+    return sqlContext.getType();
+  }
+
 }

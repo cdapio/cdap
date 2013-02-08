@@ -25,7 +25,7 @@ public class TestSQLInsert {
 
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.insert("account").columns("name,email_id").
-      values(name, email).execute();
+      values(name, email).run();
 
   }
 
@@ -42,10 +42,21 @@ public class TestSQLInsert {
   List<Map<String,Object>> selectName(Connection connection, String name) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.select("account").includeAll().where("name").equal(name).execute();
+
   }
 
 
+  public boolean deleteOne(Connection connection, String email) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.delete("ACCOUNT").where("email_id").equal(email).run();
 
+  }
+
+  public boolean deleteAll(Connection connection) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.delete("ACCOUNT").noWhere().run();
+
+  }
 
   @Test
   public void testInsertAndSelect() throws SQLException, ClassNotFoundException {
@@ -59,10 +70,8 @@ public class TestSQLInsert {
     //PreparedStatment's execute returns false on inserts
     assertFalse(insertSingle(connection,"sree@continuuity.com","sree"));
 
-
     //Select all
     assertEquals(1,selectAll(connection).size() );
-
 
     //Select none
     assertEquals(0, selectNone(connection).size());
@@ -71,13 +80,24 @@ public class TestSQLInsert {
     assertFalse(insertSingle(connection,"simpson@homer.com","homer simpson"));
 
     //Select by name
-//    assertEquals(1,selectName(connection,"homer simpson").size());
+    assertEquals(1,selectName(connection,"homer simpson").size());
 
     //Select all count 2
     assertEquals(2, selectAll(connection).size());
 
+    //Delete one
+    assertFalse(deleteOne(connection,"simpson@homer.com"));
 
-     //Stop HSQL instance
+    //Verify the data is deleted
+    assertEquals(1, selectAll(connection).size());
+
+    //Delete all
+    assertFalse(deleteAll(connection));
+
+    //Verify if delete all worked
+    assertEquals(0,selectAll(connection).size());
+
+    //Stop HSQL instance
     TestHelper.stopHsqlDB();
 
   }

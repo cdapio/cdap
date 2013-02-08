@@ -1,5 +1,6 @@
 package com.continuuity.passport.common.sql.statement;
 
+import com.continuuity.passport.common.sql.SQLContext;
 import com.continuuity.passport.common.sql.clause.RelationClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
 
@@ -28,8 +29,21 @@ public class WhereStatement<T> extends StatementBase implements WhereClause<T> {
   @Override
   public T noWhere() {
 
-    SelectStatement statement = new SelectStatement();
-    statement.setContext(getContext());
+    return getStatement();
+  }
+
+  private T getStatement(){
+    StatementBase statement = null;
+
+    if (getType().equals(SQLContext.QueryType.SELECT)) {
+      statement = new SelectStatement();
+      statement.setContext(getContext());
+    }
+    else if (getType().equals(SQLContext.QueryType.DELETE)){
+      statement = new ExecuteStatement() ;
+      statement.setContext(getContext());
+    }
+
     return (T) statement;
   }
 }
