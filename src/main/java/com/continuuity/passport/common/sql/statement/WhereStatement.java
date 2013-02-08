@@ -32,18 +32,4 @@ public class WhereStatement<T> extends StatementBase implements WhereClause<T> {
     return getStatement();
   }
 
-  private T getStatement(){
-    StatementBase statement = null;
-
-    if (getType().equals(SQLContext.QueryType.SELECT)) {
-      statement = new SelectStatement();
-      statement.setContext(getContext());
-    }
-    else if (getType().equals(SQLContext.QueryType.DELETE)){
-      statement = new ExecuteStatement() ;
-      statement.setContext(getContext());
-    }
-
-    return (T) statement;
-  }
 }

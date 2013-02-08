@@ -54,20 +54,4 @@ public class RelationStatement<T> extends StatementBase implements RelationClaus
     return getStatement();
 
   }
-
-   //TODO: MOve this to a helper function
-   private T getStatement(){
-     StatementBase statement = null;
-
-     if (getType().equals(SQLContext.QueryType.SELECT)) {
-       statement = new SelectStatement();
-       statement.setContext(getContext());
-     }
-     else if (getType().equals(SQLContext.QueryType.DELETE)){
-       statement = new ExecuteStatement() ;
-       statement.setContext(getContext());
-     }
-
-     return (T) statement;
-   }
 }

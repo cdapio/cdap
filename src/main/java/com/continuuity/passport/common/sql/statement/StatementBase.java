@@ -47,4 +47,18 @@ public abstract class StatementBase {
     return sqlContext.getType();
   }
 
+  public <T> T getStatement(){
+    StatementBase statement = null;
+
+    if (getType().equals(SQLContext.QueryType.SELECT)) {
+      statement = new SelectStatement();
+      statement.setContext(getContext());
+    }
+    else if (getType().equals(SQLContext.QueryType.DELETE)){
+      statement = new ExecuteStatement() ;
+      statement.setContext(getContext());
+    }
+
+    return (T) statement;
+  }
 }
