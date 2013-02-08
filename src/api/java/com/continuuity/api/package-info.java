@@ -2,8 +2,6 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.api;
-
 /**
  * <h1>WIP</h1>
  * <h1>Application</h1>
@@ -236,3 +234,4 @@ package com.continuuity.api;
  * </p>
  *
  */
+package com.continuuity.api;
