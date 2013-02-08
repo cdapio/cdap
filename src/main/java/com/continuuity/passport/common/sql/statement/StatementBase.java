@@ -58,6 +58,11 @@ public abstract class StatementBase {
       statement = new ExecuteStatement() ;
       statement.setContext(getContext());
     }
+    else if (getType().equals(SQLContext.QueryType.UPDATE)) {
+      statement = new ExecuteStatement() ;
+      statement.setContext(getContext());
+    }
+
 
     return (T) statement;
   }

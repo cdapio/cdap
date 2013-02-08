@@ -5,9 +5,11 @@ import com.continuuity.passport.common.sql.clause.ExecuteClause;
 import com.continuuity.passport.common.sql.clause.InsertColumns;
 import com.continuuity.passport.common.sql.clause.QueryClause;
 import com.continuuity.passport.common.sql.clause.SQLChain;
+import com.continuuity.passport.common.sql.clause.SetClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
 import com.continuuity.passport.common.sql.statement.ColumnSelectStatement;
 import com.continuuity.passport.common.sql.statement.InsertColumnsStatement;
+import com.continuuity.passport.common.sql.statement.SetStatement;
 import com.continuuity.passport.common.sql.statement.WhereStatement;
 
 import java.sql.Connection;
@@ -17,7 +19,7 @@ import java.util.Map;
 /**
  * Implements SQLChain for commonly used SQL statements
  */
-public class SQLChainImpl implements SQLChain {
+public class  SQLChainImpl implements SQLChain {
 
   public static SQLChain getSqlChain (Connection connection) {
     return new SQLChainImpl(connection);
@@ -60,12 +62,32 @@ public class SQLChainImpl implements SQLChain {
 
   }
 
+  /**
+   * Delete query
+   * @param table table name
+   * @return
+   */
   @Override
   public WhereClause<ExecuteClause> delete(String table){
     SQLContext context = new SQLContext(connection,SQLContext.QueryType.DELETE);
     context.getQuery().append(" DELETE FROM "+table);
 
     WhereStatement statement = new WhereStatement();
+    statement.setContext(context);
+    return statement;
+
+  }
+
+  /**
+   * Update Statement
+   * @param table Table name
+   * @return Instance of  {@code SetClause}
+   */
+  public SetClause<ExecuteClause> update(String table){
+    SQLContext context = new SQLContext(connection, SQLContext.QueryType.UPDATE) ;
+    context.getQuery().append("UPDATE "+table+ " SET ");
+
+    SetStatement statement = new SetStatement();
     statement.setContext(context);
     return statement;
 

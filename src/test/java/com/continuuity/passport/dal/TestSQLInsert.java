@@ -13,6 +13,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -25,7 +26,7 @@ public class TestSQLInsert {
 
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.insert("account").columns("name,email_id").
-      values(name, email).run();
+      values(name, email).execute();
 
   }
 
@@ -42,20 +43,31 @@ public class TestSQLInsert {
   List<Map<String,Object>> selectName(Connection connection, String name) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.select("account").includeAll().where("name").equal(name).execute();
-
   }
+
+
+  List<Map<String,Object>> selectEmail(Connection connection, String email) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.select("account").includeAll().where("email_id").equal(email).execute();
+  }
+
 
 
   public boolean deleteOne(Connection connection, String email) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
-    return chain.delete("ACCOUNT").where("email_id").equal(email).run();
+    return chain.delete("ACCOUNT").where("email_id").equal(email).execute();
 
   }
 
   public boolean deleteAll(Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
-    return chain.delete("ACCOUNT").noWhere().run();
+    return chain.delete("ACCOUNT").noWhere().execute();
 
+  }
+
+  public boolean updateOne(Connection connection) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.update("account").setLast("name","Sreevatsan Raman").where("name").equal("sree").execute();
   }
 
   @Test
@@ -90,6 +102,15 @@ public class TestSQLInsert {
 
     //Verify the data is deleted
     assertEquals(1, selectAll(connection).size());
+
+
+    //Update an entry
+    assertFalse(updateOne(connection));
+
+    List<Map<String,Object>> data  = selectEmail(connection,"sree@continuuity.com");
+    for  (Map<String,Object> d : data){
+      assertEquals("Sreevatsan Raman",d.get("NAME"));
+    }
 
     //Delete all
     assertFalse(deleteAll(connection));

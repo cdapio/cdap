@@ -13,7 +13,7 @@ public interface ExecuteClause {
    *          false if the first result is an update count or there is no result
    * @throws SQLException
    */
-  public boolean run() throws SQLException;
+  public boolean execute() throws SQLException;
 
   }
 

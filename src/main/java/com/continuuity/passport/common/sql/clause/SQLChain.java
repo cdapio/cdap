@@ -27,12 +27,19 @@ public interface SQLChain {
   public ColumnSelectionClause<QueryClause<List<Map<String, Object>>>> select(String table);
 
   /**
-   * DELETE clause
+   * DELETE statement
    * @param table table name
    * @return Instance of {@code WhereClause}
    */
   public WhereClause<ExecuteClause> delete(String table);
 
+
+  /**
+   * Update statement
+   * @param table Table name
+   * @return Instance of {@code SetClause}
+   */
+  public SetClause<ExecuteClause> update(String table);
 
 
 }
