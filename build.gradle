@@ -19,5 +19,9 @@ dependencies {
 
   // Self dependencies.
   compile apiJar.outputs.files
+  compile libraries.mysql
+
+  testCompile libraries.junit
+  testCompile 'org.hsqldb:hsqldb:2.2.6' //TODO: Move this to central dependency
 
 }
