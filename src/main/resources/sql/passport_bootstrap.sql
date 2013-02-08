@@ -3,11 +3,11 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 CREATE SCHEMA IF NOT EXISTS `continuuity` DEFAULT CHARACTER SET latin1 ;
-
 USE `continuuity` ;
 
 -- -----------------------------------------------------
 -- Table `continuuity`.`account`
+-- Table to hold the account information
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
@@ -23,6 +23,7 @@ DEFAULT CHARACTER SET = latin1;
 
 -- -----------------------------------------------------
 -- Table `continuuity`.`account_payment`
+-- Store payment information for the accounts
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`account_payment` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
@@ -41,9 +42,11 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`account_role`
+-- Table `continuuity`.`account_role_types`
+-- Stores role definitions for account. The role defnitions
+-- can be used in any of the VPCs created in the account
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`account_role` (
+CREATE  TABLE IF NOT EXISTS `continuuity`.`account_role_types` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
   `name` VARCHAR(100) NULL DEFAULT NULL ,
@@ -59,6 +62,7 @@ DEFAULT CHARACTER SET = latin1;
 
 -- -----------------------------------------------------
 -- Table `continuuity`.`component_type`
+-- Defines component type - Example: Datasets, Streams
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`component_type` (
   `id` INT(11) NOT NULL ,
@@ -70,6 +74,7 @@ DEFAULT CHARACTER SET = latin1;
 
 -- -----------------------------------------------------
 -- Table `continuuity`.`vpc_component`
+-- Stores component information for each VPC
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_component` (
   `id` INT(11) NOT NULL ,
@@ -87,6 +92,7 @@ DEFAULT CHARACTER SET = latin1;
 
 -- -----------------------------------------------------
 -- Table `continuuity`.`component_acls`
+-- Stores ACLS for each components
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`component_acls` (
   `component_id` INT(11) NOT NULL ,
@@ -105,9 +111,10 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`vpc`
+-- Table `continuuity`.`vpc_account`
+-- Stores VPC for each account
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc` (
+CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
   `vpc_name` VARCHAR(100) NOT NULL ,
@@ -121,23 +128,8 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `continuuity`.`vpc_account`
--- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `account_id` INT(11) NOT NULL ,
-  `vpc_name` VARCHAR(100) NOT NULL ,
-  PRIMARY KEY (`id`) ,
-  INDEX `account_id` (`account_id` ASC) ,
-  CONSTRAINT `vpc_account_ibfk_1`
-    FOREIGN KEY (`account_id` )
-    REFERENCES `continuuity`.`account` (`id` ))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = latin1;
-
-
--- -----------------------------------------------------
 -- Table `continuuity`.`vpc_roles`
+-- Store the role information for each user in the VPC
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
   `vpc_id` INT(11) NOT NULL ,
@@ -152,11 +144,17 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
     REFERENCES `continuuity`.`account` (`id` ),
   CONSTRAINT `vpc_roles_ibfk_2`
     FOREIGN KEY (`role_type` )
-    REFERENCES `continuuity`.`account_role` (`id` ),
+    REFERENCES `continuuity`.`account_role_types` (`id` ),
   CONSTRAINT `vpc_roles_ibfk_3`
     FOREIGN KEY (`vpc_id` )
-    REFERENCES `continuuity`.`vpc` (`id` ))
+    REFERENCES `continuuity`.`vpc_account` (`id` ))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
+USE `continuuity` ;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
