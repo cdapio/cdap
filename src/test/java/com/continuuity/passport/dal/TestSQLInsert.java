@@ -65,6 +65,12 @@ public class TestSQLInsert {
 
   }
 
+  public boolean updateManyColumns (Connection connection) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.update("account").set("company","Continuuity").set("email_id","sree@continuuity.com")
+                .setLast("name","Sree").where("email_id").equal("sree@gmail.com").execute();
+  }
+
   public boolean updateOne(Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.update("account").setLast("name","Sreevatsan Raman").where("name").equal("sree").execute();
@@ -80,7 +86,7 @@ public class TestSQLInsert {
 
     //Insert
     //PreparedStatment's execute returns false on inserts
-    assertFalse(insertSingle(connection,"sree@continuuity.com","sree"));
+    assertFalse(insertSingle(connection,"sree@gmail.com","sree"));
 
     //Select all
     assertEquals(1,selectAll(connection).size() );
@@ -107,9 +113,20 @@ public class TestSQLInsert {
     //Update an entry
     assertFalse(updateOne(connection));
 
-    List<Map<String,Object>> data  = selectEmail(connection,"sree@continuuity.com");
+    //Verify Updates
+    List<Map<String,Object>> data  = selectEmail(connection,"sree@gmail.com");
     for  (Map<String,Object> d : data){
       assertEquals("Sreevatsan Raman",d.get("NAME"));
+    }
+
+    //Update multiple Entries
+    assertFalse(updateManyColumns(connection));
+
+    //Verify result of updating multiple columns
+     data  = selectEmail(connection,"sree@continuuity.com");
+    for  (Map<String,Object> d : data){
+      assertEquals("Sree",d.get("NAME"));
+      assertEquals("Continuuity",d.get("COMPANY"));
     }
 
     //Delete all

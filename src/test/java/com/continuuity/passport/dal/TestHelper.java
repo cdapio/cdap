@@ -16,7 +16,8 @@ import java.sql.SQLException;
 public class TestHelper {
 
   private  static Server server = null;
-  private static final String CREATE_TABLE = "CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) )";
+  private static final String CREATE_TABLE = "CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
+                                               ", company VARCHAR(100))";
 
   private static final String DROP_TABLE = "DROP TABLE account";
   protected static Connection connection;
