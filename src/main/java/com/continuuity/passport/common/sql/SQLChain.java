@@ -1,4 +1,11 @@
-package com.continuuity.passport.common.sql.clause;
+package com.continuuity.passport.common.sql;
+
+import com.continuuity.passport.common.sql.clause.ColumnSelectionClause;
+import com.continuuity.passport.common.sql.clause.ExecuteClause;
+import com.continuuity.passport.common.sql.clause.InsertColumns;
+import com.continuuity.passport.common.sql.clause.QueryClause;
+import com.continuuity.passport.common.sql.clause.SetClause;
+import com.continuuity.passport.common.sql.clause.WhereClause;
 
 import java.util.List;
 import java.util.Map;

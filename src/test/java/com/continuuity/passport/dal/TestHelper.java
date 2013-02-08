@@ -26,6 +26,7 @@ public class TestHelper {
   public static void startHsqlDB() throws SQLException, ClassNotFoundException {
 
     System.out.println("======================================START======================================");
+
     server = new Server();
     server.setLogWriter(null);
     server.setPort(1234);
@@ -38,13 +39,12 @@ public class TestHelper {
                                             "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
     connection.createStatement().execute(CREATE_TABLE);
 
-
   }
 
 
   public static void stopHsqlDB() throws SQLException {
-    System.out.println("======================================STOP=======================================");
 
+    System.out.println("======================================STOP=======================================");
     connection.createStatement().execute(DROP_TABLE);
     connection.close();
     server.stop();

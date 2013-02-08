@@ -4,7 +4,6 @@ import com.continuuity.passport.common.sql.clause.ColumnSelectionClause;
 import com.continuuity.passport.common.sql.clause.ExecuteClause;
 import com.continuuity.passport.common.sql.clause.InsertColumns;
 import com.continuuity.passport.common.sql.clause.QueryClause;
-import com.continuuity.passport.common.sql.clause.SQLChain;
 import com.continuuity.passport.common.sql.clause.SetClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
 import com.continuuity.passport.common.sql.statement.ColumnSelectStatement;

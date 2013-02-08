@@ -2,7 +2,7 @@ package com.continuuity.passport.dal;
 
 
 import com.continuuity.passport.common.sql.SQLChainImpl;
-import com.continuuity.passport.common.sql.clause.SQLChain;
+import com.continuuity.passport.common.sql.SQLChain;
 import org.junit.Test;
 
 import java.sql.Connection;
