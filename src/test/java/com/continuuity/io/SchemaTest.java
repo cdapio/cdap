@@ -1,6 +1,9 @@
 package com.continuuity.io;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -9,32 +12,35 @@ import java.util.Map;
 
 public class SchemaTest {
 
-  public static final class Node {
+  public final class Node {
     private int data;
     private List<Node> children;
   }
 
-  public static class Parent<T> {
+  public class Parent<T> {
     private T data;
     private ByteBuffer buffer;
   }
 
-  public static class Child<T> extends Parent<Map<String, T>> {
+  public class Child<T> extends Parent<Map<String, T>> {
     private int height;
     private Node rootNode;
     private State state;
-
-    private static enum State {
-      OK, ERROR
-    }
   }
+
+  public enum State {
+    OK, ERROR
+  }
+
 
   @Test
   public void testGenerateSchema() throws UnsupportedTypeException {
-    SchemaGenerator gen = new ReflectionSchemaGenerator();
-    Schema schema = gen.generate((new TypeToken<Child<String>>(){}).getType());
+    Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() {}).getType());
 
-    // TODO: Do assertion
-    System.out.println(schema);
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+
+    Assert.assertEquals(schema, gson.fromJson(gson.toJson(schema), Schema.class));
   }
 }

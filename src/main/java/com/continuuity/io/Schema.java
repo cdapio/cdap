@@ -7,7 +7,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
@@ -44,15 +43,28 @@ public final class Schema {
       this.simpleType = primitive;
     }
 
+    /**
+     * @return true if this enum represents a simple schema type.
+     */
     public boolean isSimpleType() {
       return simpleType;
     }
   }
 
+  /**
+   * Represents a field inside a {@link Type#RECORD} schema.
+   */
   public static final class Field {
     private final String name;
     private final Schema schema;
 
+    /**
+     * Creates a {@link Field} instance with the given name and {@link Schema}.
+     *
+     * @param name Name of the field.
+     * @param schema Schema of the field.
+     * @return A new {@link Field} instance.
+     */
     public static Field of(String name, Schema schema) {
       return new Field(name, schema);
     }
@@ -62,24 +74,53 @@ public final class Schema {
       this.schema = schema;
     }
 
+    /**
+     * @return Name of the field.
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * @return Schema of the field.
+     */
     public Schema getSchema() {
       return schema;
     }
   }
 
+  /**
+   * Creates a {@link Schema} for the given type. The type given must be a
+   * {@link com.continuuity.io.Schema.Type#isSimpleType() Simple Type}.
+   *
+   * @param type Type of the schema to create.
+   * @return A {@link Schema} with the given type.
+   */
   public static Schema of(Type type) {
     Preconditions.checkArgument(type.isSimpleType(), "Type %s is not a simple type.", type);
     return new Schema(type, null, null, null, null, null, null, null);
   }
 
+  /**
+   * Creates a {@link Schema} of {@link Type#ENUM ENUM} type, with the given enum values.
+   * The set of values given should be unique and must contains at least one value.
+   * The ordering of values in the enum type schema would be the same as the order being passed in.
+   *
+   * @param values Enum values.
+   * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
+   */
   public static Schema enumWith(String...values) {
     return enumWith(ImmutableList.copyOf(values));
   }
 
+  /**
+   * Creates a {@link Schema} of {@link Type#ENUM ENUM} type, with the given enum values.
+   * The set of values given should be unique and must contains at least one value.
+   * The ordering of values in the enum type schema would be the same as the {@link Iterable#iterator()} order.
+   *
+   * @param values Enum values.
+   * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
+   */
   public static Schema enumWith(Iterable<String> values) {
     Set<String> uniqueValues = ImmutableSet.copyOf(values);
     Preconditions.checkArgument(uniqueValues.size() > 0, "No enum value provided.");
@@ -87,6 +128,13 @@ public final class Schema {
     return new Schema(Type.ENUM, uniqueValues, null, null, null, null, null, null);
   }
 
+  /**
+   * Creates a {@link Schema} of {@link Type#ENUM ENUM} type, with values extracted from the given {@link Enum} class.
+   * The ordering of values in the enum type schema would be the same as the {@link Enum#ordinal()} order.
+   *
+   * @param enumClass Enum values.
+   * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
+   */
   public static Schema enumWith(Class<Enum<?>> enumClass) {
     Enum<?>[] enumConstants = enumClass.getEnumConstants();
     String[] names = new String[enumConstants.length];
@@ -96,23 +144,58 @@ public final class Schema {
     return enumWith(names);
   }
 
+  /**
+   * Creates an {@link Type#ARRAY ARRAY} {@link Schema} of the given component type.
+   * @param componentSchema Schema of the array component.
+   * @return A {@link Schema} of {@link Type#ARRAY ARRAY} type.
+   */
   public static Schema arrayOf(Schema componentSchema) {
     return new Schema(Type.ARRAY, null, componentSchema, null, null, null, null, null);
   }
 
+  /**
+   * Creates a {@link Type#MAP MAP} {@link Schema} of the given key and value types.
+   * @param keySchema Schema of the map key.
+   * @param valueSchema Schema of the map value
+   * @return A {@link Schema} of {@link Type#MAP MAP} type.
+   */
   public static Schema mapOf(Schema keySchema, Schema valueSchema) {
     return new Schema(Type.MAP, null, null, keySchema, valueSchema, null, null, null);
   }
 
+  /**
+   * Creates a {@link Type#RECORD RECORD} {@link Schema} of the given name. The schema created
+   * doesn't carry any record fields, which makes it only useful to be used as a component schema
+   * for other schema type, where the actual schema is resolved from the top level container schema.
+   *
+   * @param name Name of the record.
+   * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
+   */
   public static Schema recordOf(String name) {
     Preconditions.checkNotNull(name, "Record name cannot be null.");
     return new Schema(Type.RECORD, null, null, null, null, name, null, null);
   }
 
+  /**
+   * Creates a {@link Type#RECORD RECORD} {@link Schema} with the given name and {@link Field Fields}.
+   * The ordering of the fields inside the record would be the same as the one being passed in.
+   *
+   * @param name Name of the record
+   * @param fields All the fields that the record contains.
+   * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
+   */
   public static Schema recordOf(String name, Field...fields) {
     return recordOf(name, ImmutableList.copyOf(fields));
   }
 
+  /**
+   * Creates a {@link Type#RECORD RECORD} {@link Schema} with the given name and {@link Field Fields}.
+   * The ordering of the fields inside the record would be the same as the {@link Iterable#iterator()} order.
+   *
+   * @param name Name of the record
+   * @param fields All the fields that the record contains.
+   * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
+   */
   public static Schema recordOf(String name, Iterable<Field> fields) {
     Preconditions.checkNotNull(name, "Record name cannot be null.");
     ImmutableMap.Builder<String, Field> fieldMapBuilder = ImmutableMap.builder();
@@ -124,10 +207,24 @@ public final class Schema {
     return new Schema(Type.RECORD, null, null, null, null, name, fieldMap, null);
   }
 
+  /**
+   * Creates a {@link Type#UNION UNION} {@link Schema} which represents a union of all the given schemas.
+   * The ordering of the schemas inside the union would be the same as the one being passed in.
+   *
+   * @param schemas All the {@link Schema Schemas} constitutes the union.
+   * @return A {@link Schema} of {@link Type#UNION UNION} type.
+   */
   public static Schema unionOf(Schema...schemas) {
     return unionOf(ImmutableList.copyOf(schemas));
   }
 
+  /**
+   * Creates a {@link Type#UNION UNION} {@link Schema} which represents a union of all the given schemas.
+   * The ordering of the schemas inside the union would be the same as the {@link Iterable#iterator()} order.
+   *
+   * @param schemas All the {@link Schema Schemas} constitutes the union.
+   * @return A {@link Schema} of {@link Type#UNION UNION} type.
+   */
   public static Schema unionOf(Iterable<Schema> schemas) {
     List<Schema> schemaList = ImmutableList.copyOf(schemas);
     Preconditions.checkArgument(schemaList.size() > 0, "No union schema provided.");
@@ -161,30 +258,70 @@ public final class Schema {
     this.unionSchemas = unionSchemas;
   }
 
+  /**
+   * @return The {@link Type} that this schema represents.
+   */
   public Type getType() {
     return type;
   }
 
+  /**
+   * @return An immutable {@link Set} of enum values or {@code null} if this is not a {@link Type#ENUM ENUM} schema.
+   *         The {@link Set#iterator()} order would be the enum values orders.
+   */
   public Set<String> getEnumValues() {
     return enumValues;
   }
 
+  /**
+   * @return The schema of the array component or {@code null} if this is not a {@link Type#ARRAY ARRAY} schema.
+   */
   public Schema getComponentSchema() {
     return componentSchema;
   }
 
+  /**
+   * @return An immutable {@link Map.Entry} if this is a {@link Type#MAP MAP} schema or {@code null} otherwise.
+   *         The {@link Map.Entry#getKey()} would returns the key schema, while {@link Map.Entry#getValue()}
+   *         would returns the value schema.
+   */
   public Map.Entry<Schema, Schema> getMapSchema() {
     return Maps.immutableEntry(keySchema, valueSchema);
   }
 
+  /**
+   * @return Name of the record if this is a {@link Type#RECORD RECORD} schema or {@code null} otherwise.
+   */
+  public String getRecordName() {
+    return recordName;
+  }
+
+  /**
+   * @return An immutable {@link List} of record {@link Field Fields} if this is a {@link Type#RECORD RECORD} schema
+   *         or {@code null} otherwise.
+   */
   public List<Field> getFields() {
     return fields;
   }
 
+  /**
+   * Returns the record {@link Field} of the given name.
+   *
+   * @param name Name of the field
+   * @return A {@link Field} or {@code null} if there is no such field in this record
+   *         or this is not a {@link Type#RECORD RECORD} schema.
+   */
   public Field getField(String name) {
+    if (fieldMap == null) {
+      return null;
+    }
     return fieldMap.get(name);
   }
 
+  /**
+   * @return An immutable {@link List} of schemas inside this union
+   *         or {@code null} if this is not a {@link Type#UNION UNION} schema.
+   */
   public List<Schema> getUnionSchemas() {
     return unionSchemas;
   }
@@ -218,6 +355,13 @@ public final class Schema {
     return schemaString.hashCode();
   }
 
+  /**
+   * Resolves all field schemas.
+   *
+   * @param fields All the fields that need to be resolved.
+   * @return A {@link Map} which has all the field schemas resolved.
+   * @see #resolveSchema(Schema, java.util.Map)
+   */
   private Map<String, Field> populateRecordFields(Map<String, Field> fields) {
     if (fields == null) {
       return null;
@@ -242,6 +386,16 @@ public final class Schema {
     return builder.build();
   }
 
+  /**
+   * This method is to recursively resolves all name only record schema in the given schema.
+   *
+   * @param schema The schema needs to be resolved.
+   * @param knownRecordSchemas The mapping of the already resolved record schemas.
+   * @return A {@link Schema} that is structurally the same as the input schema, but with all
+   *         name only record schemas resolved to full schemas (i.e. with fields sets).
+   *         If nothing in the given schema needs to be resolved, the same schema instance would be returned,
+   *         otherwise, a new instance would be returned.
+   */
   private Schema resolveSchema(final Schema schema, final Map<String, Schema> knownRecordSchemas) {
     switch (schema.getType()) {
       case ARRAY:
@@ -279,75 +433,24 @@ public final class Schema {
     return schema;
   }
 
+  /**
+   * Helper method to encode this schema into json string.
+   *
+   * @return A json string representing this schema.
+   */
   private String buildString() {
     if (type.isSimpleType()) {
-      return '"' + type.name().toString().toLowerCase() + '"';
+      return '"' + type.name().toLowerCase() + '"';
     }
     StringBuilder builder = new StringBuilder();
     JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
     try {
-      Set<String> knownRecord = Sets.newHashSet();
-      buildString(writer, knownRecord);
+      new SchemaTypeAdapter().write(writer, this);
       writer.close();
       return builder.toString();
     } catch (IOException e) {
       // It should never throw IOException on the StringBuilder Writer, if it does, something very wrong.
       throw Throwables.propagate(e);
     }
-  }
-
-  private JsonWriter buildString(JsonWriter writer, Set<String> knownRecord) throws IOException {
-    if (type.isSimpleType()) {
-      return writer.value(type.name().toString().toLowerCase());
-    }
-
-    if (type == Type.UNION) {
-      writer.beginArray();
-      for (Schema schema : unionSchemas) {
-        schema.buildString(writer, knownRecord);
-      }
-      return writer.endArray();
-    }
-
-    writer.beginObject()
-      .name("type").value(type.name().toLowerCase());
-    switch (type) {
-      case ENUM:
-        writer.name("symbols")
-          .beginArray();
-        for (String enumValue : enumValues) {
-          writer.value(enumValue);
-        }
-        writer.endArray();
-        break;
-
-      case ARRAY:
-        componentSchema.buildString(writer.name("items"), knownRecord);
-        break;
-
-      case MAP:
-        keySchema.buildString(writer.name("keys"), knownRecord);
-        valueSchema.buildString(writer.name("values"), knownRecord);
-        break;
-
-      case RECORD:
-        writer.name("name").value(recordName);
-        if (!knownRecord.contains(recordName)) {
-          knownRecord.add(recordName);
-          writer.name("fields")
-            .beginArray();
-          for (Field field : fields) {
-            writer.beginObject()
-              .name("name").value(field.getName());
-            field.getSchema().buildString(writer.name("type"), knownRecord)
-              .endObject();
-          }
-          writer.endArray();
-        }
-        break;
-    }
-    writer.endObject();
-
-    return writer;
   }
 }

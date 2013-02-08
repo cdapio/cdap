@@ -24,7 +24,7 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     for (TypeToken<?> classType : typeToken.getTypes().classes()) {
       Class<?> rawType = classType.getRawType();
       for (Field field : rawType.getDeclaredFields()) {
-        if (Modifier.isTransient(field.getModifiers())) {
+        if (Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
           continue;
         }
         TypeToken<?> fieldType = classType.resolveType(field.getGenericType());
