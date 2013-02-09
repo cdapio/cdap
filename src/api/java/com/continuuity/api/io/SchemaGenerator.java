@@ -1,4 +1,4 @@
-package com.continuuity.io;
+package com.continuuity.api.io;
 
 import java.lang.reflect.Type;
 

@@ -1,4 +1,4 @@
-package com.continuuity.io;
+package com.continuuity.api.io;
 
 /**
  * Exception to indicate a given type is not supported.

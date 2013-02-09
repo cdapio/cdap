@@ -1,4 +1,4 @@
-package com.continuuity.io;
+package com.continuuity.api.io;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;

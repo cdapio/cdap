@@ -1,4 +1,4 @@
-package com.continuuity.io;
+package com.continuuity.api.io;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -91,7 +91,7 @@ public final class Schema {
 
   /**
    * Creates a {@link Schema} for the given type. The type given must be a
-   * {@link com.continuuity.io.Schema.Type#isSimpleType() Simple Type}.
+   * {@link Schema.Type#isSimpleType() Simple Type}.
    *
    * @param type Type of the schema to create.
    * @return A {@link Schema} with the given type.
@@ -352,7 +352,7 @@ public final class Schema {
 
   @Override
   public int hashCode() {
-    return schemaString.hashCode();
+    return toString().hashCode();
   }
 
   /**
