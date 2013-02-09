@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class SQLContext {
 
-  public enum QueryType {SELECT, DELETE, UPDATE, INSERT}
+  public enum QueryType {SELECT, DELETE, UPDATE, INSERT,SELECT_JOIN}
   private Connection connection;
 
   private String tableName;
@@ -20,8 +20,14 @@ public class SQLContext {
 
   private  QueryType type;
 
-  public String getTableName() {
-    return tableName;
+  private String joinTableName;
+
+  public String getJoinTable() {
+    return joinTableName;
+  }
+
+  public void setJoinTable(String joinTableName) {
+    this.joinTableName = joinTableName;
   }
 
   public QueryType getType() {

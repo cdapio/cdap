@@ -3,6 +3,7 @@ package com.continuuity.passport.common.sql;
 import com.continuuity.passport.common.sql.clause.ColumnSelectionClause;
 import com.continuuity.passport.common.sql.clause.ExecuteClause;
 import com.continuuity.passport.common.sql.clause.InsertColumns;
+import com.continuuity.passport.common.sql.clause.JoinClause;
 import com.continuuity.passport.common.sql.clause.QueryClause;
 import com.continuuity.passport.common.sql.clause.SetClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
@@ -16,7 +17,10 @@ import java.util.Map;
  * sql.insert("ACCOUNT").columns("email_id","name").values("sree@continuuity.com","sreevatsan").execute();
  * sql.update("ACCOUNT").set("credit_card","1234 1233 1234 1232").setLast("cvv", "120").execute();
  * sql.delete("ACCOUNT").where("ID").equals("sree@continuuity.com").execute();
+ * sql.select("ACCOUNT").columns("email_id").where("ID").equals("123").execute();
+ * sql.selectJoin("ACCOUNT","VPC").columns("email_id").where("id").equals("123").join().on("VPC").condition().execute();
  */
+
 public interface SQLChain {
 
   /**
@@ -47,6 +51,14 @@ public interface SQLChain {
    * @return Instance of {@code SetClause}
    */
   public SetClause<ExecuteClause> update(String table);
+
+
+  /**
+   * Simple join on two tables. Does inner join
+   * @param table1 Table name
+   * @return Instance of {@code ColumnSelectionClause}
+   */
+  public JoinClause<QueryClause<List<Map<String, Object>>>> selectWithJoin(String table1,String table2);
 
 
 }

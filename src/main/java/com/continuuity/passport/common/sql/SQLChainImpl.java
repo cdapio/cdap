@@ -3,11 +3,13 @@ package com.continuuity.passport.common.sql;
 import com.continuuity.passport.common.sql.clause.ColumnSelectionClause;
 import com.continuuity.passport.common.sql.clause.ExecuteClause;
 import com.continuuity.passport.common.sql.clause.InsertColumns;
+import com.continuuity.passport.common.sql.clause.JoinClause;
 import com.continuuity.passport.common.sql.clause.QueryClause;
 import com.continuuity.passport.common.sql.clause.SetClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
 import com.continuuity.passport.common.sql.statement.ColumnSelectStatement;
 import com.continuuity.passport.common.sql.statement.InsertColumnsStatement;
+import com.continuuity.passport.common.sql.statement.JoinStatement;
 import com.continuuity.passport.common.sql.statement.SetStatement;
 import com.continuuity.passport.common.sql.statement.WhereStatement;
 
@@ -91,5 +93,24 @@ public class  SQLChainImpl implements SQLChain {
     return statement;
 
   }
+
+
+  /**
+   * Simple join on two tables. Does inner join
+   * @param table1 Table name
+   * @return Instance of {@code ColumnSelectionClause}
+   */
+  public JoinClause<QueryClause<List<Map<String, Object>>>> selectWithJoin(String table1,String table2){
+    SQLContext context = new SQLContext(connection,SQLContext.QueryType.SELECT_JOIN);
+    context.getQuery().append("SELECT * FROM ");
+    context.setTable(table1);
+    context.setJoinTable(table2);
+
+    JoinStatement statement = new JoinStatement();
+    statement.setContext(context);
+    return statement;
+
+  }
+
 
 }

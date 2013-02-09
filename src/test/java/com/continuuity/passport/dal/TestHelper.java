@@ -16,8 +16,9 @@ import java.sql.SQLException;
 public class TestHelper {
 
   private  static Server server = null;
-  private static final String CREATE_TABLE = "CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
+  private static final String CREATE_TABLE_ACCOUNT ="CREATE TABLE account (name VARCHAR(100), email_id VARCHAR(100) " +
                                                ", company VARCHAR(100))";
+  private static final String CREATE_TABLE_VPC = "CREATE TABLE vpc (account_name VARCHAR(100), vpc_name VARCHAR(100))";
 
   private static final String DROP_TABLE = "DROP TABLE account";
   protected static Connection connection;
@@ -37,7 +38,8 @@ public class TestHelper {
     Class.forName("org.hsqldb.jdbcDriver");
     connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
                                             "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
-    connection.createStatement().execute(CREATE_TABLE);
+    connection.createStatement().execute(CREATE_TABLE_ACCOUNT);
+    connection.createStatement().execute(CREATE_TABLE_VPC);
 
   }
 

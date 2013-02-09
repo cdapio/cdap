@@ -45,8 +45,8 @@ public class ColumnSelectStatement<T> extends StatementBase implements ColumnSel
   public WhereClause<T> includeAll() {
 
     StringBuffer query = getQuery();
-
     query.append(" * FROM " + table());
+
     WhereStatement statement = new WhereStatement();
     statement.setContext(getContext());
     return statement;

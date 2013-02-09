@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 public class TestSQLInsert {
 
 
-  public boolean insertSingle(Connection connection,String email, String name) throws SQLException {
+  public boolean insertSingleInAccount(Connection connection,String email, String name) throws SQLException {
 
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.insert("account").columns("name,email_id").
@@ -30,7 +30,7 @@ public class TestSQLInsert {
 
   }
 
-  List<Map<String,Object>> selectAll(Connection connection) throws SQLException {
+  List<Map<String,Object>> selectAllFromAccount(Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.select("account").includeAll().noWhere().execute();
   }
@@ -40,7 +40,7 @@ public class TestSQLInsert {
     return chain.select("account").includeAll().where("email_id").equal("foo@bar.com").execute();
   }
 
-  List<Map<String,Object>> selectName(Connection connection, String name) throws SQLException {
+  List<Map<String,Object>> selectNameFromAccount(Connection connection, String name) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.select("account").includeAll().where("name").equal(name).execute();
   }
@@ -53,74 +53,110 @@ public class TestSQLInsert {
 
 
 
-  public boolean deleteOne(Connection connection, String email) throws SQLException {
+  public boolean deleteOneFromAccount(Connection connection, String email) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.delete("ACCOUNT").where("email_id").equal(email).execute();
 
   }
 
-  public boolean deleteAll(Connection connection) throws SQLException {
+  public boolean deleteAllFromAccount(Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.delete("ACCOUNT").noWhere().execute();
 
   }
 
-  public boolean updateManyColumns (Connection connection) throws SQLException {
+  public boolean updateManyColumnsInAccount (Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.update("account").set("company","Continuuity").set("email_id","sree@continuuity.com")
                 .setLast("name","Sree").where("email_id").equal("sree@gmail.com").execute();
   }
 
-  public boolean updateOne(Connection connection) throws SQLException {
+  public boolean updateOneInAccount(Connection connection) throws SQLException {
     SQLChain chain = SQLChainImpl.getSqlChain(connection);
     return chain.update("account").setLast("name","Sreevatsan Raman").where("name").equal("sree").execute();
   }
 
+  public boolean insertOneIntoVPC( Connection connection, String name, String vpcName) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.insert("vpc").columns("account_name","vpc_name").values(name,vpcName).execute();
+  }
+
+  List<Map<String,Object>> selectFromVPC(Connection connection, String name) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+    return chain.select("vpc").includeAll().where("account_name").equal(name).execute();
+  }
+
+  List<Map<String,Object>> selectJoin(Connection connection) throws SQLException {
+    SQLChain chain = SQLChainImpl.getSqlChain(connection);
+   // return chain.select("vpc").includeAll().where("name").equal(name).execute();
+   return chain.selectWithJoin("account","vpc").joinOn().condition("account.name = vpc.account_name")
+                                               .where("account.name").equal("sree").execute();
+  }
+
+
   @Test
   public void testInsertAndSelect() throws SQLException, ClassNotFoundException {
+
 
     //Startup HSQL instance
     TestHelper.startHsqlDB();
     Connection connection =DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
                              "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
 
+
     //Insert
     //PreparedStatment's execute returns false on inserts
-    assertFalse(insertSingle(connection,"sree@gmail.com","sree"));
+    assertFalse(insertSingleInAccount(connection, "sree@gmail.com", "sree"));
 
-    //Select all
-    assertEquals(1,selectAll(connection).size() );
+    //Select all and verify insert
+    assertEquals(1,selectAllFromAccount(connection).size() );
+
+    //Insert into VPC table;
+    assertFalse(insertOneIntoVPC(connection,"sree","vpc1"));
+
+    //Select from VPC and veriofy
+    assertEquals(1,selectFromVPC(connection,"sree").size());
+
+    //Check Join
+    List<Map<String,Object>> data = selectJoin(connection);
+    assertEquals(1,data.size());
+
+    for( Map<String,Object> d : data) {
+      assertEquals("sree",d.get("NAME"));
+      assertEquals("vpc1",d.get("VPC_NAME"));
+    }
+
 
     //Select none
     assertEquals(0, selectNone(connection).size());
 
     //Insert again
-    assertFalse(insertSingle(connection,"simpson@homer.com","homer simpson"));
+    assertFalse(insertSingleInAccount(connection,"simpson@homer.com","homer simpson"));
 
     //Select by name
-    assertEquals(1,selectName(connection,"homer simpson").size());
+    assertEquals(1,selectNameFromAccount(connection,"homer simpson").size());
 
     //Select all count 2
-    assertEquals(2, selectAll(connection).size());
+    assertEquals(2, selectAllFromAccount(connection).size());
 
     //Delete one
-    assertFalse(deleteOne(connection,"simpson@homer.com"));
+    assertFalse(deleteOneFromAccount(connection, "simpson@homer.com"));
 
     //Verify the data is deleted
-    assertEquals(1, selectAll(connection).size());
+    assertEquals(1, selectAllFromAccount(connection).size());
 
 
     //Update an entry
-    assertFalse(updateOne(connection));
+    assertFalse(updateOneInAccount(connection));
 
     //Verify Updates
-    List<Map<String,Object>> data  = selectEmail(connection,"sree@gmail.com");
+    data  = selectEmail(connection,"sree@gmail.com");
     for  (Map<String,Object> d : data){
       assertEquals("Sreevatsan Raman",d.get("NAME"));
     }
 
     //Update multiple Entries
-    assertFalse(updateManyColumns(connection));
+    assertFalse(updateManyColumnsInAccount(connection));
 
     //Verify result of updating multiple columns
      data  = selectEmail(connection,"sree@continuuity.com");
@@ -130,10 +166,10 @@ public class TestSQLInsert {
     }
 
     //Delete all
-    assertFalse(deleteAll(connection));
+    assertFalse(deleteAllFromAccount(connection));
 
     //Verify if delete all worked
-    assertEquals(0,selectAll(connection).size());
+    assertEquals(0,selectAllFromAccount(connection).size());
 
     //Stop HSQL instance
     TestHelper.stopHsqlDB();

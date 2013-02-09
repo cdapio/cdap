@@ -43,6 +43,10 @@ public abstract class StatementBase {
     return sqlContext.getTable();
   }
 
+  public String joinTable() {
+    return sqlContext.getJoinTable();
+  }
+
   public SQLContext.QueryType getType() {
     return sqlContext.getType();
   }
@@ -60,6 +64,10 @@ public abstract class StatementBase {
     }
     else if (getType().equals(SQLContext.QueryType.UPDATE)) {
       statement = new ExecuteStatement() ;
+      statement.setContext(getContext());
+    }
+    else if (getType().equals(SQLContext.QueryType.SELECT_JOIN)){
+      statement = new SelectStatement();
       statement.setContext(getContext());
     }
 
