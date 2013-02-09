@@ -16,6 +16,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `salted_hashed_password` VARCHAR(100) NULL DEFAULT NULL ,
   `confirmed` TINYINT(1) NULL DEFAULT NULL ,
   `locked` TINYINT(1) NULL DEFAULT NULL ,
+  `api_key` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
