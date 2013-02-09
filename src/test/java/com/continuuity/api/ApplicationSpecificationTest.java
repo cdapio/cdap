@@ -1,7 +1,5 @@
 package com.continuuity.api;
 
-import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.DataSet;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
@@ -12,14 +10,14 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.io.ReflectionSchemaGenerator;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -27,7 +25,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -69,7 +66,7 @@ public class ApplicationSpecificationTest {
   }
 
   public static class TokenizerParent extends AbstractFlowlet {
-    @Output("list")
+    @Output("mylist")
     private OutputEmitter<List<String>> outputList;
 
     @Process("bar")
@@ -79,7 +76,7 @@ public class ApplicationSpecificationTest {
   }
 
   public static class Tokenizer extends TokenizerParent {
-    @Output("map")
+    @Output("field")
     private OutputEmitter<Map<String, String>> outputMap;
 
     @Process
@@ -152,10 +149,13 @@ public class ApplicationSpecificationTest {
   @Test
   public void testConfigureApplication() throws NoSuchMethodException, UnsupportedTypeException {
     ApplicationSpecification appSpec = new WordCountApp().configure();
-
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
-    // TODO: Do actual Assert
-    System.out.println(gson.toJson(appSpec));
+    ApplicationSpecification newSpec = gson.fromJson(gson.toJson(appSpec), ApplicationSpecification.class);
+
+    Assert.assertEquals(1, newSpec.getDataSets().size());
+    Assert.assertEquals(new ReflectionSchemaGenerator().generate(MyRecord.class),
+                        newSpec.getFlows().get("WordCountFlow")
+                               .getFlowlets().get("Tokenizer").getInputs().get("").iterator().next());
   }
 }
