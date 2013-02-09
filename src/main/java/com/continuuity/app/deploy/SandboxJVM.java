@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -46,7 +47,7 @@ public class SandboxJVM {
    */
   public int doMain(String[] args) {
     String jarFilename;
-    File outputFilename;
+    File outputFile;
 
     CommandLineParser parser = new GnuParser();
     Options options = new Options();
@@ -66,7 +67,7 @@ public class SandboxJVM {
       }
 
       jarFilename = line.getOptionValue("jar");
-      outputFilename = new File(line.getOptionValue("output"));
+      outputFile = new File(line.getOptionValue("output"));
     } catch (org.apache.commons.cli.ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
@@ -78,16 +79,7 @@ public class SandboxJVM {
     try {
       JarClassLoader loader = new JarClassLoader(jarFilename);
       mainClass = loader.getMainClass(Application.class);
-    } catch (JarResourceException e) {
-      LOG.error("Failed loading jar {}. {}", jarFilename, e.getMessage());
-      return -1;
-    } catch (ClassNotFoundException e) {
-      LOG.error("Failed loading class. {}", e.getMessage());
-      return -1;
-    } catch (InstantiationException e) {
-      LOG.error("Failed instantiating class. {}", e.getMessage());
-      return -1;
-    } catch (IllegalAccessException e) {
+    } catch (Exception e) {
       LOG.error(e.getMessage());
       return -1;
     }
@@ -98,7 +90,7 @@ public class SandboxJVM {
     // Now, we are ready to call configure on application.
     // Setup security manager, this setting allows only output file to be return.
     ApplicationSecurity.builder()
-      .add(new FilePermission(outputFilename.getAbsolutePath(), "write"))
+      .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
       .apply();
 
     // Now, we call configure, which returns application specification.
@@ -109,22 +101,11 @@ public class SandboxJVM {
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .create();
 
-    String data = gson.toJson(specification);
-    if(data == null || data.isEmpty()) {
-      LOG.error("Error serializing schema.");
-      return -1;
-    }
-
     // We write the Application specification to output file in JSON format.
     try {
-      if(!outputFilename.exists()) {
-        outputFilename.createNewFile();
-      }
-      FileOutputStream fos = new FileOutputStream(outputFilename);
-      fos.write(data.getBytes());
-      fos.close();
+      gson.toJson(specification, new FileWriter(outputFile));
     } catch (IOException e) {
-      LOG.error("Error writing to file {}. {}", outputFilename, e.getMessage());
+      LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
     }
     return 0;
