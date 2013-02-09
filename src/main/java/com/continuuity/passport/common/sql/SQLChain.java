@@ -56,6 +56,7 @@ public interface SQLChain {
   /**
    * Simple join on two tables. Does inner join
    * @param table1 Table name
+   * @param table2 Table name
    * @return Instance of {@code ColumnSelectionClause}
    */
   public JoinClause<QueryClause<List<Map<String, Object>>>> selectWithJoin(String table1,String table2);
