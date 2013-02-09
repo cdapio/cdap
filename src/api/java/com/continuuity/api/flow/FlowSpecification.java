@@ -4,16 +4,21 @@
 
 package com.continuuity.api.flow;
 
-import com.continuuity.api.annotation.DataSet;
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.io.ReflectionSchemaGenerator;
+import com.continuuity.api.io.Schema;
+import com.continuuity.api.io.SchemaGenerator;
+import com.continuuity.api.io.UnsupportedTypeException;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -51,9 +56,12 @@ import java.util.Set;
  * </pre>
  */
 public final class FlowSpecification {
+
   private static final String PROCESS_METHOD_PREFIX = "process";
   private static final String DEFAULT_OUTPUT = "out";
   private static final String ANY_INPUT = "";
+  private static final SchemaGenerator SCHEMA_GENERATOR = new ReflectionSchemaGenerator();
+
 
   /**
    * Name of the flow
@@ -124,20 +132,24 @@ public final class FlowSpecification {
     private final FlowletSpecification flowletSpec;
     private final int instances;
     private final ResourceSpecification resourceSpec;
-    private final Map<String, TypeToken<?>> inputs;
-    private final Map<String, TypeToken<?>> outputs;
+    private final Map<String, Set<Schema>> inputs;
+    private final Map<String, Set<Schema>> outputs;
 
     private FlowletDefinition(Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
       this.flowletSpec = flowlet.configure();
       this.instances = instances;
       this.resourceSpec = resourceSpec;
 
-      Map<String, TypeToken<?>> inputs = Maps.newHashMap();
-      Map<String, TypeToken<?>> outputs = Maps.newHashMap();
-      inspectFlowlet(flowlet.getClass(), inputs, outputs);
+      Map<String, Set<Schema>> inputs = Maps.newHashMap();
+      Map<String, Set<Schema>> outputs = Maps.newHashMap();
+      try {
+        inspectFlowlet(flowlet.getClass(), inputs, outputs);
+      } catch (UnsupportedTypeException e) {
+        throw new IllegalArgumentException(e);
+      }
 
-      this.inputs = Collections.unmodifiableMap(inputs);
-      this.outputs = Collections.unmodifiableMap(outputs);
+      this.inputs = immutableCopyOf(inputs);
+      this.outputs = immutableCopyOf(outputs);
     }
 
     /**
@@ -164,14 +176,14 @@ public final class FlowSpecification {
     /**
      * @return Mapping of name to the method types for processing inputs.
      */
-    public Map<String, TypeToken<?>> getInputs() {
+    public Map<String, Set<Schema>> getInputs() {
       return inputs;
     }
 
     /**
      * @return Mapping from name of {@link OutputEmitter} to actual emitters.
      */
-    public Map<String, TypeToken<?>> getOutputs() {
+    public Map<String, Set<Schema>> getOutputs() {
       return outputs;
     }
 
@@ -183,30 +195,36 @@ public final class FlowSpecification {
      * @param outputs reference to map of name to {@link OutputEmitter} and the types they handle.
      */
     private void inspectFlowlet(Class<?> flowletClass,
-                                Map<String, TypeToken<?>> inputs,
-                                Map<String, TypeToken<?>> outputs) {
+                                Map<String, Set<Schema>> inputs,
+                                Map<String, Set<Schema>> outputs) throws UnsupportedTypeException {
       TypeToken<?> flowletType = TypeToken.of(flowletClass);
 
       // Walk up the hierarchy of flowlet class.
       for (TypeToken<?> type : flowletType.getTypes().classes()) {
+        if (type.getRawType().equals(Object.class)) {
+          break;
+        }
 
         // Grab all the OutputEmitter fields
         for (Field field : type.getRawType().getDeclaredFields()) {
           if (!OutputEmitter.class.equals(field.getType())) {
             continue;
           }
-
           Type emitterType = field.getGenericType();
           Preconditions.checkArgument(emitterType instanceof ParameterizedType,
                                       "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
 
           // Extract the Output type from the first type argument of OutputEmitter
           TypeToken<?> outputType = TypeToken.of(((ParameterizedType) emitterType).getActualTypeArguments()[0]);
-          String outputName = field.isAnnotationPresent(DataSet.class) ?
-                                  field.getAnnotation(DataSet.class).value() : DEFAULT_OUTPUT;
-          if (!outputs.containsKey(outputName)) {
-            outputs.put(outputName, outputType);
+          String outputName = field.isAnnotationPresent(Output.class) ?
+                                  field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
+
+          Set<Schema> schemas = outputs.get(outputName);
+          if (schemas == null) {
+            schemas = Sets.newHashSet();
+            outputs.put(outputName, schemas);
           }
+          schemas.add(SCHEMA_GENERATOR.generate(outputType.getType()));
         }
 
         // Grab all process methods
@@ -222,15 +240,32 @@ public final class FlowSpecification {
 
           // Extract the Input type from the first parameter of the process method
           TypeToken<?> inputType = type.resolveType(methodParams[0]);
+          List<String> inputNames = Lists.newLinkedList();
           if (processAnnotation == null || processAnnotation.value().length == 0) {
-            inputs.put(ANY_INPUT, inputType);
+            inputNames.add(ANY_INPUT);
           } else {
-            for (String name : processAnnotation.value()) {
-              inputs.put(name, inputType);
+            Collections.addAll(inputNames, processAnnotation.value());
+          }
+
+          Schema inputSchema = SCHEMA_GENERATOR.generate(inputType.getType());
+          for (String inputName : inputNames) {
+            Set<Schema> schemas = inputs.get(inputName);
+            if (schemas == null) {
+              schemas = Sets.newHashSet();
+              inputs.put(inputName, schemas);
             }
+            schemas.add(inputSchema);
           }
         }
       }
+    }
+
+    private Map<String, Set<Schema>> immutableCopyOf(Map<String, Set<Schema>> map) {
+      ImmutableMap.Builder<String, Set<Schema>> builder = ImmutableMap.builder();
+      for (Map.Entry<String, Set<Schema>> entry : map.entrySet()) {
+        builder.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
+      }
+      return builder.build();
     }
   }
 
@@ -250,16 +285,11 @@ public final class FlowSpecification {
     private final SourceType sourceType;
     private final String sourceName;
     private final String targetName;
-    private final String sourceOutput;
-    private final String targetInput;
 
-    private FlowletConnection(SourceType sourceType, String sourceName, String targetName, String sourceOutput,
-                             String targetInput) {
+    private FlowletConnection(SourceType sourceType, String sourceName, String targetName) {
       this.sourceType = sourceType;
       this.sourceName = sourceName;
       this.targetName = targetName;
-      this.sourceOutput = sourceOutput;
-      this.targetInput = targetInput;
     }
 
     /**
@@ -282,20 +312,6 @@ public final class FlowSpecification {
     public String getTargetName() {
       return targetName;
     }
-
-    /**
-     * @return Name of the output for the source.
-     */
-    public String getSourceOutput() {
-      return sourceOutput;
-    }
-
-    /**
-     * @return Name of the input for the connection target.
-     */
-    public String getTargetInput() {
-      return targetInput;
-    }
   }
 
   /**
@@ -304,7 +320,6 @@ public final class FlowSpecification {
   public static final class Builder {
     private String name;
     private String description;
-    private final Set<String> streams = Sets.newHashSet();
     private final Map<String, FlowletDefinition> flowlets = Maps.newHashMap();
     private final List<FlowletConnection> connections = Lists.newArrayList();
 
@@ -413,14 +428,6 @@ public final class FlowSpecification {
        * @return An instance of {@link ConnectFrom}
        */
       public ConnectFrom connect() {
-        // Collect all input streams names
-        for (FlowletDefinition flowletDef : flowlets.values()) {
-          for (Map.Entry<String, TypeToken<?>> inputEntry : flowletDef.getInputs().entrySet()) {
-            if (StreamEvent.class.equals(inputEntry.getValue().getRawType())) {
-              streams.add(inputEntry.getKey());
-            }
-          }
-        }
         return new Connector();
       }
     }
@@ -501,8 +508,6 @@ public final class FlowSpecification {
       public ConnectTo from(Stream stream) {
         Preconditions.checkArgument(stream != null, "Stream cannot be null");
         StreamSpecification streamSpec = stream.configure();
-        Preconditions.checkArgument(streams.contains(streamSpec.getName()) || streams.contains(ANY_INPUT),
-                                    "Stream %s is not accepted by any configured flowlet.", streamSpec.getName());
 
         fromFlowlet = null;
         fromStream = streamSpec.getName();
@@ -521,28 +526,16 @@ public final class FlowSpecification {
         String flowletName = flowlet.configure().getName();
         Preconditions.checkArgument(flowlets.containsKey(flowletName), "Undefined flowlet %s", flowletName);
 
-        FlowletDefinition flowletDef = flowlets.get(flowletName);
-
+        FlowletConnection.SourceType sourceType;
+        String sourceName;
         if (fromStream != null) {
-          TypeToken<?> type = flowletDef.getInputs().get(fromStream);
-          String targetInput = fromStream;
-          if (type == null) {
-            type = flowletDef.getInputs().get(ANY_INPUT);
-            targetInput = ANY_INPUT;
-          }
-          Preconditions.checkArgument(StreamEvent.class.equals(type.getRawType()),
-                                      "Cannot cannot stream %s to flowlet %s", fromStream, flowletName);
-          connections.add(new FlowletConnection(FlowletConnection.SourceType.STREAM, "", flowletName, fromStream,
-                                                targetInput));
-
+          sourceType = FlowletConnection.SourceType.STREAM;
+          sourceName = fromStream;
         } else {
-          // TODO: Check if the output types of fromFlowlet is compatible with input types of toFlowlet
-          // Need supports from the serialization library to implement it.
-
-          // connections.add(new FlowletConnection(FlowletConnection.SourceType.FLOWLET,
-          // fromFlowlet.getFlowletSpec().getName(), flowletName, ))
+          sourceType = FlowletConnection.SourceType.FLOWLET;
+          sourceName = fromFlowlet.getFlowletSpec().getName();
         }
-
+        connections.add(new FlowletConnection(sourceType, sourceName, flowletName));
         return this;
       }
 
