@@ -20,7 +20,8 @@ public class TestHelper {
                                                ", company VARCHAR(100))";
   private static final String CREATE_TABLE_VPC = "CREATE TABLE vpc (account_name VARCHAR(100), vpc_name VARCHAR(100))";
 
-  private static final String DROP_TABLE = "DROP TABLE account";
+  private static final String DROP_TABLE_ACCOUNT = "DROP TABLE account";
+  private static final String DROP_TABLE_VPC = "DROP TABLE vpc";
   protected static Connection connection;
 
 
@@ -47,7 +48,8 @@ public class TestHelper {
   public static void stopHsqlDB() throws SQLException {
 
     System.out.println("======================================STOP=======================================");
-    connection.createStatement().execute(DROP_TABLE);
+    connection.createStatement().execute(DROP_TABLE_ACCOUNT);
+    connection.createStatement().execute(DROP_TABLE_VPC);
     connection.close();
     server.stop();
   }
