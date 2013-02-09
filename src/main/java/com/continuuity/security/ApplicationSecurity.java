@@ -81,6 +81,7 @@ public final class ApplicationSecurity extends SecurityManager {
       return this;
     }
 
+
     /**
      * Applies the permission. Replaces the security manager for the JVM if there
      * none set.
