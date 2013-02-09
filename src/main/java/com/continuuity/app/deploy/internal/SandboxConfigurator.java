@@ -82,12 +82,20 @@ public class SandboxConfigurator implements Configurator {
       process = Runtime.getRuntime().exec(getCommand(outputFile));
 
       // Add future to handle the case when the future is cancelled.
-      // OnSuccess, we don't do anything, onFailure, we make sure that
-      // process is destroyed.
+      // OnSuccess, we don't do anything other than cleaning the output.
+      // onFailure, we make sure that process is destroyed.
       Futures.addCallback(result, new FutureCallback<ConfigResponse>() {
+
+        private void deleteOutput() {
+          if(outputFile.exists()) {
+            outputFile.delete();
+          }
+        }
+
         @Override
         public void onSuccess(final ConfigResponse result) {
-          return; // does nothing.
+          // Delete the output file on delete.
+          deleteOutput();
         }
 
         @Override
@@ -97,6 +105,7 @@ public class SandboxConfigurator implements Configurator {
           if(result.isCancelled()) {
             process.destroy();
           }
+          deleteOutput();
         }
       });
     } catch(Exception e) {
@@ -105,7 +114,7 @@ public class SandboxConfigurator implements Configurator {
       return Futures.immediateFailedFuture(e);
     }
 
-    // Start a thread that waits for process to complete
+    // Start a thread that waits for command execution to complete or till it's cancelled.
     new Thread() {
       @Override
       public void run() {
