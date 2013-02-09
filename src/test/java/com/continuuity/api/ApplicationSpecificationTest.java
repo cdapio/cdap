@@ -1,8 +1,8 @@
 package com.continuuity.api;
 
-import com.continuuity.api.annotation.DataSet;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -73,9 +73,9 @@ public class ApplicationSpecificationTest {
     public void process(StreamEvent event) throws CharacterCodingException {
       ByteBuffer buf = event.getBody();
       output.emit(new MyRecordImpl(
-        event.getHeaders().get("title"),
-        buf == null ? null : Charset.forName("UTF-8").newDecoder().decode(buf).toString(),
-        false));
+                      event.getHeaders().get("title"),
+                      buf == null ? null : Charset.forName("UTF-8").newDecoder().decode(buf).toString(),
+                      false));
     }
   }
 
@@ -111,7 +111,7 @@ public class ApplicationSpecificationTest {
   }
 
   public static class CountByField extends AbstractFlowlet {
-    @DataSet("mydataset")
+    @UseDataSet("mydataset")
     private KeyValueTable counters;
 
     @Process("field")
@@ -137,8 +137,8 @@ public class ApplicationSpecificationTest {
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
         .withFlowlets().add(new StreamSucker()).apply()
-                      .add(new Tokenizer()).apply()
-                      .add(new CountByField()).apply()
+                       .add(new Tokenizer()).apply()
+                       .add(new CountByField()).apply()
         .connect().from(new Stream("text")).to(new StreamSucker())
                   .from(new StreamSucker()).to(new Tokenizer())
                   .from(new Tokenizer()).to(new CountByField())
@@ -169,7 +169,7 @@ public class ApplicationSpecificationTest {
 
     Assert.assertEquals(1, newSpec.getDataSets().size());
     Assert.assertEquals(new ReflectionSchemaGenerator().generate(MyRecord.class),
-                        newSpec.getFlows().get("WordCountFlow")
-                               .getFlowlets().get("Tokenizer").getInputs().get("").iterator().next());
+                          newSpec.getFlows().get("WordCountFlow").getFlowlets().get("Tokenizer")
+                                 .getInputs().get("").iterator().next());
   }
 }

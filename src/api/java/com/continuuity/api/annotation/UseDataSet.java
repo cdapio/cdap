@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface DataSet {
+public @interface UseDataSet {
   /**
    * @return Name of the {@link com.continuuity.api.data.DataSet}
    */
