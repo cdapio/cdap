@@ -9,7 +9,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.classloader.JarClassLoader;
-import com.continuuity.common.classloader.JarResourceException;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -88,7 +86,8 @@ public class SandboxJVM {
     Application application = (Application) mainClass;
 
     // Now, we are ready to call configure on application.
-    // Setup security manager, this setting allows only output file to be return.
+    // Setup security manager, this setting allows only output file to be written.
+    // Nothing else can be done from here on other than creating that file.
     ApplicationSecurity.builder()
       .add(new FilePermission(outputFile.getAbsolutePath(), "write"))
       .apply();
@@ -102,11 +101,21 @@ public class SandboxJVM {
       .create();
 
     // We write the Application specification to output file in JSON format.
+    FileWriter writer = null;
     try {
-      gson.toJson(specification, new FileWriter(outputFile));
+      writer = new FileWriter(outputFile);
+      gson.toJson(specification, writer);
     } catch (IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
+    } finally  {
+      if(writer != null) {
+        try {
+          writer.close();
+        } catch (IOException e) {
+          LOG.error("Unable to close file {}. {}", outputFile.getAbsolutePath(), e.getMessage());
+        }
+      }
     }
     return 0;
   }
