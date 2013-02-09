@@ -4,7 +4,6 @@
 
 package com.continuuity.classloader;
 
-import com.continuuity.api.Application;
 import com.continuuity.common.classloader.JarResourceException;
 import com.continuuity.common.classloader.JarResources;
 import com.continuuity.common.classloader.MultiClassLoader;

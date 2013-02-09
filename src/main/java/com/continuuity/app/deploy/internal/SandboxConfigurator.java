@@ -5,8 +5,8 @@
 package com.continuuity.app.deploy.internal;
 
 import com.continuuity.app.deploy.Configurator;
-import org.hsqldb.lib.StringInputStream;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -36,7 +36,7 @@ public class SandboxConfigurator implements Configurator {
         return new Response() {
           @Override
           public InputStream get() {
-            return new StringInputStream(jarFilename);
+            return new ByteArrayInputStream(jarFilename.getBytes());
           }
         };
       } else {
