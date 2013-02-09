@@ -8,6 +8,7 @@ import com.continuuity.common.classloader.JarResourceException;
 import com.continuuity.common.classloader.JarResources;
 import com.continuuity.common.classloader.MultiClassLoader;
 
+import javax.annotation.Nullable;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -44,6 +45,7 @@ public class JarClassLoader extends MultiClassLoader {
    * @param className Name of the class bytes to be loaded.
    * @return array of bytes for the class.
    */
+  @Nullable
   protected byte[] loadClassBytes (String className) {
     className = formatClassName (className);
     return (jarResources.getResource (className));
@@ -60,6 +62,7 @@ public class JarClassLoader extends MultiClassLoader {
    * @throws IllegalAccessException If the class to be loaded cannot be accessed.
    * @throws InstantiationException If there are issue instantiating the class specified in main-class.
    */
+  @Nullable
   public Object getMainClass(Class<?> expectedClass) throws IllegalStateException, ClassNotFoundException,
     IllegalAccessException, InstantiationException {
 

@@ -111,9 +111,10 @@ public class SandboxJVM {
     } finally  {
       if(writer != null) {
         try {
-          writer.close();
+          writer.close(); // flush and close.
         } catch (IOException e) {
           LOG.error("Unable to close file {}. {}", outputFile.getAbsolutePath(), e.getMessage());
+          return -1;
         }
       }
     }

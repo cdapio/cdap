@@ -12,14 +12,16 @@ import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.classloader.JarClassLoader;
 import com.google.common.base.Preconditions;
+import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.hsqldb.lib.StringInputStream;
 
 import java.io.File;
-import java.io.StringReader;
+import java.io.IOException;
 import java.io.StringWriter;
 
 /**
@@ -42,6 +44,21 @@ public class InMemoryConfigurator implements Configurator  {
   }
 
   /**
+   * Returns a {@link StringInputStream} for the string.
+   *
+   * @param result to be converted into {@link StringInputStream}
+   * @return An instance of {@link StringInputStream}
+   */
+  private InputSupplier<StringInputStream> newStringStream(final String result) {
+    return new InputSupplier<StringInputStream>() {
+      @Override
+      public StringInputStream getInput() throws IOException {
+        return new StringInputStream(result);
+      }
+    };
+  }
+
+  /**
    * Executes the <code>Application.configure</code> within the same JVM.
    * <p>
    *   This method could be dangerous and should be used only in singlenode.
@@ -50,7 +67,9 @@ public class InMemoryConfigurator implements Configurator  {
    */
   @Override
   public ListenableFuture<ConfigResponse> config() {
+    StringWriter writer = null;
     SettableFuture result = SettableFuture.create();
+
     try {
       // Load the JAR using the JAR class load and load the manifest file.
       Object mainClass;
@@ -69,11 +88,19 @@ public class InMemoryConfigurator implements Configurator  {
                     .create();
 
       // We write the Application specification to output file in JSON format.
-      StringWriter writer = new StringWriter();
+      writer = new StringWriter();
       gson.toJson(specification, writer);
-      result.set(new DefaultConfigResponse(0, new StringReader(writer.toString())));
+      result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch (Exception e) {
       Futures.immediateFailedFuture(e);
+    } finally {
+      if(writer != null) {
+        try {
+          writer.close();
+        } catch (IOException e) {
+          Futures.immediateFailedFuture(e);
+        }
+      }
     }
     return result;
   }

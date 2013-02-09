@@ -53,7 +53,6 @@ public final class JarResources {
    * @param name a resource name.
    */
   public byte[] getResource(String name) {
-    LOG.trace("Resource name = " + name);
     return entryContents.get(name);
   }
 

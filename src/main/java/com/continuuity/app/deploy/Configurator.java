@@ -6,7 +6,6 @@ package com.continuuity.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.InputStream;
 import java.util.concurrent.Callable;
 
 /**
@@ -21,8 +20,11 @@ import java.util.concurrent.Callable;
 public interface Configurator {
 
   /**
-   * Invokes the
-   * @return
+   * Invokes the configurator.
+   * <p>
+   *   It's responsible for taking a JAR file and running the configure in secured sandbox or non secured sandbox.
+   * </p>
+   * @return A instance of future that callee can timeout.
    */
   ListenableFuture<ConfigResponse> config();
 }

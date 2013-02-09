@@ -7,16 +7,13 @@ package com.continuuity.app.deploy.internal;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.StringReader;
-import java.net.URI;
 
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
@@ -124,9 +121,9 @@ public class SandboxConfigurator implements Configurator {
           process.waitFor();
           int exit = process.exitValue();
           if(exit == 0)  {
-            result.set(new DefaultConfigResponse(0, new BufferedReader(new FileReader(outputFile))));
+            result.set(new DefaultConfigResponse(0, Files.newInputStreamSupplier(outputFile)));
           } else {
-            result.set(new DefaultConfigResponse(exit, new StringReader("")));
+            result.set(new DefaultConfigResponse(exit, null));
           }
         } catch (Exception e) {
           result.setException(e);

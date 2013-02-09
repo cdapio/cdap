@@ -23,6 +23,7 @@ dependencies {
   compile libraries.google_guice_assistedinject
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
+  compile libraries.jsr_305
 
   // Test dependencies
   testCompile libraries.junit
