@@ -31,26 +31,39 @@ import java.util.Map;
  */
 public class ApplicationSpecificationTest {
 
-  public static final class MyRecord {
-    private String title;
-    private String text;
+  public static interface MyRecord {
+    String getTitle();
 
-    public MyRecord setTitle(String title) {
+    String getText();
+
+    boolean isExpired();
+  }
+
+  public static final class MyRecordImpl implements MyRecord {
+
+    private final String title;
+    private final String text;
+    private final boolean expired;
+
+    public MyRecordImpl(String title, String text, boolean expired) {
       this.title = title;
-      return this;
-    }
-
-    public MyRecord setText(String text) {
       this.text = text;
-      return this;
+      this.expired = expired;
     }
 
+    @Override
     public String getTitle() {
       return title;
     }
 
+    @Override
     public String getText() {
       return text;
+    }
+
+    @Override
+    public boolean isExpired() {
+      return expired;
     }
   }
 
@@ -59,9 +72,10 @@ public class ApplicationSpecificationTest {
 
     public void process(StreamEvent event) throws CharacterCodingException {
       ByteBuffer buf = event.getBody();
-      output.emit(new MyRecord()
-                    .setTitle(event.getHeaders().get("title"))
-                    .setText(buf == null ? null : Charset.forName("UTF-8").newDecoder().decode(buf).toString()));
+      output.emit(new MyRecordImpl(
+        event.getHeaders().get("title"),
+        buf == null ? null : Charset.forName("UTF-8").newDecoder().decode(buf).toString(),
+        false));
     }
   }
 

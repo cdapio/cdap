@@ -16,6 +16,18 @@ import java.util.Set;
 
 /**
  * This class uses Java Reflection to inspect fields in any Java class to generate RECORD schema.
+ *
+ * <p>
+ *   If the given type is a class, it will uses the class fields (includes all the fields in parent classes)
+ *   to generate the schema. All fields, no matter what access it is would be included, except transient or
+ *   synthetic one.
+ * </p>
+ *
+ * <p>
+ *   If the given type is an interface, it will uses all getter methods (methods that prefix with "get" or "is",
+ *   followed by a name with no arguments) to generate fields for the record schema.
+ *   E.g. for the method {@code String getFirstName()}, a field name "firstName" of type String would be generated.
+ * </p>
  */
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
@@ -25,8 +37,11 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     Map<String, TypeToken<?>> recordFieldTypes = Maps.newTreeMap();
     knowRecords.add(recordName);
 
-    collectByFields(typeToken, recordFieldTypes);
-    collectByMethod(typeToken, recordFieldTypes);
+    if (typeToken.getRawType().isInterface()) {
+      collectByMethod(typeToken, recordFieldTypes);
+    } else {
+      collectByFields(typeToken, recordFieldTypes);
+    }
 
     // Recursively generate field type schema.
     ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
@@ -69,11 +84,13 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
         continue;
       }
       String methodName = method.getName();
-      if (!methodName.startsWith("get") || method.isSynthetic() || method.getParameterTypes().length != 0) {
+      if (!(methodName.startsWith("get") || methodName.startsWith("is"))
+              || method.isSynthetic() || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
-      String fieldName = methodName.substring("get".length());
+      String fieldName = methodName.startsWith("get") ?
+                            methodName.substring("get".length()) : methodName.substring("is".length());
       if (fieldName.isEmpty()) {
         continue;
       }
