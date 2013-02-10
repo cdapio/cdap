@@ -284,7 +284,6 @@ public final class ApplicationSpecification {
       }
     }
 
-
     /**
      * Class for adding {@link DataSet}.
      */

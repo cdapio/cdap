@@ -4,9 +4,11 @@
 
 package com.continuuity.api.batch;
 
+import com.continuuity.api.Processor;
+
 /**
  *
  */
-public interface Batch {
+public interface Batch extends Processor {
 
 }

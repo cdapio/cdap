@@ -250,7 +250,8 @@ public final class Schema {
 
   private String schemaString;
 
-  private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema, String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
+  private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
+                 String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
     this.type = type;
     this.enumValues = enumValues;
     this.componentSchema = componentSchema;

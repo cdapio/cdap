@@ -19,7 +19,6 @@ public class ApplicationSpecificationTest {
   public void testConfigureApplication() throws NoSuchMethodException, UnsupportedTypeException {
     ApplicationSpecification appSpec = new WordCountApp().configure();
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
-
     ApplicationSpecification newSpec = gson.fromJson(gson.toJson(appSpec), ApplicationSpecification.class);
 
     Assert.assertEquals(1, newSpec.getDataSets().size());
