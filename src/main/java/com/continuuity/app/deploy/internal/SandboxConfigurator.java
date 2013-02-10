@@ -7,13 +7,16 @@ package com.continuuity.app.deploy.internal;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
@@ -21,6 +24,8 @@ import java.io.File;
  *   This class is responsible for starting the process of generating configuration
  *   by passing in the JAR file of Application be configured by a seperate JVM.
  * </p>
+ *
+ * @see InMemoryConfigurator
  */
 public class SandboxConfigurator implements Configurator {
   /**
@@ -59,6 +64,21 @@ public class SandboxConfigurator implements Configurator {
   public static ListenableFuture<ConfigResponse> config(File jarFilename) {
     SandboxConfigurator sc = new SandboxConfigurator(jarFilename);
     return sc.config();
+  }
+
+  /**
+   * Returns a {@link org.hsqldb.lib.StringInputStream} for the string.
+   *
+   * @param result to be converted into {@link org.hsqldb.lib.StringInputStream}
+   * @return An instance of {@link org.hsqldb.lib.StringInputStream}
+   */
+  private InputSupplier<Reader> newFileStream(final File result) {
+    return new InputSupplier<Reader>() {
+      @Override
+      public Reader getInput() throws IOException {
+        return new FileReader(result);
+      }
+    };
   }
 
   /**
@@ -121,7 +141,7 @@ public class SandboxConfigurator implements Configurator {
           process.waitFor();
           int exit = process.exitValue();
           if(exit == 0)  {
-            result.set(new DefaultConfigResponse(0, Files.newInputStreamSupplier(outputFile)));
+            result.set(new DefaultConfigResponse(0, newFileStream(outputFile)));
           } else {
             result.set(new DefaultConfigResponse(exit, null));
           }

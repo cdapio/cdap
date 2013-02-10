@@ -4,16 +4,12 @@
 
 package com.continuuity.classloader;
 
-import com.continuuity.common.classloader.JarResourceException;
-import com.continuuity.common.classloader.JarResources;
-import com.continuuity.common.classloader.MultiClassLoader;
-
 import javax.annotation.Nullable;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
- * JarClassLoader extends {@link com.continuuity.common.classloader.MultiClassLoader}
+ * JarClassLoader extends {@link MultiClassLoader}
  */
 public class JarClassLoader extends MultiClassLoader {
   private JarResources jarResources;
@@ -31,7 +27,7 @@ public class JarClassLoader extends MultiClassLoader {
    * Creates an instance of classloader with provided jar resources.
    *
    * @param jarResources instance of jar resources
-   * @throws com.continuuity.common.classloader.JarResourceException
+   * @throws JarResourceException
    */
   public JarClassLoader(JarResources jarResources) throws JarResourceException {
     this.jarResources = jarResources;

@@ -285,8 +285,8 @@ public final class Schema {
   }
 
   /**
-   * @return An immutable {@link Map.Entry} if this is a {@link Type#MAP MAP} schema or {@code null} otherwise.
-   *         The {@link Map.Entry#getKey()} would returns the key schema, while {@link Map.Entry#getValue()}
+   * @return An immutable {@code Map.Entry} if this is a {@code Type#MAP MAP} schema or {@code null} otherwise.
+   *         The {@code Map.Entry#getKey()} would returns the key schema, while {@code Map.Entry#getValue()}
    *         would returns the value schema.
    */
   public Map.Entry<Schema, Schema> getMapSchema() {

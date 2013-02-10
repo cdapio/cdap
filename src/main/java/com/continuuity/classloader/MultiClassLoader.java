@@ -18,14 +18,9 @@ import java.util.Hashtable;
  * with large modifications.
  */
 public abstract class MultiClassLoader extends ClassLoader {
-  private static final Logger Log = LoggerFactory.getLogger(MultiClassLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
   private Hashtable classes = new Hashtable();
   private char      classNameReplacementChar;
-
-  protected boolean   monitorOn = false;
-  protected boolean   sourceMonitorOn = true;
-
-  public MultiClassLoader() { }
 
   /**
    * This is a simple version for external clients since they
@@ -54,7 +49,7 @@ public abstract class MultiClassLoader extends ClassLoader {
       result = super.findSystemClass(className);
       return result;
     } catch (ClassNotFoundException e) {
-      Log.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+      LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
     }
 
     //Try to load it from preferred source

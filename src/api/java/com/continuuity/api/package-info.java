@@ -123,13 +123,13 @@
  * </p>
  *
  * <p>
- *   Defining a <code>WordCountApplication</code>
+ *   Defining a <code>WordCountApp</code>
  *   <pre>
- *     public class WordCountApplication implements Application {
+ *     public class WordCountApp implements Application {
  *       {@literal @Override}
  *       public ApplicationSpecification configure() {
  *         return ApplicationSpecification.builder()
- *            .setName("WordCountApplication")
+ *            .setName("WordCountApp")
  *            .setDescription("Application for counting words")
  *            .withStreams().add(new Stream("text")
  *            .withDataSets().add(new KeyValueTable("mydataset"))

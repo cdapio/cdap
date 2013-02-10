@@ -16,8 +16,11 @@ smartyFacts {
 dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
 
   // Dependencies required by main.
+  compile libraries.slf4j_api
+  compile libraries.apache_commons_cli
   compile libraries.google_gson
   compile libraries.google_guice
   compile libraries.google_guice_assistedinject

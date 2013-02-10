@@ -123,7 +123,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    * Generates a RECORD schema of the given type.
    * @param typeToken
    * @param knownRecords
-   * @return
+   * @return An instance of {@link Schema}
    * @throws UnsupportedTypeException
    */
   protected abstract Schema generateRecord(TypeToken<?> typeToken, Set<String> knownRecords) throws UnsupportedTypeException;

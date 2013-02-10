@@ -4,9 +4,9 @@
 
 package com.continuuity.api.flow;
 
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.Process;
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.Flowlet;
