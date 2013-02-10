@@ -66,7 +66,7 @@ public class  SQLChainImpl implements SQLChain {
   /**
    * Delete query
    * @param table table name
-   * @return
+   * @return Instance of {@code WhereClause}
    */
   @Override
   public WhereClause<ExecuteClause> delete(String table){

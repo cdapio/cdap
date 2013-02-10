@@ -1,10 +1,10 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Account;
+
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
-import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.status.Status;
 
 /**
@@ -16,12 +16,12 @@ public interface DataManagementService {
    * Register an {@code Account} in the system
    *
    * @param account Account information
-   * @param owner   Owner of the account
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerAccount(Account account, User owner) throws RetryException;
+  public Status registerAccount(Account account) throws RetryException;
 
+  public Status confirmRegistration(Account account) throws RetryException;
 
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
@@ -67,13 +67,6 @@ public interface DataManagementService {
    */
   public Status updateComponent(String accountId, Credentials credentials, Component component) throws RetryException;
 
-  /**
-   * get User Object
-   *
-   * @param userId Id that defines the user
-   * @return Instance of {@code User}
-   */
-  public User getUser(String userId);
 
   /**
    * GetAccount object

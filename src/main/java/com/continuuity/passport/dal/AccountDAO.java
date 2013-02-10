@@ -1,7 +1,12 @@
 package com.continuuity.passport.dal;
 
-import com.continuuity.passport.core.Account;
+import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.BillingInfo;
+
+import java.util.Map;
 
 
 /**
@@ -13,12 +18,14 @@ public interface AccountDAO {
   /**
    * Create Account in the system
    *
-   * @param accountId accountID
    * @param account   Instance of {@code Account}
    * @return boolean status of account creation
    * @throws {@code RetryException}
    */
-  public boolean createAccount(String accountId, Account account) throws RetryException;
+  public boolean createAccount(Account account) throws ConfigurationException, RuntimeException;
+
+
+  public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException;
 
   /**
    * Delete Account in the system
@@ -27,7 +34,7 @@ public interface AccountDAO {
    * @return boolean status of account deletion
    * @throws {@code RetryException}
    */
-  public boolean deleteAccount(String accountId) throws RetryException;
+  public boolean deleteAccount(String accountId) throws ConfigurationException, RuntimeException;
 
   /**
    * GetAccount
@@ -36,18 +43,15 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(String accountId) throws RetryException;
+  public Account getAccount(String accountId) throws ConfigurationException, RuntimeException;
 
+
+  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException, RuntimeException;
 
   /**
-   * AccountId to be updated
-   *
-   * @param accountId AccountId
-   * @param account   Instance of {@code Account}
-   * @return boolean status of update
-   * @throws {@code RetryException}
+   * Configure the Data access objects
+   * @param configurations Key value params for configuring the DAO
    */
-  public boolean updateAccount(String accountId, Account account) throws RetryException;
-
+  public void configure (Map<String,String> configurations);
 
 }

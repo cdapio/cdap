@@ -17,7 +17,8 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `confirmed` TINYINT(1) NULL DEFAULT NULL ,
   `locked` TINYINT(1) NULL DEFAULT NULL ,
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) )
+  PRIMARY KEY (`id`) ) ,
+  UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
