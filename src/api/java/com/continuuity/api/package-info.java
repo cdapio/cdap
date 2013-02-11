@@ -237,5 +237,74 @@
  *   </pre>
  * </p>
  *
+ * <h1>More examples</h1>
+ * <h2>How to create an enrichment pipeline</h2>
+ * <p>
+ *   <h3>Team 1</h3>
+ *   <p>Defines a type Document, let's say was extracted from crawling.</p>
+ *   <pre>
+ *      public interface Document {
+ *        public Integer getDocumentId();
+ *        public String  getDocumentBody();
+ *        public String  getUrl();
+ *      }
+ *   </pre>
+ *   <p>
+ *     A flowlet managed by Team 1 will emit type Document, anyone connecting to
+ *     this flowlet will be able to consume type Document or any type that extends
+ *     from Document type.
+ *   </p>
+ *   <pre>
+ *     public DocumentCrawler extends AbstractFlowlet {
+ *       private OutputEmitter<Document> out;
+ *
+ *       @Process
+ *       public void generate() {
+ *         out.emit(new Document() { ... });
+ *       }
+ *     }
+ *   </pre>
+ * </p>
+ *
+ * <p>
+ *   <h3>Team 2</h3>
+ *   <p>Enriches the document, let's say it's adding page rank to document</p>
+ *   <pre>
+ *     public interface DocumentRank extends Document {
+ *       public Float getPageRank();
+ *     }
+ *   </pre>
+ *   <p>
+ *     A Flowlet managed by Team 2 will emit DocumentRank. DocumentRank is a Document
+ *     with Page Rank enrichment on Document.
+ *   </p>
+ *   <pre>
+ *     public DocumentRanker extends AbstractFlowlet {
+ *       private OutputEmitter<DocumentRank> out;
+ *
+ *       @Process
+ *       public void process(DocumentRank ranker) {
+ *          ranker.setPageRank(...);
+ *          out.emit(ranker);
+ *       }
+ *     }
+ *   </pre>
+ * </p>
+ *
+ * <p>
+ *   <h3>Team 3</h3>
+ *   <p>Enriches the document, needs Page Rank to generate entities within the document </p>
+ *   <pre>
+ *     public interface DocumentEntities extends DocumentRank {
+ *       public String[] getEntities();
+ *     }
+ *   </pre>
+ * </p>
+ *
+ * <p>
+ *   <h2>Team 4</h2>
+ *   <p>Team 4 needs a consume a basic Document</p>
+ * </p>
+ *
  */
 package com.continuuity.api;

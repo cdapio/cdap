@@ -5,6 +5,7 @@
 package com.continuuity.security;
 
 import java.security.Permission;
+import java.security.PermissionCollection;
 
 /**
  * This class is a extention of the existing java {@link SecurityManager} to allow
@@ -14,13 +15,13 @@ public final class ApplicationSecurity extends SecurityManager {
   /**
    * Collection of security permissions.
    */
-  private final ApplicationPermissionCollection permissions;
+  private final PermissionCollection permissions;
 
   /**
    * Invoked by the builder only.
    * @param permissions a collection of {@link Permission} objects.
    */
-  private ApplicationSecurity(ApplicationPermissionCollection permissions) {
+  private ApplicationSecurity(PermissionCollection permissions) {
     this.permissions = permissions;
   }
 
@@ -62,7 +63,7 @@ public final class ApplicationSecurity extends SecurityManager {
    * The permission collection is a allowed permission list.
    */
   public static class Builder {
-    private final ApplicationPermissionCollection perms;
+    private final PermissionCollection perms;
 
     /**
      * Invoked by the {@link #builder()}
