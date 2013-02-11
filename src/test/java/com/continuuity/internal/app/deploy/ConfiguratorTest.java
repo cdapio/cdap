@@ -2,13 +2,14 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app.deploy;
+package com.continuuity.internal.app.deploy;
 
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaTypeAdapter;
-import com.continuuity.app.deploy.internal.InMemoryConfigurator;
+import com.continuuity.app.deploy.ConfigResponse;
+import com.continuuity.app.deploy.Configurator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,8 +22,8 @@ import java.util.concurrent.TimeUnit;
  * Tests the configurators.
  *
  * NOTE: Till we can build the JAR it's difficult to test other configurators
- * {@link com.continuuity.app.deploy.internal.InMemoryConfigurator} &
- * {@link com.continuuity.app.deploy.internal.SandboxConfigurator}
+ * {@link com.continuuity.internal.app.deploy.InMemoryConfigurator} &
+ * {@link com.continuuity.internal.app.deploy.SandboxConfigurator}
  */
 public class ConfiguratorTest {
 
@@ -43,4 +44,5 @@ public class ConfiguratorTest {
     Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
     Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
   }
+
 }

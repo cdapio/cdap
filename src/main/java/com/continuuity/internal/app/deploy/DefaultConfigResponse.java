@@ -1,4 +1,4 @@
-package com.continuuity.app.deploy.internal;
+package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.ConfigResponse;
 import com.google.common.io.InputSupplier;
