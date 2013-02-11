@@ -21,9 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 
 /**
  * Sandbox JVM allows the configuration phase of an application to be executed
@@ -101,23 +105,18 @@ public class SandboxJVM {
       .create();
 
     // We write the Application specification to output file in JSON format.
-    FileWriter writer = null;
     try {
-      writer = new FileWriter(outputFile);
-      gson.toJson(specification, writer);
+      Writer writer = new OutputStreamWriter(new FileOutputStream(outputFile), Charset.forName("UTF-8"));
+      try {
+        gson.toJson(specification, writer);
+      } finally {
+        writer.close();
+      }
     } catch (IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
-    } finally  {
-      if(writer != null) {
-        try {
-          writer.close(); // flush and close.
-        } catch (IOException e) {
-          LOG.error("Unable to close file {}. {}", outputFile.getAbsolutePath(), e.getMessage());
-          return -1;
-        }
-      }
     }
+
     return 0;
   }
 

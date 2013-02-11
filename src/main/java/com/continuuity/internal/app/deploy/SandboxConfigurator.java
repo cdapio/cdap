@@ -14,9 +14,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
@@ -76,7 +79,7 @@ public class SandboxConfigurator implements Configurator {
     return new InputSupplier<Reader>() {
       @Override
       public Reader getInput() throws IOException {
-        return new FileReader(result);
+        return new InputStreamReader(new FileInputStream(result), Charset.forName("UTF-8"));
       }
     };
   }
