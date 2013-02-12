@@ -281,6 +281,9 @@ public final class FlowSpecification {
               schemas = Sets.newHashSet();
               inputs.put(inputName, schemas);
             }
+            Preconditions.checkArgument(!schemas.contains(inputSchema),
+                                        "Same type already defined for the same input. Type: %s, input: %s",
+                                        inputType, inputName);
             schemas.add(inputSchema);
           }
         }
