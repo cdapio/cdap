@@ -12,23 +12,14 @@ jar.exclude '*.xml'
 evaluationDependsOn(":flow")
 
 task javadoc(type: Javadoc, overwrite: true) {
-
-  //TODO: Remove this excludes hack and do it in a clean-way
-  excludes += ["com/continuuity/test/**/internal", "com/continuuity/test/FlowTestHelper.java"]
   source project.parent.subprojects.collect { proj ->
-  //TODO: Remove the hack below. The hack is to include api and testhelper sourcesets
-  if (proj.name == "flow") {
-    def classes = []
-    classes << proj.sourceSets.api.allJava
-    classes << proj.sourceSets.testhelper.allJava
-    return classes
-   } 
    if(proj.plugins.findPlugin("java") && proj.sourceSets.findByName("api")!=null){
      return proj.sourceSets.api.allJava
    }else{
     return []       
    }
   }
+
   doFirst{
     classpath = files(project.parent.subprojects.collect { project ->
     if(project.plugins.findPlugin("java")){
