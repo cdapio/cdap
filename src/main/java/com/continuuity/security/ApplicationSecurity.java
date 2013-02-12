@@ -18,11 +18,18 @@ public final class ApplicationSecurity extends SecurityManager {
   private final PermissionCollection permissions;
 
   /**
+   * Admin class as set that has ability to by-pass the security manager.
+   */
+  private final Class<?> adminClass;
+
+  /**
    * Invoked by the builder only.
    * @param permissions a collection of {@link Permission} objects.
+   * @param adminClass Class that had administratives
    */
-  private ApplicationSecurity(PermissionCollection permissions) {
+  private ApplicationSecurity(PermissionCollection permissions, Class<?> adminClass) {
     this.permissions = permissions;
+    this.adminClass = adminClass;
   }
 
   /**
@@ -33,6 +40,27 @@ public final class ApplicationSecurity extends SecurityManager {
    */
   @Override
   public void checkPermission(final Permission permission) {
+    // We get the current execution stack as an array of classes.
+    Class<?>[] klasses = getClassContext();
+    boolean isAdminClass = false;
+
+    // Iterate and see if the stack has a call that's coming from
+    // the adminClass. If it is, then consider this check coming
+    // the admin class.
+    if(adminClass != null) {
+      for(Class<?> k : klasses) {
+        if(k == this.adminClass) {
+          isAdminClass = true;
+          break;
+        }
+      }
+    }
+
+    // If admin found on stack, we return, that class is given admin rights.
+    if(isAdminClass) {
+      return;
+    }
+
     // If there is a security manager already installed, this method first calls the security manager's
     // checkPermission method with a RuntimePermission("setSecurityManager") permission to ensure it's ok to
     // replace the existing security manager. This may result in throwing a SecurityException.
@@ -64,6 +92,7 @@ public final class ApplicationSecurity extends SecurityManager {
    */
   public static class Builder {
     private final PermissionCollection perms;
+    private Class<?> klass = null;
 
     /**
      * Invoked by the {@link #builder()}
@@ -82,17 +111,24 @@ public final class ApplicationSecurity extends SecurityManager {
       return this;
     }
 
+    /**
+     * Defines the admin class that has capability to operate outside of restriction
+     * as set by {@link ApplicationSecurity}.
+     *
+     * @param klass that has admin rights within this security manager.
+     * @return this builder.
+     */
+    public Builder adminClass(Class<?> klass) {
+      this.klass = klass;
+      return this;
+    }
 
     /**
      * Applies the permission. Replaces the security manager for the JVM if there
      * none set.
      */
     public void apply() {
-      perms.setReadOnly();
-      SecurityManager manager = System.getSecurityManager();
-      if(manager == null) {
-        System.setSecurityManager(new ApplicationSecurity(perms));
-      }
+      System.setSecurityManager(new ApplicationSecurity(perms, klass));
     }
   }
 }
