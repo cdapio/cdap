@@ -94,9 +94,6 @@ libraries.jsr_305 = "com.google.code.findbugs:jsr305:2.0.1"
 libraries.mysql = "mysql:mysql-connector-java:5.1.21"
 libraries.hsql = "org.hsqldb:hsqldb:2.2.4"
 
-// Apache Common
-libraries.apache_commons_cli = "commons-cli:commons-cli:1.2"
-
 // Serialization 
 libraries.kryo = "kryo:kryo:2.12"
 
