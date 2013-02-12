@@ -51,22 +51,6 @@ public abstract class QueueInvalidate {
     }
   }
 
-  public static class QueueFinalize extends QueueInvalidate {
-    private final QueueConsumer consumer;
-    private final int totalNumGroups;
-    public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer,
-        QueueConsumer consumer, int totalNumGroups) {
-      super(queueName, entryPointer);
-      this.consumer = consumer;
-      this.totalNumGroups = totalNumGroups;
-    }
-    @Override
-    public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
-      queueTable.finalize(queueName, entryPointer, consumer, totalNumGroups);
-    }
-  }
-
   public static class QueueUnack extends QueueInvalidate {
     final QueueConsumer consumer;
     public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
