@@ -6,6 +6,8 @@ package com.continuuity.api.io;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -236,7 +238,10 @@ public final class Schema {
   }
 
   private final Type type;
-  private final Set<String> enumValues;
+
+  private final BiMap<String, Integer> enumValues;
+  private final BiMap<Integer, String> enumIndexes;
+
   private final Schema componentSchema;
 
   private final Schema keySchema;
@@ -253,7 +258,8 @@ public final class Schema {
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
     this.type = type;
-    this.enumValues = enumValues;
+    this.enumValues = createIndex(enumValues);
+    this.enumIndexes = this.enumValues == null ? null : this.enumValues.inverse();
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
@@ -275,7 +281,32 @@ public final class Schema {
    *         The {@link Set#iterator()} order would be the enum values orders.
    */
   public Set<String> getEnumValues() {
-    return enumValues;
+    return enumValues.keySet();
+  }
+
+  /**
+   * @param value The enum value
+   * @return The 0-base index of the given value in the enum values or {@code -1} if this is not a
+   *         {@link Type#ENUM ENUM} schema.
+   */
+  public int getEnumIndex(String value) {
+    if (enumValues == null) {
+      return -1;
+    }
+    Integer idx = enumValues.get(value);
+    return idx == null ? -1 : idx;
+  }
+
+  /**
+   * @param idx The index in the enum values
+   * @return The string represents the enum value, or {@code null} if this is not a {@link Type#ENUM ENUM} schema or
+   *         the given index is invalid.
+   */
+  public String getEnumValue(int idx) {
+    if (enumIndexes == null) {
+      return null;
+    }
+    return enumIndexes.get(idx);
   }
 
   /**
@@ -358,6 +389,25 @@ public final class Schema {
   @Override
   public int hashCode() {
     return toString().hashCode();
+  }
+
+  /**
+   * Creates a map of indexes based on the iteration order of the given set.
+   *
+   * @param values Set of values to create index on
+   * @return A map from the values to indexes in the set iteration order.
+   */
+  private <V> BiMap<V, Integer> createIndex(Set<V> values) {
+    if (values == null) {
+      return null;
+    }
+
+    ImmutableBiMap.Builder<V, Integer> builder = ImmutableBiMap.builder();
+    int idx = 0;
+    for (V value : values) {
+      builder.put(value, idx++);
+    }
+    return builder.build();
   }
 
   /**
