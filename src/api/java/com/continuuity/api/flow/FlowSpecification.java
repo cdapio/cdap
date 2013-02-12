@@ -127,6 +127,13 @@ public final class FlowSpecification {
   }
 
   /**
+   * @return
+   */
+  public List<FlowletConnection> getConnections() {
+    return connections;
+  }
+
+  /**
    * Class defining the definition for a flowlet.
    */
   public static final class FlowletDefinition {

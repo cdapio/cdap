@@ -1,8 +1,13 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.error.Err;
+
+import java.util.Map;
 
 /**
  * This verifies a give {@link com.continuuity.api.flow.Flow}
@@ -19,7 +24,7 @@ import com.continuuity.app.verification.VerifyResult;
  *
  * </p>
  */
-public class FlowVerification implements Verifier<FlowSpecification> {
+public class FlowVerification extends AbstractVerifier implements Verifier<FlowSpecification> {
 
   /**
    * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}
@@ -30,6 +35,43 @@ public class FlowVerification implements Verifier<FlowSpecification> {
    */
   @Override
   public VerifyResult verify(final FlowSpecification input) {
+    String flowName = input.getName();
+
+    // Checks if Flow name is an ID
+    if(! isId(flowName)) {
+      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Flow");
+    }
+
+    // Check if there are no flowlets.
+    if(input.getFlowlets().size() == 0) {
+      return VerifyResult.FAILURE(Err.Flow.ATLEAST_ONE_FLOWLET, flowName);
+    }
+
+    // Check if there no connections.
+    if(input.getFlowlets().size() == 0) {
+      return VerifyResult.FAILURE(Err.Flow.ATLEAST_ONE_CONNECTION, flowName);
+    }
+
+    // We go through each Flowlet and verify the flowlets.
+    for(Map.Entry<String, FlowSpecification.FlowletDefinition> entry : input.getFlowlets().entrySet()) {
+      FlowSpecification.FlowletDefinition defn = entry.getValue();
+      String flowletName = defn.getFlowletSpec().getName();
+
+      // Check if the Flowlet Name is an ID.
+      if(!isId(defn.getFlowletSpec().getName())) {
+        return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName);
+      }
+
+      // We check if all the dataset names used are ids
+      for(String dataSet : defn.getDatasets()) {
+        if(! isId(dataSet)) {
+          return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
+        }
+      }
+
+      // Iterate through each input and see if there is a matching
+    }
+
     return VerifyResult.SUCCESS();
   }
 }

@@ -1,5 +1,7 @@
 package com.continuuity.app.verification;
 
+import com.continuuity.error.Errors;
+
 /**
  * This class defines the result of {@link Verifier#verify(Object)}.
  */
@@ -60,10 +62,9 @@ public class VerifyResult {
    * Helper static method for creating failure {@link VerifyResult} with
    * a descriptive message.
    *
-   * @param message indicating the reason for failure.
    * @return An instance of {@link VerifyResult} which has failed with descriptive message.
    */
-  public static VerifyResult FAILURE(final String message) {
-    return new VerifyResult(Status.FAILED, message);
+  public static VerifyResult FAILURE(Errors error, Object...objects) {
+    return new VerifyResult(Status.FAILED, error.getMessage(objects));
   }
 }

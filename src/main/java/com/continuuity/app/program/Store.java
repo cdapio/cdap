@@ -12,22 +12,24 @@ import java.util.List;
  */
 public interface Store {
   /**
-   * Registers a {@link Program} with central meta data service.
-   */
-  public void register();
-
-  /**
    * @return A list of available version of the program.
    */
   public List<Version> getAvailableVersions();
 
   /**
-   * @return Current active version.
+   * @return Current active version of this {@link Program}
    */
-  public Version getActiveVersion();
+  public Version getCurrentVersion();
 
   /**
-   * Deletes this {@link Program}
+   * Deletes a <code>version</code> of this {@link Program}
+   *
+   * @param version of the {@link Program} to be deleted.
    */
-  public void delete();
+  public void delete(Version version);
+
+  /**
+   * Deletes all the versions of this {@link Program}
+   */
+  public void deleteAll();
 }

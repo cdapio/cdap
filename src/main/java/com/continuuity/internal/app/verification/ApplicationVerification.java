@@ -1,8 +1,10 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
+import com.continuuity.error.Err;
 
 /**
  * This class is responsible for verifying the Application details of
@@ -16,7 +18,7 @@ import com.continuuity.app.verification.VerifyResult;
  *   </ul>
  * </p>
  */
-public class ApplicationVerification implements Verifier<ApplicationSpecification> {
+public class ApplicationVerification extends AbstractVerifier implements Verifier<ApplicationSpecification> {
 
   /**
    * Verifies {@link ApplicationSpecification} of the {@link com.continuuity.api.Application}
@@ -27,6 +29,16 @@ public class ApplicationVerification implements Verifier<ApplicationSpecificatio
    */
   @Override
   public VerifyResult verify(final ApplicationSpecification input) {
+    // Check if Application name is an ID or no.
+    if(!isId(input.getName())) {
+      return VerifyResult.FAILURE(Err.NOT_AN_ID, "Application");
+    }
+
+    // Check if there is atleast one of the following : Flow & Procedure for now.
+    if(input.getProcedures().size() == 0 && input.getFlows().size() == 0) {
+      return VerifyResult.FAILURE(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
+    }
+
     return VerifyResult.SUCCESS();
   }
 }
