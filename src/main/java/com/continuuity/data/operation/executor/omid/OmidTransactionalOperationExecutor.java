@@ -25,7 +25,6 @@ import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.*;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueFinalize;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
@@ -576,7 +575,7 @@ implements TransactionalOperationExecutor {
       QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
       QueueFinalize finalize = new QueueFinalize(ack.getKey(),
           ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups());
-      finalize.execute(getQueueTable(ack.getKey()), pointer);
+      finalize.execute(getQueueTable(ack.getKey()));
     }
 
     // Transaction was successfully committed, emit metrics
