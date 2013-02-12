@@ -15,3 +15,4 @@ out/
 lib/
 .idea
 data/
+build/
