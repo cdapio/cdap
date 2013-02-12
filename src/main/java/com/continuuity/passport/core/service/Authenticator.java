@@ -4,6 +4,8 @@ import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 
+import java.util.Map;
+
 /**
  * Interface for user authentication
  * Use this interface to implement different kinds of authentication mechanisms
@@ -20,5 +22,6 @@ public interface Authenticator {
    */
   AuthenticationStatus authenticate(String userId, Credentials credentials) throws RetryException;
 
+  public void configure (Map<String,String> configurations);
 
 }

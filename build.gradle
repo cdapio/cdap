@@ -21,6 +21,9 @@ dependencies {
   compile apiJar.outputs.files
   compile libraries.mysql
 
+  //TODO: Move this to central dependency
+  compile 'org.apache.shiro:shiro-core:1.2.1'
+ 
   testCompile libraries.junit
   testCompile 'org.hsqldb:hsqldb:2.2.6' //TODO: Move this to central dependency
 

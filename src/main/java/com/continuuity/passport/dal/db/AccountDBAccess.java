@@ -5,9 +5,9 @@ import com.continuuity.passport.common.sql.SQLChain;
 import com.continuuity.passport.common.sql.SQLChainImpl;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
-import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
+import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.dal.AccountDAO;
 import  java.sql.Connection;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -152,9 +152,9 @@ public class AccountDBAccess implements AccountDAO {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
       chain.insert(Common.AccountPayment.TABLE_NAME)
-           .columns(Common.AccountPayment.ACCOUNT_ID, Common.AccountPayment.CREDIT_CARD_NAME,
-                    Common.AccountPayment.CREDIT_CARD_NUMBER,Common.AccountPayment.CREDIT_CARD_CVV,
-                    Common.AccountPayment.CREDIT_CARD_EXPIRY)
+           .columns(Common.AccountPayment.ACCOUNT_ID_COLUMN, Common.AccountPayment.CREDIT_CARD_NAME_COLUMN,
+                    Common.AccountPayment.CREDIT_CARD_NUMBER_COLUMN,Common.AccountPayment.CREDIT_CARD_CVV_COLUMN,
+                    Common.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN)
            .values(accountId,billingInfo.getCreditCardName(),billingInfo.getCreditCardNumber(),
                    billingInfo.getCvv(),billingInfo.getExpirationDate())
            .execute();
@@ -186,6 +186,26 @@ public class AccountDBAccess implements AccountDAO {
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
 
     }
+  }
+
+  @Override
+  public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException {
+    if(this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      Connection connection = this.poolManager.getConnection();
+      SQLChain chain = SQLChainImpl.getSqlChain(connection);
+      chain.insert(Common.AccountRoleType.TABLE_NAME)
+           .columns(Common.AccountRoleType.ACCOUNT_ID_COLUMN,Common.AccountRoleType.ROLE_NAME_COLUMN,
+                    Common.AccountRoleType.PERMISSIONS_COLUMN)
+           .values(accountId, role.getRoleName(),role.getPermissions())
+           .execute();
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e.getMessage(),e.getCause());
+    }
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   private String generateAPIKey(){

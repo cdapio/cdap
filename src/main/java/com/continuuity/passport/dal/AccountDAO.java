@@ -2,9 +2,9 @@ package com.continuuity.passport.dal;
 
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
-import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
+import com.continuuity.passport.core.meta.Role;
 
 import java.util.Map;
 
@@ -53,5 +53,7 @@ public interface AccountDAO {
    * @param configurations Key value params for configuring the DAO
    */
   public void configure (Map<String,String> configurations);
+
+  public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException;
 
 }
