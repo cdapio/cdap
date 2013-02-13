@@ -4,36 +4,18 @@
 
 package com.continuuity.api.flow;
 
-import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.Process;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.io.ReflectionSchemaGenerator;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaGenerator;
-import com.continuuity.api.io.UnsupportedTypeException;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class provides specification of a Flow. Instance of this class should be created through
@@ -58,12 +40,6 @@ import java.util.Set;
  * </pre>
  */
 public final class FlowSpecification {
-
-  private static final String PROCESS_METHOD_PREFIX = "process";
-  private static final String DEFAULT_OUTPUT = "out";
-  private static final String ANY_INPUT = "";
-  private static final SchemaGenerator SCHEMA_GENERATOR = new ReflectionSchemaGenerator();
-
 
   /**
    * Name of the flow
@@ -127,176 +103,10 @@ public final class FlowSpecification {
   }
 
   /**
-   * @return
+   * @return Immutable list of {@link FlowletConnection}.
    */
   public List<FlowletConnection> getConnections() {
     return connections;
-  }
-
-  /**
-   * Class defining the definition for a flowlet.
-   */
-  public static final class FlowletDefinition {
-    private final FlowletSpecification flowletSpec;
-    private final int instances;
-    private final ResourceSpecification resourceSpec;
-    private final Set<String> datasets;
-    private final Map<String, Set<Schema>> inputs;
-    private final Map<String, Set<Schema>> outputs;
-
-    private FlowletDefinition(Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
-      this.flowletSpec = flowlet.configure();
-      this.instances = instances;
-      this.resourceSpec = resourceSpec;
-
-      Set<String> datasets = Sets.newHashSet();
-      Map<String, Set<Schema>> inputs = Maps.newHashMap();
-      Map<String, Set<Schema>> outputs = Maps.newHashMap();
-      try {
-        inspectFlowlet(flowlet.getClass(),datasets, inputs, outputs);
-      } catch (UnsupportedTypeException e) {
-        throw new IllegalArgumentException(e);
-      }
-
-      this.datasets = ImmutableSet.copyOf(datasets);
-      this.inputs = immutableCopyOf(inputs);
-      this.outputs = immutableCopyOf(outputs);
-    }
-
-    /**
-     * @return Number of instances configured for this flowlet.
-     */
-    public int getInstances() {
-      return instances;
-    }
-
-    /**
-     * @return Specification of Flowlet
-     */
-    public FlowletSpecification getFlowletSpec() {
-      return flowletSpec;
-    }
-
-    /**
-     * @return Specification for resource.
-     */
-    public ResourceSpecification getResourceSpec() {
-      return resourceSpec;
-    }
-
-    /**
-     * @return Set of datasets names needed by this flowlet.
-     */
-    public Set<String> getDatasets() {
-      return datasets;
-    }
-
-    /**
-     * @return Mapping of name to the method types for processing inputs.
-     */
-    public Map<String, Set<Schema>> getInputs() {
-      return inputs;
-    }
-
-    /**
-     * @return Mapping from name of {@link OutputEmitter} to actual emitters.
-     */
-    public Map<String, Set<Schema>> getOutputs() {
-      return outputs;
-    }
-
-    /**
-     * This method is responsible for inspecting the flowlet class and inspecting to figure out what
-     * method are used for processing input and what are used for emitting outputs.
-     * @param flowletClass defining the flowlet that needs to be inspected.
-     * @param datasets reference to set of datasets names.
-     * @param inputs reference to map of name to input methods used for processing events on queues.
-     * @param outputs reference to map of name to {@link OutputEmitter} and the types they handle.
-     */
-    private void inspectFlowlet(Class<?> flowletClass,
-                                Set<String> datasets,
-                                Map<String, Set<Schema>> inputs,
-                                Map<String, Set<Schema>> outputs) throws UnsupportedTypeException {
-      TypeToken<?> flowletType = TypeToken.of(flowletClass);
-
-      // Walk up the hierarchy of flowlet class.
-      for (TypeToken<?> type : flowletType.getTypes().classes()) {
-        if (type.getRawType().equals(Object.class)) {
-          break;
-        }
-
-        // Grab all the DataSet and OutputEmitter fields
-        for (Field field : type.getRawType().getDeclaredFields()) {
-          if (com.continuuity.api.data.DataSet.class.isAssignableFrom(field.getType())) {
-            UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-            if (dataset == null || dataset.value().isEmpty()) {
-              continue;
-            }
-            datasets.add(dataset.value());
-
-          } else if (OutputEmitter.class.equals(field.getType())) {
-            Type emitterType = field.getGenericType();
-            Preconditions.checkArgument(emitterType instanceof ParameterizedType,
-                                        "Type info missing from OutputEmitter; class: %s; field: %s.", type, field);
-
-            // Extract the Output type from the first type argument of OutputEmitter
-            TypeToken<?> outputType = TypeToken.of(((ParameterizedType) emitterType).getActualTypeArguments()[0]);
-            String outputName = field.isAnnotationPresent(Output.class) ?
-                                    field.getAnnotation(Output.class).value() : DEFAULT_OUTPUT;
-
-            Set<Schema> schemas = outputs.get(outputName);
-            if (schemas == null) {
-              schemas = Sets.newHashSet();
-              outputs.put(outputName, schemas);
-            }
-            schemas.add(SCHEMA_GENERATOR.generate(outputType.getType()));
-          }
-        }
-
-        // Grab all process methods
-        for (Method method : type.getRawType().getDeclaredMethods()) {
-          Process processAnnotation = method.getAnnotation(Process.class);
-          if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processAnnotation == null) {
-            continue;
-          }
-
-          Type[] methodParams = method.getGenericParameterTypes();
-          Preconditions.checkArgument(methodParams.length > 0,
-                                      "Type parameter missing from process method; class: %s, method: %s",
-                                      type, method);
-
-          // Extract the Input type from the first parameter of the process method
-          TypeToken<?> inputType = type.resolveType(methodParams[0]);
-          List<String> inputNames = Lists.newLinkedList();
-          if (processAnnotation == null || processAnnotation.value().length == 0) {
-            inputNames.add(ANY_INPUT);
-          } else {
-            Collections.addAll(inputNames, processAnnotation.value());
-          }
-
-          Schema inputSchema = SCHEMA_GENERATOR.generate(inputType.getType());
-          for (String inputName : inputNames) {
-            Set<Schema> schemas = inputs.get(inputName);
-            if (schemas == null) {
-              schemas = Sets.newHashSet();
-              inputs.put(inputName, schemas);
-            }
-            Preconditions.checkArgument(!schemas.contains(inputSchema),
-                                        "Same type already defined for the same input. Type: %s, input: %s",
-                                        inputType, inputName);
-            schemas.add(inputSchema);
-          }
-        }
-      }
-    }
-
-    private Map<String, Set<Schema>> immutableCopyOf(Map<String, Set<Schema>> map) {
-      ImmutableMap.Builder<String, Set<Schema>> builder = ImmutableMap.builder();
-      for (Map.Entry<String, Set<Schema>> entry : map.entrySet()) {
-        builder.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
-      }
-      return builder.build();
-    }
   }
 
   /**

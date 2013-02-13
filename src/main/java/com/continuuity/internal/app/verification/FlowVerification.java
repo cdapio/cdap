@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
@@ -52,8 +53,8 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
     }
 
     // We go through each Flowlet and verify the flowlets.
-    for(Map.Entry<String, FlowSpecification.FlowletDefinition> entry : input.getFlowlets().entrySet()) {
-      FlowSpecification.FlowletDefinition defn = entry.getValue();
+    for(Map.Entry<String, FlowletDefinition> entry : input.getFlowlets().entrySet()) {
+      FlowletDefinition defn = entry.getValue();
       String flowletName = defn.getFlowletSpec().getName();
 
       // Check if the Flowlet Name is an ID.
