@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.Reader;
 
 /**
- *
+ * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.
  */
 @NotThreadSafe
 public final class ApplicationSpecificationAdapter {
@@ -31,16 +31,16 @@ public final class ApplicationSpecificationAdapter {
   }
 
   public String toJson(ApplicationSpecification appSpec) {
-    StringBuilder builder = new StringBuilder();
     try {
-      writeJson(appSpec, builder);
+      StringBuilder builder = new StringBuilder();
+      toJson(appSpec, builder);
+      return builder.toString();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    return builder.toString();
   }
 
-  public void writeJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
+  public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
     try {
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
@@ -54,7 +54,11 @@ public final class ApplicationSpecificationAdapter {
     }
   }
 
-  public ApplicationSpecification readJson(Reader reader) throws IOException {
+  public ApplicationSpecification fromJson(String json) {
+    return gson.fromJson(json, ApplicationSpecification.class);
+  }
+
+  public ApplicationSpecification fromJson(Reader reader) throws IOException {
     try {
       return gson.fromJson(reader, ApplicationSpecification.class);
     } catch (JsonParseException e) {
