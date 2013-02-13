@@ -12,6 +12,7 @@ import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -55,16 +56,12 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
       log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
             cleanWriteVersion + ")");
 
-    // Get a dirty pointer
-    ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
-
     // Get our unique entry id
     long entryId;
     try {
-      // TODO: Make sure the increment below uses increment operation of the underlying implementation directly so that it is atomic
-      // TODO: (Eg. HBase increment operation)
-      entryId = this.table.increment(makeRowName(GLOBAL_ENTRY_HEADER),
-                                     GLOBAL_ENTRYID_COUNTER, 1, dirty.getFirst(), dirty.getSecond());
+      // Make sure the increment below uses increment operation of the underlying implementation directly so that it is atomic
+      // (Eg. HBase increment operation)
+      entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 1);
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
         "of global entry id failed with status code " + e.getStatus() +
@@ -84,7 +81,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
   @Override
   public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
-    byte [] rowName = makeRowName(GLOBAL_DATA_HEADER);
+    final byte [] rowName = makeRowName(GLOBAL_DATA_HEADER);
     // Change meta data to INVALID
     this.table.put(rowName, makeColumnName(entryPointer.getEntryId(), ENTRY_META),
                    cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
@@ -99,18 +96,17 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");
 
-    byte [] rowName = makeRowName(GLOBAL_DATA_HEADER);
+    final byte [] rowName = makeRowName(GLOBAL_DATA_HEADER);
     while(true) {
       // Get the next entryId that can be dequeued by this consumer
-      long entryId = fetchNextEntryId(consumer, config, readPointer);
-      // TODO: Read both entry meta and entry data in one call
-      // Read entry meta and entry data for the entryId with readPointer
-      OperationResult<ImmutablePair<byte[],Long>> entryMetaResult =
-        this.table.getWithVersion(rowName, makeColumnName(entryId, ENTRY_META), readPointer);
-      OperationResult<ImmutablePair<byte[],Long>> entryDataResult =
-        this.table.getWithVersion(rowName, makeColumnName(entryId, ENTRY_DATA), readPointer);
+      final long entryId = fetchNextEntryId(consumer, config, readPointer);
+      final byte [] metaColName = makeColumnName(entryId, ENTRY_META);
+      final byte [] dataColName = makeColumnName(entryId, ENTRY_DATA);
+      // Read visible entry meta and entry data for the entryId
+      OperationResult<Map<byte[], byte[]>> result = this.table.get(rowName,
+                      new byte[][]{ metaColName, dataColName }, readPointer);
 
-      if(entryMetaResult.isEmpty()) {
+      if(result.isEmpty()) {
         // This entry doesn't exist or is not visible, queue is empty for this consumer
         log("Queue is empty, nothing found at " + entryId + " using " +
               "read pointer " + readPointer);
@@ -118,7 +114,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
       }
 
       // Queue entry exists and is visible, check the global state of it
-      EntryMeta entryMeta = EntryMeta.fromBytes(entryMetaResult.getValue().getFirst());
+      EntryMeta entryMeta = EntryMeta.fromBytes(result.getValue().get(metaColName));
       if (TRACE) log("entryMeta : " + entryMeta.toString());
 
       // Check if entry has been invalidated or evicted
@@ -131,9 +127,8 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
       // Entry is visible and valid!
       assert(entryMeta.isValid());
-      byte [] entryData = entryDataResult.getValue().getFirst();
-      assert(entryData.length > 0);
-      if (TRACE) log("Entry : " + entryId + " can be dequeued");
+      byte [] entryData = result.getValue().get(dataColName);
+      if (TRACE) log("Entry : " + entryId + " is dequeued");
       this.dequeueReturns.incrementAndGet();
       return new DequeueResult(DequeueResult.DequeueStatus.SUCCESS,
                                new QueueEntryPointer(this.queueName, entryId), entryData);
