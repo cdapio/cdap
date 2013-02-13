@@ -6,18 +6,16 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaTypeAdapter;
+import com.continuuity.api.io.ReflectionSchemaGenerator;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.classloader.JarClassLoader;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,13 +109,10 @@ public class InMemoryConfigurator implements Configurator  {
       ApplicationSpecification specification = app.configure();
 
       // Convert the specification to JSON.
-      Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-                    .create();
-
       // We write the Application specification to output file in JSON format.
       writer = new StringWriter();
-      gson.toJson(specification, writer);
+      // TODO: The SchemaGenerator should be injected
+      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch (Exception e) {
       Futures.immediateFailedFuture(e);

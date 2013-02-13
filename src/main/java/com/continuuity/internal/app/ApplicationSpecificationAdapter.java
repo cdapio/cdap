@@ -7,6 +7,7 @@ import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +31,10 @@ public final class ApplicationSpecificationAdapter {
     return new ApplicationSpecificationAdapter(generator, gson);
   }
 
+  public static ApplicationSpecificationAdapter create() {
+    return create(null);
+  }
+
   public String toJson(ApplicationSpecification appSpec) {
     try {
       StringBuilder builder = new StringBuilder();
@@ -41,6 +46,7 @@ public final class ApplicationSpecificationAdapter {
   }
 
   public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
+    Preconditions.checkState(schemaGenerator != null, "No schema generator is configured. Fail to serialize to json");
     try {
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {

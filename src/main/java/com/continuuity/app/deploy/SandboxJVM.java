@@ -6,12 +6,11 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaTypeAdapter;
+import com.continuuity.api.io.ReflectionSchemaGenerator;
 import com.continuuity.classloader.JarClassLoader;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.security.ApplicationSecurity;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -21,10 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
@@ -99,15 +96,12 @@ public class SandboxJVM {
     ApplicationSpecification specification = application.configure();
 
     // Convert the specification to JSON.
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
-
     // We write the Application specification to output file in JSON format.
     try {
-      Writer writer = new OutputStreamWriter(new FileOutputStream(outputFile), Charset.forName("UTF-8"));
+      Writer writer = Files.newWriter(outputFile, Charset.forName("UTF-8"));
       try {
-        gson.toJson(specification, writer);
+        // TODO: The SchemaGenerator should be injected.
+        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       } finally {
         writer.close();
       }
