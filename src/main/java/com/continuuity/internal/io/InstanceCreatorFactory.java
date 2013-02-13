@@ -1,5 +1,7 @@
 package com.continuuity.internal.io;
 
+import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.internal.app.runtime.DefaultStreamEvent;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -126,6 +128,14 @@ public final class InstanceCreatorFactory {
         @Override
         public T create() {
           return (T) Maps.newHashMap();
+        }
+      };
+    }
+    if (StreamEvent.class.isAssignableFrom(rawType)) {
+      return new InstanceCreator<T>() {
+        @Override
+        public T create() {
+          return (T) new DefaultStreamEvent();
         }
       };
     }
