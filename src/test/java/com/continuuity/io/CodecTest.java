@@ -27,7 +27,7 @@ public class CodecTest {
     Decoder decoder = new BinaryDecoder(input);
 
     encoder.writeNull();
-    decoder.readNull();
+    Assert.assertNull(decoder.readNull());
 
     encoder.writeBool(true);
     Assert.assertTrue(decoder.readBool());

@@ -67,10 +67,6 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    */
   protected final Schema doGenerate(TypeToken<?> typeToken, Set<String> knownRecords) throws UnsupportedTypeException {
     Type type = typeToken.getType();
-    if (!(type instanceof Class) && !(type instanceof ParameterizedType)) {
-      throw new UnsupportedTypeException("Type " + type + " is not supported. " +
-                                         "Only Class or ParameterizedType are supported.");
-    }
     Class<?> rawType = typeToken.getRawType();
 
     if (SIMPLE_SCHEMAS.containsKey(rawType)) {
@@ -85,6 +81,11 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     // Java array, use ARRAY schema.
     if (rawType.isArray()) {
       return Schema.arrayOf(doGenerate(TypeToken.of(rawType), knownRecords));
+    }
+
+    if (!(type instanceof Class || type instanceof ParameterizedType)) {
+      throw new UnsupportedTypeException("Type " + type + " is not supported. " +
+                                           "Only Class or ParameterizedType are supported.");
     }
 
     // Any parameterized Collection class would be represented by ARRAY schema.

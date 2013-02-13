@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -34,14 +35,11 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
   @Override
   protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords) throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
-    Map<String, TypeToken<?>> recordFieldTypes = Maps.newTreeMap();
     knowRecords.add(recordName);
-
-    if (typeToken.getRawType().isInterface()) {
-      collectByMethod(typeToken, recordFieldTypes);
-    } else {
-      collectByFields(typeToken, recordFieldTypes);
-    }
+    Map<String, TypeToken<?>> recordFieldTypes =
+              typeToken.getRawType().isInterface() ?
+                      collectByMethods(typeToken, Maps.<String, TypeToken<?>>newTreeMap()) :
+                      collectByFields(typeToken, Maps.<String, TypeToken<?>>newTreeMap());
 
     // Recursively generate field type schema.
     ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
@@ -49,8 +47,10 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       Schema fieldSchema = doGenerate(fieldType.getValue(), knowRecords);
 
       if (!fieldType.getValue().getRawType().isPrimitive()) {
-        // For non-primitive, allows "null" value.
-        fieldSchema = Schema.unionOf(Schema.of(Schema.Type.NULL), fieldSchema);
+        // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
+        if (!typeToken.getRawType().isAnnotationPresent(Nonnull.class)) {
+          fieldSchema = Schema.unionOf(fieldSchema, Schema.of(Schema.Type.NULL));
+        }
       }
       builder.add(Schema.Field.of(fieldType.getKey(), fieldSchema));
     }
@@ -58,7 +58,7 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     return Schema.recordOf(recordName, builder.build());
   }
 
-  private void collectByFields(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
+  private Map<String, TypeToken<?>> collectByFields(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
     // Collect the field types
     for (TypeToken<?> classType : typeToken.getTypes().classes()) {
       Class<?> rawType = classType.getRawType();
@@ -75,9 +75,10 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
         fieldTypes.put(field.getName(), fieldType);
       }
     }
+    return fieldTypes;
   }
 
-  private void collectByMethod(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
+  private Map<String, TypeToken<?>> collectByMethods(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
     for (Method method : typeToken.getRawType().getMethods()) {
       if (method.getDeclaringClass().equals(Object.class)) {
         // Ignore all object methods
@@ -101,5 +102,6 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       TypeToken<?> fieldType = typeToken.resolveType(method.getGenericReturnType());
       fieldTypes.put(fieldName, fieldType);
     }
+    return fieldTypes;
   }
 }

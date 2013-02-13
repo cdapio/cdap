@@ -19,8 +19,9 @@ public final class BinaryDecoder implements Decoder {
   }
 
   @Override
-  public void readNull() throws IOException {
+  public Object readNull() throws IOException {
     // No-op
+    return null;
   }
 
   @Override

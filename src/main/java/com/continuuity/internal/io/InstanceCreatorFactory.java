@@ -1,0 +1,148 @@
+package com.continuuity.internal.io;
+
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+
+/**
+ *
+ */
+public final class InstanceCreatorFactory {
+
+  private static final Unsafe UNSAFE;
+
+  static {
+    Unsafe unsafe;
+    try {
+      Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+      Field f = unsafeClass.getDeclaredField("theUnsafe");
+      f.setAccessible(true);
+      unsafe = (Unsafe) f.get(null);
+    } catch (Exception e) {
+      unsafe = null;
+    }
+    UNSAFE = unsafe;
+  }
+
+  public <T> InstanceCreator<T> get(TypeToken<T> type) {
+    InstanceCreator<T> creator = getByDefaultConstructor(type);
+    if (creator != null) {
+      return creator;
+    }
+
+    creator = getByKnownType(type);
+    if (creator != null) {
+      return creator;
+    }
+
+    return getByUnsafe(type);
+  }
+
+  /**
+   * Returns an {@link InstanceCreator} that uses default constructor to instantiate an object of the given type.
+   *
+   * @param type
+   * @param <T>
+   * @return
+   */
+  private <T> InstanceCreator<T> getByDefaultConstructor(TypeToken<T> type) {
+    try {
+      final Constructor<? super T> defaultCons = type.getRawType().getDeclaredConstructor();
+      defaultCons.setAccessible(true);
+
+      return new InstanceCreator<T>() {
+        @Override
+        public T create() {
+          try {
+            return (T) defaultCons.newInstance();
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
+
+    } catch (NoSuchMethodException e) {
+      return null;
+    }
+  }
+
+  private <T> InstanceCreator<T> getByKnownType(TypeToken<T> type) {
+    Class<? super T> rawType = type.getRawType();
+    if (Collection.class.isAssignableFrom(rawType)) {
+      if (SortedSet.class.isAssignableFrom(rawType)) {
+        return new InstanceCreator<T>() {
+          @Override
+          public T create() {
+            return (T) Sets.newTreeSet();
+          }
+        };
+      }
+      if (Set.class.isAssignableFrom(rawType)) {
+        return new InstanceCreator<T>() {
+          @Override
+          public T create() {
+            return (T) Sets.newHashSet();
+          }
+        };
+      }
+      if (Queue.class.isAssignableFrom(rawType)) {
+        return new InstanceCreator<T>() {
+          @Override
+          public T create() {
+            return (T) Lists.newLinkedList();
+          }
+        };
+      }
+      return new InstanceCreator<T>() {
+        @Override
+        public T create() {
+          return (T) Lists.newArrayList();
+        }
+      };
+    }
+
+    if (Map.class.isAssignableFrom(rawType)) {
+      if (SortedMap.class.isAssignableFrom(rawType)) {
+        return new InstanceCreator<T>() {
+          @Override
+          public T create() {
+            return (T) Maps.newTreeMap();
+          }
+        };
+      }
+      return new InstanceCreator<T>() {
+        @Override
+        public T create() {
+          return (T) Maps.newHashMap();
+        }
+      };
+    }
+    return null;
+  }
+
+  private <T> InstanceCreator<T> getByUnsafe(TypeToken<T> type) {
+    final Class<? super T> rawType = type.getRawType();
+    return new InstanceCreator<T>() {
+      @Override
+      public T create() {
+        try {
+          return (T)UNSAFE.allocateInstance(rawType);
+        } catch (InstantiationException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+}

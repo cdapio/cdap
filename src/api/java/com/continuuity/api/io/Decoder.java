@@ -8,7 +8,13 @@ import java.nio.ByteBuffer;
  */
 public interface Decoder {
 
-  void readNull() throws IOException;
+  /**
+   * Returns a null value.
+   *
+   * @return Always returns {@code null}
+   * @throws IOException
+   */
+  Object readNull() throws IOException;
 
   boolean readBool() throws IOException;
 
