@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
@@ -68,9 +67,9 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
           return VerifyResult.FAILURE(Err.NOT_AN_ID, flowName + ":" + flowletName + ":" + dataSet);
         }
       }
-
-      // Iterate through each input and see if there is a matching
     }
+
+    // We iterate through connections and make sure we have right schemas for all the interconnects.
 
     return VerifyResult.SUCCESS();
   }
