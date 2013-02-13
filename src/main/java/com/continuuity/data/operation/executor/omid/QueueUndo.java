@@ -11,13 +11,18 @@ import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ReadPointer;
 import com.google.common.base.Objects;
 
-public abstract class QueueInvalidate {
+public abstract class QueueUndo implements Undo {
+
+  @Override
+  public byte[] getRowKey() {
+    // queue operations are excluded from conflict detection
+    return null;
+  }
 
   protected final byte [] queueName;
   protected final QueueEntryPointer entryPointer;
 
-  protected QueueInvalidate(final byte [] queueName,
-      final QueueEntryPointer entryPointer) {
+  protected QueueUndo(final byte[] queueName, final QueueEntryPointer entryPointer) {
     this.queueName = queueName;
     this.entryPointer = entryPointer;
   }
@@ -33,7 +38,7 @@ public abstract class QueueInvalidate {
   public abstract void execute(TTQueueTable queueTable,
       ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
 
-  public static class QueueUnenqueue extends QueueInvalidate {
+  public static class QueueUnenqueue extends QueueUndo {
     final byte[] data;
     final QueueProducer producer;
     public QueueUnenqueue(final byte[] queueName,
@@ -51,7 +56,7 @@ public abstract class QueueInvalidate {
     }
   }
 
-  public static class QueueUnack extends QueueInvalidate {
+  public static class QueueUnack extends QueueUndo {
     final QueueConsumer consumer;
     public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
         QueueConsumer consumer) {
