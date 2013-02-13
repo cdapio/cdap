@@ -3,7 +3,6 @@ package com.continuuity.internal.io;
 import com.continuuity.api.io.Decoder;
 import com.continuuity.api.io.Schema;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
@@ -13,7 +12,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,9 +67,9 @@ public final class ReflectionDatumReader<T> {
         check(sourceType == targetType, "Fails to resolve %s to %s", sourceType, targetType);
         return readBytes(decoder, targetTypeToken);
       case ENUM:
-        check(targetSchema.getEnumValues().containsAll(sourceSchema.getEnumValues()),
-              "Source enum values missing in target. Source: %s, target: %s", sourceSchema, targetSchema);
-        return sourceSchema.getEnumValue(decoder.readInt());
+        String enumValue = sourceSchema.getEnumValue(decoder.readInt());
+        check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.", enumValue);
+        return enumValue;
       case ARRAY:
         check(sourceType == targetType, "Fails to resolve %s to %s", sourceType, targetType);
         return readArray(decoder, sourceSchema, targetSchema, targetTypeToken);
