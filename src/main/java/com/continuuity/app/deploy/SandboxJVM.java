@@ -6,7 +6,7 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.classloader.JarClassLoader;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.security.ApplicationSecurity;

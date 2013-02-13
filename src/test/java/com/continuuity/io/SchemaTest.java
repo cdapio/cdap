@@ -1,6 +1,6 @@
 package com.continuuity.io;
 
-import com.continuuity.api.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.api.io.UnsupportedTypeException;
