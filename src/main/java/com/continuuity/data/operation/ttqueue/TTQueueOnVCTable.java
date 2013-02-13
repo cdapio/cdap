@@ -47,29 +47,29 @@ public class TTQueueOnVCTable implements TTQueue {
   AtomicLong dequeueReturns = new AtomicLong(0);
 
   // Row header names and flags
-  static final byte [] GLOBAL_ENTRY_HEADER = bytes((byte)10);
-  static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = bytes((byte)20);
-  static final byte [] GLOBAL_SHARDS_HEADER = bytes((byte)30);
-  static final byte [] GLOBAL_GROUPS_HEADER = bytes((byte)40);
-  static final byte [] GLOBAL_DATA_HEADER = bytes((byte)50);
+  static final byte [] GLOBAL_ENTRY_HEADER = { 10 };
+  static final byte [] GLOBAL_ENTRY_WRITEPOINTER_HEADER = { 20 };
+  static final byte [] GLOBAL_SHARDS_HEADER = { 30 } ;
+  static final byte [] GLOBAL_GROUPS_HEADER = { 40 };
+  static final byte [] GLOBAL_DATA_HEADER = { 50 };
 
   // Columns for row = GLOBAL_ENTRY_HEADER
-  static final byte [] GLOBAL_ENTRYID_COUNTER = bytes((byte)10);
+  static final byte [] GLOBAL_ENTRYID_COUNTER = { 10 };
 
   // Columns for row = GLOBAL_ENTRY_WRITEPOINTER_HEADER
-  static final byte [] GLOBAL_ENTRYID_WRITEPOINTER_COUNTER = bytes((byte)10);
+  static final byte [] GLOBAL_ENTRYID_WRITEPOINTER_COUNTER = { 10 };
 
   // Columns for row = GLOBAL_SHARDS_HEADER
-  static final byte [] GLOBAL_SHARD_META = bytes((byte)10);
+  static final byte [] GLOBAL_SHARD_META = { 10 };
 
   // Columns for row = GLOBAL_GROUPS_HEADER
-  static final byte [] GROUP_ID_GEN = bytes((byte)5);
-  static final byte [] GROUP_STATE = bytes((byte)10);
+  static final byte [] GROUP_ID_GEN = { 5 };
+  static final byte [] GROUP_STATE = { 10 };
 
   // Columns for row = GLOBAL_DATA_HEADER
-  static final byte [] ENTRY_META = bytes((byte)10);
-  static final byte [] ENTRY_GROUP_META = bytes((byte)20);
-  static final byte [] ENTRY_DATA = bytes((byte)30);
+  static final byte [] ENTRY_META = { 10 };
+  static final byte [] ENTRY_GROUP_META = { 20 };
+  static final byte [] ENTRY_DATA = { 30 };
 
   /**
    * Constructs a TTQueue with the specified queue name, backed by the specified
@@ -84,21 +84,13 @@ public class TTQueueOnVCTable implements TTQueue {
     this.queueName = queueName;
     this.timeOracle = timeOracle;
     this.maxEntriesPerShard = conf.getLong("ttqueue.shard.max.entries", 1024);
-    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes",
-        1024*1024*1024);
-    this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max",
-        120 * 1000); // 120 seconds default
-    this.maxAgeBeforeSemiAckedToAcked = conf.getLong(
-        "ttqueue.entry.semiacked.max",
-        10 * 1000); // 10 second default
+    this.maxBytesPerShard = conf.getLong("ttqueue.shard.max.bytes", 1024*1024*1024);
+    this.maxAgeBeforeExpirationInMillis = conf.getLong("ttqueue.entry.age.max", 120 * 1000); // 120 seconds default
+    this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
   }
-  //Mario, look at the next method!
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
-      throws OperationException {
-    if (TRACE)
-      log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
-        cleanWriteVersion + ")");
+  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+    if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
@@ -106,8 +98,8 @@ public class TTQueueOnVCTable implements TTQueue {
     // Get our unique entry id
     long entryId;
     try {
-      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER),
-          GLOBAL_ENTRYID_COUNTER, 1, dirty.getFirst(), dirty.getSecond());
+      entryId = this.table.increment(makeRow(GLOBAL_ENTRY_HEADER), GLOBAL_ENTRYID_COUNTER, 1,
+                                     dirty.getFirst(), dirty.getSecond());
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
           "of global entry id failed with status code " + e.getStatus() +
@@ -199,8 +191,8 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
-      ReadPointer readPointer) throws OperationException {
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
 
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
