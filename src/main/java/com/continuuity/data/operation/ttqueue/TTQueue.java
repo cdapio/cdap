@@ -52,7 +52,7 @@ public interface TTQueue {
    * that is acknowledging is allowed to do so, false if not.
    * @throws OperationException if unsuccessful
    */
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException;
 
   /**
@@ -70,7 +70,7 @@ public interface TTQueue {
    *
    * @throws OperationException if unsuccessful
    */
-  void unack(QueueEntryPointer entryPointer, QueueConsumer consumer) throws OperationException;
+  void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for this queue.

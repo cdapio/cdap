@@ -1,15 +1,14 @@
 package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.ttqueue.QueueProducer;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ReadPointer;
 import com.google.common.base.Objects;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public abstract class QueueInvalidate {
 
@@ -77,7 +76,7 @@ public abstract class QueueInvalidate {
     @Override
     public void execute(TTQueueTable queueTable,
         ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
-      queueTable.unack(queueName, entryPointer, consumer);
+      queueTable.unack(queueName, entryPointer, consumer, txPointer.getFirst());
     }
   }
 }

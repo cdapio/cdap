@@ -9,13 +9,21 @@ import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.table.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-import org.junit.Ignore;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class TestTTQueue {
 
@@ -57,12 +65,12 @@ public abstract class TestTTQueue {
     QueueConsumer consumerSync = new QueueConsumer(0, 0, 1);
     QueueConfig configSync = new QueueConfig(PartitionerType.RANDOM, true);
     for (int i=1; i<numEntries+1; i++) {
+      MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result =
-          queue.dequeue(consumerSync, configSync,
-              new MemoryReadPointer(timeOracle.getTimestamp()));
+          queue.dequeue(consumerSync, configSync, rp);
       assertTrue(result.isSuccess());
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
-      queue.ack(result.getEntryPointer(), consumerSync);
+      queue.ack(result.getEntryPointer(), consumerSync, rp);
       queue.finalize(result.getEntryPointer(), consumerSync, -1);
       if (i % 100 == 0) System.out.print(".");
       if (i % 1000 == 0) System.out.println(" " + i);
@@ -150,7 +158,7 @@ public abstract class TestTTQueue {
     for (int i=0; i<10; i++) {
       DequeueResult result =
           queueNormal.dequeue(consumer, config, dirtyReadPointer);
-      queueNormal.ack(result.getEntryPointer(), consumer);
+      queueNormal.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
       queueNormal.finalize(result.getEntryPointer(), consumer, numGroups);
     }
 
@@ -175,7 +183,7 @@ public abstract class TestTTQueue {
     for (int i=0; i<10; i++) {
       DequeueResult result =
           queueEvict.dequeue(consumer, config, dirtyReadPointer);
-      queueEvict.ack(result.getEntryPointer(), consumer);
+      queueEvict.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
       queueEvict.finalize(result.getEntryPointer(), consumer, numGroups);
     }
 
@@ -215,7 +223,7 @@ public abstract class TestTTQueue {
       DequeueResult result =
           queue.dequeue(consumer1, config, dirtyReadPointer);
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
-      queue.ack(result.getEntryPointer(), consumer1);
+      queue.ack(result.getEntryPointer(), consumer1, dirtyReadPointer);
       queue.finalize(result.getEntryPointer(), consumer1, numGroups);
     }
 
@@ -232,7 +240,7 @@ public abstract class TestTTQueue {
       DequeueResult result =
           queue.dequeue(consumer2, config, dirtyReadPointer);
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
-      queue.ack(result.getEntryPointer(), consumer2);
+      queue.ack(result.getEntryPointer(), consumer2, dirtyReadPointer);
       queue.finalize(result.getEntryPointer(), consumer2, numGroups);
     }
 
@@ -249,7 +257,7 @@ public abstract class TestTTQueue {
       DequeueResult result =
           queue.dequeue(consumer3, config, dirtyReadPointer);
       assertTrue(Bytes.equals(Bytes.toBytes(i), result.getValue()));
-      queue.ack(result.getEntryPointer(), consumer3);
+      queue.ack(result.getEntryPointer(), consumer3, dirtyReadPointer);
       queue.finalize(result.getEntryPointer(), consumer3, numGroups);
     }
 
@@ -260,7 +268,7 @@ public abstract class TestTTQueue {
     DequeueResult result = queue.dequeue(consumer4, config, dirtyReadPointer);
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
-    queue.ack(result.getEntryPointer(), consumer4);
+    queue.ack(result.getEntryPointer(), consumer4, dirtyReadPointer);
     queue.finalize(result.getEntryPointer(), consumer4, ++numGroups); // numGroups=4
 
     // TODO: there is some weirdness here.  is the new native queue correct in
@@ -280,7 +288,7 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer3, config, dirtyReadPointer);
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
-    queue.ack(result.getEntryPointer(), consumer3);
+    queue.ack(result.getEntryPointer(), consumer3, dirtyReadPointer);
     // finalize now with numGroups=4
     queue.finalize(result.getEntryPointer(), consumer3, numGroups);
 
@@ -326,7 +334,7 @@ public abstract class TestTTQueue {
         Bytes.equals(result.getValue(), valueOne));
 
     // ack
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // dequeue, should get second value
@@ -335,7 +343,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(result.getValue(), valueTwo));
 
     // ack
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // verify queue is empty
@@ -370,7 +378,7 @@ public abstract class TestTTQueue {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), valueSemiAckedTimeout));
     // ack it but that's it
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
 
 
     // dequeue again, should get second entry (first is semi-acked)
@@ -378,8 +386,8 @@ public abstract class TestTTQueue {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToDequeued));
     // ack it, then unack it
-    queue.ack(result.getEntryPointer(), consumer);
-    queue.unack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
+    queue.unack(result.getEntryPointer(), consumer, dirtyReadPointer);
 
 
     // dequeue again, should get second entry again
@@ -387,7 +395,7 @@ public abstract class TestTTQueue {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToDequeued));
     // ack it, then finalize it
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
 
@@ -396,7 +404,7 @@ public abstract class TestTTQueue {
     assertTrue(result.toString(), result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), valueSemiAckedToAcked));
     // ack it, then finalize it
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, dirtyReadPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // queue should be empty
@@ -440,7 +448,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultTwo.getValue(), Bytes.toBytes(2)));
 
     // ack result two
-    queue.ack(resultTwo.getEntryPointer(), consumer);
+    queue.ack(resultTwo.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultTwo.getEntryPointer(), consumer, -1);
 
     // dequeue, should get third value
@@ -448,7 +456,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultThree.getValue(), Bytes.toBytes(3)));
 
     // ack
-    queue.ack(resultThree.getEntryPointer(), consumer);
+    queue.ack(resultThree.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultThree.getEntryPointer(), consumer, -1);
 
     // dequeue fourth
@@ -459,7 +467,7 @@ public abstract class TestTTQueue {
     for (int i=5; i<11; i++) {
       DequeueResult result = queue.dequeue(consumer, config, readPointer);
       assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(i)));
-      queue.ack(result.getEntryPointer(), consumer);
+      queue.ack(result.getEntryPointer(), consumer, readPointer);
       queue.finalize(result.getEntryPointer(), consumer, -1);
     }
 
@@ -469,22 +477,22 @@ public abstract class TestTTQueue {
     // second and third ackd, another ack should fail
     // second and third ackd, another ack should fail
     try {
-      queue.ack(resultTwo.getEntryPointer(), consumer);
+      queue.ack(resultTwo.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
     }
     try {
-      queue.ack(resultThree.getEntryPointer(), consumer);
+      queue.ack(resultThree.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
     }
 
     // first and fourth are not acked, ack should pass
-    queue.ack(resultOne.getEntryPointer(), consumer);
+    queue.ack(resultOne.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);
-    queue.ack(resultFour.getEntryPointer(), consumer);
+    queue.ack(resultFour.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultFour.getEntryPointer(), consumer, -1);
 
     // queue still empty
@@ -517,7 +525,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultTwo.getValue(), Bytes.toBytes(2)));
 
     // ack result two
-    queue.ack(resultTwo.getEntryPointer(), consumer);
+    queue.ack(resultTwo.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultTwo.getEntryPointer(), consumer, -1);
 
     // dequeue, should get third value
@@ -525,7 +533,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultThree.getValue(), Bytes.toBytes(3)));
 
     // ack
-    queue.ack(resultThree.getEntryPointer(), consumer);
+    queue.ack(resultThree.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultThree.getEntryPointer(), consumer, -1);
 
     // dequeue fourth
@@ -536,7 +544,7 @@ public abstract class TestTTQueue {
     for (int i=5; i<11; i++) {
       DequeueResult result = queue.dequeue(consumer, config, readPointer);
       assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(i)));
-      queue.ack(result.getEntryPointer(), consumer);
+      queue.ack(result.getEntryPointer(), consumer, readPointer);
       queue.finalize(result.getEntryPointer(), consumer, -1);
     }
 
@@ -545,13 +553,13 @@ public abstract class TestTTQueue {
 
     // second and third ackd, another ack should fail
     try {
-      queue.ack(resultTwo.getEntryPointer(), consumer);
+      queue.ack(resultTwo.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
     }
     try {
-      queue.ack(resultThree.getEntryPointer(), consumer);
+      queue.ack(resultThree.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
@@ -587,20 +595,20 @@ public abstract class TestTTQueue {
     assertTrue(queue.dequeue(consumer, config, readPointer).isEmpty());
 
     // first and fourth are not acked, ack should pass using either result
-    queue.ack(resultOne.getEntryPointer(), consumer);
+    queue.ack(resultOne.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);
-    queue.ack(resultFourB.getEntryPointer(), consumer);
+    queue.ack(resultFourB.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultFourB.getEntryPointer(), consumer, -1);
 
     // using other result version should fail second time
     try {
-      queue.ack(resultOneB.getEntryPointer(), consumer);
+      queue.ack(resultOneB.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
     }
     try {
-      queue.ack(resultFour.getEntryPointer(), consumer);
+      queue.ack(resultFour.getEntryPointer(), consumer, readPointer);
       fail("ack should fail.");
     } catch (OperationException e) {
       // expected
@@ -641,7 +649,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultTwo.getValue(), Bytes.toBytes(2)));
 
     // ack result two
-    queue.ack(resultTwo.getEntryPointer(), consumer);
+    queue.ack(resultTwo.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultTwo.getEntryPointer(), consumer, -1);
 
     // dequeue again, multi mode should get the third value
@@ -649,7 +657,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultThree.getValue(), Bytes.toBytes(3)));
 
     // ack result three
-    queue.ack(resultThree.getEntryPointer(), consumer);
+    queue.ack(resultThree.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultThree.getEntryPointer(), consumer, -1);
 
     // one is still not acked, queue is not empty
@@ -664,7 +672,7 @@ public abstract class TestTTQueue {
     }
 
     // ack entry one
-    queue.ack(resultOne.getEntryPointer(), consumer);
+    queue.ack(resultOne.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);
 
     // everything is empty now, should be able to change config
@@ -710,7 +718,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultOneB.getValue(), Bytes.toBytes(1)));
 
     // ack result one
-    queue.ack(resultOne.getEntryPointer(), consumer);
+    queue.ack(resultOne.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultOne.getEntryPointer(), consumer, -1);
 
     // dequeue again without acking, get second value
@@ -729,7 +737,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(resultTwoC.getValue(), Bytes.toBytes(2)));
 
     // ack
-    queue.ack(resultTwoB.getEntryPointer(), consumer);
+    queue.ack(resultTwoB.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultTwoB.getEntryPointer(), consumer, -1);
 
     // dequeue again, should get four not three as it was invalidated
@@ -756,7 +764,7 @@ public abstract class TestTTQueue {
     }
 
     // ack
-    queue.ack(resultFourA.getEntryPointer(), consumer);
+    queue.ack(resultFourA.getEntryPointer(), consumer, readPointer);
     queue.finalize(resultFourA.getEntryPointer(), consumer, -1);
 
     // empty
@@ -800,24 +808,24 @@ public abstract class TestTTQueue {
 
     // verify consumer 1 can't ack one of consumer 0s entries and vice versa
     try {
-      queue.ack(resultM0One.getEntryPointer(), consumers[1]);
+      queue.ack(resultM0One.getEntryPointer(), consumers[1], readPointer);
       fail("ack should fail with wrong consumer id.");
     } catch (OperationException e) {
       // expected
     }
     try {
-      queue.ack(resultM1Three.getEntryPointer(), consumers[0]);
+      queue.ack(resultM1Three.getEntryPointer(), consumers[0], readPointer);
       fail("ack should fail with wrong consumer id.");
     } catch (OperationException e) {
       // expected
     }
 
     // ack everything correctly
-    queue.ack(resultM0One.getEntryPointer(), consumers[0]);
+    queue.ack(resultM0One.getEntryPointer(), consumers[0], readPointer);
     queue.finalize(resultM0One.getEntryPointer(), consumer, -1);
-    queue.ack(resultM0Two.getEntryPointer(), consumers[0]);
+    queue.ack(resultM0Two.getEntryPointer(), consumers[0], readPointer);
     queue.finalize(resultM0Two.getEntryPointer(), consumer, -1);
-    queue.ack(resultM1Three.getEntryPointer(), consumers[1]);
+    queue.ack(resultM1Three.getEntryPointer(), consumers[1], readPointer);
     queue.finalize(resultM1Three.getEntryPointer(), consumer, -1);
 
     // both still see empty
@@ -851,7 +859,7 @@ public abstract class TestTTQueue {
     DequeueResult result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(1)));
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // changing configuration to multi should work fine, should get next entry
@@ -877,7 +885,7 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(3)));
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
 
     // changing configuration back to single should still not work
     config = singleConfig;
@@ -893,7 +901,7 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(4)));
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
 
     // we still have value=2 pending but dequeue will return empty in multiEntry
     result = queue.dequeue(consumer, config, readPointer);
@@ -909,7 +917,7 @@ public abstract class TestTTQueue {
     }
 
     // now ack value=2
-    queue.ack(value2result.getEntryPointer(), consumer);
+    queue.ack(value2result.getEntryPointer(), consumer, readPointer);
 
     // nothing pending and empty, can change config
     config = singleConfig;
@@ -922,7 +930,7 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(5)));
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // change config and dequeue
@@ -930,7 +938,7 @@ public abstract class TestTTQueue {
     result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(6)));
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // nothing pending and empty, can change config
@@ -977,7 +985,7 @@ public abstract class TestTTQueue {
       System.out.println("Consumer 1 dequeued value = "+ value);
       if (last > 0 && value != last + 1) ack = false;
       if (ack) {
-        queue.ack(result.getEntryPointer(), consumer1);
+        queue.ack(result.getEntryPointer(), consumer1, readPointer);
         queue.finalize(result.getEntryPointer(), consumer1, -1);
         assertTrue(acked.add(value));
         System.out.println("Consumer 1 acked value = "+ value);
@@ -1001,7 +1009,7 @@ public abstract class TestTTQueue {
     // iterate back over unacked consumer 1 entries and ack everything
     for (Map.Entry<Integer,QueueEntryPointer> entry:
       consumer1unacked.entrySet()) {
-      queue.ack(entry.getValue(), consumer1);
+      queue.ack(entry.getValue(), consumer1, readPointer);
       queue.finalize(entry.getValue(), consumer1, -1);
       assertTrue(acked.add(entry.getKey()));
       System.out.println("Consumer 1 acked value = "+ entry.getKey());
@@ -1015,7 +1023,7 @@ public abstract class TestTTQueue {
       if (result.isEmpty()) break;
       assertTrue(result.isSuccess());
       int value = Bytes.toInt(result.getValue());
-      queue.ack(result.getEntryPointer(), consumer3);
+      queue.ack(result.getEntryPointer(), consumer3, readPointer);
       queue.finalize(result.getEntryPointer(), consumer3, -1);
       assertTrue(acked.add(value));
       result = queue.dequeue(consumer3, config, readPointer);
@@ -1044,7 +1052,7 @@ public abstract class TestTTQueue {
     // ack all entries with consumer 2
     for (Map.Entry<Integer,QueueEntryPointer> entry:
       consumer2unacked.entrySet()) {
-      queue.ack(entry.getValue(), consumer2);
+      queue.ack(entry.getValue(), consumer2, readPointer);
       queue.finalize(entry.getValue(), consumer2, -1);
       assertTrue(acked.add(entry.getKey()));
       System.out.println("Consumer 2 acked value = "+ entry.getKey());
@@ -1106,7 +1114,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(result.getValue(), valueOne));
 
     // ack it!
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // trigger another dequeue
@@ -1140,7 +1148,7 @@ public abstract class TestTTQueue {
     assertTrue(Bytes.equals(result.getValue(), valueTwo));
 
     // ack it!
-    queue.ack(result.getEntryPointer(), consumer);
+    queue.ack(result.getEntryPointer(), consumer, readPointer);
     queue.finalize(result.getEntryPointer(), consumer, -1);
 
     // verify queue is empty
@@ -1160,7 +1168,11 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueFifoOnVCTable) {
+      dequeueReturns = ((TTQueueFifoOnVCTable)queue).dequeueReturns;
     }
+
+    assertNotNull(dequeueReturns);
 
     final int n = getNumIterations();
 
@@ -1185,7 +1197,7 @@ public abstract class TestTTQueue {
           if (result.isSuccess()) {
             dequeued.add(result.getValue());
             try {
-              queue.ack(result.getEntryPointer(), consumer);
+              queue.ack(result.getEntryPointer(), consumer, readPointer);
               queue.finalize(result.getEntryPointer(), consumer, -1);
             } catch (OperationException e) {
               fail("Queue ack or finalize failed: " + e.getMessage());
@@ -1247,7 +1259,11 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueFifoOnVCTable) {
+      dequeueReturns = ((TTQueueFifoOnVCTable)queue).dequeueReturns;
     }
+
+    assertNotNull(dequeueReturns);
 
     // Create 4 consumer groups with 4 consumers each
     int n = 4;
@@ -1367,7 +1383,7 @@ public abstract class TestTTQueue {
             readPointer);
         assertNotNull(result);
         assertEquals(j, Bytes.toLong(result.getValue()));
-        queue.ack(result.getEntryPointer(), consumers[i][j]);
+        queue.ack(result.getEntryPointer(), consumers[i][j], readPointer);
         queue.finalize(result.getEntryPointer(), consumers[i][j], -1);
         System.out.println("ACK: i=" + i + ", j=" + j);
       }
@@ -1403,7 +1419,7 @@ public abstract class TestTTQueue {
               readPointer);
           assertNotNull(result);
           assertEquals(j, Bytes.toLong(result.getValue()));
-          queue.ack(result.getEntryPointer(), consumers[i][j]);
+          queue.ack(result.getEntryPointer(), consumers[i][j], readPointer);
           queue.finalize(result.getEntryPointer(), consumers[i][j], -1);
           // buffer of dequeuer should still have that result
           waitForAndAssertCount(numdequeues, dequeuers[i][j].dequeues);
@@ -1469,7 +1485,7 @@ public abstract class TestTTQueue {
           assertEquals("i=" + i + ", j=" + j + ", k=" + k + ", threadid=" +
               dequeuers[i][j].getId(),
               (long)(k*n)+j, Bytes.toLong(result.getValue()));
-          queue.ack(result.getEntryPointer(), consumers[i][j]);
+          queue.ack(result.getEntryPointer(), consumers[i][j], readPointer);
           queue.finalize(result.getEntryPointer(), consumers[i][j], -1);
           dequeuers[i][j].triggerdequeue();
           localdequeues++;

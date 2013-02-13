@@ -5,7 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -59,9 +58,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
-                  QueueConsumer consumer) throws OperationException {
-    getQueue(queueName).ack(entryPointer, consumer);
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).ack(entryPointer, consumer, readPointer);
   }
 
   @Override
@@ -71,9 +69,8 @@ public class TTQueueTableOnVCTable implements TTQueueTable {
   }
 
   @Override
-  public void unack(byte[] queueName, QueueEntryPointer entryPointer,
-                    QueueConsumer consumer) throws OperationException {
-    getQueue(queueName).unack(entryPointer, consumer);
+  public void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    getQueue(queueName).unack(entryPointer, consumer, readPointer);
   }
 
   @Override

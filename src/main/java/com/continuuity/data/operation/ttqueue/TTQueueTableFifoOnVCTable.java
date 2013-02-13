@@ -2,45 +2,37 @@ package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.table.ReadPointer;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
 
 /**
- * A table of {@link TTQueue}s.  See that API for details.
+ * A table of {@link com.continuuity.data.operation.ttqueue.TTQueue}s.  See that API for details.
  */
-public class TTQueueTableOnHBaseNative implements TTQueueTable {
+public class TTQueueTableFifoOnVCTable implements TTQueueTable {
 
-  private final HTable table;
+  private final VersionedColumnarTable table;
   private final TimestampOracle timeOracle;
-  private final Configuration hbaseConf;
   private final CConfiguration conf;
 
   private final ConcurrentSkipListMap<byte[], TTQueue> queues =
       new ConcurrentSkipListMap<byte[],TTQueue>(Bytes.BYTES_COMPARATOR);
 
-  public TTQueueTableOnHBaseNative(HTable table,
-      TimestampOracle timeOracle, CConfiguration conf, Configuration hbaseConf) {
+  public TTQueueTableFifoOnVCTable(VersionedColumnarTable table, TimestampOracle timeOracle, CConfiguration conf) {
     this.table = table;
     this.timeOracle = timeOracle;
     this.conf = conf;
-    this.hbaseConf = hbaseConf;
   }
 
   private TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueOnHBaseNative(this.table, queueName, this.timeOracle,
+    queue = new TTQueueFifoOnVCTable(this.table, queueName, this.timeOracle,
         this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;
@@ -71,7 +63,7 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
 
   @Override
   public void finalize(byte[] queueName, QueueEntryPointer entryPointer,
-      QueueConsumer consumer, int totalNumGroups) throws OperationException {
+                       QueueConsumer consumer, int totalNumGroups) throws OperationException {
     getQueue(queueName).finalize(entryPointer, consumer, totalNumGroups);
   }
 
@@ -83,18 +75,14 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
   @Override
   public String getGroupInfo(byte[] queueName, int groupId)
       throws OperationException {
-    TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getInfo(groupId);
+    // TODO: implement this :)
     return "GroupInfo not supported";
   }
 
   @Override
   public String getEntryInfo(byte[] queueName, long entryId)
       throws OperationException {
-    TTQueue queue = getQueue(queueName);
-    if (queue instanceof TTQueueOnVCTable)
-      return ((TTQueueOnVCTable)queue).getEntryInfo(entryId);
+    // TODO: implement this :)
     return "EntryInfo not supported";
   }
 
@@ -110,15 +98,6 @@ public class TTQueueTableOnHBaseNative implements TTQueueTable {
 
   @Override
   public void clear() throws OperationException {
-    try {
-      HBaseAdmin hba = new HBaseAdmin(this.hbaseConf);
-      HTableDescriptor htd = hba.getTableDescriptor(this.table.getTableName());
-      hba.disableTable(this.table.getTableName());
-      hba.deleteTable(this.table.getTableName());
-      hba.createTable(htd);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new OperationException(StatusCode.HBASE_ERROR, "Problem clearing");
-    }
+    table.clear();
   }
 }

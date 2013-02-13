@@ -7,6 +7,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
+import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
@@ -20,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
-  private final VersionedColumnarTable table;
+  protected final VersionedColumnarTable table;
   private final byte [] queueName;
   final TimestampOracle timeOracle;
 
@@ -39,7 +40,11 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
   static final byte [] ENTRY_META = {10};
   static final byte [] ENTRY_DATA = {20};
 
-  // Columns for row = CONSUMER_META_HEADER are dynamic, based on entryID
+  // Columns for row = CONSUMER_META_HEADER
+  static final byte [] ACTIVE_ENTRY = {10};
+  static final byte [] META_ENTRY_PREFIX = {20};
+
+  static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
 
   protected TTQueueAbstractOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle,
                                      final CConfiguration conf) {
@@ -48,7 +53,8 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     this.timeOracle = timeOracle;
   }
 
-  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer);
+  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException;
 
   @Override
   public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
@@ -69,7 +75,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     }
     if (TRACE) log("New enqueue got entry id " + entryId);
 
-    // Insert entry at active shard
+    // Insert entry
     this.table.put(makeRowName(GLOBAL_DATA_HEADER),
                    new byte [][] { makeColumnName(entryId, ENTRY_DATA), makeColumnName(entryId, ENTRY_META)},
                    cleanWriteVersion,
@@ -99,7 +105,8 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     final byte [] rowName = makeRowName(GLOBAL_DATA_HEADER);
     while(true) {
       // Get the next entryId that can be dequeued by this consumer
-      final long entryId = fetchNextEntryId(consumer, config, readPointer);
+      final long entryId = determineNextEntryId(consumer, config, readPointer);
+
       final byte [] metaColName = makeColumnName(entryId, ENTRY_META);
       final byte [] dataColName = makeColumnName(entryId, ENTRY_DATA);
       // Read visible entry meta and entry data for the entryId
@@ -135,30 +142,66 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     }
   }
 
+  private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
+    // Read any claimed entry that was not processed
+    // TODO: the active entry should be read during initialization from HBase and stored in memory,
+    // TODO: so that repeated reads to HBase on each dequeue is not required
+    OperationResult<byte[]> result =
+      this.table.get(makeRowName(CONSUMER_META_HEADER, consumer.getGroupId(), consumer.getInstanceId()), ACTIVE_ENTRY, readPointer);
+    if(!result.isEmpty()) {
+      long activeEntryID = Bytes.toLong(result.getValue());
+      if(activeEntryID != INVALID_ACTIVE_ENTRY_ID_VALUE) {
+        return activeEntryID;
+      }
+    }
+
+    // Else get the next entryId
+    long entryId = fetchNextEntryId(consumer, config, readPointer);
+    // Persist the entryId this consumer will be working on
+    // TODO: Later when active entry can saved in memory, there is no need to write it into HBase
+    this.table.put(makeRowName(CONSUMER_META_HEADER, consumer.getGroupId(), consumer.getInstanceId()),
+                   new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY}, readPointer.getMaximum(),
+                   new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(), Bytes.toBytes(entryId)});
+    return entryId;
+  }
+
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer) throws OperationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
+    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
+    this.table.put(makeRowName(CONSUMER_META_HEADER, consumer.getGroupId(), consumer.getInstanceId()),
+      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
+      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(), Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
   }
 
   @Override
   public void finalize(QueueEntryPointer entryPointer, QueueConsumer consumer, int totalNumGroups) throws
     OperationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    // TODO: Evict queue entries
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer) throws OperationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
+    // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
+    // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
+    this.table.put(makeRowName(CONSUMER_META_HEADER, consumer.getGroupId(), consumer.getInstanceId()),
+      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
+      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(), Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
   }
 
+  static long groupId = 0;
   @Override
   public long getGroupID() throws OperationException {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    // TODO: implement this :)
+    return groupId++;
   }
 
   @Override
   public QueueAdmin.QueueInfo getQueueInfo() throws OperationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    // TODO: implement this :)
+    return null;
   }
 
   protected static boolean TRACE = false;
@@ -176,7 +219,25 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     return Bytes.add(this.queueName, bytesToAppendToQueueName);
   }
 
+  protected byte[] makeRowName(byte[] bytesToAppendToQueueName, long id1) {
+    return Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1));
+  }
+
+  protected byte[] makeRowName(byte[] bytesToAppendToQueueName, long id1, int id2) {
+    return Bytes.add(
+      Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)),
+      Bytes.toBytes(id2));
+  }
+
   protected byte[] makeColumnName(long id, byte[] bytesToAppendToId) {
     return Bytes.add(Bytes.toBytes(id), bytesToAppendToId);
+  }
+
+  protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
+    return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));
+  }
+
+  protected byte[] makeColumnName(long id) {
+    return Bytes.toBytes(id);
   }
 }

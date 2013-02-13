@@ -55,10 +55,10 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
+   * @param readPointer
    * @throws OperationException if something goes wrong
    */
-  public void ack(byte[] queueName, QueueEntryPointer entryPointer,
-                  QueueConsumer consumer) throws OperationException;
+  public void ack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Finalizes an ack.
@@ -79,10 +79,9 @@ public interface TTQueueTable {
    * @param queueName name of the queue
    * @param entryPointer
    * @param consumer
-   * @throws OperationException if something goes wrong
+   * @param readPointer
    */
-  void unack(byte[] queueName, QueueEntryPointer entryPointer,
-             QueueConsumer consumer) throws OperationException;
+  void unack(byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Generates and returns a unique group id for the specified queue.

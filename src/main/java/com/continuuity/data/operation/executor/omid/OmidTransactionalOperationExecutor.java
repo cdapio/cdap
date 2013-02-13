@@ -3,34 +3,46 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadAllKeys;
-import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.*;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OpenTable;
+import com.continuuity.data.operation.Operation;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadAllKeys;
+import com.continuuity.data.operation.ReadColumnRange;
+import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.Undelete;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.WriteOperationComparator;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueFinalize;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnack;
 import com.continuuity.data.operation.executor.omid.QueueInvalidate.QueueUnenqueue;
 import com.continuuity.data.operation.executor.omid.memory.MemoryRowSet;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.EnqueueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data.table.ReadPointer;
@@ -45,7 +57,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -807,8 +823,7 @@ implements TransactionalOperationExecutor {
             enqueue.getProducer(), result.getEntryPointer()));
   }
 
-  WriteTransactionResult write(QueueAck ack,
-      @SuppressWarnings("unused") ImmutablePair<ReadPointer, Long> pointer)
+  WriteTransactionResult write(QueueAck ack, ImmutablePair<ReadPointer, Long> pointer)
       throws OperationException {
 
     initialize();
@@ -816,7 +831,7 @@ implements TransactionalOperationExecutor {
     long begin = begin();
     try {
       getQueueTable(ack.getKey()).ack(ack.getKey(),
-          ack.getEntryPointer(), ack.getConsumer());
+          ack.getEntryPointer(), ack.getConsumer(), pointer.getFirst());
     } catch (OperationException e) {
       // Ack failed, roll back transaction
       return new WriteTransactionResult(StatusCode.ILLEGAL_ACK,

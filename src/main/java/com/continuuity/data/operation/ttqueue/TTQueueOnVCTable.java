@@ -10,9 +10,14 @@ import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.DequeueResult.DequeueStatus;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.QueueMeta;
-import com.continuuity.data.operation.ttqueue.internal.*;
+import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryGroupMeta.EntryGroupState;
+import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta.EntryState;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
+import com.continuuity.data.operation.ttqueue.internal.ExecutionMode;
+import com.continuuity.data.operation.ttqueue.internal.GroupState;
+import com.continuuity.data.operation.ttqueue.internal.ShardMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -529,7 +534,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
 
     // Get a dirty pointer
@@ -656,8 +661,7 @@ public class TTQueueOnVCTable implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer,
-                    QueueConsumer consumer) throws OperationException {
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     // Get a dirty pointer
     ImmutablePair<ReadPointer,Long> dirty = dirtyPointer();
     // Do a dirty read of EntryGroupMeta for this entry

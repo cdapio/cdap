@@ -1,10 +1,6 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
 import com.continuuity.data.runtime.DataFabricLocalModule;
@@ -12,6 +8,9 @@ import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.ReadPointer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class TestLocalModeTTQueuePerf {
 
@@ -95,7 +94,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result =
           queueTable.dequeue(queueName, consumer, config, readPointer);
-      queueTable.ack(queueName, result.getEntryPointer(), consumer);
+      queueTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
       queueTable.finalize(queueName, result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }
@@ -118,7 +117,7 @@ public class TestLocalModeTTQueuePerf {
     for (int i=0; i<n; i++) {
       DequeueResult result =
           streamTable.dequeue(queueName, consumer, config, readPointer);
-      streamTable.ack(queueName, result.getEntryPointer(), consumer);
+      streamTable.ack(queueName, result.getEntryPointer(), consumer, readPointer);
       streamTable.finalize(queueName, result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }

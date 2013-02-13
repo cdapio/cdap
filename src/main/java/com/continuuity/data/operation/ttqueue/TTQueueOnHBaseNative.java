@@ -7,8 +7,20 @@ import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
 import com.continuuity.data.table.ReadPointer;
-import com.continuuity.hbase.ttqueue.*;
+import com.continuuity.hbase.ttqueue.HBQAck;
+import com.continuuity.hbase.ttqueue.HBQDequeue;
+import com.continuuity.hbase.ttqueue.HBQDequeueResult;
+import com.continuuity.hbase.ttqueue.HBQEnqueue;
+import com.continuuity.hbase.ttqueue.HBQEnqueueResult;
+import com.continuuity.hbase.ttqueue.HBQExpirationConfig;
+import com.continuuity.hbase.ttqueue.HBQFinalize;
+import com.continuuity.hbase.ttqueue.HBQInvalidate;
+import com.continuuity.hbase.ttqueue.HBQMetaOperation;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
+import com.continuuity.hbase.ttqueue.HBQQueueMeta;
+import com.continuuity.hbase.ttqueue.HBQShardConfig;
+import com.continuuity.hbase.ttqueue.HBQUnack;
+import com.continuuity.hbase.ttqueue.HBReadPointer;
 import org.apache.hadoop.hbase.client.HTable;
 
 import java.io.IOException;
@@ -125,7 +137,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer)
+  public void ack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer)
       throws OperationException {
     if (TRACE) log("Acking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
@@ -161,8 +173,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public void unack(QueueEntryPointer entryPointer,
-      QueueConsumer consumer) throws OperationException {
+  public void unack(QueueEntryPointer entryPointer, QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
     if (TRACE) log("Unacking " + entryPointer);
     long now = this.timeOracle.getTimestamp();
     try {

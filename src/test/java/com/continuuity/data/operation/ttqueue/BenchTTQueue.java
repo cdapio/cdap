@@ -81,7 +81,7 @@ public abstract class BenchTTQueue {
     for (int i=0; i<iterations; i++) {
       DequeueResult result = queue.dequeue(consumer, config, rp);
       assertTrue(result.isSuccess());
-      queue.ack(result.getEntryPointer(), consumer);
+      queue.ack(result.getEntryPointer(), consumer, rp);
       queue.finalize(result.getEntryPointer(), consumer, -1);
       last = printStat(i, last, 1000);
     }
