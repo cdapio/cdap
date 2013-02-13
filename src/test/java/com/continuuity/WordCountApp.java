@@ -16,11 +16,11 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -105,7 +105,7 @@ public class WordCountApp implements Application {
       ByteBuffer buf = event.getBody();
       output.emit(new MyRecordImpl(
         event.getHeaders().get("title"),
-        buf == null ? null : Charset.forName("UTF-8").newDecoder().decode(buf).toString(),
+        buf == null ? null : Charsets.UTF_8.newDecoder().decode(buf).toString(),
         false));
     }
   }
@@ -155,7 +155,7 @@ public class WordCountApp implements Application {
       if (field != null) {
         token = field + ":" + token;
       }
-      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charset.forName("UTF-8"))));
+      this.counters.stage(new KeyValueTable.IncrementKey(token.getBytes(Charsets.UTF_8)));
     }
   }
 }

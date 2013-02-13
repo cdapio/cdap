@@ -6,7 +6,9 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -14,11 +16,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
@@ -78,7 +77,7 @@ public class SandboxConfigurator implements Configurator {
     return new InputSupplier<Reader>() {
       @Override
       public Reader getInput() throws IOException {
-        return new InputStreamReader(new FileInputStream(result), Charset.forName("UTF-8"));
+        return Files.newReader(result, Charsets.UTF_8);
       }
     };
   }

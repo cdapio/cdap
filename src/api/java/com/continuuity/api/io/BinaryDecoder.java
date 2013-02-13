@@ -1,16 +1,15 @@
 package com.continuuity.api.io;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  *
  */
 public final class BinaryDecoder implements Decoder {
-
-  private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final InputStream input;
 
@@ -72,7 +71,7 @@ public final class BinaryDecoder implements Decoder {
 
   @Override
   public String readString() throws IOException {
-    return new String(rawReadBytes(), UTF8);
+    return new String(rawReadBytes(), Charsets.UTF_8);
   }
 
   @Override

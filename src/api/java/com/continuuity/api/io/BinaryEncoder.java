@@ -1,16 +1,15 @@
 package com.continuuity.api.io;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  *
  */
 public final class BinaryEncoder implements Encoder {
-
-  private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private final OutputStream output;
 
@@ -97,7 +96,7 @@ public final class BinaryEncoder implements Encoder {
 
   @Override
   public Encoder writeString(String s) throws IOException {
-    return writeBytes(UTF8.encode(s));
+    return writeBytes(Charsets.UTF_8.encode(s));
   }
 
   @Override
