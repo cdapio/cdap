@@ -40,6 +40,24 @@ public final class ReflectionDatumReader<T> {
 
   private Object read(Decoder decoder, Schema sourceSchema,
                       Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+
+    if (sourceSchema.getType() != Schema.Type.UNION && targetSchema.getType() == Schema.Type.UNION) {
+      // Try every target schemas
+      for (Schema schema : targetSchema.getUnionSchemas()) {
+        try {
+          return doRead(decoder, sourceSchema, schema, targetTypeToken);
+        } catch (IOException e) {
+          // Continue;
+        }
+      }
+      throw new IOException(String.format("No matching schema to resolve %s to %s", sourceSchema, targetSchema));
+    }
+    return doRead(decoder, sourceSchema, targetSchema, targetTypeToken);
+  }
+
+  private Object doRead(Decoder decoder, Schema sourceSchema,
+                      Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+
     Schema.Type sourceType = sourceSchema.getType();
     Schema.Type targetType = targetSchema.getType();
 
@@ -176,28 +194,29 @@ public final class ReflectionDatumReader<T> {
                             Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
     int idx = decoder.readInt();
     Schema sourceValueSchema = sourceSchema.getUnionSchemas().get(idx);
-    List<Schema> targetUnion = targetSchema.getType() == Schema.Type.UNION ?
-                                    targetSchema.getUnionSchemas() : ImmutableList.of(targetSchema);
 
-    // A simple optimization to try resolve before resorting to linearly try the union schema.
-    try {
-      if (targetUnion.size() >= idx) {
-        Schema targetValueSchema = targetUnion.get(idx);
-        if (targetValueSchema.getType() == sourceValueSchema.getType()) {
+
+    if (targetSchema.getType() == Schema.Type.UNION) {
+      try {
+        // A simple optimization to try resolve before resorting to linearly try the union schema.
+        Schema targetValueSchema = targetSchema.getUnionSchema(idx);
+        if (targetValueSchema != null && targetValueSchema.getType() == sourceValueSchema.getType()) {
           return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
         }
-      }
-    } catch (IOException e) {
-      // It's ok to have exception here, and we'll go into union resolution logic
-    }
-    for (Schema targetValueSchema : targetUnion) {
-      try {
-        return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
       } catch (IOException e) {
-        // It's ok to have exception here, as we'll keep trying until exhausted the target union.
+        // OK to ignore it, as we'll do union schema resolution
       }
+      for (Schema targetValueSchema : targetSchema.getUnionSchemas()) {
+        try {
+          return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
+        } catch (IOException e) {
+          // It's ok to have exception here, as we'll keep trying until exhausted the target union.
+        }
+      }
+      throw new IOException(String.format("Fail to resolve %s to %s", sourceSchema, targetSchema));
+    } else {
+      return read(decoder, sourceValueSchema, targetSchema, targetTypeToken);
     }
-    throw new IOException("Fail to resolve type against union. Schema: " + sourceValueSchema + ", union: " + targetUnion);
   }
 
   private Object resolveType(Decoder decoder, Schema.Type sourceType, Schema.Type targetType) throws IOException {
@@ -255,24 +274,9 @@ public final class ReflectionDatumReader<T> {
         }
         break;
       case STRING:
-        try {
-          String value = decoder.readString();
-          switch (targetType) {
-            case STRING:
-              return value;
-            case BOOLEAN:
-              return Boolean.valueOf(value);
-            case INT:
-              return Integer.valueOf(value);
-            case LONG:
-              return Long.valueOf(value);
-            case FLOAT:
-              return Float.valueOf(value);
-            case DOUBLE:
-              return Double.valueOf(value);
-          }
-        } catch (Exception e) {
-          throw propagate(e);
+        switch (targetType) {
+          case STRING:
+            return decoder.readString();
         }
         break;
     }

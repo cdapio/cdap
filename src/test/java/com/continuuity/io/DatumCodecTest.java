@@ -55,17 +55,17 @@ public class DatumCodecTest {
   }
 
   public static class Record1 {
-    private final String i;
+    private final int i;
     private final Map<Integer, Value> properties;
 
-    public Record1(String i, Map<Integer, Value> properties) {
+    public Record1(int i, Map<Integer, Value> properties) {
       this.i = i;
       this.properties = properties;
     }
   }
 
   public static class Record2 {
-    private final long i;
+    private final Long i;
     private final Map<String, Value> properties;
     private final String name;
 
@@ -78,7 +78,7 @@ public class DatumCodecTest {
 
   @Test
   public void test() throws IOException, UnsupportedTypeException {
-    Record1 r1 = new Record1("10", Maps.<Integer, Value>newHashMap());
+    Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap());
     r1.properties.put(1, new Value(1, "Name1"));
     r1.properties.put(2, new Value(2, "Name2"));
 
@@ -92,7 +92,7 @@ public class DatumCodecTest {
     Record2 r2 = new ReflectionDatumReader<Record2>(targetSchema, TypeToken.of(Record2.class))
                             .read(new BinaryDecoder(input), sourceSchema);
 
-    Assert.assertEquals(10L, r2.i);
+    Assert.assertEquals(10L, r2.i.longValue());
     Assert.assertEquals(ImmutableMap.of("1", new Value(1, "Name1"), "2", new Value(2, "Name2")), r2.properties);
     Assert.assertNull(r2.name);
   }

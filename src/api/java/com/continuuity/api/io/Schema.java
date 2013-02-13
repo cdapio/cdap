@@ -362,6 +362,15 @@ public final class Schema {
     return unionSchemas;
   }
 
+  /**
+   * @param idx Index to the union schemas
+   * @return A {@link Schema} of the given union index or {@code null} if this is not a {@link Type#UNION UNION}
+   *         schema or the given index is invalid.
+   */
+  public Schema getUnionSchema(int idx) {
+    return (unionSchemas == null || idx < 0 || unionSchemas.size() <= idx) ? null : unionSchemas.get(idx);
+  }
+
   @Override
   public String toString() {
     // The follow logic is thread safe, as all the fields buildString() needs are immutable.
