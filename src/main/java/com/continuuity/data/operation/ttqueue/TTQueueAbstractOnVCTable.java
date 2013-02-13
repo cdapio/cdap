@@ -145,7 +145,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
   private long determineNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
     // Read any claimed entry that was not processed
-    // TODO: the active entry should be read during initialization from HBase and stored in memory,
+    // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
     // TODO: so that repeated reads to HBase on each dequeue is not required
     OperationResult<byte[]> result =
       this.table.get(makeRowName(CONSUMER_META_HEADER, consumer.getGroupId(), consumer.getInstanceId()), ACTIVE_ENTRY, readPointer);
