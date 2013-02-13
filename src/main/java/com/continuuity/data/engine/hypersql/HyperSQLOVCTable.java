@@ -289,6 +289,11 @@ implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
+    return -1;
+  }
+
+  @Override
   public void compareAndSwap(byte[] row, byte[] column,
                              byte[] expectedValue, byte[] newValue, ReadPointer readPointer,
                              long writeVersion) throws OperationException {

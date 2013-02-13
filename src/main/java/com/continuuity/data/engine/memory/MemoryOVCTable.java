@@ -420,6 +420,47 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   }
 
   @Override
+  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
+    return -1;
+//    Row r = new Row(row);
+//    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+//
+//    long[] newAmounts = new long[amounts.length];
+//    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+//
+//    try {
+//      // first determine new values for all columns. This can thrown an
+//      // exception if an existing value is not sizeof(long).
+//      for (int i=0; i<columns.length; i++) {
+//        byte [] column = columns[i];
+//        long amount = amounts[i];
+//        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+//        long existingAmount = 0L;
+//        ImmutablePair<Long, byte[]> latest = filteredLatest(versions, readPointer);
+//        if (latest != null) {
+//          try {
+//            existingAmount = Bytes.toLong(latest.getSecond());
+//          } catch(IllegalArgumentException e) {
+//            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+//          }
+//        }
+//        long newAmount = existingAmount + amount;
+//        newAmounts[i] = newAmount;
+//      }
+//      // now we know all values are legal, we can apply all increments
+//      for (int i=0; i<columns.length; i++) {
+//        byte [] column = columns[i];
+//        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+//        versions.put(new Version(writeVersion), new Value(Bytes.toBytes(newAmounts[i])));
+//        newAmountsMap.put(column, newAmounts[i]);
+//      }
+//      return newAmountsMap;
+//    } finally {
+//      unlockRow(r);
+//    }
+  }
+
+  @Override
   public void compareAndSwap(byte[] row, byte[] column,
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer, long writeVersion)
@@ -522,22 +563,18 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
   /**
    * Locks the specified row and returns the map of the columns of the row.
    */
-  private ImmutablePair<RowLock, NavigableMap<Column,
-      NavigableMap<Version, Value>>> getAndLockRow(Row row) {
+  private ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> getAndLockRow(Row row) {
     // Ensure row entry exists
-    NavigableMap<Column, NavigableMap<Version, Value>> rowMap =
-        this.map.get(row);
+    NavigableMap<Column, NavigableMap<Version, Value>> rowMap = this.map.get(row);
 
     if (rowMap == null) {
       rowMap = new TreeMap<Column, NavigableMap<Version, Value>>();
-      NavigableMap<Column, NavigableMap<Version, Value>> existingMap =
-          this.map.putIfAbsent(row, rowMap);
+      NavigableMap<Column, NavigableMap<Version, Value>> existingMap = this.map.putIfAbsent(row, rowMap);
       if (existingMap != null) rowMap = existingMap;
     }
     // Now we have the entry, grab a row lock
     RowLock rowLock = lockRow(row);
-    return new ImmutablePair<RowLock,
-        NavigableMap<Column, NavigableMap<Version, Value>>>(rowLock, rowMap);
+    return new ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>>(rowLock, rowMap);
   }
 
   /**

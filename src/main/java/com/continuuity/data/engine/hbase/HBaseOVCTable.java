@@ -529,6 +529,21 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
     }
   }
 
+  @Override
+  public long incrementAtomicDirtily(byte[] row, byte[] column, long amount)
+    throws OperationException {
+    try {
+      Increment increment = new Increment(row);
+      increment.addColumn(this.family, column, amount);
+      Result result = this.readTable.increment(increment);
+      if (result.isEmpty()) return 0L;
+      return Bytes.toLong(result.value());
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return -1L;
+    }
+  }
+
   private KeyValue getLatestVisible(final byte [] row, final byte [] qualifier, ReadPointer readPointer)
     throws OperationException {
     Set<Long> deleted = Sets.newHashSet();
