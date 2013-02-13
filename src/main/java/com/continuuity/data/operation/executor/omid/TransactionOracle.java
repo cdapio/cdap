@@ -6,6 +6,8 @@ package com.continuuity.data.operation.executor.omid;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.ReadPointer;
 
+import java.util.List;
+
 
 /**
  *
@@ -20,8 +22,11 @@ public interface TransactionOracle {
   
   public ImmutablePair<ReadPointer,Long> getNewPointer();
   
-  public boolean commit(long txid, RowSet rows) throws OmidTransactionException;
+  public void add(long txid, List<Undo> undos) throws OmidTransactionException;
 
-  public void aborted(long txid) throws OmidTransactionException;
+  public TransactionResult commit(long txid) throws OmidTransactionException;
 
+  public TransactionResult abort(long txid) throws OmidTransactionException;
+
+  void remove(long txid) throws OmidTransactionException;
 }
