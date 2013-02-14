@@ -59,25 +59,19 @@ public class AccountHandler {
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
-      JsonElement emailId = jsonObject.get("email_id");
-      JsonElement name = jsonObject.get("name");
 
-      String accountEmail = StringUtils.EMPTY_STRING;
-      String accountName = StringUtils.EMPTY_STRING;
+      String firstName = jsonObject.get("first_name") == null? null : jsonObject.get("first_name").getAsString();
+      String lastName = jsonObject.get("first_name") == null? null : jsonObject.get("last_name").getAsString();
+      String emailId = jsonObject.get("email_id") == null? null : jsonObject.get("email_id").getAsString();
+      String company = jsonObject.get("company") == null? null : jsonObject.get("company").getAsString();
 
-      if (emailId != null) {
-        accountEmail = emailId.getAsString();
-      }
-      if ( name != null)  {
-        accountName = name.getAsString();
-      }
 
-      if ( (accountEmail.isEmpty()) || (accountName.isEmpty()) ){
+      if ( (firstName == null) || (lastName == null) || (emailId == null) || (company == null) ){
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "Account name or email id is missing")).build();
+          .entity(Utils.getJson("FAILED", "Account name or email id or company is missing")).build();
       }
       else {
-        DataManagementServiceImpl.getInstance().registerAccount(new Account(accountName,accountEmail));
+        DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,lastName,company,emailId));
         return Response.ok(Utils.getJson("OK","Account Created")).build();
       }
     }
@@ -89,45 +83,36 @@ public class AccountHandler {
   }
 
 
+  //  public Account(String firstName, String lastName, String company, String emailId, int accountId) {
+
+
 
   @Path("{id}/confirm")
   @PUT
   @Produces("application/json")
   @Consumes("application/json")
-  public Response confirmAccount(String data, @PathParam("id") String id){
-//TODO: DOnot expect name and emailid in json
+  public Response confirmAccount(String data, @PathParam("id") int id){
     try{
       JsonParser parser = new JsonParser();
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
-      JsonElement emailId = jsonObject.get("email_id");
-      JsonElement name = jsonObject.get("name");
       JsonElement password = jsonObject.get("password");
 
-      String accountEmail = StringUtils.EMPTY_STRING;
-      String accountName = StringUtils.EMPTY_STRING;
       String accountPassword = StringUtils.EMPTY_STRING;
 
-      if (emailId != null) {
-        accountEmail = emailId.getAsString();
-      }
-      if ( name != null)  {
-        accountName = name.getAsString();
-      }
 
       if(password !=null){
         accountPassword = password.getAsString();
       }
 
-      if ( (accountEmail.isEmpty()) || (accountName.isEmpty()) || (accountPassword.isEmpty()) ){
+      if ( accountPassword.isEmpty()){
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED","Account name or email id or password is missing")).build();
+          .entity(Utils.getJson("FAILED","Password is missing")).build();
       }
       else {
 
-        Account account = new Account(accountName, id);
-        AccountSecurity security = new AccountSecurity(account, accountPassword);
+        AccountSecurity security = new AccountSecurity(id, accountPassword);
         DataManagementServiceImpl.getInstance().confirmRegistration(security);
         return Response.ok(Utils.getJson("OK","Account confirmed")).build();
       }
@@ -144,7 +129,7 @@ public class AccountHandler {
   @PUT
   @Produces("application/json")
   @Consumes("application/json")
-  public Response createVPC(String data)  {
+  public Response createVPC(String data, @PathParam("id")int id)  {
 
     try {
       JsonParser parser = new JsonParser();
@@ -152,26 +137,20 @@ public class AccountHandler {
       JsonObject jsonObject = element.getAsJsonObject();
 
       JsonElement name = jsonObject.get("vpc_name");
-      JsonElement id = jsonObject.get("account_id");
 
       String vpcName = StringUtils.EMPTY_STRING;
-      int accountid = -1;
 
-      System.out.println("Routed");
-      if (id != null) {
-        accountid = id.getAsInt();
-      }
       if ( name != null)  {
         vpcName = name.getAsString();
       }
 
-      if ( (accountid != -1) && (!vpcName.isEmpty()) ){
-        DataManagementServiceImpl.getInstance().addVPC(accountid, new VPC(vpcName));
+      if ( (!vpcName.isEmpty()) ){
+        DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
         return Response.ok(Utils.getJson("OK","VPC Created")).build();
       }
       else {
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "VPC creation failed. account_id or vpc_name is missing"))
+          .entity(Utils.getJson("FAILED", "VPC creation failed. vpc_name is missing"))
           .build();
       }
     }

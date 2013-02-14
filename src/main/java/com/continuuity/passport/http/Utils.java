@@ -8,14 +8,14 @@ public class Utils {
 
   public static String getJson(String status, String message){
 
-    return String.format("{\"status\":\"%s\",\"message\":\"%s\" ",status, message);
+    return String.format("{\"status\":\"%s\",\"message\":\"%s\" }",status, message);
   }
 
 
   public static String getJson(String status, String message, Exception e){
 
     String errorMessage =  String.format("%s. %s",message,e.getMessage()) ;
-    return String.format("{\"status\":\"%s\",\"message\":\"%s\" ",status, errorMessage);
+    return String.format("{\"status\":\"%s\",\"message\":\"%s\" }",status, errorMessage);
   }
 
 

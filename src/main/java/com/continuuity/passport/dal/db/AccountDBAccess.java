@@ -42,9 +42,11 @@ public class AccountDBAccess implements AccountDAO {
       //TODO: Execute in a thread ...
       SQLChain chain =  SQLChainImpl.getSqlChain(connection);
       chain.insert(Common.AccountTable.TABLE_NAME)
-           .columns(Common.AccountTable.EMAIL_COLUMN, Common.AccountTable.NAME_COLUMN,
+           .columns(Common.AccountTable.EMAIL_COLUMN, Common.AccountTable.FIRST_NAME_COLUMN,
+                    Common.AccountTable.LAST_NAME_COLUMN, Common.AccountTable.COMPANY_COLUMN,
                     Common.AccountTable.CONFIRMED_COLUMN)
-           .values(account.getEmailId(), account.getName(), Common.AccountTable.ACCOUNT_UNCONFIRMED)
+           .values(account.getEmailId(), account.getFirstName(), account.getLastName(),
+                   account.getCompany(),Common.AccountTable.ACCOUNT_UNCONFIRMED)
            .execute();
     } catch (SQLException e) {
       //TODO: Log
@@ -67,7 +69,7 @@ public class AccountDBAccess implements AccountDAO {
            .set(Common.AccountTable.PASSWORD_COLUMN, generateSaltedHashedPassword(security.getPassword()))
            .set(Common.AccountTable.CONFIRMED_COLUMN, Common.AccountTable.ACCOUNT_CONFIRMED)
            .setLast(Common.AccountTable.API_KEY_COLUMN, generateAPIKey())
-           .where(Common.AccountTable.EMAIL_COLUMN).equal(security.getAccount().getEmailId()).execute();
+           .where(Common.AccountTable.ID_COLUMN).equal(security.getAccountId()).execute();
     }
     catch (SQLException e){
       throw new RuntimeException(e.getMessage(),e.getCause());
@@ -128,7 +130,9 @@ public class AccountDBAccess implements AccountDAO {
       List<Map<String,Object>> resultSet = chain.select(Common.AccountTable.TABLE_NAME)
                                                 .include(Common.AccountTable.ID_COLUMN,
                                                          Common.AccountTable.EMAIL_COLUMN,
-                                                         Common.AccountTable.NAME_COLUMN)
+                                                         Common.AccountTable.FIRST_NAME_COLUMN,
+                                                         Common.AccountTable.LAST_NAME_COLUMN,
+                                                         Common.AccountTable.COMPANY_COLUMN)
                                                 .where(Common.AccountTable.ID_COLUMN).equal(accountId)
                                                 .execute();
 
@@ -136,8 +140,11 @@ public class AccountDBAccess implements AccountDAO {
       System.out.println("Result Size: "+resultSet.size() );
        if (resultSet.size() == 1 ) {
 
+
          Map<String,Object> dataSet = resultSet.get(0);
-         account = new Account((String)dataSet.get(Common.AccountTable.NAME_COLUMN.toLowerCase()),
+         account = new Account((String)dataSet.get(Common.AccountTable.FIRST_NAME_COLUMN.toLowerCase()),
+                               (String)dataSet.get(Common.AccountTable.LAST_NAME_COLUMN.toLowerCase()),
+                               (String)dataSet.get(Common.AccountTable.COMPANY_COLUMN.toLowerCase()),
                                (String)dataSet.get(Common.AccountTable.EMAIL_COLUMN.toLowerCase()),
                                (Integer)dataSet.get(Common.AccountTable.ID_COLUMN.toLowerCase()));
 

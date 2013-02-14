@@ -10,7 +10,9 @@ public class Common {
     public static final String TABLE_NAME = "account";
     public static  final String ID_COLUMN = "id";
     public static final String EMAIL_COLUMN ="email_id";
-    public static final String NAME_COLUMN = "name";
+    public static final String FIRST_NAME_COLUMN = "first_name";
+    public static final String LAST_NAME_COLUMN = "last_name";
+    public static final String COMPANY_COLUMN = "company";
     public static final String CONFIRMED_COLUMN = "confirmed";
     public static final String PASSWORD_COLUMN = "password";
     public static final String API_KEY_COLUMN = "api_key";

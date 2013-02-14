@@ -4,16 +4,17 @@ package com.continuuity.passport.core.meta;
 *
 */
 public class AccountSecurity {
-  private Account account;
+  private int accountId;
   private String password;
 
-  public AccountSecurity(Account account, String password) {
-    this.account = account;
+
+  public AccountSecurity(int accountId, String password) {
+    this.accountId = accountId;
     this.password = password;
   }
 
-  public Account getAccount() {
-    return account;
+  public int getAccountId() {
+    return accountId;
   }
 
   public String getPassword() {
