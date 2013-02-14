@@ -13,6 +13,7 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -76,7 +77,7 @@ public class DatumCodecTest {
   }
 
   @Test
-  public void test() throws IOException, UnsupportedTypeException {
+  public void testTypeProject() throws IOException, UnsupportedTypeException {
     Record1 r1 = new Record1(10, Maps.<Integer, Value>newHashMap());
     r1.properties.put(1, new Value(1, "Name1"));
     r1.properties.put(2, new Value(2, "Name2"));
@@ -94,5 +95,22 @@ public class DatumCodecTest {
     Assert.assertEquals(10L, r2.i.longValue());
     Assert.assertEquals(ImmutableMap.of("1", new Value(1, "Name1"), "2", new Value(2, "Name2")), r2.properties);
     Assert.assertNull(r2.name);
+  }
+
+  public static final class Node {
+    int d;
+    Node next;
+  }
+
+  @Test(expected = IOException.class)
+  public void testCircularRef() throws UnsupportedTypeException, IOException {
+    Schema schema = new ReflectionSchemaGenerator().generate(Node.class);
+
+    Node head = new Node();
+    head.next = new Node();
+    head.next.next = head;
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    new ReflectionDatumWriter(schema).write(head, new BinaryEncoder(output));
   }
 }
