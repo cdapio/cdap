@@ -5,7 +5,11 @@ import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.status.Status;
+
+import java.util.List;
 
 /**
  *
@@ -19,9 +23,12 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerAccount(Account account) throws RetryException;
+  public Status registerAccount(Account account) throws RuntimeException;
 
-  public Status confirmRegistration(Account account) throws RetryException;
+  public Status addVPC(int accountId, VPC vpc) throws RuntimeException;
+
+
+  public Status confirmRegistration(AccountSecurity account) throws RuntimeException;
 
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
@@ -74,6 +81,8 @@ public interface DataManagementService {
    * @param accountId Id of the account
    * @return Instance of {@code Account}
    */
-  public Account getAccount(String accountId);
+  public Account getAccount(String accountId) throws RuntimeException;
+
+  public List<VPC> getVPC(int accountId);
 
 }

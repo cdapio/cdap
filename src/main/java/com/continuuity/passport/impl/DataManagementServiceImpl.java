@@ -2,16 +2,47 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.passport.core.Component;
 import com.continuuity.passport.core.Credentials;
+import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.core.status.Status;
+import com.continuuity.passport.dal.AccountDAO;
+import com.continuuity.passport.dal.VpcDAO;
+import com.continuuity.passport.dal.db.AccountDBAccess;
+import com.continuuity.passport.dal.db.VpcDBAccess;
+import com.google.inject.Inject;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
 public class DataManagementServiceImpl implements DataManagementService {
 
+
+  private static DataManagementService service = null;
+
+  private AccountDAO accountDAO = null;
+
+  private VpcDAO vpcDao = null;
+
+
+  private DataManagementServiceImpl() {
+    accountDAO = new AccountDBAccess();
+    Map<String,String> config = new HashMap<String,String>();
+    config.put("jdbcType","mysql");
+    //config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
+    accountDAO.configure(config);
+
+    vpcDao = new VpcDBAccess();
+    vpcDao.configure(config);
+  }
 
   /**
    * Register an {@code Account} in the system
@@ -21,13 +52,32 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Status registerAccount(Account account) throws RetryException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public Status registerAccount(Account account) throws RuntimeException {
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+
+    }
+    try {
+      accountDAO.createAccount(account);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return null;
   }
 
   @Override
-  public Status confirmRegistration(Account account) throws RetryException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public Status confirmRegistration(AccountSecurity account) throws RuntimeException {
+
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+
+    }
+    try {
+      accountDAO.confirmRegistration(account);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return null;
   }
 
   /**
@@ -90,7 +140,55 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @return Instance of {@code Account}
    */
   @Override
-  public Account getAccount(String accountId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public Account getAccount(String accountId) throws RuntimeException {
+
+    System.out.println("In get Service Impl");
+    Account account = null;
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+     account= accountDAO.getAccount(accountId);
+    } catch (ConfigurationException e) {
+
+      System.out.println("In get Service Impl caught exception");
+      throw new RuntimeException(e.getMessage());
+    }
+    return account;
   }
+
+  @Override
+  public List<VPC> getVPC(int accountId) {
+    List<VPC> vpcs;
+    if(vpcDao == null) {
+      throw new RuntimeException("Could not initialize data access object");
+    }
+    try {
+       vpcs = vpcDao.getVPC(accountId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return vpcs;
+  }
+
+  public Status addVPC(int accountId, VPC vpc) throws RuntimeException {
+    if(vpcDao == null) {
+      throw new RuntimeException("Could not initialize data access object");
+    }
+    try {
+      vpcDao.addVPC(accountId, vpc);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return null;
+  }
+
+
+  public static DataManagementService getInstance(){
+    if (service == null ){
+      service = new DataManagementServiceImpl();
+    }
+    return service;
+  }
+
 }

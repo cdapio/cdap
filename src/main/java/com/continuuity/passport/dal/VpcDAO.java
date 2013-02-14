@@ -4,6 +4,7 @@ import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.meta.VPC;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,5 +22,7 @@ public interface VpcDAO {
                           throws ConfigurationException, RuntimeException;
 
   public void configure (Map<String,String> configuration) ;
+
+  public List<VPC> getVPC(int accountId) throws RuntimeException,ConfigurationException;
 
 }

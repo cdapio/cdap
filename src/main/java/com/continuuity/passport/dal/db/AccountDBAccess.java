@@ -23,7 +23,7 @@ public class AccountDBAccess implements AccountDAO {
 
   private Map<String, String> configuration;
 
-  private DBConnectionPoolManager poolManager =null;
+  private DBConnectionPoolManager poolManager = null;
 
   /**
    * Create Account in the system
@@ -32,7 +32,7 @@ public class AccountDBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public boolean createAccount(Account account) throws ConfigurationException,RuntimeException {
+  public boolean createAccount(Account account) throws ConfigurationException, RuntimeException {
     //TODO: Return boolean?
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
@@ -62,8 +62,9 @@ public class AccountDBAccess implements AccountDAO {
     try {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
+      //TODO: Update count should be 1
       chain.update(Common.AccountTable.TABLE_NAME)
-           .set(Common.AccountTable.PASSWORD_COLUMN, security.getSaltedHashedPassword())
+           .set(Common.AccountTable.PASSWORD_COLUMN, generateSaltedHashedPassword(security.getPassword()))
            .set(Common.AccountTable.CONFIRMED_COLUMN, Common.AccountTable.ACCOUNT_CONFIRMED)
            .setLast(Common.AccountTable.API_KEY_COLUMN, generateAPIKey())
            .where(Common.AccountTable.EMAIL_COLUMN).equal(security.getAccount().getEmailId()).execute();
@@ -117,8 +118,13 @@ public class AccountDBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
+      System.out.println("In get account DB Access");
       Connection connection = this.poolManager.getConnection();
+      System.out.println("Got connection");
+      if (connection == null) {System.out.println("Empty Connection");}
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
+      System.out.println(connection.toString());
+
       List<Map<String,Object>> resultSet = chain.select(Common.AccountTable.TABLE_NAME)
                                                 .include(Common.AccountTable.ID_COLUMN,
                                                          Common.AccountTable.EMAIL_COLUMN,
@@ -126,7 +132,10 @@ public class AccountDBAccess implements AccountDAO {
                                                 .where(Common.AccountTable.EMAIL_COLUMN).equal(emailId)
                                                 .execute();
 
+
+      System.out.println("Result Size: "+resultSet.size() );
        if (resultSet.size() == 1 ) {
+
          Map<String,Object> dataSet = resultSet.get(0);
          account = new Account((String)dataSet.get(Common.AccountTable.NAME_COLUMN.toLowerCase()),
                                (String)dataSet.get(Common.AccountTable.EMAIL_COLUMN.toLowerCase()),
@@ -137,6 +146,7 @@ public class AccountDBAccess implements AccountDAO {
 
     }
     catch (SQLException e) {
+      System.out.println(e.getMessage());
       throw new RuntimeException(e.getMessage(),e.getCause());
     }
     return account;
@@ -183,6 +193,8 @@ public class AccountDBAccess implements AccountDAO {
 
       MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
+
+
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
 
     }
@@ -195,6 +207,7 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
+
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
       chain.insert(Common.AccountRoleType.TABLE_NAME)
            .columns(Common.AccountRoleType.ACCOUNT_ID_COLUMN,Common.AccountRoleType.ROLE_NAME_COLUMN,
@@ -211,6 +224,12 @@ public class AccountDBAccess implements AccountDAO {
   private String generateAPIKey(){
     //TODO: Generate API_KEY
     return "API_KEY";
+  }
+
+  private String generateSaltedHashedPassword(String password) {
+    //TODO: Add this
+    return password;
+
   }
 
 }

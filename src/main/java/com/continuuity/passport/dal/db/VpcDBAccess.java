@@ -11,6 +11,8 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,7 +75,7 @@ public class VpcDBAccess implements VpcDAO {
       //TODO: Execute in a thread ...
       SQLChain chain =  SQLChainImpl.getSqlChain(connection);
       chain.insert(Common.VPCRole.TABLE_NAME)
-           .columns(Common.VPCRole.VPC_ID_COLUMN,Common.VPCRole.ACCOUNT_ID_COLUMN,Common.VPCRole.USER_ID,
+           .columns(Common.VPCRole.VPC_ID_COLUMN,Common.VPCRole.ACCOUNT_ID_COLUMN,Common.VPCRole.USER_ID_COLUMN,
                     Common.VPCRole.ROLE_TYPE_COLUMN,Common.VPCRole.ROLE_OVERRIDES_COLUMN)
            .values(vpcId,accountId,userId,role.getRoleId(),overrides).execute();
     }
@@ -99,5 +101,32 @@ public class VpcDBAccess implements VpcDAO {
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
 
     }
+  }
+
+  @Override
+  public List<VPC> getVPC(int accountId) throws RuntimeException, ConfigurationException {
+
+    List<VPC> vpcList = new ArrayList<VPC>();
+    if (this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      Connection connection= this.poolManager.getConnection();
+      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
+      List<Map<String,Object>> resultSet =  chain.select(Common.VPC.TABLE_NAME)
+                                                 .includeAll()
+                                                 .where(Common.VPC.ACCOUNT_ID_COLUMN).equal(accountId)
+                                                 .execute();
+      for(Map<String,Object> result : resultSet) {
+        VPC vpc = new VPC((Integer)result.get(Common.VPC.VPC_ID_COLUMN),(String)result.get(Common.VPC.NAME_COLUMN));
+        vpcList.add(vpc);
+      }
+
+      }
+    catch (SQLException e) {
+      //TODO: Log
+      throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    return vpcList;
   }
 }

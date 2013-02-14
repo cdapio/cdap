@@ -9,7 +9,6 @@ import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.dal.db.Common;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -31,7 +30,7 @@ import java.util.Set;
 /**
  *
  */
-///public class AuthenticatorImpl implements Authenticator extends AuthorizingRealm {
+
 public class AuthenticatorImpl extends AuthorizingRealm implements Authenticator {
 
   private Map<String,String> configurations;
