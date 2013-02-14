@@ -277,8 +277,8 @@ public final class FlowSpecification {
      */
     public interface ConnectFrom {
       /**
-       * Defines the flowlet that is at start of the connection.
-       * @param flowlet that is start of connection.
+       * Defines the flowlet that is at run of the connection.
+       * @param flowlet that is run of connection.
        * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       ConnectTo from(Flowlet flowlet);
@@ -323,8 +323,8 @@ public final class FlowSpecification {
       private FlowletDefinition fromFlowlet;
 
       /**
-       * Defines the flowlet that is at start of the connection.
-       * @param flowlet that is start of connection.
+       * Defines the flowlet that is at run of the connection.
+       * @param flowlet that is run of connection.
        * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       @Override
