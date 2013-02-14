@@ -11,13 +11,15 @@ USE `continuuity` ;
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
-  `name` VARCHAR(100) NOT NULL ,
+  `first_name` VARCHAR(50) NOT NULL ,
+  `last_name` VARCHAR(50) NOT NULL ,
+  `company` VARCHAR(100) NOT NULL ,
   `email_id` VARCHAR(100) NOT NULL ,
-  `salted_hashed_password` VARCHAR(100) NULL DEFAULT NULL ,
+  `password` VARCHAR(100) NULL DEFAULT NULL ,
   `confirmed` TINYINT(1) NULL DEFAULT NULL ,
   `locked` TINYINT(1) NULL DEFAULT NULL ,
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) ) ,
+  PRIMARY KEY (`id`) ,
   UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
