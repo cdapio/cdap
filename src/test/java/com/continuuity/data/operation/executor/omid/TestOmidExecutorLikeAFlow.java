@@ -8,7 +8,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
@@ -231,7 +230,6 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("testWriteBatchJustAck");
 
     TTQueueOnVCTable.TRACE = true;
-    MemoryOracle.TRACE = true;
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(
         PartitionerType.RANDOM, true);
@@ -251,7 +249,6 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertDequeueResultSuccess(result, Bytes.toBytes(1L));
 
     TTQueueOnVCTable.TRACE = false;
-    MemoryOracle.TRACE = false;
 
     // Ack it
     this.executor.execute(context, batch(new QueueAck(queueName,
