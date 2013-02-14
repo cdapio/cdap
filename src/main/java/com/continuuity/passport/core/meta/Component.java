@@ -1,4 +1,4 @@
-package com.continuuity.passport.core;
+package com.continuuity.passport.core.meta;
 
 import com.google.common.collect.ImmutableSet;
 

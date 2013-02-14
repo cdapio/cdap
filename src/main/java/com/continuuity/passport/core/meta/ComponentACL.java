@@ -1,4 +1,4 @@
-package com.continuuity.passport.core;
+package com.continuuity.passport.core.meta;
 
 /**
  * Defines Access control for each object
