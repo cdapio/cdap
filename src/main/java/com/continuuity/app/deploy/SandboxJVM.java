@@ -6,9 +6,9 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.jar.JarClassLoader;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.jar.JarClassLoader;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;

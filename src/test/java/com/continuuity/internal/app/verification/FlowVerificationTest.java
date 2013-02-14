@@ -5,10 +5,8 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.WebCrawlApp;
-import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;

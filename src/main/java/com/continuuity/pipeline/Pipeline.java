@@ -4,8 +4,6 @@
 
 package com.continuuity.pipeline;
 
-import java.util.List;
-
 /**
  * This class represents a processing system consisting of a number of stages.
  * Each {@link Stage} takes in data processes it and forwards it to the next {@link Stage}

@@ -2,7 +2,6 @@ package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.io.Schema;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.Verifier;
