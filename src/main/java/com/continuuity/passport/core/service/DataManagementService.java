@@ -81,7 +81,7 @@ public interface DataManagementService {
    * @param accountId Id of the account
    * @return Instance of {@code Account}
    */
-  public Account getAccount(String accountId) throws RuntimeException;
+  public Account getAccount(int accountId) throws RuntimeException;
 
   public List<VPC> getVPC(int accountId);
 

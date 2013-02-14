@@ -43,7 +43,7 @@ public interface AccountDAO {
    * @return {@code Account}
    * @throws {@code RetryException}
    */
-  public Account getAccount(String accountId) throws ConfigurationException, RuntimeException;
+  public Account getAccount(int accountId) throws ConfigurationException, RuntimeException;
 
 
   public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException, RuntimeException;

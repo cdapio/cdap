@@ -29,12 +29,12 @@ import java.util.List;
 public class AccountHandler {
 
 
-  @Path("{emailId}/status")
+  @Path("{id}/status")
   @GET
   @Produces("application/json")
-  public Response getAccountInfo(@PathParam("emailId") String emailId){
+  public Response getAccountInfo(@PathParam("id") int id){
 
-    Account account = DataManagementServiceImpl.getInstance().getAccount(emailId);
+    Account account = DataManagementServiceImpl.getInstance().getAccount(id);
     if (account != null){
       return Response.ok(account.toString()).build();
     }

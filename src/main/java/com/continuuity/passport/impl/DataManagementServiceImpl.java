@@ -140,7 +140,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @return Instance of {@code Account}
    */
   @Override
-  public Account getAccount(String accountId) throws RuntimeException {
+  public Account getAccount(int accountId) throws RuntimeException {
 
     System.out.println("In get Service Impl");
     Account account = null;

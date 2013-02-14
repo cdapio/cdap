@@ -105,12 +105,12 @@ public class AccountDBAccess implements AccountDAO {
   /**
    * GetAccount
    *
-   * @param emailId emailId of the account
+   * @param accountId id of the account
    * @return null if no entry matches, Instance of {@code Account} otherwise
    * @throws {@code RetryException}
    */
   @Override
-  public Account getAccount(String emailId) throws ConfigurationException, RuntimeException {
+  public Account getAccount(int accountId) throws ConfigurationException, RuntimeException {
 
     Account account = null;
 
@@ -129,7 +129,7 @@ public class AccountDBAccess implements AccountDAO {
                                                 .include(Common.AccountTable.ID_COLUMN,
                                                          Common.AccountTable.EMAIL_COLUMN,
                                                          Common.AccountTable.NAME_COLUMN)
-                                                .where(Common.AccountTable.EMAIL_COLUMN).equal(emailId)
+                                                .where(Common.AccountTable.ID_COLUMN).equal(accountId)
                                                 .execute();
 
 
