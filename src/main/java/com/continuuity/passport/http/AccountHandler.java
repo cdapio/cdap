@@ -8,8 +8,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.jersey.api.core.PackagesResourceConfig;
 import org.apache.shiro.util.StringUtils;
 
+import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -20,14 +22,14 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 /**
- *
- *
- *
+ * Annotations for endpoints, method types and data types for handlings Http requests
+ * Note: Jersey has a limitation of not allowing multiple resource handlers share the same path.
+ *       As a result we are needing to have all the code in a single file. This will be potentially
+ *       huge. Need to find a work-around.
  */
 
 @Path("/passport/v1/account/")
 public class AccountHandler {
-
 
   @Path("{id}")
   @GET
@@ -46,7 +48,7 @@ public class AccountHandler {
     }
   }
 
-  @Path("/create")
+  @Path("create")
   @PUT
   @Produces("application/json")
   @Consumes("application/json")
@@ -86,27 +88,7 @@ public class AccountHandler {
     }
   }
 
-  @Path("{id}/vpc")
-  @GET
-  @Produces("application/json")
-  public Response getVPC(@PathParam("id") int id) {
 
-    try{
-      List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(id);
-      Gson gson = new Gson();
-      if (vpcList.isEmpty()) {
-        return Response.ok("[]").build();
-      }
-      else {
-        return Response.ok(gson.toJson(vpcList)).build();
-      }
-    }
-    catch(Exception e){
-      return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
-        .build();
-    }
-  }
 
   @Path("{id}/confirm")
   @PUT
@@ -156,4 +138,71 @@ public class AccountHandler {
         .build();
     }
   }
+
+
+  @Path("{id}/vpc/create")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response createVPC(String data)  {
+
+    try {
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
+
+      JsonElement name = jsonObject.get("vpc_name");
+      JsonElement id = jsonObject.get("account_id");
+
+      String vpcName = StringUtils.EMPTY_STRING;
+      int accountid = -1;
+
+      System.out.println("Routed");
+      if (id != null) {
+        accountid = id.getAsInt();
+      }
+      if ( name != null)  {
+        vpcName = name.getAsString();
+      }
+
+      if ( (accountid != -1) && (!vpcName.isEmpty()) ){
+        DataManagementServiceImpl.getInstance().addVPC(accountid, new VPC(vpcName));
+        return Response.ok(Utils.getJson("OK","VPC Created")).build();
+      }
+      else {
+        return Response.status(Response.Status.BAD_REQUEST)
+          .entity(Utils.getJson("FAILED", "VPC creation failed. account_id or vpc_name is missing"))
+          .build();
+      }
+    }
+    catch (Exception e ){
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "VPC Creation Failed", e))
+        .build();
+
+    }
+  }
+
+  @Path("{id}/vpc")
+  @GET
+  @Produces("application/json")
+  public Response getVPC(@PathParam("id") int id) {
+
+    try{
+      List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(id);
+      Gson gson = new Gson();
+      if (vpcList.isEmpty()) {
+        return Response.ok("[]").build();
+      }
+      else {
+        return Response.ok(gson.toJson(vpcList)).build();
+      }
+    }
+    catch(Exception e){
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .build();
+    }
+  }
+
 }
