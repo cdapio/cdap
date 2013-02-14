@@ -7,7 +7,7 @@ import com.continuuity.passport.core.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
-import com.continuuity.passport.dal.db.Common;
+import com.continuuity.passport.dal.db.DBUtils;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -88,25 +88,25 @@ public class AuthenticatorImpl extends AuthorizingRealm implements Authenticator
     try {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet = chain.selectWithJoin(Common.VPCRole.TABLE_NAME,Common.AccountRole.TABLE_NAME)
+      List<Map<String,Object>> resultSet = chain.selectWithJoin(DBUtils.VPCRole.TABLE_NAME, DBUtils.AccountRole.TABLE_NAME)
                                                 .joinOn().condition(String.format("%s.%s = %s.%s",
-                                                                                  Common.VPC.TABLE_NAME,
-                                                                                  Common.VPC.VPC_ID_COLUMN,
-                                                                                  Common.VPCRole.TABLE_NAME,
-                                                                                  Common.VPCRole.VPC_ID_COLUMN))
-                                                .where(String.format("%s.%s",Common.VPCRole.USER_ID_COLUMN))
+                                                                                  DBUtils.VPC.TABLE_NAME,
+                                                                                  DBUtils.VPC.VPC_ID_COLUMN,
+                                                                                  DBUtils.VPCRole.TABLE_NAME,
+                                                                                  DBUtils.VPCRole.VPC_ID_COLUMN))
+                                                .where(String.format("%s.%s", DBUtils.VPCRole.USER_ID_COLUMN))
                                                             .equal(username)
                                                 .execute();
 
 
-      String roleNameKey = String.format("%s.%s",Common.VPC.TABLE_NAME.toUpperCase(),
-                                              Common.VPC.NAME_COLUMN.toUpperCase());
+      String roleNameKey = String.format("%s.%s", DBUtils.VPC.TABLE_NAME.toUpperCase(),
+                                              DBUtils.VPC.NAME_COLUMN.toUpperCase());
 
-      String permissionsKey = String.format("%s.%s",Common.AccountRole.TABLE_NAME,
-                                                    Common.AccountRole.PERMISSIONS_COLUMN);
+      String permissionsKey = String.format("%s.%s", DBUtils.AccountRole.TABLE_NAME,
+                                                    DBUtils.AccountRole.PERMISSIONS_COLUMN);
 
-      String permissionOverridesKey = String.format("%s.%s",Common.VPCRole.TABLE_NAME,
-                                                            Common.VPCRole.ROLE_OVERRIDES_COLUMN);
+      String permissionOverridesKey = String.format("%s.%s", DBUtils.VPCRole.TABLE_NAME,
+                                                            DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
 
       for(Map<String,Object> result : resultSet) {
         roleNames.add((String) result.get(roleNameKey));
@@ -158,13 +158,13 @@ public class AuthenticatorImpl extends AuthorizingRealm implements Authenticator
     try {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain  = SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet = chain.select(Common.AccountTable.TABLE_NAME)
-                                                .include(Common.AccountTable.PASSWORD_COLUMN)
-                                                .where(Common.AccountTable.EMAIL_COLUMN).equal(username)
+      List<Map<String,Object>> resultSet = chain.select(DBUtils.AccountTable.TABLE_NAME)
+                                                .include(DBUtils.AccountTable.PASSWORD_COLUMN)
+                                                .where(DBUtils.AccountTable.EMAIL_COLUMN).equal(username)
                                                 .execute();
 
       if (resultSet.size() == 1 ) {
-        String password = (String) resultSet.get(0).get(Common.AccountTable.PASSWORD_COLUMN.toUpperCase());
+        String password = (String) resultSet.get(0).get(DBUtils.AccountTable.PASSWORD_COLUMN.toUpperCase());
         info = new SimpleAuthenticationInfo(username,password,getName());
       }
 

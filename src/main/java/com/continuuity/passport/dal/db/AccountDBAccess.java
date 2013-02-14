@@ -44,17 +44,17 @@ public class AccountDBAccess implements AccountDAO {
       Connection connection= this.poolManager.getConnection();
 
       PreparedStatement ps = null;
-      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)", Common.AccountTable.TABLE_NAME,
-                                  Common.AccountTable.EMAIL_COLUMN,
-                                  Common.AccountTable.FIRST_NAME_COLUMN,Common.AccountTable.LAST_NAME_COLUMN,
-                                  Common.AccountTable.COMPANY_COLUMN,Common.AccountTable.CONFIRMED_COLUMN);
+      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)", DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.EMAIL_COLUMN,
+                                  DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                  DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN);
 
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
-      ps.setString(1,account.getEmailId());
+      ps.setString(1, account.getEmailId());
       ps.setString(2,account.getFirstName());
       ps.setString(3,account.getLastName());
       ps.setString(4,account.getCompany());
-      ps.setInt(5,0);
+      ps.setInt(5, 0);
 
       ps.executeUpdate();
       ResultSet result = ps.getGeneratedKeys();
@@ -81,11 +81,11 @@ public class AccountDBAccess implements AccountDAO {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
       //TODO: Update count should be 1
-      chain.update(Common.AccountTable.TABLE_NAME)
-           .set(Common.AccountTable.PASSWORD_COLUMN, generateSaltedHashedPassword(security.getPassword()))
-           .set(Common.AccountTable.CONFIRMED_COLUMN, Common.AccountTable.ACCOUNT_CONFIRMED)
-           .setLast(Common.AccountTable.API_KEY_COLUMN, generateAPIKey())
-           .where(Common.AccountTable.ID_COLUMN).equal(security.getAccountId()).execute();
+      chain.update(DBUtils.AccountTable.TABLE_NAME)
+           .set(DBUtils.AccountTable.PASSWORD_COLUMN, generateSaltedHashedPassword(security.getPassword()))
+           .set(DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.ACCOUNT_CONFIRMED)
+           .setLast(DBUtils.AccountTable.API_KEY_COLUMN, generateAPIKey())
+           .where(DBUtils.AccountTable.ID_COLUMN).equal(security.getAccountId()).execute();
     }
     catch (SQLException e){
       throw new RuntimeException(e.getMessage(),e.getCause());
@@ -110,8 +110,8 @@ public class AccountDBAccess implements AccountDAO {
     try {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.delete(Common.AccountTable.TABLE_NAME)
-           .where(Common.AccountTable.EMAIL_COLUMN).equal(accountId).execute();
+      chain.delete(DBUtils.AccountTable.TABLE_NAME)
+           .where(DBUtils.AccountTable.EMAIL_COLUMN).equal(accountId).execute();
 
     }
     catch (SQLException e){
@@ -139,13 +139,13 @@ public class AccountDBAccess implements AccountDAO {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
 
-      List<Map<String,Object>> resultSet = chain.select(Common.AccountTable.TABLE_NAME)
-                                                .include(Common.AccountTable.ID_COLUMN,
-                                                         Common.AccountTable.EMAIL_COLUMN,
-                                                         Common.AccountTable.FIRST_NAME_COLUMN,
-                                                         Common.AccountTable.LAST_NAME_COLUMN,
-                                                         Common.AccountTable.COMPANY_COLUMN)
-                                                .where(Common.AccountTable.ID_COLUMN).equal(accountId)
+      List<Map<String,Object>> resultSet = chain.select(DBUtils.AccountTable.TABLE_NAME)
+                                                .include(DBUtils.AccountTable.ID_COLUMN,
+                                                         DBUtils.AccountTable.EMAIL_COLUMN,
+                                                         DBUtils.AccountTable.FIRST_NAME_COLUMN,
+                                                         DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                                         DBUtils.AccountTable.COMPANY_COLUMN)
+                                                .where(DBUtils.AccountTable.ID_COLUMN).equal(accountId)
                                                 .execute();
 
 
@@ -153,11 +153,11 @@ public class AccountDBAccess implements AccountDAO {
 
 
          Map<String,Object> dataSet = resultSet.get(0);
-         account = new Account((String)dataSet.get(Common.AccountTable.FIRST_NAME_COLUMN.toLowerCase()),
-                               (String)dataSet.get(Common.AccountTable.LAST_NAME_COLUMN.toLowerCase()),
-                               (String)dataSet.get(Common.AccountTable.COMPANY_COLUMN.toLowerCase()),
-                               (String)dataSet.get(Common.AccountTable.EMAIL_COLUMN.toLowerCase()),
-                               (Integer)dataSet.get(Common.AccountTable.ID_COLUMN.toLowerCase()));
+         account = new Account((String)dataSet.get(DBUtils.AccountTable.FIRST_NAME_COLUMN.toLowerCase()),
+                               (String)dataSet.get(DBUtils.AccountTable.LAST_NAME_COLUMN.toLowerCase()),
+                               (String)dataSet.get(DBUtils.AccountTable.COMPANY_COLUMN.toLowerCase()),
+                               (String)dataSet.get(DBUtils.AccountTable.EMAIL_COLUMN.toLowerCase()),
+                               (Integer)dataSet.get(DBUtils.AccountTable.ID_COLUMN.toLowerCase()));
 
        }
 
@@ -178,10 +178,10 @@ public class AccountDBAccess implements AccountDAO {
     try {
       Connection connection = this.poolManager.getConnection();
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.insert(Common.AccountPayment.TABLE_NAME)
-           .columns(Common.AccountPayment.ACCOUNT_ID_COLUMN, Common.AccountPayment.CREDIT_CARD_NAME_COLUMN,
-                    Common.AccountPayment.CREDIT_CARD_NUMBER_COLUMN,Common.AccountPayment.CREDIT_CARD_CVV_COLUMN,
-                    Common.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN)
+      chain.insert(DBUtils.AccountPayment.TABLE_NAME)
+           .columns(DBUtils.AccountPayment.ACCOUNT_ID_COLUMN, DBUtils.AccountPayment.CREDIT_CARD_NAME_COLUMN,
+                    DBUtils.AccountPayment.CREDIT_CARD_NUMBER_COLUMN, DBUtils.AccountPayment.CREDIT_CARD_CVV_COLUMN,
+                    DBUtils.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN)
            .values(accountId,billingInfo.getCreditCardName(),billingInfo.getCreditCardNumber(),
                    billingInfo.getCvv(),billingInfo.getExpirationDate())
            .execute();
@@ -226,9 +226,9 @@ public class AccountDBAccess implements AccountDAO {
       Connection connection = this.poolManager.getConnection();
 
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.insert(Common.AccountRoleType.TABLE_NAME)
-           .columns(Common.AccountRoleType.ACCOUNT_ID_COLUMN,Common.AccountRoleType.ROLE_NAME_COLUMN,
-                    Common.AccountRoleType.PERMISSIONS_COLUMN)
+      chain.insert(DBUtils.AccountRoleType.TABLE_NAME)
+           .columns(DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN, DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
+                    DBUtils.AccountRoleType.PERMISSIONS_COLUMN)
            .values(accountId, role.getRoleName(),role.getPermissions())
            .execute();
     }

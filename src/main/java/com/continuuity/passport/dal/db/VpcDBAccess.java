@@ -37,13 +37,13 @@ public class VpcDBAccess implements VpcDAO {
 //
       PreparedStatement ps = null;
       String SQL = String.format( "INSERT INTO %s (%s,%s) VALUES (?,?)",
-                                  Common.VPC.TABLE_NAME,
-                                  Common.VPC.ACCOUNT_ID_COLUMN,Common.VPC.NAME_COLUMN );
+                                  DBUtils.VPC.TABLE_NAME,
+                                  DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN );
 
 
       ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
-      ps.setInt(1,accountId);
-      ps.setString(2,vpc.getVpcName());
+      ps.setInt(1, accountId);
+      ps.setString(2, vpc.getVpcName());
 
       ps.executeUpdate();
       ResultSet result = ps.getGeneratedKeys();
@@ -68,8 +68,8 @@ public class VpcDBAccess implements VpcDAO {
       Connection connection= this.poolManager.getConnection();
       //TODO: Execute in a thread ...
       SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.delete(Common.VPC.TABLE_NAME)
-           .where(Common.VPC.VPC_ID_COLUMN).equal(vpcId)
+      chain.delete(DBUtils.VPC.TABLE_NAME)
+           .where(DBUtils.VPC.VPC_ID_COLUMN).equal(vpcId)
            .execute();
     } catch (SQLException e) {
       //TODO: Log
@@ -89,9 +89,9 @@ public class VpcDBAccess implements VpcDAO {
       Connection connection= this.poolManager.getConnection();
       //TODO: Execute in a thread ...
       SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.insert(Common.VPCRole.TABLE_NAME)
-           .columns(Common.VPCRole.VPC_ID_COLUMN,Common.VPCRole.ACCOUNT_ID_COLUMN,Common.VPCRole.USER_ID_COLUMN,
-                    Common.VPCRole.ROLE_TYPE_COLUMN,Common.VPCRole.ROLE_OVERRIDES_COLUMN)
+      chain.insert(DBUtils.VPCRole.TABLE_NAME)
+           .columns(DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN, DBUtils.VPCRole.USER_ID_COLUMN,
+                    DBUtils.VPCRole.ROLE_TYPE_COLUMN, DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN)
            .values(vpcId,accountId,userId,role.getRoleId(),overrides).execute();
     }
     catch (SQLException e) {
@@ -128,12 +128,12 @@ public class VpcDBAccess implements VpcDAO {
     try {
       Connection connection= this.poolManager.getConnection();
       SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet =  chain.select(Common.VPC.TABLE_NAME)
+      List<Map<String,Object>> resultSet =  chain.select(DBUtils.VPC.TABLE_NAME)
                                                  .includeAll()
-                                                 .where(Common.VPC.ACCOUNT_ID_COLUMN).equal(accountId)
+                                                 .where(DBUtils.VPC.ACCOUNT_ID_COLUMN).equal(accountId)
                                                  .execute();
       for(Map<String,Object> result : resultSet) {
-        VPC vpc = new VPC((Integer)result.get(Common.VPC.VPC_ID_COLUMN),(String)result.get(Common.VPC.NAME_COLUMN));
+        VPC vpc = new VPC((Integer)result.get(DBUtils.VPC.VPC_ID_COLUMN),(String)result.get(DBUtils.VPC.NAME_COLUMN));
         vpcList.add(vpc);
       }
 

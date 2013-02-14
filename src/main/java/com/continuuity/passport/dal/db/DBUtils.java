@@ -1,9 +1,9 @@
 package com.continuuity.passport.dal.db;
 
 /**
- * Define
+ *
  */
-public class Common {
+public class DBUtils {
 
   public static class AccountTable {
 
