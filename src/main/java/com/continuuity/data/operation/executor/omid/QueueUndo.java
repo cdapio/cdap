@@ -4,11 +4,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.ttqueue.QueueProducer;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
-import com.continuuity.data.table.ReadPointer;
 import com.google.common.base.Objects;
 
 public abstract class QueueUndo implements Undo {
@@ -36,7 +34,7 @@ public abstract class QueueUndo implements Undo {
   }
   
   public abstract void execute(TTQueueTable queueTable,
-      ImmutablePair<ReadPointer,Long> txPointer) throws OperationException;
+      Transaction transaction) throws OperationException;
 
   public static class QueueUnenqueue extends QueueUndo {
     final byte[] data;
@@ -51,8 +49,8 @@ public abstract class QueueUndo implements Undo {
     }
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
-      queueTable.invalidate(queueName, entryPointer, txPointer.getSecond());
+        Transaction transaction) throws OperationException {
+      queueTable.invalidate(queueName, entryPointer, transaction.getTransactionId());
     }
   }
 
@@ -65,7 +63,7 @@ public abstract class QueueUndo implements Undo {
     }
     @Override
     public void execute(TTQueueTable queueTable,
-        ImmutablePair<ReadPointer,Long> txPointer) throws OperationException {
+        Transaction transaction) throws OperationException {
       queueTable.unack(queueName, entryPointer, consumer);
     }
   }

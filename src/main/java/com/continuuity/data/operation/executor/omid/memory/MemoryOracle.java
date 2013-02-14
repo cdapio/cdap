@@ -5,6 +5,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.executor.omid.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
@@ -127,12 +128,11 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized ImmutablePair<ReadPointer, Long> startTransaction() {
+  public synchronized Transaction startTransaction() {
     long txid = this.timeOracle.getTimestamp();
     this.inProgress.put(txid, new InProgress());
     this.excludes.add(txid);
-    return new ImmutablePair<ReadPointer,Long>(
-      new MemoryReadPointer(this.readPoint, txid, this.getExcludes()), txid);
+    return new Transaction(txid, new MemoryReadPointer(this.readPoint, txid, this.getExcludes()));
   }
 
   @Override

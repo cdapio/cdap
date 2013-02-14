@@ -1,6 +1,5 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.table.ReadPointer;
 import com.google.common.collect.Lists;
@@ -37,27 +36,27 @@ public class TestMemoryOracle {
     TransactionOracle oracle = newOracle();
 
     // start a transaction, should be >0, visible to itself
-    ImmutablePair<ReadPointer, Long> tx1 = oracle.startTransaction();
-    long txid1 = tx1.getSecond();
+    Transaction tx1 = oracle.startTransaction();
+    long txid1 = tx1.getTransactionId();
     Assert.assertTrue(txid1 > 0);
-    Assert.assertTrue(tx1.getFirst().isVisible(txid1));
+    Assert.assertTrue(tx1.getReadPointer().isVisible(txid1));
 
     // start another transaction, should be > first transaction, visible to itself, exclude first one
-    ImmutablePair<ReadPointer, Long> tx2 = oracle.startTransaction();
-    long txid2 = tx2.getSecond();
-    ReadPointer rp2 = tx2.getFirst();
+    Transaction tx2 = oracle.startTransaction();
+    long txid2 = tx2.getTransactionId();
+    ReadPointer rp2 = tx2.getReadPointer();
     Assert.assertTrue(txid2 > txid1);
     Assert.assertTrue(rp2.isVisible(txid2));
     Assert.assertFalse(rp2.isVisible(txid1));
 
     // commit the first transaction, should remain invisible to tx2
     oracle.commitTransaction(txid1);
-    Assert.assertFalse(tx2.getFirst().isVisible(txid1));
+    Assert.assertFalse(tx2.getReadPointer().isVisible(txid1));
 
     // start another transaction, should be > second transaction, visible to itself, exclude second one
-    ImmutablePair<ReadPointer, Long> tx3 = oracle.startTransaction();
-    long txid3 = tx3.getSecond();
-    ReadPointer rp3 = tx3.getFirst();
+    Transaction tx3 = oracle.startTransaction();
+    long txid3 = tx3.getTransactionId();
+    ReadPointer rp3 = tx3.getReadPointer();
     Assert.assertTrue(txid3 > txid2);
     Assert.assertTrue(rp3.isVisible(txid1));
     Assert.assertFalse(rp3.isVisible(txid2));
@@ -65,9 +64,9 @@ public class TestMemoryOracle {
 
     // abort transaction 2, should remain invisible to new transactions
     oracle.abortTransaction(txid2);
-    ImmutablePair<ReadPointer, Long> tx4 = oracle.startTransaction();
-    long txid4 = tx4.getSecond();
-    ReadPointer rp4 = tx4.getFirst();
+    Transaction tx4 = oracle.startTransaction();
+    long txid4 = tx4.getTransactionId();
+    ReadPointer rp4 = tx4.getReadPointer();
     Assert.assertTrue(txid4 > txid3);
     Assert.assertTrue(rp4.isVisible(txid1));
     Assert.assertFalse(rp4.isVisible(txid2));
@@ -76,9 +75,9 @@ public class TestMemoryOracle {
 
     // remove transaction 2, should become visible now
     oracle.removeTransaction(txid2);
-    ImmutablePair<ReadPointer, Long> tx5 = oracle.startTransaction();
-    long txid5 = tx5.getSecond();
-    ReadPointer rp5 = tx5.getFirst();
+    Transaction tx5 = oracle.startTransaction();
+    long txid5 = tx5.getTransactionId();
+    ReadPointer rp5 = tx5.getReadPointer();
     Assert.assertTrue(txid5 > txid3);
     Assert.assertTrue(rp5.isVisible(txid1));
     Assert.assertTrue(rp5.isVisible(txid2));
@@ -99,20 +98,20 @@ public class TestMemoryOracle {
     TransactionOracle oracle = newOracle();
 
     // start four transactions with overlapping writes
-    ImmutablePair<ReadPointer, Long> tx1 = oracle.startTransaction();
-    long txid1 = tx1.getSecond();
+    Transaction tx1 = oracle.startTransaction();
+    long txid1 = tx1.getTransactionId();
     oracle.addToTransaction(txid1, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
 
-    ImmutablePair<ReadPointer, Long> tx2 = oracle.startTransaction();
-    long txid2 = tx2.getSecond();
+    Transaction tx2 = oracle.startTransaction();
+    long txid2 = tx2.getTransactionId();
     oracle.addToTransaction(txid2, Collections.singletonList((Undo)new UndoWrite(table, a, columns)));
 
-    ImmutablePair<ReadPointer, Long> tx3 = oracle.startTransaction();
-    long txid3 = tx3.getSecond();
+    Transaction tx3 = oracle.startTransaction();
+    long txid3 = tx3.getTransactionId();
     oracle.addToTransaction(txid3, Collections.singletonList((Undo)new UndoWrite(table, b, columns)));
 
-    ImmutablePair<ReadPointer, Long> tx4 = oracle.startTransaction();
-    long txid4 = tx4.getSecond();
+    Transaction tx4 = oracle.startTransaction();
+    long txid4 = tx4.getTransactionId();
     oracle.addToTransaction(txid4, Collections.singletonList((Undo)new UndoWrite(table, c, columns)));
 
     // now each transaction has started and performed one write
@@ -160,24 +159,21 @@ public class TestMemoryOracle {
   @Test(expected = OmidTransactionException.class)
   public void testAddToCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.commitTransaction(txid);
     oracle.addToTransaction(txid, noUndos);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAddToAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.addToTransaction(txid, noUndos);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAddToRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.removeTransaction(txid);
     oracle.addToTransaction(txid, noUndos);
@@ -191,24 +187,21 @@ public class TestMemoryOracle {
   @Test(expected = OmidTransactionException.class)
   public void testCommitCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.commitTransaction(txid);
     oracle.commitTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testCommitAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.commitTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testCommitRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.removeTransaction(txid);
     oracle.commitTransaction(txid);
@@ -222,24 +215,21 @@ public class TestMemoryOracle {
   @Test(expected = OmidTransactionException.class)
   public void testAbortCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.commitTransaction(txid);
     oracle.abortTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAbortAborted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.abortTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testAbortRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.removeTransaction(txid);
     oracle.abortTransaction(txid);
@@ -253,23 +243,20 @@ public class TestMemoryOracle {
   @Test(expected = OmidTransactionException.class)
   public void testRemoveInProgress() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.removeTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testRemoveCommitted() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.commitTransaction(txid);
     oracle.removeTransaction(txid);
   }
   @Test(expected = OmidTransactionException.class)
   public void testRemoveRemoved() throws OmidTransactionException {
     TransactionOracle oracle = newOracle();
-    ImmutablePair<ReadPointer, Long> tx = oracle.startTransaction();
-    long txid = tx.getSecond();
+    long txid = oracle.startTransaction().getTransactionId();
     oracle.abortTransaction(txid);
     oracle.removeTransaction(txid);
     oracle.removeTransaction(txid);
