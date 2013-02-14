@@ -8,15 +8,15 @@ import org.apache.commons.lang.StringUtils;
  */
 public class Account {
 
-  private String firstName;
+  private final String firstName;
 
-  private String lastName;
+  private final String lastName;
 
-  private String company;
+  private final String company;
 
-  private String emailId;
+  private final  String emailId;
 
-  private int accountId;
+  private final int accountId;
 
   public Account(String firstName, String lastName, String emailId) {
     this(firstName,lastName, StringUtils.EMPTY,emailId,-1);

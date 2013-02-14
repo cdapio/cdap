@@ -5,10 +5,10 @@ package com.continuuity.passport.core.meta;
 */
 public class BillingInfo {
 
-  private String creditCardName;
-  private String creditCardNumber;
-  private String cvv;
-  private String expirationDate;
+  private final String creditCardName;
+  private final String creditCardNumber;
+  private final String cvv;
+  private final String expirationDate;
 
   public BillingInfo(String creditCardName, String creditCardNumber, String cvv, String expirationDate) {
     this.creditCardName = creditCardName;

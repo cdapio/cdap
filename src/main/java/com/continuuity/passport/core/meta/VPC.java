@@ -5,9 +5,9 @@ package com.continuuity.passport.core.meta;
  */
 public class VPC {
 
-  private int vpcId ;
+  private final int vpcId ;
 
-  private String vpcName;
+  private final String vpcName;
 
   public VPC(String vpcName) {
     this(-1,vpcName);

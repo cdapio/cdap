@@ -5,8 +5,8 @@ package com.continuuity.passport.core.meta;
  */
 public class VPCRole {
 
-  private VPC vpc;
-  private Role role;
+  private final VPC vpc;
+  private final Role role;
 
   public VPCRole(VPC vpc, Role role) {
     this.vpc = vpc;

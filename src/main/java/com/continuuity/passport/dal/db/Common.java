@@ -1,7 +1,7 @@
 package com.continuuity.passport.dal.db;
 
 /**
- *
+ * Define
  */
 public class Common {
 

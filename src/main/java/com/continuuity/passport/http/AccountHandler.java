@@ -64,7 +64,7 @@ public class AccountHandler {
 
       if ( (firstName == null) || (lastName == null) || (emailId == null) || (company == null) ){
         return Response.status(Response.Status.BAD_REQUEST)
-          .entity(Utils.getJson("FAILED", "Account name or email id or company is missing")).build();
+          .entity(Utils.getJson("FAILED", "First/last name or email id or company is missing")).build();
       }
       else {
         long genId = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,lastName,company,emailId));

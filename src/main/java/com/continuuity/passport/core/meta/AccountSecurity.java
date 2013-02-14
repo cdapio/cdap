@@ -4,8 +4,8 @@ package com.continuuity.passport.core.meta;
 *
 */
 public class AccountSecurity {
-  private int accountId;
-  private String password;
+  private final int accountId;
+  private final String password;
 
 
   public AccountSecurity(int accountId, String password) {
