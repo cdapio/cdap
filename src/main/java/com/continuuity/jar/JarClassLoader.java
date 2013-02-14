@@ -42,7 +42,7 @@ public class JarClassLoader extends MultiClassLoader {
    * @return array of bytes for the class.
    */
   @Nullable
-  protected byte[] loadClassBytes (String className) {
+  public byte[] loadClassBytes (String className) {
     className = formatClassName (className);
     return (jarResources.getResource (className));
   }
