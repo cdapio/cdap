@@ -1,101 +1,159 @@
 package com.continuuity.passport.http;
 
 import com.continuuity.passport.core.meta.Account;
-import com.continuuity.passport.core.service.DataManagementService;
+import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.shiro.util.StringUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  *
+ *
+ *
  */
-public class AccountHandler extends HttpServlet {
 
-  private DataManagementService dataManagementService = new DataManagementServiceImpl();
-
-  @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+@Path("/passport/v1/account/")
+public class AccountHandler {
 
 
-    String id = request.getParameter("id");
-    Account account  = null ;
+  @Path("{emailId}/status")
+  @GET
+  @Produces("application/json")
+  public Response getAccountInfo(@PathParam("emailId") String emailId){
 
-    if(id != null && !id.isEmpty()) {
-      account = this.dataManagementService.getAccount(id);
-    }
-
-    if (account != null ){
-      response.setContentType("application/json");
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().println(account.toString());
-
+    Account account = DataManagementServiceImpl.getInstance().getAccount(emailId);
+    if (account != null){
+      return Response.ok(account.toString()).build();
     }
     else {
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJson("NOT_FOUND", "Account not found"))
+        .build();
+
     }
-
   }
-  @Override
-  public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-    ServletInputStream inputStream = request.getInputStream();
-    int length  =  inputStream.available();
 
-    byte [] buffer = new byte[length] ;
-    inputStream.read(buffer);
+  @Path("/create")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response createAccount(String data) {
 
     try{
-      createAccount(new String(buffer));
-      response.setContentType("application/json;charset=utf-8");
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().println("{\"message\": \"Account Created\"}");
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
 
+      JsonElement emailId = jsonObject.get("email_id");
+      JsonElement name = jsonObject.get("name");
+
+      String accountEmail = StringUtils.EMPTY_STRING;
+      String accountName = StringUtils.EMPTY_STRING;
+
+      if (emailId != null) {
+        accountEmail = emailId.getAsString();
+      }
+      if ( name != null)  {
+        accountName = name.getAsString();
+      }
+
+      if ( (accountEmail.isEmpty()) || (accountName.isEmpty()) ){
+        return Response.status(Response.Status.BAD_REQUEST)
+          .entity(Utils.getJson("FAILED", "Account name or email id is missing")).build();
+      }
+      else {
+        DataManagementServiceImpl.getInstance().registerAccount(new Account(accountName,accountEmail));
+        return Response.ok(Utils.getJson("OK","Account Created")).build();
+      }
     }
-    catch (Exception e) {
-      response.setContentType("application/json");
-      response.setStatus(HttpServletResponse.SC_EXPECTATION_FAILED);
-      response.getWriter().println("{\"message\": \"Account creation failed\", \"reason\": \""+e.getMessage()+"\"}");
-
+    catch (Exception e){
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "Account Creation Failed", e))
+        .build();
     }
-
   }
 
-  private boolean createAccount(String data) throws RuntimeException {
-    JsonParser parser = new JsonParser();
-    JsonElement element = parser.parse(data);
-    JsonObject jsonObject = element.getAsJsonObject();
+  @Path("{id}/vpc")
+  @GET
+  @Produces("application/json")
+  public Response getVPC(@PathParam("id") int id) {
 
-    JsonElement emailId = jsonObject.get("email_id");
-    JsonElement name = jsonObject.get("name");
-
-    String accountEmail = StringUtils.EMPTY_STRING;
-    String accountName = StringUtils.EMPTY_STRING;
-
-    if (emailId != null) {
-      accountEmail = emailId.getAsString();
+    try{
+      List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(id);
+      Gson gson = new Gson();
+      if (vpcList.isEmpty()) {
+        return Response.ok("[]").build();
+      }
+      else {
+        return Response.ok(gson.toJson(vpcList)).build();
+      }
     }
-    if ( name != null)  {
-      accountName = name.getAsString();
+    catch(Exception e){
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .build();
     }
-
-    if ( (accountEmail == StringUtils.EMPTY_STRING) || (accountName == StringUtils.EMPTY_STRING) ){
-      throw new RuntimeException("Input json does not contain email_id or name fields");
-    }
-    else {
-      dataManagementService.registerAccount(new Account(accountName,accountEmail));
-    }
-
-    return true;
-
   }
 
+  @Path("{id}/confirm")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response confirmAccount(String data, @PathParam("id") String id){
+//TODO: DOnot expect name and emailid in json
+    try{
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
 
+      JsonElement emailId = jsonObject.get("email_id");
+      JsonElement name = jsonObject.get("name");
+      JsonElement password = jsonObject.get("password");
+
+      String accountEmail = StringUtils.EMPTY_STRING;
+      String accountName = StringUtils.EMPTY_STRING;
+      String accountPassword = StringUtils.EMPTY_STRING;
+
+      if (emailId != null) {
+        accountEmail = emailId.getAsString();
+      }
+      if ( name != null)  {
+        accountName = name.getAsString();
+      }
+
+      if(password !=null){
+        accountPassword = password.getAsString();
+      }
+
+      if ( (accountEmail.isEmpty()) || (accountName.isEmpty()) || (accountPassword.isEmpty()) ){
+        return Response.status(Response.Status.BAD_REQUEST)
+          .entity(Utils.getJson("FAILED","Account name or email id or password is missing")).build();
+      }
+      else {
+
+        Account account = new Account(accountName, id);
+        AccountSecurity security = new AccountSecurity(account, accountPassword);
+        DataManagementServiceImpl.getInstance().confirmRegistration(security);
+        return Response.ok(Utils.getJson("OK","Account confirmed")).build();
+      }
+    }
+    catch (Exception e){
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED","Account Confirmation Failed",e))
+        .build();
+    }
+  }
 }
