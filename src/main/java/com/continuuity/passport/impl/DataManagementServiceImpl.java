@@ -1,7 +1,7 @@
 package com.continuuity.passport.impl;
 
-import com.continuuity.passport.core.Component;
-import com.continuuity.passport.core.Credentials;
+import com.continuuity.passport.core.meta.Component;
+import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;

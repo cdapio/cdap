@@ -1,6 +1,6 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Credentials;
+import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 

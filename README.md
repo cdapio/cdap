@@ -32,27 +32,31 @@ Passport service is a service to manage account, account related components and 
 
 **Account Datamodel:**
 - Account 
-	- AccountName
-       	- AccountID
-        - UserRoles: Set of Userid and Roles
-        	- UserID
-                - Role: {Owner, Admin, User}
-        - Billing info - To be updated
-       	- Components: Set of Components 
-        	- Component Type
-           	- Component Id
-           	- Component ACL: Set of UserId and ACL
-              		- UserID
-              		- ACL : {ALL, READ, READ_WRITE_DELETE}
-        
-**User Datamodel:** 
-- User
-	- User ID
-        - FirstName
-        - LastName
-        - EmailId
-      	- Password
-      	- Authority: Set of Accountids and Roles
-        	- AccountID
-         	- Role: {Owner, Admin, User}
-              
+	- Account Meta
+	  - Account ID
+    - First Name
+    - Last Name
+    - Email Id
+    - Company ID
+  - Security Credentials
+    - Password
+  - Billing Info
+    - Credit Card Name
+    - Credit Card Type
+    - Credit Card cvv
+    - Credit Card expiration
+  - Role Definitions
+    - Role Type
+    - Permissions
+  - VPC
+    - VPC Name
+    - User Roles
+      - Account Id
+      - Role Type
+      - Role Overrides
+  - Components
+    - Component Name
+    - Component Type
+    - Component ACLs
+      - Account ID
+      - Permissions

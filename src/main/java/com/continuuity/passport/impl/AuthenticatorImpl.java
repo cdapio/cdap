@@ -3,7 +3,7 @@ package com.continuuity.passport.impl;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.common.sql.SQLChain;
 import com.continuuity.passport.common.sql.SQLChainImpl;
-import com.continuuity.passport.core.Credentials;
+import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
