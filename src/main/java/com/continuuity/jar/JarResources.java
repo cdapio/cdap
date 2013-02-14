@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.classloader;
+package com.continuuity.jar;
 
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;

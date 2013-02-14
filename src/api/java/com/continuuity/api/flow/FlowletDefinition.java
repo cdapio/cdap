@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.api.flow;
 
 import com.continuuity.api.annotation.Output;
@@ -33,7 +37,7 @@ import java.util.Set;
 public final class FlowletDefinition {
   private static final String PROCESS_METHOD_PREFIX = "process";
   private static final String DEFAULT_OUTPUT = "out";
-  private static final String ANY_INPUT = "";
+  public static final String ANY_INPUT = "";
 
   private final String flowletClassName;
   private final FlowletSpecification flowletSpec;

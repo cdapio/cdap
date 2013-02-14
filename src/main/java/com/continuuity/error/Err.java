@@ -62,6 +62,12 @@ public final class Err {
                                                                   " Should atleast have a flowlet.");
     public static final Errors ATLEAST_ONE_CONNECTION = new Errors("Flow %s has no connections defined." +
                                                                      " Should atleast have one connection.");
+
+    public static final Errors NO_INPUT_FOR_OUTPUT = new Errors("Input of flowlet %s does not define a compatible " +
+                                                                 "type method for processing output of flowlet %s.");
+    public static final Errors INCOMPATIBLE_CONNECTION = new Errors("There are no inputs of flowlet %s that are " +
+                                                                      "compatible for processing output of flowlet %s ");
+    // Output being emitted
   }
 
   /**

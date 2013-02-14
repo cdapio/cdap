@@ -9,7 +9,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
-import com.continuuity.classloader.JarClassLoader;
+import com.continuuity.jar.JarClassLoader;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
