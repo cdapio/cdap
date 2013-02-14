@@ -29,7 +29,7 @@ import java.util.List;
 public class AccountHandler {
 
 
-  @Path("{id}/status")
+  @Path("{id}")
   @GET
   @Produces("application/json")
   public Response getAccountInfo(@PathParam("id") int id){
