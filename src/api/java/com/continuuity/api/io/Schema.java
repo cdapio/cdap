@@ -4,19 +4,26 @@
 
 package com.continuuity.api.io;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -246,6 +253,7 @@ public final class Schema {
 
   private final Schema keySchema;
   private final Schema valueSchema;
+  private final Map.Entry<Schema, Schema> mapSchema;
 
   private final String recordName;
   private final Map<String, Field> fieldMap;
@@ -254,6 +262,7 @@ public final class Schema {
   private final List<Schema> unionSchemas;
 
   private String schemaString;
+  private byte[] schemaHash;
 
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
@@ -263,6 +272,7 @@ public final class Schema {
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
+    this.mapSchema = (keySchema == null || valueSchema == null) ? null : Maps.immutableEntry(keySchema, valueSchema);
     this.recordName = recordName;
     this.fieldMap = populateRecordFields(fieldMap);
     this.fields = this.fieldMap == null ? null : ImmutableList.copyOf(this.fieldMap.values());
@@ -322,7 +332,7 @@ public final class Schema {
    *         would returns the value schema.
    */
   public Map.Entry<Schema, Schema> getMapSchema() {
-    return Maps.immutableEntry(keySchema, valueSchema);
+    return mapSchema;
   }
 
   /**
@@ -377,8 +387,7 @@ public final class Schema {
     // It's possible that buildString() get triggered multiple times, but they should yield the same result.
     String str = schemaString;
     if (str == null) {
-      str = buildString();
-      schemaString = str;
+      schemaString = str = buildString();
     }
     return str;
   }
@@ -392,12 +401,123 @@ public final class Schema {
       return false;
     }
 
-    return toString().equals(other.toString());
+    Schema otherSchema = (Schema)other;
+    byte[] hash = schemaHash == null ? getSchemaHash() : schemaHash;
+    byte[] otherHash = otherSchema.schemaHash == null ? otherSchema.getSchemaHash() : otherSchema.schemaHash;
+
+    return Arrays.equals(hash, otherHash);
   }
 
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    byte[] hash = schemaHash == null ? getSchemaHash() : schemaHash;
+    return Arrays.hashCode(hash);
+  }
+
+  /**
+   * @return A MD5 hash of this schema.
+   */
+  public byte[] getSchemaHash() {
+    byte[] hash = schemaHash;
+    if (hash == null) {
+      schemaHash = hash = computeHash();
+    }
+    return Arrays.copyOf(hash, hash.length);
+  }
+
+
+  /**
+   * Checks if the given target schema is compatible with this schema, meaning datum being written with this
+   * schema could be projected correctly into the given target schema.
+   *
+   * TODO: Add link to document of the target type projection.
+   *
+   * @param target Schema to check for compatibility to this target
+   * @return {@code true} if the schemas are compatible, {@code false} otherwise.
+   */
+  public boolean isCompatible(Schema target) {
+    if (equals(target)) {
+      return true;
+    }
+    Multimap<String, String> recordCompared = HashMultimap.create();
+    return checkCompatible(target, recordCompared);
+  }
+
+  private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {
+    if (type.isSimpleType()) {
+      if (type == target.getType()) {
+        // Same simple type are always compatible
+        return true;
+      }
+      switch (target.getType()) {
+        case LONG:
+          return type == Type.INT;
+        case FLOAT:
+          return type == Type.INT || type == Type.LONG;
+        case DOUBLE:
+          return type == Type.INT || type == Type.LONG || type == Type.FLOAT;
+        case STRING:
+          return type != Type.NULL && type != Type.BYTES;
+        case UNION:
+          for (Schema targetSchema : target.unionSchemas) {
+            if (checkCompatible(targetSchema, recordCompared)) {
+              return true;
+            }
+          }
+      }
+      return false;
+    }
+
+    if (type == target.type) {
+      switch (type) {
+        case ENUM:
+          return target.getEnumValues().containsAll(getEnumValues());
+        case ARRAY:
+          // The component schema must be compatible
+          return componentSchema.checkCompatible(target.getComponentSchema(), recordCompared);
+        case MAP:
+          // Both key and value schemas must be compatible
+          return keySchema.checkCompatible(target.keySchema, recordCompared)
+            && valueSchema.checkCompatible(target.valueSchema, recordCompared);
+        case RECORD:
+          // For every common field (by name), their schema must be compatible
+          if (!recordCompared.containsEntry(recordName, target.recordName)) {
+            recordCompared.put(recordName, target.recordName);
+            for (Field field : fields) {
+              Field targetField = target.getField(field.getName());
+              if (targetField == null) {
+                continue;
+              }
+              if (!field.getSchema().checkCompatible(targetField.getSchema(), recordCompared)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        case UNION:
+          // Compare each source union to target union
+          for (Schema sourceSchema : unionSchemas) {
+            for (Schema targetSchema : target.unionSchemas) {
+              if (sourceSchema.checkCompatible(targetSchema, recordCompared)) {
+                return true;
+              }
+            }
+          }
+          return false;
+      }
+    }
+
+    if (type == Type.UNION || target.type == Type.UNION) {
+      List<Schema> unions = type == Type.UNION ? unionSchemas : target.unionSchemas;
+      Schema checkSchema = type == Type.UNION ? target : this;
+      for (Schema schema : unions) {
+        if (schema.checkCompatible(checkSchema, recordCompared)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -516,5 +636,90 @@ public final class Schema {
       // It should never throw IOException on the StringBuilder Writer, if it does, something very wrong.
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Helper method to compute MD5 hash of this schema.
+   *
+   * @return A byte[] of MD5 hash representing this schema.
+   */
+  private byte[] computeHash() {
+    try {
+      Set<String> knownRecords = Sets.newHashSet();
+      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), this, knownRecords);
+      return md5.digest();
+    } catch (NoSuchAlgorithmException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Updates md5 based on the given schema.
+   *
+   * @param md5 {@link MessageDigest} to update.
+   * @param schema {@link Schema} for updating the md5.
+   * @param knownRecords bytes to use for updating the md5 for records that're seen before.
+   * @return The same {@link MessageDigest} in the parameter.
+   */
+  private MessageDigest updateHash(MessageDigest md5, Schema schema, Set<String> knownRecords) {
+    // Don't use enum.ordinal() as ordering in enum could change
+    switch (schema.type) {
+      case NULL:
+        md5.update((byte)0);
+        break;
+      case BOOLEAN:
+        md5.update((byte)1);
+        break;
+      case INT:
+        md5.update((byte)2);
+        break;
+      case LONG:
+        md5.update((byte)3);
+        break;
+      case FLOAT:
+        md5.update((byte)4);
+        break;
+      case DOUBLE:
+        md5.update((byte)5);
+        break;
+      case BYTES:
+        md5.update((byte)6);
+        break;
+      case STRING:
+        md5.update((byte)7);
+        break;
+      case ENUM:
+        md5.update((byte)8);
+        for (String value : schema.enumValues.keySet()) {
+          md5.update(Charsets.UTF_8.encode(value));
+        }
+        break;
+      case ARRAY:
+        md5.update((byte)9);
+        updateHash(md5, schema.componentSchema, knownRecords);
+        break;
+      case MAP:
+        md5.update((byte)10);
+        updateHash(md5, schema.keySchema, knownRecords);
+        updateHash(md5, schema.valueSchema, knownRecords);
+        break;
+      case RECORD:
+        md5.update((byte)11);
+        boolean notKnown = knownRecords.add(schema.recordName);
+        for (Field field : schema.fields) {
+          md5.update(Charsets.UTF_8.encode(field.getName()));
+          if (notKnown) {
+            updateHash(md5, field.getSchema(), knownRecords);
+          }
+        }
+        break;
+      case UNION:
+        md5.update((byte)12);
+        for (Schema unionSchema : schema.unionSchemas) {
+          updateHash(md5, unionSchema, knownRecords);
+        }
+        break;
+    }
+    return md5;
   }
 }
