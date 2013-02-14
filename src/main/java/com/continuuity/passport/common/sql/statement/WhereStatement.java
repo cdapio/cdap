@@ -1,6 +1,5 @@
 package com.continuuity.passport.common.sql.statement;
 
-import com.continuuity.passport.common.sql.SQLContext;
 import com.continuuity.passport.common.sql.clause.RelationClause;
 import com.continuuity.passport.common.sql.clause.WhereClause;
 

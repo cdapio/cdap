@@ -3,15 +3,15 @@ package com.continuuity.passport.dal.db;
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.common.sql.SQLChain;
 import com.continuuity.passport.common.sql.SQLChainImpl;
-import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
+import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.dal.AccountDAO;
-import  java.sql.Connection;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;

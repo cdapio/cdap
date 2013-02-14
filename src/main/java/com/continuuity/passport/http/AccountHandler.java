@@ -8,10 +8,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sun.jersey.api.core.PackagesResourceConfig;
 import org.apache.shiro.util.StringUtils;
 
-import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -22,7 +20,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 /**
- * Annotations for endpoints, method types and data types for handlings Http requests
+ * Annotations for endpoints, method types and data types for handling Http requests
  * Note: Jersey has a limitation of not allowing multiple resource handlers share the same path.
  *       As a result we are needing to have all the code in a single file. This will be potentially
  *       huge. Need to find a work-around.
@@ -59,12 +57,10 @@ public class AccountHandler {
       JsonElement element = parser.parse(data);
       JsonObject jsonObject = element.getAsJsonObject();
 
-
       String firstName = jsonObject.get("first_name") == null? null : jsonObject.get("first_name").getAsString();
       String lastName = jsonObject.get("first_name") == null? null : jsonObject.get("last_name").getAsString();
       String emailId = jsonObject.get("email_id") == null? null : jsonObject.get("email_id").getAsString();
       String company = jsonObject.get("company") == null? null : jsonObject.get("company").getAsString();
-
 
       if ( (firstName == null) || (lastName == null) || (emailId == null) || (company == null) ){
         return Response.status(Response.Status.BAD_REQUEST)
@@ -81,11 +77,6 @@ public class AccountHandler {
         .build();
     }
   }
-
-
-  //  public Account(String firstName, String lastName, String company, String emailId, int accountId) {
-
-
 
   @Path("{id}/confirm")
   @PUT

@@ -1,7 +1,5 @@
 package com.continuuity.passport.dal;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.hsqldb.Server;
 
 import java.sql.Connection;

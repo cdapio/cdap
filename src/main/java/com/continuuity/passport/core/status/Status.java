@@ -1,7 +1,5 @@
 package com.continuuity.passport.core.status;
 
-import org.apache.commons.lang.StringUtils;
-
 /**
  * Data management services Status
  */

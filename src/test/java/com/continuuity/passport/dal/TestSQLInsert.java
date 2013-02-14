@@ -1,8 +1,8 @@
 package com.continuuity.passport.dal;
 
 
-import com.continuuity.passport.common.sql.SQLChainImpl;
 import com.continuuity.passport.common.sql.SQLChain;
+import com.continuuity.passport.common.sql.SQLChainImpl;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -13,7 +13,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 
 /**

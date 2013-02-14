@@ -13,7 +13,6 @@ import com.continuuity.passport.dal.AccountDAO;
 import com.continuuity.passport.dal.VpcDAO;
 import com.continuuity.passport.dal.db.AccountDBAccess;
 import com.continuuity.passport.dal.db.VpcDBAccess;
-import com.google.inject.Inject;
 
 import java.util.HashMap;
 import java.util.List;

@@ -1,7 +1,5 @@
 package com.continuuity.passport.common.sql.clause;
 
-import com.continuuity.passport.common.sql.statement.StatementBase;
-
 /**
  *  Add a condition to select statement
  */
