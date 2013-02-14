@@ -6,12 +6,12 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaTypeAdapter;
-import com.continuuity.classloader.JarClassLoader;
+import com.continuuity.jar.JarClassLoader;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilePermission;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 
 /**
  * Sandbox JVM allows the configuration phase of an application to be executed
@@ -96,28 +96,20 @@ public class SandboxJVM {
     ApplicationSpecification specification = application.configure();
 
     // Convert the specification to JSON.
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
-
     // We write the Application specification to output file in JSON format.
-    FileWriter writer = null;
     try {
-      writer = new FileWriter(outputFile);
-      gson.toJson(specification, writer);
+      Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
+      try {
+        // TODO: The SchemaGenerator should be injected.
+        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
+      } finally {
+        writer.close();
+      }
     } catch (IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
-    } finally  {
-      if(writer != null) {
-        try {
-          writer.close(); // flush and close.
-        } catch (IOException e) {
-          LOG.error("Unable to close file {}. {}", outputFile.getAbsolutePath(), e.getMessage());
-          return -1;
-        }
-      }
     }
+
     return 0;
   }
 

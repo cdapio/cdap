@@ -6,13 +6,10 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,8 +35,7 @@ public class ConfiguratorTest {
     Assert.assertNotNull(response);
 
     // Deserialize the JSON spec back into Application object.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
-    ApplicationSpecification specification = gson.fromJson(response.get(), ApplicationSpecification.class);
+    ApplicationSpecification specification = ApplicationSpecificationAdapter.create().fromJson(response.get());
     Assert.assertNotNull(specification);
     Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
     Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.

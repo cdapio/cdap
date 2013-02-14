@@ -61,6 +61,13 @@ public final class FlowletSpecification {
   }
 
   /**
+   * @return The failure policy of the flowlet.
+   */
+  public FailurePolicy getFailurePolicy() {
+    return failurePolicy;
+  }
+
+  /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.

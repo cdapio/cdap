@@ -2,12 +2,9 @@ package com.continuuity.api;
 
 
 import com.continuuity.WordCountApp;
-import com.continuuity.api.io.ReflectionSchemaGenerator;
-import com.continuuity.api.io.Schema;
-import com.continuuity.api.io.SchemaTypeAdapter;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,12 +12,16 @@ import org.junit.Test;
  *
  */
 public class ApplicationSpecificationTest {
+
   @Test
   public void testConfigureApplication() throws NoSuchMethodException, UnsupportedTypeException {
     ApplicationSpecification appSpec = new WordCountApp().configure();
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
-    ApplicationSpecification newSpec = gson.fromJson(gson.toJson(appSpec), ApplicationSpecification.class);
 
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+
+    ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
+
+    String s = adapter.toJson(appSpec);
     Assert.assertEquals(1, newSpec.getDataSets().size());
     Assert.assertEquals(new ReflectionSchemaGenerator().generate(WordCountApp.MyRecord.class),
                           newSpec.getFlows().get("WordCountFlow").getFlowlets().get("Tokenizer")

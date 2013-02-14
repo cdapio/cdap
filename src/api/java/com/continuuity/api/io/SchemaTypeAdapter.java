@@ -35,6 +35,10 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   @Override
   public void write(JsonWriter writer, Schema schema) throws IOException {
+    if (schema == null) {
+      writer.nullValue();
+      return;
+    }
     Set<String> knownRecords = Sets.newHashSet();
     write(writer, schema, knownRecords);
   }
@@ -43,6 +47,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
   public Schema read(JsonReader reader) throws IOException {
     JsonToken token = reader.peek();
     switch (token) {
+      case NULL:
+        return null;
       case STRING:
         // Simple type
         return Schema.of(Schema.Type.valueOf(reader.nextString().toUpperCase()));
