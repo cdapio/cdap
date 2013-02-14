@@ -10,7 +10,10 @@ import com.continuuity.passport.dal.VpcDAO;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,23 +28,35 @@ public class VpcDBAccess implements VpcDAO {
   private DBConnectionPoolManager poolManager =null;
 
   @Override
-  public boolean addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
+  public long addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
       Connection connection= this.poolManager.getConnection();
-      //TODO: Execute in a thread ...
-      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.insert(Common.VPC.TABLE_NAME)
-        .columns(Common.VPC.ACCOUNT_ID_COLUMN,Common.VPC.NAME_COLUMN)
-        .values(accountId, vpc.getVpcName())
-        .execute();
+//
+      PreparedStatement ps = null;
+      String SQL = String.format( "INSERT INTO %s (%s,%s) VALUES (?,?)",
+                                  Common.VPC.TABLE_NAME,
+                                  Common.VPC.ACCOUNT_ID_COLUMN,Common.VPC.NAME_COLUMN );
+
+
+      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps.setInt(1,accountId);
+      ps.setString(2,vpc.getVpcName());
+
+      ps.executeUpdate();
+      ResultSet result = ps.getGeneratedKeys();
+      if (result == null) {
+        throw new RuntimeException("Failed Insert");
+      }
+      result.next();
+      long id = result.getLong(1);
+      return id;
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     }
-    return true;
   }
 
   @Override

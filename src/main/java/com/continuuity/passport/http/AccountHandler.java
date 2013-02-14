@@ -67,8 +67,8 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED", "Account name or email id or company is missing")).build();
       }
       else {
-        DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,lastName,company,emailId));
-        return Response.ok(Utils.getJson("OK","Account Created")).build();
+        long genId = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,lastName,company,emailId));
+        return Response.ok(Utils.getJson("OK","Account Created",genId)).build();
       }
     }
     catch (Exception e){
@@ -136,8 +136,8 @@ public class AccountHandler {
       }
 
       if ( (!vpcName.isEmpty()) ){
-        DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
-        return Response.ok(Utils.getJson("OK","VPC Created")).build();
+        long genId = DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
+        return Response.ok(Utils.getJson("OK","VPC Created",genId)).build();
       }
       else {
         return Response.status(Response.Status.BAD_REQUEST)

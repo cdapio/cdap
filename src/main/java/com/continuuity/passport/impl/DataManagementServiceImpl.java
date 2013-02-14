@@ -35,8 +35,8 @@ public class DataManagementServiceImpl implements DataManagementService {
     accountDAO = new AccountDBAccess();
     Map<String,String> config = new HashMap<String,String>();
     config.put("jdbcType","mysql");
-    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    //config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
+    //config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
     accountDAO.configure(config);
 
     vpcDao = new VpcDBAccess();
@@ -51,17 +51,16 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public Status registerAccount(Account account) throws RuntimeException {
+  public long registerAccount(Account account) throws RuntimeException {
     if (accountDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
 
     }
     try {
-      accountDAO.createAccount(account);
+      return accountDAO.createAccount(account);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
-    return null;
   }
 
   @Override
@@ -167,16 +166,15 @@ public class DataManagementServiceImpl implements DataManagementService {
     return vpcs;
   }
 
-  public Status addVPC(int accountId, VPC vpc) throws RuntimeException {
+  public long addVPC(int accountId, VPC vpc) throws RuntimeException {
     if(vpcDao == null) {
       throw new RuntimeException("Could not initialize data access object");
     }
     try {
-      vpcDao.addVPC(accountId, vpc);
+     return vpcDao.addVPC(accountId, vpc);
     } catch (ConfigurationException e) {
       throw new RuntimeException(e.getMessage());
     }
-    return null;
   }
 
 

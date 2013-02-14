@@ -23,9 +23,9 @@ public interface DataManagementService {
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerAccount(Account account) throws RuntimeException;
+  public long registerAccount(Account account) throws RuntimeException;
 
-  public Status addVPC(int accountId, VPC vpc) throws RuntimeException;
+  public long addVPC(int accountId, VPC vpc) throws RuntimeException;
 
 
   public Status confirmRegistration(AccountSecurity account) throws RuntimeException;

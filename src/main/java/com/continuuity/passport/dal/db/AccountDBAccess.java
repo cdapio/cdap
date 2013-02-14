@@ -12,7 +12,10 @@ import com.continuuity.passport.dal.AccountDAO;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -32,27 +35,40 @@ public class AccountDBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public boolean createAccount(Account account) throws ConfigurationException, RuntimeException {
+  public long createAccount(Account account) throws ConfigurationException, RuntimeException {
     //TODO: Return boolean?
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
       Connection connection= this.poolManager.getConnection();
-      //TODO: Execute in a thread ...
-      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.insert(Common.AccountTable.TABLE_NAME)
-           .columns(Common.AccountTable.EMAIL_COLUMN, Common.AccountTable.FIRST_NAME_COLUMN,
-                    Common.AccountTable.LAST_NAME_COLUMN, Common.AccountTable.COMPANY_COLUMN,
-                    Common.AccountTable.CONFIRMED_COLUMN)
-           .values(account.getEmailId(), account.getFirstName(), account.getLastName(),
-                   account.getCompany(),Common.AccountTable.ACCOUNT_UNCONFIRMED)
-           .execute();
+
+      PreparedStatement ps = null;
+      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)", Common.AccountTable.TABLE_NAME,
+                                  Common.AccountTable.EMAIL_COLUMN,
+                                  Common.AccountTable.FIRST_NAME_COLUMN,Common.AccountTable.LAST_NAME_COLUMN,
+                                  Common.AccountTable.COMPANY_COLUMN,Common.AccountTable.CONFIRMED_COLUMN);
+
+      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps.setString(1,account.getEmailId());
+      ps.setString(2,account.getFirstName());
+      ps.setString(3,account.getLastName());
+      ps.setString(4,account.getCompany());
+      ps.setInt(5,0);
+
+      ps.executeUpdate();
+      ResultSet result = ps.getGeneratedKeys();
+      if (result == null) {
+        throw new RuntimeException("Failed Insert");
+      }
+      result.next();
+      long id = result.getLong(1);
+
+      return id;
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
     }
-    return true;
   }
 
 

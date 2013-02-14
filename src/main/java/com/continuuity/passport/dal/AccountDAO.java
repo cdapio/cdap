@@ -19,10 +19,10 @@ public interface AccountDAO {
    * Create Account in the system
    *
    * @param account   Instance of {@code Account}
-   * @return boolean status of account creation
+   * @return int account Id that was generated
    * @throws {@code RetryException}
    */
-  public boolean createAccount(Account account) throws ConfigurationException, RuntimeException;
+  public long createAccount(Account account) throws ConfigurationException, RuntimeException;
 
 
   public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException;
