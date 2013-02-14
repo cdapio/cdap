@@ -1,10 +1,8 @@
 package com.continuuity.passport.impl;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.common.sql.SQLChain;
-import com.continuuity.passport.common.sql.SQLChainImpl;
-import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.dal.db.DBUtils;
@@ -21,6 +19,8 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -81,43 +81,49 @@ public class AuthenticatorImpl extends AuthorizingRealm implements Authenticator
      throw new AuthorizationException("PrincipalCollection argument cannot be null");
     }
 
-    String username = (String) getAvailablePrincipal(principals);
+    int accountId = (Integer) getAvailablePrincipal(principals);
     Set<String> rolePermissions = null;
     Set<String> roleNames = null;
     SimpleAuthorizationInfo info = null;
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet = chain.selectWithJoin(DBUtils.VPCRole.TABLE_NAME, DBUtils.AccountRole.TABLE_NAME)
-                                                .joinOn().condition(String.format("%s.%s = %s.%s",
-                                                                                  DBUtils.VPC.TABLE_NAME,
-                                                                                  DBUtils.VPC.VPC_ID_COLUMN,
-                                                                                  DBUtils.VPCRole.TABLE_NAME,
-                                                                                  DBUtils.VPCRole.VPC_ID_COLUMN))
-                                                .where(String.format("%s.%s", DBUtils.VPCRole.USER_ID_COLUMN))
-                                                            .equal(username)
-                                                .execute();
 
+      String SQL = String.format( "SELECT %s,%s,%s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
 
-      String roleNameKey = String.format("%s.%s", DBUtils.VPC.TABLE_NAME.toUpperCase(),
-                                              DBUtils.VPC.NAME_COLUMN.toUpperCase());
+                                  //SELECT COLS
+                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
+                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.PERMISSIONS_COLUMN,
+                                  DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN,
 
-      String permissionsKey = String.format("%s.%s", DBUtils.AccountRole.TABLE_NAME,
-                                                    DBUtils.AccountRole.PERMISSIONS_COLUMN);
+                                  //TABLE NAMES
+                                  DBUtils.AccountRoleType.TABLE_NAME, DBUtils.VPCRole.TABLE_NAME,
 
-      String permissionOverridesKey = String.format("%s.%s", DBUtils.VPCRole.TABLE_NAME,
-                                                            DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
+                                  //JOIN CONDITION
+                                  DBUtils.AccountRoleType.TABLE_NAME+"."+DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
+                                  DBUtils.VPCRole.TABLE_NAME+"."+DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
 
-      for(Map<String,Object> result : resultSet) {
-        roleNames.add((String) result.get(roleNameKey));
-        String overrides  = (String) result.get(permissionOverridesKey);
-        if (overrides == null) {
-          rolePermissions.add((String)result.get(permissionsKey));
-        }
-        else {
+                                  //WHERE CLAUSE
+                                  DBUtils.VPCRole.USER_ID_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setInt(1,accountId);
+      ResultSet rs = ps.executeQuery();
+
+      while (rs.next()) {
+
+        String roleName = rs.getString(1);
+        String permissions = rs.getString(2);
+        String overrides = rs.getString(3);
+        if (overrides!=null && !overrides.isEmpty()) {
           rolePermissions.add(overrides);
         }
+        else {
+          rolePermissions.add(permissions);
+        }
+        roleNames.add(roleName);
       }
+
+
       info  = new SimpleAuthorizationInfo(roleNames);
       info.setStringPermissions(rolePermissions);
 
@@ -152,21 +158,38 @@ public class AuthenticatorImpl extends AuthorizingRealm implements Authenticator
 
 
     UsernamePasswordToken upToken = (UsernamePasswordToken) token;
-    String username = upToken.getUsername();
+    String emailId = upToken.getUsername();
 
     SimpleAuthenticationInfo info = null;
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain  = SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet = chain.select(DBUtils.AccountTable.TABLE_NAME)
-                                                .include(DBUtils.AccountTable.PASSWORD_COLUMN)
-                                                .where(DBUtils.AccountTable.EMAIL_COLUMN).equal(username)
-                                                .execute();
 
-      if (resultSet.size() == 1 ) {
-        String password = (String) resultSet.get(0).get(DBUtils.AccountTable.PASSWORD_COLUMN.toUpperCase());
-        info = new SimpleAuthenticationInfo(username,password,getName());
+
+      String SQL = String.format( "SELECT %s FROM %s WHERE %s = ?",
+                                  DBUtils.AccountTable.PASSWORD_COLUMN,
+                                  DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.EMAIL_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setString(1,emailId);
+      ResultSet rs = ps.executeQuery();
+
+      int count = 0;
+      String password = null;
+      while(rs.next()) {
+        password = rs.getString(1);
+        count++;
+        if(count > 1) {
+          // Note: This condition should never occur since ids are auto generated.
+          throw new RuntimeException("Multiple accounts with same account ID");
+        }
       }
+
+      if (password ==null || password.isEmpty()) {
+        throw new RuntimeException(String.format("Password not found for %s",emailId));
+      }
+
+      info = new SimpleAuthenticationInfo(emailId,password,getName());
 
     } catch (SQLException e) {
       //TODO: Log and throw exception
