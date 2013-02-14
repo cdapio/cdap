@@ -10,9 +10,7 @@ public class StatusCode extends com.continuuity.api.data.StatusCode {
   public static final int ILLEGAL_FINALIZE = 1005;
   public static final int ILLEGAL_UNACK = 1006;
 
-  public static final int ILLEGAL_COMMIT = 1007;
-  public static final int ILLEGAL_ABORT = 1008;
-  public static final int ILLEGAL_ADDTX = 1009;
+  public static final int INVALID_TRANSACTION = 1009;
 
   public static final int INTERNAL_ERROR = 5000;
   public static final int SQL_ERROR = 5001;
