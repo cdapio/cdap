@@ -120,12 +120,8 @@ public class AccountDBAccess implements AccountDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      System.out.println("In get account DB Access");
       Connection connection = this.poolManager.getConnection();
-      System.out.println("Got connection");
-      if (connection == null) {System.out.println("Empty Connection");}
       SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      System.out.println(connection.toString());
 
       List<Map<String,Object>> resultSet = chain.select(Common.AccountTable.TABLE_NAME)
                                                 .include(Common.AccountTable.ID_COLUMN,
@@ -137,7 +133,6 @@ public class AccountDBAccess implements AccountDAO {
                                                 .execute();
 
 
-      System.out.println("Result Size: "+resultSet.size() );
        if (resultSet.size() == 1 ) {
 
 
@@ -153,7 +148,6 @@ public class AccountDBAccess implements AccountDAO {
 
     }
     catch (SQLException e) {
-      System.out.println(e.getMessage());
       throw new RuntimeException(e.getMessage(),e.getCause());
     }
     return account;

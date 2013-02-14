@@ -142,7 +142,6 @@ public class DataManagementServiceImpl implements DataManagementService {
   @Override
   public Account getAccount(int accountId) throws RuntimeException {
 
-    System.out.println("In get Service Impl");
     Account account = null;
     if (accountDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
@@ -150,8 +149,6 @@ public class DataManagementServiceImpl implements DataManagementService {
     try {
      account= accountDAO.getAccount(accountId);
     } catch (ConfigurationException e) {
-
-      System.out.println("In get Service Impl caught exception");
       throw new RuntimeException(e.getMessage());
     }
     return account;
