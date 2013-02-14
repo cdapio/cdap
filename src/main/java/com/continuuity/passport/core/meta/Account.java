@@ -1,5 +1,7 @@
 package com.continuuity.passport.core.meta;
 
+import com.google.gson.Gson;
+
 /**
  * Defines account
  */
@@ -32,5 +34,12 @@ public class Account {
   public int getAccountId() {
     return accountId;
   }
+
+  public String toString() {
+    Gson gson = new Gson();
+    return (gson.toJson(this));
+
+  }
+
 }
 
