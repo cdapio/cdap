@@ -5,22 +5,22 @@ package com.continuuity.passport.core.meta;
  */
 public class Role {
 
-  private final int roleId;
+  private final String roleType;
   private final String roleName;
   private final String permissions;
 
-  public Role(int roleId, String roleName, String permissions) {
-    this.roleId = roleId;
+  public Role(String roleType, String roleName, String permissions) {
+    this.roleType = roleType;
     this.roleName = roleName;
     this.permissions = permissions;
   }
 
   public Role(String roleName, String permissions) {
-    this(-1,roleName,permissions);
+    this("",roleName,permissions);
   }
 
-  public int getRoleId() {
-    return roleId;
+  public String getRoleType() {
+    return roleType;
   }
 
   public String getRoleName() {

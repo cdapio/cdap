@@ -1,8 +1,6 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.common.sql.SQLChain;
-import com.continuuity.passport.common.sql.SQLChainImpl;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.meta.VPC;
@@ -34,18 +32,16 @@ public class VpcDBAccess implements VpcDAO {
     }
     try {
       Connection connection= this.poolManager.getConnection();
-//
-      PreparedStatement ps = null;
+
       String SQL = String.format( "INSERT INTO %s (%s,%s) VALUES (?,?)",
                                   DBUtils.VPC.TABLE_NAME,
                                   DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN );
 
-
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
-
       ps.executeUpdate();
+
       ResultSet result = ps.getGeneratedKeys();
       if (result == null) {
         throw new RuntimeException("Failed Insert");
@@ -66,11 +62,15 @@ public class VpcDBAccess implements VpcDAO {
     }
     try {
       Connection connection= this.poolManager.getConnection();
-      //TODO: Execute in a thread ...
-      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.delete(DBUtils.VPC.TABLE_NAME)
-           .where(DBUtils.VPC.VPC_ID_COLUMN).equal(vpcId)
-           .execute();
+
+      String SQL = String.format( "DELETE FROM %s WHERE %s = ?",
+                                  DBUtils.VPC.TABLE_NAME,
+                                  DBUtils.VPC.VPC_ID_COLUMN);
+      PreparedStatement ps = connection.prepareStatement(SQL);
+
+      ps.setInt(1,vpcId);
+      ps.executeUpdate();
+
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
@@ -87,12 +87,22 @@ public class VpcDBAccess implements VpcDAO {
     }
     try {
       Connection connection= this.poolManager.getConnection();
-      //TODO: Execute in a thread ...
-      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      chain.insert(DBUtils.VPCRole.TABLE_NAME)
-           .columns(DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN, DBUtils.VPCRole.USER_ID_COLUMN,
-                    DBUtils.VPCRole.ROLE_TYPE_COLUMN, DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN)
-           .values(vpcId,accountId,userId,role.getRoleId(),overrides).execute();
+
+
+      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)",
+                                  DBUtils.VPCRole.TABLE_NAME,
+                                  DBUtils.VPCRole.VPC_ID_COLUMN, DBUtils.VPCRole.ACCOUNT_ID_COLUMN,
+                                  DBUtils.VPCRole.USER_ID_COLUMN, DBUtils.VPCRole.ROLE_TYPE_COLUMN,
+                                  DBUtils.VPCRole.ROLE_OVERRIDES_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      ps.setInt(1, vpcId);
+      ps.setInt(2, accountId);
+      ps.setInt(3, userId);
+      ps.setString(4, role.getRoleType());
+      ps.setString(5,overrides);
+      ps.executeUpdate();
+
     }
     catch (SQLException e) {
       //TODO: Log
@@ -126,18 +136,24 @@ public class VpcDBAccess implements VpcDAO {
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
-      Connection connection= this.poolManager.getConnection();
-      SQLChain chain =  SQLChainImpl.getSqlChain(connection);
-      List<Map<String,Object>> resultSet =  chain.select(DBUtils.VPC.TABLE_NAME)
-                                                 .includeAll()
-                                                 .where(DBUtils.VPC.ACCOUNT_ID_COLUMN).equal(accountId)
-                                                 .execute();
-      for(Map<String,Object> result : resultSet) {
-        VPC vpc = new VPC((Integer)result.get(DBUtils.VPC.VPC_ID_COLUMN),(String)result.get(DBUtils.VPC.NAME_COLUMN));
+      Connection connection = this.poolManager.getConnection();
+      String SQL = String.format( "SELECT %s, %s FROM %s WHERE %s = ?",
+                                  DBUtils.VPC.VPC_ID_COLUMN, DBUtils.VPC.NAME_COLUMN, //COLUMNS
+                                  DBUtils.VPC.TABLE_NAME, //FROM
+                                  DBUtils.VPC.ACCOUNT_ID_COLUMN); //WHERE
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setInt(1,accountId);
+      ResultSet rs = ps.executeQuery();
+
+
+      while(rs.next()) {
+        VPC vpc = new VPC(rs.getInt(1),rs.getString(2));
         vpcList.add(vpc);
-      }
 
       }
+
+    }
     catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());

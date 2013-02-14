@@ -54,11 +54,5 @@ public class DBUtils {
     public static final String ROLE_OVERRIDES_COLUMN = "role_overrides";
   }
 
-  public static class AccountRole {
-    public static final String TABLE_NAME = "account_role";
-    public static final String ACCOUNT_ID_COLUMN = "account_id";
-    public static final String ROLE_NAME_COLUMN = "name";
-    public static final String PERMISSIONS_COLUMN = "permissions";
-  }
 
 }

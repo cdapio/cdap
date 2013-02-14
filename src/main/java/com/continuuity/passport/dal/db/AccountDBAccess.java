@@ -1,8 +1,6 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
-import com.continuuity.passport.common.sql.SQLChain;
-import com.continuuity.passport.common.sql.SQLChainImpl;
 import com.continuuity.passport.core.exceptions.ConfigurationException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
@@ -16,7 +14,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,18 +40,17 @@ public class AccountDBAccess implements AccountDAO {
     try {
       Connection connection= this.poolManager.getConnection();
 
-      PreparedStatement ps = null;
       String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)", DBUtils.AccountTable.TABLE_NAME,
                                   DBUtils.AccountTable.EMAIL_COLUMN,
                                   DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
                                   DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN);
 
-      ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
+      PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setString(1, account.getEmailId());
       ps.setString(2,account.getFirstName());
       ps.setString(3,account.getLastName());
       ps.setString(4,account.getCompany());
-      ps.setInt(5, 0);
+      ps.setInt(5, DBUtils.AccountTable.ACCOUNT_UNCONFIRMED);
 
       ps.executeUpdate();
       ResultSet result = ps.getGeneratedKeys();
@@ -79,13 +75,19 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      //TODO: Update count should be 1
-      chain.update(DBUtils.AccountTable.TABLE_NAME)
-           .set(DBUtils.AccountTable.PASSWORD_COLUMN, generateSaltedHashedPassword(security.getPassword()))
-           .set(DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.ACCOUNT_CONFIRMED)
-           .setLast(DBUtils.AccountTable.API_KEY_COLUMN, generateAPIKey())
-           .where(DBUtils.AccountTable.ID_COLUMN).equal(security.getAccountId()).execute();
+      String SQL = String.format( "UPDATE %s SET %s = ?, %s = ?, %s = ? WHERE %s = ?" ,
+                                          DBUtils.AccountTable.TABLE_NAME,
+                                          DBUtils.AccountTable.PASSWORD_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN,
+                                          DBUtils.AccountTable.API_KEY_COLUMN, DBUtils.AccountTable.ID_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setString(1, generateSaltedHashedPassword(security.getPassword()));
+      ps.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
+      ps.setString(3,generateAPIKey());
+      ps.setInt(4, security.getAccountId());
+
+      ps.executeUpdate();
+
     }
     catch (SQLException e){
       throw new RuntimeException(e.getMessage(),e.getCause());
@@ -104,14 +106,19 @@ public class AccountDBAccess implements AccountDAO {
   @Override
   public boolean deleteAccount(String accountId) throws ConfigurationException, RuntimeException {
 
+    //TODO: accountId to int
     if(this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.delete(DBUtils.AccountTable.TABLE_NAME)
-           .where(DBUtils.AccountTable.EMAIL_COLUMN).equal(accountId).execute();
+      String SQL = String.format( "DELETE FROM %s WHERE %s = ?",
+                                  DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.ID_COLUMN);
+      PreparedStatement ps = connection.prepareStatement(SQL);
+
+      ps.setString(1, accountId);
+      ps.executeUpdate();
 
     }
     catch (SQLException e){
@@ -137,30 +144,26 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
 
-      List<Map<String,Object>> resultSet = chain.select(DBUtils.AccountTable.TABLE_NAME)
-                                                .include(DBUtils.AccountTable.ID_COLUMN,
-                                                         DBUtils.AccountTable.EMAIL_COLUMN,
-                                                         DBUtils.AccountTable.FIRST_NAME_COLUMN,
-                                                         DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                                         DBUtils.AccountTable.COMPANY_COLUMN)
-                                                .where(DBUtils.AccountTable.ID_COLUMN).equal(accountId)
-                                                .execute();
+      String SQL = String.format( "SELECT %s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+                                  DBUtils.AccountTable.FIRST_NAME_COLUMN,DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                  DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
+                                  DBUtils.AccountTable.ID_COLUMN,
+                                  DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.ID_COLUMN);
 
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setInt(1,accountId);
+      ResultSet rs = ps.executeQuery();
 
-       if (resultSet.size() == 1 ) {
-
-
-         Map<String,Object> dataSet = resultSet.get(0);
-         account = new Account((String)dataSet.get(DBUtils.AccountTable.FIRST_NAME_COLUMN.toLowerCase()),
-                               (String)dataSet.get(DBUtils.AccountTable.LAST_NAME_COLUMN.toLowerCase()),
-                               (String)dataSet.get(DBUtils.AccountTable.COMPANY_COLUMN.toLowerCase()),
-                               (String)dataSet.get(DBUtils.AccountTable.EMAIL_COLUMN.toLowerCase()),
-                               (Integer)dataSet.get(DBUtils.AccountTable.ID_COLUMN.toLowerCase()));
-
-       }
-
+      int count  = 0;
+      while(rs.next()) {
+        count++;
+        account = new Account(rs.getString(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getInt(5));
+        if (count > 1 ) { // Note: This condition should never occur since ids are auto generated.
+          throw new RuntimeException("Multiple accounts with same account ID");
+        }
+      }
 
     }
     catch (SQLException e) {
@@ -177,14 +180,26 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.insert(DBUtils.AccountPayment.TABLE_NAME)
-           .columns(DBUtils.AccountPayment.ACCOUNT_ID_COLUMN, DBUtils.AccountPayment.CREDIT_CARD_NAME_COLUMN,
-                    DBUtils.AccountPayment.CREDIT_CARD_NUMBER_COLUMN, DBUtils.AccountPayment.CREDIT_CARD_CVV_COLUMN,
-                    DBUtils.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN)
-           .values(accountId,billingInfo.getCreditCardName(),billingInfo.getCreditCardNumber(),
-                   billingInfo.getCvv(),billingInfo.getExpirationDate())
-           .execute();
+
+
+      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)" ,
+                                    DBUtils.AccountPayment.TABLE_NAME,
+                                    DBUtils.AccountPayment.ACCOUNT_ID_COLUMN,
+                                    DBUtils.AccountPayment.CREDIT_CARD_NAME_COLUMN,
+                                    DBUtils.AccountPayment.CREDIT_CARD_NUMBER_COLUMN,
+                                    DBUtils.AccountPayment.CREDIT_CARD_CVV_COLUMN,
+                                    DBUtils.AccountPayment.CREDIT_CARD_EXPIRY_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+
+      ps.setInt(1,accountId);
+      ps.setString(2, billingInfo.getCreditCardName());
+      ps.setString(3, billingInfo.getCreditCardNumber());
+      ps.setString(4,billingInfo.getCvv());
+      ps.setString(5,billingInfo.getExpirationDate());
+
+      ps.executeUpdate();
+
     }
     catch (SQLException e){
       throw new RuntimeException(e.getMessage(),e.getCause());
@@ -210,8 +225,6 @@ public class AccountDBAccess implements AccountDAO {
 
       MysqlConnectionPoolDataSource mysqlDataSource =  new MysqlConnectionPoolDataSource();
       mysqlDataSource.setUrl(connectionString);
-
-
       this.poolManager = new DBConnectionPoolManager(mysqlDataSource, 20);
 
     }
@@ -224,13 +237,19 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
+      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES(?,?,?,?,?)" ,
+                                              DBUtils.AccountRoleType.TABLE_NAME,
+                                              DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN,
+                                              DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
+                                              DBUtils.AccountRoleType.PERMISSIONS_COLUMN);
 
-      SQLChain chain = SQLChainImpl.getSqlChain(connection);
-      chain.insert(DBUtils.AccountRoleType.TABLE_NAME)
-           .columns(DBUtils.AccountRoleType.ACCOUNT_ID_COLUMN, DBUtils.AccountRoleType.ROLE_NAME_COLUMN,
-                    DBUtils.AccountRoleType.PERMISSIONS_COLUMN)
-           .values(accountId, role.getRoleName(),role.getPermissions())
-           .execute();
+      PreparedStatement ps = connection.prepareStatement(SQL);
+
+      ps.setInt(1,accountId);
+      ps.setString(2,role.getRoleName());
+      ps.setString(3,role.getPermissions());
+      ps.executeUpdate();
+
     }
     catch (SQLException e) {
       throw new RuntimeException(e.getMessage(),e.getCause());
