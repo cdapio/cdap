@@ -14,6 +14,7 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -39,7 +40,6 @@ public final class FlowletDefinition {
   private static final String DEFAULT_OUTPUT = "out";
   public static final String ANY_INPUT = "";
 
-  private final String flowletClassName;
   private final FlowletSpecification flowletSpec;
   private final int instances;
   private final ResourceSpecification resourceSpec;
@@ -51,8 +51,7 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> outputs;
 
   FlowletDefinition(Flowlet flowlet, int instances, ResourceSpecification resourceSpec) {
-    this.flowletClassName = flowlet.getClass().getName();
-    this.flowletSpec = flowlet.configure();
+    this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(), flowlet.configure());
     this.instances = instances;
     this.resourceSpec = resourceSpec;
 
@@ -68,13 +67,6 @@ public final class FlowletDefinition {
     this.datasets = ImmutableSet.copyOf(datasets);
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
-  }
-
-  /**
-   * @return Name of the flowlet class.
-   */
-  public String getFlowletClassName() {
-    return flowletClassName;
   }
 
   /**
@@ -126,12 +118,14 @@ public final class FlowletDefinition {
    * @param generator The {@link SchemaGenerator} for generating type schema.
    */
   public void generateSchema(SchemaGenerator generator) throws UnsupportedTypeException {
-    // Generate both inputs and outputs before making this visible
-    Map<String, Set<Schema>> inputs = generateSchema(generator, inputTypes, ImmutableMap.<String, Set<Schema>>builder());
-    Map<String, Set<Schema>> outputs = generateSchema(generator, outputTypes, ImmutableMap.<String, Set<Schema>>builder());
+    if (inputs == null && outputs == null && inputTypes != null && outputTypes != null) {
+      // Generate both inputs and outputs before making this visible
+      Map<String, Set<Schema>> inputs = generateSchema(generator, inputTypes, ImmutableMap.<String, Set<Schema>>builder());
+      Map<String, Set<Schema>> outputs = generateSchema(generator, outputTypes, ImmutableMap.<String, Set<Schema>>builder());
 
-    this.inputs = inputs;
-    this.outputs = outputs;
+      this.inputs = inputs;
+      this.outputs = outputs;
+    }
   }
 
   private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator,

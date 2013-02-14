@@ -30,7 +30,7 @@ public class ApplicationVerificationTest {
   private static class ApplicationWithBadId implements Application {
     @Override
     public ApplicationSpecification configure() {
-      return ApplicationSpecification.builder()
+      return ApplicationSpecification.Builder.with()
         .setName("Bad App Name")
         .setDescription("Bad Application Name Test")
         .noStream()

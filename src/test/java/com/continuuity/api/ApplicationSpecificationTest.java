@@ -21,7 +21,6 @@ public class ApplicationSpecificationTest {
 
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    String s = adapter.toJson(appSpec);
     Assert.assertEquals(1, newSpec.getDataSets().size());
     Assert.assertEquals(new ReflectionSchemaGenerator().generate(WordCountApp.MyRecord.class),
                           newSpec.getFlows().get("WordCountFlow").getFlowlets().get("Tokenizer")

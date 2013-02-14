@@ -24,7 +24,7 @@ public abstract class AbstractProcedure implements Procedure {
    */
   @Override
   public ProcedureSpecification configure() {
-    return ProcedureSpecification.builder()
+    return ProcedureSpecification.Builder.with()
       .setName(getName())
       .setDescription(getDescription())
       .build();
