@@ -900,24 +900,24 @@ implements TransactionalOperationExecutor {
 
   ImmutablePair<ReadPointer, Long> startTransaction() {
     requestMetric("StartTransaction");
-    return this.oracle.getNewPointer();
+    return this.oracle.startTransaction();
   }
 
   void addToTransaction(ImmutablePair<ReadPointer, Long> pointer, List<Undo> undos)
       throws OmidTransactionException {
-    this.oracle.add(pointer.getSecond(), undos);
+    this.oracle.addToTransaction(pointer.getSecond(), undos);
   }
 
   TransactionResult commitTransaction(ImmutablePair<ReadPointer, Long> pointer)
     throws OmidTransactionException {
     requestMetric("CommitTransaction");
-    return this.oracle.commit(pointer.getSecond());
+    return this.oracle.commitTransaction(pointer.getSecond());
   }
 
   TransactionResult abortTransaction(ImmutablePair<ReadPointer, Long> pointer)
     throws OmidTransactionException {
     requestMetric("CommitTransaction");
-    return this.oracle.abort(pointer.getSecond());
+    return this.oracle.abortTransaction(pointer.getSecond());
   }
 
 
@@ -945,7 +945,7 @@ implements TransactionalOperationExecutor {
     }
     // if any of the undos fails, we won't reach this point.
     // That is, the tx will remain in the oracle as invalid
-    oracle.remove(pointer.getSecond());
+    oracle.removeTransaction(pointer.getSecond());
   }
 
   // Single Write Operations (Wrapped and called in a transaction batch)

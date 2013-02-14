@@ -122,37 +122,26 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized ReadPointer getReadPointer(long writeTxid) {
-    return new MemoryReadPointer(this.readPoint, writeTxid, this.getExcludes());
-  }
-
-  @Override
   public synchronized ReadPointer getReadPointer() {
     return new MemoryReadPointer(this.readPoint, this.getExcludes());
   }
 
   @Override
-  public synchronized long getWriteTxid() {
+  public synchronized ImmutablePair<ReadPointer, Long> startTransaction() {
     long txid = this.timeOracle.getTimestamp();
     this.inProgress.put(txid, new InProgress());
     this.excludes.add(txid);
-    return txid;
-  }
-
-  @Override
-  public synchronized ImmutablePair<ReadPointer, Long> getNewPointer() {
-    long writeTxid = getWriteTxid();
     return new ImmutablePair<ReadPointer,Long>(
-        getReadPointer(writeTxid), writeTxid);
+      new MemoryReadPointer(this.readPoint, txid, this.getExcludes()), txid);
   }
 
   @Override
-  public synchronized void add(long txid, List<Undo> undos) throws OmidTransactionException {
+  public synchronized void addToTransaction(long txid, List<Undo> undos) throws OmidTransactionException {
     getInProgress(txid).add(undos);
   }
 
   @Override
-  public synchronized TransactionResult abort(long txid) throws OmidTransactionException {
+  public synchronized TransactionResult abortTransaction(long txid) throws OmidTransactionException {
     // this removes the txid from in-progress. It remains in the exclude
     // list until removed after successful undo of its writes.
     InProgress existing = this.inProgress.remove(txid);
@@ -164,12 +153,12 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized void remove(long txid) throws OmidTransactionException {
+  public synchronized void removeTransaction(long txid) throws OmidTransactionException {
     // this is called after all writes of a failed transaction have been
     // undone successfully. It removes the txid from the invalid and excluded list.
-    if (!this.excludes.remove(txid)) {
+    if (!this.excludes.remove(txid) || this.inProgress.containsKey(txid)) {
       throw new OmidTransactionException(
-        StatusCode.INVALID_TRANSACTION, "Transaction not in current set");
+        StatusCode.INVALID_TRANSACTION, "Transaction not aborted");
     }
     // we must move the read pointer. If the failed transaction performed an
     // enqueue, then it was undone by overwriting the entry meta data with an
@@ -179,7 +168,7 @@ public class MemoryOracle implements TransactionOracle {
   }
 
   @Override
-  public synchronized TransactionResult commit(long txid) throws OmidTransactionException {
+  public synchronized TransactionResult commitTransaction(long txid) throws OmidTransactionException {
     List<Undo> undos = getInProgress(txid).getUndos();
     // determine row set of transaction from undos
     RowSet rows = computeRowSet(undos);
@@ -196,7 +185,7 @@ public class MemoryOracle implements TransactionOracle {
       for (Map.Entry<Long,RowSet> entry : rowsToCheck.entrySet()) {
         if (entry.getValue().conflictsWith(rows)) {
           // we have a conflict -> transaction failed
-          return abort(txid);
+          return abortTransaction(txid);
         }
       }
       // No conflicts found, add to row sets
