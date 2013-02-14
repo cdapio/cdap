@@ -6,7 +6,6 @@ package com.continuuity.data.operation.executor.omid;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.StatusCode;
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -29,7 +28,6 @@ import com.continuuity.data.operation.ttqueue.QueueConsumer;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.collect.Lists;
@@ -81,7 +79,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] value = Bytes.toBytes("value");
 
     // start a transaction
-    ImmutablePair<ReadPointer, Long> pointer = executor.startTransaction();
+    Transaction pointer = executor.startTransaction();
 
     // write to a key
     WriteTransactionResult txResult = executor.write(context, new Write(key, value), pointer);
@@ -191,7 +189,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] valueTwo = Bytes.toBytes("value2");
 
     // start tx one
-    ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction();
     // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
@@ -204,9 +202,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
 
     // start tx two
-    ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
+    Transaction pointerTwo = executor.startTransaction();
     // System.out.println("Started transaction two : " + pointerTwo);
-    assertTrue(pointerTwo.getSecond() > pointerOne.getSecond());
+    assertTrue(pointerTwo.getTransactionId() > pointerOne.getTransactionId());
 
     // write value two
     WriteTransactionResult txResult2 =
@@ -241,7 +239,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testClosedTransactionsThrowExceptions");
 
     // start txwOne
-    ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction();
     //System.out.println("Started transaction txwOne : " + pointerOne);
 
     // write and commit
@@ -270,7 +268,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] key = Bytes.toBytes("testOverlappingConcurrentReadersAndWriters");
 
     // start txwOne
-    ImmutablePair<ReadPointer, Long> pointerWOne = executor.startTransaction();
+    Transaction pointerWOne = executor.startTransaction();
     // System.out.println("Started transaction txwOne : " + pointerWOne);
 
     // write 1
@@ -290,11 +288,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
         executor.execute(context, new ReadKey(key)).getValue());
 
     // open long-running read
-    ImmutablePair<ReadPointer, Long> pointerReadOne =
-        executor.startTransaction();
+    Transaction pointerReadOne = executor.startTransaction();
 
     // write 2 and commit immediately
-    ImmutablePair<ReadPointer, Long> pointerWTwo = executor.startTransaction();
+    Transaction pointerWTwo = executor.startTransaction();
     // System.out.println("Started transaction txwTwo : " + pointerWTwo);
     WriteTransactionResult txResultW2 =
       executor.write(context, new Write(key, Bytes.toBytes(2)), pointerWTwo);
@@ -310,12 +307,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
         executor.execute(context, new ReadKey(key)).getValue());
 
     // open long-running read
-    ImmutablePair<ReadPointer, Long> pointerReadTwo =
-        executor.startTransaction();
+    Transaction pointerReadTwo = executor.startTransaction();
 
     // write 3 with one transaction but don't commit
-    ImmutablePair<ReadPointer, Long> pointerWThree =
-        executor.startTransaction();
+    Transaction pointerWThree = executor.startTransaction();
     // System.out.println("Started transaction txwThree : " + pointerWThree);
     WriteTransactionResult txResultW3 =
       executor.write(context, new Write(key, Bytes.toBytes(3)), pointerWThree);
@@ -323,8 +318,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.addToTransaction(pointerWThree, txResultW3.undos);
 
     // write 4 with another transaction and also don't commit
-    ImmutablePair<ReadPointer, Long> pointerWFour =
-        executor.startTransaction();
+    Transaction pointerWFour = executor.startTransaction();
     // System.out.println("Started transaction txwFour : " + pointerWFour);
     WriteTransactionResult txResultW4 =
       executor.write(context, new Write(key, Bytes.toBytes(4)), pointerWFour);
@@ -351,14 +345,13 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // now read with long-running read 1, should see value = 1
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
             .getValue());
 
     // now do the same thing but in reverse order of conflict
 
     // write 5 with one transaction but don't commit
-    ImmutablePair<ReadPointer, Long> pointerWFive =
-        executor.startTransaction();
+    Transaction pointerWFive = executor.startTransaction();
     // System.out.println("Started transaction txwFive : " + pointerWFive);
     WriteTransactionResult txResultW5 =
       executor.write(context, new Write(key, Bytes.toBytes(5)), pointerWFive);
@@ -366,8 +359,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.addToTransaction(pointerWFive, txResultW5.undos);
 
     // write 6 with another transaction and also don't commit
-    ImmutablePair<ReadPointer, Long> pointerWSix =
-        executor.startTransaction();
+    Transaction pointerWSix = executor.startTransaction();
     // System.out.println("Started transaction txwSix : " + pointerWSix);
     WriteTransactionResult txResultW6 =
       executor.write(context, new Write(key, Bytes.toBytes(6)), pointerWSix);
@@ -380,10 +372,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
             .getValue());
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
             .getValue());
 
     // commit 5, should be successful
@@ -395,10 +387,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
             .getValue());
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
             .getValue());
 
     // commit 6, should fail
@@ -410,10 +402,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
             .getValue());
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getFirst())
+        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
             .getValue());
   }
 
@@ -436,10 +428,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(dequeueResult.isSuccess());
 
     // Start our ack operation
-    ImmutablePair<ReadPointer,Long> ackPointer = executor.startTransaction();
+    Transaction ackPointer = executor.startTransaction();
 
     // Start a fake operation that will just conflict with our key
-    ImmutablePair<ReadPointer,Long> fakePointer = executor.startTransaction();
+    Transaction fakePointer = executor.startTransaction();
     Undo fakeUndo = new UndoWrite(null, key, new byte[][] { new byte[] {'a' } } );
     executor.addToTransaction(fakePointer, Collections.singletonList(fakeUndo));
 
@@ -511,7 +503,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, delete);
 
     // start tx one
-    ImmutablePair<ReadPointer, Long> pointerOne = executor.startTransaction();
+    Transaction pointerOne = executor.startTransaction();
     // System.out.println("Started transaction one : " + pointerOne);
 
     // write value one
@@ -527,11 +519,11 @@ public abstract class TestOmidTransactionalOperationExecutor {
     assertTrue(executor.commitTransaction(pointerOne).isSuccess());
 
     // dirty read should see it
-    assertArrayEquals(valueOne, executor.read(context,
-        new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).getValue());
+    assertArrayEquals(valueOne, executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE))
+      .getValue());
 
     // start tx two
-    ImmutablePair<ReadPointer, Long> pointerTwo = executor.startTransaction();
+    Transaction pointerTwo = executor.startTransaction();
     // System.out.println("Started transaction two : " + pointerTwo);
 
     // delete value one
@@ -541,12 +533,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.addToTransaction(pointerTwo, txResultTwo.undos);
 
     // clean read should see it still
-    assertArrayEquals(valueOne, executor.execute(context,
-        new ReadKey(key)).getValue());
+    assertArrayEquals(valueOne, executor.execute(context, new ReadKey(key)).getValue());
 
     // dirty read should NOT see it
-    assertTrue(executor.read(context, new ReadKey(key),
-            new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
+    assertTrue(executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
 
     // commit it
     assertTrue(executor.commitTransaction(pointerTwo).isSuccess());
@@ -558,19 +548,18 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, new Write(key, valueTwo));
 
     // clean read sees it
-    assertArrayEquals(valueTwo, executor.execute(context,
-        new ReadKey(key)).getValue());
+    assertArrayEquals(valueTwo, executor.execute(context, new ReadKey(key)).getValue());
 
     // dirty read sees it
     assertArrayEquals(valueTwo, executor.read(context,
         new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).getValue());
 
     // start tx three
-    ImmutablePair<ReadPointer, Long> pointerThree = executor.startTransaction();
+    Transaction pointerThree = executor.startTransaction();
     // System.out.println("Started transaction three : " + pointerThree);
 
     // start and commit a fake transaction which will overlap
-    ImmutablePair<ReadPointer, Long> pointerFour = executor.startTransaction();
+    Transaction pointerFour = executor.startTransaction();
     Undo fakeUndo = new UndoWrite(null, key, new byte[][] { new byte[] {'a' } } );
     executor.addToTransaction(pointerFour, Collections.singletonList(fakeUndo));
     assertTrue(executor.commitTransaction(pointerFour).isSuccess());
@@ -586,10 +575,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     }
 
     // verify clean and dirty reads still see the value (it was undeleted)
-    assertArrayEquals(valueTwo, executor.execute(context,
-        new ReadKey(key)).getValue());
-    assertArrayEquals(valueTwo, executor.read(context,
-        new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).getValue());
+    assertArrayEquals(valueTwo, executor.execute(context, new ReadKey(key)).getValue());
+    assertArrayEquals(valueTwo, executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE))
+      .getValue());
   }
 
   @Test
@@ -687,10 +675,6 @@ public abstract class TestOmidTransactionalOperationExecutor {
     testNamedTableOperations(null);
     testNamedTableOperations("tableA");
     testNamedTableOperations("tableB");
-  }
-
-  private void assertValueIsNull(byte[] value) {
-    Assert.assertTrue(value == null || value.length == 0);
   }
 
   private void testNamedTableOperations(String table)

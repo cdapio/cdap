@@ -67,7 +67,7 @@ public interface TransactionOracle {
    * transactions can see their own writes.
    * @return a pair of the read pointer and the new transaction id.
    */
-  public ImmutablePair<ReadPointer,Long> startTransaction();
+  public Transaction startTransaction();
 
   /**
    * Add a batch of operations to a transaction. The list of undo operations is saved for that
