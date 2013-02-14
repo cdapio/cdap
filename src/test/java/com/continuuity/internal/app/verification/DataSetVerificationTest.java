@@ -1,0 +1,31 @@
+package com.continuuity.internal.app.verification;
+
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.app.verification.VerifyResult;
+import org.junit.Assert;
+import org.junit.Test;
+
+/**
+ * Tests bad dataset specification.
+ */
+public class DataSetVerificationTest {
+
+  @Test
+  public void testGoodDataSetSpecification() throws Exception {
+    DataSetSpecification spec = new DataSetSpecification.Builder(new KeyValueTable("crawl-table"))
+      .create();
+    DataSetVerification verifier = new DataSetVerification();
+    VerifyResult result = verifier.verify(spec);
+    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
+  }
+
+  @Test
+  public void testBadDataSetSpecification() throws Exception {
+    DataSetSpecification spec = new DataSetSpecification.Builder(new KeyValueTable("bad dataset"))
+                                  .create();
+    DataSetVerification verifier = new DataSetVerification();
+    VerifyResult result = verifier.verify(spec);
+    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.FAILED);
+  }
+}

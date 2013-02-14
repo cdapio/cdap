@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.classloader;
+package com.continuuity.jar;
 
 import javax.annotation.Nullable;
 import java.util.jar.Attributes;
@@ -24,7 +24,7 @@ public class JarClassLoader extends MultiClassLoader {
   }
 
   /**
-   * Creates an instance of classloader with provided jar resources.
+   * Creates an instance of jar with provided jar resources.
    *
    * @param jarResources instance of jar resources
    * @throws JarResourceException
@@ -42,7 +42,7 @@ public class JarClassLoader extends MultiClassLoader {
    * @return array of bytes for the class.
    */
   @Nullable
-  protected byte[] loadClassBytes (String className) {
+  public byte[] loadClassBytes (String className) {
     className = formatClassName (className);
     return (jarResources.getResource (className));
   }

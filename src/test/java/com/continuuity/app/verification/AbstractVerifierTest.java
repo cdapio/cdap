@@ -24,6 +24,7 @@ public class AbstractVerifierTest {
       }
     };
     Assert.assertTrue(v.isId("foo"));
+    Assert.assertTrue(v.isId("mydataset"));
     Assert.assertFalse(v.isId("foo name"));
     Assert.assertTrue(v.isId("foo-name"));
     Assert.assertTrue(v.isId("foo_name"));
