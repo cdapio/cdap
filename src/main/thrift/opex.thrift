@@ -202,14 +202,6 @@ exception TOperationException {
 
 service TOperationExecutor {
 
-  // write op ex
-  void write(1: TOperationContext context, 2: TWrite write) throws (1: TOperationException ex),
-  void delet(1: TOperationContext context, 2: TDelete delet) throws (1: TOperationException ex),
-  void increment(1: TOperationContext context, 2: TIncrement increment) throws (1: TOperationException ex),
-  void compareAndSwap(1: TOperationContext context, 2: TCompareAndSwap compareAndSwap) throws (1: TOperationException ex),
-  void queueEnqueue(1: TOperationContext context, 2: TQueueEnqueue queueEnqueue) throws (1: TOperationException ex),
-  void queueAck(1: TOperationContext context, 2: TQueueAck queueAck) throws (1: TOperationException ex),
-
   // batch op ex
   void batch(1: TOperationContext context, 2: TWriteBatch batch) throws (1: TOperationException ex),
 
