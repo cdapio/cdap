@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.jar;
+package com.continuuity.archive;
 
 import javax.annotation.Nullable;
 import java.util.jar.Attributes;
@@ -15,18 +15,18 @@ public class JarClassLoader extends MultiClassLoader {
   private JarResources jarResources;
 
   /**
-   * Create the JarResource and suck in the jar file.
+   * Create the JarResource and suck in the archive file.
    *
-   * @param jarName Name of the jar file.
+   * @param jarName Name of the archive file.
    */
   public JarClassLoader(String jarName) throws JarResourceException {
     jarResources = new JarResources (jarName);
   }
 
   /**
-   * Creates an instance of jar with provided jar resources.
+   * Creates an instance of archive with provided archive resources.
    *
-   * @param jarResources instance of jar resources
+   * @param jarResources instance of archive resources
    * @throws JarResourceException
    */
   public JarClassLoader(JarResources jarResources) throws JarResourceException {
@@ -36,7 +36,7 @@ public class JarClassLoader extends MultiClassLoader {
   /**
    * Loads the class bytes based on the name specified. Name
    * munging is used to identify the class to be loaded from
-   * the jar.
+   * the archive.
    *
    * @param className Name of the class bytes to be loaded.
    * @return array of bytes for the class.
