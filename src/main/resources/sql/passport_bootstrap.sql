@@ -20,6 +20,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `confirmed` TINYINT(1) NULL DEFAULT NULL ,
   `locked` TINYINT(1) NULL DEFAULT NULL ,
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
+  `account_created_at` DATETIME NOT NULL,
   PRIMARY KEY (`id`) ,
   UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
 ENGINE = InnoDB
@@ -123,8 +124,10 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   `id` INT(11) NOT NULL AUTO_INCREMENT ,
   `account_id` INT(11) NOT NULL ,
   `vpc_name` VARCHAR(100) NOT NULL ,
+  `vpc_create_at` DATETIME NOT NULL,
   PRIMARY KEY (`id`) ,
   INDEX `account_id` (`account_id` ASC) ,
+  UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC) ),
   CONSTRAINT `vpc_ibfk_1`
     FOREIGN KEY (`account_id` )
     REFERENCES `continuuity`.`account` (`id` ))
