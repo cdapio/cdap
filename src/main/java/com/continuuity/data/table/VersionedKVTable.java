@@ -3,6 +3,7 @@ package com.continuuity.data.table;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.executor.ReadPointer;
 
 public interface VersionedKVTable {
 

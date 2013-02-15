@@ -6,7 +6,7 @@ import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOrac
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import org.junit.Test;
 
 import java.util.Random;

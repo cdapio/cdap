@@ -1,5 +1,7 @@
 package com.continuuity.data.table;
 
+import com.continuuity.data.operation.executor.ReadPointer;
+
 public class SimpleReadPointer implements ReadPointer {
 
   private final long maxVersion;

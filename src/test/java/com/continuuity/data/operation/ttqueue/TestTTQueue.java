@@ -6,10 +6,9 @@ import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOrac
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;

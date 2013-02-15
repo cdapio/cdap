@@ -1,11 +1,9 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -13,16 +11,18 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -357,92 +357,9 @@ public class RemoteOperationExecutor
 
   @Override
   public void execute(final OperationContext context,
-                      final Write write)
+                      final WriteOperation write)
       throws OperationException {
-    this.execute(
-        new Operation<Boolean>("Write") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, write);
-            return true;
-          }
-        });
-  }
-
-  @Override
-  public void execute(final OperationContext context,
-                      final Delete delete)
-      throws OperationException {
-    this.execute(
-        new Operation<Boolean>("Delete") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, delete);
-            return true;
-          }
-        });
-  }
-
-  @Override
-  public void execute(final OperationContext context,
-                      final Increment increment)
-      throws OperationException {
-    this.execute(
-        new Operation<Boolean>("Increment") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, increment);
-            return true;
-          }
-        });
-  }
-
-  @Override
-  public void execute(final OperationContext context,
-                      final CompareAndSwap compareAndSwap)
-      throws OperationException {
-    this.execute(
-        new Operation<Boolean>("CompareAndSwap") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, compareAndSwap);
-            return true;
-          }
-        });
-  }
-
-  @Override
-  public void execute(final OperationContext context,
-                      final QueueEnqueue enqueue)
-      throws OperationException {
-    this.execute(
-        new Operation<Boolean>("EnqueuePayload") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, enqueue);
-            return true;
-          }
-        });
-  }
-
-  @Override
-  public void execute(final OperationContext context,
-                      final QueueAck ack)
-      throws OperationException {
-    this.execute(
-        new Operation<Boolean>("Ack") {
-          @Override
-          public Boolean execute(OperationExecutorClient client)
-              throws TException, OperationException {
-            client.execute(context, ack);
-            return true;
-          }
-        });
+    this.execute(context, Collections.singletonList(write));
   }
 
   @Override

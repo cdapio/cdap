@@ -38,11 +38,13 @@ public class TimeoutTest extends OpexServiceTestBase {
 
           @Override
           public void execute(OperationContext context,
-                              Write write) throws OperationException {
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException e) {
-              // do nothing
+                              WriteOperation write) throws OperationException {
+            if (write instanceof Write) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException e) {
+                // do nothing
+              }
             }
             super.execute(context, write);
           }

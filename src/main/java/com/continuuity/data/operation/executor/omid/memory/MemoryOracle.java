@@ -1,15 +1,14 @@
 package com.continuuity.data.operation.executor.omid.memory;
 
-import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.Transaction;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.inject.Inject;
 
 import java.util.*;

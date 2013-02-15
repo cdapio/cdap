@@ -24,12 +24,13 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.*;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
 import com.continuuity.data.operation.ttqueue.*;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.base.Objects;
@@ -503,12 +504,6 @@ implements TransactionalOperationExecutor {
     end("WriteOperationBatch", begin);
   }
 
-  private void executeAsBatch(OperationContext context,
-                              WriteOperation write)
-      throws OperationException {
-    execute(context, Collections.singletonList(write));
-  }
-
   void execute(OperationContext context, List<WriteOperation> writes,
                Transaction transaction)
       throws OperationException {
@@ -953,38 +948,8 @@ implements TransactionalOperationExecutor {
 
   @Override
   public void execute(OperationContext context,
-                      Write write) throws OperationException {
-    executeAsBatch(context, write);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      Delete delete) throws OperationException {
-    executeAsBatch(context, delete);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      Increment inc) throws OperationException {
-    executeAsBatch(context, inc);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      CompareAndSwap cas) throws OperationException {
-    executeAsBatch(context, cas);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      QueueAck ack) throws OperationException {
-    executeAsBatch(context, ack);
-  }
-
-  @Override
-  public void execute(OperationContext context,
-                      QueueEnqueue enqueue) throws OperationException {
-    executeAsBatch(context, enqueue);
+                      WriteOperation write) throws OperationException {
+    execute(context, Collections.singletonList(write));
   }
 
   private TTQueueTable getQueueTable(byte[] queueName) {

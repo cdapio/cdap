@@ -1,6 +1,4 @@
-package com.continuuity.data.operation.executor.omid;
-
-import com.continuuity.data.table.ReadPointer;
+package com.continuuity.data.operation.executor;
 
 /**
  * This represents a transaction in Omid. It has a transaction id, used as the write timestamp,

@@ -1,7 +1,8 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
