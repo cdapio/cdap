@@ -6,11 +6,13 @@ import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.BillingInfo;
 import com.continuuity.passport.core.meta.Role;
+import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.dal.AccountDAO;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.joda.time.DateTime;
 
 import javax.swing.*;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -90,13 +92,15 @@ public class AccountDBAccess implements AccountDAO {
       PreparedStatement ps = connection.prepareStatement(SQL);
       ps.setString(1, generateSaltedHashedPassword(security.getPassword()));
       ps.setInt(2, DBUtils.AccountTable.ACCOUNT_CONFIRMED);
-      ps.setString(3,generateAPIKey());
+      ps.setString(3, ApiKey.generateKey(String.valueOf(security.getAccountId())));
       ps.setInt(4, security.getAccountId());
 
       ps.executeUpdate();
 
     }
     catch (SQLException e){
+      throw new RuntimeException(e.getMessage(),e.getCause());
+    } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e.getMessage(),e.getCause());
     }
 
@@ -262,11 +266,6 @@ public class AccountDBAccess implements AccountDAO {
       throw new RuntimeException(e.getMessage(),e.getCause());
     }
     return false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  private String generateAPIKey(){
-    //TODO: Generate API_KEY
-    return "API_KEY";
   }
 
   private String generateSaltedHashedPassword(String password) {
