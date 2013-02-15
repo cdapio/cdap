@@ -19,9 +19,7 @@ public interface FlowletContext {
   int getInstanceCount();
 
   /**
-   * Returns a reference to {@link DataSet} instance based on the name specified.
-   * @param name of the dataset
-   * @return null if not found; otherwise the {@link DataSet} instance.
+   * @return Name of this flowlet.
    */
-  DataSet getDataSet(String name);
+  String getName();
 }
