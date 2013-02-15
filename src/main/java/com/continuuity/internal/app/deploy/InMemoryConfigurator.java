@@ -7,19 +7,17 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
-import com.continuuity.app.deploy.ConfigResult;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.archive.JarClassLoader;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.archive.JarClassLoader;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -117,9 +115,9 @@ public class InMemoryConfigurator implements Configurator  {
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch (Exception e) {
-      Futures.immediateFailedFuture(e);
+      return Futures.immediateFailedFuture(e);
     } catch (Throwable throwable) {
-      throwable.printStackTrace();
+      return Futures.immediateFailedFuture(throwable);
     } finally {
       if(writer != null) {
         try {

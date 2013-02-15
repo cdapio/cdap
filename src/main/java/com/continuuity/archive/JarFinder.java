@@ -53,7 +53,7 @@ public class JarFinder {
     zos.closeEntry();
   }
 
-  public static void jarDir(File dir, String relativePath, ZipOutputStream zos)
+  public static void jarDir(File dir, String relativePath, ZipOutputStream zos, Manifest manifest)
     throws IOException {
     Preconditions.checkNotNull(relativePath, "relativePath");
     Preconditions.checkNotNull(zos, "zos");
@@ -64,7 +64,7 @@ public class JarFinder {
     ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
     if (!manifestFile.exists()) {
       zos.putNextEntry(manifestEntry);
-      new Manifest().write(new BufferedOutputStream(zos));
+      manifest.write(new BufferedOutputStream(zos));
       zos.closeEntry();
     } else {
       InputStream is = new FileInputStream(manifestFile);
@@ -103,7 +103,7 @@ public class JarFinder {
     }
   }
 
-  private static void createJar(File dir, File jarFile) throws IOException {
+  private static void createJar(File dir, File jarFile, Manifest manifest) throws IOException {
     Preconditions.checkNotNull(dir, "dir");
     Preconditions.checkNotNull(jarFile, "jarFile");
     File jarDir = jarFile.getParentFile();
@@ -114,7 +114,11 @@ public class JarFinder {
       }
     }
     JarOutputStream zos = new JarOutputStream(new FileOutputStream(jarFile));
-    jarDir(dir, "", zos);
+    jarDir(dir, "", zos, manifest);
+  }
+
+  public static String getJar(Class klass) {
+    return getJar(klass, new Manifest());
   }
 
   /**
@@ -122,10 +126,11 @@ public class JarFinder {
    * JAR.
    *
    * @param klass class.
+   * @param manifest Manifest to be generated.
    *
    * @return path to the Jar containing the class.
    */
-  public static String getJar(Class klass) {
+  public static String getJar(Class klass, Manifest manifest) {
     Preconditions.checkNotNull(klass, "klass");
     ClassLoader loader = klass.getClassLoader();
     if (loader != null) {
@@ -155,7 +160,7 @@ public class JarFinder {
             }
             File tempJar = File.createTempFile("app-", "", testDir);
             tempJar = new File(tempJar.getAbsolutePath() + ".jar");
-            createJar(baseDir, tempJar);
+            createJar(baseDir, tempJar, manifest);
             return tempJar.getAbsolutePath();
           }
         }

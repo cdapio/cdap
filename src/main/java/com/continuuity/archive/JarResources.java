@@ -7,7 +7,6 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,9 +81,10 @@ public final class JarResources {
   private Manifest init(InputStream stream) throws JarResourceException {
     File temp = null;
     try {
-      temp = File.createTempFile("local", "archive");
+      temp = File.createTempFile("archive-", ".jar");
       FileOutputStream fos = new FileOutputStream(temp);
       ByteStreams.copy(stream, fos);
+      fos.close();
       return init(temp.getAbsolutePath());
     } catch (IOException e) {
       throw new JarResourceException(e);

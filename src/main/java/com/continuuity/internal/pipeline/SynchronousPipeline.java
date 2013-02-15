@@ -19,6 +19,10 @@ import com.continuuity.pipeline.Stage;
 final class SynchronousPipeline extends AbstractPipeline {
   /**
    * Executes a pipeline in synchronous mode.
+   * <p>
+   *   Waits for the results of previous to be available to move to next
+   *   stage of processing.
+   * </p>
    * @param o argument to run the pipeline.
    */
   @Override
@@ -29,6 +33,7 @@ final class SynchronousPipeline extends AbstractPipeline {
       stage.process(ctx);
       input = ctx.getDownStream();
     }
+    // After the processing has completed, set the result to be retrieved.
     setResult(input);
   }
 
