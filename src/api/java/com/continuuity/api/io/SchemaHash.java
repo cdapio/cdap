@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.Set;
 
 /**
@@ -16,6 +17,7 @@ import java.util.Set;
 public final class SchemaHash {
 
   private final byte[] hash;
+  private String hashStr;
 
   public SchemaHash(Schema schema) {
     hash = computeHash(schema);
@@ -41,6 +43,20 @@ public final class SchemaHash {
   @Override
   public int hashCode() {
     return Arrays.hashCode(hash);
+  }
+
+  @Override
+  public String toString() {
+    String str = hashStr;
+    if (str == null) {
+      // hex encode the bytes
+      Formatter formatter = new Formatter(new StringBuilder(32));
+      for (byte b : hash) {
+        formatter.format("%02X", b);
+      }
+      str = hashStr = formatter.toString();
+    }
+    return str;
   }
 
   private byte[] computeHash(Schema schema) {
