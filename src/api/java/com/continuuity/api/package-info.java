@@ -23,7 +23,7 @@
  *
  *     public ApplicationSpecification configure() {
  *
- *       return ApplicationSpecification.builder()
+ *       return ApplicationSpecification.Builder.with()
  *             .setName("myFirstApp")
  *             .setDescription("This is my first application")
  *             .withStreams().add(new Stream("text"))
@@ -68,7 +68,7 @@
  *       public class SentimentAnalyzer extends AbstractFlowlet {
  *
  *          FlowletSpecification configure() {
- *            return FlowletSpecification.builder()
+ *            return FlowletSpecification.Builder.with()
  *                      .set(...)
  *          }
  *
@@ -128,7 +128,7 @@
  *     public class WordCountApp implements Application {
  *       {@literal @Override}
  *       public ApplicationSpecification configure() {
- *         return ApplicationSpecification.builder()
+ *         return ApplicationSpecification.Builder.with()
  *            .setName("WordCountApp")
  *            .setDescription("Application for counting words")
  *            .withStreams().add(new Stream("text")
@@ -146,7 +146,7 @@
  *   <pre>
  *     public class WordCountFlow implements Flow {
  *       public FlowSpecification configure() {
- *         return FlowSpecification.builder()
+ *         return FlowSpecification.Builder.with()
  *             .setName("WordCountFlow")
  *             .setDescription("Flow for counting tokens")
  *             .withFlowlets()

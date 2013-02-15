@@ -7,10 +7,11 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
+import com.continuuity.app.deploy.ConfigResult;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.jar.JarClassLoader;
+import com.continuuity.archive.JarClassLoader;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -41,8 +42,8 @@ public class InMemoryConfigurator implements Configurator  {
   private final Application application;
 
   /**
-   * Constructor that accepts jar file as input to invoke configure.
-   * @param jarFilename name of the jar file for which configure is invoked in-memory.
+   * Constructor that accepts archive file as input to invoke configure.
+   * @param jarFilename name of the archive file for which configure is invoked in-memory.
    */
   public InMemoryConfigurator(File jarFilename) {
     Preconditions.checkNotNull(jarFilename);

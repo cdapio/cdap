@@ -37,7 +37,7 @@ public class WordCountApp implements Application {
    */
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
+    return ApplicationSpecification.Builder.with()
       .setName("WordCountApp")
       .setDescription("Application for counting words")
       .withStreams().add(new Stream("text"))
@@ -85,7 +85,7 @@ public class WordCountApp implements Application {
   public static class WordCountFlow implements Flow {
     @Override
     public FlowSpecification configure() {
-      return FlowSpecification.builder()
+      return FlowSpecification.Builder.with()
         .setName("WordCountFlow")
         .setDescription("Flow for counting words")
         .withFlowlets().add(new StreamSucker()).apply()

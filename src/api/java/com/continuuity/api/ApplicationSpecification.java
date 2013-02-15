@@ -12,6 +12,9 @@ import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.internal.api.DefaultApplicationSpecification;
+import com.continuuity.internal.api.flow.DefaultFlowSpecification;
+import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -20,107 +23,41 @@ import java.util.Map;
 /**
  * This class provides an specification of an application to be executed within AppFabric.
  */
-public final class ApplicationSpecification {
-
-  /**
-   * @return A new instance of {@link Builder}.
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
-   * Name of the application.
-   */
-  private final String name;
-
-  /**
-   * Description of the application.
-   */
-  private final String description;
-
-  /**
-   * Map from stream name to {@link StreamSpecification} for all streams defined to this application.
-   */
-  private final Map<String, StreamSpecification> streams;
-
-  /**
-   * Map from dataset name to {@link DataSetSpecification} for all datasets defined in this application.
-   */
-  private final Map<String, DataSetSpecification> dataSets;
-
-  /**
-   * Map from flow name to {@link FlowSpecification} for all flows defined in this application.
-   */
-  private final Map<String, FlowSpecification> flows;
-
-  /**
-   * Map from procedure name to {@link ProcedureSpecification} for all procedures defined in this application.
-   */
-  private final Map<String, ProcedureSpecification> procedures;
-
-  /**
-   * Private constructor to only allows {@link Builder} to call it, making
-   * sure this class is immutable.
-   */
-  private ApplicationSpecification(String name, String description,
-                                   Map<String, StreamSpecification> streams,
-                                   Map<String, DataSetSpecification> dataSets,
-                                   Map<String, FlowSpecification> flows,
-                                   Map<String, ProcedureSpecification> procedures) {
-    this.name = name;
-    this.description = description;
-    this.streams = streams;
-    this.dataSets = dataSets;
-    this.flows = flows;
-    this.procedures = procedures;
-  }
+public interface ApplicationSpecification {
 
   /**
    * @return Name of the application.
    */
-  public String getName() {
-    return name;
-  }
+  String getName();
 
   /**
    * @return Description of the application.
    */
-  public String getDescription() {
-    return description;
-  }
+  String getDescription();
 
   /**
    * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
    *         for {@link Stream}s that are configured for the application.
    */
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
+  Map<String, StreamSpecification> getStreams();
 
   /**
    * @return An immutable {@link Map} from {@link DataSet} name to {@link DataSetSpecification}
    *         for {@link DataSet}s that are configured for the application.
    */
-  public Map<String, DataSetSpecification> getDataSets() {
-    return dataSets;
-  }
+  Map<String, DataSetSpecification> getDataSets();
 
   /**
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
    *         for {@link Flow}s that are configured for the application.
    */
-  public Map<String, FlowSpecification> getFlows() {
-    return flows;
-  }
+  Map<String, FlowSpecification> getFlows();
 
   /**
    * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
    *         for {@link Procedure}s that are configured for the application.
    */
-  public Map<String, ProcedureSpecification> getProcedures() {
-    return procedures;
-  }
+  Map<String, ProcedureSpecification> getProcedures();
 
   /**
    * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
@@ -129,36 +66,42 @@ public final class ApplicationSpecification {
    */
   public static final class Builder {
 
-
     /**
-     * @see ApplicationSpecification#name
+     * Name of the application.
      */
     private String name;
 
     /**
-     * @see ApplicationSpecification#description
+     * Description of the application.
      */
     private String description;
 
     /**
-     * @see ApplicationSpecification#streams
+     * Map from stream name to {@link StreamSpecification} for all streams defined to this application.
      */
     private final ImmutableMap.Builder<String, StreamSpecification> streams = ImmutableMap.builder();
 
     /**
-     * @see ApplicationSpecification#dataSets
+     * Map from dataset name to {@link DataSetSpecification} for all datasets defined in this application.
      */
     private final ImmutableMap.Builder<String, DataSetSpecification> dataSets = ImmutableMap.builder();
 
     /**
-     * @see ApplicationSpecification#flows
+     * Map from flow name to {@link FlowSpecification} for all flows defined in this application.
      */
     private final ImmutableMap.Builder<String, FlowSpecification> flows = ImmutableMap.builder();
 
     /**
-     * @see ApplicationSpecification#procedures
+     * Map from procedure name to {@link ProcedureSpecification} for all procedures defined in this application.
      */
     private final ImmutableMap.Builder<String, ProcedureSpecification> procedures = ImmutableMap.builder();
+
+    /**
+     * @return A new instance of {@link Builder}.
+     */
+    public static Builder with() {
+      return new Builder();
+    }
 
     /**
      * Sets the application name.
@@ -399,7 +342,7 @@ public final class ApplicationSpecification {
       @Override
       public MoreFlow add(Flow flow) {
         Preconditions.checkArgument(flow != null, "Flow cannot be null.");
-        FlowSpecification spec = flow.configure();
+        FlowSpecification spec = new DefaultFlowSpecification(flow.getClass().getName(), flow.configure());
         flows.put(spec.getName(), spec);
         return this;
       }
@@ -463,7 +406,8 @@ public final class ApplicationSpecification {
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = procedure.configure();
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure.getClass().getName(),
+                                                                        procedure.configure());
         procedures.put(spec.getName(), spec);
         return this;
       }
@@ -474,14 +418,14 @@ public final class ApplicationSpecification {
        */
       @Override
       public ApplicationSpecification build() {
-        return new ApplicationSpecification(name, description,
-                                            streams.build(), dataSets.build(),
-                                            flows.build(), procedures.build());
+        return new DefaultApplicationSpecification(name, description,
+                                                   streams.build(), dataSets.build(),
+                                                   flows.build(), procedures.build());
       }
     }
 
     /**
-     * Builder is created through {@link com.continuuity.api.ApplicationSpecification#builder()}
+     * Builder is created through {@link #with()}
      */
     private Builder() { }
   }

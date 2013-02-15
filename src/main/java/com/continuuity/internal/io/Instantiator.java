@@ -3,7 +3,7 @@ package com.continuuity.internal.io;
 /**
  *
  */
-public interface InstanceCreator<T> {
+public interface Instantiator<T> {
 
   T create();
 }

@@ -6,22 +6,6 @@ import java.net.URI;
  *
  */
 public class Program<S> {
-
-  /**
-   * Defines types of programs supported by the system.
-   */
-  public enum Type {
-    FLOW(1),
-    PROCEDURE(2),
-    BATCH(3);
-
-    private final int programType;
-
-    private Type(int type) {
-      this.programType = type;
-    }
-  }
-
   /**
    * Defines the type of the {@link Program}
    */

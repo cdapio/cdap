@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 /**
- * Building of API jar
+ * Building of API archive
  */
 smartyFacts {
   api {

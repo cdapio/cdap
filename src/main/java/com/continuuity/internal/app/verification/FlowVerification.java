@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.io.Schema;
 import com.continuuity.app.verification.AbstractVerifier;
@@ -74,18 +75,18 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
 
     // We through connection and make sure the input and output are compatible.
     Map<String, FlowletDefinition> flowlets = input.getFlowlets();
-    for(FlowSpecification.FlowletConnection connection : input.getConnections()) {
+    for(FlowletConnection connection : input.getConnections()) {
       String source = connection.getSourceName();
       String target = connection.getTargetName();
 
       // Let's start with a simple case, when the type of source is FLOWLET
-      if(connection.getSourceType() == FlowSpecification.FlowletConnection.SourceType.FLOWLET) {
+      if(connection.getSourceType() == FlowletConnection.SourceType.FLOWLET) {
         VerifyResult result = VerifyFlowletConnections(flowlets.get(source), flowlets.get(target));
         // If validation have failed, then we return the status of failure and not proceed further.
         if(result.getStatus() != VerifyResult.Status.SUCCESS) {
           return result;
         }
-      } else if(connection.getSourceType() == FlowSpecification.FlowletConnection.SourceType.STREAM) {
+      } else if(connection.getSourceType() == FlowletConnection.SourceType.STREAM) {
         // We know that output type is a stream, but there should be a input that can handle this.
       }
     }

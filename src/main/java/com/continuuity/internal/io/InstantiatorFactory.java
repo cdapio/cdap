@@ -21,7 +21,7 @@ import java.util.SortedSet;
 /**
  *
  */
-public final class InstanceCreatorFactory {
+public final class InstantiatorFactory {
 
   private static final Unsafe UNSAFE;
 
@@ -38,8 +38,8 @@ public final class InstanceCreatorFactory {
     UNSAFE = unsafe;
   }
 
-  public <T> InstanceCreator<T> get(TypeToken<T> type) {
-    InstanceCreator<T> creator = getByDefaultConstructor(type);
+  public <T> Instantiator<T> get(TypeToken<T> type) {
+    Instantiator<T> creator = getByDefaultConstructor(type);
     if (creator != null) {
       return creator;
     }
@@ -53,18 +53,18 @@ public final class InstanceCreatorFactory {
   }
 
   /**
-   * Returns an {@link InstanceCreator} that uses default constructor to instantiate an object of the given type.
+   * Returns an {@link Instantiator} that uses default constructor to instantiate an object of the given type.
    *
    * @param type
    * @param <T>
    * @return
    */
-  private <T> InstanceCreator<T> getByDefaultConstructor(TypeToken<T> type) {
+  private <T> Instantiator<T> getByDefaultConstructor(TypeToken<T> type) {
     try {
       final Constructor<? super T> defaultCons = type.getRawType().getDeclaredConstructor();
       defaultCons.setAccessible(true);
 
-      return new InstanceCreator<T>() {
+      return new Instantiator<T>() {
         @Override
         public T create() {
           try {
@@ -80,11 +80,11 @@ public final class InstanceCreatorFactory {
     }
   }
 
-  private <T> InstanceCreator<T> getByKnownType(TypeToken<T> type) {
+  private <T> Instantiator<T> getByKnownType(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
     if (Collection.class.isAssignableFrom(rawType)) {
       if (SortedSet.class.isAssignableFrom(rawType)) {
-        return new InstanceCreator<T>() {
+        return new Instantiator<T>() {
           @Override
           public T create() {
             return (T) Sets.newTreeSet();
@@ -92,7 +92,7 @@ public final class InstanceCreatorFactory {
         };
       }
       if (Set.class.isAssignableFrom(rawType)) {
-        return new InstanceCreator<T>() {
+        return new Instantiator<T>() {
           @Override
           public T create() {
             return (T) Sets.newHashSet();
@@ -100,14 +100,14 @@ public final class InstanceCreatorFactory {
         };
       }
       if (Queue.class.isAssignableFrom(rawType)) {
-        return new InstanceCreator<T>() {
+        return new Instantiator<T>() {
           @Override
           public T create() {
             return (T) Lists.newLinkedList();
           }
         };
       }
-      return new InstanceCreator<T>() {
+      return new Instantiator<T>() {
         @Override
         public T create() {
           return (T) Lists.newArrayList();
@@ -117,14 +117,14 @@ public final class InstanceCreatorFactory {
 
     if (Map.class.isAssignableFrom(rawType)) {
       if (SortedMap.class.isAssignableFrom(rawType)) {
-        return new InstanceCreator<T>() {
+        return new Instantiator<T>() {
           @Override
           public T create() {
             return (T) Maps.newTreeMap();
           }
         };
       }
-      return new InstanceCreator<T>() {
+      return new Instantiator<T>() {
         @Override
         public T create() {
           return (T) Maps.newHashMap();
@@ -132,7 +132,7 @@ public final class InstanceCreatorFactory {
       };
     }
     if (StreamEvent.class.isAssignableFrom(rawType)) {
-      return new InstanceCreator<T>() {
+      return new Instantiator<T>() {
         @Override
         public T create() {
           return (T) new DefaultStreamEvent();
@@ -142,9 +142,9 @@ public final class InstanceCreatorFactory {
     return null;
   }
 
-  private <T> InstanceCreator<T> getByUnsafe(TypeToken<T> type) {
+  private <T> Instantiator<T> getByUnsafe(TypeToken<T> type) {
     final Class<? super T> rawType = type.getRawType();
-    return new InstanceCreator<T>() {
+    return new Instantiator<T>() {
       @Override
       public T create() {
         try {

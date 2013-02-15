@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.jar;
+package com.continuuity.archive;
 
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -26,21 +26,21 @@ import java.util.jar.Manifest;
 public final class JarResources {
   private static final Logger LOG = LoggerFactory.getLogger(JarResources.class);
 
-  // jar resource mapping tables
+  // archive resource mapping tables
   private final Map<String, byte[]> entryContents = Maps.newHashMap();
   private final Manifest manifest;
 
   /**
    * creates a JarResources. It extracts all resources from a Jar
    * into an internal hashtable, keyed by resource names.
-   * @param jarFileName a jar or zip file
+   * @param jarFileName a archive or zip file
    */
   public JarResources(String jarFileName) throws JarResourceException {
     manifest = init(jarFileName);
   }
 
   /**
-   * Returns the {@link java.util.jar.Manifest} object if it presents in the jar file, or {@code null} otherwise.
+   * Returns the {@link java.util.jar.Manifest} object if it presents in the archive file, or {@code null} otherwise.
    *
    * @see java.util.jar.JarFile#getManifest()
    */
@@ -49,7 +49,7 @@ public final class JarResources {
   }
 
   /**
-   * Extracts a jar resource as a blob.
+   * Extracts a archive resource as a blob.
    * @param name a resource name.
    */
   public byte[] getResource(String name) {
@@ -104,7 +104,7 @@ public final class JarResources {
       }
     } catch (NullPointerException e){
       LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
-      throw new JarResourceException("Null pointer while loading jar file " + jarFileName);
+      throw new JarResourceException("Null pointer while loading archive file " + jarFileName);
     } catch (FileNotFoundException e) {
       LOG.warn("File {} not found. Reason : {}", jarFileName, e.getMessage());
       throw new JarResourceException("Jar file " + jarFileName + " requested to be loaded is not found");

@@ -21,14 +21,14 @@ public final class ReflectionDatumReader<T> {
 
   private final Schema schema;
   private final TypeToken<T> type;
-  private final Map<Class<?>, InstanceCreator<?>> creators;
-  private final InstanceCreatorFactory creatorFactory;
+  private final Map<Class<?>, Instantiator<?>> creators;
+  private final InstantiatorFactory creatorFactory;
 
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
     this.type = type;
 
-    this.creatorFactory = new InstanceCreatorFactory();
+    this.creatorFactory = new InstantiatorFactory();
     this.creators = Maps.newIdentityHashMap();
   }
 
@@ -297,7 +297,7 @@ public final class ReflectionDatumReader<T> {
 
   private Object create(TypeToken<?> type) {
     Class<?> rawType = type.getRawType();
-    InstanceCreator<?> creator = creators.get(rawType);
+    Instantiator<?> creator = creators.get(rawType);
     if (creator == null) {
       creator = creatorFactory.get(type);
       creators.put(rawType, creator);

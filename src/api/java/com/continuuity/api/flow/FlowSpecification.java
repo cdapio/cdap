@@ -7,10 +7,9 @@ package com.continuuity.api.flow;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.Flowlet;
+import com.continuuity.internal.api.flow.DefaultFlowSpecification;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -19,12 +18,12 @@ import java.util.Map;
 
 /**
  * This class provides specification of a Flow. Instance of this class should be created through
- * the {@link Builder} class by invoking the {@link #builder()} method.
+ * the {@link Builder} class by invoking the {@link Builder#with()} method.
  *
  * <pre>
  * {@code
  * FlowSpecification flowSpecification =
- *      FlowSpecification.builder()
+ *      FlowSpecification.Builder.with()
  *        .setName("tokenCount")
  *        .setDescription("Token counting flow")
  *        .withDataset().add("token")
@@ -39,129 +38,50 @@ import java.util.Map;
  * }
  * </pre>
  */
-public final class FlowSpecification {
+public interface FlowSpecification {
 
   /**
-   * Name of the flow
+   * @return Class name of the {@link Flow}.
    */
-  private final String name;
+  String getClassName();
 
   /**
-   * Description about the flow
+   * @return Name of the {@link Flow}.
    */
-  private final String description;
-
-  /**
-   * Set of flowlets that constitute the flow. Map from flowlet id to {@link FlowletDefinition}
-   */
-  private final Map<String, FlowletDefinition> flowlets;
-
-  /**
-   * Stores flowlet connections.
-   */
-  private final List<FlowletConnection> connections;
-
-  /**
-   * Creates a {@link Builder} for building instance of this class.
-   *
-   * @return a new builder instance.
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
-   * Private constructor, only called by {@link Builder}.
-   */
-  private FlowSpecification(String name, String description,
-                            Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections) {
-    this.name = name;
-    this.description = description;
-    this.flowlets = flowlets;
-    this.connections = connections;
-  }
-
-  /**
-   * @return Name of the flow.
-   */
-  public String getName() {
-    return name;
-  }
+  String getName();
 
   /**
    * @return Description of the flow.
    */
-  public String getDescription() {
-    return description;
-  }
+  String getDescription();
 
   /**
    * @return Immutable Map from flowlet name to {@link FlowletDefinition}.
    */
-  public Map<String, FlowletDefinition> getFlowlets() {
-    return flowlets;
-  }
+  Map<String, FlowletDefinition> getFlowlets();
 
   /**
    * @return Immutable list of {@link FlowletConnection}.
    */
-  public List<FlowletConnection> getConnections() {
-    return connections;
-  }
-
-  /**
-   * Class that defines a connection between two flowlets.
-   */
-  public static final class FlowletConnection {
-
-    /**
-     * Defines different types of source a flowlet can be connected to.
-     */
-    public enum SourceType {
-      STREAM,
-      FLOWLET
-    }
-
-    private final SourceType sourceType;
-    private final String sourceName;
-    private final String targetName;
-
-    private FlowletConnection(SourceType sourceType, String sourceName, String targetName) {
-      this.sourceType = sourceType;
-      this.sourceName = sourceName;
-      this.targetName = targetName;
-    }
-
-    /**
-     * @return Type of source.
-     */
-    public SourceType getSourceType() {
-      return sourceType;
-    }
-
-    /**
-     * @return name of the source.
-     */
-    public String getSourceName() {
-      return sourceName;
-    }
-
-    /**
-     * @return name of the flowlet, the connection is connected to.
-     */
-    public String getTargetName() {
-      return targetName;
-    }
-  }
+  List<FlowletConnection> getConnections();
 
   /**
    * Defines builder for building connections or topology for a flow.
    */
-  public static final class Builder {
+  static final class Builder {
     private String name;
     private String description;
     private final Map<String, FlowletDefinition> flowlets = Maps.newHashMap();
     private final List<FlowletConnection> connections = Lists.newArrayList();
+
+    /**
+     * Creates a {@link Builder} for building instance of {@link FlowSpecification}.
+     *
+     * @return a new builder instance.
+     */
+    public static Builder with() {
+      return new Builder();
+    }
 
     /**
      * Sets the name of the Flow
@@ -381,8 +301,7 @@ public final class FlowSpecification {
 
       @Override
       public FlowSpecification build() {
-        return new FlowSpecification(name, description,
-                                     ImmutableMap.copyOf(flowlets), ImmutableList.copyOf(connections));
+        return new DefaultFlowSpecification(name, description, flowlets, connections);
       }
     }
 

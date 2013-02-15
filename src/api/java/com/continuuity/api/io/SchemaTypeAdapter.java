@@ -45,17 +45,34 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   @Override
   public Schema read(JsonReader reader) throws IOException {
+    return read(reader, Sets.<String>newHashSet());
+  }
+
+  /**
+   * Reads json value and convert it into {@link Schema} object.
+   *
+   * @param reader Source of json
+   * @param knownRecords Set of record name already encountered during the reading.
+   * @return A {@link Schema} reflecting the json.
+   * @throws IOException Any error during reading.
+   */
+  private Schema read(JsonReader reader, Set<String> knownRecords) throws IOException {
     JsonToken token = reader.peek();
     switch (token) {
       case NULL:
         return null;
-      case STRING:
-        // Simple type
-        return Schema.of(Schema.Type.valueOf(reader.nextString().toUpperCase()));
+      case STRING: {
+        // Simple type or know record type
+        String name = reader.nextString();
+        if (knownRecords.contains(name)) {
+          return Schema.recordOf(name);
+        }
+        return Schema.of(Schema.Type.valueOf(name.toUpperCase()));
+      }
       case BEGIN_ARRAY:
         // Union type
-        return readUnion(reader);
-      case BEGIN_OBJECT:
+        return readUnion(reader, knownRecords);
+      case BEGIN_OBJECT: {
         reader.beginObject();
         String name = reader.nextName();
         if (!"type".equals(name)) {
@@ -69,19 +86,20 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
             schema = readEnum(reader);
             break;
           case ARRAY:
-            schema = readArray(reader);
+            schema = readArray(reader, knownRecords);
             break;
           case MAP:
-            schema = readMap(reader);
+            schema = readMap(reader, knownRecords);
             break;
           case RECORD:
-            schema = readRecord(reader);
+            schema = readRecord(reader, knownRecords);
             break;
           default:
             schema = Schema.of(schemaType);
         }
         reader.endObject();
         return schema;
+      }
     }
     throw new IOException("Malformed schema input.");
   }
@@ -90,14 +108,15 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * Constructs {@link Schema.Type#UNION UNION} type schema from the json input.
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
+   * @param knownRecords Set of record name already encountered during the reading.
    * @return A {@link Schema} of type {@link Schema.Type#UNION UNION}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readUnion(JsonReader reader) throws IOException {
+  private Schema readUnion(JsonReader reader, Set<String> knownRecords) throws IOException {
     ImmutableList.Builder<Schema> unionSchemas = ImmutableList.builder();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
-      unionSchemas.add(read(reader));
+      unionSchemas.add(read(reader, knownRecords));
     }
     reader.endArray();
     return Schema.unionOf(unionSchemas.build());
@@ -127,47 +146,49 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * Constructs {@link Schema.Type#ARRAY ARRAY} type schema from the json input.
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
+   * @param knownRecords Set of record name already encountered during the reading.
    * @return A {@link Schema} of type {@link Schema.Type#ARRAY ARRAY}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readArray(JsonReader reader) throws IOException {
-    return Schema.arrayOf(readInnerSchema(reader, "items"));
+  private Schema readArray(JsonReader reader, Set<String> knownRecords) throws IOException {
+    return Schema.arrayOf(readInnerSchema(reader, "items", knownRecords));
   }
 
   /**
    * Constructs {@link Schema.Type#MAP MAP} type schema from the json input.
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
+   * @param knownRecords Set of record name already encountered during the reading.
    * @return A {@link Schema} of type {@link Schema.Type#MAP MAP}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readMap(JsonReader reader) throws IOException {
-    return Schema.mapOf(readInnerSchema(reader, "keys"),
-                        readInnerSchema(reader, "values"));
+  private Schema readMap(JsonReader reader, Set<String> knownRecords) throws IOException {
+    return Schema.mapOf(readInnerSchema(reader, "keys", knownRecords),
+                        readInnerSchema(reader, "values", knownRecords));
   }
 
   /**
    * Constructs {@link Schema.Type#RECORD RECORD} type schema from the json input.
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
+   * @param knownRecords Set of record name already encountered during the reading.
    * @return A {@link Schema} of type {@link Schema.Type#RECORD RECORD}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readRecord(JsonReader reader) throws IOException {
+  private Schema readRecord(JsonReader reader, Set<String> knownRecords) throws IOException {
     if (!"name".equals(reader.nextName())) {
       throw new IOException("Property \"name\" missing for record.");
     }
 
     String recordName = reader.nextString();
-    if (reader.peek() == JsonToken.END_OBJECT) {
-      // Name only record, which is a reference record.
-      return Schema.recordOf(recordName);
-    }
 
     // Read in fields schemas
     if (!"fields".equals(reader.nextName())) {
       throw new IOException("Property \"fields\" missing for record.");
     }
+
+    knownRecords.add(recordName);
+
     ImmutableList.Builder<Schema.Field> fieldBuilder = ImmutableList.builder();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
@@ -176,7 +197,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
         throw new IOException("Property \"name\" missing for record field.");
       }
       String fieldName = reader.nextString();
-      fieldBuilder.add(Schema.Field.of(fieldName, readInnerSchema(reader, "type")));
+      fieldBuilder.add(Schema.Field.of(fieldName, readInnerSchema(reader, "type", knownRecords)));
       reader.endObject();
     }
     reader.endArray();
@@ -188,14 +209,15 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
    * @param key The json property name that need to match.
+   * @param knownRecords Set of record name already encountered during the reading.
    * @return A {@link Schema} object representing the schema of the json input.
    * @throws IOException When fails to construct a valid schema from the input.
    */
-  private Schema readInnerSchema(JsonReader reader, String key) throws IOException {
+  private Schema readInnerSchema(JsonReader reader, String key, Set<String> knownRecords) throws IOException {
     if (!key.equals(reader.nextName())) {
       throw new IOException("Property \"" + key + "\" missing.");
     }
-    return read(reader);
+    return read(reader, knownRecords);
   }
 
   /**
@@ -222,6 +244,10 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       return writer.endArray();
     }
 
+    // If it is a record that refers to a previously defined record, just emit the name of it
+    if (schema.getType() == Schema.Type.RECORD && knownRecords.contains(schema.getRecordName())) {
+      return writer.value(schema.getRecordName());
+    }
     // Complex types, represented as an object with "type" property carrying the type name
     writer.beginObject().name("type").value(schema.getType().name().toLowerCase());
     switch (schema.getType()) {
@@ -248,21 +274,16 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
       case RECORD:
         // Emits the name of record, keyed by "name"
-        writer.name("name").value(schema.getRecordName());
-
-        // If the record hasn't been emitted before, emit all the fields as an array, keyed by "fields"
-        if (!knownRecords.contains(schema.getRecordName())) {
-          knownRecords.add(schema.getRecordName());
-          writer.name("fields").beginArray();
-
-          // Each field is an object, with field name keyed by "name" and field schema keyed by "type"
-          for (Schema.Field field : schema.getFields()) {
-            writer.beginObject().name("name").value(field.getName());
-            write(writer.name("type"), field.getSchema(), knownRecords);
-            writer.endObject();
-          }
-          writer.endArray();
+        knownRecords.add(schema.getRecordName());
+        writer.name("name").value(schema.getRecordName())
+              .name("fields").beginArray();
+        // Each field is an object, with field name keyed by "name" and field schema keyed by "type"
+        for (Schema.Field field : schema.getFields()) {
+          writer.beginObject().name("name").value(field.getName());
+          write(writer.name("type"), field.getSchema(), knownRecords);
+          writer.endObject();
         }
+        writer.endArray();
         break;
     }
     writer.endObject();

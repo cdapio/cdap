@@ -4,48 +4,42 @@
 
 package com.continuuity.api.procedure;
 
+import com.continuuity.internal.api.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 
 /**
  * This class defines an specification for a {@link Procedure}.
  * An {@link Procedure} runtime attributes are always defined using this class.
+ * Instance of this class should be created through the {@link Builder} class
+ * by invoking the {@link Builder#with()} method.
  */
-public class ProcedureSpecification {
-  private final String name;
-  private final String description;
+public interface ProcedureSpecification {
 
-  private ProcedureSpecification(String name, String description) {
-    this.name = name;
-    this.description = description;
-  }
+  /**
+   * @return Class name of the {@link Procedure} class.
+   */
+  String getClassName();
 
   /**
    * @return Name of the {@link Procedure}
    */
-  public String getName() {
-    return name;
-  }
+  String getName();
 
   /**
    * @return Description to be associated with {@link Procedure}
    */
-  public String getDescription() {
-    return description;
-  }
-
-  /**
-   * @return A instance of builder for {@link ProcedureSpecification}
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
+  String getDescription();
 
   /**
    * Builder for building {@link ProcedureSpecification}
    */
-  public static final class Builder {
+  static final class Builder {
     private String name;
     private String description;
+
+    public static Builder with() {
+      return new Builder();
+    }
 
     /**
      * Sets the name of the {@link Procedure}
@@ -83,7 +77,7 @@ public class ProcedureSpecification {
        * @return build a {@link ProcedureSpecification}
        */
       public ProcedureSpecification build() {
-        return new ProcedureSpecification(name, description);
+        return new DefaultProcedureSpecification(name, description);
       }
     }
     private Builder() {}

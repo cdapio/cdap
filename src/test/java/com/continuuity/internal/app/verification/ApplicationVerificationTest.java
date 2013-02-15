@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.WebCrawlApp;
@@ -30,7 +34,7 @@ public class ApplicationVerificationTest {
   private static class ApplicationWithBadId implements Application {
     @Override
     public ApplicationSpecification configure() {
-      return ApplicationSpecification.builder()
+      return ApplicationSpecification.Builder.with()
         .setName("Bad App Name")
         .setDescription("Bad Application Name Test")
         .noStream()
