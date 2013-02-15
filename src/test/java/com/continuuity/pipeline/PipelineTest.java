@@ -57,8 +57,7 @@ public class PipelineTest {
     pipeline.addLast(new HowStage());
     pipeline.addLast(new AreStage());
     pipeline.addLast(new YouStage());
-    pipeline.execute("Hi");
-    String s = (String)pipeline.getResult();
+    String s = (String)pipeline.execute("Hi").get();
     Assert.assertTrue(s.equals("Hi, how  are  you"));
   }
 

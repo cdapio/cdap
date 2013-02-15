@@ -5,11 +5,11 @@
 package com.continuuity.app.deploy;
 
 import com.continuuity.filesystem.Location;
-import com.continuuity.pipeline.Pipeline;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  *
  */
 public interface Manager {
-  Pipeline deploy(Location deployedJar) throws Exception;
+  ListenableFuture<?> deploy(Location deployedJar) throws Exception;
 }

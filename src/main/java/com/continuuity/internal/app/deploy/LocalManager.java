@@ -10,6 +10,7 @@ import com.continuuity.internal.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
 /**
@@ -24,11 +25,10 @@ public class LocalManager implements Manager {
   }
 
   @Override
-  public Pipeline deploy(Location deployedJar) throws Exception {
+  public ListenableFuture<?> deploy(Location deployedJar) throws Exception {
     Pipeline pipeline = factory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage());
     pipeline.addLast(new VerificationStage());
-    pipeline.execute(deployedJar);
-    return pipeline;
+    return pipeline.execute(deployedJar);
   }
 }
