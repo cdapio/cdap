@@ -1,4 +1,4 @@
-package com.continuuity.api.io;
+package com.continuuity.internal.io;
 
 import com.google.common.base.Charsets;
 

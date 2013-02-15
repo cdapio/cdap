@@ -1,6 +1,5 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.api.io.Decoder;
 import com.continuuity.api.io.Schema;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

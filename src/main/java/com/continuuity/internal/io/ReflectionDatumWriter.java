@@ -1,6 +1,5 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.api.io.Encoder;
 import com.continuuity.api.io.Schema;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
