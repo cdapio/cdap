@@ -10,7 +10,7 @@ package com.continuuity.api.flow.flowlet;
  */
 public interface InputContext {
   /**
-   * @return Name of the input the event was read from.
+   * @return Name of the output the event was read from.
    */
   String getName();
 

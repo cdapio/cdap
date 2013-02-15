@@ -1,9 +1,9 @@
 package com.continuuity.io;
 
-import com.continuuity.api.io.BinaryDecoder;
-import com.continuuity.api.io.BinaryEncoder;
-import com.continuuity.api.io.Decoder;
-import com.continuuity.api.io.Encoder;
+import com.continuuity.internal.io.BinaryDecoder;
+import com.continuuity.internal.io.BinaryEncoder;
+import com.continuuity.internal.io.Decoder;
+import com.continuuity.internal.io.Encoder;
 import org.junit.Assert;
 import org.junit.Test;
 

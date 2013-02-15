@@ -1,7 +1,7 @@
 package com.continuuity.io;
 
-import com.continuuity.api.io.BinaryDecoder;
-import com.continuuity.api.io.BinaryEncoder;
+import com.continuuity.internal.io.BinaryDecoder;
+import com.continuuity.internal.io.BinaryEncoder;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.internal.io.ReflectionDatumReader;
