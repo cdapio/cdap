@@ -156,10 +156,10 @@ public class AccountDBAccess implements AccountDAO {
     try {
       Connection connection = this.poolManager.getConnection();
 
-      String SQL = String.format( "SELECT %s,%s,%s,%s,%s FROM %s WHERE %s = ?",
+      String SQL = String.format( "SELECT %s,%s,%s,%s,%s, %s FROM %s WHERE %s = ?",
                                   DBUtils.AccountTable.FIRST_NAME_COLUMN,DBUtils.AccountTable.LAST_NAME_COLUMN,
                                   DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.EMAIL_COLUMN,
-                                  DBUtils.AccountTable.ID_COLUMN,
+                                  DBUtils.AccountTable.ID_COLUMN, DBUtils.AccountTable.API_KEY_COLUMN,
                                   DBUtils.AccountTable.TABLE_NAME,
                                   DBUtils.AccountTable.ID_COLUMN);
 
@@ -170,7 +170,8 @@ public class AccountDBAccess implements AccountDAO {
       int count  = 0;
       while(rs.next()) {
         count++;
-        account = new Account(rs.getString(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getInt(5));
+        account = new Account(rs.getString(1),rs.getString(2),rs.getString(3),
+                              rs.getString(4),rs.getInt(5),rs.getString(6));
         if (count > 1 ) { // Note: This condition should never occur since ids are auto generated.
           throw new RuntimeException("Multiple accounts with same account ID");
         }
