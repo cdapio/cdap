@@ -8,7 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
-import com.continuuity.archive.JarClassLoader;
+import com.continuuity.app.program.ProgramArchive;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -90,13 +90,9 @@ public class InMemoryConfigurator implements Configurator  {
     try {
       Application app = null;
 
-
       if(archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass;
-        JarClassLoader loader = new JarClassLoader(archive);
-        mainClass = loader.getMainClass(Application.class);
-
+        Object mainClass = new ProgramArchive(archive).getMainClass().newInstance();
         // Convert it to the type application.
         app  = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance

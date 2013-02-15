@@ -35,19 +35,21 @@ public final class JarResources {
 
   /**
    * creates a JarResources. It extracts all resources from a Jar
-   * into an internal hashtable, keyed by resource names.
+   * into an internal map, keyed by resource names.
    *
    * @param jarFileName a local archive or zip file
-   * @deprecated Use {@link #JarResources(com.continuuity.filesystem.Location)}  instead.
    */
-  @Deprecated
   public JarResources(String jarFileName) throws IOException {
-    manifest = init(new File(jarFileName));
+    this(new File(jarFileName));
+  }
+
+  public JarResources(File jarFile) throws IOException {
+    manifest = init(jarFile);
   }
 
   /**
    * Creates a JarResources using a {@link Location}. It extracts all resources from
-   * a Jar into a internal hashtable, keyed by resource names.
+   * a Jar into a internal map, keyed by resource names.
    *
    * @param jar location of JAR file.
    * @throws IOException
