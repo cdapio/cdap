@@ -1,5 +1,8 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueFinalize;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -9,6 +12,7 @@ import java.util.List;
 public class TransactionResult {
 
   private List<Undo> undos;
+  private QueueFinalize finalize;
   private boolean success;
 
   /**
@@ -17,14 +21,19 @@ public class TransactionResult {
    */
   public TransactionResult(List<Undo> undos) {
     this.undos = undos;
+    this.finalize = null;
     this.success = false;
   }
 
   /**
-   * Constructor for success case, there is nothing to be undone
+   * Constructor for success case. There is nothing to be undone, but we
+   * return the undos anyway, as the opex relies on this for metrics. We
+   * also return the (optional) queue finalize operation that has to be
+   * done by opex after successful commit.
    */
-  public TransactionResult() {
-    this.undos = Collections.EMPTY_LIST;
+  public TransactionResult(List<Undo> undos, QueueFinalize finalize) {
+    this.undos = undos;
+    this.finalize = finalize;
     this.success = true;
   }
 
@@ -34,5 +43,9 @@ public class TransactionResult {
 
   public boolean isSuccess() {
     return success;
+  }
+
+  public QueueFinalize getFinalize() {
+    return finalize;
   }
 }

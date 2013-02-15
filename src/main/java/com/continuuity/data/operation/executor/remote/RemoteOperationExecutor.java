@@ -13,6 +13,7 @@ import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -219,6 +220,35 @@ public class RemoteOperationExecutor
             return true;
           }
         });
+  }
+
+  @Override
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException {
+    // TODO implement this properly
+    return null;
+  }
+
+  @Override
+  public Transaction submit(final OperationContext context,
+                            final Transaction transaction,
+                            final List<WriteOperation> writes)
+    throws OperationException {
+    // TODO implement this properly
+    execute(context, writes);
+    return null;
+  }
+
+  @Override
+  public void commit(OperationContext context, Transaction transaction)
+    throws OperationException {
+    // TODO implement this properly
+  }
+
+  @Override
+  public void abort(OperationContext context, Transaction transaction)
+    throws OperationException {
+    // TODO implement this properly
   }
 
   @Override

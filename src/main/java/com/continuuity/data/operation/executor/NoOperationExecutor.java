@@ -38,6 +38,34 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
+  public Transaction startTransaction(OperationContext context) throws OperationException {
+    return null;
+  }
+
+  @Override
+  public Transaction submit(OperationContext context,
+                            Transaction transaction,
+                            List<WriteOperation> writes)
+    throws OperationException {
+    execute(context, writes);
+    return null;
+  }
+
+  @Override
+  public void commit(OperationContext context,
+                     Transaction transaction)
+    throws OperationException {
+    // do nothing
+  }
+
+  @Override
+  public void abort(OperationContext context,
+                    Transaction transaction)
+    throws OperationException {
+    // do nothing
+  }
+
+  @Override
   public DequeueResult execute(OperationContext context,
                                QueueDequeue dequeue) {
     // pretend the queue is empty

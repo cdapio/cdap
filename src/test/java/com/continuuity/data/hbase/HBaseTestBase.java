@@ -127,27 +127,33 @@ public abstract class HBaseTestBase {
 
     // Stop HBase
 
-    System.err.println("\n\n\nShutting down HBase in 1 sec...\n\n\n");
-    Thread.sleep(1000);
-    hbaseCluster.shutdown();
-    System.err.println("\n\n\nDone with HBase shutdown\n\n\n");
-    hbaseCluster = null;
+    if (hbaseCluster != null) {
+      System.err.println("\n\n\nShutting down HBase in 1 sec...\n\n\n");
+      Thread.sleep(1000);
+      hbaseCluster.shutdown();
+      System.err.println("\n\n\nDone with HBase shutdown\n\n\n");
+      hbaseCluster = null;
+    }
 
     // Stop DFS
 
-    System.err.println("\n\n\nShutting down DFS in 1 sec...\n\n\n");
-    Thread.sleep(1000);
-    dfsCluster.shutdown();
-    System.err.println("\n\n\nDone with DFS shutdown\n\n\n");
-    dfsCluster = null;
+    if (dfsCluster != null) {
+      System.err.println("\n\n\nShutting down DFS in 1 sec...\n\n\n");
+      Thread.sleep(1000);
+      dfsCluster.shutdown();
+      System.err.println("\n\n\nDone with DFS shutdown\n\n\n");
+      dfsCluster = null;
+    }
 
     // Stop ZK
 
-    System.err.println("\n\n\nShutting down ZK in 1 sec...\n\n\n");
-    Thread.sleep(1000);
-    zkCluster.shutdown();
-    System.err.println("\n\n\nDone with zk shutdown\n\n\n");
-    zkCluster = null;
+    if (zkCluster != null) {
+      System.err.println("\n\n\nShutting down ZK in 1 sec...\n\n\n");
+      Thread.sleep(1000);
+      zkCluster.shutdown();
+      System.err.println("\n\n\nDone with zk shutdown\n\n\n");
+      zkCluster = null;
+    }
   }
 
   // Startup/shutdown helpers
