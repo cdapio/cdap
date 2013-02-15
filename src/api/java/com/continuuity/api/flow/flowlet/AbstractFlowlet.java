@@ -13,7 +13,7 @@ public abstract class AbstractFlowlet implements Flowlet {
 
   @Override
   public FlowletSpecification configure() {
-    return FlowletSpecification.builder()
+    return FlowletSpecification.Builder.with()
       .setName(getName())
       .setDescription(getDescription())
       .build();

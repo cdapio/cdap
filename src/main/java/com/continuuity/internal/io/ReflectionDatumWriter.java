@@ -3,6 +3,7 @@ package com.continuuity.internal.io;
 import com.continuuity.api.io.Encoder;
 import com.continuuity.api.io.Schema;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -30,10 +32,16 @@ public final class ReflectionDatumWriter {
   }
 
   public void write(Object object, Encoder encoder) throws IOException {
-    write(object, encoder, schema);
+    Set<Object> seenRefs = Sets.newIdentityHashSet();
+    write(object, encoder, schema, seenRefs);
   }
 
-  private void write(Object object, Encoder encoder, Schema objSchema) throws IOException {
+  private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
+    if (seenRefs.contains(object)) {
+      throw new IOException("Circular reference not supported.");
+    }
+    seenRefs.add(object);
+
     switch (objSchema.getType()) {
       case NULL:
         encoder.writeNull();
@@ -67,13 +75,13 @@ public final class ReflectionDatumWriter {
         writeEnum(object.toString(), encoder, objSchema);
         break;
       case ARRAY:
-        writeArray(object, encoder, objSchema.getComponentSchema());
+        writeArray(object, encoder, objSchema.getComponentSchema(), seenRefs);
         break;
       case MAP:
-        writeMap(object, encoder, objSchema.getMapSchema());
+        writeMap(object, encoder, objSchema.getMapSchema(), seenRefs);
         break;
       case RECORD:
-        writeRecord(object, encoder, objSchema);
+        writeRecord(object, encoder, objSchema, seenRefs);
     }
   }
 
@@ -85,33 +93,36 @@ public final class ReflectionDatumWriter {
     encoder.writeInt(idx);
   }
 
-  private void writeArray(Object array, Encoder encoder, Schema componentSchema) throws IOException {
+  private void writeArray(Object array, Encoder encoder,
+                          Schema componentSchema, Set<Object> seenRefs) throws IOException {
     if (array instanceof Collection) {
       Collection col = (Collection)array;
       encoder.writeInt(col.size());
       for (Object obj : col) {
-        write(obj, encoder, componentSchema);
+        write(obj, encoder, componentSchema, seenRefs);
       }
     } else {
       int len = Array.getLength(array);
       encoder.writeInt(len);
       for (int i = 0; i < len; i++) {
-        write(Array.get(array, i), encoder, componentSchema);
+        write(Array.get(array, i), encoder, componentSchema, seenRefs);
       }
     }
     encoder.writeInt(0);
   }
 
-  private void writeMap(Object map, Encoder encoder, Map.Entry<Schema, Schema> mapSchema) throws IOException {
+  private void writeMap(Object map, Encoder encoder, Map.Entry<Schema,
+                        Schema> mapSchema, Set<Object> seenRefs) throws IOException {
     Map<?,?> objMap = (Map<?,?>)map;
     encoder.writeInt(objMap.size());
     for (Map.Entry<?,?> entry : objMap.entrySet()) {
-      write(entry.getKey(), encoder, mapSchema.getKey());
-      write(entry.getValue(), encoder, mapSchema.getValue());
+      write(entry.getKey(), encoder, mapSchema.getKey(), seenRefs);
+      write(entry.getValue(), encoder, mapSchema.getValue(), seenRefs);
     }
   }
 
-  private void writeRecord(Object record, Encoder encoder, Schema recordSchema) throws IOException {
+  private void writeRecord(Object record, Encoder encoder,
+                           Schema recordSchema, Set<Object> seenRefs) throws IOException {
     try {
       TypeToken<?> type = TypeToken.of(record.getClass());
 
@@ -144,7 +155,7 @@ public final class ReflectionDatumWriter {
             fieldSchema = fieldSchema.getUnionSchemas().get(0);
           }
         }
-        write(value, encoder, fieldSchema);
+        write(value, encoder, fieldSchema, seenRefs);
       }
     } catch (Exception e) {
       if (e instanceof IOException) {

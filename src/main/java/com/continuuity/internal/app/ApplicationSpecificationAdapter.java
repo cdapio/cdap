@@ -7,10 +7,12 @@ package com.continuuity.internal.app;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.SchemaTypeAdapter;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -31,7 +33,13 @@ public final class ApplicationSpecificationAdapter {
   private final Gson gson;
 
   public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
+      .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
+      .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
+      .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
+      .create();
     return new ApplicationSpecificationAdapter(generator, gson);
   }
 

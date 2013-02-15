@@ -35,7 +35,7 @@ public class WebCrawlApp implements Application {
    */
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.builder()
+    return ApplicationSpecification.Builder.with()
       .setName("WebCrawlerApp")
       .setDescription("Web Crawler Application")
       .withStreams().add(new Stream("urls"))
@@ -122,7 +122,7 @@ public class WebCrawlApp implements Application {
      */
     @Override
     public FlowSpecification configure() {
-      return FlowSpecification.builder()
+      return FlowSpecification.Builder.with()
         .setName("CrawlFlow")
         .setDescription("Flow for crawling pages")
         .withFlowlets().add(new UrlSanitizer()).apply()

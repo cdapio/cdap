@@ -4,17 +4,18 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import com.continuuity.internal.api.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 
 /**
  * This class provides specification of a Flowlet. Instance of this class should be created through
- * the {@link Builder} class by invoking the {@link #builder()} method.
+ * the {@link Builder} class by invoking the {@link Builder#with()} method.
  *
  * <pre>
  * {@code
  * FlowletSpecification flowletSpecification =
  *  FlowletSpecification flowletSpecification =
- *      FlowletSpecification.builder()
+ *      FlowletSpecification.Builder.with()
  *        .setName("tokenCount")
  *        .setDescription("Token counting flow")
  *        .setFailurePolicy(FailurePolicy.RETRY)
@@ -22,66 +23,46 @@ import com.google.common.base.Preconditions;
  * }
  * </pre>
  */
-public final class FlowletSpecification {
-
-  private final String name;
-  private final String description;
-  private final FailurePolicy failurePolicy;
+public interface FlowletSpecification {
 
   /**
-   * Creates a {@link Builder} for building instance of this class.
-   *
-   * @return a new builder instance.
+   * @return Class name of the {@link Flowlet} class.
    */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
-   * Private constructor, only called by {@link Builder}.
-   */
-  private FlowletSpecification(String name, String description, FailurePolicy failurePolicy) {
-    this.name = name;
-    this.description = description;
-    this.failurePolicy = failurePolicy;
-  }
+  String getClassName();
 
   /**
    * @return Name of the flowlet.
    */
-  public String getName() {
-    return name;
-  }
+  String getName();
 
   /**
    * @return Description of the flowlet.
    */
-  public String getDescription() {
-    return description;
-  }
+  String getDescription();
 
   /**
    * @return The failure policy of the flowlet.
    */
-  public FailurePolicy getFailurePolicy() {
-    return failurePolicy;
-  }
+  FailurePolicy getFailurePolicy();
 
   /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.
    */
-  public static final class Builder {
+  static final class Builder {
 
     private String name;
     private String description;
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
 
     /**
-     * Private builder to maintain builder contract.
+     * Creates a {@link Builder} for building instance of this class.
+     *
+     * @return a new builder instance.
      */
-    private Builder() {
+    public static Builder with() {
+      return new Builder();
     }
 
     /**
@@ -132,8 +113,14 @@ public final class FlowletSpecification {
        * @return An instance of {@link FlowletSpecification}
        */
       public FlowletSpecification build() {
-        return new FlowletSpecification(name, description, failurePolicy);
+        return new DefaultFlowletSpecification(name, description, failurePolicy);
       }
+    }
+
+    /**
+     * Private builder to maintain builder contract.
+     */
+    private Builder() {
     }
   }
 }
