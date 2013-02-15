@@ -25,10 +25,10 @@ public class LocalManager implements Manager {
   }
 
   @Override
-  public ListenableFuture<?> deploy(Location deployedJar) throws Exception {
+  public ListenableFuture<?> deploy(Location archive) throws Exception {
     Pipeline pipeline = factory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage());
     pipeline.addLast(new VerificationStage());
-    return pipeline.execute(deployedJar);
+    return pipeline.execute(archive);
   }
 }

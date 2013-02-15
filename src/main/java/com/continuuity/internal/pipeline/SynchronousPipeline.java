@@ -7,6 +7,9 @@ package com.continuuity.internal.pipeline;
 import com.continuuity.pipeline.Context;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.Stage;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * Concrete implementation of synchronous {@link Pipeline}.
@@ -26,15 +29,16 @@ final class SynchronousPipeline extends AbstractPipeline {
    * @param o argument to run the pipeline.
    */
   @Override
-  public void execute(Object o) throws Exception {
+  public ListenableFuture<?> execute(Object o) throws Exception {
     Object input = o;
+    Object output = null;
     for(Stage stage : getStages()) {
       Context ctx = new StageContext(input);
       stage.process(ctx);
-      input = ctx.getDownStream();
+      output = ctx.getDownStream();
+      input = output;  // Output of previous stage is input to next stage.
     }
-    // After the processing has completed, set the result to be retrieved.
-    setResult(input);
+    return Futures.immediateFuture(output);
   }
 
 }
