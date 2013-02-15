@@ -10,6 +10,7 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
@@ -198,12 +199,20 @@ public final class FlowletDefinition {
         }
 
         Type[] methodParams = method.getGenericParameterTypes();
-        Preconditions.checkArgument(methodParams.length > 0,
+        Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
                                     "Type parameter missing from process method; class: %s, method: %s",
                                     type, method);
 
+        // If there are more than one parameter, there be exactly two and the 2nd one should be InputContext
+        if (methodParams.length == 2) {
+          Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
+                                      "The second parameter of the process method must be %s type.",
+                                      InputContext.class.getName());
+        }
+
         // Extract the Input type from the first parameter of the process method
         Type inputType = type.resolveType(methodParams[0]).getType();
+
         List<String> inputNames = Lists.newLinkedList();
         if (processAnnotation == null || processAnnotation.value().length == 0) {
           inputNames.add(ANY_INPUT);
