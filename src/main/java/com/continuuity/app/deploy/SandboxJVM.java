@@ -6,7 +6,7 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.archive.JarClassLoader;
+import com.continuuity.app.program.ProgramArchive;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
@@ -73,10 +73,11 @@ public class SandboxJVM {
     }
 
     // Load the JAR using the JAR class load and load the manifest file.
+
     Object mainClass;
     try {
-      JarClassLoader loader = new JarClassLoader(jarFilename);
-      mainClass = loader.getMainClass(Application.class);
+      ProgramArchive archive = new ProgramArchive(new File(jarFilename));
+      mainClass = archive.getMainClass().newInstance();
     } catch (Exception e) {
       LOG.error(e.getMessage());
       return -1;

@@ -4,10 +4,11 @@
 
 package com.continuuity.archive;
 
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * A simple test class loader capable of loading from
@@ -19,7 +20,7 @@ import java.util.Hashtable;
  */
 public abstract class MultiClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(MultiClassLoader.class);
-  private Hashtable classes = new Hashtable();
+  private Map<String, Class<?>> classes = Maps.newHashMap();
   private char      classNameReplacementChar;
 
   /**
@@ -27,19 +28,17 @@ public abstract class MultiClassLoader extends ClassLoader {
    * will always want the class resolved before it is returned
    * to them.
    */
-  public Class loadClass(String className) throws ClassNotFoundException {
-    return (loadClass(className, true));
+  @Override
+  public Class<?> loadClass(String className) throws ClassNotFoundException {
+    return loadClass(className, true);
   }
 
-  @SuppressWarnings("unchecked")
-  public synchronized Class loadClass(String className,
+  @Override
+  public synchronized Class<?> loadClass(String className,
                                       boolean resolveIt) throws ClassNotFoundException {
 
-    Class   result;
-    byte[]  classBytes;
-
     //Check our local cache of classes
-    result = (Class)classes.get(className);
+    Class<?> result = classes.get(className);
     if (result != null) {
       return result;
     }
@@ -49,12 +48,14 @@ public abstract class MultiClassLoader extends ClassLoader {
       result = super.findSystemClass(className);
       return result;
     } catch (ClassNotFoundException e) {
-      LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+      }
     }
 
     //Try to load it from preferred source
     // Note loadClassBytes() is an abstract method
-    classBytes = loadClassBytes(className);
+    byte[] classBytes = loadClassBytes(className);
     if (classBytes == null) {
       throw new ClassNotFoundException();
     }
@@ -66,7 +67,9 @@ public abstract class MultiClassLoader extends ClassLoader {
     }
 
     //Resolve if necessary
-    if (resolveIt) resolveClass(result);
+    if (resolveIt) {
+      resolveClass(result);
+    }
 
     // Done
     classes.put(className, result);
