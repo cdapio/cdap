@@ -1,11 +1,18 @@
 package com.continuuity.passport.http;
 
 
+import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.*;
+import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PassportHttpServer  {
 
@@ -32,7 +39,21 @@ public class PassportHttpServer  {
   }
 
   public static void main(String [] args) {
+
+    Map<String,String> config = new HashMap<String,String>();
+
+    //TODO: Move this configurations to a central place
+    config.put("jdbcType","mysql");
+    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+
+    Realm realm = new JDBCAuthrozingRealm(config);
+
+    org.apache.shiro.mgt.SecurityManager securityManager = new DefaultSecurityManager(realm);
+    SecurityUtils.setSecurityManager(securityManager);
+
     PassportHttpServer server = new PassportHttpServer();
     server.start();
+
+
   }
 }

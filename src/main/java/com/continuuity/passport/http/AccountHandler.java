@@ -1,22 +1,31 @@
 package com.continuuity.passport.http;
 
+import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.UsernamePasswordCredentials;
 import com.continuuity.passport.core.meta.VPC;
+import com.continuuity.passport.core.status.AuthenticationStatus;
+import com.continuuity.passport.impl.AuthenticatorImpl;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.jersey.core.util.Base64;
 import org.apache.shiro.util.StringUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Request;
 import java.util.List;
 
 /**
@@ -173,6 +182,55 @@ public class AccountHandler {
         .entity(Utils.getJson("FAILED", "VPC get Failed", e))
         .build();
     }
+  }
+
+  @Path("{id}/authenticate")
+  @GET
+  @Produces("application/json")
+  public Response authenticate(@Context HttpHeaders headers, @HeaderParam("Authorization") String authorization){
+
+    if (authorization ==null || authorization.isEmpty()) {
+      return Response.status(Response.Status.UNAUTHORIZED)
+                     .entity(Utils.getJson("FAILED","Authorization headers empty")).build();
+    }
+
+
+    String param = Utils.getBasicAuthParam(authorization);
+
+    if ( param == null ){
+      return Response.status(Response.Status.UNAUTHORIZED)
+        .entity(Utils.getJson("FAILED","Must pass basic authorization header")).build();
+
+    }
+
+    String decoded = new String(Base64.decode(param));
+    String [] authParts = decoded.split(":");
+
+    if (authParts.length < 2){
+      return Response.status(Response.Status.UNAUTHORIZED)
+        .entity(Utils.getJson("FAILED","Could not parse emailId and password from auth header")).build();
+
+    }
+
+    String emailId = authParts[0];
+    String password = authParts[1];
+
+    try {
+      AuthenticationStatus status =  AuthenticatorImpl.getInstance()
+                                              .authenticate(new UsernamePasswordCredentials(emailId,password));
+      if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
+        return Response.ok(Utils.getJson("OK","Authentication Successful")).build();
+      }
+      else {
+        return Response.status(Response.Status.UNAUTHORIZED).entity(
+          Utils.getJson("FAILED","Authentication Failed. Either user doesn't exist or password doesn't match")).build();
+      }
+    } catch (Exception e) {
+
+      return    Response.status(Response.Status.UNAUTHORIZED).entity(
+        Utils.getJson("FAILED","Authentication Failed",e)).build();
+    }
+
   }
 
 }

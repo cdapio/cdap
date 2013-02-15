@@ -7,27 +7,27 @@ import org.apache.commons.lang.StringUtils;
  */
 public class AuthenticationStatus {
 
-  public enum Value {AUTHENTICATED, AUTHENTICATION_FAILED}
+  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED}
 
   ;
 
-  private Value value;
+  private Type type;
 
   private String reason;
 
-  public AuthenticationStatus(Value value) {
-    this.value = value;
+  public AuthenticationStatus(Type type) {
+    this.type = type;
     this.reason = StringUtils.EMPTY;
   }
 
-  public AuthenticationStatus(Value value, String reason) {
-    this.value = value;
+  public AuthenticationStatus(Type type, String reason) {
+    this.type = type;
     this.reason = reason;
   }
 
 
-  public Value getValue() {
-    return value;
+  public Type getType() {
+    return type;
   }
 
   public String getReason() {

@@ -22,5 +22,16 @@ public class Utils {
     return String.format("{\"status\":\"%s\",\"message\":\"%s\" }",status, errorMessage);
   }
 
+  public static String getBasicAuthParam(String authorization) {
+
+    String [] params = authorization.split("Basic ");
+
+    if (params.length < 2 ){
+      return null;
+    }
+    else {
+      return params[1];
+    }
+  }
 
 }

@@ -20,7 +20,7 @@ public interface Authenticator {
    * @return {@code AuthenticationStatus}
    * @throws {@code RetryException}
    */
-  AuthenticationStatus authenticate(String userId, Credentials credentials) throws RetryException;
+  AuthenticationStatus authenticate(Credentials credentials) throws RetryException;
 
   public void configure (Map<String,String> configurations);
 
