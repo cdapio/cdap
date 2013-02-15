@@ -7,12 +7,13 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -36,10 +37,12 @@ public final class JarResources {
   /**
    * creates a JarResources. It extracts all resources from a Jar
    * into an internal hashtable, keyed by resource names.
-   * @param jarFileName a archive or zip file
+   * @param jarFileName a local archive or zip file
+   * @deprecated Use {@link #JarResources(com.continuuity.filesystem.Location)}  instead.
    */
+  @Deprecated
   public JarResources(String jarFileName) throws JarResourceException {
-    manifest = init(jarFileName);
+    manifest = init(new File(jarFileName));
   }
 
   /**
@@ -51,8 +54,7 @@ public final class JarResources {
    */
   public JarResources(Location jar) throws JarResourceException {
     try {
-      InputStream is = jar.getInputStream();
-      manifest = init(is);
+      manifest = init(jar);
     } catch (IOException e) {
       throw new JarResourceException(e);
     }
@@ -78,30 +80,28 @@ public final class JarResources {
   /**
    * Makes a copy of JAR and then passes it to retrieve and initialize internal hash tables with Jar file resources.
    */
-  private Manifest init(InputStream stream) throws JarResourceException {
-    File temp = null;
+  private Manifest init(final Location jar) throws IOException, JarResourceException {
+    File tmpFile = File.createTempFile("archive-", ".jar");
     try {
-      temp = File.createTempFile("archive-", ".jar");
-      FileOutputStream fos = new FileOutputStream(temp);
-      ByteStreams.copy(stream, fos);
-      fos.close();
-      return init(temp.getAbsolutePath());
-    } catch (IOException e) {
-      throw new JarResourceException(e);
+      Files.copy(new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return jar.getInputStream();
+        }
+      }, tmpFile);
+      return init(tmpFile);
     } finally {
-      if(temp != null) {
-        temp.delete();
-      }
+      tmpFile.delete();
     }
   }
 
   /**
    * initializes internal hash tables with Jar file resources.
    */
-  private Manifest init(String jarFileName) throws JarResourceException {
+  private Manifest init(File jarFile) throws JarResourceException {
     try {
       // extracts just sizes only.
-      JarFile zf = new JarFile(jarFileName);
+      JarFile zf = new JarFile(jarFile);
       try {
         Enumeration<JarEntry> entries = zf.entries();
 
@@ -143,13 +143,13 @@ public final class JarResources {
       }
     } catch (NullPointerException e){
       LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
-      throw new JarResourceException("Null pointer while loading archive file " + jarFileName);
+      throw new JarResourceException("Null pointer while loading archive file " + jarFile);
     } catch (FileNotFoundException e) {
-      LOG.warn("File {} not found. Reason : {}", jarFileName, e.getMessage());
-      throw new JarResourceException("Jar file " + jarFileName + " requested to be loaded is not found");
+      LOG.warn("File {} not found. Reason : {}", jarFile, e.getMessage());
+      throw new JarResourceException("Jar file " + jarFile + " requested to be loaded is not found");
     } catch (IOException e) {
-      LOG.warn("Error while reading file {}. Reason : {}", jarFileName, e.getMessage());
-      throw new JarResourceException("Error reading file " + jarFileName + ".");
+      LOG.warn("Error while reading file {}. Reason : {}", jarFile, e.getMessage());
+      throw new JarResourceException("Error reading file " + jarFile + ".");
     }
   }
 
