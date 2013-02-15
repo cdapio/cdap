@@ -15,7 +15,7 @@ import java.util.jar.Manifest;
  * JarClassLoader extends {@link MultiClassLoader}
  */
 public class JarClassLoader extends MultiClassLoader {
-  private JarResources jarResources;
+  private final JarResources jarResources;
 
   /**
    * Create the JarResource and suck in the archive file.
@@ -49,6 +49,7 @@ public class JarClassLoader extends MultiClassLoader {
    * @param className Name of the class bytes to be loaded.
    * @return array of bytes for the class.
    */
+  @Override
   @Nullable
   public byte[] loadClassBytes (String className) {
     className = formatClassName (className);
