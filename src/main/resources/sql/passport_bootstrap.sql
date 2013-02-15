@@ -15,6 +15,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `last_name` VARCHAR(50) NOT NULL ,
   `company` VARCHAR(100) NOT NULL ,
   `email_id` VARCHAR(100) NOT NULL ,
+  `salt`  VARCHAR(20) NULL DEFAULT NULL,
   `password` VARCHAR(100) NULL DEFAULT NULL ,
   `confirmed` TINYINT(1) NULL DEFAULT NULL ,
   `locked` TINYINT(1) NULL DEFAULT NULL ,

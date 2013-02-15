@@ -40,6 +40,7 @@ Passport service is a service to manage account, account related components and 
     - Company ID
   - Security Credentials
     - Password
+    - Password Salt
   - Billing Info
     - Credit Card Name
     - Credit Card Type
