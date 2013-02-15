@@ -7,7 +7,6 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -90,7 +89,7 @@ public class JarClassLoader extends MultiClassLoader {
     }
 
     Class<?> loadedClass = loadClass(className);
-    if(! loadedClass.isAssignableFrom(expectedClass)) {
+    if(! expectedClass.isAssignableFrom(loadedClass)) {
       throw new IllegalStateException("Found " + loadedClass.getCanonicalName() + ", Expected " +
         expectedClass.getCanonicalName());
     }

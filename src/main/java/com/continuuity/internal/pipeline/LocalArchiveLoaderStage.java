@@ -2,12 +2,13 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.app.deploy;
+package com.continuuity.internal.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.deploy.InMemoryConfigurator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
@@ -17,6 +18,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationSpecification}.
+ * <p>
+ *   This stage is responsible for reading the JAR and generating an ApplicationSpecification
+ *   that is forwarded to the next stage of processing.
+ * </p>
  */
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   private final ApplicationSpecificationAdapter adapter;
@@ -30,19 +35,18 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   }
 
   /**
-   * Creates a {@link InMemoryConfigurator} to run through the process of generation
-   * of {@link ApplicationSpecification}
+   * Creates a {@link com.continuuity.internal.app.deploy.InMemoryConfigurator} to run through
+   * the process of generation of {@link ApplicationSpecification}
    *
-   * @param o Location of archive.
+   * @param archive Location of archive.
    */
   @Override
-  public void process(Location o) throws Exception {
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(o);
+  public void process(Location archive) throws Exception {
+    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(archive);
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
-
-    // Blocked wait.
+    //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    emit(specification);
+    emit(new VerificationStage.Input(specification, archive));
   }
 }

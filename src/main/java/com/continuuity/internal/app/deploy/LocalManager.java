@@ -6,19 +6,29 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.filesystem.Location;
-import com.continuuity.internal.pipeline.PipelineFactory;
+import com.continuuity.internal.pipeline.LocalArchiveLoaderStage;
+import com.continuuity.internal.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
+import com.continuuity.pipeline.PipelineFactory;
+import com.google.inject.Inject;
 
 /**
  *
  */
 public class LocalManager implements Manager {
+  private final PipelineFactory factory;
+
+  @Inject
+  public LocalManager(PipelineFactory factory) {
+    this.factory = factory;
+  }
 
   @Override
   public Pipeline deploy(Location deployedJar) throws Exception {
-    Pipeline pipeline = PipelineFactory.newSynchronousPipeline();
+    Pipeline pipeline = factory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage());
     pipeline.addLast(new VerificationStage());
+    pipeline.execute(deployedJar);
     return pipeline;
   }
 }

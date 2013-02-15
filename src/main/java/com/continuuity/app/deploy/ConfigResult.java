@@ -4,8 +4,6 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.api.ApplicationSpecification;
-
 /**
  *
  */

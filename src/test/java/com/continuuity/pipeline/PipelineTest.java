@@ -4,7 +4,7 @@
 
 package com.continuuity.pipeline;
 
-import com.continuuity.internal.pipeline.PipelineFactory;
+import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,7 +52,8 @@ public class PipelineTest {
 
   @Test
   public void testSimplePipeline() throws Exception {
-    Pipeline pipeline = PipelineFactory.newSynchronousPipeline();
+    PipelineFactory factory = new SynchronousPipelineFactory();
+    Pipeline pipeline = factory.getPipeline();
     pipeline.addLast(new HowStage());
     pipeline.addLast(new AreStage());
     pipeline.addLast(new YouStage());
