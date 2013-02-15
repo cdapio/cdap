@@ -7,9 +7,9 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.io.ByteStreams;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.jar.JarInputStream;
@@ -22,10 +22,6 @@ import java.util.zip.ZipEntry;
  * to the manifest file and also adds few additional files to the cloned JAR.
  */
 public final class ArchiveBundler {
-  /**
-   * Buffer size of bytes to be read from the input archive into the output archive.
-   */
-  private static final int BUFFER_SIZE = 10 * 1024 * 1024;
 
   /**
    * Default location of additional files in cloned archive.
@@ -48,7 +44,7 @@ public final class ArchiveBundler {
    * @param archive to be cloned.
    */
   public ArchiveBundler(Location archive) {
-    this(archive, "META-INF/specification/");
+    this(archive, DEFAULT_LOC);
   }
 
   /**
@@ -74,13 +70,8 @@ public final class ArchiveBundler {
    * @param files Additional files to be added to cloned archive
    * @throws IOException thrown when issue with handling of files.
    */
-  public void clone(Location output, final Manifest manifest, Location[] files) throws IOException {
-    clone(output, manifest, files, new Predicate<ZipEntry>() {
-      @Override
-      public boolean apply(@Nullable ZipEntry input) {
-        return false;
-      }
-    });
+  public void clone(Location output, Manifest manifest, Iterable<Location> files) throws IOException {
+    clone(output, manifest, files, Predicates.<ZipEntry>alwaysTrue());
   }
 
   /**
@@ -90,15 +81,13 @@ public final class ArchiveBundler {
    * @param output Cloned output archive
    * @param manifest New manifest file to be added to the cloned archive
    * @param files Additional files to be added to cloned archive
-   * @param filter Filter applied on ZipEntry, if true file is filtered else kept in output.
+   * @param acceptFilter Filter applied on ZipEntry, if true file is accepted, otherwise will be ignored output.
    * @throws IOException thrown when issue with handling of files.
    */
-  public void clone(Location output, final Manifest manifest, Location[] files, Predicate<ZipEntry> filter)
-    throws IOException {
+  public void clone(Location output, Manifest manifest,
+                    Iterable<Location> files, Predicate<ZipEntry> acceptFilter) throws IOException {
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
-
-    byte[] buf = new byte[BUFFER_SIZE];
 
     // Create a input stream based on the original archive file.
     JarInputStream zin = new JarInputStream(archive.getInputStream());
@@ -107,60 +96,52 @@ public final class ArchiveBundler {
     JarOutputStream zout = new JarOutputStream(output.getOutputStream(), manifest);
 
     try {
-      try {
-        // Iterates through the input zip entry and make sure, the new files
-        // being added are not already present. If not, they are added to the
-        // output zip.
-        ZipEntry entry = zin.getNextEntry();
-        while (entry != null) {
-          String name = entry.getName();
-
-          // Invoke the predicate to see if the entry needs to be filtered.
-          // If the filter returns true, then it needs to be filtered; false keep it.
-          if(filter.apply(entry)) {
-            entry = zin.getNextEntry();
-            continue;
-          }
-
-          boolean absenceInJar = true;
-          for (Location f : files) {
-            if (f.getName().equals(name)) {
-              absenceInJar = false;
-              break;
-            }
-          }
-
-          if (absenceInJar) {
-            zout.putNextEntry(new ZipEntry(name));
-            ByteStreams.copy(zin, zout);
-          }
+      // Iterates through the input zip entry and make sure, the new files
+      // being added are not already present. If not, they are added to the
+      // output zip.
+      ZipEntry entry = zin.getNextEntry();
+      while (entry != null) {
+        // Invoke the predicate to see if the entry needs to be filtered.
+        // If the acceptFilter returns false, then it needs to be filtered; true keep it.
+        if(!acceptFilter.apply(entry)) {
           entry = zin.getNextEntry();
+          continue;
         }
-      } finally {
-        // Close the stream
-        if(zin != null) {
-          zin.close();
-        }
-      }
 
+        String name = entry.getName();
+        boolean absenceInJar = true;
+        for (Location f : files) {
+          if (f.getName().equals(name)) {
+            absenceInJar = false;
+            break;
+          }
+        }
+
+        if (absenceInJar) {
+          zout.putNextEntry(new ZipEntry(name));
+          ByteStreams.copy(zin, zout);
+        }
+        entry = zin.getNextEntry();
+      }
+    } finally {
+      // Close the stream
+      zin.close();
+    }
+
+    try {
       // Add the new files.
-      for (int i = 0; i < files.length; i++) {
-        InputStream in = null;
+      for (Location file : files) {
+        InputStream in = file.getInputStream();
         try {
-          in = files[i].getInputStream();
-          zout.putNextEntry(new ZipEntry(jarEntryPrefix + files[i].getName()));
+          zout.putNextEntry(new ZipEntry(jarEntryPrefix + file.getName()));
           ByteStreams.copy(in, zout);
           zout.closeEntry();
         } finally {
-          if(in != null) {
-            in.close();
-          }
+          in.close();
         }
       }
     } finally {
-      if(zout != null) {
-        zout.close();
-      }
+      zout.close();
     }
   }
 }
