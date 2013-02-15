@@ -20,11 +20,13 @@ import java.util.jar.Manifest;
 public final class ProgramArchive {
 
   private static final String PROCESSOR_TYPE = "Processor-Type";
+  private static final String PROCESSOR_NAME = "Processor-Name";
   private static final String SPEC_FILE = "Spec-File";
 
   private final ClassLoader jarClassLoader;
   private final String mainClassName;
   private final Type processorType;
+  private final String processorName;
   private final ApplicationSpecification specification;
 
   public ProgramArchive(File file) throws IOException {
@@ -46,6 +48,8 @@ public final class ProgramArchive {
     String type = manifest.getMainAttributes().getValue(PROCESSOR_TYPE);
     processorType = type == null ? null : Type.valueOf(type);
 
+    processorName = manifest.getMainAttributes().getValue(PROCESSOR_NAME);
+
     String appSpecFile = manifest.getMainAttributes().getValue(SPEC_FILE);
     specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create().fromJson(
       CharStreams.newReaderSupplier(
@@ -58,6 +62,10 @@ public final class ProgramArchive {
 
   public Type getProcessorType() {
     return processorType;
+  }
+
+  public String getProcessorName() {
+    return processorName;
   }
 
   public ApplicationSpecification getSpecification() {
