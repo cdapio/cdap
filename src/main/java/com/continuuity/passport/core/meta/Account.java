@@ -8,26 +8,26 @@ import org.apache.commons.lang.StringUtils;
  */
 public class Account {
 
-  private final String firstName;
+  private final String first_name;
 
-  private final String lastName;
+  private final String last_name;
 
   private final String company;
 
-  private final  String emailId;
+  private final  String email_id;
 
-  private final int accountId;
+  private final int account_id;
 
   public Account(String firstName, String lastName, String emailId) {
     this(firstName,lastName, StringUtils.EMPTY,emailId,-1);
   }
 
   public Account(String firstName, String lastName, String company, String emailId, int accountId) {
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.first_name = firstName;
+    this.last_name = lastName;
     this.company = company;
-    this.emailId = emailId;
-    this.accountId = accountId;
+    this.email_id = emailId;
+    this.account_id = accountId;
   }
 
   public Account(String firstName, String lastName, String company, String emailId) {
@@ -36,11 +36,11 @@ public class Account {
 
 
   public String getFirstName() {
-    return firstName;
+    return first_name;
   }
 
   public String getLastName() {
-    return lastName;
+    return last_name;
   }
 
   public String getCompany() {
@@ -48,11 +48,11 @@ public class Account {
   }
 
   public String getEmailId() {
-    return emailId;
+    return email_id;
   }
 
   public int getAccountId() {
-    return accountId;
+    return account_id;
   }
 
   public String toString() {

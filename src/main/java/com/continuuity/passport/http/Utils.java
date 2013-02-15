@@ -34,4 +34,8 @@ public class Utils {
     }
   }
 
+  public static String getAuthenticatedJson(String status, String payload) {
+    return String.format( "{\"status\": \"%s\", \"account\": %s }",status,payload);
+  }
+
 }

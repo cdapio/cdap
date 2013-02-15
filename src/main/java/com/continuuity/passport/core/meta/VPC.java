@@ -5,23 +5,23 @@ package com.continuuity.passport.core.meta;
  */
 public class VPC {
 
-  private final int vpcId ;
+  private final int vpc_id ;
 
-  private final String vpcName;
+  private final String vpc_name;
 
   public VPC(String vpcName) {
     this(-1,vpcName);
   }
   public VPC(int vpcId, String vpcName) {
-    this.vpcId = vpcId;
-    this.vpcName = vpcName;
+    this.vpc_id = vpcId;
+    this.vpc_name = vpcName;
   }
 
   public int getVpcId() {
-    return vpcId;
+    return vpc_id;
   }
 
   public String getVpcName() {
-    return vpcName;
+    return vpc_name;
   }
 }

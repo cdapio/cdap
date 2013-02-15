@@ -1,6 +1,7 @@
 package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
+import com.continuuity.passport.core.meta.Account;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -141,7 +142,11 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       Connection connection = this.poolManager.getConnection();
 
 
-      String SQL = String.format( "SELECT %s FROM %s WHERE %s = ?",
+      String SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+                                  DBUtils.AccountTable.FIRST_NAME_COLUMN,
+                                  DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                  DBUtils.AccountTable.COMPANY_COLUMN,
+                                  DBUtils.AccountTable.ID_COLUMN,
                                   DBUtils.AccountTable.PASSWORD_COLUMN,
                                   DBUtils.AccountTable.TABLE_NAME,
                                   DBUtils.AccountTable.EMAIL_COLUMN);
@@ -152,8 +157,18 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
       int count = 0;
       String password = null;
+      int accountId = -1;
+      String firstName = null;
+      String lastName = null;
+      String company = null;
+
       while(rs.next()) {
-        password = rs.getString(1);
+        firstName = rs.getString(1);
+        lastName = rs.getString(2);
+        company = rs.getString(3);
+
+        accountId  = rs.getInt(4);
+        password = rs.getString(5);
         count++;
         if(count > 1) {
           // Note: This condition should never occur since ids are auto generated.
@@ -165,7 +180,11 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         throw new RuntimeException(String.format("Password not found for %s",emailId));
       }
 
-      info = new SimpleAuthenticationInfo(emailId,password,getName());
+      //  public Account(String firstName, String lastName, String company, String emailId, int accountId) {
+
+
+      Account account = new Account(firstName,lastName,company,emailId,accountId);
+      info = new SimpleAuthenticationInfo(account,password,getName());
 
     } catch (SQLException e) {
       //TODO: Log and throw exception

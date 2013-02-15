@@ -5,24 +5,23 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Authentication Status type indicates the status and an optional message
  */
+//TODO: Encoding account info in message - find a better way
 public class AuthenticationStatus {
 
-  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED}
-
-  ;
+  public enum Type {AUTHENTICATED, AUTHENTICATION_FAILED};
 
   private Type type;
 
-  private String reason;
+  private String message;
 
   public AuthenticationStatus(Type type) {
     this.type = type;
-    this.reason = StringUtils.EMPTY;
+    this.message = StringUtils.EMPTY;
   }
 
-  public AuthenticationStatus(Type type, String reason) {
+  public AuthenticationStatus(Type type, String message) {
     this.type = type;
-    this.reason = reason;
+    this.message = message;
   }
 
 
@@ -30,7 +29,7 @@ public class AuthenticationStatus {
     return type;
   }
 
-  public String getReason() {
-    return reason;
+  public String getMessage() {
+    return message;
   }
 }

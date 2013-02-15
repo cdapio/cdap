@@ -5,24 +5,24 @@ package com.continuuity.passport.core.meta;
 */
 public class BillingInfo {
 
-  private final String creditCardName;
-  private final String creditCardNumber;
+  private final String credit_card_name;
+  private final String credit_card_number;
   private final String cvv;
-  private final String expirationDate;
+  private final String expiration_date;
 
   public BillingInfo(String creditCardName, String creditCardNumber, String cvv, String expirationDate) {
-    this.creditCardName = creditCardName;
-    this.creditCardNumber = creditCardNumber;
+    this.credit_card_name = creditCardName;
+    this.credit_card_number = creditCardNumber;
     this.cvv = cvv;
-    this.expirationDate = expirationDate;
+    this.expiration_date = expirationDate;
   }
 
   public String getCreditCardName() {
-    return creditCardName;
+    return credit_card_name;
   }
 
   public String getCreditCardNumber() {
-    return creditCardNumber;
+    return credit_card_number;
   }
 
   public String getCvv() {
@@ -30,6 +30,6 @@ public class BillingInfo {
   }
 
   public String getExpirationDate() {
-    return expirationDate;
+    return expiration_date;
   }
 }

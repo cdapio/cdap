@@ -36,7 +36,7 @@ public class DataManagementServiceImpl implements DataManagementService {
     Map<String,String> config = new HashMap<String,String>();
     config.put("jdbcType","mysql");
     config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    //config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
+   // config.put("connectionString","jdbc:mysql://localhost/continuuity?user=passport_user");
     accountDAO.configure(config);
 
     vpcDao = new VpcDBAccess();

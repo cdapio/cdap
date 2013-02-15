@@ -184,42 +184,26 @@ public class AccountHandler {
     }
   }
 
-  @Path("{id}/authenticate")
-  @GET
+  @Path("authenticate")
+  @PUT
   @Produces("application/json")
-  public Response authenticate(@Context HttpHeaders headers, @HeaderParam("Authorization") String authorization){
+  @Consumes("application/json")
+  public Response authenticate(String data){
 
-    if (authorization ==null || authorization.isEmpty()) {
-      return Response.status(Response.Status.UNAUTHORIZED)
-                     .entity(Utils.getJson("FAILED","Authorization headers empty")).build();
-    }
+    JsonParser parser = new JsonParser();
+    JsonElement element = parser.parse(data);
+    JsonObject jsonObject = element.getAsJsonObject();
 
+    String password = jsonObject.get("password") == null? null : jsonObject.get("password").getAsString();
+    String emailId = jsonObject.get("email_id") == null? null : jsonObject.get("email_id").getAsString();
 
-    String param = Utils.getBasicAuthParam(authorization);
-
-    if ( param == null ){
-      return Response.status(Response.Status.UNAUTHORIZED)
-        .entity(Utils.getJson("FAILED","Must pass basic authorization header")).build();
-
-    }
-
-    String decoded = new String(Base64.decode(param));
-    String [] authParts = decoded.split(":");
-
-    if (authParts.length < 2){
-      return Response.status(Response.Status.UNAUTHORIZED)
-        .entity(Utils.getJson("FAILED","Could not parse emailId and password from auth header")).build();
-
-    }
-
-    String emailId = authParts[0];
-    String password = authParts[1];
 
     try {
       AuthenticationStatus status =  AuthenticatorImpl.getInstance()
                                               .authenticate(new UsernamePasswordCredentials(emailId,password));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
-        return Response.ok(Utils.getJson("OK","Authentication Successful")).build();
+        //TODO: Better naming for authenticatedJson?
+        return Response.ok(Utils.getAuthenticatedJson("OK",status.getMessage())).build();
       }
       else {
         return Response.status(Response.Status.UNAUTHORIZED).entity(

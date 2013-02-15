@@ -2,6 +2,7 @@ package com.continuuity.passport.impl;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.meta.UsernamePasswordCredentials;
 import com.continuuity.passport.core.service.Authenticator;
@@ -66,7 +67,8 @@ public class AuthenticatorImpl implements Authenticator {
     try {
       Subject currentUser = SecurityUtils.getSubject();
       currentUser.login(token);
-      return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED,"User Authenticated");
+      Account account = (Account) currentUser.getPrincipal();
+      return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATED,account.toString());
     }
     catch (Exception e){
       return new AuthenticationStatus(AuthenticationStatus.Type.AUTHENTICATION_FAILED,
