@@ -4,6 +4,9 @@
 
 package com.continuuity.app.program;
 
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.filesystem.Location;
+
 import java.util.List;
 
 /**

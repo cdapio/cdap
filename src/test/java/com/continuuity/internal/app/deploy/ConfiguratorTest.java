@@ -9,6 +9,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,7 +36,8 @@ public class ConfiguratorTest {
     Assert.assertNotNull(response);
 
     // Deserialize the JSON spec back into Application object.
-    ApplicationSpecification specification = ApplicationSpecificationAdapter.create().fromJson(response.get());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecification specification = adapter.fromJson(response.get());
     Assert.assertNotNull(specification);
     Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
     Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.

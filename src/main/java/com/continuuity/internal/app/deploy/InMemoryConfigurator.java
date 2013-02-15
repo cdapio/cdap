@@ -9,6 +9,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.ConfigResult;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.archive.JarClassLoader;
@@ -34,7 +35,7 @@ public class InMemoryConfigurator implements Configurator  {
   /**
    * JAR file path.
    */
-  private final File jarFilename;
+  private final Location archive;
 
   /**
    * Application which needs to be configured.
@@ -43,11 +44,11 @@ public class InMemoryConfigurator implements Configurator  {
 
   /**
    * Constructor that accepts archive file as input to invoke configure.
-   * @param jarFilename name of the archive file for which configure is invoked in-memory.
+   * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(File jarFilename) {
-    Preconditions.checkNotNull(jarFilename);
-    this.jarFilename = jarFilename;
+  public InMemoryConfigurator(Location archive) {
+    Preconditions.checkNotNull(archive);
+    this.archive = archive;
     this.application = null;
   }
 
@@ -57,7 +58,7 @@ public class InMemoryConfigurator implements Configurator  {
    */
   public InMemoryConfigurator(Application application) {
     Preconditions.checkNotNull(application);
-    this.jarFilename = null;
+    this.archive = null;
     this.application = application;
   }
 
@@ -92,15 +93,15 @@ public class InMemoryConfigurator implements Configurator  {
       Application app = null;
 
 
-      if(jarFilename != null && application == null) { // Provided Application JAR.
+      if(archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
         Object mainClass;
-        JarClassLoader loader = new JarClassLoader(jarFilename.getAbsolutePath());
+        JarClassLoader loader = new JarClassLoader(archive);
         mainClass = loader.getMainClass(Application.class);
 
         // Convert it to the type application.
         app  = (Application) mainClass;
-      } else if(application != null && jarFilename == null) {  // Provided Application instance
+      } else if(application != null && archive == null) {  // Provided Application instance
         app = application;
       } else {
         throw new IllegalStateException("Have not specified JAR or Application class or have specified both.");
