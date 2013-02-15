@@ -7,6 +7,7 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -20,12 +21,14 @@ public class JarClassLoader extends MultiClassLoader {
    * Create the JarResource and suck in the archive file.
    *
    * @param jarName Name of the archive file.
+   * @deprecated Use {@link #JarClassLoader(com.continuuity.filesystem.Location)}
    */
-  public JarClassLoader(String jarName) throws JarResourceException {
-    jarResources = new JarResources (jarName);
+  @Deprecated
+  public JarClassLoader(String jarName) throws IOException {
+    jarResources = new JarResources(jarName);
   }
 
-  public JarClassLoader(Location jarName) throws JarResourceException {
+  public JarClassLoader(Location jarName) throws IOException {
     jarResources = new JarResources(jarName);
   }
 
@@ -33,9 +36,8 @@ public class JarClassLoader extends MultiClassLoader {
    * Creates an instance of archive with provided archive resources.
    *
    * @param jarResources instance of archive resources
-   * @throws JarResourceException
    */
-  public JarClassLoader(JarResources jarResources) throws JarResourceException {
+  public JarClassLoader(JarResources jarResources) {
     this.jarResources = jarResources;
   }
 
