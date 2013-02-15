@@ -12,10 +12,10 @@ import com.google.common.io.ByteStreams;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 /**
  * ArchiveBundler is a utlity class that allows to clone a JAR file with modifications
@@ -71,7 +71,7 @@ public final class ArchiveBundler {
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest, Iterable<Location> files) throws IOException {
-    clone(output, manifest, files, Predicates.<ZipEntry>alwaysTrue());
+    clone(output, manifest, files, Predicates.<JarEntry>alwaysTrue());
   }
 
   /**
@@ -85,7 +85,7 @@ public final class ArchiveBundler {
    * @throws IOException thrown when issue with handling of files.
    */
   public void clone(Location output, Manifest manifest,
-                    Iterable<Location> files, Predicate<ZipEntry> acceptFilter) throws IOException {
+                    Iterable<Location> files, Predicate<JarEntry> acceptFilter) throws IOException {
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
 
@@ -99,12 +99,12 @@ public final class ArchiveBundler {
       // Iterates through the input zip entry and make sure, the new files
       // being added are not already present. If not, they are added to the
       // output zip.
-      ZipEntry entry = zin.getNextEntry();
+      JarEntry entry = zin.getNextJarEntry();
       while (entry != null) {
         // Invoke the predicate to see if the entry needs to be filtered.
         // If the acceptFilter returns false, then it needs to be filtered; true keep it.
         if(!acceptFilter.apply(entry)) {
-          entry = zin.getNextEntry();
+          entry = zin.getNextJarEntry();
           continue;
         }
 
@@ -118,10 +118,10 @@ public final class ArchiveBundler {
         }
 
         if (absenceInJar) {
-          zout.putNextEntry(new ZipEntry(name));
+          zout.putNextEntry(new JarEntry(entry));
           ByteStreams.copy(zin, zout);
         }
-        entry = zin.getNextEntry();
+        entry = zin.getNextJarEntry();
       }
     } finally {
       // Close the stream
@@ -133,7 +133,7 @@ public final class ArchiveBundler {
       for (Location file : files) {
         InputStream in = file.getInputStream();
         try {
-          zout.putNextEntry(new ZipEntry(jarEntryPrefix + file.getName()));
+          zout.putNextEntry(new JarEntry(jarEntryPrefix + file.getName()));
           ByteStreams.copy(in, zout);
           zout.closeEntry();
         } finally {
