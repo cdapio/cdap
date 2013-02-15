@@ -14,6 +14,7 @@ import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
+import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
@@ -101,7 +102,10 @@ public class WordCountApp implements Application {
   public static class StreamSucker extends AbstractFlowlet {
     private OutputEmitter<MyRecord> output;
 
-    public void process(StreamEvent event) throws CharacterCodingException {
+    public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
+      if (!"text".equals(context.getName())) {
+        return;
+      }
       ByteBuffer buf = event.getBody();
       output.emit(new MyRecordImpl(
         event.getHeaders().get("title"),

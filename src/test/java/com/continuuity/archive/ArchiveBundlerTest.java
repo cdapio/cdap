@@ -1,6 +1,9 @@
 package com.continuuity.archive;
 
-import java.io.File;
+import com.continuuity.filesystem.Location;
+import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.filesystem.LocalLocationFactory;
+
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -16,7 +19,8 @@ public class ArchiveBundlerTest {
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "foo.testBundler");
     manifest.getMainAttributes().put(new Attributes.Name("Processor-Type"), "FLOW");
     manifest.getMainAttributes().put(new Attributes.Name("Spec-File"), "META-INF/specification/application.json");
-    ArchiveBundler bundler = new ArchiveBundler(new File("/tmp/TwitterFlow-1.0-archive-with-dependencies.archive"));
-    bundler.clone(new File("/tmp/1.archive"), manifest, new File[]{ new File("/tmp/application.json") });
+    LocationFactory lf = new LocalLocationFactory();
+    ArchiveBundler bundler = new ArchiveBundler(lf.create("/tmp/TwitterFlow-1.0-archive-with-dependencies.archive"));
+    bundler.clone(lf.create("/tmp/1.archive"), manifest, new Location[]{ lf.create("/tmp/application.json") });
   }
 }
