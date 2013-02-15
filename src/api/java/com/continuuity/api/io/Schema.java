@@ -4,17 +4,21 @@
 
 package com.continuuity.api.io;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -253,7 +257,7 @@ public final class Schema {
   private final List<Schema> unionSchemas;
 
   private String schemaString;
-  private byte[] schemaHash;
+  private SchemaHash schemaHash;
 
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
@@ -392,28 +396,23 @@ public final class Schema {
       return false;
     }
 
-    Schema otherSchema = (Schema)other;
-    byte[] hash = schemaHash == null ? getSchemaHash() : schemaHash;
-    byte[] otherHash = otherSchema.schemaHash == null ? otherSchema.getSchemaHash() : otherSchema.schemaHash;
-
-    return Arrays.equals(hash, otherHash);
+    return getSchemaHash().equals(((Schema)other).getSchemaHash());
   }
 
   @Override
   public int hashCode() {
-    byte[] hash = schemaHash == null ? getSchemaHash() : schemaHash;
-    return Arrays.hashCode(hash);
+    return getSchemaHash().hashCode();
   }
 
   /**
    * @return A MD5 hash of this schema.
    */
-  public byte[] getSchemaHash() {
-    byte[] hash = schemaHash;
+  public SchemaHash getSchemaHash() {
+    SchemaHash hash = schemaHash;
     if (hash == null) {
-      schemaHash = hash = computeHash();
+      schemaHash = hash = new SchemaHash(this);
     }
-    return Arrays.copyOf(hash, hash.length);
+    return hash;
   }
 
 
@@ -627,90 +626,5 @@ public final class Schema {
       // It should never throw IOException on the StringBuilder Writer, if it does, something very wrong.
       throw Throwables.propagate(e);
     }
-  }
-
-  /**
-   * Helper method to compute MD5 hash of this schema.
-   *
-   * @return A byte[] of MD5 hash representing this schema.
-   */
-  private byte[] computeHash() {
-    try {
-      Set<String> knownRecords = Sets.newHashSet();
-      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), this, knownRecords);
-      return md5.digest();
-    } catch (NoSuchAlgorithmException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  /**
-   * Updates md5 based on the given schema.
-   *
-   * @param md5 {@link MessageDigest} to update.
-   * @param schema {@link Schema} for updating the md5.
-   * @param knownRecords bytes to use for updating the md5 for records that're seen before.
-   * @return The same {@link MessageDigest} in the parameter.
-   */
-  private MessageDigest updateHash(MessageDigest md5, Schema schema, Set<String> knownRecords) {
-    // Don't use enum.ordinal() as ordering in enum could change
-    switch (schema.type) {
-      case NULL:
-        md5.update((byte)0);
-        break;
-      case BOOLEAN:
-        md5.update((byte)1);
-        break;
-      case INT:
-        md5.update((byte)2);
-        break;
-      case LONG:
-        md5.update((byte)3);
-        break;
-      case FLOAT:
-        md5.update((byte)4);
-        break;
-      case DOUBLE:
-        md5.update((byte)5);
-        break;
-      case BYTES:
-        md5.update((byte)6);
-        break;
-      case STRING:
-        md5.update((byte)7);
-        break;
-      case ENUM:
-        md5.update((byte)8);
-        for (String value : schema.enumValues.keySet()) {
-          md5.update(Charsets.UTF_8.encode(value));
-        }
-        break;
-      case ARRAY:
-        md5.update((byte)9);
-        updateHash(md5, schema.componentSchema, knownRecords);
-        break;
-      case MAP:
-        md5.update((byte)10);
-        updateHash(md5, schema.keySchema, knownRecords);
-        updateHash(md5, schema.valueSchema, knownRecords);
-        break;
-      case RECORD:
-        md5.update((byte)11);
-        boolean notKnown = knownRecords.add(schema.recordName);
-        for (Field field : schema.fields) {
-          md5.update(Charsets.UTF_8.encode(field.getName()));
-          if (notKnown) {
-            updateHash(md5, field.getSchema(), knownRecords);
-          }
-        }
-        break;
-      case UNION:
-        md5.update((byte)12);
-        for (Schema unionSchema : schema.unionSchemas) {
-          updateHash(md5, unionSchema, knownRecords);
-        }
-        break;
-    }
-    return md5;
   }
 }
