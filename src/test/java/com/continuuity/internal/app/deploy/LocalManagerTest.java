@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.TestHelper;
@@ -10,6 +14,7 @@ import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.internal.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,8 +53,8 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class,
                                   TestHelper.getManifestWithMainClass(WebCrawlApp.class));
     Location deployedJar = lf.create(jar);
-    Pipeline p = mgr.deploy(deployedJar);
-    VerificationStage.Input input = (VerificationStage.Input)p.getResult();
+    ListenableFuture<?> p = mgr.deploy(deployedJar);
+    VerificationStage.Input input = (VerificationStage.Input)p.get();
     Assert.assertEquals(input.getArchive(), deployedJar);
   }
 

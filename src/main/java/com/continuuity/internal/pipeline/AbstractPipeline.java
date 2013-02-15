@@ -21,11 +21,6 @@ public abstract class AbstractPipeline implements Pipeline {
   private List<Stage> stages = Lists.newLinkedList();
 
   /**
-   * Result of Pipeline.
-   */
-  private Object result;
-
-  /**
    * Adds a {@link Stage} to the {@link Pipeline}
    * @param stage to be added to this pipeline.
    */
@@ -40,21 +35,4 @@ public abstract class AbstractPipeline implements Pipeline {
   protected List<Stage> getStages() {
     return Collections.unmodifiableList(stages);
   }
-
-  /**
-   * @return Result of {@link Pipeline}
-   */
-  @Override
-  public Object getResult() {
-    return result;
-  }
-
-  /**
-   * Sets the result object of {@link Pipeline}
-   * @param o result object to be set for pipeline.
-   */
-  protected void setResult(Object o) {
-    result = o;
-  }
-
 }
