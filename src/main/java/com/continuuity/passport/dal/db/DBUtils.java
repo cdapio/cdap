@@ -16,6 +16,7 @@ public class DBUtils {
     public static final String CONFIRMED_COLUMN = "confirmed";
     public static final String PASSWORD_COLUMN = "password";
     public static final String API_KEY_COLUMN = "api_key";
+    public static final String ACCOUNT_CREATED_AT = "account_created_at";
     public static final int ACCOUNT_UNCONFIRMED = 0;
     public static final int ACCOUNT_CONFIRMED = 1;
   }
@@ -43,6 +44,7 @@ public class DBUtils {
     public static final String VPC_ID_COLUMN = "id";
     public static final String ACCOUNT_ID_COLUMN = "account_id";
     public static final String NAME_COLUMN = "vpc_name";
+    public static final String VPC_CREATED_AT = "vpc_created_at";
   }
 
   public static class VPCRole {

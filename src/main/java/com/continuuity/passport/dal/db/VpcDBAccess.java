@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -33,13 +34,17 @@ public class VpcDBAccess implements VpcDAO {
     try {
       Connection connection= this.poolManager.getConnection();
 
-      String SQL = String.format( "INSERT INTO %s (%s,%s) VALUES (?,?)",
+      String SQL = String.format( "INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
                                   DBUtils.VPC.TABLE_NAME,
-                                  DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN );
+                                  DBUtils.VPC.ACCOUNT_ID_COLUMN, DBUtils.VPC.NAME_COLUMN ,
+                                  DBUtils.VPC.VPC_CREATED_AT);
 
+      Date date = new Date();
       PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setInt(1, accountId);
       ps.setString(2, vpc.getVpcName());
+      ps.setTimestamp(3, new java.sql.Timestamp(date.getTime()));
+
       ps.executeUpdate();
 
       ResultSet result = ps.getGeneratedKeys();

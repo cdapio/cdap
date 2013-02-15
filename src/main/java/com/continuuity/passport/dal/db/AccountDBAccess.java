@@ -8,12 +8,16 @@ import com.continuuity.passport.core.meta.BillingInfo;
 import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.dal.AccountDAO;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import org.joda.time.DateTime;
 
+import javax.swing.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -39,27 +43,30 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection= this.poolManager.getConnection();
+      String SQL = String.format( "INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (?,?,?,?,?,?)",
+                                  DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.EMAIL_COLUMN, DBUtils.AccountTable.FIRST_NAME_COLUMN,
+                                  DBUtils.AccountTable.LAST_NAME_COLUMN, DBUtils.AccountTable.COMPANY_COLUMN,
+                                  DBUtils.AccountTable.CONFIRMED_COLUMN, DBUtils.AccountTable.ACCOUNT_CREATED_AT
+                                  );
 
-      String SQL = String.format( "INSERT INTO %s (%s,%s,%s,%s,%s) VALUES (?,?,?,?,?)", DBUtils.AccountTable.TABLE_NAME,
-                                  DBUtils.AccountTable.EMAIL_COLUMN,
-                                  DBUtils.AccountTable.FIRST_NAME_COLUMN, DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                  DBUtils.AccountTable.COMPANY_COLUMN, DBUtils.AccountTable.CONFIRMED_COLUMN);
 
+      Date date = new Date();
       PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setString(1, account.getEmailId());
       ps.setString(2,account.getFirstName());
       ps.setString(3,account.getLastName());
-      ps.setString(4,account.getCompany());
+      ps.setString(4, account.getCompany());
       ps.setInt(5, DBUtils.AccountTable.ACCOUNT_UNCONFIRMED);
-
+      ps.setTimestamp(6, new java.sql.Timestamp(date.getTime()));
       ps.executeUpdate();
+
       ResultSet result = ps.getGeneratedKeys();
       if (result == null) {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
       long id = result.getLong(1);
-
       return id;
     } catch (SQLException e) {
       //TODO: Log
