@@ -26,7 +26,7 @@ public interface Location {
   /**
    * @return Returns the name of the file or directory denoteed by this abstract pathname.
    */
-  String getUri();
+  String getName();
 
   /**
    * @return An {@link InputStream} for this location.
@@ -55,4 +55,28 @@ public interface Location {
    * @return A {@link URI} for this location.
    */
   URI toURI();
+
+  /**
+   * Deletes the file or directory denoted by this abstract pathname. If this
+   * pathname denotes a directory, then the directory must be empty in order
+   * to be deleted.
+   *
+   * @return true if and only if the file or directory is successfully delete; false otherwise.
+   */
+  boolean delete() throws IOException;
+
+
+  /**
+   * Requests that the file or directory denoted by this abstract pathname be
+   * deleted when the virtual machine terminates. Files (or directories) are deleted in
+   * the reverse order that they are registered. Invoking this method to delete a file or
+   * directory that is already registered for deletion has no effect. Deletion will be
+   * attempted only for normal termination of the virtual machine, as defined by the
+   * Java Language Specification.
+   * <p>
+   * Once deletion has been requested, it is not possible to cancel the request.
+   * This method should therefore be used with care.
+   * </p>
+   */
+  public void deleteOnExit() throws IOException;
 }

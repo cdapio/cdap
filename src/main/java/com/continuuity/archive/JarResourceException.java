@@ -12,4 +12,7 @@ public class JarResourceException extends Exception {
   public JarResourceException(String reason) {
     super(reason);
   }
+  public JarResourceException(Throwable throwable) {
+    super(throwable);
+  }
 }

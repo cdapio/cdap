@@ -24,7 +24,7 @@ public interface Pipeline {
    *
    * @param o argument to run the pipeline.
    */
-  void execute(Object o);
+  void execute(Object o) throws Exception;
 
   /**
    * @return Result of processing the pipeline.

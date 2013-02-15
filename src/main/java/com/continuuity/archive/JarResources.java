@@ -4,12 +4,16 @@
 
 package com.continuuity.archive;
 
+import com.continuuity.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -40,6 +44,22 @@ public final class JarResources {
   }
 
   /**
+   * Creates a JarResources using a {@link Location}. It extracts all resources from
+   * a Jar into a internal hashtable, keyed by resource names.
+   * @param jar location of JAR file.
+   * @throws JarResourceException
+   * @throws IOException
+   */
+  public JarResources(Location jar) throws JarResourceException {
+    try {
+      InputStream is = jar.getInputStream();
+      manifest = init(is);
+    } catch (IOException e) {
+      throw new JarResourceException(e);
+    }
+  }
+
+  /**
    * Returns the {@link java.util.jar.Manifest} object if it presents in the archive file, or {@code null} otherwise.
    *
    * @see java.util.jar.JarFile#getManifest()
@@ -54,6 +74,25 @@ public final class JarResources {
    */
   public byte[] getResource(String name) {
     return entryContents.get(name);
+  }
+
+  /**
+   * Makes a copy of JAR and then passes it to retrieve and initialize internal hash tables with Jar file resources.
+   */
+  private Manifest init(InputStream stream) throws JarResourceException {
+    File temp = null;
+    try {
+      temp = File.createTempFile("local", "archive");
+      FileOutputStream fos = new FileOutputStream(temp);
+      ByteStreams.copy(stream, fos);
+      return init(temp.getAbsolutePath());
+    } catch (IOException e) {
+      throw new JarResourceException(e);
+    } finally {
+      if(temp != null) {
+        temp.delete();
+      }
+    }
   }
 
   /**

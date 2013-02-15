@@ -95,7 +95,6 @@ public final class ArchiveBundler {
    */
   public void clone(Location output, final Manifest manifest, Location[] files, Predicate<ZipEntry> filter)
     throws IOException {
-    Preconditions.checkArgument(output.exists(), "JAR file %s already exists.");
     Preconditions.checkNotNull(manifest, "Null manifest");
     Preconditions.checkNotNull(files);
 
@@ -125,7 +124,7 @@ public final class ArchiveBundler {
 
           boolean absenceInJar = true;
           for (Location f : files) {
-            if (f.getUri().equals(name)) {
+            if (f.getName().equals(name)) {
               absenceInJar = false;
               break;
             }
@@ -149,7 +148,7 @@ public final class ArchiveBundler {
         InputStream in = null;
         try {
           in = files[i].getInputStream();
-          zout.putNextEntry(new ZipEntry(jarEntryPrefix + files[i].getUri()));
+          zout.putNextEntry(new ZipEntry(jarEntryPrefix + files[i].getName()));
           ByteStreams.copy(in, zout);
           zout.closeEntry();
         } finally {

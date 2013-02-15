@@ -26,7 +26,7 @@ public abstract class AbstractStage<T> implements Stage {
    * Processes an object passed to it from context.
    * @param ctx of processing.
    */
-  public final void process(Context ctx) {
+  public final void process(Context ctx) throws Exception {
     this.ctx = ctx;
     Object upStream = ctx.getUpStream();
     if (typeToken.isAssignableFrom(upStream.getClass())) {
@@ -46,5 +46,5 @@ public abstract class AbstractStage<T> implements Stage {
    * Abstract process that does a safe cast to the type.
    * @param o Object to be processed which is of type T
    */
-  public abstract void process(T o);
+  public abstract void process(T o) throws Exception;
 }

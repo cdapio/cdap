@@ -15,5 +15,5 @@ public interface Stage {
    * object and transfer any objects generated to downstream for processing.
    * @param ctx
    */
-  void process(Context ctx);
+  void process(Context ctx) throws Exception;
 }

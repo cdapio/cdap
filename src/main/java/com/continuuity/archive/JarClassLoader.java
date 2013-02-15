@@ -4,7 +4,10 @@
 
 package com.continuuity.archive;
 
+import com.continuuity.filesystem.Location;
+
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -21,6 +24,10 @@ public class JarClassLoader extends MultiClassLoader {
    */
   public JarClassLoader(String jarName) throws JarResourceException {
     jarResources = new JarResources (jarName);
+  }
+
+  public JarClassLoader(Location jarName) throws JarResourceException {
+    jarResources = new JarResources(jarName);
   }
 
   /**

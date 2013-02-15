@@ -22,7 +22,7 @@ final class SynchronousPipeline extends AbstractPipeline {
    * @param o argument to run the pipeline.
    */
   @Override
-  public void execute(Object o) {
+  public void execute(Object o) throws Exception {
     Object input = o;
     for(Stage stage : getStages()) {
       Context ctx = new StageContext(input);
