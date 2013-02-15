@@ -18,6 +18,7 @@ import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionException;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor.WriteTransactionResult;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;

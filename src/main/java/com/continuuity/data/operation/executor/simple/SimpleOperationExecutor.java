@@ -7,16 +7,15 @@ import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.ReadKey;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.ColumnarTable;
 import com.continuuity.data.table.ColumnarTableHandle;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleOperationExecutor extends NoOperationExecutor {
@@ -41,17 +40,15 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
                       List<WriteOperation> writes) throws OperationException {
     for (WriteOperation write : writes) {
       if (write instanceof Write)
-        execute(context, (Write)write);
+        exec((Write) write);
       else if (write instanceof Increment)
-        execute(context, (Increment)write);
+        exec((Increment) write);
       else if (write instanceof Delete)
-        execute(context, (Delete)write);
+        exec((Delete) write);
       else if (write instanceof CompareAndSwap)
-        execute(context, (CompareAndSwap)write);
-      else if (write instanceof QueueEnqueue)
-        execute(context, (QueueEnqueue)write);
-      else throw new OperationException(StatusCode.INTERNAL_ERROR,
-            "Unknown write operation " + write.getClass().getName());
+        exec((CompareAndSwap) write);
+      else
+        super.execute(context, write);
     }
   }
 
@@ -59,28 +56,26 @@ public class SimpleOperationExecutor extends NoOperationExecutor {
 
   @Override
   public void execute(OperationContext context,
-                      Write write) throws OperationException {
+                      WriteOperation write) throws OperationException {
+    this.execute(context, Collections.singletonList(write));
+  }
+
+  public void exec(Write write) throws OperationException {
     this.randomTable.put(write.getKey(), write.getColumns(), write.getValues());
   }
 
-  @Override
-  public void execute(OperationContext context,
-                      Delete delete) throws OperationException {
+  public void exec(Delete delete) throws OperationException {
     this.randomTable.delete(delete.getKey(), delete.getColumns()[0]);
   }
 
   // Conditional Writes
-  @Override
-  public void execute(OperationContext context,
-                      CompareAndSwap cas) throws OperationException {
+  public void exec(CompareAndSwap cas) throws OperationException {
     this.randomTable.compareAndSwap(cas.getKey(), Operation.KV_COL,
         cas.getExpectedValue(), cas.getNewValue());
   }
 
   // Value Returning Read-Modify-Writes
-  @Override
-  public void execute(OperationContext context,
-                      Increment inc) throws OperationException {
+  public void exec(Increment inc) throws OperationException {
     this.randomTable.increment(
         inc.getKey(), inc.getColumns()[0], inc.getAmounts()[0]);
   }

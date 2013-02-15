@@ -3,8 +3,8 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
+import com.continuuity.data.operation.executor.ReadPointer;
 
 import java.util.List;
 

@@ -6,7 +6,7 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.operation.ttqueue.EnqueueResult.EnqueueStatus;
-import com.continuuity.data.table.ReadPointer;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.hbase.ttqueue.*;
 import com.continuuity.hbase.ttqueue.HBQMetaOperation.MetaOperationType;
 import org.apache.hadoop.hbase.client.HTable;
