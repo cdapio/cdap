@@ -15,6 +15,9 @@ import com.continuuity.api.io.UnsupportedTypeException;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -22,6 +25,7 @@ import com.google.gson.JsonParseException;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 
 /**
  * Helper class to encoded/decode {@link ApplicationSpecification} to/from json.
@@ -72,6 +76,16 @@ public final class ApplicationSpecificationAdapter {
     }
   }
 
+  public void toJson(ApplicationSpecification appSpec,
+                     OutputSupplier<? extends Writer> outputSupplier) throws IOException{
+    Writer writer = outputSupplier.getOutput();
+    try {
+      toJson(appSpec, writer);
+    } finally {
+      Closeables.closeQuietly(writer);
+    }
+  }
+
   public ApplicationSpecification fromJson(String json) {
     return gson.fromJson(json, ApplicationSpecification.class);
   }
@@ -81,6 +95,15 @@ public final class ApplicationSpecificationAdapter {
       return gson.fromJson(reader, ApplicationSpecification.class);
     } catch (JsonParseException e) {
       throw new IOException(e);
+    }
+  }
+
+  public ApplicationSpecification fromJson(InputSupplier<? extends Reader> inputSupplier) throws IOException {
+    Reader reader = inputSupplier.getInput();
+    try {
+      return fromJson(reader);
+    } finally {
+      Closeables.closeQuietly(reader);
     }
   }
 
