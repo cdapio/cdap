@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.shiro.util.StringUtils;
 
+import javax.swing.tree.ExpandVetoException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -20,7 +21,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Annotations for endpoints, method types and data types for handling Http requests
@@ -32,6 +35,7 @@ import java.util.List;
 
 @Path("/passport/v1/account/")
 public class AccountHandler {
+
   @Path("{id}")
   @GET
   @Produces("application/json")
@@ -50,6 +54,49 @@ public class AccountHandler {
     }
 
 
+  @Path ("{id}/update")
+  @PUT
+  @Produces("application/json")
+  @Consumes("application/json")
+  public Response updateAccount(@PathParam("id")int id, String data){
+
+    try {
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
+
+      Map<String,Object> updateParams = new HashMap<String,Object>();
+
+      String firstName = jsonObject.get("first_name") == null? null : jsonObject.get("first_name").getAsString();
+      String lastName = jsonObject.get("last_name") == null? null : jsonObject.get("last_name").getAsString();
+      String company = jsonObject.get("company") == null? null : jsonObject.get("company").getAsString();
+
+      //TODO: Find a better way to update the map
+      if ( firstName != null ) {
+        updateParams.put("first_name",firstName);
+      }
+
+      if ( lastName != null ) {
+        updateParams.put("last_name",lastName);
+      }
+
+      if ( company != null ) {
+        updateParams.put("company",company);
+      }
+
+      DataManagementServiceImpl.getInstance().updateAccount(id,updateParams);
+      return Response.ok()
+        .entity(Utils.getJson("OK", "Account Updated"))
+        .build();
+    }
+    catch(Exception e) {
+      return Response.status(Response.Status.BAD_REQUEST)
+        .entity(Utils.getJson("FAILED", "Account Update Failed", e))
+        .build();
+
+    }
+
+  }
 
   @Path("create")
   @PUT

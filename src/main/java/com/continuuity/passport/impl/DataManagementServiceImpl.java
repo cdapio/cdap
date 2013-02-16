@@ -190,6 +190,26 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   }
 
+  /**
+   * Update account with passed Params
+   *
+   * @param accountId accountId
+   * @param params    Map<"keyName", "value">
+   */
+  @Override
+  public void updateAccount(int accountId, Map<String, Object> params) throws RuntimeException {
+
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      accountDAO.updateAccount(accountId,params);
+    } catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+
+  }
+
   public long addVPC(int accountId, VPC vpc) throws RuntimeException {
     if(vpcDao == null) {
       throw new RuntimeException("Could not initialize data access object");

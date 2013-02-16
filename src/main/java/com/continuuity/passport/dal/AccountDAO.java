@@ -57,4 +57,7 @@ public interface AccountDAO {
 
   public boolean addRoleType(int accountId, Role role) throws ConfigurationException, RuntimeException;
 
+  public void updateAccount(int accountId, Map<String,Object> keyValueParams)
+    throws ConfigurationException, RuntimeException;
+
 }

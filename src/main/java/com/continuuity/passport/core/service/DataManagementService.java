@@ -10,6 +10,7 @@ import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.status.Status;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -96,6 +97,13 @@ public interface DataManagementService {
    * @return List of {@code VPC}
    */
   public List<VPC> getVPC(String apiKey);
+
+  /**
+   * Update account with passed Params
+   * @param accountId accountId
+   * @param params  Map<"keyName", "value">
+   */
+  public void updateAccount(int accountId, Map<String,Object> params) throws RuntimeException;
 
 
 }

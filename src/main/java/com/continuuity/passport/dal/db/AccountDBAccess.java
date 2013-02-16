@@ -266,6 +266,62 @@ public class AccountDBAccess implements AccountDAO {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override
+  public void updateAccount(int accountId, Map<String, Object> keyValueParams) throws  ConfigurationException, RuntimeException {
+    if(this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+
+       Connection connection = this.poolManager.getConnection();
+
+       //Set basic update command
+       StringBuilder sb  = new StringBuilder();
+
+       sb.append(String.format("UPDATE %s SET ",DBUtils.AccountTable.TABLE_NAME));
+       boolean firstValue = true;
+
+       if(!keyValueParams.isEmpty()){
+
+         //Add Column names
+         for(Map.Entry e: keyValueParams.entrySet()){
+
+           if (firstValue){
+             sb.append(String.format(" %s= ?", (String)e.getKey()));
+             firstValue = false;
+           }
+           else {
+             //append a comma as well
+             sb.append(String.format(", %s = ?", (String) e.getKey()));
+           }
+         }
+
+         sb.append(String.format(" where %s = ? ",DBUtils.AccountTable.ID_COLUMN));
+
+         //Prepared Statement
+         PreparedStatement ps = connection.prepareStatement(sb.toString());
+         int count = 1;
+         //Set Values in prepared statement
+         //All values are set as String for now.
+         //For now we are only updating String fields
+         // TODO: Enhance it to actual type of columns later.
+
+         for (Map.Entry e : keyValueParams.entrySet()){
+           ps.setString(count,(String)e.getValue());
+           count++;
+         }
+
+         //Set value for where clause
+         ps.setInt(count,accountId);
+         ps.executeUpdate();
+
+       }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e.getMessage(),e.getCause());
+    }
+  }
+
   private String generateSaltedHashedPassword(String password) {
     //TODO: Add this
     return password;
