@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.app.program;
@@ -7,7 +7,7 @@ package com.continuuity.app.program;
 /**
  * Result of running a program
  */
-public enum ProgramRunResult {
+public enum Status {
   /**
    * Program execution ended successfully
    */

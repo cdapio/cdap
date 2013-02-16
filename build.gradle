@@ -56,7 +56,7 @@ sourceSets {
  * Generates API javadoc.
  */
 javadoc {
-  classpath += (sourceSets.api.output + thrift.output)
+  classpath += (sourceSets.api.output + sourceSets.thrift.output)
 }
 
 /**

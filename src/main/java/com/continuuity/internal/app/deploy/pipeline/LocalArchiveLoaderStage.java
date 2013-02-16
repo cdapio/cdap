@@ -9,6 +9,7 @@ import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.InMemoryConfigurator;
+import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
@@ -31,7 +32,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
    */
   public LocalArchiveLoaderStage() {
     super(TypeToken.of(Location.class));
-    adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    adapter = ApplicationSpecificationAdapter.create(new SimpleQueueSpecificationGeneratorFactory(new ReflectionSchemaGenerator()));
   }
 
   /**

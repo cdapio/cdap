@@ -8,10 +8,10 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
-import com.continuuity.app.program.ProgramArchive;
+import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -92,7 +92,7 @@ public class InMemoryConfigurator implements Configurator  {
 
       if(archive != null && application == null) { // Provided Application JAR.
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass = new ProgramArchive(archive).getMainClass().newInstance();
+        Object mainClass = new Program(archive).getMainClass().newInstance();
         // Convert it to the type application.
         app  = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance
@@ -108,7 +108,7 @@ public class InMemoryConfigurator implements Configurator  {
       // We write the Application specification to output file in JSON format.
       writer = new StringWriter();
       // TODO: The SchemaGenerator should be injected
-      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
+      ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch (Exception e) {
       return Futures.immediateFailedFuture(e);
