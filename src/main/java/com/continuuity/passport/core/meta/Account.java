@@ -22,6 +22,8 @@ public class Account {
 
   private final String apiKey;
 
+  private final String accountJson ;
+
   public Account(String firstName, String lastName, String emailId) {
     this(firstName,lastName, StringUtils.EMPTY,emailId,-1);
   }
@@ -37,6 +39,8 @@ public class Account {
     this.emailId = emailId;
     this.accountId = accountId;
     this.apiKey = apiKey;
+    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    accountJson = gson.toJson(this);
   }
 
 
@@ -71,10 +75,7 @@ public class Account {
 
   @Override
   public String toString() {
-    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-
-    return (gson.toJson(this));
-
+    return accountJson;
   }
 
 }

@@ -13,12 +13,18 @@ public class VPC {
 
   private final String vpcName;
 
+  private final String vpcJson;
+
   public VPC(String vpcName) {
     this(-1,vpcName);
   }
   public VPC(int vpcId, String vpcName) {
     this.vpcId = vpcId;
     this.vpcName = vpcName;
+
+    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    vpcJson = gson.toJson(this);
+
   }
 
   public int getVpcId() {
@@ -30,9 +36,6 @@ public class VPC {
   }
   @Override
   public String toString() {
-    Gson gson = new GsonBuilder()
-                        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                        .create();
-    return (gson.toJson(this));
+    return vpcJson;
   }
 }
