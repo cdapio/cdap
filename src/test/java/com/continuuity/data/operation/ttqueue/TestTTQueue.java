@@ -685,8 +685,7 @@ public abstract class TestTTQueue {
   }
 
   @Test
-  public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti()
-      throws Exception {
+  public void testSingleConsumerSingleEntryWithInvalid_Empty_ChangeSizeAndToMulti() throws Exception {
     TTQueue queue = createQueue();
     long version = timeOracle.getTimestamp();
     ReadPointer readPointer = getCleanPointer(version);

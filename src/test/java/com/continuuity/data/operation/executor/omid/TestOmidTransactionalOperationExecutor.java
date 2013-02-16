@@ -96,8 +96,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // insert to all three types
     executor.execute(context, new Write(dataKey, dataKey));
-    executor.execute(context, new QueueEnqueue(queueKey, "out", queueKey));
-    executor.execute(context, new QueueEnqueue(streamKey, "out", streamKey));
+    executor.execute(context, new QueueEnqueue(queueKey, queueKey));
+    executor.execute(context, new QueueEnqueue(streamKey, streamKey));
 
     // read data from all three types
     assertTrue(Bytes.equals(dataKey,
@@ -130,8 +130,8 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // insert data to all three again
     executor.execute(context, new Write(dataKey, dataKey));
-    executor.execute(context, new QueueEnqueue(queueKey, "out", queueKey));
-    executor.execute(context, new QueueEnqueue(streamKey, "out", streamKey));
+    executor.execute(context, new QueueEnqueue(queueKey, queueKey));
+    executor.execute(context, new QueueEnqueue(streamKey, streamKey));
 
     // read data from all three types
     assertArrayEquals(dataKey,
@@ -412,7 +412,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] queueName = Bytes.toBytes("testAbortedAckQueue");
 
     // EnqueuePayload something
-    executor.execute(context, batch(new QueueEnqueue(queueName, "out", queueName)));
+    executor.execute(context, batch(new QueueEnqueue(queueName, queueName)));
 
     // DequeuePayload it
     QueueConsumer consumer = new QueueConsumer(0, 0, 1);
@@ -606,7 +606,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     enqueueOneMap.put("two", incrementTwo.getId());
 
     // Make the first enqueue operation using an enqueue payload with the map
-    QueueEnqueue enqueueOne = new QueueEnqueue(queueOne, "out",
+    QueueEnqueue enqueueOne = new QueueEnqueue(queueOne,
         EnqueuePayload.write(enqueueOneMap, queueOneData));
 
     // Generate second enqueue payload tied to the first increment
@@ -614,7 +614,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     enqueueTwoMap.put("ONE", incrementOne.getId());
 
     // Make the second enqueue operation using an enqueue payload with the map
-    QueueEnqueue enqueueTwo = new QueueEnqueue(queueTwo, "out",
+    QueueEnqueue enqueueTwo = new QueueEnqueue(queueTwo,
         EnqueuePayload.write(enqueueTwoMap, queueTwoData));
 
     // Make a batch of operations, putting enqueues first knowing that these

@@ -70,7 +70,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         PartitionerType.RANDOM, true);
 
     this.executor.execute(context,
-        new QueueEnqueue(queueName, "out", queueName));
+        new QueueEnqueue(queueName, queueName));
     this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config));
 
@@ -107,8 +107,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         PartitionerType.RANDOM, true);
 
     // enqueue to queue, stream, and write data
-    this.executor.execute(context, new QueueEnqueue(queueName, "out", queueName));
-    this.executor.execute(context, new QueueEnqueue(streamName, "out", streamName));
+    this.executor.execute(context, new QueueEnqueue(queueName, queueName));
+    this.executor.execute(context, new QueueEnqueue(streamName, streamName));
     this.executor.execute(context, new Write(keyAndValue, keyAndValue));
 
     // verify it can all be read
@@ -156,7 +156,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Write to the queue
     this.executor.execute(context, Collections.singletonList((WriteOperation)
-        new QueueEnqueue(queueName, "out", Bytes.toBytes(1L))));
+        new QueueEnqueue(queueName, Bytes.toBytes(1L))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -243,7 +243,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(result.isEmpty());
 
     // Write to the queue
-    this.executor.execute(context, batch(new QueueEnqueue(queueName, "out", Bytes.toBytes(1L))));
+    this.executor.execute(context, batch(new QueueEnqueue(queueName, Bytes.toBytes(1L))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -306,7 +306,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Add an entry to source queue
     this.executor.execute(
-        context, new QueueEnqueue(srcQueueName, "out", srcQueueValue));
+        context, new QueueEnqueue(srcQueueName, srcQueueValue));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
@@ -325,14 +325,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add a push to dest queue one
-    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
 
     // Add a compare-and-swap
     writes.add(new CompareAndSwap(
         dataKey, Bytes.toBytes(1L), Bytes.toBytes(10L)));
 
     // Add a push to dest queue two
-    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKey, 3));
@@ -400,7 +400,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Add an entry to source queue
     this.executor.execute(context,
-        new QueueEnqueue(srcQueueName, "out", srcQueueValue));
+        new QueueEnqueue(srcQueueName, srcQueueValue));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
@@ -423,8 +423,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], 3));
@@ -477,8 +477,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], 3));
@@ -520,7 +520,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     for (int i=1; i<numEntries+1; i++) {
       byte [] entry = Bytes.toBytes(i);
-      this.executor.execute(context, new QueueEnqueue(queueName, "out", entry));
+      this.executor.execute(context, new QueueEnqueue(queueName, entry));
     }
 
     long enqueueStop = System.currentTimeMillis();
@@ -648,7 +648,7 @@ public abstract class TestOmidExecutorLikeAFlow {
       public void run() {
         for (int i=0; i<n; i++) {
           try {
-            executorFinal.execute(context, new QueueEnqueue(queueName, "out", Bytes.toBytes(i)));
+            executorFinal.execute(context, new QueueEnqueue(queueName, Bytes.toBytes(i)));
           } catch (OperationException e) {
             fail("Exception for QueueEnqueue " + i);
           }
@@ -845,8 +845,7 @@ public abstract class TestOmidExecutorLikeAFlow {
           byte [] entry = Bytes.add(Bytes.toBytes(this.instanceid),
               Bytes.toBytes(i));
           TestOmidExecutorLikeAFlow.this.executor.execute(context,
-              new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, "out",
-                  entry));
+              new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, entry));
           this.enqueuedMap.put(entry, entry);
         } catch (OperationException e) {
           fail("OperationException for EnqueuePayload");

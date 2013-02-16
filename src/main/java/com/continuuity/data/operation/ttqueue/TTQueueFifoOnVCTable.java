@@ -1,8 +1,10 @@
 package com.continuuity.data.operation.ttqueue;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
+import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
 
@@ -20,9 +22,9 @@ public class TTQueueFifoOnVCTable extends TTQueueAbstractOnVCTable {
 
   @Override
   protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
-    return this.table.incrementAtomicDirtily(
-      makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-      CONSUMER_READ_POINTER, consumer.getGroupSize());
-    //return this.table.incrementAtomicDirtily(makeRowName(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 1);
+//    return this.table.incrementAtomicDirtily(
+//      makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+//      CONSUMER_READ_POINTER, consumer.getGroupSize());
+    return this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 1);
   }
 }

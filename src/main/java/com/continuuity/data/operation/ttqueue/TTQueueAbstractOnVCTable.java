@@ -40,6 +40,8 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
   static final byte [] ENTRY_META = {10};
   static final byte [] ENTRY_DATA = {20};
 
+  static final byte [] GROUP_READ_POINTER = {10};
+
   // Columns for row = CONSUMER_META_PREFIX
   static final byte [] ACTIVE_ENTRY = {10};
   static final byte [] META_ENTRY_PREFIX = {20};
@@ -76,8 +78,11 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     }
     if (TRACE) log("New enqueue got entry id " + entryId);
 
-    // Insert entry
-    this.table.put(makeRowName(GLOBAL_DATA_PREFIX, entryId),
+    /*
+    Insert entry with version=<cleanWriteVersion> and
+    row-key = 20<entryId> , column/value 20/<data> and 10/EntryState.VALID
+    */
+    this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
                    new byte [][] { ENTRY_DATA, ENTRY_META},
                    cleanWriteVersion,
                    new byte [][] {data, new EntryMeta(EntryMeta.EntryState.VALID).getBytes()});
@@ -88,7 +93,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
   @Override
   public void invalidate(QueueEntryPointer entryPointer, long cleanWriteVersion) throws OperationException {
-    final byte [] rowName = makeRowName(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
+    final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryPointer.getEntryId());
     // Change meta data to INVALID
     this.table.put(rowName, ENTRY_META,
                    cleanWriteVersion, new EntryMeta(EntryMeta.EntryState.INVALID).getBytes());
@@ -108,7 +113,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
       // Get the next entryId that can be dequeued by this consumer
       final long entryId = determineNextEntryId(consumer, config, readPointer);
 
-      final byte [] rowName = makeRowName(GLOBAL_DATA_PREFIX, entryId);
+      final byte [] rowName = makeRowKey(GLOBAL_DATA_PREFIX, entryId);
       // Read visible entry meta and entry data for the entryId
       OperationResult<Map<byte[], byte[]>> result = this.table.get(rowName,
                       new byte[][]{ ENTRY_META, ENTRY_DATA }, readPointer);
@@ -148,7 +153,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     // TODO: the active entry should be read during initialization from HBase and stored in memory if tries < MAX_TRIES,
     // TODO: so that repeated reads to HBase on each dequeue is not required
     OperationResult<byte[]> result =
-      this.table.get(makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+      this.table.get(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
                      ACTIVE_ENTRY, readPointer);
     if(!result.isEmpty()) {
       long activeEntryID = Bytes.toLong(result.getValue());
@@ -161,7 +166,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     long entryId = fetchNextEntryId(consumer, config, readPointer);
     // Persist the entryId this consumer will be working on
     // TODO: Later when active entry can saved in memory, there is no need to write it into HBase
-    this.table.put(makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
       new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY}, readPointer.getMaximum(),
       new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(), Bytes.toBytes(entryId)});
     return entryId;
@@ -172,7 +177,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    this.table.put(makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
       new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
       new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
                                                                         Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
@@ -190,7 +195,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
     // TODO: 3. Ack gets rolled back with tries=0. Need to fix this by fixing point 2 above.
-    this.table.put(makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
       new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
       new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
                                                                         Bytes.toBytes(entryPointer.getEntryId())});
@@ -224,11 +229,11 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     return Bytes.add(this.queueName, bytesToAppendToQueueName);
   }
 
-  protected byte[] makeRowName(byte[] bytesToAppendToQueueName, long id1) {
+  protected byte[] makeRowKey(byte[] bytesToAppendToQueueName, long id1) {
     return Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1));
   }
 
-  protected byte[] makeRowName(byte[] bytesToAppendToQueueName, long id1, int id2) {
+  protected byte[] makeRowKey(byte[] bytesToAppendToQueueName, long id1, int id2) {
     return Bytes.add(
       Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)),
       Bytes.toBytes(id2));

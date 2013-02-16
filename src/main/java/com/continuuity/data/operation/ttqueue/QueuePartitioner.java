@@ -23,7 +23,7 @@ public interface QueuePartitioner {
       byte [] value);
 
   public static enum PartitionerType {
-    RANDOM, HASH_ON_VALUE, MODULO_LONG_VALUE;
+    RANDOM, HASH_ON_VALUE, MODULO_LONG_VALUE, FIFO;
 
     private static final QueuePartitioner PARTITIONER_RANDOM =
         new RandomPartitioner();
@@ -31,12 +31,15 @@ public interface QueuePartitioner {
         new HashPartitioner();
     private static final QueuePartitioner PARTITIONER_LONG_MOD =
         new LongValueHashPartitioner();
-    
+    private static final QueuePartitioner PARTITIONER_FIFO =
+      new FifoPartitioner();
+
     public QueuePartitioner getPartitioner() {
       switch (this) {
         case RANDOM: return PARTITIONER_RANDOM;
         case HASH_ON_VALUE: return PARTITIONER_HASH;
         case MODULO_LONG_VALUE: return PARTITIONER_LONG_MOD;
+        case FIFO: return PARTITIONER_FIFO;
         default: return PARTITIONER_RANDOM;
       }
     }
@@ -84,6 +87,18 @@ public interface QueuePartitioner {
         byte [] value) {
       long val = Bytes.toLong(value);
       return (val % consumer.getGroupSize()) == consumer.getInstanceId();
+    }
+  }
+
+  public static class FifoPartitioner implements QueuePartitioner {
+    @Override
+    public boolean shouldEmit(QueueConsumer consumer, long entryId, byte [] value) {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this).toString();
     }
   }
 }
