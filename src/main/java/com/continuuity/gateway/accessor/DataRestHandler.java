@@ -1,13 +1,14 @@
 package com.continuuity.gateway.accessor;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.gateway.util.NettyRestHandler;
 import com.continuuity.gateway.util.Util;
@@ -28,7 +29,11 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.*;
+import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
+import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
+import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * This is the http request handler for the rest accessor. At this time it
@@ -252,23 +257,23 @@ public class DataRestHandler extends NettyRestHandler {
       switch(operation) {
         case READ : {
           // Get the value from the data fabric
-          OperationResult<byte[]> result;
+          OperationResult<Map<byte[],byte[]>> result;
           try {
-            ReadKey read = new ReadKey(table, keyBinary);
+            Read read = new Read(table, keyBinary, Operation.KV_COL);
             result = this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, read);
           } catch (Exception e) {
             helper.finish(Error);
-            LOG.error("Error during ReadKey: " + e.getMessage(), e);
+            LOG.error("Error during Read: " + e.getMessage(), e);
             respondError(message.getChannel(),
                 HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return;
           }
-          if (result.isEmpty()) {
+          if (result.isEmpty() || null == result.getValue().get(Operation.KV_COL)) {
             respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
             helper.finish(NoData);
           } else {
-            respondSuccess(message.getChannel(), request, result.getValue());
+            respondSuccess(message.getChannel(), request, result.getValue().get(Operation.KV_COL));
             helper.finish(Success);
           }
           break;
@@ -345,11 +350,11 @@ public class DataRestHandler extends NettyRestHandler {
         case DELETE : {
           // first perform a Read to determine whether the key exists
           try {
-            ReadKey read = new ReadKey(table, keyBinary);
-            OperationResult<byte[]> result =
+            Read read = new Read(table, keyBinary, Operation.KV_COL);
+            OperationResult<Map<byte[],byte[]>> result =
                 this.accessor.getExecutor().
                     execute(OperationContext.DEFAULT, read);
-            if (result.isEmpty()) {
+            if (result.isEmpty() || null == result.getValue().get(Operation.KV_COL)) {
               // key does not exist -> Not Found
               respondError(message.getChannel(), HttpResponseStatus.NOT_FOUND);
               helper.finish(NotFound);
@@ -358,7 +363,7 @@ public class DataRestHandler extends NettyRestHandler {
           } catch (Exception e) {
             // something went wrong, internal error
             helper.finish(Error);
-            LOG.error("Error during ReadKey: " + e.getMessage(), e);
+            LOG.error("Error during Read: " + e.getMessage(), e);
             respondError(message.getChannel(),
                 HttpResponseStatus.INTERNAL_SERVER_ERROR);
             break;
@@ -366,7 +371,7 @@ public class DataRestHandler extends NettyRestHandler {
 
           // now that we know the key exists, delete it
           try {
-            Delete delete = new Delete(table, keyBinary);
+            Delete delete = new Delete(table, keyBinary, Operation.KV_COL);
             this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, delete);
             // deleted successfully
@@ -394,7 +399,7 @@ public class DataRestHandler extends NettyRestHandler {
           byte[] bytes = new byte[length];
           content.readBytes(bytes);
           // create a write and attempt to execute it
-          Write write = new Write(table, keyBinary, bytes);
+          Write write = new Write(table, keyBinary, Operation.KV_COL, bytes);
           try {
             this.accessor.getExecutor().
                 execute(OperationContext.DEFAULT, write);
