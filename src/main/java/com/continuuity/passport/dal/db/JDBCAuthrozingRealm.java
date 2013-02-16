@@ -2,6 +2,7 @@ package com.continuuity.passport.dal.db;
 
 import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -30,6 +31,27 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
   private Map<String,String> configurations;
   private DBConnectionPoolManager poolManager =null;
+
+  private final String SQL_LOOKUP_BY_EMAIL = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+                                                             DBUtils.AccountTable.FIRST_NAME_COLUMN,
+                                                             DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                                             DBUtils.AccountTable.COMPANY_COLUMN,
+                                                             DBUtils.AccountTable.ID_COLUMN,
+                                                             DBUtils.AccountTable.PASSWORD_COLUMN,
+                                                             DBUtils.AccountTable.API_KEY_COLUMN,
+                                                             DBUtils.AccountTable.TABLE_NAME,
+                                                             DBUtils.AccountTable.EMAIL_COLUMN);
+
+  private final String SQL_LOOKUP_BY_APIKEY = String.format( "SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
+                                                                DBUtils.AccountTable.FIRST_NAME_COLUMN,
+                                                                DBUtils.AccountTable.LAST_NAME_COLUMN,
+                                                                DBUtils.AccountTable.COMPANY_COLUMN,
+                                                                DBUtils.AccountTable.ID_COLUMN,
+                                                                DBUtils.AccountTable.PASSWORD_COLUMN,
+                                                                DBUtils.AccountTable.API_KEY_COLUMN,
+                                                                DBUtils.AccountTable.TABLE_NAME,
+                                                                DBUtils.AccountTable.API_KEY_COLUMN);
+
 
   public JDBCAuthrozingRealm(Map<String,String> configurations) {
     this.configurations = configurations;
@@ -116,8 +138,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
   }
 
   /**
-   * Retrieves authentication data from an implementation-specific datasource (RDBMS, LDAP, etc) for the given
-   * authentication token.
+   * Retrieves authentication data from RDBMS for the given authentication token.
    * <p/>
    * For most datasources, this means just 'pulling' authentication data for an associated subject/user and nothing
    * more and letting Shiro do the rest.  But in some systems, this method could actually perform EIS specific
@@ -134,25 +155,36 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
    */
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-    UsernamePasswordToken upToken = (UsernamePasswordToken) token;
+    UsernamePasswordApiKeyToken upToken = (UsernamePasswordApiKeyToken) token;
     String emailId = upToken.getUsername();
+    String apiKey = upToken.getApiKey();
 
     SimpleAuthenticationInfo info = null;
     try {
       Connection connection = this.poolManager.getConnection();
 
 
-      String SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?",
-                                  DBUtils.AccountTable.FIRST_NAME_COLUMN,
-                                  DBUtils.AccountTable.LAST_NAME_COLUMN,
-                                  DBUtils.AccountTable.COMPANY_COLUMN,
-                                  DBUtils.AccountTable.ID_COLUMN,
-                                  DBUtils.AccountTable.PASSWORD_COLUMN,
-                                  DBUtils.AccountTable.TABLE_NAME,
-                                  DBUtils.AccountTable.EMAIL_COLUMN);
+      String SQL = null;
+      PreparedStatement ps = null;
 
-      PreparedStatement ps = connection.prepareStatement(SQL);
-      ps.setString(1,emailId);
+      if (emailId !=null && !emailId.isEmpty()) {
+        SQL = SQL_LOOKUP_BY_EMAIL;
+        ps = connection.prepareStatement(SQL);
+        ps.setString(1,emailId);
+
+
+      }
+      else if (apiKey!=null && ! apiKey.isEmpty()) {
+        SQL = SQL_LOOKUP_BY_APIKEY;
+        ps = connection.prepareStatement(SQL);
+        ps.setString(1,apiKey);
+
+      }
+
+      if (ps == null){
+        throw new AuthenticationException("ApiKey or emailId should be set.");
+      }
+
       ResultSet rs = ps.executeQuery();
 
       int count = 0;
@@ -179,9 +211,6 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       if (password ==null || password.isEmpty()) {
         throw new RuntimeException(String.format("Password not found for %s",emailId));
       }
-
-      //  public Account(String firstName, String lastName, String company, String emailId, int accountId) {
-
 
       Account account = new Account(firstName,lastName,company,emailId,accountId);
       info = new SimpleAuthenticationInfo(account,password,getName());

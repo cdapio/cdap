@@ -3,7 +3,7 @@ package com.continuuity.passport.http;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
-import com.continuuity.passport.core.meta.UsernamePasswordCredentials;
+import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.impl.AuthenticatorImpl;
@@ -199,8 +199,9 @@ public class AccountHandler {
 
 
     try {
-      AuthenticationStatus status =  AuthenticatorImpl.getInstance()
-                                              .authenticate(new UsernamePasswordCredentials(emailId,password));
+      AuthenticationStatus status = AuthenticatorImpl.getInstance()
+                                     .authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
+                                                                                         StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         return Response.ok(Utils.getAuthenticatedJson("OK",status.getMessage())).build();

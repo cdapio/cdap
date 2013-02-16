@@ -4,7 +4,8 @@ import com.continuuity.common.db.DBConnectionPoolManager;
 import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.Credentials;
-import com.continuuity.passport.core.meta.UsernamePasswordCredentials;
+import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
+import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.Authenticator;
 import com.continuuity.passport.core.status.AuthenticationStatus;
 import com.continuuity.passport.dal.db.DBUtils;
@@ -59,10 +60,11 @@ public class AuthenticatorImpl implements Authenticator {
   @Override
   public AuthenticationStatus authenticate(Credentials credentials) throws RetryException {
 
-    UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentials;
+    UsernamePasswordApiKeyCredentials userCredentials = (UsernamePasswordApiKeyCredentials) credentials;
 
-    UsernamePasswordToken token  =  new UsernamePasswordToken(usernamePasswordCredentials.getUserName(),
-                                                              usernamePasswordCredentials.getPassword());
+    UsernamePasswordApiKeyToken token  =  new UsernamePasswordApiKeyToken(userCredentials.getUserName(),
+                                                                          userCredentials.getPassword(),
+                                                                          userCredentials.getApiKey());
 
     try {
       Subject currentUser = SecurityUtils.getSubject();
