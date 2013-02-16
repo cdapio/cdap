@@ -6,6 +6,7 @@ package com.continuuity.internal.app.program;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.program.ProgramRunResult;
+import com.continuuity.app.program.Store;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
@@ -47,9 +48,9 @@ public class MDSBasedStoreTest {
     MetaDataStore metaDataStore = new SerializingMetaDataStore(executor);
     MDSBasedStore store = new MDSBasedStore(metaDataStore, metadataService);
     long startTs = System.currentTimeMillis();
-    store.logProgramStart("account1", "application1", "flow1", "run1", startTs);
+    store.setStart(new Store.ProgramId("account1", "application1", "flow1"), "run1", startTs);
     long endTs = startTs + 10;
-    store.logProgramEnd("account1", "application1", "flow1", "run1", endTs, ProgramRunResult.FAILED);
+    store.setEnd(new Store.ProgramId("account1", "application1", "flow1"), "run1", endTs, ProgramRunResult.FAILED);
 
     // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
     MetaDataEntry logged = metaDataStore.get(new OperationContext("account1"), "account1", "application1",

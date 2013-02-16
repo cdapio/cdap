@@ -11,7 +11,7 @@ import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.ProgramArchive;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -108,7 +108,7 @@ public class InMemoryConfigurator implements Configurator  {
       // We write the Application specification to output file in JSON format.
       writer = new StringWriter();
       // TODO: The SchemaGenerator should be injected
-      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
+      ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
     } catch (Exception e) {
       return Futures.immediateFailedFuture(e);
