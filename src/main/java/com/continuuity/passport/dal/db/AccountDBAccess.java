@@ -117,10 +117,11 @@ public class AccountDBAccess implements AccountDAO {
     }
     try {
       Connection connection = this.poolManager.getConnection();
-      String SQL = String.format( "UPDATE %s SET %s = ? WHERE %s = ?" ,
+      String SQL = String.format( "UPDATE %s SET %s = ? WHERE %s = ? AND %s is NULL" ,
                                   DBUtils.AccountTable.TABLE_NAME,
                                   DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
-                                  DBUtils.AccountTable.ID_COLUMN);
+                                  DBUtils.AccountTable.ID_COLUMN,
+                                  DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT);
 
       PreparedStatement ps = connection.prepareStatement(SQL);
 
