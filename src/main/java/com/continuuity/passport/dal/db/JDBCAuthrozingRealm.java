@@ -193,6 +193,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
       String firstName = null;
       String lastName = null;
       String company = null;
+      String apiToken = null;
 
       while(rs.next()) {
         firstName = rs.getString(1);
@@ -201,6 +202,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
         accountId  = rs.getInt(4);
         password = rs.getString(5);
+        apiToken = rs.getString(6);
         count++;
         if(count > 1) {
           // Note: This condition should never occur since ids are auto generated.
@@ -212,7 +214,7 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
         throw new RuntimeException(String.format("Password not found for %s",emailId));
       }
 
-      Account account = new Account(firstName,lastName,company,emailId,accountId);
+      Account account = new Account(firstName,lastName,company,emailId,accountId,apiToken);
       info = new SimpleAuthenticationInfo(account,password,getName());
 
     } catch (SQLException e) {
