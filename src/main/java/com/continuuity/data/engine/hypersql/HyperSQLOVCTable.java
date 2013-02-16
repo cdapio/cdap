@@ -290,7 +290,74 @@ implements OrderedVersionedColumnarTable {
 
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
-    return -1;
+    PreparedStatement ps = null;
+    long newAmount = amount;
+    long writeVersion = 0L;
+      try {
+//        try {
+//          ps = this.connection.prepareStatement(
+//            "MERGE INTO "+ this.quotedTableName + " " +
+//            "USING (VALUES(?,?,?,?,?) " +
+//            "AS vals(rowkey, column, version, kvtype, value)) " +
+//            "ON rowkey=vals.rowkey and column=vals.column and kvtype=3" +
+//            "WHEN MATCHED THEN UPDATE SET value=CONVERT(CONVERT(value, SQL_BIGINT)+?,SQL_BINARY) "+
+//            "WHEN NOT MATCHED THEN INSERT VALUES (?,?,?,?,?)");
+//          ps.setBytes(1, row);
+//          ps.setBytes(2, column);
+//          ps.setLong(3, writeVersion);
+//          ps.setInt(4, Type.VALUE.i);
+//          ps.setBytes(5, Bytes.toBytes(newAmount));
+//          ...
+//          ps.executeUpdate();
+//          ps.close();
+//        } catch (SQLException e) {
+//          handleSQLException(e, "merge");
+//        }
+      try {
+        ps = this.connection.prepareStatement(
+          "SELECT version, kvtype, id, value " +
+            "FROM " + this.quotedTableName + " " +
+            "WHERE rowkey = ? AND column = ? " +
+            "ORDER BY version DESC, kvtype ASC, id DESC");
+        ps.setBytes(1, row);
+        ps.setBytes(2, column);
+        ResultSet result = ps.executeQuery();
+        ImmutablePair<Long, byte[]> latest = latest(result);
+        if (latest != null) {
+          try {
+            newAmount += Bytes.toLong(latest.getSecond());
+            writeVersion = latest.getFirst() + 1L;
+          } catch(IllegalArgumentException e) {
+            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+          }
+        }
+        ps.close();
+      } catch (SQLException e) {
+        handleSQLException(e, "select");
+      }
+      try {
+        ps = this.connection.prepareStatement(
+          "INSERT INTO " + this.quotedTableName + " (rowkey, column, version, kvtype, value) " +
+            "VALUES ( ? , ? , ? , ? , ?)");
+        ps.setBytes(1, row);
+        ps.setBytes(2, column);
+        ps.setLong(3, writeVersion);
+        ps.setInt(4, Type.VALUE.i);
+        ps.setBytes(5, Bytes.toBytes(newAmount));
+        ps.executeUpdate();
+      } catch (SQLException e) {
+        handleSQLException(e, "insert");
+      }
+    } finally {
+      if (ps != null) {
+        try {
+          ps.close();
+        } catch (SQLException e) {
+          handleSQLException(e, "close");
+        }
+      }
+    }
+    return newAmount;
   }
 
   @Override
@@ -711,6 +778,35 @@ implements OrderedVersionedColumnarTable {
         }
       }
     }
+  }
+
+  /**
+   * Result has (version, kvtype, id, value)
+   * @throws SQLException
+   */
+  private ImmutablePair<Long, byte[]> latest(ResultSet result) throws SQLException {
+    if (result == null) return null;
+    long lastDelete = -1;
+    long undeleted = -1;
+    while (result.next()) {
+      long curVersion = result.getLong(1);
+      Type type = Type.from(result.getInt(2));
+      if (type.isUndeleteAll()) {
+        undeleted = curVersion;
+        continue;
+      }
+      if (type.isDeleteAll()) {
+        if (undeleted == curVersion) continue;
+        else break;
+      }
+      if (type.isDelete()) {
+        lastDelete = curVersion;
+        continue;
+      }
+      if (curVersion == lastDelete) continue;
+      return new ImmutablePair<Long, byte[]>(curVersion, result.getBytes(4));
+    }
+    return null;
   }
 
   /**

@@ -70,7 +70,7 @@ public abstract class TestOmidExecutorLikeAFlow {
         PartitionerType.RANDOM, true);
 
     this.executor.execute(context,
-        new QueueEnqueue(queueName, queueName));
+        new QueueEnqueue(queueName, "out", queueName));
     this.executor.execute(context,
         new QueueDequeue(queueName, consumer, config));
 
@@ -94,6 +94,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] queueName = Bytes.toBytes("queue://testClearFabric_queue");
     byte [] streamName = Bytes.toBytes("stream://testClearFabric_stream");
     byte [] keyAndValue = Bytes.toBytes("testClearFabric");
+    String outputName = "testGetGroupIdAndGetGroupMeta";
 
     // clear first to catch ENG-375
     this.executor.execute(context, new ClearFabric());
@@ -106,8 +107,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         PartitionerType.RANDOM, true);
 
     // enqueue to queue, stream, and write data
-    this.executor.execute(context, new QueueEnqueue(queueName, queueName));
-    this.executor.execute(context, new QueueEnqueue(streamName, streamName));
+    this.executor.execute(context, new QueueEnqueue(queueName, "out", queueName));
+    this.executor.execute(context, new QueueEnqueue(streamName, "out", streamName));
     this.executor.execute(context, new Write(keyAndValue, keyAndValue));
 
     // verify it can all be read
@@ -155,7 +156,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Write to the queue
     this.executor.execute(context, Collections.singletonList((WriteOperation)
-        new QueueEnqueue(queueName, Bytes.toBytes(1L))));
+        new QueueEnqueue(queueName, "out", Bytes.toBytes(1L))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -242,8 +243,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(result.isEmpty());
 
     // Write to the queue
-    this.executor.execute(context, batch(new QueueEnqueue(queueName,
-        Bytes.toBytes(1L))));
+    this.executor.execute(context, batch(new QueueEnqueue(queueName, "out", Bytes.toBytes(1L))));
 
     // DequeuePayload entry just written
     dequeue = new QueueDequeue(queueName, consumer, config);
@@ -306,7 +306,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Add an entry to source queue
     this.executor.execute(
-        context, new QueueEnqueue(srcQueueName, srcQueueValue));
+        context, new QueueEnqueue(srcQueueName, "out", srcQueueValue));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
@@ -325,14 +325,14 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add a push to dest queue one
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
 
     // Add a compare-and-swap
     writes.add(new CompareAndSwap(
         dataKey, Bytes.toBytes(1L), Bytes.toBytes(10L)));
 
     // Add a push to dest queue two
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKey, 3));
@@ -400,7 +400,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Add an entry to source queue
     this.executor.execute(context,
-        new QueueEnqueue(srcQueueName, srcQueueValue));
+        new QueueEnqueue(srcQueueName, "out", srcQueueValue));
 
     // DequeuePayload one entry from source queue
     DequeueResult srcDequeueResult = this.executor.execute(context,
@@ -423,8 +423,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], 3));
@@ -477,8 +477,8 @@ public abstract class TestOmidExecutorLikeAFlow {
         srcDequeueResult.getEntryPointer(), consumer));
 
     // Add two pushes to two dest queues
-    writes.add(new QueueEnqueue(destQueueOne, destQueueOneVal));
-    writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
+    writes.add(new QueueEnqueue(destQueueOne, "out", destQueueOneVal));
+    writes.add(new QueueEnqueue(destQueueTwo, "out", destQueueTwoVal));
 
     // Add another user increment operation
     writes.add(new Increment(dataKeys[2], 3));
@@ -520,7 +520,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     for (int i=1; i<numEntries+1; i++) {
       byte [] entry = Bytes.toBytes(i);
-      this.executor.execute(context, new QueueEnqueue(queueName, entry));
+      this.executor.execute(context, new QueueEnqueue(queueName, "out", entry));
     }
 
     long enqueueStop = System.currentTimeMillis();
@@ -648,7 +648,7 @@ public abstract class TestOmidExecutorLikeAFlow {
       public void run() {
         for (int i=0; i<n; i++) {
           try {
-            executorFinal.execute(context, new QueueEnqueue(queueName, Bytes.toBytes(i)));
+            executorFinal.execute(context, new QueueEnqueue(queueName, "out", Bytes.toBytes(i)));
           } catch (OperationException e) {
             fail("Exception for QueueEnqueue " + i);
           }
@@ -845,7 +845,7 @@ public abstract class TestOmidExecutorLikeAFlow {
           byte [] entry = Bytes.add(Bytes.toBytes(this.instanceid),
               Bytes.toBytes(i));
           TestOmidExecutorLikeAFlow.this.executor.execute(context,
-              new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName,
+              new QueueEnqueue(TestOmidExecutorLikeAFlow.this.threadedQueueName, "out",
                   entry));
           this.enqueuedMap.put(entry, entry);
         } catch (OperationException e) {

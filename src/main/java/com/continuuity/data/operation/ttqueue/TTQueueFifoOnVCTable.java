@@ -12,7 +12,7 @@ import com.continuuity.data.table.VersionedColumnarTable;
  */
 public class TTQueueFifoOnVCTable extends TTQueueAbstractOnVCTable {
   // Row header names and flags
-  static final byte [] GROUP_READ_POINTER = {10};
+//  static final byte [] CONSUMER_READ_POINTER = {30};
 
   protected TTQueueFifoOnVCTable(VersionedColumnarTable table, byte[] queueName, TimestampOracle timeOracle, CConfiguration conf) {
     super(table, queueName, timeOracle, conf);
@@ -20,6 +20,9 @@ public class TTQueueFifoOnVCTable extends TTQueueAbstractOnVCTable {
 
   @Override
   protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
-    return this.table.incrementAtomicDirtily(makeRowName(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 1);
+    return this.table.incrementAtomicDirtily(
+      makeRowName(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+      CONSUMER_READ_POINTER, consumer.getGroupSize());
+    //return this.table.incrementAtomicDirtily(makeRowName(GROUP_READ_POINTER, consumer.getGroupId()), GROUP_READ_POINTER, 1);
   }
 }

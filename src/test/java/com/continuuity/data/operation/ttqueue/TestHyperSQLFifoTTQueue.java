@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.data.runtime.DataFabricLocalModule;
 import com.continuuity.data.table.OVCTableHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -13,32 +14,15 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import java.util.Random;
 
-public class TestHBaseFifoTTQueue extends TestTTQueue {
+@Ignore
+public class TestHyperSQLFifoTTQueue extends TestTTQueue {
 
-  private static Injector injector;
+  private static final Injector injector = Guice.createInjector (
+    new DataFabricLocalModule("jdbc:hsqldb:mem:membenchdb", null));
+  //  Guice.createInjector(new DataFabricLocalModule());
 
-  private static OVCTableHandle handle;
-
-  @BeforeClass
-  public static void startEmbeddedHBase() {
-    try {
-      HBaseTestBase.startHBase();
-      injector = Guice.createInjector(
-          new DataFabricDistributedModule(HBaseTestBase.getConfiguration()));
-      handle = injector.getInstance(OVCTableHandle.class);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @AfterClass
-  public static void stopEmbeddedHBase() {
-    try {
-      HBaseTestBase.stopHBase();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final OVCTableHandle handle =
+    injector.getInstance(OVCTableHandle.class);
 
   private static final Random r = new Random();
 
@@ -46,7 +30,7 @@ public class TestHBaseFifoTTQueue extends TestTTQueue {
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
     return new TTQueueFifoOnVCTable(
-        handle.getTable(Bytes.toBytes("TTQueueFifoOnVCTable" + rand)),
+        handle.getTable(Bytes.toBytes("HyperSQLTTQueueFifoOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.timeOracle, conf);
   }

@@ -421,43 +421,36 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
 
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
-    return -1;
-//    Row r = new Row(row);
-//    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
-//
-//    long[] newAmounts = new long[amounts.length];
-//    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
-//
-//    try {
-//      // first determine new values for all columns. This can thrown an
-//      // exception if an existing value is not sizeof(long).
-//      for (int i=0; i<columns.length; i++) {
-//        byte [] column = columns[i];
-//        long amount = amounts[i];
-//        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
-//        long existingAmount = 0L;
-//        ImmutablePair<Long, byte[]> latest = filteredLatest(versions, readPointer);
-//        if (latest != null) {
-//          try {
-//            existingAmount = Bytes.toLong(latest.getSecond());
-//          } catch(IllegalArgumentException e) {
-//            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
-//          }
-//        }
-//        long newAmount = existingAmount + amount;
-//        newAmounts[i] = newAmount;
-//      }
-//      // now we know all values are legal, we can apply all increments
-//      for (int i=0; i<columns.length; i++) {
-//        byte [] column = columns[i];
-//        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
-//        versions.put(new Version(writeVersion), new Value(Bytes.toBytes(newAmounts[i])));
-//        newAmountsMap.put(column, newAmounts[i]);
-//      }
-//      return newAmountsMap;
-//    } finally {
-//      unlockRow(r);
-//    }
+    Row r = new Row(row);
+    ImmutablePair<RowLock, NavigableMap<Column, NavigableMap<Version, Value>>> p = getAndLockRow(r);
+
+    long newAmount;
+    long writeVersion = 0L;
+    Map<byte[],Long> newAmountsMap = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+
+    try {
+      // first determine new values for all columns. This can thrown an
+      // exception if an existing value is not sizeof(long).
+        NavigableMap<Version, Value> versions = getColumn(p.getSecond(), column);
+        long existingAmount = 0L;
+        ImmutablePair<Long, byte[]> latest = latest(versions);
+        if (latest != null) {
+          try {
+            writeVersion = latest.getFirst();
+            existingAmount = Bytes.toLong(latest.getSecond());
+          } catch(IllegalArgumentException e) {
+            throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+          }
+        } else {
+          writeVersion = System.currentTimeMillis();
+        }
+        newAmount = existingAmount + amount;
+      // now we know all values are legal, we can apply all increments
+        versions.put(new Version(writeVersion), new Value(Bytes.toBytes(newAmount)));
+      return newAmount;
+    } finally {
+      unlockRow(r);
+    }
   }
 
   @Override
@@ -526,6 +519,35 @@ public class MemoryOVCTable implements OrderedVersionedColumnarTable {
       ret.put(curVersion.stamp, entry.getValue().value);
     }
     return ret.descendingMap();
+  }
+
+  /**
+   * Returns the latest version of a column within the specified column map,
+   * filtering out deleted values and everything with a version higher than the
+   * specified version.
+   */
+  private ImmutablePair<Long, byte[]> latest(NavigableMap<Version, Value> columnMap) {
+    if (columnMap == null || columnMap.isEmpty()) return null;
+    long lastDelete = -1;
+    long undeleted = -1;
+    for (Map.Entry<Version, Value> entry : columnMap.entrySet()) {
+      Version curVersion = entry.getKey();
+      if (curVersion.isUndeleteAll()) {
+        undeleted = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.isDeleteAll()) {
+        if (undeleted == curVersion.stamp) continue;
+        else break;
+      }
+      if (curVersion.isDelete()) {
+        lastDelete = entry.getKey().stamp;
+        continue;
+      }
+      if (curVersion.stamp == lastDelete) continue;
+      return new ImmutablePair<Long, byte[]>(curVersion.stamp, entry.getValue().value);
+    }
+    return null;
   }
 
   /**

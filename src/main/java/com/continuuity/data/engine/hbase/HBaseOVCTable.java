@@ -592,27 +592,49 @@ public class HBaseOVCTable implements OrderedVersionedColumnarTable {
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer,
                              long writeVersion) throws OperationException {
-    HTable writeTable=null;
+    byte[] expectedPrependedValue=null;
+    KeyValue latestVisibleKV=null;
     try {
-      if (newValue == null) {
-        if (equalValues(getLatestVisible(row,column,readPointer), expectedValue)) {
-          writeTable=getWriteTable();
-          writeTable.put(new Put(row).add(this.family, column, writeVersion, DELETE_ALL_VALUE));
-        } else {
-          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
-        }
-      } else {
-        if (equalValues(getLatestVisible(row,column,readPointer), expectedValue)) {
-          writeTable=getWriteTable();
-          writeTable.put(new Put(row).add(this.family, column, writeVersion, prependWithTypePrefix(DATA, newValue)));
-        } else {
-          throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
+      Get get = new Get(row);
+      get.addColumn(this.family, column);
+      // read rows that were written up until the start of the current transaction (=getMaxStamp(readPointer))
+      get.setTimeRange(0, getMaxStamp(readPointer));
+      get.setMaxVersions();
+      Result result = this.readTable.get(get);
+      KeyValue[] rawResults=result.raw();
+      if (rawResults!=null && rawResults.length!=0) {
+        expectedPrependedValue=rawResults[0].getValue();
+        Set<Long> deleted = Sets.newHashSet();
+        for (KeyValue kv : result.raw()) {
+          long version = kv.getTimestamp();
+          if (!readPointer.isVisible(version)) continue;
+          if (deleted.contains(version)) continue;
+          byte [] value = kv.getValue();
+          byte typePrefix=value[0];
+          if (typePrefix==DATA) {
+            latestVisibleKV=kv;
+            break;
+          } else if (typePrefix==DELETE_VERSION) {
+            deleted.add(version);
+          } else if (typePrefix==DELETE_ALL) {
+            latestVisibleKV=null;
+            break;
+          }
         }
       }
+      if (equalValues(latestVisibleKV, expectedValue)) {
+        byte[] newPrependedValue;
+        //if (expectedValue!=null) expectedPrependedValue=prependWithTypePrefix(DATA, expectedValue);
+        if (newValue == null) newPrependedValue=DELETE_ALL_VALUE;
+        else newPrependedValue=prependWithTypePrefix(DATA, newValue);
+        if (this.readTable.checkAndPut(row, this.family, column, expectedPrependedValue, readPointer.getMaximum(),
+                                   new Put(row).add(this.family, column, writeVersion, newPrependedValue))) {
+          return;
+        }
+      }
+      throw new OperationException(StatusCode.WRITE_CONFLICT, "CompareAndSwap expected value mismatch");
     } catch (IOException e) {
       this.exceptionHandler.handle(e);
-    } finally {
-      if (writeTable != null) returnWriteTable(writeTable);
     }
   }
 

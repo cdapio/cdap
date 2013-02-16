@@ -368,8 +368,8 @@ public abstract class OperationExecutorServiceTest extends
     write = new Write(keyD, "0".getBytes());
     remote.execute(context, write);
     // insert two elements into a queue, and dequeue one to get an ack
-    remote.execute(context, new QueueEnqueue(q, "0".getBytes()));
-    remote.execute(context, new QueueEnqueue(q, "1".getBytes()));
+    remote.execute(context, new QueueEnqueue(q, "out", "0".getBytes()));
+    remote.execute(context, new QueueEnqueue(q, "out", "1".getBytes()));
     QueueConsumer consumer = new QueueConsumer(0, 1, 1);
     QueueConfig config =
         new QueueConfig(PartitionerType.RANDOM, true);
@@ -385,7 +385,7 @@ public abstract class OperationExecutorServiceTest extends
     writes.add(new Write(keyA, "1".getBytes()));
     writes.add(new Delete(keyB));
     writes.add(new Increment(keyC, 5));
-    writes.add(new QueueEnqueue(qq, "1".getBytes()));
+    writes.add(new QueueEnqueue(qq, "out", "1".getBytes()));
     writes.add(new QueueAck(
         q, dequeueResult.getEntryPointer(), consumer));
     writes.add(new CompareAndSwap(
@@ -452,8 +452,8 @@ public abstract class OperationExecutorServiceTest extends
 
     // write to a table, a queue, and a stream
     remote.execute(context, new Write(a, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
+    remote.execute(context, new QueueEnqueue(q, "out", x));
+    remote.execute(context, new QueueEnqueue(s, "out", x));
 
     // clear everything
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.ALL));
@@ -469,8 +469,8 @@ public abstract class OperationExecutorServiceTest extends
 
     // write back all values
     remote.execute(context, new Write(a, x));
-    remote.execute(context, new QueueEnqueue(q, x));
-    remote.execute(context, new QueueEnqueue(s, x));
+    remote.execute(context, new QueueEnqueue(q, "out", x));
+    remote.execute(context, new QueueEnqueue(s, "out", x));
 
     // clear only the data
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
@@ -497,7 +497,7 @@ public abstract class OperationExecutorServiceTest extends
         context, new QueueDequeue(s, consumer, config)).getValue());
 
     // write back to the queue
-    remote.execute(context, new QueueEnqueue(q, x));
+    remote.execute(context, new QueueEnqueue(q, "out", x));
 
     // clear only the streams
     remote.execute(context, new ClearFabric(ClearFabric.ToClear.STREAMS));
@@ -528,7 +528,7 @@ public abstract class OperationExecutorServiceTest extends
       int next = rand.nextInt(1000);
       if (next == prev) continue;
       byte[] value = Integer.toString(next).getBytes();
-      QueueEnqueue enqueue = new QueueEnqueue(q, value);
+      QueueEnqueue enqueue = new QueueEnqueue(q, "out", value);
       remote.execute(context, enqueue);
       remote.execute(context, enqueue);
       prev = next;
@@ -719,7 +719,7 @@ public abstract class OperationExecutorServiceTest extends
     // generate an enqueue payload referencing the increment
     Map<String,Long> map = Collections.singletonMap(field, increment.getId());
     byte[] payload = TupleMetaDataAnnotator.EnqueuePayload.write(map, data);
-    QueueEnqueue enqueue = new QueueEnqueue(queue,payload);
+    QueueEnqueue enqueue = new QueueEnqueue(queue, "out",payload);
 
     // make a batch of the increment and the enqueue and execute
     List<WriteOperation> batch = Lists.newArrayList(

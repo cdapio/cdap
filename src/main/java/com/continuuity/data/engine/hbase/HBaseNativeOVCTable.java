@@ -352,6 +352,27 @@ public class HBaseNativeOVCTable extends HBaseOVCTable {
   }
 
   @Override
+  public Map<byte[], Long> increment(byte[] row, byte[][] columns,
+                                     long[] amounts, ReadPointer readPointer, long writeVersion)
+    throws OperationException {
+    Map<byte[],Long> ret = new TreeMap<byte[],Long>(Bytes.BYTES_COMPARATOR);
+    try {
+      Increment increment = new Increment(row);
+      increment.setTimeRange(0, getMaxStamp(readPointer));
+      increment.setWriteVersion(writeVersion);
+      for (int i=0; i<columns.length; i++)
+        increment.addColumn(this.family, columns[i], amounts[i]);
+      Result result = this.readTable.increment(increment);
+      for (KeyValue kv : result.raw())
+        ret.put(kv.getQualifier(), Bytes.toLong(kv.getValue()));
+      return ret;
+    } catch (IOException e) {
+      this.exceptionHandler.handle(e);
+      return ret;
+    }
+  }
+
+  @Override
   public void compareAndSwap(byte[] row, byte[] column,
                              byte[] expectedValue, byte[] newValue,
                              ReadPointer readPointer,

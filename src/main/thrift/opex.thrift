@@ -79,8 +79,11 @@ struct TQueueProducer {
 struct TQueueEnqueue {
   1: binary queueName,
   2: binary value,
-  3: i64 id,
-  4: optional TQueueProducer producer,
+  3: i32 headerVersion,
+  4: binary headers,
+  5: string outputName,
+  6: i64 id,
+  7: optional TQueueProducer producer,
 }
 
 struct TQueueConsumer {
@@ -88,6 +91,7 @@ struct TQueueConsumer {
   2: i64 groupId,
   3: i32 groupSize,
   4: optional string groupName,
+  5: optional string partitioningKey,
 }
 
 struct TQueueEntryPointer {

@@ -1,6 +1,10 @@
 package com.continuuity.data.operation.executor.remote;
 
 import com.continuuity.api.data.*;
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Decoder;
+import com.continuuity.common.io.Encoder;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -24,6 +28,11 @@ import org.apache.thrift.TBaseHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +72,51 @@ public class ConverterUtils {
     for (Long value : list)
       longs[i++] = value;
     return longs;
+  }
+
+  private ByteBuffer wrap(Map<String,String> map) {
+    byte[] mapAsBytes;
+    if (map == null)
+      return null;
+    else {
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Encoder encoder = new BinaryEncoder(bos);
+      try {
+        encoder.writeInt(map.size());
+        for(Map.Entry<String,String> entry: map.entrySet()) {
+          encoder.writeString(entry.getKey());
+          encoder.writeString(entry.getValue());
+        }
+        mapAsBytes=bos.toByteArray();
+      } catch (IOException e) {
+        e.printStackTrace();
+        return null;
+      }
+      return ByteBuffer.wrap(mapAsBytes);
+    }
+  }
+
+  Map<String,String> unwrap(byte[] mapAsBytes) {
+    Map<String,String> map=null;
+    if (mapAsBytes == null) return map;
+    else {
+      ByteArrayInputStream bis = new ByteArrayInputStream(mapAsBytes);
+      Decoder decoder = new BinaryDecoder(bis);
+      int size= 0;
+      try {
+        size = decoder.readInt();
+        if (size>0) {
+          map=Maps.newHashMap();
+          for(int i=0; i<size; i++) {
+            map.put(decoder.readString(),decoder.readString());
+          }
+        }
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        return null;
+      }
+      return map;
+    }
   }
 
   /** wrap a byte array into a byte buffer */
@@ -394,6 +448,9 @@ public class ConverterUtils {
     TQueueEnqueue tQueueEnqueue = new TQueueEnqueue(
         wrap(enqueue.getKey()),
         wrap(enqueue.getData()),
+        enqueue.getHeaderVersion(),
+        wrap(enqueue.getHeaders()),
+        enqueue.getOutputName(),
         enqueue.getId());
     if (enqueue.getProducer() != null)
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
@@ -405,6 +462,8 @@ public class ConverterUtils {
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
+        tEnqueue.getOutputName(),
+        unwrap(tEnqueue.getHeaders()),
         tEnqueue.getValue());
   }
 

@@ -43,6 +43,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
   // Columns for row = CONSUMER_META_PREFIX
   static final byte [] ACTIVE_ENTRY = {10};
   static final byte [] META_ENTRY_PREFIX = {20};
+  static final byte [] CONSUMER_READ_POINTER = {30};
 
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
 

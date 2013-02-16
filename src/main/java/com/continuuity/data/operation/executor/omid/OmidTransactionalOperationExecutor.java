@@ -7,6 +7,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
+import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -810,13 +811,13 @@ implements TransactionalOperationExecutor {
    *
    * They are rolled back with an invalidate.
    */
-  WriteTransactionResult write(QueueEnqueue enqueue,
-      ImmutablePair<ReadPointer, Long> pointer) throws OperationException {
+  WriteTransactionResult write(QueueEnqueue enqueue, ImmutablePair<ReadPointer, Long> pointer)
+                                                                                            throws OperationException {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
-    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(
-        enqueue.getKey(), enqueue.getData(), pointer.getSecond());
+    EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
+                                                                   pointer.getSecond());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
