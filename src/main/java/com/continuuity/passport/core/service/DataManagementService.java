@@ -31,6 +31,8 @@ public interface DataManagementService {
 
   public Status confirmRegistration(AccountSecurity account) throws RuntimeException;
 
+  public void confirmDownload(int accountId) throws RuntimeException;
+
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
    *

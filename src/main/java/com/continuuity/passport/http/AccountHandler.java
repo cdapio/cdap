@@ -54,6 +54,26 @@ public class AccountHandler {
     }
 
 
+
+  @Path("{id}/confirmDownload")
+  @PUT
+  @Produces("application/json")
+  public Response confirmDownload(@PathParam("id") int id){
+
+    try {
+      DataManagementServiceImpl.getInstance().confirmDownload(id);
+      return Response.ok()
+        .entity(Utils.getJson("OK", "Download confirmed"))
+        .build();
+
+    }
+    catch (Exception e){
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+        .entity(Utils.getJson("FAILED","Download confirmation failed",e))
+        .build();
+    }
+  }
+
   @Path ("{id}/update")
   @PUT
   @Produces("application/json")

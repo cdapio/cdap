@@ -27,6 +27,16 @@ public interface AccountDAO {
 
   public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException;
 
+
+  /**
+   * @param accountId
+   * @return
+   * @throws ConfigurationException
+   * @throws RuntimeException
+   */
+  public void confirmDownload(int accountId) throws ConfigurationException, RuntimeException;
+
+
   /**
    * Delete Account in the system
    *

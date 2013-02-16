@@ -78,6 +78,18 @@ public class DataManagementServiceImpl implements DataManagementService {
     return null;
   }
 
+  @Override
+  public void confirmDownload(int accountId) throws RuntimeException {
+    if (accountDAO ==null) {
+      throw new RuntimeException("Could not init data access Object");
+    }
+    try {
+      accountDAO.confirmDownload(accountId);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
+
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
    *
@@ -203,7 +215,7 @@ public class DataManagementServiceImpl implements DataManagementService {
       throw new RuntimeException("Could not init data access Object");
     }
     try {
-      accountDAO.updateAccount(accountId,params);
+      accountDAO.updateAccount(accountId, params);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }

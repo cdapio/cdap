@@ -50,14 +50,14 @@ public class AccountDBAccess implements AccountDAO {
                                   );
 
 
-      Date date = new Date();
       PreparedStatement ps = connection.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS);
       ps.setString(1, account.getEmailId());
       ps.setString(2,account.getFirstName());
       ps.setString(3,account.getLastName());
       ps.setString(4, account.getCompany());
       ps.setInt(5, DBUtils.AccountTable.ACCOUNT_UNCONFIRMED);
-      ps.setTimestamp(6, new java.sql.Timestamp(date.getTime()));
+      ps.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+
       ps.executeUpdate();
 
       ResultSet result = ps.getGeneratedKeys();
@@ -102,6 +102,37 @@ public class AccountDBAccess implements AccountDAO {
     }
 
     return true;
+  }
+
+  /**
+   * @param accountId
+   * @throws com.continuuity.passport.core.exceptions.ConfigurationException
+   *
+   * @throws RuntimeException
+   */
+  @Override
+  public void confirmDownload(int accountId) throws ConfigurationException, RuntimeException {
+    if (this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      Connection connection = this.poolManager.getConnection();
+      String SQL = String.format( "UPDATE %s SET %s = ? WHERE %s = ?" ,
+                                  DBUtils.AccountTable.TABLE_NAME,
+                                  DBUtils.AccountTable.DEV_SUITE_DOWNLOADED_AT,
+                                  DBUtils.AccountTable.ID_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+
+      ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+      ps.setInt(2, accountId);
+
+      ps.executeUpdate();
+
+    }
+    catch (SQLException e){
+      throw new RuntimeException(e.getMessage(),e.getCause());
+    }
   }
 
   /**
@@ -278,7 +309,7 @@ public class AccountDBAccess implements AccountDAO {
        //Set basic update command
        StringBuilder sb  = new StringBuilder();
 
-       sb.append(String.format("UPDATE %s SET ",DBUtils.AccountTable.TABLE_NAME));
+       sb.append(String.format("UPDATE %s SET ", DBUtils.AccountTable.TABLE_NAME));
        boolean firstValue = true;
 
        if(!keyValueParams.isEmpty()){
@@ -287,7 +318,7 @@ public class AccountDBAccess implements AccountDAO {
          for(Map.Entry e: keyValueParams.entrySet()){
 
            if (firstValue){
-             sb.append(String.format(" %s= ?", (String)e.getKey()));
+             sb.append(String.format(" %s= ?", (String) e.getKey()));
              firstValue = false;
            }
            else {
@@ -296,11 +327,13 @@ public class AccountDBAccess implements AccountDAO {
            }
          }
 
-         sb.append(String.format(" where %s = ? ",DBUtils.AccountTable.ID_COLUMN));
+         sb.append(String.format(" where %s = ? ", DBUtils.AccountTable.ID_COLUMN));
 
          //Prepared Statement
          PreparedStatement ps = connection.prepareStatement(sb.toString());
          int count = 1;
+
+         System.out.println(sb.toString());
          //Set Values in prepared statement
          //All values are set as String for now.
          //For now we are only updating String fields
@@ -312,7 +345,7 @@ public class AccountDBAccess implements AccountDAO {
          }
 
          //Set value for where clause
-         ps.setInt(count,accountId);
+         ps.setInt(count, accountId);
          ps.executeUpdate();
 
        }

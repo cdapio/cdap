@@ -21,6 +21,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`account` (
   `locked` TINYINT(1) NULL DEFAULT NULL ,
   `api_key` VARCHAR(100) NULL DEFAULT NULL,
   `account_created_at` DATETIME NOT NULL,
+  `dev_suite_downloaded_at` DATETIME NOT NULL,
   PRIMARY KEY (`id`) ,
   UNIQUE INDEX `email_id_UNIQUE` (`email_id` ASC) )
 ENGINE = InnoDB

@@ -17,6 +17,7 @@ public class DBUtils {
     public static final String PASSWORD_COLUMN = "password";
     public static final String API_KEY_COLUMN = "api_key";
     public static final String ACCOUNT_CREATED_AT = "account_created_at";
+    public static final String DEV_SUITE_DOWNLOADED_AT = "dev_suite_downloaded_at";
     public static final int ACCOUNT_UNCONFIRMED = 0;
     public static final int ACCOUNT_CONFIRMED = 1;
   }
