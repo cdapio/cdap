@@ -1,6 +1,7 @@
 package com.continuuity.performance.opex;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.Write;
 import com.continuuity.performance.benchmark.*;
 import com.continuuity.common.utils.Bytes;
@@ -14,7 +15,7 @@ public class WriteBenchmark extends OpexBenchmark {
 
     final byte[] key = ("key" + agentId).getBytes();
     final byte[] value = Bytes.toBytes(iteration);
-    Write write = new Write(key, value);
+    Write write = new Write(key, Operation.KV_COL, value);
 
     try {
       opex.execute(opContext, write);
