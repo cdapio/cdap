@@ -42,16 +42,15 @@ public class AccountHandler {
   public Response getAccountInfo(@PathParam("id") int id){
 
     Account account = DataManagementServiceImpl.getInstance().getAccount(id);
-     if (account != null){
-        return Response.ok(account.toString()).build();
-      }
-    else {
-        return Response.status(Response.Status.NOT_FOUND)
-          .entity(Utils.getJson("NOT_FOUND", "Account not found"))
-          .build();
-
-        }
+    if (account != null){
+      return Response.ok(account.toString()).build();
     }
+    else {
+      return Response.status(Response.Status.NOT_FOUND)
+        .entity(Utils.getJson("NOT_FOUND", "Account not found"))
+        .build();
+    }
+  }
 
 
 
@@ -113,9 +112,7 @@ public class AccountHandler {
       return Response.status(Response.Status.BAD_REQUEST)
         .entity(Utils.getJson("FAILED", "Account Update Failed", e))
         .build();
-
     }
-
   }
 
   @Path("create")
@@ -264,8 +261,8 @@ public class AccountHandler {
 
     try {
       AuthenticationStatus status = AuthenticatorImpl.getInstance()
-                                     .authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
-                                                                                         StringUtils.EMPTY_STRING));
+        .authenticate(new UsernamePasswordApiKeyCredentials(emailId, password,
+                                                            StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
         return Response.ok(Utils.getAuthenticatedJson("OK",status.getMessage())).build();
@@ -279,7 +276,5 @@ public class AccountHandler {
       return    Response.status(Response.Status.UNAUTHORIZED).entity(
         Utils.getJson("FAILED","Authentication Failed",e)).build();
     }
-
   }
-
 }
