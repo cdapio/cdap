@@ -13,7 +13,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
@@ -388,28 +387,6 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey read)
-      throws OperationException {
-    initialize();
-    requestMetric("ReadKey");
-    long begin = begin();
-    OperationResult<byte[]> result =
-        read(context, read, this.oracle.getReadPointer());
-    end("ReadKey", begin);
-    namedTableMetric_read(read.getTable());
-    return result;
-  }
-
-  OperationResult<byte[]> read(OperationContext context,
-                               ReadKey read, ReadPointer pointer)
-      throws OperationException {
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), Operation.KV_COL, pointer);
-  }
-
-  @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
       throws OperationException {
@@ -418,9 +395,17 @@ implements TransactionalOperationExecutor {
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
     List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
-    end("ReadKey", begin);
+    end("ReadAllKeys", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
+  }
+
+  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
+                                           Read read, ReadPointer pointer)
+    throws OperationException {
+    OrderedVersionedColumnarTable table =
+      this.findRandomTable(context, read.getTable());
+    return table.get(read.getKey(), read.getColumns(), pointer);
   }
 
   @Override
@@ -504,11 +489,24 @@ implements TransactionalOperationExecutor {
     end("WriteOperationBatch", begin);
   }
 
-  void execute(OperationContext context, List<WriteOperation> writes,
-               Transaction transaction)
-      throws OperationException {
+  @Override
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException {
+    return this.startTransaction();
+  }
 
-    if (writes.isEmpty()) return;
+  @Override
+  public Transaction submit(OperationContext context, Transaction transaction, List<WriteOperation> writes) throws OperationException {
+    // make sure we have a transaction
+    if (transaction == null) {
+      transaction = startTransaction();
+    }
+
+    // TODO should we add an empty batch of undos to the transaction in oracle?
+    // TODO That would update the timestamp of the transaction and prevent it from time out
+    if (writes.isEmpty()) {
+      return transaction;
+    }
 
     // Re-order operations (create a copy for now)
     List<WriteOperation> orderedWrites = new ArrayList<WriteOperation>(writes);
@@ -550,50 +548,44 @@ implements TransactionalOperationExecutor {
       addToTransaction(transaction, undos);
     }
 
-    // now either abort or attempt to commit. the oracle returns a success status and
-    // in case of failure/abort, a list of undo operations.
-    TransactionResult txResult;
+    // if any write failed, abort the transaction
     if (abort) {
-      txResult = abortTransaction(transaction);
-    } else {
-      txResult = commitTransaction(transaction);
-      // make sure to emit the metric for failed commits
-      if (!txResult.isSuccess()) {
-        cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
-      }
+      abort(context, transaction);
+      throw new OmidTransactionException(
+        writeTxReturn.statusCode, writeTxReturn.message);
     }
+    return transaction; // TODO auto generated body
+  }
 
-    // abort or commit failed
+  @Override
+  public void commit(OperationContext context, Transaction transaction) throws OperationException {
+    // attempt to commit in Oracle
+    TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
+      // make sure to emit the metric for failed commits
+      cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedCommits", 1);
+
       // attempt to ubdo all the writes of the transaction
       // (transaction is already marked as invalid in oracle)
       attemptUndo(context, transaction, txResult.getUndos());
 
-      // throw the right exception, either from the failed operation that caused
-      // the abort, or indicating that commit failed
-      if (abort) {
-        throw new OmidTransactionException(
-            writeTxReturn.statusCode, writeTxReturn.message);
-      } else {
-        throw new OmidTransactionException(StatusCode.WRITE_CONFLICT,
-            "Commit of transaction failed, transaction aborted");
-      }
+      throw new OmidTransactionException(StatusCode.WRITE_CONFLICT,
+                                         "Commit of transaction failed, transaction aborted");
+    }
+    // Commit was successful.
+
+    // TODO this must go away with the new queue implementation
+    // If the transaction did a queue ack, finalize it
+    QueueFinalize finalize = txResult.getFinalize();
+    if (finalize != null) {
+      finalize.execute(getQueueTable(finalize.getQueueName()));
     }
 
-    // If last operation was an ack, finalize it
-    if (orderedWrites.get(orderedWrites.size() - 1) instanceof QueueAck) {
-      QueueAck ack = (QueueAck)orderedWrites.get(orderedWrites.size() - 1);
-      QueueFinalize finalize = new QueueFinalize(ack.getKey(),
-          ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups());
-      finalize.execute(getQueueTable(ack.getKey()));
-    }
-
-    // Transaction was successfully committed, emit metrics
-    // - for the transaction
+    // emit metrics for the transaction and the queues/streams involved
     cmetric.meter(
-        METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
+      METRIC_PREFIX + "WriteOperationBatch_SuccessfulTransactions", 1);
     // for each queue operation (enqueue or ack)
-    for (Undo undo : undos) {
+    for (Undo undo : txResult.getUndos()) {
       if (undo instanceof QueueUndo.QueueUnenqueue) {
         QueueUndo.QueueUnenqueue unenqueue = (QueueUndo.QueueUnenqueue)undo;
         QueueProducer producer = unenqueue.producer;
@@ -606,6 +598,24 @@ implements TransactionalOperationExecutor {
         ackMetric(unack.queueName, consumer);
       }
     }
+    // done
+  }
+
+  @Override
+  public void abort(OperationContext context, Transaction transaction) throws OperationException {
+    // abort transaction in oracle, that returns the undos to be performed
+    TransactionResult txResult = abortTransaction(transaction);
+    // attempt to ubdo all the writes of the transaction
+    // (transaction is already marked as invalid in oracle)
+    attemptUndo(context, transaction, txResult.getUndos());
+  }
+
+  void execute(OperationContext context, List<WriteOperation> writes,
+               Transaction transaction)
+      throws OperationException {
+
+    transaction = submit(context, transaction, writes);
+    commit(context, transaction);
   }
 
   /**
@@ -823,7 +833,7 @@ implements TransactionalOperationExecutor {
       end("QueueAck", begin);
     }
     return new WriteTransactionResult(
-        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer()));
+        new QueueUndo.QueueUnack(ack.getKey(), ack.getEntryPointer(), ack.getConsumer(), ack.getNumGroups()));
   }
 
   @Override

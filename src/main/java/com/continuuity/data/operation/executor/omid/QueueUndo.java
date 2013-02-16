@@ -21,6 +21,14 @@ public abstract class QueueUndo implements Undo {
   protected final byte [] queueName;
   protected final QueueEntryPointer entryPointer;
 
+  public byte[] getQueueName() {
+    return queueName;
+  }
+
+  public QueueEntryPointer getEntryPointer() {
+    return entryPointer;
+  }
+
   protected QueueUndo(final byte[] queueName, final QueueEntryPointer entryPointer) {
     this.queueName = queueName;
     this.entryPointer = entryPointer;
@@ -40,6 +48,7 @@ public abstract class QueueUndo implements Undo {
   public static class QueueUnenqueue extends QueueUndo {
     final byte[] data;
     final QueueProducer producer;
+
     public QueueUnenqueue(final byte[] queueName,
                           final byte[] data,
                           QueueProducer producer,
@@ -48,6 +57,7 @@ public abstract class QueueUndo implements Undo {
       this.producer = producer;
       this.data = data;
     }
+
     @Override
     public void execute(TTQueueTable queueTable,
         Transaction transaction) throws OperationException {
@@ -57,11 +67,23 @@ public abstract class QueueUndo implements Undo {
 
   public static class QueueUnack extends QueueUndo {
     final QueueConsumer consumer;
+    final int numGroups;
+
+    public QueueConsumer getConsumer() {
+      return consumer;
+    }
+
+    public int getNumGroups() {
+      return numGroups;
+    }
+
     public QueueUnack(final byte[] queueName, QueueEntryPointer entryPointer,
-        QueueConsumer consumer) {
+        QueueConsumer consumer, int numGroups) {
       super(queueName, entryPointer);
       this.consumer = consumer;
+      this.numGroups = numGroups;
     }
+
     @Override
     public void execute(TTQueueTable queueTable,
         Transaction transaction) throws OperationException {

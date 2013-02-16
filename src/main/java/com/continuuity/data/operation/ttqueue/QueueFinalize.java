@@ -10,12 +10,17 @@ public class QueueFinalize {
   private final QueueEntryPointer entryPointer;
   private final QueueConsumer consumer;
   private final int totalNumGroups;
+
   public QueueFinalize(final byte[] queueName, QueueEntryPointer entryPointer, QueueConsumer consumer,
                        int totalNumGroups) {
     this.queueName = queueName;
     this.entryPointer = entryPointer;
     this.consumer = consumer;
     this.totalNumGroups = totalNumGroups;
+  }
+
+  public byte[] getQueueName() {
+    return queueName;
   }
 
   public void execute(TTQueueTable queueTable) throws OperationException {

@@ -9,10 +9,10 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueDequeue;
@@ -222,6 +222,35 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException {
+    // TODO implement this properly
+    return null;
+  }
+
+  @Override
+  public Transaction submit(final OperationContext context,
+                            final Transaction transaction,
+                            final List<WriteOperation> writes)
+    throws OperationException {
+    // TODO implement this properly
+    execute(context, writes);
+    return null;
+  }
+
+  @Override
+  public void commit(OperationContext context, Transaction transaction)
+    throws OperationException {
+    // TODO implement this properly
+  }
+
+  @Override
+  public void abort(OperationContext context, Transaction transaction)
+    throws OperationException {
+    // TODO implement this properly
+  }
+
+  @Override
   public DequeueResult execute(final OperationContext context,
                                final QueueDequeue dequeue)
       throws OperationException {
@@ -289,20 +318,6 @@ public class RemoteOperationExecutor
               throws TException, OperationException {
             client.execute(context, openTable);
             return true;
-          }
-        });
-  }
-
-  @Override
-  public OperationResult<byte[]> execute(final OperationContext context,
-                                         final ReadKey readKey)
-      throws OperationException {
-    return this.execute(
-        new Operation<OperationResult<byte[]>>("ReadKey") {
-          @Override
-          public OperationResult<byte[]> execute(OperationExecutorClient client)
-              throws OperationException, TException {
-            return client.execute(context, readKey);
           }
         });
   }

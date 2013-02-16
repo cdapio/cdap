@@ -1,30 +1,50 @@
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetQueueInfo;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.operation.ttqueue.TTQueueOnVCTable;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.continuuity.data.operation.ttqueue.QueueAdmin.QueueInfo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class TestOmidExecutorLikeAFlow {
 
@@ -87,6 +107,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
+  static final byte [] kvcol = Operation.KV_COL;
+
   @Test
   public void testClearFabric() throws Exception {
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = true;
@@ -107,7 +129,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // enqueue to queue, stream, and write data
     this.executor.execute(context, new QueueEnqueue(queueName, queueName));
     this.executor.execute(context, new QueueEnqueue(streamName, streamName));
-    this.executor.execute(context, new Write(keyAndValue, keyAndValue));
+    this.executor.execute(context, new Write(keyAndValue, kvcol, keyAndValue));
 
     // verify it can all be read
     assertTrue(this.executor.execute(context,
@@ -115,7 +137,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(this.executor.execute(context,
         new QueueDequeue(streamName, consumer, config)).isSuccess());
     assertArrayEquals(keyAndValue, this.executor.execute(context,
-        new ReadKey(keyAndValue)).getValue());
+        new Read(keyAndValue, kvcol)).getValue().get(kvcol));
 
     // and it can be read twice
     assertTrue(this.executor.execute(context,
@@ -123,7 +145,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     assertTrue(this.executor.execute(context,
         new QueueDequeue(streamName, consumer, config)).isSuccess());
     assertArrayEquals(keyAndValue, this.executor.execute(context,
-        new ReadKey(keyAndValue)).getValue());
+        new Read(keyAndValue, kvcol)).getValue().get(kvcol));
 
     // but if we clear the fabric they all disappear
     this.executor.execute(context, new ClearFabric());
@@ -133,8 +155,9 @@ public abstract class TestOmidExecutorLikeAFlow {
         new QueueDequeue(queueName, consumer, config)).isEmpty());
     assertTrue(this.executor.execute(context,
         new QueueDequeue(streamName, consumer, config)).isEmpty());
-    assertTrue(this.executor.execute(context,
-        new ReadKey(keyAndValue)).isEmpty());
+    OperationResult<Map<byte[],byte[]>> result =
+      this.executor.execute(context, new Read(keyAndValue, kvcol));
+    assertTrue(result.isEmpty() || null == result.getValue().get(kvcol));
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
 
@@ -194,32 +217,32 @@ public abstract class TestOmidExecutorLikeAFlow {
     byte [] key = Bytes.toBytes("testUWSSkey");
 
     // Write value = 1
-    this.executor.execute(context, batch(new Write(key, Bytes.toBytes(1L))));
+    this.executor.execute(context, batch(new Write(key, kvcol, Bytes.toBytes(1L))));
 
     // Verify value = 1
     assertArrayEquals(Bytes.toBytes(1L),
-        this.executor.execute(context, new ReadKey(key)).getValue());
+        this.executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol));
 
     // Create batch with increment and compareAndSwap
     // first try (CAS(1->3),Increment(3->4))
     // (will fail if operations are reordered)
     this.executor.execute(context, batch(
         new CompareAndSwap(key, Bytes.toBytes(1L), Bytes.toBytes(3L)),
-        new Increment(key, 1L)));
+        new Increment(key, kvcol, 1L)));
 
     // verify value = 4
     // (value = 2 if no ReadOwnWrites)
-    byte [] value = this.executor.execute(context, new ReadKey(key)).getValue();
+    byte [] value = this.executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol);
     assertEquals(4L, Bytes.toLong(value));
 
     // Create another batch with increment and compareAndSwap, change order
     // second try (Increment(4->5),CAS(5->1))
     // (will fail if operations are reordered or if no ReadOwnWrites)
-    this.executor.execute(context, batch(new Increment(key, 1L),
+    this.executor.execute(context, batch(new Increment(key, kvcol, 1L),
         new CompareAndSwap(key, Bytes.toBytes(5L), Bytes.toBytes(1L))));
 
     // verify value = 1
-    value = this.executor.execute(context, new ReadKey(key)).getValue();
+    value = this.executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol);
     assertEquals(1L, Bytes.toLong(value));
   }
 
@@ -315,7 +338,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     List<WriteOperation> writes = new ArrayList<WriteOperation>();
 
     // Add increment operation
-    writes.add(new Increment(dataKey, 1));
+    writes.add(new Increment(dataKey, kvcol, 1));
 
     // Add an ack of entry one in source queue
     writes.add(new QueueAck(srcQueueName,
@@ -332,7 +355,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
-    writes.add(new Increment(dataKey, 3));
+    writes.add(new Increment(dataKey, kvcol, 3));
     expectedVal = 13L;
 
     // Commit batch successfully
@@ -340,7 +363,7 @@ public abstract class TestOmidExecutorLikeAFlow {
 
     // Verify value from operations was done in order
     assertEquals(expectedVal, Bytes.toLong(
-        this.executor.execute(context, new ReadKey(dataKey)).getValue()));
+        this.executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol)));
 
     // DequeuePayload from both dest queues, verify, ack
     DequeueResult destDequeueResult = this.executor.execute(context,
@@ -409,8 +432,8 @@ public abstract class TestOmidExecutorLikeAFlow {
     List<WriteOperation> writes = new ArrayList<WriteOperation>();
 
     // Add two user increment operations
-    writes.add(new Increment(dataKeys[0], 1));
-    writes.add(new Increment(dataKeys[1], 2));
+    writes.add(new Increment(dataKeys[0], kvcol, 1));
+    writes.add(new Increment(dataKeys[1], kvcol, 2));
     // Update expected vals (this batch will be successful)
     expectedVals[0] = 1L;
     expectedVals[1] = 2L;
@@ -424,7 +447,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
-    writes.add(new Increment(dataKeys[2], 3));
+    writes.add(new Increment(dataKeys[2], kvcol, 3));
     expectedVals[2] = 3L;
 
     // Commit batch successfully
@@ -433,7 +456,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // Verify three values from increment operations
     for (int i=0; i<3; i++) {
       assertEquals(expectedVals[i], Bytes.toLong(
-          this.executor.execute(context, new ReadKey(dataKeys[i])).getValue()));
+          this.executor.execute(context, new Read(dataKeys[i], kvcol)).getValue().get(kvcol)));
     }
 
     // DequeuePayload from both dest queues, verify, ack
@@ -466,7 +489,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     writes = new ArrayList<WriteOperation>();
 
     // Add one user increment operation
-    writes.add(new Increment(dataKeys[0], 1));
+    writes.add(new Increment(dataKeys[0], kvcol, 1));
     // Don't change expected, this will fail
 
     // Add an ack of entry one in source queue (we already ackd, should fail)
@@ -478,7 +501,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     writes.add(new QueueEnqueue(destQueueTwo, destQueueTwoVal));
 
     // Add another user increment operation
-    writes.add(new Increment(dataKeys[2], 3));
+    writes.add(new Increment(dataKeys[2], kvcol, 3));
 
     // Commit batch, should fail
     try {
@@ -492,7 +515,7 @@ public abstract class TestOmidExecutorLikeAFlow {
     // All values from increments should be the same as before
     for (int i=0; i<3; i++) {
       assertEquals(expectedVals[i], Bytes.toLong(
-          this.executor.execute(context, new ReadKey(dataKeys[i])).getValue()));
+          this.executor.execute(context, new Read(dataKeys[i], kvcol)).getValue().get(kvcol)));
     }
 
     // Dest queues should still be empty

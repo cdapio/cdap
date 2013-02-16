@@ -2,6 +2,7 @@ package com.continuuity.data.operation.executor.omid.memory;
 
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
+import com.continuuity.data.operation.executor.omid.QueueUndo;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
 import com.continuuity.data.operation.executor.Transaction;
@@ -9,6 +10,7 @@ import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
 import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.google.inject.Inject;
 
 import java.util.*;
@@ -204,7 +206,7 @@ public class MemoryOracle implements TransactionOracle {
     toRemove.clear(); // removes from the underlying map, this.rowSets
 
     // success
-    return new TransactionResult();
+    return new TransactionResult(undos, computeFinalize(undos));
   }
 
   /**
@@ -224,6 +226,25 @@ public class MemoryOracle implements TransactionOracle {
       }
     }
     return rows;
+  }
+
+  /**
+   * Utility to look for a queue unack in the list of undos, and if found,
+   * creates a corresponding queue finalize.
+   * @returns the generated queue finalize operation
+   */
+  private QueueFinalize computeFinalize(List<Undo> undos) {
+    // assume that the unack is the last undo in the list - as the ack is
+    // always the last operation in a batch (last thing a flowlet does).
+    if (!undos.isEmpty()) {
+      Undo last = undos.get(undos.size() - 1);
+      if (last instanceof QueueUndo.QueueUnack) {
+        QueueUndo.QueueUnack unack = (QueueUndo.QueueUnack)last;
+        return new QueueFinalize(unack.getQueueName(), unack.getEntryPointer(),
+                                 unack.getConsumer(), unack.getNumGroups());
+      }
+    }
+    return null;
   }
 
 }

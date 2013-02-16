@@ -1,6 +1,7 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.CompareAndSwap;
 import com.continuuity.data.operation.Delete;
@@ -10,12 +11,45 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.executor.remote.stubs.*;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
+import com.continuuity.data.operation.executor.remote.stubs.TCompareAndSwap;
+import com.continuuity.data.operation.executor.remote.stubs.TDelete;
+import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
+import com.continuuity.data.operation.executor.remote.stubs.TDequeueStatus;
+import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
+import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TIncrement;
+import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinary;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueAck;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConfig;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueConsumer;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueEnqueue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueEntryPointer;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TQueuePartitioner;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueProducer;
+import com.continuuity.data.operation.executor.remote.stubs.TRead;
+import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
+import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
+import com.continuuity.data.operation.executor.remote.stubs.TWrite;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
 import com.continuuity.data.operation.ttqueue.QueuePartitioner.PartitionerType;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
 import com.continuuity.data.operation.ttqueue.internal.EntryPointer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -329,22 +363,6 @@ public class ConverterUtils {
         tRead.isSetTable() ? tRead.getTable() : null,
         tRead.getKey(),
         unwrap(tRead.getColumns()));
-  }
-
-  /** wrap a ReadKey operation */
-  TReadKey wrap(ReadKey readKey) {
-    TReadKey tReadKey = new TReadKey(
-        wrap(readKey.getKey()), readKey.getId());
-    if (readKey.getTable() != null)
-      tReadKey.setTable(readKey.getTable());
-    return tReadKey;
-  }
-  /** unwrap a ReadKey operation */
-  ReadKey unwrap(TReadKey tReadKey) {
-    return new ReadKey(
-        tReadKey.getId(),
-        tReadKey.isSetTable() ? tReadKey.getTable() : null,
-        tReadKey.getKey());
   }
 
   /** wrap a ReadAllKeys operation */
