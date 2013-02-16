@@ -1,76 +1,76 @@
 package com.continuuity.app.program;
 
-import java.net.URI;
+import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.archive.JarClassLoader;
+import com.continuuity.archive.JarResources;
+import com.continuuity.filesystem.Location;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 /**
  *
  */
-public class Program<S> {
-  /**
-   * Defines the type of the {@link Program}
-   */
-  private final Type type;
+public final class Program {
+  private final ClassLoader jarClassLoader;
+  private final String mainClassName;
+  private final Type processorType;
+  private final String processorName;
+  private final ApplicationSpecification specification;
 
-  /**
-   * Defines version of a program.
-   */
-  private final Version version;
-
-  /**
-   * Specification for this program.
-   */
-  private final S specification;
-
-  /**
-   * URI of the program.
-   */
-  private final URI uri;
-
-  /**
-   * Constructs an instance of {@link Program}
-   * @param type
-   */
-
-  /**
-   * Constructs an instance of {@link Program}
-   *
-   * @param specification of the this Program
-   * @param type of this Program
-   * @param version of this Program
-   * @param uri to the Program
-   */
-  public Program(S specification, Type type, Version version, URI uri) {
-    this.specification = specification;
-    this.type = type;
-    this.version = version;
-    this.uri = uri;
+  @Deprecated
+  public Program(File file) throws IOException {
+    this(new JarResources(file));
   }
 
-  /**
-   * @return Type of this Program
-   */
-  public Type getType() {
-    return type;
+  public Program(Location location) throws IOException {
+    this(new JarResources(location));
   }
 
-  /**
-   * @return Version of this Program
-   */
-  public Version getVersion() {
-    return version;
+  private Program(JarResources jarResources) throws IOException {
+    jarClassLoader = new JarClassLoader(jarResources);
+
+    Manifest manifest = jarResources.getManifest();
+
+    mainClassName = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+    check(mainClassName != null, "Fail to get %s attribute in jar.", Attributes.Name.MAIN_CLASS);
+
+    String type = manifest.getMainAttributes().getValue(ManifestFields.PROCESSOR_TYPE);
+    processorType = type == null ? null : Type.valueOf(type);
+
+    processorName = manifest.getMainAttributes().getValue(ManifestFields.PROCESSOR_NAME);
+
+    String appSpecFile = manifest.getMainAttributes().getValue(ManifestFields.SPEC_FILE);
+    specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create().fromJson(
+      CharStreams.newReaderSupplier(ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
+                                    Charsets.UTF_8));
   }
 
-  /**
-   * @return Specification of this Program
-   */
-  public S getSpecification() {
+  public Class<?> getMainClass() throws ClassNotFoundException {
+    return jarClassLoader.loadClass(mainClassName);
+  }
+
+  public Type getProcessorType() {
+    return processorType;
+  }
+
+  public String getProcessorName() {
+    return processorName;
+  }
+
+  public ApplicationSpecification getSpecification() {
     return specification;
   }
 
-  /**
-   * @return Path to this Program
-   */
-  public URI getUri() {
-    return uri;
+  private void check(boolean condition, String fmt, Object...objs) throws IOException {
+    if (!condition) {
+      throw new IOException(String.format(fmt, objs));
+    }
   }
 }

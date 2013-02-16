@@ -1,34 +1,23 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.api.flow.flowlet.InputContext;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.io.SchemaHash;
-import com.continuuity.app.program.ProgramArchive;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Cancellable;
 import com.continuuity.app.runtime.Runner;
 import com.continuuity.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *
@@ -36,19 +25,19 @@ import java.util.Set;
 public final class FlowletRunner implements Runner {
 
   @Override
-  public Cancellable run(Location jarLocation, String name, Map<String, String> arguments) {
+  public Cancellable run(Location archive, String name, Map<String, String> arguments) {
     try {
-      ProgramArchive programArchive = new ProgramArchive(jarLocation);
-      Preconditions.checkArgument(programArchive.getProcessorType() == Type.FLOW, "Supported process type");
+      Program program = new Program(archive);
+      Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
 
-      ApplicationSpecification appSpec = programArchive.getSpecification();
+      ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
-      Type processorType = programArchive.getProcessorType();
+      Type processorType = program.getProcessorType();
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-      String processorName = programArchive.getProcessorName();
+      String processorName = program.getProcessorName();
       Preconditions.checkNotNull(processorName, "Missing processor name.");
 
       FlowSpecification flowSpec = appSpec.getFlows().get(processorName);
@@ -57,7 +46,7 @@ public final class FlowletRunner implements Runner {
       Preconditions.checkNotNull(flowletDef, "Definition missing for flowlet \"%s\"", name);
       Class<?> flowletClass = Class.forName(flowletDef.getFlowletSpec().getClassName(),
                                             true,
-                                            programArchive.getMainClass().getClassLoader());
+                                            program.getMainClass().getClassLoader());
 
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(flowletClass), "%s is not a Flowlet.", flowletClass);
 

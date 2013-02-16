@@ -11,6 +11,7 @@ import com.continuuity.api.flow.QueueSpecificationGenerator;
 import com.continuuity.api.io.Schema;
 import com.continuuity.api.io.SchemaGenerator;
 import com.continuuity.api.io.UnsupportedTypeException;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 
 import java.lang.reflect.Type;
@@ -36,12 +37,14 @@ public class SimpleQueueSpecificationGenerator implements QueueSpecificationGene
   public QueueSpecification generate(String key, Type type) throws UnsupportedTypeException {
     try {
       Schema schema = generator.generate(type);
-      URI uri = new URI("queue", this.specification.getName(), "/" + definition.getFlowletSpec().getName() + "/" + key, null);
+      URI uri = new URI("queue", this.specification.getName(),
+                        Joiner.on("/").join(new String[]{definition.getFlowletSpec().getName(), key}), null);
       QueueSpecification queueSpecification = new SimpleQueueSpecification(uri, schema);
       return queueSpecification;
     } catch (URISyntaxException e) {
       Throwables.propagate(e);
+      // Unreachable
+      return null;
     }
-    return null;
   }
 }

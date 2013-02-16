@@ -5,16 +5,13 @@
 package com.continuuity.internal.app.program;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.program.ProgramRunResult;
+import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Store;
-import com.continuuity.app.program.Version;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.Inject;
-
-import java.util.List;
 
 /**
  * Implementation of the Store that ultimately places data into
@@ -76,7 +73,7 @@ public class MDSBasedStore implements Store {
    * @param state State of program
    */
   @Override
-  public void setEnd(ProgramId id, final String pid, final long endTime, final ProgramRunResult state)
+  public void setEnd(ProgramId id, final String pid, final long endTime, final Status state)
     throws OperationException {
 
     OperationContext context = new OperationContext(id.getAccountId());

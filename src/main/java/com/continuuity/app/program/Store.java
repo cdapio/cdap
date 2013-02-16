@@ -7,8 +7,6 @@ package com.continuuity.app.program;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.metadata.thrift.MetadataService;
 
-import java.util.List;
-
 /**
  * {@link Store} operates on a {@link Program}. It's responsible
  * for managing the non-runtime lifecycle of a {@link Program}
@@ -65,5 +63,5 @@ public interface Store {
    * @param endTime end timestamp
    * @param state State of program
    */
-  void setEnd(ProgramId id, String pid, long endTime, ProgramRunResult state) throws OperationException;
+  void setEnd(ProgramId id, String pid, long endTime, Status state) throws OperationException;
 }

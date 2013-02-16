@@ -4,6 +4,7 @@
 
 package com.continuuity.api.flow;
 
+import com.continuuity.api.flow.QueueSpecification;
 import com.continuuity.api.io.UnsupportedTypeException;
 
 import java.lang.reflect.Type;
