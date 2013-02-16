@@ -36,6 +36,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -917,7 +918,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertArrayEquals(valY, executor.execute(
         context2, new Read(table, rowX, colY)).getValue().get(colY));
 
-    // verify that each context can not see the other's writes
+    // verify that each context can not see the others writes
     OperationResult<Map<byte[],byte[]>> result1 =
         executor.execute(context1, new Read(table, rowX, colY));
     OperationResult<Map<byte[],byte[]>> result2 =
@@ -940,4 +941,179 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertArrayEquals(valY, executor.execute(
         context2, new Read(table, rowX, colY)).getValue().get(colY));
   }
+
+  // test that transactions work across calls
+  @Test
+  public void testMultiCallTransaction() throws OperationException {
+    final String table = "tMCT";
+    final byte[] a = "a".getBytes();
+    final byte[] b = "b".getBytes();
+    final byte[] c = "c".getBytes();
+    final byte[] x = "x".getBytes();
+    final byte[] col = "col".getBytes();
+    final byte[] me = "me".getBytes();
+
+    // start two transactions, one explicit, one by submitting a batch
+    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx2 = executor.submit(context, null, batch(new Write(table, a, col, me)));
+    // increment a counter with both transactions
+    executor.submit(context, tx1, batch(new Increment(table, b, x, 1L)));
+    executor.submit(context, tx2, batch(new Increment(table, c, x, 5L)));
+    // fail the first transaction with a c-a-s
+    try {
+      executor.submit(context, tx1, batch(new CompareAndSwap(table, x, me, me)));
+      fail("Compare-andswap should fail");
+    } catch (OperationException e) {
+      // expected
+    }
+    // commit the second transaction
+    executor.commit(context, tx2);
+    // verify the first transaction was rolled back
+    Assert.assertTrue(executor.execute(context, new Read(table, b, x)).isEmpty());
+    // verify the second transaction was commited
+    Assert.assertArrayEquals(me, executor.execute(context, new Read(table, a, col)).getValue().get(col));
+    Assert.assertEquals(5L, Bytes.toLong(executor.execute(context, new Read(table, c, x)).getValue().get(x)));
+  }
+
+  // test that conflict detection works across calls
+  @Test
+  public void testMultiCallConflictDetection() throws OperationException {
+    final String table = "tMCCD";
+    final byte[] a = {'a'};
+    final byte[] b = {'b'};
+    final byte[] x = {'x'};
+    final byte[] y = {'y'};
+    final byte[] one = {'1'};
+    final byte[] two = {'2'};
+    final byte[] three = {'3'};
+
+    // write a value to row a with the first transaction
+    Transaction tx1 = executor.startTransaction(context);
+    executor.submit(context, tx1, batch(new Write(table, a, x, one)));
+    // write row b with the second transaction
+    Transaction tx2 = executor.startTransaction(context);
+    executor.submit(context, tx2, batch(new Write(table, b, x, two)));
+    // write to a different row x with the third transaction
+    Transaction tx3 = executor.startTransaction(context);
+    executor.submit(context, tx3, batch(new Write(table, x, y, one)));
+    // write a value to row b with the first transaction
+    executor.submit(context, tx1, batch(new Write(table, b, y, three)));
+    // write to row a with with the third transaction
+    executor.submit(context, tx3, batch(new Write(table, a, y, two)));
+    // commit first transaction
+    executor.commit(context, tx1);
+    // commit second transaction - should fail because it conflict with row b
+    try {
+      executor.commit(context, tx2);
+      fail("commit of tx2 should have failed dur to conflict on row b");
+    } catch (OperationException e) {
+      // expected
+    }
+    // commit third transaction - should fail because it conflicts with row a
+    try {
+      executor.commit(context, tx3);
+      fail("commit of tx3 should have failed dur to conflict on row a");
+    } catch (OperationException e) {
+      // expected
+    }
+  }
+
+  // test that read isolation works across calls
+  @Test
+  public void testMultiCallReadIsolation() throws OperationException {
+    final String table = "tMCRI";
+    final byte[] row = { 'r', 'o' };
+    final byte[] col = { 'c', 'o' };
+
+    // start a transaction
+    Transaction tx1 = executor.startTransaction(context);
+    // set a row to 10
+    executor.submit(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(10L))));
+    // increment the row in another transaction
+    Transaction tx2 = executor.startTransaction(context);
+    executor.submit(context, tx2, batch(new Increment(table, row, col, 1L)));
+    // increment the row by 10 - must see its own write but not the other one -> 20
+    executor.submit(context, tx1, batch(new Increment(table, row, col, 10L)));
+    // commit the transaction
+    executor.commit(context, tx1);
+    // verify the value is 20
+    Assert.assertEquals(20L, Bytes.toLong(executor.execute(context, new Read(table, row, col)).getValue().get(col)));
+    // commit the other transaction - fails
+    try {
+      executor.commit(context, tx2);
+      fail("tx2 should have failed becauseof conflict with row " + new String(row));
+    } catch (OperationException e) {
+      // expected
+    }
+  }
+
+  // test that reads are performed within transaction
+  @Test
+  public void testReadsWithinTransaction() throws OperationException {
+    final String table = "tRWT";
+    final byte[] f = {'f'};
+    final byte[] g = {'g'};
+    final byte[] x = {'x'};
+    final byte[] one = {'1'};
+
+    // start transaction
+    Transaction tx = executor.startTransaction();
+    // write a value in that tx
+    executor.submit(context, tx, batch(new Write(table, f, x, one)));
+    // read the value outside the tx -> null
+    Assert.assertTrue(executor.execute(context, new Read(table, f, x)).isEmpty());
+    // read the value inside the tx -> visible
+    Assert.assertArrayEquals(one, executor.execute(context, tx, new Read(table, f, x)).getValue().get(x));
+    // write another value outside the tx
+    executor.execute(context, batch(new Write(table, g, x, one)));
+    // read the value outside the tx -> visible
+    Assert.assertArrayEquals(one, executor.execute(context, new Read(table, g, x)).getValue().get(x));
+    // read the value inside the tx -> null
+    Assert.assertTrue(executor.execute(context, tx, new Read(table, g, x)).isEmpty());
+    // commit transaction
+    executor.commit(context, tx);
+  }
+
+  // test that read results can be sent via queue
+  @Test
+  public void testReadThenEnqueueAndDeqeue() throws OperationException, IOException {
+    final String table = "tRTEAD";
+    final byte[] qname = "qRTEAD".getBytes();
+    final byte[] f = {'f'};
+    final byte[] g = {'g'};
+    final byte[] x = {'x'};
+    final byte[] one = Bytes.toBytes(1L);
+
+    // start a transaction
+    Transaction tx1 = executor.startTransaction(context);
+    // write a value 1
+    executor.submit(context, tx1, batch(new Write(table, f, x, one)));
+    // increment the value by 10
+    executor.submit(context, tx1, batch(new Increment(table, f, x, 10L)));
+    // read the value back, should be 11
+    byte[] value = executor.execute(context, tx1, new Read(table, f, x)).getValue().get(x);
+    Assert.assertArrayEquals(Bytes.toBytes(11L), value);
+    // enqueue the value
+    executor.submit(context, tx1, batch(
+      new QueueEnqueue(qname, EnqueuePayload.write(new TreeMap<String, Long>(), value))));
+    // commit
+    executor.commit(context, tx1);
+    // dequeue
+    DequeueResult deqres = executor.execute(
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+    // verify the value
+    Assert.assertFalse(deqres.isEmpty());
+    Assert.assertArrayEquals(value, DequeuePayload.read(deqres.getValue()).getSerializedTuple());
+    // in a new transaction, write the dequeued value and ack the queue entry
+    executor.execute(context, batch(new Write(table, g, x, value),
+                                    new QueueAck(qname, deqres.getEntryPointer(), new QueueConsumer(0, 0, 1))));
+    // attempt to dequeue again, should be empty
+    deqres = executor.execute(
+      context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
+    // verify the value
+    Assert.assertTrue(deqres.isEmpty());
+    // verify the write
+    Assert.assertArrayEquals(value, executor.execute(context, new Read(table, g, x)).getValue().get(x));
+  }
+
 }
