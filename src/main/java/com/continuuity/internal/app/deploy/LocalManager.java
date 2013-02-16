@@ -6,17 +6,17 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.filesystem.Location;
-import com.continuuity.internal.pipeline.LocalArchiveLoaderStage;
-import com.continuuity.internal.pipeline.VerificationStage;
+import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
+import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
 /**
- *
+ * This class is concrete implementation of
  */
-public class LocalManager implements Manager {
+public class LocalManager implements Manager<Location, String> {
   private final PipelineFactory factory;
 
   @Inject
@@ -25,8 +25,8 @@ public class LocalManager implements Manager {
   }
 
   @Override
-  public ListenableFuture<?> deploy(Location archive) throws Exception {
-    Pipeline pipeline = factory.getPipeline();
+  public ListenableFuture<String> deploy(Location archive) throws Exception {
+    Pipeline<String> pipeline = factory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage());
     pipeline.addLast(new VerificationStage());
     return pipeline.execute(archive);

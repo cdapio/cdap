@@ -153,13 +153,30 @@ public class FlowVerification extends AbstractVerifier implements Verifier<FlowS
    * @param output {@link Schema} of a {@link com.continuuity.api.flow.flowlet.Flowlet}
    * @param input  {@link Schema} of a {@link com.continuuity.api.flow.flowlet.Flowlet}
    * @return true if they matched; false otherwise.
+   * // Max 1 equal and Min 1 compatible.
    */
   private boolean VerifyFlowletConnectionSchema(Set<Schema> output, Set<Schema> input) {
     for(Schema outputSchema : output) {
+      int equal = 0;
+      int compatible = 0;
       for(Schema inputSchema : input) {
-        if(! outputSchema.isCompatible(inputSchema)) {
-          return false;
+        if(outputSchema.equals(inputSchema)) {
+          equal++;
         }
+        if(outputSchema.isCompatible(inputSchema)) {
+          compatible++;
+        }
+      }
+      // There is max of one output schema that is capable of handling
+      // the input.
+      if(equal > 1) {
+        return false;
+      }
+
+      // There is min of 1 compatible in light of none being equal to handle
+      // input.
+      if(equal < 1 && compatible < 1 ) {
+        return false;
       }
     }
     return true;

@@ -8,9 +8,9 @@ package com.continuuity.pipeline;
  * A factory interface for creating pipelines. This class allows to
  * implement different {@link com.continuuity.pipeline.Pipeline} based on external constraints.
  */
-public interface PipelineFactory {
+public interface PipelineFactory<T> {
   /**
    * @return A {@link com.continuuity.pipeline.Pipeline} created by the factory.
    */
-  Pipeline getPipeline();
+  Pipeline<T> getPipeline();
 }

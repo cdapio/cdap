@@ -14,55 +14,56 @@ import java.util.List;
  * for managing the non-runtime lifecycle of a {@link Program}
  */
 public interface Store {
+
+  /**
+   * Program Id identifies a given program.
+   * Program is global unique if used within context of account and application.
+   */
+  public static class ProgramId {
+    private final String accountId;
+    private final String applicationId;
+    private final String programId;
+
+    public ProgramId(final String accountId, final String applicationId, final String programId) {
+      this.accountId = accountId;
+      this.applicationId = applicationId;
+      this.programId = programId;
+    }
+
+    public String getAccountId() {
+      return accountId;
+    }
+
+    public String getApplicationId() {
+      return applicationId;
+    }
+
+    public String getProgramId() {
+      return programId;
+    }
+  }
+
   /**
    * @return MetaDataService to access program configuration data
    */
   MetadataService.Iface getMetaDataService();
 
   /**
-   * Logs start of program run
-   * @param accountId account this program belongs to
-   * @param applicationId application this program belongs to
-   * @param programId program id
-   * @param runId run id
-   * @param startTs start timestamp
+   * Logs start of program run.
+   *
+   * @param id Info about program
+   * @param pid  run id
+   * @param startTime start timestamp
    */
-  void logProgramStart(String accountId, String applicationId, String programId, String runId,
-                          long startTs) throws OperationException;
+  void setStart(ProgramId id, String pid, long startTime) throws OperationException;
 
   /**
    * Logs end of program run
-   * @param accountId account this program belongs to
-   * @param applicationId application this program belongs to
-   * @param programId program id
-   * @param runId run id
-   * @param endTs end timestamp
-   * @param endState program run result
-   */
-  void logProgramEnd(String accountId, String applicationId, String programId, String runId,
-                        long endTs, ProgramRunResult endState) throws OperationException;
-
-  /**
-   * @return A list of available version of the program.
-   */
-  List<Version> getAvailableVersions();
-
-  /**
-   * @return Current active version of this {@link Program}
-   */
-  Version getCurrentVersion();
-
-  /**
-   * Deletes a <code>version</code> of this {@link Program}
    *
-   * @param version of the {@link Program} to be deleted.
+   * @param id id of program
+   * @param pid run id
+   * @param endTime end timestamp
+   * @param state State of program
    */
-  void delete(Version version);
-
-  /**
-   * Deletes all the versions of this {@link Program}
-   */
-  void deleteAll();
-
-
+  void setEnd(ProgramId id, String pid, long endTime, ProgramRunResult state) throws OperationException;
 }
