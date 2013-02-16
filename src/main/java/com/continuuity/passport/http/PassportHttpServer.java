@@ -30,7 +30,7 @@ public class PassportHttpServer  {
       context.addServlet(new ServletHolder(new ServletContainer(
         new PackagesResourceConfig("com.continuuity.passport.http"))), "/*");
 
-      context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/account/*",0);
+      context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/*",0);
 
       server.start();
       server.join();
