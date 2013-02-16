@@ -1,6 +1,8 @@
 package com.continuuity.passport.core.meta;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -69,7 +71,8 @@ public class Account {
 
   @Override
   public String toString() {
-    Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
     return (gson.toJson(this));
 
   }
