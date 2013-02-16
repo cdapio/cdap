@@ -79,6 +79,20 @@ public final class BinaryDecoder implements Decoder {
     return ByteBuffer.wrap(rawReadBytes());
   }
 
+  @Override
+  public void skipString() throws IOException {
+    skipBytes();
+  }
+
+  @Override
+  public void skipBytes() throws IOException {
+    int len = readInt();
+    long skipped = input.skip(len);
+    while (skipped != len) {
+      skipped += input.skip(len - skipped);
+    }
+  }
+
   private byte[] rawReadBytes() throws IOException {
     int len = readInt();
     byte[] bytes = new byte[len];

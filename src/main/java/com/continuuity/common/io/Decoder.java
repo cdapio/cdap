@@ -29,4 +29,14 @@ public interface Decoder {
   String readString() throws IOException;
 
   ByteBuffer readBytes() throws IOException;
+
+  /**
+   * Skips the a string.
+   */
+  void skipString() throws IOException;
+
+  /**
+   * Skips a byte array
+   */
+  void skipBytes() throws IOException;
 }
