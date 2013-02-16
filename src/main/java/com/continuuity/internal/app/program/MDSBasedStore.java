@@ -17,13 +17,14 @@ import com.google.inject.Inject;
 import java.util.List;
 
 /**
- * Implementation of the Store that ultimately places data into MetaDataStore (thru MetadataService or directly).
+ * Implementation of the Store that ultimately places data into
+ * MetaDataStore (thru MetadataService or directly).
  */
 public class MDSBasedStore implements Store {
-  static final String ENTRY_TYPE_PROGRAM_RUN = "program_run";
-  static final String FIELD_PROGRAM_RUN_START_TS = "startTs";
-  static final String FIELD_PROGRAM_RUN_END_TS = "endTs";
-  static final String FIELD_PROGRAM_RUN_END_STATE = "endState";
+  static final String ENTRY_TYPE_PROGRAM_RUN = "run";
+  static final String FIELD_PROGRAM_RUN_START_TS = "start";
+  static final String FIELD_PROGRAM_RUN_END_TS = "end";
+  static final String FIELD_PROGRAM_RUN_END_STATE = "stat";
 
   /**
    * We re-use metadataService to store configuration type data
@@ -50,64 +51,40 @@ public class MDSBasedStore implements Store {
   }
 
   /**
+   * Logs start of program run.
    *
+   * @param id Info about program
+   * @param pid  run id
+   * @param startTime start timestamp
    */
   @Override
-  public void logProgramStart(final String accountId, final String applicationId, final String programId,
-                              final String runId, final long startTs) throws OperationException {
-    MetaDataEntry entry = new MetaDataEntry(accountId, applicationId, ENTRY_TYPE_PROGRAM_RUN, programId);
-    entry.addField(FIELD_PROGRAM_RUN_START_TS, String.valueOf(startTs));
+  public void setStart(ProgramId id, final String pid, final long startTime) throws OperationException {
+    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(), ENTRY_TYPE_PROGRAM_RUN, pid);
+    entry.addField(FIELD_PROGRAM_RUN_START_TS, String.valueOf(startTime));
 
-    OperationContext context = new OperationContext(accountId);
+    OperationContext context = new OperationContext(id.getAccountId());
     // perform insert, no conflict resolution
     metaDataStore.add(context, entry, false);
   }
 
+  /**
+   * Logs end of program run
+   *
+   * @param id id of program
+   * @param pid run id
+   * @param endTime end timestamp
+   * @param state State of program
+   */
   @Override
-  public void logProgramEnd(final String accountId, final String applicationId, final String programId,
-                            final String runId, final long endTs, final ProgramRunResult endState)
+  public void setEnd(ProgramId id, final String pid, final long endTime, final ProgramRunResult state)
     throws OperationException {
 
-    OperationContext context = new OperationContext(accountId);
+    OperationContext context = new OperationContext(id.getAccountId());
 
     // we want program run info to be in one entry to make things cleaner on reading end
-    metaDataStore.updateField(context, accountId, applicationId, ENTRY_TYPE_PROGRAM_RUN, programId,
-                              FIELD_PROGRAM_RUN_END_TS, String.valueOf(endTs), -1);
-    metaDataStore.updateField(context, accountId, applicationId, ENTRY_TYPE_PROGRAM_RUN, programId,
-                              FIELD_PROGRAM_RUN_END_STATE, String.valueOf(endState), -1);
-  }
-
-  /**
-   * @return A list of available version of the program.
-   */
-  @Override
-  public List<Version> getAvailableVersions() {
-    return null;
-  }
-
-  /**
-   * @return Current active version of this {@link com.continuuity.app.program.Program}
-   */
-  @Override
-  public Version getCurrentVersion() {
-    return null;
-  }
-
-  /**
-   * Deletes a <code>version</code> of this {@link com.continuuity.app.program.Program}
-   *
-   * @param version of the {@link com.continuuity.app.program.Program} to be deleted.
-   */
-  @Override
-  public void delete(Version version) {
-
-  }
-
-  /**
-   * Deletes all the versions of this {@link com.continuuity.app.program.Program}
-   */
-  @Override
-  public void deleteAll() {
-    //To change body of implemented methods use File | Settings | File Templates.
+    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), ENTRY_TYPE_PROGRAM_RUN, pid,
+                              FIELD_PROGRAM_RUN_END_TS, String.valueOf(endTime), -1);
+    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), ENTRY_TYPE_PROGRAM_RUN, pid,
+                              FIELD_PROGRAM_RUN_END_STATE, String.valueOf(state), -1);
   }
 }

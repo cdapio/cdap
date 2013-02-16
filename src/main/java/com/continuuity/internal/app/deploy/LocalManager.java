@@ -6,15 +6,15 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.filesystem.Location;
-import com.continuuity.internal.pipeline.LocalArchiveLoaderStage;
-import com.continuuity.internal.pipeline.VerificationStage;
+import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
+import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
 /**
- *
+ * This class is concrete implementation of
  */
 public class LocalManager implements Manager<Location, String> {
   private final PipelineFactory factory;
