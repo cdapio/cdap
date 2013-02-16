@@ -1,15 +1,23 @@
 package com.continuuity.gateway;
 
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.api.flow.flowlet.Tuple;
 import com.continuuity.api.flow.flowlet.builders.TupleBuilder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.PortDetector;
+import com.continuuity.data.operation.Operation;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
@@ -588,15 +596,15 @@ public class RestAccessorTest {
   }
 
   void verifyKeyGone(String key) throws Exception {
-    ReadKey read = new ReadKey(key.getBytes());
+    Read read = new Read(key.getBytes(), Operation.KV_COL);
     Assert.assertTrue(this.executor.execute(context, read).isEmpty());
   }
 
   void verifyKeyValue(String key, String value) throws Exception {
-    ReadKey read = new ReadKey(key.getBytes());
-    OperationResult<byte[]> result = this.executor.execute(context, read);
+    Read read = new Read(key.getBytes(), Operation.KV_COL);
+    OperationResult<Map<byte[],byte[]>> result = this.executor.execute(context, read);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertArrayEquals(value.getBytes(), result.getValue());
+    Assert.assertArrayEquals(value.getBytes(), result.getValue().get(Operation.KV_COL));
   }
 
   void verifyQueueGone(String queueUri) throws Exception {

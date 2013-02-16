@@ -1,14 +1,22 @@
 package com.continuuity.gateway;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.Event;
 import com.continuuity.api.flow.flowlet.Tuple;
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueConfig;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
+import com.continuuity.data.operation.ttqueue.QueuePartitioner;
 import com.continuuity.flow.definition.impl.FlowStream;
 import com.continuuity.flow.flowlet.internal.EventSerializer;
 import com.continuuity.flow.flowlet.internal.TupleSerializer;
@@ -419,7 +427,7 @@ public class TestUtil {
                           String table, byte[] key, byte[] value)
   throws Exception {
     // add the key/value to the data fabric
-    Write write = new Write(table, key, value);
+    Write write = new Write(table, key, Operation.KV_COL, value);
     List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
     operations.add(write);
     executor.execute(context, operations);
@@ -539,12 +547,12 @@ public class TestUtil {
         response.getStatusLine().getStatusCode());
 
     // read the key/value back from the data fabric
-    ReadKey read = new ReadKey(key);
-    OperationResult<byte[]> result = executor.execute(context, read);
+    Read read = new Read(key, Operation.KV_COL);
+    OperationResult<Map<byte[],byte[]>> result = executor.execute(context, read);
 
     // verify the read value is the same as the original value
     Assert.assertFalse(result.isEmpty());
-    Assert.assertArrayEquals(value, result.getValue());
+    Assert.assertArrayEquals(value, result.getValue().get(Operation.KV_COL));
   }
 
   /**
