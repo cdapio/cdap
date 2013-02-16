@@ -32,19 +32,21 @@ public class NoOperationExecutor implements OperationExecutor {
 
   @Override
   public void execute(OperationContext context,
-                      List<WriteOperation> writes) throws OperationException {
+                      List<WriteOperation> writes)
+    throws OperationException {
     // do nothing
   }
 
   @Override
-  public Transaction startTransaction(OperationContext context) throws OperationException {
+  public Transaction startTransaction(OperationContext context)
+    throws OperationException {
     return null;
   }
 
   @Override
-  public Transaction submit(OperationContext context,
-                            Transaction transaction,
-                            List<WriteOperation> writes)
+  public Transaction execute(OperationContext context,
+                             Transaction transaction,
+                             List<WriteOperation> writes)
     throws OperationException {
     execute(context, writes);
     return null;
@@ -55,6 +57,14 @@ public class NoOperationExecutor implements OperationExecutor {
                      Transaction transaction)
     throws OperationException {
     // do nothing
+  }
+
+  @Override
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes)
+    throws OperationException {
+    execute(context, writes);
   }
 
   @Override

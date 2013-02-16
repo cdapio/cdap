@@ -79,9 +79,9 @@ public interface OperationExecutor
    * @return the transaction (either provided or newly started)
    * @throws OperationException if anything goes wrong
    */
-  public Transaction submit(OperationContext context,
-                            Transaction transaction,
-                            List<WriteOperation> writes)
+  public Transaction execute(OperationContext context,
+                             Transaction transaction,
+                             List<WriteOperation> writes)
     throws OperationException;
 
   /**
@@ -93,6 +93,18 @@ public interface OperationExecutor
    */
   public void commit(OperationContext context,
                      Transaction transaction)
+    throws OperationException;
+
+  /**
+   * Execute a batch of write operations in an existing transaction and commit.
+   * If the commit fails, the transaction is aborted and an exception is thrown.
+   * @param context the operation context
+   * @param transaction the transaction to be committed
+   * @throws OperationException if the commit fails for any reason
+   */
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes)
     throws OperationException;
 
   /**
