@@ -532,7 +532,7 @@ implements TransactionalOperationExecutor {
     requestMetric("WriteOperationBatch");
     long begin = begin();
     cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_NumReqs", writes.size());
-    execute(context, writes, startTransaction());
+    commit(context, startTransaction(), writes);
     end("WriteOperationBatch", begin);
   }
 
@@ -587,7 +587,12 @@ implements TransactionalOperationExecutor {
         undos.addAll(writeTxReturn.undos);
         // See if write operation was an Increment, and if so, add result to map
         if (write instanceof Increment) {
-          incrementResults.put(write.getId(), writeTxReturn.incrementValue);
+          // TODO this is for the old increment pass-through. It only works for a single column
+          // TODO remove this as soon as increment pass-thru is obsolete
+          Map<byte[], Long> result = writeTxReturn.incrementResult;
+          if (result != null && result.size() > 0) {
+            incrementResults.put(write.getId(), result.values().iterator().next());
+          }
         }
       }
     }
@@ -668,12 +673,42 @@ implements TransactionalOperationExecutor {
     attemptUndo(context, transaction, txResult.getUndos());
   }
 
-  void execute(OperationContext context, List<WriteOperation> writes,
-               Transaction transaction)
-      throws OperationException {
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
+                                                    Increment increment) throws OperationException {
+    // start transaction, execute increment, commit transaction, return result
+    Transaction tx = startTransaction();
+    OperationResult<Map<byte[], Long>> result = execute(context, tx, increment);
+    commit(context, tx);
+    return result;
+  }
 
-    transaction = execute(context, transaction, writes);
-    commit(context, transaction);
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context,
+                                                    Transaction transaction,
+                                                    Increment increment) throws OperationException {
+    // if a null transaction is passed in,
+    // call the companion method that wraps this into a new transaction
+    if (transaction == null) {
+      return execute(context, increment);
+    }
+
+    WriteTransactionResult writeTxReturn = write(context, increment, transaction);
+    List<Undo> undos = writeTxReturn.undos;
+    // whether success or not, we must notify the oracle of all operations
+    if (null != undos && !undos.isEmpty()) {
+      addToTransaction(transaction, undos);
+    }
+    if (writeTxReturn.success) {
+      // increment was successful. the return value is in the write transaction result
+      return new OperationResult<Map<byte[], Long>>(writeTxReturn.incrementResult);
+    } else {
+      // operation failed
+      cmetric.meter(METRIC_PREFIX + "WriteOperationBatch_FailedWrites", 1);
+      abort(context, transaction);
+      throw new OmidTransactionException(
+        writeTxReturn.statusCode, writeTxReturn.message);
+    }
   }
 
   /**
@@ -735,7 +770,7 @@ implements TransactionalOperationExecutor {
     final int statusCode;
     final String message;
     final List<Undo> undos;
-    Long incrementValue;
+    Map<byte[], Long> incrementResult;
 
     WriteTransactionResult(boolean success, int status, String message, List<Undo> undos) {
       this.success = success;
@@ -750,9 +785,9 @@ implements TransactionalOperationExecutor {
     }
 
     // successful increment, one delete to undo
-    WriteTransactionResult(Undo undo, Long incrementValue) {
+    WriteTransactionResult(Undo undo, Map<byte[], Long> incrementResult) {
       this(true, StatusCode.OK, null, Collections.singletonList(undo));
-      this.incrementValue = incrementValue;
+      this.incrementResult = incrementResult;
     }
 
     // failure with status code and message, nothing to undo
@@ -816,22 +851,19 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("Increment");
     long begin = begin();
-    Long incrementValue;
+    Map<byte[],Long> map;
     try {
       OrderedVersionedColumnarTable table =
           this.findRandomTable(context, increment.getTable());
-      Map<byte[],Long> map =
-          table.increment(increment.getKey(), increment.getColumns(), increment.getAmounts(),
-                          transaction.getReadPointer(), transaction.getTransactionId());
-      incrementValue = map.values().iterator().next();
+      map = table.increment(increment.getKey(), increment.getColumns(), increment.getAmounts(),
+                            transaction.getReadPointer(), transaction.getTransactionId());
     } catch (OperationException e) {
       return new WriteTransactionResult(e.getStatus(), e.getMessage());
     }
     end("Increment", begin);
     namedTableMetric_write(increment.getTable(), increment.getSize());
     return new WriteTransactionResult(
-        new UndoWrite(increment.getTable(), increment.getKey(),
-            increment.getColumns()), incrementValue);
+        new UndoWrite(increment.getTable(), increment.getKey(), increment.getColumns()), map);
   }
 
   WriteTransactionResult write(OperationContext context, CompareAndSwap write,

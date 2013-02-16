@@ -4,6 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -239,7 +240,8 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void commit(OperationContext context, Transaction transaction)
+  public void commit(OperationContext context,
+                     Transaction transaction)
     throws OperationException {
     // TODO implement this properly
   }
@@ -254,9 +256,27 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public void abort(OperationContext context, Transaction transaction)
+  public void abort(OperationContext context,
+                    Transaction transaction)
     throws OperationException {
     // TODO implement this properly
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
+    throws OperationException {
+    // TODO implement this properly
+    execute(context, (WriteOperation)increment);
+    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
+                                                    Increment increment)
+    throws OperationException {
+    // TODO implement this properly
+    execute(context, transaction, Collections.singletonList((WriteOperation)increment));
+    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override

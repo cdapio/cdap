@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
@@ -72,6 +73,21 @@ public class NoOperationExecutor implements OperationExecutor {
                     Transaction transaction)
     throws OperationException {
     // do nothing
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
+    throws OperationException {
+    // do nothing
+    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
+                                                    Increment increment)
+    throws OperationException {
+    // do nothing
+    return new OperationResult<Map<byte[], Long>>(StatusCode.KEY_NOT_FOUND);
   }
 
   @Override
