@@ -132,8 +132,9 @@ public class MemoryOracle implements TransactionOracle {
   public synchronized Transaction startTransaction() {
     long txid = this.timeOracle.getTimestamp();
     this.inProgress.put(txid, new InProgress());
+    Set<Long> excludes = this.getExcludes();
     this.excludes.add(txid);
-    return new Transaction(txid, new MemoryReadPointer(this.readPoint, txid, this.getExcludes()));
+    return new Transaction(txid, new MemoryReadPointer(txid, txid, excludes));
   }
 
   @Override
