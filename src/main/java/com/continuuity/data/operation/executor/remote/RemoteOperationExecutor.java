@@ -229,9 +229,9 @@ public class RemoteOperationExecutor
   }
 
   @Override
-  public Transaction submit(final OperationContext context,
-                            final Transaction transaction,
-                            final List<WriteOperation> writes)
+  public Transaction execute(final OperationContext context,
+                             final Transaction transaction,
+                             final List<WriteOperation> writes)
     throws OperationException {
     // TODO implement this properly
     execute(context, writes);
@@ -242,6 +242,15 @@ public class RemoteOperationExecutor
   public void commit(OperationContext context, Transaction transaction)
     throws OperationException {
     // TODO implement this properly
+  }
+
+  @Override
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes)
+    throws OperationException {
+    // TODO implement this properly
+    execute(context, writes);
   }
 
   @Override

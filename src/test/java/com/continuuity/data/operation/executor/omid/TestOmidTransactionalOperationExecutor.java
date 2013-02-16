@@ -955,13 +955,13 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // start two transactions, one explicit, one by submitting a batch
     Transaction tx1 = executor.startTransaction(context);
-    Transaction tx2 = executor.submit(context, null, batch(new Write(table, a, col, me)));
+    Transaction tx2 = executor.execute(context, null, batch(new Write(table, a, col, me)));
     // increment a counter with both transactions
-    executor.submit(context, tx1, batch(new Increment(table, b, x, 1L)));
-    executor.submit(context, tx2, batch(new Increment(table, c, x, 5L)));
+    executor.execute(context, tx1, batch(new Increment(table, b, x, 1L)));
+    executor.execute(context, tx2, batch(new Increment(table, c, x, 5L)));
     // fail the first transaction with a c-a-s
     try {
-      executor.submit(context, tx1, batch(new CompareAndSwap(table, x, me, me)));
+      executor.execute(context, tx1, batch(new CompareAndSwap(table, x, me, me)));
       fail("Compare-andswap should fail");
     } catch (OperationException e) {
       // expected
@@ -989,17 +989,17 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write a value to row a with the first transaction
     Transaction tx1 = executor.startTransaction(context);
-    executor.submit(context, tx1, batch(new Write(table, a, x, one)));
+    executor.execute(context, tx1, batch(new Write(table, a, x, one)));
     // write row b with the second transaction
     Transaction tx2 = executor.startTransaction(context);
-    executor.submit(context, tx2, batch(new Write(table, b, x, two)));
+    executor.execute(context, tx2, batch(new Write(table, b, x, two)));
     // write to a different row x with the third transaction
     Transaction tx3 = executor.startTransaction(context);
-    executor.submit(context, tx3, batch(new Write(table, x, y, one)));
+    executor.execute(context, tx3, batch(new Write(table, x, y, one)));
     // write a value to row b with the first transaction
-    executor.submit(context, tx1, batch(new Write(table, b, y, three)));
+    executor.execute(context, tx1, batch(new Write(table, b, y, three)));
     // write to row a with with the third transaction
-    executor.submit(context, tx3, batch(new Write(table, a, y, two)));
+    executor.execute(context, tx3, batch(new Write(table, a, y, two)));
     // commit first transaction
     executor.commit(context, tx1);
     // commit second transaction - should fail because it conflict with row b
@@ -1028,22 +1028,22 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start a transaction
     Transaction tx1 = executor.startTransaction(context);
     // set a row to 10
-    executor.submit(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(10L))));
+    executor.execute(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(10L))));
     // increment the row in another transaction
     Transaction tx2 = executor.startTransaction(context);
     // TODO increment is currently broken in HBase (see Jira ENG-2126).
     // TODO For now, when testing HBase, perform a write, not an increment
     // TODO this must be removed as soon as HBase is fixed
     if (this instanceof TestHBaseOmidTransactionalOperationExecutor) {
-      executor.submit(context, tx2, batch(new Write(table, row, col, Bytes.toBytes(11L))));
+      executor.execute(context, tx2, batch(new Write(table, row, col, Bytes.toBytes(11L))));
       // increment the row by 10 - must see its own write but not the other one -> 20
       long current = Bytes.toLong(executor.execute(context, tx1, new Read(table, row, col)).getValue().get(col));
       Assert.assertEquals(10L, current);
-      executor.submit(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(current + 10L))));
+      executor.execute(context, tx1, batch(new Write(table, row, col, Bytes.toBytes(current + 10L))));
     } else {
-      executor.submit(context, tx2, batch(new Increment(table, row, col, 1L)));
+      executor.execute(context, tx2, batch(new Increment(table, row, col, 1L)));
       // increment the row by 10 - must see its own write but not the other one -> 20
-      executor.submit(context, tx1, batch(new Increment(table, row, col, 10L)));
+      executor.execute(context, tx1, batch(new Increment(table, row, col, 10L)));
     }
     // commit the transaction
     executor.commit(context, tx1);
@@ -1070,7 +1070,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start transaction
     Transaction tx = executor.startTransaction();
     // write a value in that tx
-    executor.submit(context, tx, batch(new Write(table, f, x, one)));
+    executor.execute(context, tx, batch(new Write(table, f, x, one)));
     // read the value outside the tx -> null
     Assert.assertTrue(executor.execute(context, new Read(table, f, x)).isEmpty());
     // read the value inside the tx -> visible
@@ -1099,24 +1099,22 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // start a transaction
     Transaction tx1 = executor.startTransaction(context);
     // write a value 1
-    executor.submit(context, tx1, batch(new Write(table, f, x, one)));
+    executor.execute(context, tx1, batch(new Write(table, f, x, one)));
     // increment the value by 10
     // TODO increment is currently broken in HBase (see Jira ENG-2126).
     // TODO For now, when testing HBase, perform a write, not an increment
     // TODO this must be removed as soon as HBase is fixed
     if (this instanceof TestHBaseOmidTransactionalOperationExecutor) {
-      executor.submit(context, tx1, batch(new Write(table, f, x, eleven)));
+      executor.execute(context, tx1, batch(new Write(table, f, x, eleven)));
     } else {
-      executor.submit(context, tx1, batch(new Increment(table, f, x, 10L)));
+      executor.execute(context, tx1, batch(new Increment(table, f, x, 10L)));
     }
     // read the value back, should be 11
     byte[] value = executor.execute(context, tx1, new Read(table, f, x)).getValue().get(x);
     Assert.assertArrayEquals(eleven, value);
-    // enqueue the value
-    executor.submit(context, tx1, batch(
-      new QueueEnqueue(qname, EnqueuePayload.write(new TreeMap<String, Long>(), value))));
-    // commit
-    executor.commit(context, tx1);
+    // enqueue the value and commit
+    executor.commit(context, tx1, batch(new QueueEnqueue(qname, EnqueuePayload.write(new TreeMap<String, Long>(),
+                                                                                      value))));
     // dequeue
     DequeueResult deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));

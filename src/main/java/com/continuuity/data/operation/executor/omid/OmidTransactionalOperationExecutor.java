@@ -543,7 +543,9 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public Transaction submit(OperationContext context, Transaction transaction, List<WriteOperation> writes) throws OperationException {
+  public Transaction execute(OperationContext context,
+                             Transaction transaction,
+                             List<WriteOperation> writes) throws OperationException {
     // make sure we have a transaction
     if (transaction == null) {
       transaction = startTransaction();
@@ -605,7 +607,8 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
-  public void commit(OperationContext context, Transaction transaction) throws OperationException {
+  public void commit(OperationContext context,
+                     Transaction transaction) throws OperationException {
     // attempt to commit in Oracle
     TransactionResult txResult = commitTransaction(transaction);
     if (!txResult.isSuccess()) {
@@ -649,6 +652,14 @@ implements TransactionalOperationExecutor {
   }
 
   @Override
+  public void commit(OperationContext context,
+                     Transaction transaction,
+                     List<WriteOperation> writes) throws OperationException {
+    transaction = execute(context, transaction, writes);
+    commit(context, transaction);
+  }
+
+  @Override
   public void abort(OperationContext context, Transaction transaction) throws OperationException {
     // abort transaction in oracle, that returns the undos to be performed
     TransactionResult txResult = abortTransaction(transaction);
@@ -661,7 +672,7 @@ implements TransactionalOperationExecutor {
                Transaction transaction)
       throws OperationException {
 
-    transaction = submit(context, transaction, writes);
+    transaction = execute(context, transaction, writes);
     commit(context, transaction);
   }
 
