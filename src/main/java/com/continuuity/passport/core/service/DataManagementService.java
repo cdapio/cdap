@@ -83,6 +83,19 @@ public interface DataManagementService {
    */
   public Account getAccount(int accountId) throws RuntimeException;
 
+  /**
+   * Get VPC list for accountID
+   * @param accountId accountId identifying accounts
+   * @return List of {@code VPC}
+   */
   public List<VPC> getVPC(int accountId);
+
+  /**
+   * Get VPC List based on the ApiKey
+   * @param apiKey apiKey of the account
+   * @return List of {@code VPC}
+   */
+  public List<VPC> getVPC(String apiKey);
+
 
 }

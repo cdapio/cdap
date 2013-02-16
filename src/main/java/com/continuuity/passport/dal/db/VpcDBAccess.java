@@ -165,4 +165,40 @@ public class VpcDBAccess implements VpcDAO {
     }
     return vpcList;
   }
+
+  @Override
+  public List<VPC> getVPC(String apiKey) throws RuntimeException, ConfigurationException {
+
+    List<VPC> vpcList = new ArrayList<VPC>();
+    if (this.poolManager == null){
+      throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
+    }
+    try {
+      Connection connection = this.poolManager.getConnection();
+      String SQL = String.format( "SELECT %s, %s FROM %s JOIN %s ON %s = %s WHERE %s = ?",
+                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.VPC_ID_COLUMN,
+                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.NAME_COLUMN, //COLUMNS
+                                  DBUtils.VPC.TABLE_NAME, //FROM
+                                  DBUtils.AccountTable.TABLE_NAME, //JOIN
+                                  DBUtils.VPC.TABLE_NAME+"."+DBUtils.VPC.ACCOUNT_ID_COLUMN, //CONDITION
+                                  DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.ID_COLUMN,
+                                  DBUtils.AccountTable.TABLE_NAME+"."+DBUtils.AccountTable.API_KEY_COLUMN);
+
+      PreparedStatement ps = connection.prepareStatement(SQL);
+      ps.setString(1,apiKey);
+      ResultSet rs = ps.executeQuery();
+
+      while(rs.next()) {
+        VPC vpc = new VPC(rs.getInt(1),rs.getString(2));
+        vpcList.add(vpc);
+
+      }
+
+    }
+    catch (SQLException e) {
+      //TODO: Log
+      throw new RuntimeException(e.getMessage(), e.getCause());
+    }
+    return vpcList;
+  }
 }

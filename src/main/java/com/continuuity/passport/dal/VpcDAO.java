@@ -25,4 +25,6 @@ public interface VpcDAO {
 
   public List<VPC> getVPC(int accountId) throws RuntimeException,ConfigurationException;
 
+  public List<VPC> getVPC(String apiKey) throws RuntimeException,ConfigurationException;
+
 }

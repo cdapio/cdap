@@ -166,6 +166,27 @@ public class DataManagementServiceImpl implements DataManagementService {
     return vpcs;
   }
 
+  /**
+   * Get VPC List based on the ApiKey
+   *
+   * @param apiKey apiKey of the account
+   * @return List of {@code VPC}
+   */
+  @Override
+  public List<VPC> getVPC(String apiKey) {
+    List<VPC> vpcs;
+    if(vpcDao == null) {
+      throw new RuntimeException("Could not initialize data access object");
+    }
+    try {
+      vpcs = vpcDao.getVPC(apiKey);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return vpcs;
+
+  }
+
   public long addVPC(int accountId, VPC vpc) throws RuntimeException {
     if(vpcDao == null) {
       throw new RuntimeException("Could not initialize data access object");
