@@ -166,12 +166,11 @@ public class JDBCAuthrozingRealm extends AuthorizingRealm {
 
       String SQL = null;
       PreparedStatement ps = null;
-
+      //Precedence for lookup if emailID is present use that to lookup. Else use apIKey.
       if (emailId !=null && !emailId.isEmpty()) {
         SQL = SQL_LOOKUP_BY_EMAIL;
         ps = connection.prepareStatement(SQL);
         ps.setString(1,emailId);
-
 
       }
       else if (apiKey!=null && ! apiKey.isEmpty()) {

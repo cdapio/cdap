@@ -35,25 +35,27 @@ import java.util.List;
  *       huge. Need to find a work-around.
  */
 
+
 @Path("/passport/v1/account/")
 public class AccountHandler {
-
   @Path("{id}")
   @GET
   @Produces("application/json")
   public Response getAccountInfo(@PathParam("id") int id){
 
     Account account = DataManagementServiceImpl.getInstance().getAccount(id);
-    if (account != null){
-      return Response.ok(account.toString()).build();
-    }
+     if (account != null){
+        return Response.ok(account.toString()).build();
+      }
     else {
-      return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJson("NOT_FOUND", "Account not found"))
-        .build();
+        return Response.status(Response.Status.NOT_FOUND)
+          .entity(Utils.getJson("NOT_FOUND", "Account not found"))
+          .build();
 
+        }
     }
-  }
+
+
 
   @Path("create")
   @PUT

@@ -3,6 +3,7 @@ package com.continuuity.passport.http;
 
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.*;
@@ -28,6 +29,8 @@ public class PassportHttpServer  {
 
       context.addServlet(new ServletHolder(new ServletContainer(
         new PackagesResourceConfig("com.continuuity.passport.http"))), "/*");
+
+      context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/account/*",0);
 
       server.start();
       server.join();
