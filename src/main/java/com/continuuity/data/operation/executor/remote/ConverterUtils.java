@@ -450,7 +450,6 @@ public class ConverterUtils {
         wrap(enqueue.getData()),
         enqueue.getHeaderVersion(),
         wrap(enqueue.getHeaders()),
-        enqueue.getOutputName(),
         enqueue.getId());
     if (enqueue.getProducer() != null)
       tQueueEnqueue.setProducer(wrap(enqueue.getProducer()));
@@ -462,7 +461,6 @@ public class ConverterUtils {
         tEnqueue.getId(),
         unwrap(tEnqueue.getProducer()),
         tEnqueue.getQueueName(),
-        tEnqueue.getOutputName(),
         unwrap(tEnqueue.getHeaders()),
         tEnqueue.getValue());
   }

@@ -81,7 +81,6 @@ struct TQueueEnqueue {
   2: binary value,
   3: i32 headerVersion,
   4: binary headers,
-  5: string outputName,
   6: i64 id,
   7: optional TQueueProducer producer,
 }

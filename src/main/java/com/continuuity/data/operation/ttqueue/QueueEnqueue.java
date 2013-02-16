@@ -20,14 +20,13 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   /** Unique id for the operation */
   private final long id;
   private final byte [] queueName;
-  private final String outputName;
   private final int headerVersion=0;
   private final Map<String, String> headers; // can be null or empty
 
   private byte [] data;
 
-  public QueueEnqueue(final byte [] queueName, final String outputName, final byte [] data) {
-    this(OperationBase.getId(), queueName, outputName, data);
+  public QueueEnqueue(final byte [] queueName, final byte [] data) {
+    this(OperationBase.getId(), queueName, data);
   }
 
   public QueueEnqueue(final byte [] queueName, final String outputName, final Map<String, String> headers,
@@ -35,36 +34,34 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
     this(OperationBase.getId(), queueName, outputName, headers, data);
   }
 
-  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final String outputName, final byte[] data) {
-    this(OperationBase.getId(), producer, queueName, outputName, data);
+  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final byte[] data) {
+    this(OperationBase.getId(), producer, queueName, data);
   }
 
-  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final String outputName,
-                      final Map<String, String> headers, final byte[] data) {
-    this(OperationBase.getId(), producer, queueName, outputName, headers, data);
+  public QueueEnqueue(QueueProducer producer, final byte [] queueName, final Map<String, String> headers,
+                      final byte[] data) {
+    this(OperationBase.getId(), producer, queueName, headers, data);
   }
 
-  public QueueEnqueue(final long id, final byte[] queueName, final String outputName, final byte [] data) {
-    this(id, null, queueName, outputName, data);
+  public QueueEnqueue(final long id, final byte[] queueName, final byte [] data) {
+    this(id, null, queueName, data);
   }
 
   public QueueEnqueue(final long id, final byte[] queueName, final String outputName,
                       final Map<String, String> headers, final byte [] data) {
-    this(id, null, queueName, outputName, headers, data);
+    this(id, null, queueName, headers, data);
   }
 
-  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final String outputName,
+  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final byte [] data) {
+    this(id, producer, queueName, null, data);
+  }
+
+
+  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final Map<String, String> headers,
                       final byte [] data) {
-    this(id, producer, queueName, outputName, null, data);
-  }
-
-
-  public QueueEnqueue(final long id, QueueProducer producer, final byte[] queueName, final String outputName,
-                      final Map<String, String> headers, final byte [] data) {
     this.id = id;
     this.producer = producer;
     this.queueName = queueName;
-    this.outputName = outputName;
     this.headers=headers;
     this.data = data;
   }
@@ -88,10 +85,6 @@ public class QueueEnqueue implements WriteOperation, ReadOperation {
   @Override
   public byte[] getKey() {
     return this.queueName;
-  }
-
-  public String getOutputName() {
-    return this.outputName;
   }
 
   @Override
