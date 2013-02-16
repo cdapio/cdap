@@ -339,6 +339,15 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException {
+    // TODO implement this properly
+    return execute(context, read);
+  }
+
+  @Override
   public OperationResult<List<byte[]>>
   execute(final OperationContext context,
           final ReadAllKeys readAllKeys)
@@ -355,6 +364,15 @@ public class RemoteOperationExecutor
   }
 
   @Override
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
+                                               ReadAllKeys readKeys)
+    throws OperationException {
+    // TODO implement this properly
+    return execute(context, readKeys);
+  }
+
+  @Override
   public OperationResult<Map<byte[], byte[]>>
   execute(final OperationContext context,
           final ReadColumnRange readColumnRange)
@@ -368,6 +386,15 @@ public class RemoteOperationExecutor
             return client.execute(context, readColumnRange);
           }
         });
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
+    // TODO implement this properly
+    return execute(context, readColumnRange);
   }
 
   @Override

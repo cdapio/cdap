@@ -104,6 +104,14 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException {
+    return execute(context, read);
+  }
+
+  @Override
   public OperationResult<List<byte[]>> execute(
       OperationContext context, ReadAllKeys readKeys) {
     return new OperationResult<List<byte[]>>(StatusCode.KEY_NOT_FOUND);
@@ -111,10 +119,26 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
+                                               ReadAllKeys readKeys)
+    throws OperationException {
+    return execute(context, readKeys);
+  }
+
+  @Override
   public OperationResult<Map<byte[], byte[]>>
   execute(OperationContext context, ReadColumnRange readColumnRange) {
     // pretend the key does not exists
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
+    return execute(context, readColumnRange);
   }
 
   @Override

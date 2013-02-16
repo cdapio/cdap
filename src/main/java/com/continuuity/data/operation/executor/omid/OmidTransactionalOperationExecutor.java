@@ -3,33 +3,44 @@
  */
 package com.continuuity.data.operation.executor.omid;
 
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.Operation;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.ReadAllKeys;
-import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.*;
+import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.CompareAndSwap;
+import com.continuuity.data.operation.Delete;
+import com.continuuity.data.operation.Increment;
+import com.continuuity.data.operation.OpenTable;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data.operation.Read;
+import com.continuuity.data.operation.ReadAllKeys;
+import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.Write;
+import com.continuuity.data.operation.WriteOperation;
+import com.continuuity.data.operation.WriteOperationComparator;
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.TransactionalOperationExecutor;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.EnqueueResult;
+import com.continuuity.data.operation.ttqueue.QueueAck;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
 import com.continuuity.data.operation.ttqueue.QueueAdmin.GetGroupID;
+import com.continuuity.data.operation.ttqueue.QueueConsumer;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
+import com.continuuity.data.operation.ttqueue.QueueFinalize;
+import com.continuuity.data.operation.ttqueue.QueueProducer;
+import com.continuuity.data.operation.ttqueue.TTQueue;
+import com.continuuity.data.operation.ttqueue.TTQueueTable;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data.table.OrderedVersionedColumnarTable;
-import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.util.TupleMetaDataAnnotator.DequeuePayload;
 import com.continuuity.data.util.TupleMetaDataAnnotator.EnqueuePayload;
 import com.google.common.base.Objects;
@@ -41,7 +52,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -390,11 +405,22 @@ implements TransactionalOperationExecutor {
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
       throws OperationException {
+    return execute(context, null, readKeys);
+  }
+
+  @Override
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
+                                               ReadAllKeys readKeys)
+    throws OperationException {
+
     initialize();
     requestMetric("ReadAllKeys");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
-    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
+    List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), pointer);
     end("ReadAllKeys", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
@@ -411,12 +437,22 @@ implements TransactionalOperationExecutor {
   @Override
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context, Read read)
       throws OperationException {
+    return execute(context, null, read);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException {
     initialize();
     requestMetric("Read");
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, read.getTable());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OperationResult<Map<byte[], byte[]>> result =
-      table.get(read.getKey(), read.getColumns(), this.oracle.getReadPointer());
+      table.get(read.getKey(), read.getColumns(), pointer);
     end("Read", begin);
     namedTableMetric_read(read.getTable());
     return result;
@@ -426,15 +462,26 @@ implements TransactionalOperationExecutor {
   public OperationResult<Map<byte[], byte[]>>
   execute(OperationContext context,
           ReadColumnRange readColumnRange) throws OperationException {
+    return execute(context, null, readColumnRange);
+  }
+
+  @Override
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      ReadColumnRange readColumnRange)
+    throws OperationException {
+
     initialize();
     requestMetric("ReadColumnRange");
     long begin = begin();
     OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, readColumnRange.getTable());
+      this.findRandomTable(context, readColumnRange.getTable());
+    ReadPointer pointer =
+      transaction == null ? this.oracle.getReadPointer() : transaction.getReadPointer();
     OperationResult<Map<byte[], byte[]>> result = table.get(
-        readColumnRange.getKey(), readColumnRange.getStartColumn(),
-        readColumnRange.getStopColumn(), readColumnRange.getLimit(),
-        this.oracle.getReadPointer());
+      readColumnRange.getKey(), readColumnRange.getStartColumn(),
+      readColumnRange.getStopColumn(), readColumnRange.getLimit(),
+      pointer);
     end("ReadColumnRange", begin);
     namedTableMetric_read(readColumnRange.getTable());
     return result;

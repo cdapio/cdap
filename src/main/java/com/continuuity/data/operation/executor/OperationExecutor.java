@@ -118,6 +118,21 @@ public interface OperationExecutor
     throws OperationException;
 
   /**
+   * Executes a {@link com.continuuity.data.operation.Read} operation
+   * in an existing transaction
+   * @param read the operation
+   * @param transaction the existing transaction
+   * @return a result object containing a map of columns to values if the key
+   *    is found. If the key is not found, the result will be empty and the
+   *    status code is KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
+                                                      Read read)
+    throws OperationException;
+
+  /**
    * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation.
    * @param readKeys the operation
    * @return a result object containing a list of keys if none found. If no
@@ -126,6 +141,21 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               ReadAllKeys readKeys)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.ReadAllKeys} operation
+   * within an existing transaction.
+   * @param readKeys the operation
+   * @param transaction the existing transaction
+   * @return a result object containing a list of keys if none found. If no
+   * keys are found, then the result object will be empty and the status
+   * code will be KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<List<byte[]>> execute(OperationContext context,
+                                               Transaction transaction,
                                                ReadAllKeys readKeys)
     throws OperationException;
 
@@ -139,5 +169,20 @@ public interface OperationExecutor
    * @throws OperationException is something goes wrong
    */
   public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      ReadColumnRange readColumnRange) throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.ReadColumnRange} operation in the
+   * context of an existing transaction.
+   * @param readColumnRange the operation
+   * @param transaction the existing transaction
+   * @return a result object containing a map of columns to values. If the
+   * key is not found, the result will be empty and the status code is
+   * KEY_NOT_FOUND. If the key exists but there are no columns the given range,
+   * then the result is empty with status code COLUMN_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<Map<byte[], byte[]>> execute(OperationContext context,
+                                                      Transaction transaction,
                                                       ReadColumnRange readColumnRange) throws OperationException;
 }
