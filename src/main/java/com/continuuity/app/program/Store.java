@@ -4,6 +4,9 @@
 
 package com.continuuity.app.program;
 
+import com.continuuity.api.data.OperationException;
+import com.continuuity.metadata.thrift.MetadataService;
+
 import java.util.List;
 
 /**
@@ -12,26 +15,54 @@ import java.util.List;
  */
 public interface Store {
   /**
+   * @return MetaDataService to access program configuration data
+   */
+  MetadataService.Iface getMetaDataService();
+
+  /**
+   * Logs start of program run
+   * @param accountId account this program belongs to
+   * @param applicationId application this program belongs to
+   * @param programId program id
+   * @param runId run id
+   * @param startTs start timestamp
+   */
+  void logProgramStart(String accountId, String applicationId, String programId, String runId,
+                          long startTs) throws OperationException;
+
+  /**
+   * Logs end of program run
+   * @param accountId account this program belongs to
+   * @param applicationId application this program belongs to
+   * @param programId program id
+   * @param runId run id
+   * @param endTs end timestamp
+   * @param endState program run result
+   */
+  void logProgramEnd(String accountId, String applicationId, String programId, String runId,
+                        long endTs, ProgramRunResult endState) throws OperationException;
+
+  /**
    * @return A list of available version of the program.
    */
-  public List<Version> getAvailableVersions();
+  List<Version> getAvailableVersions();
 
   /**
    * @return Current active version of this {@link Program}
    */
-  public Version getCurrentVersion();
+  Version getCurrentVersion();
 
   /**
    * Deletes a <code>version</code> of this {@link Program}
    *
    * @param version of the {@link Program} to be deleted.
    */
-  public void delete(Version version);
+  void delete(Version version);
 
   /**
    * Deletes all the versions of this {@link Program}
    */
-  public void deleteAll();
+  void deleteAll();
 
 
 }
