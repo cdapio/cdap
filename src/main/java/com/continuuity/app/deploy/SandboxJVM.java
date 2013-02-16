@@ -6,9 +6,9 @@ package com.continuuity.app.deploy;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.archive.JarClassLoader;
+import com.continuuity.app.program.Program;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -73,10 +73,11 @@ public class SandboxJVM {
     }
 
     // Load the JAR using the JAR class load and load the manifest file.
+
     Object mainClass;
     try {
-      JarClassLoader loader = new JarClassLoader(jarFilename);
-      mainClass = loader.getMainClass(Application.class);
+      Program archive = new Program(new File(jarFilename));
+      mainClass = archive.getMainClass().newInstance();
     } catch (Exception e) {
       LOG.error(e.getMessage());
       return -1;
@@ -101,7 +102,7 @@ public class SandboxJVM {
       Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
       try {
         // TODO: The SchemaGenerator should be injected.
-        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
+        ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
       } finally {
         writer.close();
       }

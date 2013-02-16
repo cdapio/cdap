@@ -7,12 +7,12 @@ package com.continuuity.archive;
 import com.continuuity.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -35,27 +35,27 @@ public final class JarResources {
 
   /**
    * creates a JarResources. It extracts all resources from a Jar
-   * into an internal hashtable, keyed by resource names.
-   * @param jarFileName a archive or zip file
+   * into an internal map, keyed by resource names.
+   *
+   * @param jarFileName a local archive or zip file
    */
-  public JarResources(String jarFileName) throws JarResourceException {
-    manifest = init(jarFileName);
+  public JarResources(String jarFileName) throws IOException {
+    this(new File(jarFileName));
+  }
+
+  public JarResources(File jarFile) throws IOException {
+    manifest = init(jarFile);
   }
 
   /**
    * Creates a JarResources using a {@link Location}. It extracts all resources from
-   * a Jar into a internal hashtable, keyed by resource names.
+   * a Jar into a internal map, keyed by resource names.
+   *
    * @param jar location of JAR file.
-   * @throws JarResourceException
    * @throws IOException
    */
-  public JarResources(Location jar) throws JarResourceException {
-    try {
-      InputStream is = jar.getInputStream();
-      manifest = init(is);
-    } catch (IOException e) {
-      throw new JarResourceException(e);
-    }
+  public JarResources(Location jar) throws IOException {
+    manifest = init(jar);
   }
 
   /**
@@ -78,78 +78,66 @@ public final class JarResources {
   /**
    * Makes a copy of JAR and then passes it to retrieve and initialize internal hash tables with Jar file resources.
    */
-  private Manifest init(InputStream stream) throws JarResourceException {
-    File temp = null;
+  private Manifest init(final Location jar) throws IOException {
+    File tmpFile = File.createTempFile("archive-", ".jar");
     try {
-      temp = File.createTempFile("archive-", ".jar");
-      FileOutputStream fos = new FileOutputStream(temp);
-      ByteStreams.copy(stream, fos);
-      fos.close();
-      return init(temp.getAbsolutePath());
-    } catch (IOException e) {
-      throw new JarResourceException(e);
+      Files.copy(new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return jar.getInputStream();
+        }
+      }, tmpFile);
+      return init(tmpFile);
     } finally {
-      if(temp != null) {
-        temp.delete();
-      }
+      tmpFile.delete();
     }
   }
 
   /**
    * initializes internal hash tables with Jar file resources.
    */
-  private Manifest init(String jarFileName) throws JarResourceException {
+  private Manifest init(File jarFile) throws IOException {
+    // extracts just sizes only.
+    JarFile zf = new JarFile(jarFile);
     try {
-      // extracts just sizes only.
-      JarFile zf = new JarFile(jarFileName);
-      try {
-        Enumeration<JarEntry> entries = zf.entries();
+      Enumeration<JarEntry> entries = zf.entries();
 
-        while (entries.hasMoreElements()) {
-          JarEntry ze = entries.nextElement();
-          if (LOG.isTraceEnabled()) {
-            LOG.trace(dumpJarEntry(ze));
-          }
-
-          if (ze.isDirectory()) {
-            continue;
-          }
-          if (ze.getSize() > Integer.MAX_VALUE) {
-            throw new JarResourceException("Jar entry is too big to fit in memory.");
-          }
-
-          InputStream is = zf.getInputStream(ze);
-          try {
-            byte[] bytes;
-            if (ze.getSize() < 0) {
-              bytes = ByteStreams.toByteArray(is);
-            } else {
-              bytes = new byte[(int)ze.getSize()];
-              ByteStreams.readFully(is, bytes);
-            }
-            // add to internal resource hashtable
-            entryContents.put(ze.getName(), bytes);
-            LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize="
-                        + ze.getCompressedSize());
-
-          } finally {
-            is.close();
-          }
+      while (entries.hasMoreElements()) {
+        JarEntry ze = entries.nextElement();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace(dumpJarEntry(ze));
         }
-        return zf.getManifest();
 
-      } finally {
-        zf.close();
+        if (ze.isDirectory()) {
+          continue;
+        }
+        if (ze.getSize() > Integer.MAX_VALUE) {
+          throw new IOException("Jar entry is too big to fit in memory.");
+        }
+
+        InputStream is = zf.getInputStream(ze);
+        try {
+          byte[] bytes;
+          if (ze.getSize() < 0) {
+            bytes = ByteStreams.toByteArray(is);
+          } else {
+            bytes = new byte[(int)ze.getSize()];
+            ByteStreams.readFully(is, bytes);
+          }
+          // add to internal resource hashtable
+          entryContents.put(ze.getName(), bytes);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(ze.getName() + "size=" + ze.getSize() + ",csize=" + ze.getCompressedSize());
+          }
+
+        } finally {
+          is.close();
+        }
       }
-    } catch (NullPointerException e){
-      LOG.warn("Error during initialization resource. Reason {}", e.getMessage());
-      throw new JarResourceException("Null pointer while loading archive file " + jarFileName);
-    } catch (FileNotFoundException e) {
-      LOG.warn("File {} not found. Reason : {}", jarFileName, e.getMessage());
-      throw new JarResourceException("Jar file " + jarFileName + " requested to be loaded is not found");
-    } catch (IOException e) {
-      LOG.warn("Error while reading file {}. Reason : {}", jarFileName, e.getMessage());
-      throw new JarResourceException("Error reading file " + jarFileName + ".");
+      return zf.getManifest();
+
+    } finally {
+      zf.close();
     }
   }
 

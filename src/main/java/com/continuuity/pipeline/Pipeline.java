@@ -4,6 +4,8 @@
 
 package com.continuuity.pipeline;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
  * This class represents a processing system consisting of a number of stages.
  * Each {@link Stage} takes in data processes it and forwards it to the next {@link Stage}
@@ -11,7 +13,7 @@ package com.continuuity.pipeline;
  * This class also allows all stages in the {@link Pipeline} to be managed collectively
  * with methods to run and get results of processing.
  */
-public interface Pipeline {
+public interface Pipeline<T> {
   /**
    * Adds a {@link Stage} to the end of this pipeline.
    *
@@ -24,10 +26,5 @@ public interface Pipeline {
    *
    * @param o argument to run the pipeline.
    */
-  void execute(Object o) throws Exception;
-
-  /**
-   * @return Result of processing the pipeline.
-   */
-  Object getResult();
+  ListenableFuture<T> execute(Object o) throws Exception;
 }

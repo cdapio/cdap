@@ -8,6 +8,7 @@ smartyFacts {
     enableJavadoc()
     enableSourceJar()
   }
+  thrift
 }
 
 /**
@@ -17,6 +18,8 @@ dependencies {
   // Dependencies for smartyFacts & main
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
+  compile elastic([group: 'com.continuuity', name: 'overlord', version: "${version}", changing: true], "overlord")
+  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
 
   // Dependencies required by main.
   compile libraries.slf4j_api
@@ -28,6 +31,9 @@ dependencies {
   compile libraries.google_guava
   compile libraries.jsr_305
 
+  // Thrift related stuff.
+  thriftCompile libraries.thrift
+
   // Test dependencies
   testCompile libraries.junit
 }
@@ -37,12 +43,12 @@ dependencies {
  */
 sourceSets {
   main {
-    compileClasspath += (api.output)
-    runtimeClasspath += (api.output)
+    compileClasspath += (api.output + thrift.output)
+    runtimeClasspath += (api.output + thrift.output)
   }
   test {
-    compileClasspath += (api.output)
-    runtimeClasspath += (api.output)
+    compileClasspath += (api.output + thrift.output)
+    runtimeClasspath += (api.output + thrift.output)
   }
 }
 
@@ -50,7 +56,7 @@ sourceSets {
  * Generates API javadoc.
  */
 javadoc {
-  classpath += (sourceSets.api.output)
+  classpath += (sourceSets.api.output + sourceSets.thrift.output)
 }
 
 /**

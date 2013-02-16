@@ -59,11 +59,11 @@ public class SchemaTest {
     Schema s1 = new ReflectionSchemaGenerator().generate(Node.class);
     Schema s2 = new ReflectionSchemaGenerator().generate(Node2.class);
 
-    Assert.assertArrayEquals(s1.getSchemaHash(), s2.getSchemaHash());
+    Assert.assertEquals(s1.getSchemaHash(), s2.getSchemaHash());
     Assert.assertEquals(s1, s2);
 
     Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() {}).getType());
-    Assert.assertFalse(Arrays.equals(s1.getSchemaHash(), schema.getSchemaHash()));
+    Assert.assertNotEquals(s1.getSchemaHash(), schema.getSchemaHash());
   }
 
   public final class Node3 {

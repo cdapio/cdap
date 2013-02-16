@@ -53,12 +53,11 @@ public class PipelineTest {
   @Test
   public void testSimplePipeline() throws Exception {
     PipelineFactory factory = new SynchronousPipelineFactory();
-    Pipeline pipeline = factory.getPipeline();
+    Pipeline<String> pipeline = factory.getPipeline();
     pipeline.addLast(new HowStage());
     pipeline.addLast(new AreStage());
     pipeline.addLast(new YouStage());
-    pipeline.execute("Hi");
-    String s = (String)pipeline.getResult();
+    String s = pipeline.execute("Hi").get();
     Assert.assertTrue(s.equals("Hi, how  are  you"));
   }
 
