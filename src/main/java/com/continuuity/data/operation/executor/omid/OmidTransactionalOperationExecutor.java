@@ -13,7 +13,6 @@ import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.common.metrics.CMetrics;
@@ -388,28 +387,6 @@ implements TransactionalOperationExecutor {
   // Single reads
 
   @Override
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey read)
-      throws OperationException {
-    initialize();
-    requestMetric("ReadKey");
-    long begin = begin();
-    OperationResult<byte[]> result =
-        read(context, read, this.oracle.getReadPointer());
-    end("ReadKey", begin);
-    namedTableMetric_read(read.getTable());
-    return result;
-  }
-
-  OperationResult<byte[]> read(OperationContext context,
-                               ReadKey read, ReadPointer pointer)
-      throws OperationException {
-    OrderedVersionedColumnarTable table =
-        this.findRandomTable(context, read.getTable());
-    return table.get(read.getKey(), Operation.KV_COL, pointer);
-  }
-
-  @Override
   public OperationResult<List<byte[]>> execute(OperationContext context,
                                                ReadAllKeys readKeys)
       throws OperationException {
@@ -418,9 +395,17 @@ implements TransactionalOperationExecutor {
     long begin = begin();
     OrderedVersionedColumnarTable table = this.findRandomTable(context, readKeys.getTable());
     List<byte[]> result = table.getKeys(readKeys.getLimit(), readKeys.getOffset(), this.oracle.getReadPointer());
-    end("ReadKey", begin);
+    end("ReadAllKeys", begin);
     namedTableMetric_read(readKeys.getTable());
     return new OperationResult<List<byte[]>>(result);
+  }
+
+  OperationResult<Map<byte[],byte[]>> read(OperationContext context,
+                                           Read read, ReadPointer pointer)
+    throws OperationException {
+    OrderedVersionedColumnarTable table =
+      this.findRandomTable(context, read.getTable());
+    return table.get(read.getKey(), read.getColumns(), pointer);
   }
 
   @Override

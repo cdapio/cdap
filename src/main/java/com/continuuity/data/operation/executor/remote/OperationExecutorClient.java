@@ -13,7 +13,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.remote.stubs.*;
@@ -267,34 +266,6 @@ public class OperationExecutorClient extends ConverterUtils {
       client.openTable(tContext, tOpenTable);
       if (Log.isTraceEnabled()) Log.trace("OpenTable successful.");
       helper.success();
-
-    } catch (TOperationException te) {
-      helper.failure();
-      throw unwrap(te);
-
-    } catch (TException te) {
-      helper.failure();
-      throw te;
-    }
-  }
-
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey readKey)
-      throws TException, OperationException {
-
-    MetricsHelper helper = newHelper("readkey", readKey.getTable());
-
-    try {
-      if (Log.isTraceEnabled()) Log.trace("Received " + readKey);
-      TOperationContext tcontext = wrap(context);
-      TReadKey tReadKey = wrap(readKey);
-      if (Log.isTraceEnabled()) Log.trace("Sending TReadKey" + tReadKey);
-      TOptionalBinary tResult = client.readKey(tcontext, tReadKey);
-      if (Log.isTraceEnabled()) Log.trace("TReadKey successful.");
-      OperationResult<byte[]> result = unwrap(tResult);
-
-      helper.finish(result.isEmpty() ? NoData : Success);
-      return result;
 
     } catch (TOperationException te) {
       helper.failure();

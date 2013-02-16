@@ -7,12 +7,6 @@ struct TOperationContext {
   2: optional string application,
 }
 
-struct TReadKey {
-  1: optional string table,
-  2: binary key,
-  3: i64 id,
-}
-
 struct TRead {
   1: optional string table,
   2: binary key,
@@ -206,7 +200,6 @@ service TOperationExecutor {
   void batch(1: TOperationContext context, 2: TWriteBatch batch) throws (1: TOperationException ex),
 
   // read op ex
-  TOptionalBinary readKey(1: TOperationContext context, 2: TReadKey readKey) throws (1: TOperationException ex),
   TOptionalBinaryMap read(1: TOperationContext context, 2: TRead read) throws (1: TOperationException ex),
   TOptionalBinaryList readAllKeys(1: TOperationContext context, 2: TReadAllKeys readAllKeys) throws (1: TOperationException ex),
   TOptionalBinaryMap readColumnRange(1: TOperationContext context, 2: TReadColumnRange readColumnRange) throws (1: TOperationException ex),

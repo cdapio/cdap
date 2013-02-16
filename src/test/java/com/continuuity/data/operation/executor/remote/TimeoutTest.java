@@ -1,10 +1,12 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.*;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.operation.ClearFabric;
+import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.ReadKey;
+import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
@@ -14,6 +16,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeoutTest extends OpexServiceTestBase {
@@ -64,8 +68,8 @@ public class TimeoutTest extends OpexServiceTestBase {
           int readCount = 0;
 
           @Override
-          public OperationResult<byte[]> execute(
-              OperationContext context, ReadKey read)
+          public OperationResult<Map<byte[], byte[]>> execute(
+              OperationContext context, Read read)
               throws OperationException {
             if (++readCount < 3) {
               try {
@@ -75,8 +79,9 @@ public class TimeoutTest extends OpexServiceTestBase {
               }
               return super.execute(context, read);
             } else {
-              return new OperationResult<byte[]>(
-                  new byte[]{(byte) readCount});
+              Map<byte[], byte[]> map = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+              map.put(Operation.KV_COL, new byte[]{(byte) readCount});
+              return new OperationResult<Map<byte[], byte[]>>(map);
             }
           }
 
@@ -102,7 +107,7 @@ public class TimeoutTest extends OpexServiceTestBase {
    */
   @Test(expected = OperationException.class)
   public void testThriftTimeout() throws OperationException {
-    Write write = new Write("x".getBytes(), "1".getBytes());
+    Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
     remote.execute(context, write);
   }
 
@@ -113,7 +118,7 @@ public class TimeoutTest extends OpexServiceTestBase {
   @Test(expected = OperationException.class)
   public void testThriftTimeoutBatch() throws OperationException {
     List<WriteOperation> batch = Lists.newArrayList();
-    Write write = new Write("x".getBytes(), "1".getBytes());
+    Write write = new Write("x".getBytes(), "c".getBytes(), "1".getBytes());
     batch.add(write);
     remote.execute(context, batch);
   }
@@ -123,9 +128,9 @@ public class TimeoutTest extends OpexServiceTestBase {
    */
   @Test
   public void testRetry() throws OperationException {
-    ReadKey read = new ReadKey("x".getBytes());
+    Read read = new Read("x".getBytes(), Operation.KV_COL);
     Assert.assertArrayEquals(new byte[] { 3 },
-        remote.execute(context, read).getValue());
+        remote.execute(context, read).getValue().get(Operation.KV_COL));
   }
 
   /**

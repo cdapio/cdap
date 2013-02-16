@@ -9,7 +9,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
@@ -319,20 +318,6 @@ public class RemoteOperationExecutor
               throws TException, OperationException {
             client.execute(context, openTable);
             return true;
-          }
-        });
-  }
-
-  @Override
-  public OperationResult<byte[]> execute(final OperationContext context,
-                                         final ReadKey readKey)
-      throws OperationException {
-    return this.execute(
-        new Operation<OperationResult<byte[]>>("ReadKey") {
-          @Override
-          public OperationResult<byte[]> execute(OperationExecutorClient client)
-              throws OperationException, TException {
-            return client.execute(context, readKey);
           }
         });
   }

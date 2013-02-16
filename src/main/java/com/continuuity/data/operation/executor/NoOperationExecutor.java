@@ -8,7 +8,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
@@ -98,16 +97,8 @@ public class NoOperationExecutor implements OperationExecutor {
   }
 
   @Override
-  public OperationResult<byte[]> execute(OperationContext context,
-                                         ReadKey read)
-      throws OperationException {
-    // return empty result, key not found
-    return new OperationResult<byte[]>(StatusCode.KEY_NOT_FOUND);
-  }
-
-  @Override
   public OperationResult<Map<byte[], byte[]>>
-  execute(OperationContext context, Read read) {
+  execute(OperationContext context, Read read) throws OperationException {
     // return empty result, key not found
     return new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
   }

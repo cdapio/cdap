@@ -1,25 +1,41 @@
 package com.continuuity.data.operation.executor.remote;
 
-import com.continuuity.api.data.*;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.ClearFabric;
-import com.continuuity.data.operation.CompareAndSwap;
-import com.continuuity.data.operation.Delete;
-import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OpenTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
-import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.remote.stubs.*;
-import com.continuuity.data.operation.ttqueue.*;
+import com.continuuity.data.operation.executor.remote.stubs.TClearFabric;
+import com.continuuity.data.operation.executor.remote.stubs.TDequeueResult;
+import com.continuuity.data.operation.executor.remote.stubs.TGetGroupId;
+import com.continuuity.data.operation.executor.remote.stubs.TGetQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TOpenTable;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationContext;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationException;
+import com.continuuity.data.operation.executor.remote.stubs.TOperationExecutor;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinary;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryList;
+import com.continuuity.data.operation.executor.remote.stubs.TOptionalBinaryMap;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueDequeue;
+import com.continuuity.data.operation.executor.remote.stubs.TQueueInfo;
+import com.continuuity.data.operation.executor.remote.stubs.TRead;
+import com.continuuity.data.operation.executor.remote.stubs.TReadAllKeys;
+import com.continuuity.data.operation.executor.remote.stubs.TReadColumnRange;
+import com.continuuity.data.operation.executor.remote.stubs.TReadKey;
+import com.continuuity.data.operation.executor.remote.stubs.TWriteOperation;
+import com.continuuity.data.operation.ttqueue.DequeueResult;
+import com.continuuity.data.operation.ttqueue.QueueAdmin;
+import com.continuuity.data.operation.ttqueue.QueueDequeue;
+import com.continuuity.data.operation.ttqueue.QueueEnqueue;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,34 +161,6 @@ public class TOperationExecutorImpl
   // read operations. they may return null from the executor.
   // Because Thrift methods cannot return null, we must wrap their
   // results into a structure
-
-  @Override
-  public TOptionalBinary readKey(TOperationContext tcontext,
-                                 TReadKey tReadKey)
-      throws TException, TOperationException {
-
-    MetricsHelper helper = newHelper("readkey", tReadKey.getTable());
-
-    if (Log.isTraceEnabled())
-      Log.trace("Received TReadKey: " + tReadKey);
-
-    try {
-      OperationContext context = unwrap(tcontext);
-      ReadKey readKey = unwrap(tReadKey);
-      OperationResult<byte[]> result = this.opex.execute(context, readKey);
-      TOptionalBinary tResult = wrapBinary(result);
-      if (Log.isTraceEnabled()) Log.trace("ReadKey successful.");
-
-      helper.finish(result.isEmpty() ? NoData : Success);
-      return tResult;
-
-    } catch (OperationException e) {
-      Log.warn("ReadKey failed: " + e.getMessage());
-      Log.warn(StackTraceUtil.toStringStackTrace(e));
-      helper.failure();
-      throw wrap(e);
-    }
-  }
 
   @Override
   public TOptionalBinaryMap read(TOperationContext tcontext,

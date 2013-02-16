@@ -22,26 +22,6 @@ public class Read implements ReadOperation {
   private final byte [][] columns;
 
   /**
-   * Reads the value of the specified key from the default table.
-   *
-   * @param key the key to read
-   */
-  public Read(final byte [] key) {
-    this((String)null, key);
-  }
-
-  /**
-   * Reads the value of the specified key from the specified table.
-   *
-   * @param table the name of the table to read from
-   * @param key the key to read
-   */
-  public Read(final String table,
-              final byte [] key) {
-    this(table, key, KV_COL_ARR);
-  }
-
-  /**
    * Reads the value of the specified column in the specified row,
    * from the default table.
    *

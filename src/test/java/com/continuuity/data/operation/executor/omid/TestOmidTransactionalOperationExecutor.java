@@ -15,7 +15,6 @@ import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadColumnRange;
-import com.continuuity.data.operation.ReadKey;
 import com.continuuity.data.operation.Write;
 import com.continuuity.data.operation.WriteOperation;
 import com.continuuity.data.operation.executor.Transaction;
@@ -83,22 +82,24 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointer = executor.startTransaction();
 
     // write to a key
-    WriteTransactionResult txResult = executor.write(context, new Write(key, value), pointer);
+    WriteTransactionResult txResult = executor.write(context, new Write(key, kvcol, value), pointer);
     assertTrue(txResult.success);
     executor.addToTransaction(pointer, txResult.undos);
 
     // read should see nothing
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // commit
     assertTrue(executor.commitTransaction(pointer).isSuccess());
 
     // read should see the write
-    OperationResult<byte []> readValue = executor.execute(context, new ReadKey(key));
+    OperationResult<Map<byte [],byte[]>> readValue = executor.execute(context, new Read(key, kvcol));
     assertNotNull(readValue);
     assertFalse(readValue.isEmpty());
-    assertArrayEquals(value, readValue.getValue());
+    assertArrayEquals(value, readValue.getValue().get(kvcol));
   }
+
+  static final byte[] kvcol = Operation.KV_COL;
 
   @Test
   public void testClearFabric() throws Exception {
@@ -111,13 +112,13 @@ public abstract class TestOmidTransactionalOperationExecutor {
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
 
     // insert to all three types
-    executor.execute(context, new Write(dataKey, dataKey));
+    executor.execute(context, new Write(dataKey, kvcol, dataKey));
     executor.execute(context, new QueueEnqueue(queueKey, queueKey));
     executor.execute(context, new QueueEnqueue(streamKey, streamKey));
 
     // read data from all three types
     assertTrue(Bytes.equals(dataKey,
-        executor.execute(context, new ReadKey(dataKey)).getValue()));
+        executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol)));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).getValue()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
@@ -127,7 +128,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     executor.execute(context, new ClearFabric(ClearFabric.ToClear.DATA));
 
     // data is gone, queues still there
-    assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());
+    assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).getValue()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
@@ -138,20 +139,20 @@ public abstract class TestOmidTransactionalOperationExecutor {
         ClearFabric.ToClear.QUEUES, ClearFabric.ToClear.STREAMS)));
 
     // everything is gone
-    assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());
+    assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(streamKey, consumer, config)).isEmpty());
 
     // insert data to all three again
-    executor.execute(context, new Write(dataKey, dataKey));
+    executor.execute(context, new Write(dataKey, kvcol, dataKey));
     executor.execute(context, new QueueEnqueue(queueKey, queueKey));
     executor.execute(context, new QueueEnqueue(streamKey, streamKey));
 
     // read data from all three types
     assertArrayEquals(dataKey,
-        executor.execute(context, new ReadKey(dataKey)).getValue());
+        executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).getValue()));
     assertTrue(Bytes.equals(streamKey, executor.execute(context,
@@ -162,7 +163,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // streams gone, queues and data remain
     assertArrayEquals(dataKey,
-        executor.execute(context, new ReadKey(dataKey)).getValue());
+        executor.execute(context, new Read(dataKey, kvcol)).getValue().get(kvcol));
     assertTrue(Bytes.equals(queueKey, executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).getValue()));
     assertTrue(executor.execute(context,
@@ -173,7 +174,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         ClearFabric.ToClear.DATA, ClearFabric.ToClear.QUEUES)));
 
     // everything is gone
-    assertTrue(executor.execute(context, new ReadKey(dataKey)).isEmpty());
+    assertTrue(executor.execute(context, new Read(dataKey, kvcol)).isEmpty());
     assertTrue(executor.execute(context,
         new QueueDequeue(queueKey, consumer, config)).isEmpty());
     assertTrue(executor.execute(context,
@@ -195,12 +196,12 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write value one
     WriteTransactionResult txResult1 =
-      executor.write(context, new Write(key, valueOne), pointerOne);
+      executor.write(context, new Write(key, kvcol, valueOne), pointerOne);
     assertTrue(txResult1.success);
     executor.addToTransaction(pointerOne, txResult1.undos);
 
     // read should see nothing
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // start tx two
     Transaction pointerTwo = executor.startTransaction();
@@ -209,29 +210,29 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write value two
     WriteTransactionResult txResult2 =
-      executor.write(context, new Write(key, valueTwo), pointerTwo);
+      executor.write(context, new Write(key, kvcol, valueTwo), pointerTwo);
     executor.addToTransaction(pointerTwo, txResult2.undos);
 
     // read should see nothing
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // commit tx two, should succeed
     assertTrue(executor.commitTransaction(pointerTwo).isSuccess());
 
     // even though tx one not committed, we can see two already
-    OperationResult<byte[]> readValue = executor.execute(context, new ReadKey(key));
+    OperationResult<Map<byte[],byte[]>> readValue = executor.execute(context, new Read(key, kvcol));
     assertNotNull(readValue);
     assertFalse(readValue.isEmpty());
-    assertArrayEquals(valueTwo, readValue.getValue());
+    assertArrayEquals(valueTwo, readValue.getValue().get(kvcol));
 
     // commit tx one, should fail
     assertFalse(executor.commitTransaction(pointerOne).isSuccess());
 
     // should still see two
-    readValue = executor.execute(context, new ReadKey(key));
+    readValue = executor.execute(context, new Read(key, kvcol));
     assertNotNull(readValue);
     assertFalse(readValue.isEmpty());
-    assertArrayEquals(valueTwo, readValue.getValue());
+    assertArrayEquals(valueTwo, readValue.getValue().get(kvcol));
   }
 
   @Test
@@ -245,7 +246,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write and commit
     WriteTransactionResult txResult =
-      executor.write(context, new Write(key, Bytes.toBytes(1)), pointerOne);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(1)), pointerOne);
     assertTrue(txResult.success);
     executor.addToTransaction(pointerOne, txResult.undos);
     assertTrue(executor.commitTransaction(pointerOne).isSuccess());
@@ -260,7 +261,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // read should see value 1
     assertArrayEquals(Bytes.toBytes(1),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol));
   }
 
   @Test
@@ -274,19 +275,19 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write 1
     WriteTransactionResult txResultW1 =
-      executor.write(context, new Write(key, Bytes.toBytes(1)), pointerWOne);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(1)), pointerWOne);
     assertTrue(txResultW1.success);
     executor.addToTransaction(pointerWOne, txResultW1.undos);
 
     // read should see nothing
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // commit write 1
     assertTrue(executor.commitTransaction(pointerWOne).isSuccess());
 
     // read sees 1
     assertArrayEquals(Bytes.toBytes(1),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol));
 
     // open long-running read
     Transaction pointerReadOne = executor.startTransaction();
@@ -295,17 +296,16 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointerWTwo = executor.startTransaction();
     // System.out.println("Started transaction txwTwo : " + pointerWTwo);
     WriteTransactionResult txResultW2 =
-      executor.write(context, new Write(key, Bytes.toBytes(2)), pointerWTwo);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(2)), pointerWTwo);
     assertTrue(txResultW2.success);
     executor.addToTransaction(pointerWTwo, txResultW2.undos);
     assertTrue(executor.commitTransaction(pointerWTwo).isSuccess());
 
     // read sees 2
-    OperationResult<byte[]> value = executor.execute(context, new ReadKey(key));
+    OperationResult<Map<byte[],byte[]>> value = executor.execute(context, new Read(key, kvcol));
     assertNotNull(value);
     assertFalse(value.isEmpty());
-    assertArrayEquals(Bytes.toBytes(2),
-        executor.execute(context, new ReadKey(key)).getValue());
+    assertArrayEquals(Bytes.toBytes(2), value.getValue().get(kvcol));
 
     // open long-running read
     Transaction pointerReadTwo = executor.startTransaction();
@@ -314,7 +314,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointerWThree = executor.startTransaction();
     // System.out.println("Started transaction txwThree : " + pointerWThree);
     WriteTransactionResult txResultW3 =
-      executor.write(context, new Write(key, Bytes.toBytes(3)), pointerWThree);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(3)), pointerWThree);
     assertTrue(txResultW3.success);
     executor.addToTransaction(pointerWThree, txResultW3.undos);
 
@@ -322,32 +322,32 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointerWFour = executor.startTransaction();
     // System.out.println("Started transaction txwFour : " + pointerWFour);
     WriteTransactionResult txResultW4 =
-      executor.write(context, new Write(key, Bytes.toBytes(4)), pointerWFour);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(4)), pointerWFour);
     assertTrue(txResultW4.success);
     executor.addToTransaction(pointerWFour, txResultW4.undos);
 
     // read sees 2 still
     assertArrayEquals(Bytes.toBytes(2),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key, kvcol)).getValue().get(kvcol));
 
     // commit 4, should be successful
     assertTrue(executor.commitTransaction(pointerWFour).isSuccess());
 
     // read sees 4
     assertArrayEquals(Bytes.toBytes(4),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // commit 3, should fail
     assertFalse(executor.commitTransaction(pointerWThree).isSuccess());
 
     // read still sees 4
     assertArrayEquals(Bytes.toBytes(4),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // now read with long-running read 1, should see value = 1
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
+            .getValue().get(kvcol));
 
     // now do the same thing but in reverse order of conflict
 
@@ -355,7 +355,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointerWFive = executor.startTransaction();
     // System.out.println("Started transaction txwFive : " + pointerWFive);
     WriteTransactionResult txResultW5 =
-      executor.write(context, new Write(key, Bytes.toBytes(5)), pointerWFive);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(5)), pointerWFive);
     assertTrue(txResultW5.success);
     executor.addToTransaction(pointerWFive, txResultW5.undos);
 
@@ -363,51 +363,51 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Transaction pointerWSix = executor.startTransaction();
     // System.out.println("Started transaction txwSix : " + pointerWSix);
     WriteTransactionResult txResultW6 =
-      executor.write(context, new Write(key, Bytes.toBytes(6)), pointerWSix);
+      executor.write(context, new Write(key, kvcol, Bytes.toBytes(6)), pointerWSix);
     assertTrue(txResultW6.success);
     executor.addToTransaction(pointerWSix, txResultW6.undos);
 
     // read sees 4 still
     assertArrayEquals(Bytes.toBytes(4),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
+            .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
+            .getValue().get(kvcol));
 
     // commit 5, should be successful
     assertTrue(executor.commitTransaction(pointerWFive).isSuccess());
 
     // read sees 5
     assertArrayEquals(Bytes.toBytes(5),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
+            .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
+            .getValue().get(kvcol));
 
     // commit 6, should fail
     assertFalse(executor.commitTransaction(pointerWSix).isSuccess());
 
     // read still sees 5
     assertArrayEquals(Bytes.toBytes(5),
-        executor.execute(context, new ReadKey(key)).getValue());
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // long running reads should still see their respective values
     assertArrayEquals(Bytes.toBytes(1),
-        executor.read(context, new ReadKey(key), pointerReadOne.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadOne.getReadPointer())
+            .getValue().get(kvcol));
     assertArrayEquals(Bytes.toBytes(2),
-        executor.read(context, new ReadKey(key), pointerReadTwo.getReadPointer())
-            .getValue());
+        executor.read(context, new Read(key, kvcol), pointerReadTwo.getReadPointer())
+            .getValue().get(kvcol));
   }
 
 
@@ -441,7 +441,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // Increment a counter and add our ack
     List<WriteOperation> writes = new ArrayList<WriteOperation>(2);
-    writes.add(new Increment(key, 3));
+    writes.add(new Increment(key, kvcol, 3));
     writes.add(new QueueAck(queueName,
         dequeueResult.getEntryPointer(), consumer));
 
@@ -465,7 +465,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // Same increment and ack
     writes = new ArrayList<WriteOperation>(2);
-    writes.add(new Increment(key, 5));
+    writes.add(new Increment(key, kvcol, 5));
     writes.add(new QueueAck(queueName,
         dequeueResult.getEntryPointer(), consumer));
 
@@ -481,7 +481,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // Incremented value should be 5
     // Mario, look at this one!
     assertEquals(5L, Bytes.toLong(
-        executor.execute(context, new ReadKey(key)).getValue()));
+        executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol)));
 
     OmidTransactionalOperationExecutor.DISABLE_QUEUE_PAYLOADS = false;
   }
@@ -494,7 +494,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     byte [] valueTwo = Bytes.toBytes("valueTwo");
 
     List<WriteOperation> ops = new ArrayList<WriteOperation>();
-    Delete delete = new Delete(key);
+    Delete delete = new Delete(key, kvcol);
     ops.add(delete);
 
     // Executing in a batch should succeed
@@ -509,19 +509,19 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // write value one
     WriteTransactionResult txResultOne =
-      executor.write(context, new Write(key, valueOne), pointerOne);
+      executor.write(context, new Write(key, kvcol, valueOne), pointerOne);
     assertTrue(txResultOne.success);
     executor.addToTransaction(pointerOne, txResultOne.undos);
 
     // read should see nothing
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // commit
     assertTrue(executor.commitTransaction(pointerOne).isSuccess());
 
     // dirty read should see it
-    assertArrayEquals(valueOne, executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE))
-      .getValue());
+    assertArrayEquals(valueOne, executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE))
+      .getValue().get(kvcol));
 
     // start tx two
     Transaction pointerTwo = executor.startTransaction();
@@ -529,31 +529,31 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // delete value one
     WriteTransactionResult txResultTwo =
-      executor.write(context, new Delete(key), pointerTwo);
+      executor.write(context, new Delete(key, kvcol), pointerTwo);
     assertTrue(txResultTwo.success);
     executor.addToTransaction(pointerTwo, txResultTwo.undos);
 
     // clean read should see it still
-    assertArrayEquals(valueOne, executor.execute(context, new ReadKey(key)).getValue());
+    assertArrayEquals(valueOne, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // dirty read should NOT see it
-    assertTrue(executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
+    assertTrue(executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE)).isEmpty());
 
     // commit it
     assertTrue(executor.commitTransaction(pointerTwo).isSuccess());
 
     // clean read will not see it now
-    assertTrue(executor.execute(context, new ReadKey(key)).isEmpty());
+    assertTrue(executor.execute(context, new Read(key, kvcol)).isEmpty());
 
     // write value two
-    executor.execute(context, new Write(key, valueTwo));
+    executor.execute(context, new Write(key, kvcol, valueTwo));
 
     // clean read sees it
-    assertArrayEquals(valueTwo, executor.execute(context, new ReadKey(key)).getValue());
+    assertArrayEquals(valueTwo, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
 
     // dirty read sees it
     assertArrayEquals(valueTwo, executor.read(context,
-        new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE)).getValue());
+        new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE)).getValue().get(kvcol));
 
     // start tx three
     Transaction pointerThree = executor.startTransaction();
@@ -568,7 +568,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     // commit the real transaction with a delete, should be aborted
     try {
       executor.execute(context,
-          Arrays.asList(new WriteOperation [] { new Delete(key) }),
+          Arrays.asList(new WriteOperation [] { new Delete(key, kvcol) }),
           pointerThree);
       fail("expecting OperationException");
     } catch (OperationException e) {
@@ -576,9 +576,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     }
 
     // verify clean and dirty reads still see the value (it was undeleted)
-    assertArrayEquals(valueTwo, executor.execute(context, new ReadKey(key)).getValue());
-    assertArrayEquals(valueTwo, executor.read(context, new ReadKey(key), new MemoryReadPointer(Long.MAX_VALUE))
-      .getValue());
+    assertArrayEquals(valueTwo, executor.execute(context, new Read(key,kvcol)).getValue().get(kvcol));
+    assertArrayEquals(valueTwo, executor.read(context, new Read(key, kvcol), new MemoryReadPointer(Long.MAX_VALUE))
+      .getValue().get(kvcol));
   }
 
   @Test
@@ -724,10 +724,10 @@ public abstract class TestOmidTransactionalOperationExecutor {
     }
     {
     // read back with read key
-    OperationResult<byte[]> result3 =
-        executor.execute(context, new ReadKey(table, rowkey));
+    OperationResult<Map<byte[],byte[]>> result3 =
+        executor.execute(context, new Read(table, rowkey, kvcol));
     Assert.assertFalse(result3.isEmpty());
-    Assert.assertArrayEquals(val4, result3.getValue());
+    Assert.assertArrayEquals(val4, result3.getValue().get(kvcol));
     }
     {
     // read back with column range
