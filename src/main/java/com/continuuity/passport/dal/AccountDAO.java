@@ -46,7 +46,8 @@ public interface AccountDAO {
   public Account getAccount(int accountId) throws ConfigurationException, RuntimeException;
 
 
-  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo) throws ConfigurationException, RuntimeException;
+  public boolean updateBillingInfo(int accountId, BillingInfo billingInfo)
+                                                                  throws ConfigurationException, RuntimeException;
 
   /**
    * Configure the Data access objects
