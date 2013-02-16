@@ -8,17 +8,17 @@ import org.apache.commons.lang.StringUtils;
  */
 public class Account {
 
-  private final String first_name;
+  private final String firstName;
 
-  private final String last_name;
+  private final String lastName;
 
   private final String company;
 
-  private final  String email_id;
+  private final  String emailId;
 
-  private final int account_id;
+  private final int accountId;
 
-  private final String api_key;
+  private final String apiKey;
 
   public Account(String firstName, String lastName, String emailId) {
     this(firstName,lastName, StringUtils.EMPTY,emailId,-1);
@@ -29,12 +29,12 @@ public class Account {
   }
 
   public Account(String firstName, String lastName, String company, String emailId, int accountId,String apiKey) {
-    this.first_name = firstName;
-    this.last_name = lastName;
+    this.firstName = firstName;
+    this.lastName = lastName;
     this.company = company;
-    this.email_id = emailId;
-    this.account_id = accountId;
-    this.api_key = apiKey;
+    this.emailId = emailId;
+    this.accountId = accountId;
+    this.apiKey = apiKey;
   }
 
 
@@ -44,11 +44,11 @@ public class Account {
 
 
   public String getFirstName() {
-    return first_name;
+    return firstName;
   }
 
   public String getLastName() {
-    return last_name;
+    return lastName;
   }
 
   public String getCompany() {
@@ -56,13 +56,18 @@ public class Account {
   }
 
   public String getEmailId() {
-    return email_id;
+    return emailId;
   }
 
   public int getAccountId() {
-    return account_id;
+    return accountId;
   }
 
+  public String getApiKey() {
+    return apiKey;
+  }
+
+  @Override
   public String toString() {
     Gson gson = new Gson();
     return (gson.toJson(this));
