@@ -9,16 +9,13 @@ import com.continuuity.passport.core.meta.Role;
 import com.continuuity.passport.core.utils.ApiKey;
 import com.continuuity.passport.dal.AccountDAO;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import org.joda.time.DateTime;
 
-import javax.swing.*;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 

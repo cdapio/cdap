@@ -1,6 +1,5 @@
 package com.continuuity.passport.http;
 
-import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
 import com.continuuity.passport.core.meta.UsernamePasswordApiKeyCredentials;
@@ -12,20 +11,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sun.jersey.core.util.Base64;
 import org.apache.shiro.util.StringUtils;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Request;
 import java.util.List;
 
 /**

@@ -3,10 +3,9 @@ package com.continuuity.passport.http;
 
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
 import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.mgt.*;
+import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
