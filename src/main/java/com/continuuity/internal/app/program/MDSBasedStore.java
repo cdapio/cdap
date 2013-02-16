@@ -25,10 +25,14 @@ public class MDSBasedStore implements Store {
   static final String FIELD_PROGRAM_RUN_END_TS = "endTs";
   static final String FIELD_PROGRAM_RUN_END_STATE = "endState";
 
-  // We re-use metadataService to store configuration type data
+  /**
+   * We re-use metadataService to store configuration type data
+   */
   private MetadataService.Iface metaDataService;
 
-  // We use metaDataStore directly to store user actions history
+  /**
+   * We use metaDataStore directly to store user actions history
+   */
   private MetaDataStore metaDataStore;
 
   @Inject
@@ -45,6 +49,9 @@ public class MDSBasedStore implements Store {
     return metaDataService;
   }
 
+  /**
+   *
+   */
   @Override
   public void logProgramStart(final String accountId, final String applicationId, final String programId,
                               final String runId, final long startTs) throws OperationException {
@@ -75,7 +82,7 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public List<Version> getAvailableVersions() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   /**
@@ -83,7 +90,7 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public Version getCurrentVersion() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   /**
@@ -93,7 +100,7 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public void delete(Version version) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 
   /**

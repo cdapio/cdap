@@ -16,7 +16,7 @@ import com.google.inject.Inject;
 /**
  *
  */
-public class LocalManager implements Manager {
+public class LocalManager implements Manager<Location, String> {
   private final PipelineFactory factory;
 
   @Inject
@@ -25,8 +25,8 @@ public class LocalManager implements Manager {
   }
 
   @Override
-  public ListenableFuture<?> deploy(Location archive) throws Exception {
-    Pipeline pipeline = factory.getPipeline();
+  public ListenableFuture<String> deploy(Location archive) throws Exception {
+    Pipeline<String> pipeline = factory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage());
     pipeline.addLast(new VerificationStage());
     return pipeline.execute(archive);

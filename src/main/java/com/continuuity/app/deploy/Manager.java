@@ -4,12 +4,11 @@
 
 package com.continuuity.app.deploy;
 
-import com.continuuity.filesystem.Location;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  *
  */
-public interface Manager {
-  ListenableFuture<?> deploy(Location deployedJar) throws Exception;
+public interface Manager<I,O> {
+  ListenableFuture<O> deploy(I input) throws Exception;
 }
