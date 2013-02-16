@@ -10,6 +10,7 @@ import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.flow.flowlet.GeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.io.Schema;
@@ -193,7 +194,11 @@ public final class FlowletDefinition {
 
       // Grab all process methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
-        com.continuuity.api.annotation.Process processAnnotation = method.getAnnotation(Process.class);
+        // There should be no process method on GeneratorFlowlet
+        if (GeneratorFlowlet.class.isAssignableFrom(type.getRawType())) {
+          continue;
+        }
+        Process processAnnotation = method.getAnnotation(Process.class);
         if (!method.getName().startsWith(PROCESS_METHOD_PREFIX) && processAnnotation == null) {
           continue;
         }
