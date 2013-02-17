@@ -14,6 +14,6 @@ public interface Undo {
    *         returns null, that means that the operation is excluded from
    *         conflict detection (for instance, a queue operation).
    */
-  public byte[] getRowKey();
+  public RowSet.Row getRow();
 
 }

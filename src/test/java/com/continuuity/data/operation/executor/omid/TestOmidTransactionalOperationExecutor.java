@@ -1180,4 +1180,28 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertEquals(66L, Bytes.toLong(res1.getValue().get(c)));
   }
 
+  // test that operation on different tables but with same key do not cause write conflict
+  @Test
+  public void testNoConflictsIfDifferentTables() throws OperationException {
+    final String t2 = "tNCIDT2";
+    final String t3 = "tNCIDT3";
+    final byte[] a = {'a'};
+    final byte[] b = {'b'};
+
+    // start three transactions
+    Transaction tx1 = executor.startTransaction(context);
+    Transaction tx2 = executor.startTransaction(context);
+    Transaction tx3 = executor.startTransaction(context);
+
+    // all transactions write the same row to different tables, one uses default table
+    executor.execute(context, tx1, batch(new Write(a, b, b)));
+    executor.execute(context, tx2, batch(new Write(t2, a, b, b)));
+    executor.execute(context, tx3, batch(new Write(t3, a, b, b)));
+
+    // commit all transactions, none should fail
+    executor.commit(context, tx1); // succeeds anyway
+    executor.commit(context, tx2); // no conflict between named table and default table
+    executor.commit(context, tx3); // no conflict between two named tables
+  }
+
 }

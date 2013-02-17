@@ -1,15 +1,14 @@
 package com.continuuity.data.operation.executor.omid;
 
+import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.operation.executor.ReadPointer;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -25,6 +24,11 @@ public class TestMemoryOracle {
   private static TransactionOracle newOracle() {
     return injector.getInstance(TransactionOracle.class);
   }
+
+  static final byte[] a = { 'a' };
+  static final byte[] b = { 'b' };
+  static final byte[] c = { 'c' };
+  static final byte[][] columns = { { 'x' } };
 
   // test that txids are increasing
   // test that new transaction includes itself for read
@@ -91,10 +95,6 @@ public class TestMemoryOracle {
   @Test
   public void testWriteConflict() throws OmidTransactionException {
     final String table = "t";
-    final byte[] a = { 'a' };
-    final byte[] b = { 'b' };
-    final byte[] c = { 'c' };
-    final byte[][] columns = { { 'x' } };
 
     TransactionOracle oracle = newOracle();
 
@@ -128,8 +128,8 @@ public class TestMemoryOracle {
     Assert.assertFalse(txres1.isSuccess());
     List<Undo> undos1 = txres1.getUndos();
     Assert.assertEquals(2, undos1.size());
-    assertUndo(undos1, a);
-    assertUndo(undos1, b);
+    assertUndo(undos1, new RowSet.Row(table, a));
+    assertUndo(undos1, new RowSet.Row(table, b));
 
     // now tx3 commits. It has a conflict with tx1 on b, but tx1 failed -> success
     Assert.assertTrue(oracle.commitTransaction(txid3).isSuccess());
@@ -139,14 +139,16 @@ public class TestMemoryOracle {
     Assert.assertFalse(txres4.isSuccess());
     List<Undo> undos4 = txres4.getUndos();
     Assert.assertEquals(1, undos4.size());
-    assertUndo(undos4, c);
+    assertUndo(undos4, new RowSet.Row(table, c));
   }
 
-  private static void assertUndo(List<Undo> undos, byte[] key) {
+  private static void assertUndo(List<Undo> undos, RowSet.Row key) {
     for (Undo u : undos) {
-      if (Arrays.equals(u.getRowKey(), key)) return;
+      if (key.equals(u.getRow())) {
+        return;
+      }
     }
-    Assert.fail("Key " + Arrays.toString(key) + " is not in list of undos");
+    Assert.fail("Key " + key.toString() + " is not in list of undos");
   }
 
   private static final List<Undo> noUndos = Lists.newArrayList();
@@ -263,4 +265,27 @@ public class TestMemoryOracle {
     oracle.removeTransaction(txid);
   }
 
+  // test that conflict detection can distinguish table names
+  @Test
+  public void testConflictDetectionAcrossTables() throws OmidTransactionException {
+    final String t1 = null;
+    final String t2 = "tCDAT2";
+    final String t3 = "tCDAT3";
+
+    // start three transactions
+    TransactionOracle oracle = newOracle();
+    long tx1 = oracle.startTransaction().getTransactionId();
+    long tx2 = oracle.startTransaction().getTransactionId();
+    long tx3 = oracle.startTransaction().getTransactionId();
+
+    // all transactions write the same row to different tables, one uses default table
+    oracle.addToTransaction(tx1, Collections.singletonList((Undo)new UndoWrite(t1, a, new byte[][] { b } )));
+    oracle.addToTransaction(tx2, Collections.singletonList((Undo)new UndoWrite(t2, a, new byte[][] { b } )));
+    oracle.addToTransaction(tx3, Collections.singletonList((Undo)new UndoWrite(t3, a, new byte[][] { b } )));
+
+    // commit all transactions, none should fail
+    Assert.assertTrue(oracle.commitTransaction(tx1).isSuccess());
+    Assert.assertTrue(oracle.commitTransaction(tx2).isSuccess());
+    Assert.assertTrue(oracle.commitTransaction(tx3).isSuccess());
+  }
 }

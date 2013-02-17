@@ -1,19 +1,26 @@
 package com.continuuity.data.operation.executor.omid.memory;
 
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data.operation.executor.ReadPointer;
+import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.OmidTransactionException;
 import com.continuuity.data.operation.executor.omid.QueueUndo;
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.Transaction;
 import com.continuuity.data.operation.executor.omid.TransactionOracle;
 import com.continuuity.data.operation.executor.omid.TransactionResult;
 import com.continuuity.data.operation.executor.omid.Undo;
-import com.continuuity.data.operation.executor.ReadPointer;
 import com.continuuity.data.operation.ttqueue.QueueFinalize;
 import com.google.inject.Inject;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MemoryOracle implements TransactionOracle {
@@ -218,7 +225,7 @@ public class MemoryOracle implements TransactionOracle {
   private RowSet computeRowSet(List<Undo> undos) {
     RowSet rows = null;
     for (Undo undo : undos) {
-      byte[] rowKey = undo.getRowKey();
+      RowSet.Row rowKey = undo.getRow();
       if (rowKey != null) {
         if (rows == null) {
           rows = new MemoryRowSet();
