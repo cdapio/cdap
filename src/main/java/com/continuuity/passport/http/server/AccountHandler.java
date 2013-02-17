@@ -13,12 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.shiro.util.StringUtils;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
@@ -264,16 +259,17 @@ public class AccountHandler {
                                                             StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
-        return Response.ok(Utils.getAuthenticatedJson("OK",status.getMessage())).build();
+        return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
       }
       else {
         return Response.status(Response.Status.UNAUTHORIZED).entity(
-          Utils.getJson("FAILED","Authentication Failed. Either user doesn't exist or password doesn't match")).build();
+          Utils.getAuthenticatedJson("Authentication Failed." , "Either user doesn't exist or password doesn't match"))
+               .build();
       }
     } catch (Exception e) {
 
       return    Response.status(Response.Status.UNAUTHORIZED).entity(
-        Utils.getJson("FAILED","Authentication Failed",e)).build();
+        Utils.getAuthenticatedJson("Authentication Failed.",e.getMessage())).build();
     }
   }
 }
