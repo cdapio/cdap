@@ -1,8 +1,8 @@
 namespace java com.continuuity.app.services
 
 /**
- * Indicates the client is not authorized to talk to FARService or 
- * ProgramService. This can happen when the access has been revoked or
+ * Indicates the client is not authorized to talk to DeploymentService or 
+ * RuntimeService. This can happen when the access has been revoked or
  * the delegation token has been expired.
  */
 exception NotAuthorizedException {
@@ -30,7 +30,7 @@ struct AuthToken {
 
 /**
  * Provides authorization service. This service returns a AuthToken that
- * is then used in every call to FARService or ProgramService.
+ * is then used in every call to DeploymentService or RuntimeService.
  */
 service AuthorizationService {
   AuthToken authenticate(1:string user, 2:string password )
@@ -75,7 +75,7 @@ struct ResourceIdentifier {
 /**
  * Exception raised when issues are observed during uploading of resource.
  */
-exception FARServiceException {
+exception DeploymentServiceException {
   1:string message,
 }
 
@@ -112,63 +112,63 @@ struct FlowIdentifier {
 /**
  * Provides service for managing Flow Archive Resource
  */
-service FARService {
+service DeploymentService {
 
   /**
    * Begins uploading of FAR
    */
   ResourceIdentifier init(1:AuthToken token, 2:ResourceInfo info)
-    throws (1:FARServiceException e),
+    throws (1:DeploymentServiceException e),
 
   /**
    * Chunk of FAR is uploaded
    */
   void chunk(1:AuthToken token,
              2:ResourceIdentifier resource, 3:binary chunk)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Finalizes uploading of FAR
    */
   void deploy(1:AuthToken token, 2:ResourceIdentifier resource)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Status of upload
    */
   FARStatus status(1:AuthToken token, 2:ResourceIdentifier resource)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Promote a flow an it's resource to cloud.
    */
   bool promote(1:AuthToken token, 2:FlowIdentifier identifier)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Disables a Flow
    */
   void remove(1:AuthToken token, 2:FlowIdentifier identifier)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Disables all Flows and Queries
    */
   void removeAll(1:AuthToken token, 2:string accountId)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
   /**
    * Wipes out everything for an account
    */
   void reset(1:AuthToken token, 2:string accountId)
-    throws (1: FARServiceException e),
+    throws (1: DeploymentServiceException e),
 
 }
 
 /**
  * Exception raised when there is an issue in start/stop/status/pausing of Flows
  */
-exception ProgramServiceException {
+exception RuntimeServiceException {
   1:string message,
 }
 
@@ -226,54 +226,54 @@ struct FlowRunRecord {
 /**
  * Flow Service for managing flows. 
  */
-service ProgramService {
+service RuntimeService {
 
   /**
    * Starts a Flow
    */
   RunIdentifier start(1:AuthToken token,  2: FlowDescriptor descriptor)
-    throws (1: ProgramServiceException e),
+    throws (1: RuntimeServiceException e),
 
   /**
    * Checks the status of a Flow
    */
   FlowStatus status(1:AuthToken token, 2: FlowIdentifier identifier)
-    throws (1: ProgramServiceException e),
+    throws (1: RuntimeServiceException e),
 
   /**
    * Stops a Flow
    */
   RunIdentifier stop(1: AuthToken token,  2: FlowIdentifier identifier)
-    throws (1: ProgramServiceException e),
+    throws (1: RuntimeServiceException e),
 
   /**
    * Set number of instance of a flowlet.
    */
   void setInstances(1: AuthToken token, 2: FlowIdentifier identifier,
                     3: string flowletId, 4:i16 instances )
-    throws (1: ProgramServiceException e),
+    throws (1: RuntimeServiceException e),
 
   /**
    * Returns the state of flows within a given account id.
    */
   list<ActiveFlow> getFlows(1: string accountId)
-     throws(1: ProgramServiceException e),
+     throws(1: RuntimeServiceException e),
 
   /**
    * Returns definition of a flow.
    */
   string getFlowDefinition(1: FlowIdentifier id)
-    throws (1: ProgramServiceException e),
+    throws (1: RuntimeServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
   list<FlowRunRecord> getFlowHistory(1: FlowIdentifier id)
-      throws (1: ProgramServiceException e),
+      throws (1: RuntimeServiceException e),
 
   /**
    * Returns run information for a given flow id.
    */
   void stopAll(1: string accountId)
-   throws (1: ProgramServiceException e),
+   throws (1: RuntimeServiceException e),
 }

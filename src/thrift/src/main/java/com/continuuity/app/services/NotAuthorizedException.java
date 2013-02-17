@@ -28,8 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Indicates the client is not authorized to talk to FARService or
- * ProgramService. This can happen when the access has been revoked or
+ * Indicates the client is not authorized to talk to DeploymentService or
+ * RuntimeService. This can happen when the access has been revoked or
  * the delegation token has been expired.
  */
 public class NotAuthorizedException extends Exception implements org.apache.thrift.TBase<NotAuthorizedException, NotAuthorizedException._Fields>, java.io.Serializable, Cloneable {

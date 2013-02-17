@@ -1,9 +1,7 @@
 package com.continuuity.internal.app.services;
 
-import com.continuuity.app.program.Store;
-import com.continuuity.app.services.ProgramManagerServer;
-import com.continuuity.app.services.ProgramService;
-import com.continuuity.app.services.ProgramServiceHandler;
+import com.continuuity.app.services.RuntimeServer;
+import com.continuuity.app.services.RuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.ServiceDiscoveryClient;
@@ -23,10 +21,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of ProgramManagerServer as Thrift server
+ * Implementation of RuntimeServer as Thrift server
  */
-public final class ProgramManagerThriftServer implements ProgramManagerServer {
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramManagerThriftServer.class);
+public final class RuntimeThriftServer implements RuntimeServer {
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeThriftServer.class);
 
   /**
    * Manages threads.
@@ -36,12 +34,7 @@ public final class ProgramManagerThriftServer implements ProgramManagerServer {
   /**
    * Program Service handler.
    */
-  private ProgramServiceHandler serviceHandler;
-
-  /**
-   * Instance of Program Store
-   */
-  private final Store store;
+  private RuntimeService.Iface RuntimeService;
 
   /**
    * Half-Sync, Half-Async Thrift server.
@@ -49,8 +42,8 @@ public final class ProgramManagerThriftServer implements ProgramManagerServer {
   private THsHaServer server;
 
   @Inject
-  public ProgramManagerThriftServer(Store store) {
-    this.store = store;
+  public RuntimeThriftServer(RuntimeService.Iface RuntimeService) {
+    this.RuntimeService = RuntimeService;
   }
 
   /**
@@ -66,20 +59,17 @@ public final class ProgramManagerThriftServer implements ProgramManagerServer {
     try {
       executorService = Executors.newCachedThreadPool();
 
-      this.serviceHandler = new ProgramServiceHandlerImpl(store);
-
       int port = conf.getInt(Constants.CFG_FLOW_MANAGER_SERVER_PORT,
         Constants.DEFAULT_FLOW_MANAGER_SERVER_PORT);
 
       int threads = conf.getInt(Constants.CFG_FLOW_MANAGER_SERVER_THREADS,
         Constants.DEFAULT_FLOW_MANAGER_SERVER_THREADS);
 
-      ProgramServiceImpl serviceImpl = new ProgramServiceImpl(serviceHandler);
       THsHaServer.Args serverArgs =
         new THsHaServer
           .Args(new TNonblockingServerSocket(port))
           .executorService(executorService)
-          .processor(new ProgramService.Processor(serviceImpl))
+          .processor(new RuntimeService.Processor(RuntimeService))
           .workerThreads(threads);
 
       OverlordMetricsReporter.enable(1, TimeUnit.SECONDS, conf);

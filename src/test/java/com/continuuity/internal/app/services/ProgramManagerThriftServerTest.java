@@ -8,15 +8,15 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.program.Id;
 import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.ProgramService;
+import com.continuuity.app.services.RuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.serializer.JSONSerializer;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.program.MDSBasedStore;
 import com.continuuity.internal.app.program.StoreModule4Test;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -31,15 +31,15 @@ import org.junit.Test;
 
 public class ProgramManagerThriftServerTest {
   private static MDSBasedStore store;
-  private static ProgramManagerThriftServer server;
+  private static RuntimeThriftServer server;
 
   @BeforeClass
   public static void beforeClass() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
-                                                   new StoreModule4Test());
+                                                   new StoreModule4Test(), new ServicesModule4Test());
 
     store = injector.getInstance(MDSBasedStore.class);
-    server = injector.getInstance(ProgramManagerThriftServer.class);
+    server = injector.getInstance(RuntimeThriftServer.class);
   }
 
   @Test (timeout = 20000)
@@ -67,13 +67,12 @@ public class ProgramManagerThriftServerTest {
     transport.open();
 
     TProtocol protocol = new TBinaryProtocol(transport);
-    ProgramService.Client client = new ProgramService.Client(protocol);
+    RuntimeService.Client client = new RuntimeService.Client(protocol);
 
     // Trying to read *any* data
     FlowIdentifier flowId = new FlowIdentifier("account1", "application1", "WordCountFlow", 0);
     String flowDefJson = client.getFlowDefinition(flowId);
-    JSONSerializer<FlowDefinitionImpl> flowSerializer = new JSONSerializer<FlowDefinitionImpl>();
-    FlowDefinitionImpl flowDef = flowSerializer.deserialize(flowDefJson.getBytes(), FlowDefinitionImpl.class);
+    FlowDefinitionImpl flowDef = new Gson().fromJson(flowDefJson, FlowDefinitionImpl.class);
     Assert.assertEquals(3, flowDef.getFlowlets().size());
   }
 }

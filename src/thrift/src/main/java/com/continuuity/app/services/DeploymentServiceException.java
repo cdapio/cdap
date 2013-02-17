@@ -28,17 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Exception raised when there is an issue in start/stop/status/pausing of Flows
+ * Exception raised when issues are observed during uploading of resource.
  */
-public class ProgramServiceException extends Exception implements org.apache.thrift.TBase<ProgramServiceException, ProgramServiceException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ProgramServiceException");
+public class DeploymentServiceException extends Exception implements org.apache.thrift.TBase<DeploymentServiceException, DeploymentServiceException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DeploymentServiceException");
 
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new ProgramServiceExceptionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new ProgramServiceExceptionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new DeploymentServiceExceptionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new DeploymentServiceExceptionTupleSchemeFactory());
   }
 
   public String message; // required
@@ -108,13 +108,13 @@ public class ProgramServiceException extends Exception implements org.apache.thr
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ProgramServiceException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DeploymentServiceException.class, metaDataMap);
   }
 
-  public ProgramServiceException() {
+  public DeploymentServiceException() {
   }
 
-  public ProgramServiceException(
+  public DeploymentServiceException(
     String message)
   {
     this();
@@ -124,14 +124,14 @@ public class ProgramServiceException extends Exception implements org.apache.thr
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public ProgramServiceException(ProgramServiceException other) {
+  public DeploymentServiceException(DeploymentServiceException other) {
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  public ProgramServiceException deepCopy() {
-    return new ProgramServiceException(this);
+  public DeploymentServiceException deepCopy() {
+    return new DeploymentServiceException(this);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class ProgramServiceException extends Exception implements org.apache.thr
     return this.message;
   }
 
-  public ProgramServiceException setMessage(String message) {
+  public DeploymentServiceException setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -202,12 +202,12 @@ public class ProgramServiceException extends Exception implements org.apache.thr
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof ProgramServiceException)
-      return this.equals((ProgramServiceException)that);
+    if (that instanceof DeploymentServiceException)
+      return this.equals((DeploymentServiceException)that);
     return false;
   }
 
-  public boolean equals(ProgramServiceException that) {
+  public boolean equals(DeploymentServiceException that) {
     if (that == null)
       return false;
 
@@ -228,13 +228,13 @@ public class ProgramServiceException extends Exception implements org.apache.thr
     return 0;
   }
 
-  public int compareTo(ProgramServiceException other) {
+  public int compareTo(DeploymentServiceException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    ProgramServiceException typedOther = (ProgramServiceException)other;
+    DeploymentServiceException typedOther = (DeploymentServiceException)other;
 
     lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
@@ -263,7 +263,7 @@ public class ProgramServiceException extends Exception implements org.apache.thr
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("ProgramServiceException(");
+    StringBuilder sb = new StringBuilder("DeploymentServiceException(");
     boolean first = true;
 
     sb.append("message:");
@@ -297,15 +297,15 @@ public class ProgramServiceException extends Exception implements org.apache.thr
     }
   }
 
-  private static class ProgramServiceExceptionStandardSchemeFactory implements SchemeFactory {
-    public ProgramServiceExceptionStandardScheme getScheme() {
-      return new ProgramServiceExceptionStandardScheme();
+  private static class DeploymentServiceExceptionStandardSchemeFactory implements SchemeFactory {
+    public DeploymentServiceExceptionStandardScheme getScheme() {
+      return new DeploymentServiceExceptionStandardScheme();
     }
   }
 
-  private static class ProgramServiceExceptionStandardScheme extends StandardScheme<ProgramServiceException> {
+  private static class DeploymentServiceExceptionStandardScheme extends StandardScheme<DeploymentServiceException> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, ProgramServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, DeploymentServiceException struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -334,7 +334,7 @@ public class ProgramServiceException extends Exception implements org.apache.thr
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, ProgramServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, DeploymentServiceException struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -349,16 +349,16 @@ public class ProgramServiceException extends Exception implements org.apache.thr
 
   }
 
-  private static class ProgramServiceExceptionTupleSchemeFactory implements SchemeFactory {
-    public ProgramServiceExceptionTupleScheme getScheme() {
-      return new ProgramServiceExceptionTupleScheme();
+  private static class DeploymentServiceExceptionTupleSchemeFactory implements SchemeFactory {
+    public DeploymentServiceExceptionTupleScheme getScheme() {
+      return new DeploymentServiceExceptionTupleScheme();
     }
   }
 
-  private static class ProgramServiceExceptionTupleScheme extends TupleScheme<ProgramServiceException> {
+  private static class DeploymentServiceExceptionTupleScheme extends TupleScheme<DeploymentServiceException> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, ProgramServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, DeploymentServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetMessage()) {
@@ -371,7 +371,7 @@ public class ProgramServiceException extends Exception implements org.apache.thr
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, ProgramServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, DeploymentServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {

@@ -27,97 +27,94 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FARService {
+public class RuntimeService {
 
   /**
-   * Provides service for managing Flow Archive Resource
+   * Flow Service for managing flows.
    */
   public interface Iface {
 
     /**
-     * Begins uploading of FAR
+     * Starts a Flow
      * 
      * @param token
-     * @param info
+     * @param descriptor
      */
-    public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws FARServiceException, org.apache.thrift.TException;
+    public RunIdentifier start(AuthToken token, FlowDescriptor descriptor) throws RuntimeServiceException, org.apache.thrift.TException;
 
     /**
-     * Chunk of FAR is uploaded
-     * 
-     * @param token
-     * @param resource
-     * @param chunk
-     */
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws FARServiceException, org.apache.thrift.TException;
-
-    /**
-     * Finalizes uploading of FAR
-     * 
-     * @param token
-     * @param resource
-     */
-    public void deploy(AuthToken token, ResourceIdentifier resource) throws FARServiceException, org.apache.thrift.TException;
-
-    /**
-     * Status of upload
-     * 
-     * @param token
-     * @param resource
-     */
-    public FARStatus status(AuthToken token, ResourceIdentifier resource) throws FARServiceException, org.apache.thrift.TException;
-
-    /**
-     * Promote a flow an it's resource to cloud.
+     * Checks the status of a Flow
      * 
      * @param token
      * @param identifier
      */
-    public boolean promote(AuthToken token, FlowIdentifier identifier) throws FARServiceException, org.apache.thrift.TException;
+    public FlowStatus status(AuthToken token, FlowIdentifier identifier) throws RuntimeServiceException, org.apache.thrift.TException;
 
     /**
-     * Disables a Flow
+     * Stops a Flow
      * 
      * @param token
      * @param identifier
      */
-    public void remove(AuthToken token, FlowIdentifier identifier) throws FARServiceException, org.apache.thrift.TException;
+    public RunIdentifier stop(AuthToken token, FlowIdentifier identifier) throws RuntimeServiceException, org.apache.thrift.TException;
 
     /**
-     * Disables all Flows and Queries
+     * Set number of instance of a flowlet.
      * 
      * @param token
-     * @param accountId
+     * @param identifier
+     * @param flowletId
+     * @param instances
      */
-    public void removeAll(AuthToken token, String accountId) throws FARServiceException, org.apache.thrift.TException;
+    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws RuntimeServiceException, org.apache.thrift.TException;
 
     /**
-     * Wipes out everything for an account
+     * Returns the state of flows within a given account id.
      * 
-     * @param token
      * @param accountId
      */
-    public void reset(AuthToken token, String accountId) throws FARServiceException, org.apache.thrift.TException;
+    public List<ActiveFlow> getFlows(String accountId) throws RuntimeServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns definition of a flow.
+     * 
+     * @param id
+     */
+    public String getFlowDefinition(FlowIdentifier id) throws RuntimeServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns run information for a given flow id.
+     * 
+     * @param id
+     */
+    public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws RuntimeServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns run information for a given flow id.
+     * 
+     * @param accountId
+     */
+    public void stopAll(String accountId) throws RuntimeServiceException, org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void init(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.init_call> resultHandler) throws org.apache.thrift.TException;
+    public void start(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.start_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.chunk_call> resultHandler) throws org.apache.thrift.TException;
+    public void status(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.status_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void deploy(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deploy_call> resultHandler) throws org.apache.thrift.TException;
+    public void stop(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stop_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void status(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.status_call> resultHandler) throws org.apache.thrift.TException;
+    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setInstances_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void promote(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.promote_call> resultHandler) throws org.apache.thrift.TException;
+    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlows_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.remove_call> resultHandler) throws org.apache.thrift.TException;
+    public void getFlowDefinition(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowDefinition_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void removeAll(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.removeAll_call> resultHandler) throws org.apache.thrift.TException;
+    public void getFlowHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowHistory_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void reset(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.reset_call> resultHandler) throws org.apache.thrift.TException;
+    public void stopAll(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stopAll_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -141,97 +138,48 @@ public class FARService {
       super(iprot, oprot);
     }
 
-    public ResourceIdentifier init(AuthToken token, ResourceInfo info) throws FARServiceException, org.apache.thrift.TException
+    public RunIdentifier start(AuthToken token, FlowDescriptor descriptor) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_init(token, info);
-      return recv_init();
+      send_start(token, descriptor);
+      return recv_start();
     }
 
-    public void send_init(AuthToken token, ResourceInfo info) throws org.apache.thrift.TException
+    public void send_start(AuthToken token, FlowDescriptor descriptor) throws org.apache.thrift.TException
     {
-      init_args args = new init_args();
+      start_args args = new start_args();
       args.setToken(token);
-      args.setInfo(info);
-      sendBase("init", args);
+      args.setDescriptor(descriptor);
+      sendBase("start", args);
     }
 
-    public ResourceIdentifier recv_init() throws FARServiceException, org.apache.thrift.TException
+    public RunIdentifier recv_start() throws RuntimeServiceException, org.apache.thrift.TException
     {
-      init_result result = new init_result();
-      receiveBase(result, "init");
+      start_result result = new start_result();
+      receiveBase(result, "start");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "init failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "start failed: unknown result");
     }
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws FARServiceException, org.apache.thrift.TException
+    public FlowStatus status(AuthToken token, FlowIdentifier identifier) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_chunk(token, resource, chunk);
-      recv_chunk();
-    }
-
-    public void send_chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk) throws org.apache.thrift.TException
-    {
-      chunk_args args = new chunk_args();
-      args.setToken(token);
-      args.setResource(resource);
-      args.setChunk(chunk);
-      sendBase("chunk", args);
-    }
-
-    public void recv_chunk() throws FARServiceException, org.apache.thrift.TException
-    {
-      chunk_result result = new chunk_result();
-      receiveBase(result, "chunk");
-      if (result.e != null) {
-        throw result.e;
-      }
-      return;
-    }
-
-    public void deploy(AuthToken token, ResourceIdentifier resource) throws FARServiceException, org.apache.thrift.TException
-    {
-      send_deploy(token, resource);
-      recv_deploy();
-    }
-
-    public void send_deploy(AuthToken token, ResourceIdentifier resource) throws org.apache.thrift.TException
-    {
-      deploy_args args = new deploy_args();
-      args.setToken(token);
-      args.setResource(resource);
-      sendBase("deploy", args);
-    }
-
-    public void recv_deploy() throws FARServiceException, org.apache.thrift.TException
-    {
-      deploy_result result = new deploy_result();
-      receiveBase(result, "deploy");
-      if (result.e != null) {
-        throw result.e;
-      }
-      return;
-    }
-
-    public FARStatus status(AuthToken token, ResourceIdentifier resource) throws FARServiceException, org.apache.thrift.TException
-    {
-      send_status(token, resource);
+      send_status(token, identifier);
       return recv_status();
     }
 
-    public void send_status(AuthToken token, ResourceIdentifier resource) throws org.apache.thrift.TException
+    public void send_status(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
     {
       status_args args = new status_args();
       args.setToken(token);
-      args.setResource(resource);
+      args.setIdentifier(identifier);
       sendBase("status", args);
     }
 
-    public FARStatus recv_status() throws FARServiceException, org.apache.thrift.TException
+    public FlowStatus recv_status() throws RuntimeServiceException, org.apache.thrift.TException
     {
       status_result result = new status_result();
       receiveBase(result, "status");
@@ -244,99 +192,154 @@ public class FARService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "status failed: unknown result");
     }
 
-    public boolean promote(AuthToken token, FlowIdentifier identifier) throws FARServiceException, org.apache.thrift.TException
+    public RunIdentifier stop(AuthToken token, FlowIdentifier identifier) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_promote(token, identifier);
-      return recv_promote();
+      send_stop(token, identifier);
+      return recv_stop();
     }
 
-    public void send_promote(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_stop(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
     {
-      promote_args args = new promote_args();
+      stop_args args = new stop_args();
       args.setToken(token);
       args.setIdentifier(identifier);
-      sendBase("promote", args);
+      sendBase("stop", args);
     }
 
-    public boolean recv_promote() throws FARServiceException, org.apache.thrift.TException
+    public RunIdentifier recv_stop() throws RuntimeServiceException, org.apache.thrift.TException
     {
-      promote_result result = new promote_result();
-      receiveBase(result, "promote");
+      stop_result result = new stop_result();
+      receiveBase(result, "stop");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "promote failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "stop failed: unknown result");
     }
 
-    public void remove(AuthToken token, FlowIdentifier identifier) throws FARServiceException, org.apache.thrift.TException
+    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_remove(token, identifier);
-      recv_remove();
+      send_setInstances(token, identifier, flowletId, instances);
+      recv_setInstances();
     }
 
-    public void send_remove(AuthToken token, FlowIdentifier identifier) throws org.apache.thrift.TException
+    public void send_setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances) throws org.apache.thrift.TException
     {
-      remove_args args = new remove_args();
+      setInstances_args args = new setInstances_args();
       args.setToken(token);
       args.setIdentifier(identifier);
-      sendBase("remove", args);
+      args.setFlowletId(flowletId);
+      args.setInstances(instances);
+      sendBase("setInstances", args);
     }
 
-    public void recv_remove() throws FARServiceException, org.apache.thrift.TException
+    public void recv_setInstances() throws RuntimeServiceException, org.apache.thrift.TException
     {
-      remove_result result = new remove_result();
-      receiveBase(result, "remove");
+      setInstances_result result = new setInstances_result();
+      receiveBase(result, "setInstances");
       if (result.e != null) {
         throw result.e;
       }
       return;
     }
 
-    public void removeAll(AuthToken token, String accountId) throws FARServiceException, org.apache.thrift.TException
+    public List<ActiveFlow> getFlows(String accountId) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_removeAll(token, accountId);
-      recv_removeAll();
+      send_getFlows(accountId);
+      return recv_getFlows();
     }
 
-    public void send_removeAll(AuthToken token, String accountId) throws org.apache.thrift.TException
+    public void send_getFlows(String accountId) throws org.apache.thrift.TException
     {
-      removeAll_args args = new removeAll_args();
-      args.setToken(token);
+      getFlows_args args = new getFlows_args();
       args.setAccountId(accountId);
-      sendBase("removeAll", args);
+      sendBase("getFlows", args);
     }
 
-    public void recv_removeAll() throws FARServiceException, org.apache.thrift.TException
+    public List<ActiveFlow> recv_getFlows() throws RuntimeServiceException, org.apache.thrift.TException
     {
-      removeAll_result result = new removeAll_result();
-      receiveBase(result, "removeAll");
+      getFlows_result result = new getFlows_result();
+      receiveBase(result, "getFlows");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
       if (result.e != null) {
         throw result.e;
       }
-      return;
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlows failed: unknown result");
     }
 
-    public void reset(AuthToken token, String accountId) throws FARServiceException, org.apache.thrift.TException
+    public String getFlowDefinition(FlowIdentifier id) throws RuntimeServiceException, org.apache.thrift.TException
     {
-      send_reset(token, accountId);
-      recv_reset();
+      send_getFlowDefinition(id);
+      return recv_getFlowDefinition();
     }
 
-    public void send_reset(AuthToken token, String accountId) throws org.apache.thrift.TException
+    public void send_getFlowDefinition(FlowIdentifier id) throws org.apache.thrift.TException
     {
-      reset_args args = new reset_args();
-      args.setToken(token);
+      getFlowDefinition_args args = new getFlowDefinition_args();
+      args.setId(id);
+      sendBase("getFlowDefinition", args);
+    }
+
+    public String recv_getFlowDefinition() throws RuntimeServiceException, org.apache.thrift.TException
+    {
+      getFlowDefinition_result result = new getFlowDefinition_result();
+      receiveBase(result, "getFlowDefinition");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowDefinition failed: unknown result");
+    }
+
+    public List<FlowRunRecord> getFlowHistory(FlowIdentifier id) throws RuntimeServiceException, org.apache.thrift.TException
+    {
+      send_getFlowHistory(id);
+      return recv_getFlowHistory();
+    }
+
+    public void send_getFlowHistory(FlowIdentifier id) throws org.apache.thrift.TException
+    {
+      getFlowHistory_args args = new getFlowHistory_args();
+      args.setId(id);
+      sendBase("getFlowHistory", args);
+    }
+
+    public List<FlowRunRecord> recv_getFlowHistory() throws RuntimeServiceException, org.apache.thrift.TException
+    {
+      getFlowHistory_result result = new getFlowHistory_result();
+      receiveBase(result, "getFlowHistory");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowHistory failed: unknown result");
+    }
+
+    public void stopAll(String accountId) throws RuntimeServiceException, org.apache.thrift.TException
+    {
+      send_stopAll(accountId);
+      recv_stopAll();
+    }
+
+    public void send_stopAll(String accountId) throws org.apache.thrift.TException
+    {
+      stopAll_args args = new stopAll_args();
       args.setAccountId(accountId);
-      sendBase("reset", args);
+      sendBase("stopAll", args);
     }
 
-    public void recv_reset() throws FARServiceException, org.apache.thrift.TException
+    public void recv_stopAll() throws RuntimeServiceException, org.apache.thrift.TException
     {
-      reset_result result = new reset_result();
-      receiveBase(result, "reset");
+      stopAll_result result = new stopAll_result();
+      receiveBase(result, "stopAll");
       if (result.e != null) {
         throw result.e;
       }
@@ -361,140 +364,67 @@ public class FARService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void init(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler) throws org.apache.thrift.TException {
+    public void start(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      init_call method_call = new init_call(token, info, resultHandler, this, ___protocolFactory, ___transport);
+      start_call method_call = new start_call(token, descriptor, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class init_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class start_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceInfo info;
-      public init_call(AuthToken token, ResourceInfo info, org.apache.thrift.async.AsyncMethodCallback<init_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private FlowDescriptor descriptor;
+      public start_call(AuthToken token, FlowDescriptor descriptor, org.apache.thrift.async.AsyncMethodCallback<start_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
-        this.info = info;
+        this.descriptor = descriptor;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("init", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        init_args args = new init_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("start", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        start_args args = new start_args();
         args.setToken(token);
-        args.setInfo(info);
+        args.setDescriptor(descriptor);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public ResourceIdentifier getResult() throws FARServiceException, org.apache.thrift.TException {
+      public RunIdentifier getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_init();
+        return (new Client(prot)).recv_start();
       }
     }
 
-    public void chunk(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler) throws org.apache.thrift.TException {
+    public void status(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      chunk_call method_call = new chunk_call(token, resource, chunk, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class chunk_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private AuthToken token;
-      private ResourceIdentifier resource;
-      private ByteBuffer chunk;
-      public chunk_call(AuthToken token, ResourceIdentifier resource, ByteBuffer chunk, org.apache.thrift.async.AsyncMethodCallback<chunk_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.token = token;
-        this.resource = resource;
-        this.chunk = chunk;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("chunk", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        chunk_args args = new chunk_args();
-        args.setToken(token);
-        args.setResource(resource);
-        args.setChunk(chunk);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public void getResult() throws FARServiceException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_chunk();
-      }
-    }
-
-    public void deploy(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      deploy_call method_call = new deploy_call(token, resource, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class deploy_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private AuthToken token;
-      private ResourceIdentifier resource;
-      public deploy_call(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.token = token;
-        this.resource = resource;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("deploy", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        deploy_args args = new deploy_args();
-        args.setToken(token);
-        args.setResource(resource);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public void getResult() throws FARServiceException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_deploy();
-      }
-    }
-
-    public void status(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      status_call method_call = new status_call(token, resource, resultHandler, this, ___protocolFactory, ___transport);
+      status_call method_call = new status_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class status_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
-      private ResourceIdentifier resource;
-      public status_call(AuthToken token, ResourceIdentifier resource, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private FlowIdentifier identifier;
+      public status_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<status_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
-        this.resource = resource;
+        this.identifier = identifier;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("status", org.apache.thrift.protocol.TMessageType.CALL, 0));
         status_args args = new status_args();
         args.setToken(token);
-        args.setResource(resource);
+        args.setIdentifier(identifier);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public FARStatus getResult() throws FARServiceException, org.apache.thrift.TException {
+      public FlowStatus getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -504,143 +434,207 @@ public class FARService {
       }
     }
 
-    public void promote(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler) throws org.apache.thrift.TException {
+    public void stop(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      promote_call method_call = new promote_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
+      stop_call method_call = new stop_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class promote_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class stop_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
       private FlowIdentifier identifier;
-      public promote_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<promote_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public stop_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<stop_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("promote", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        promote_args args = new promote_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("stop", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        stop_args args = new stop_args();
         args.setToken(token);
         args.setIdentifier(identifier);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws FARServiceException, org.apache.thrift.TException {
+      public RunIdentifier getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_promote();
+        return (new Client(prot)).recv_stop();
       }
     }
 
-    public void remove(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler) throws org.apache.thrift.TException {
+    public void setInstances(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      remove_call method_call = new remove_call(token, identifier, resultHandler, this, ___protocolFactory, ___transport);
+      setInstances_call method_call = new setInstances_call(token, identifier, flowletId, instances, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class remove_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class setInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
       private FlowIdentifier identifier;
-      public remove_call(AuthToken token, FlowIdentifier identifier, org.apache.thrift.async.AsyncMethodCallback<remove_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private String flowletId;
+      private short instances;
+      public setInstances_call(AuthToken token, FlowIdentifier identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
+        this.flowletId = flowletId;
+        this.instances = instances;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("remove", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        remove_args args = new remove_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("setInstances", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        setInstances_args args = new setInstances_args();
         args.setToken(token);
         args.setIdentifier(identifier);
+        args.setFlowletId(flowletId);
+        args.setInstances(instances);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws FARServiceException, org.apache.thrift.TException {
+      public void getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_remove();
+        (new Client(prot)).recv_setInstances();
       }
     }
 
-    public void removeAll(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<removeAll_call> resultHandler) throws org.apache.thrift.TException {
+    public void getFlows(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      removeAll_call method_call = new removeAll_call(token, accountId, resultHandler, this, ___protocolFactory, ___transport);
+      getFlows_call method_call = new getFlows_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class removeAll_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private AuthToken token;
+    public static class getFlows_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String accountId;
-      public removeAll_call(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<removeAll_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getFlows_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<getFlows_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.token = token;
         this.accountId = accountId;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("removeAll", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        removeAll_args args = new removeAll_args();
-        args.setToken(token);
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlows", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlows_args args = new getFlows_args();
         args.setAccountId(accountId);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws FARServiceException, org.apache.thrift.TException {
+      public List<ActiveFlow> getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_removeAll();
+        return (new Client(prot)).recv_getFlows();
       }
     }
 
-    public void reset(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<reset_call> resultHandler) throws org.apache.thrift.TException {
+    public void getFlowDefinition(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowDefinition_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      reset_call method_call = new reset_call(token, accountId, resultHandler, this, ___protocolFactory, ___transport);
+      getFlowDefinition_call method_call = new getFlowDefinition_call(id, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class reset_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private AuthToken token;
-      private String accountId;
-      public reset_call(AuthToken token, String accountId, org.apache.thrift.async.AsyncMethodCallback<reset_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+    public static class getFlowDefinition_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private FlowIdentifier id;
+      public getFlowDefinition_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowDefinition_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.token = token;
+        this.id = id;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowDefinition", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlowDefinition_args args = new getFlowDefinition_args();
+        args.setId(id);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws RuntimeServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getFlowDefinition();
+      }
+    }
+
+    public void getFlowHistory(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowHistory_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getFlowHistory_call method_call = new getFlowHistory_call(id, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getFlowHistory_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private FlowIdentifier id;
+      public getFlowHistory_call(FlowIdentifier id, org.apache.thrift.async.AsyncMethodCallback<getFlowHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.id = id;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowHistory", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlowHistory_args args = new getFlowHistory_args();
+        args.setId(id);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<FlowRunRecord> getResult() throws RuntimeServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getFlowHistory();
+      }
+    }
+
+    public void stopAll(String accountId, org.apache.thrift.async.AsyncMethodCallback<stopAll_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      stopAll_call method_call = new stopAll_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class stopAll_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String accountId;
+      public stopAll_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<stopAll_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
         this.accountId = accountId;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("reset", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        reset_args args = new reset_args();
-        args.setToken(token);
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("stopAll", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        stopAll_args args = new stopAll_args();
         args.setAccountId(accountId);
         args.write(prot);
         prot.writeMessageEnd();
       }
 
-      public void getResult() throws FARServiceException, org.apache.thrift.TException {
+      public void getResult() throws RuntimeServiceException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_reset();
+        (new Client(prot)).recv_stopAll();
       }
     }
 
@@ -657,71 +651,31 @@ public class FARService {
     }
 
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
-      processMap.put("init", new init());
-      processMap.put("chunk", new chunk());
-      processMap.put("deploy", new deploy());
+      processMap.put("start", new start());
       processMap.put("status", new status());
-      processMap.put("promote", new promote());
-      processMap.put("remove", new remove());
-      processMap.put("removeAll", new removeAll());
-      processMap.put("reset", new reset());
+      processMap.put("stop", new stop());
+      processMap.put("setInstances", new setInstances());
+      processMap.put("getFlows", new getFlows());
+      processMap.put("getFlowDefinition", new getFlowDefinition());
+      processMap.put("getFlowHistory", new getFlowHistory());
+      processMap.put("stopAll", new stopAll());
       return processMap;
     }
 
-    private static class init<I extends Iface> extends org.apache.thrift.ProcessFunction<I, init_args> {
-      public init() {
-        super("init");
+    private static class start<I extends Iface> extends org.apache.thrift.ProcessFunction<I, start_args> {
+      public start() {
+        super("start");
       }
 
-      protected init_args getEmptyArgsInstance() {
-        return new init_args();
+      protected start_args getEmptyArgsInstance() {
+        return new start_args();
       }
 
-      protected init_result getResult(I iface, init_args args) throws org.apache.thrift.TException {
-        init_result result = new init_result();
+      protected start_result getResult(I iface, start_args args) throws org.apache.thrift.TException {
+        start_result result = new start_result();
         try {
-          result.success = iface.init(args.token, args.info);
-        } catch (FARServiceException e) {
-          result.e = e;
-        }
-        return result;
-      }
-    }
-
-    private static class chunk<I extends Iface> extends org.apache.thrift.ProcessFunction<I, chunk_args> {
-      public chunk() {
-        super("chunk");
-      }
-
-      protected chunk_args getEmptyArgsInstance() {
-        return new chunk_args();
-      }
-
-      protected chunk_result getResult(I iface, chunk_args args) throws org.apache.thrift.TException {
-        chunk_result result = new chunk_result();
-        try {
-          iface.chunk(args.token, args.resource, args.chunk);
-        } catch (FARServiceException e) {
-          result.e = e;
-        }
-        return result;
-      }
-    }
-
-    private static class deploy<I extends Iface> extends org.apache.thrift.ProcessFunction<I, deploy_args> {
-      public deploy() {
-        super("deploy");
-      }
-
-      protected deploy_args getEmptyArgsInstance() {
-        return new deploy_args();
-      }
-
-      protected deploy_result getResult(I iface, deploy_args args) throws org.apache.thrift.TException {
-        deploy_result result = new deploy_result();
-        try {
-          iface.deploy(args.token, args.resource);
-        } catch (FARServiceException e) {
+          result.success = iface.start(args.token, args.descriptor);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
@@ -740,89 +694,128 @@ public class FARService {
       protected status_result getResult(I iface, status_args args) throws org.apache.thrift.TException {
         status_result result = new status_result();
         try {
-          result.success = iface.status(args.token, args.resource);
-        } catch (FARServiceException e) {
+          result.success = iface.status(args.token, args.identifier);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
       }
     }
 
-    private static class promote<I extends Iface> extends org.apache.thrift.ProcessFunction<I, promote_args> {
-      public promote() {
-        super("promote");
+    private static class stop<I extends Iface> extends org.apache.thrift.ProcessFunction<I, stop_args> {
+      public stop() {
+        super("stop");
       }
 
-      protected promote_args getEmptyArgsInstance() {
-        return new promote_args();
+      protected stop_args getEmptyArgsInstance() {
+        return new stop_args();
       }
 
-      protected promote_result getResult(I iface, promote_args args) throws org.apache.thrift.TException {
-        promote_result result = new promote_result();
+      protected stop_result getResult(I iface, stop_args args) throws org.apache.thrift.TException {
+        stop_result result = new stop_result();
         try {
-          result.success = iface.promote(args.token, args.identifier);
-          result.setSuccessIsSet(true);
-        } catch (FARServiceException e) {
+          result.success = iface.stop(args.token, args.identifier);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
       }
     }
 
-    private static class remove<I extends Iface> extends org.apache.thrift.ProcessFunction<I, remove_args> {
-      public remove() {
-        super("remove");
+    private static class setInstances<I extends Iface> extends org.apache.thrift.ProcessFunction<I, setInstances_args> {
+      public setInstances() {
+        super("setInstances");
       }
 
-      protected remove_args getEmptyArgsInstance() {
-        return new remove_args();
+      protected setInstances_args getEmptyArgsInstance() {
+        return new setInstances_args();
       }
 
-      protected remove_result getResult(I iface, remove_args args) throws org.apache.thrift.TException {
-        remove_result result = new remove_result();
+      protected setInstances_result getResult(I iface, setInstances_args args) throws org.apache.thrift.TException {
+        setInstances_result result = new setInstances_result();
         try {
-          iface.remove(args.token, args.identifier);
-        } catch (FARServiceException e) {
+          iface.setInstances(args.token, args.identifier, args.flowletId, args.instances);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
       }
     }
 
-    private static class removeAll<I extends Iface> extends org.apache.thrift.ProcessFunction<I, removeAll_args> {
-      public removeAll() {
-        super("removeAll");
+    private static class getFlows<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlows_args> {
+      public getFlows() {
+        super("getFlows");
       }
 
-      protected removeAll_args getEmptyArgsInstance() {
-        return new removeAll_args();
+      protected getFlows_args getEmptyArgsInstance() {
+        return new getFlows_args();
       }
 
-      protected removeAll_result getResult(I iface, removeAll_args args) throws org.apache.thrift.TException {
-        removeAll_result result = new removeAll_result();
+      protected getFlows_result getResult(I iface, getFlows_args args) throws org.apache.thrift.TException {
+        getFlows_result result = new getFlows_result();
         try {
-          iface.removeAll(args.token, args.accountId);
-        } catch (FARServiceException e) {
+          result.success = iface.getFlows(args.accountId);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
       }
     }
 
-    private static class reset<I extends Iface> extends org.apache.thrift.ProcessFunction<I, reset_args> {
-      public reset() {
-        super("reset");
+    private static class getFlowDefinition<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowDefinition_args> {
+      public getFlowDefinition() {
+        super("getFlowDefinition");
       }
 
-      protected reset_args getEmptyArgsInstance() {
-        return new reset_args();
+      protected getFlowDefinition_args getEmptyArgsInstance() {
+        return new getFlowDefinition_args();
       }
 
-      protected reset_result getResult(I iface, reset_args args) throws org.apache.thrift.TException {
-        reset_result result = new reset_result();
+      protected getFlowDefinition_result getResult(I iface, getFlowDefinition_args args) throws org.apache.thrift.TException {
+        getFlowDefinition_result result = new getFlowDefinition_result();
         try {
-          iface.reset(args.token, args.accountId);
-        } catch (FARServiceException e) {
+          result.success = iface.getFlowDefinition(args.id);
+        } catch (RuntimeServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class getFlowHistory<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowHistory_args> {
+      public getFlowHistory() {
+        super("getFlowHistory");
+      }
+
+      protected getFlowHistory_args getEmptyArgsInstance() {
+        return new getFlowHistory_args();
+      }
+
+      protected getFlowHistory_result getResult(I iface, getFlowHistory_args args) throws org.apache.thrift.TException {
+        getFlowHistory_result result = new getFlowHistory_result();
+        try {
+          result.success = iface.getFlowHistory(args.id);
+        } catch (RuntimeServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class stopAll<I extends Iface> extends org.apache.thrift.ProcessFunction<I, stopAll_args> {
+      public stopAll() {
+        super("stopAll");
+      }
+
+      protected stopAll_args getEmptyArgsInstance() {
+        return new stopAll_args();
+      }
+
+      protected stopAll_result getResult(I iface, stopAll_args args) throws org.apache.thrift.TException {
+        stopAll_result result = new stopAll_result();
+        try {
+          iface.stopAll(args.accountId);
+        } catch (RuntimeServiceException e) {
           result.e = e;
         }
         return result;
@@ -831,25 +824,25 @@ public class FARService {
 
   }
 
-  public static class init_args implements org.apache.thrift.TBase<init_args, init_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("init_args");
+  public static class start_args implements org.apache.thrift.TBase<start_args, start_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("start_args");
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField INFO_FIELD_DESC = new org.apache.thrift.protocol.TField("info", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField DESCRIPTOR_FIELD_DESC = new org.apache.thrift.protocol.TField("descriptor", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new init_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new init_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new start_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new start_argsTupleSchemeFactory());
     }
 
     public AuthToken token; // required
-    public ResourceInfo info; // required
+    public FlowDescriptor descriptor; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       TOKEN((short)1, "token"),
-      INFO((short)2, "info");
+      DESCRIPTOR((short)2, "descriptor");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -866,8 +859,8 @@ public class FARService {
         switch(fieldId) {
           case 1: // TOKEN
             return TOKEN;
-          case 2: // INFO
-            return INFO;
+          case 2: // DESCRIPTOR
+            return DESCRIPTOR;
           default:
             return null;
         }
@@ -913,51 +906,51 @@ public class FARService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
-      tmpMap.put(_Fields.INFO, new org.apache.thrift.meta_data.FieldMetaData("info", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceInfo.class)));
+      tmpMap.put(_Fields.DESCRIPTOR, new org.apache.thrift.meta_data.FieldMetaData("descriptor", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowDescriptor.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(init_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(start_args.class, metaDataMap);
     }
 
-    public init_args() {
+    public start_args() {
     }
 
-    public init_args(
+    public start_args(
       AuthToken token,
-      ResourceInfo info)
+      FlowDescriptor descriptor)
     {
       this();
       this.token = token;
-      this.info = info;
+      this.descriptor = descriptor;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public init_args(init_args other) {
+    public start_args(start_args other) {
       if (other.isSetToken()) {
         this.token = new AuthToken(other.token);
       }
-      if (other.isSetInfo()) {
-        this.info = new ResourceInfo(other.info);
+      if (other.isSetDescriptor()) {
+        this.descriptor = new FlowDescriptor(other.descriptor);
       }
     }
 
-    public init_args deepCopy() {
-      return new init_args(this);
+    public start_args deepCopy() {
+      return new start_args(this);
     }
 
     @Override
     public void clear() {
       this.token = null;
-      this.info = null;
+      this.descriptor = null;
     }
 
     public AuthToken getToken() {
       return this.token;
     }
 
-    public init_args setToken(AuthToken token) {
+    public start_args setToken(AuthToken token) {
       this.token = token;
       return this;
     }
@@ -977,27 +970,27 @@ public class FARService {
       }
     }
 
-    public ResourceInfo getInfo() {
-      return this.info;
+    public FlowDescriptor getDescriptor() {
+      return this.descriptor;
     }
 
-    public init_args setInfo(ResourceInfo info) {
-      this.info = info;
+    public start_args setDescriptor(FlowDescriptor descriptor) {
+      this.descriptor = descriptor;
       return this;
     }
 
-    public void unsetInfo() {
-      this.info = null;
+    public void unsetDescriptor() {
+      this.descriptor = null;
     }
 
-    /** Returns true if field info is set (has been assigned a value) and false otherwise */
-    public boolean isSetInfo() {
-      return this.info != null;
+    /** Returns true if field descriptor is set (has been assigned a value) and false otherwise */
+    public boolean isSetDescriptor() {
+      return this.descriptor != null;
     }
 
-    public void setInfoIsSet(boolean value) {
+    public void setDescriptorIsSet(boolean value) {
       if (!value) {
-        this.info = null;
+        this.descriptor = null;
       }
     }
 
@@ -1011,11 +1004,11 @@ public class FARService {
         }
         break;
 
-      case INFO:
+      case DESCRIPTOR:
         if (value == null) {
-          unsetInfo();
+          unsetDescriptor();
         } else {
-          setInfo((ResourceInfo)value);
+          setDescriptor((FlowDescriptor)value);
         }
         break;
 
@@ -1027,8 +1020,8 @@ public class FARService {
       case TOKEN:
         return getToken();
 
-      case INFO:
-        return getInfo();
+      case DESCRIPTOR:
+        return getDescriptor();
 
       }
       throw new IllegalStateException();
@@ -1043,8 +1036,8 @@ public class FARService {
       switch (field) {
       case TOKEN:
         return isSetToken();
-      case INFO:
-        return isSetInfo();
+      case DESCRIPTOR:
+        return isSetDescriptor();
       }
       throw new IllegalStateException();
     }
@@ -1053,12 +1046,12 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof init_args)
-        return this.equals((init_args)that);
+      if (that instanceof start_args)
+        return this.equals((start_args)that);
       return false;
     }
 
-    public boolean equals(init_args that) {
+    public boolean equals(start_args that) {
       if (that == null)
         return false;
 
@@ -1071,12 +1064,12 @@ public class FARService {
           return false;
       }
 
-      boolean this_present_info = true && this.isSetInfo();
-      boolean that_present_info = true && that.isSetInfo();
-      if (this_present_info || that_present_info) {
-        if (!(this_present_info && that_present_info))
+      boolean this_present_descriptor = true && this.isSetDescriptor();
+      boolean that_present_descriptor = true && that.isSetDescriptor();
+      if (this_present_descriptor || that_present_descriptor) {
+        if (!(this_present_descriptor && that_present_descriptor))
           return false;
-        if (!this.info.equals(that.info))
+        if (!this.descriptor.equals(that.descriptor))
           return false;
       }
 
@@ -1088,13 +1081,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(init_args other) {
+    public int compareTo(start_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      init_args typedOther = (init_args)other;
+      start_args typedOther = (start_args)other;
 
       lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
       if (lastComparison != 0) {
@@ -1106,12 +1099,12 @@ public class FARService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetInfo()).compareTo(typedOther.isSetInfo());
+      lastComparison = Boolean.valueOf(isSetDescriptor()).compareTo(typedOther.isSetDescriptor());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetInfo()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.info, typedOther.info);
+      if (isSetDescriptor()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.descriptor, typedOther.descriptor);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1133,7 +1126,7 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("init_args(");
+      StringBuilder sb = new StringBuilder("start_args(");
       boolean first = true;
 
       sb.append("token:");
@@ -1144,11 +1137,11 @@ public class FARService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("info:");
-      if (this.info == null) {
+      sb.append("descriptor:");
+      if (this.descriptor == null) {
         sb.append("null");
       } else {
-        sb.append(this.info);
+        sb.append(this.descriptor);
       }
       first = false;
       sb.append(")");
@@ -1175,15 +1168,15 @@ public class FARService {
       }
     }
 
-    private static class init_argsStandardSchemeFactory implements SchemeFactory {
-      public init_argsStandardScheme getScheme() {
-        return new init_argsStandardScheme();
+    private static class start_argsStandardSchemeFactory implements SchemeFactory {
+      public start_argsStandardScheme getScheme() {
+        return new start_argsStandardScheme();
       }
     }
 
-    private static class init_argsStandardScheme extends StandardScheme<init_args> {
+    private static class start_argsStandardScheme extends StandardScheme<start_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, init_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, start_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -1202,11 +1195,11 @@ public class FARService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // INFO
+            case 2: // DESCRIPTOR
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.info = new ResourceInfo();
-                struct.info.read(iprot);
-                struct.setInfoIsSet(true);
+                struct.descriptor = new FlowDescriptor();
+                struct.descriptor.read(iprot);
+                struct.setDescriptorIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -1222,7 +1215,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, init_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, start_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -1231,9 +1224,9 @@ public class FARService {
           struct.token.write(oprot);
           oprot.writeFieldEnd();
         }
-        if (struct.info != null) {
-          oprot.writeFieldBegin(INFO_FIELD_DESC);
-          struct.info.write(oprot);
+        if (struct.descriptor != null) {
+          oprot.writeFieldBegin(DESCRIPTOR_FIELD_DESC);
+          struct.descriptor.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1242,35 +1235,35 @@ public class FARService {
 
     }
 
-    private static class init_argsTupleSchemeFactory implements SchemeFactory {
-      public init_argsTupleScheme getScheme() {
-        return new init_argsTupleScheme();
+    private static class start_argsTupleSchemeFactory implements SchemeFactory {
+      public start_argsTupleScheme getScheme() {
+        return new start_argsTupleScheme();
       }
     }
 
-    private static class init_argsTupleScheme extends TupleScheme<init_args> {
+    private static class start_argsTupleScheme extends TupleScheme<start_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, init_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, start_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetToken()) {
           optionals.set(0);
         }
-        if (struct.isSetInfo()) {
+        if (struct.isSetDescriptor()) {
           optionals.set(1);
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetToken()) {
           struct.token.write(oprot);
         }
-        if (struct.isSetInfo()) {
-          struct.info.write(oprot);
+        if (struct.isSetDescriptor()) {
+          struct.descriptor.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, init_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, start_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -1279,29 +1272,29 @@ public class FARService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.info = new ResourceInfo();
-          struct.info.read(iprot);
-          struct.setInfoIsSet(true);
+          struct.descriptor = new FlowDescriptor();
+          struct.descriptor.read(iprot);
+          struct.setDescriptorIsSet(true);
         }
       }
     }
 
   }
 
-  public static class init_result implements org.apache.thrift.TBase<init_result, init_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("init_result");
+  public static class start_result implements org.apache.thrift.TBase<start_result, start_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("start_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new init_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new init_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new start_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new start_resultTupleSchemeFactory());
     }
 
-    public ResourceIdentifier success; // required
-    public FARServiceException e; // required
+    public RunIdentifier success; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1369,19 +1362,19 @@ public class FARService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RunIdentifier.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(init_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(start_result.class, metaDataMap);
     }
 
-    public init_result() {
+    public start_result() {
     }
 
-    public init_result(
-      ResourceIdentifier success,
-      FARServiceException e)
+    public start_result(
+      RunIdentifier success,
+      RuntimeServiceException e)
     {
       this();
       this.success = success;
@@ -1391,17 +1384,17 @@ public class FARService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public init_result(init_result other) {
+    public start_result(start_result other) {
       if (other.isSetSuccess()) {
-        this.success = new ResourceIdentifier(other.success);
+        this.success = new RunIdentifier(other.success);
       }
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
-    public init_result deepCopy() {
-      return new init_result(this);
+    public start_result deepCopy() {
+      return new start_result(this);
     }
 
     @Override
@@ -1410,11 +1403,11 @@ public class FARService {
       this.e = null;
     }
 
-    public ResourceIdentifier getSuccess() {
+    public RunIdentifier getSuccess() {
       return this.success;
     }
 
-    public init_result setSuccess(ResourceIdentifier success) {
+    public start_result setSuccess(RunIdentifier success) {
       this.success = success;
       return this;
     }
@@ -1434,11 +1427,11 @@ public class FARService {
       }
     }
 
-    public FARServiceException getE() {
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public init_result setE(FARServiceException e) {
+    public start_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -1464,7 +1457,7 @@ public class FARService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((ResourceIdentifier)value);
+          setSuccess((RunIdentifier)value);
         }
         break;
 
@@ -1472,7 +1465,7 @@ public class FARService {
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -1510,12 +1503,12 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof init_result)
-        return this.equals((init_result)that);
+      if (that instanceof start_result)
+        return this.equals((start_result)that);
       return false;
     }
 
-    public boolean equals(init_result that) {
+    public boolean equals(start_result that) {
       if (that == null)
         return false;
 
@@ -1545,13 +1538,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(init_result other) {
+    public int compareTo(start_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      init_result typedOther = (init_result)other;
+      start_result typedOther = (start_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -1590,7 +1583,7 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("init_result(");
+      StringBuilder sb = new StringBuilder("start_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -1632,15 +1625,15 @@ public class FARService {
       }
     }
 
-    private static class init_resultStandardSchemeFactory implements SchemeFactory {
-      public init_resultStandardScheme getScheme() {
-        return new init_resultStandardScheme();
+    private static class start_resultStandardSchemeFactory implements SchemeFactory {
+      public start_resultStandardScheme getScheme() {
+        return new start_resultStandardScheme();
       }
     }
 
-    private static class init_resultStandardScheme extends StandardScheme<init_result> {
+    private static class start_resultStandardScheme extends StandardScheme<start_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, init_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, start_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -1652,7 +1645,7 @@ public class FARService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new ResourceIdentifier();
+                struct.success = new RunIdentifier();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -1661,7 +1654,7 @@ public class FARService {
               break;
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
+                struct.e = new RuntimeServiceException();
                 struct.e.read(iprot);
                 struct.setEIsSet(true);
               } else { 
@@ -1679,7 +1672,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, init_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, start_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -1699,16 +1692,16 @@ public class FARService {
 
     }
 
-    private static class init_resultTupleSchemeFactory implements SchemeFactory {
-      public init_resultTupleScheme getScheme() {
-        return new init_resultTupleScheme();
+    private static class start_resultTupleSchemeFactory implements SchemeFactory {
+      public start_resultTupleScheme getScheme() {
+        return new start_resultTupleScheme();
       }
     }
 
-    private static class init_resultTupleScheme extends TupleScheme<init_result> {
+    private static class start_resultTupleScheme extends TupleScheme<start_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, init_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, start_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -1727,1751 +1720,16 @@ public class FARService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, init_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, start_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new ResourceIdentifier();
+          struct.success = new RunIdentifier();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.e = new FARServiceException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class chunk_args implements org.apache.thrift.TBase<chunk_args, chunk_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("chunk_args");
-
-    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField RESOURCE_FIELD_DESC = new org.apache.thrift.protocol.TField("resource", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-    private static final org.apache.thrift.protocol.TField CHUNK_FIELD_DESC = new org.apache.thrift.protocol.TField("chunk", org.apache.thrift.protocol.TType.STRING, (short)3);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new chunk_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new chunk_argsTupleSchemeFactory());
-    }
-
-    public AuthToken token; // required
-    public ResourceIdentifier resource; // required
-    public ByteBuffer chunk; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TOKEN((short)1, "token"),
-      RESOURCE((short)2, "resource"),
-      CHUNK((short)3, "chunk");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // TOKEN
-            return TOKEN;
-          case 2: // RESOURCE
-            return RESOURCE;
-          case 3: // CHUNK
-            return CHUNK;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
-      tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
-      tmpMap.put(_Fields.CHUNK, new org.apache.thrift.meta_data.FieldMetaData("chunk", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(chunk_args.class, metaDataMap);
-    }
-
-    public chunk_args() {
-    }
-
-    public chunk_args(
-      AuthToken token,
-      ResourceIdentifier resource,
-      ByteBuffer chunk)
-    {
-      this();
-      this.token = token;
-      this.resource = resource;
-      this.chunk = chunk;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public chunk_args(chunk_args other) {
-      if (other.isSetToken()) {
-        this.token = new AuthToken(other.token);
-      }
-      if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
-      }
-      if (other.isSetChunk()) {
-        this.chunk = org.apache.thrift.TBaseHelper.copyBinary(other.chunk);
-;
-      }
-    }
-
-    public chunk_args deepCopy() {
-      return new chunk_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.token = null;
-      this.resource = null;
-      this.chunk = null;
-    }
-
-    public AuthToken getToken() {
-      return this.token;
-    }
-
-    public chunk_args setToken(AuthToken token) {
-      this.token = token;
-      return this;
-    }
-
-    public void unsetToken() {
-      this.token = null;
-    }
-
-    /** Returns true if field token is set (has been assigned a value) and false otherwise */
-    public boolean isSetToken() {
-      return this.token != null;
-    }
-
-    public void setTokenIsSet(boolean value) {
-      if (!value) {
-        this.token = null;
-      }
-    }
-
-    public ResourceIdentifier getResource() {
-      return this.resource;
-    }
-
-    public chunk_args setResource(ResourceIdentifier resource) {
-      this.resource = resource;
-      return this;
-    }
-
-    public void unsetResource() {
-      this.resource = null;
-    }
-
-    /** Returns true if field resource is set (has been assigned a value) and false otherwise */
-    public boolean isSetResource() {
-      return this.resource != null;
-    }
-
-    public void setResourceIsSet(boolean value) {
-      if (!value) {
-        this.resource = null;
-      }
-    }
-
-    public byte[] getChunk() {
-      setChunk(org.apache.thrift.TBaseHelper.rightSize(chunk));
-      return chunk == null ? null : chunk.array();
-    }
-
-    public ByteBuffer bufferForChunk() {
-      return chunk;
-    }
-
-    public chunk_args setChunk(byte[] chunk) {
-      setChunk(chunk == null ? (ByteBuffer)null : ByteBuffer.wrap(chunk));
-      return this;
-    }
-
-    public chunk_args setChunk(ByteBuffer chunk) {
-      this.chunk = chunk;
-      return this;
-    }
-
-    public void unsetChunk() {
-      this.chunk = null;
-    }
-
-    /** Returns true if field chunk is set (has been assigned a value) and false otherwise */
-    public boolean isSetChunk() {
-      return this.chunk != null;
-    }
-
-    public void setChunkIsSet(boolean value) {
-      if (!value) {
-        this.chunk = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case TOKEN:
-        if (value == null) {
-          unsetToken();
-        } else {
-          setToken((AuthToken)value);
-        }
-        break;
-
-      case RESOURCE:
-        if (value == null) {
-          unsetResource();
-        } else {
-          setResource((ResourceIdentifier)value);
-        }
-        break;
-
-      case CHUNK:
-        if (value == null) {
-          unsetChunk();
-        } else {
-          setChunk((ByteBuffer)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case TOKEN:
-        return getToken();
-
-      case RESOURCE:
-        return getResource();
-
-      case CHUNK:
-        return getChunk();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case TOKEN:
-        return isSetToken();
-      case RESOURCE:
-        return isSetResource();
-      case CHUNK:
-        return isSetChunk();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof chunk_args)
-        return this.equals((chunk_args)that);
-      return false;
-    }
-
-    public boolean equals(chunk_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_token = true && this.isSetToken();
-      boolean that_present_token = true && that.isSetToken();
-      if (this_present_token || that_present_token) {
-        if (!(this_present_token && that_present_token))
-          return false;
-        if (!this.token.equals(that.token))
-          return false;
-      }
-
-      boolean this_present_resource = true && this.isSetResource();
-      boolean that_present_resource = true && that.isSetResource();
-      if (this_present_resource || that_present_resource) {
-        if (!(this_present_resource && that_present_resource))
-          return false;
-        if (!this.resource.equals(that.resource))
-          return false;
-      }
-
-      boolean this_present_chunk = true && this.isSetChunk();
-      boolean that_present_chunk = true && that.isSetChunk();
-      if (this_present_chunk || that_present_chunk) {
-        if (!(this_present_chunk && that_present_chunk))
-          return false;
-        if (!this.chunk.equals(that.chunk))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(chunk_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      chunk_args typedOther = (chunk_args)other;
-
-      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetToken()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetResource()).compareTo(typedOther.isSetResource());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetResource()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.resource, typedOther.resource);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetChunk()).compareTo(typedOther.isSetChunk());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetChunk()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.chunk, typedOther.chunk);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("chunk_args(");
-      boolean first = true;
-
-      sb.append("token:");
-      if (this.token == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.token);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("resource:");
-      if (this.resource == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.resource);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("chunk:");
-      if (this.chunk == null) {
-        sb.append("null");
-      } else {
-        org.apache.thrift.TBaseHelper.toString(this.chunk, sb);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class chunk_argsStandardSchemeFactory implements SchemeFactory {
-      public chunk_argsStandardScheme getScheme() {
-        return new chunk_argsStandardScheme();
-      }
-    }
-
-    private static class chunk_argsStandardScheme extends StandardScheme<chunk_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, chunk_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // TOKEN
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.token = new AuthToken();
-                struct.token.read(iprot);
-                struct.setTokenIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // RESOURCE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
-                struct.resource.read(iprot);
-                struct.setResourceIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 3: // CHUNK
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.chunk = iprot.readBinary();
-                struct.setChunkIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, chunk_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.token != null) {
-          oprot.writeFieldBegin(TOKEN_FIELD_DESC);
-          struct.token.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.resource != null) {
-          oprot.writeFieldBegin(RESOURCE_FIELD_DESC);
-          struct.resource.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.chunk != null) {
-          oprot.writeFieldBegin(CHUNK_FIELD_DESC);
-          oprot.writeBinary(struct.chunk);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class chunk_argsTupleSchemeFactory implements SchemeFactory {
-      public chunk_argsTupleScheme getScheme() {
-        return new chunk_argsTupleScheme();
-      }
-    }
-
-    private static class chunk_argsTupleScheme extends TupleScheme<chunk_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, chunk_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetToken()) {
-          optionals.set(0);
-        }
-        if (struct.isSetResource()) {
-          optionals.set(1);
-        }
-        if (struct.isSetChunk()) {
-          optionals.set(2);
-        }
-        oprot.writeBitSet(optionals, 3);
-        if (struct.isSetToken()) {
-          struct.token.write(oprot);
-        }
-        if (struct.isSetResource()) {
-          struct.resource.write(oprot);
-        }
-        if (struct.isSetChunk()) {
-          oprot.writeBinary(struct.chunk);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, chunk_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
-        if (incoming.get(0)) {
-          struct.token = new AuthToken();
-          struct.token.read(iprot);
-          struct.setTokenIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
-          struct.resource.read(iprot);
-          struct.setResourceIsSet(true);
-        }
-        if (incoming.get(2)) {
-          struct.chunk = iprot.readBinary();
-          struct.setChunkIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class chunk_result implements org.apache.thrift.TBase<chunk_result, chunk_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("chunk_result");
-
-    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new chunk_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new chunk_resultTupleSchemeFactory());
-    }
-
-    public FARServiceException e; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      E((short)1, "e");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // E
-            return E;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(chunk_result.class, metaDataMap);
-    }
-
-    public chunk_result() {
-    }
-
-    public chunk_result(
-      FARServiceException e)
-    {
-      this();
-      this.e = e;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public chunk_result(chunk_result other) {
-      if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
-      }
-    }
-
-    public chunk_result deepCopy() {
-      return new chunk_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.e = null;
-    }
-
-    public FARServiceException getE() {
-      return this.e;
-    }
-
-    public chunk_result setE(FARServiceException e) {
-      this.e = e;
-      return this;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been assigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((FARServiceException)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case E:
-        return getE();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case E:
-        return isSetE();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof chunk_result)
-        return this.equals((chunk_result)that);
-      return false;
-    }
-
-    public boolean equals(chunk_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(chunk_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      chunk_result typedOther = (chunk_result)other;
-
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("chunk_result(");
-      boolean first = true;
-
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class chunk_resultStandardSchemeFactory implements SchemeFactory {
-      public chunk_resultStandardScheme getScheme() {
-        return new chunk_resultStandardScheme();
-      }
-    }
-
-    private static class chunk_resultStandardScheme extends StandardScheme<chunk_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, chunk_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, chunk_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class chunk_resultTupleSchemeFactory implements SchemeFactory {
-      public chunk_resultTupleScheme getScheme() {
-        return new chunk_resultTupleScheme();
-      }
-    }
-
-    private static class chunk_resultTupleScheme extends TupleScheme<chunk_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, chunk_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetE()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, chunk_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.e = new FARServiceException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class deploy_args implements org.apache.thrift.TBase<deploy_args, deploy_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deploy_args");
-
-    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField RESOURCE_FIELD_DESC = new org.apache.thrift.protocol.TField("resource", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new deploy_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new deploy_argsTupleSchemeFactory());
-    }
-
-    public AuthToken token; // required
-    public ResourceIdentifier resource; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TOKEN((short)1, "token"),
-      RESOURCE((short)2, "resource");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // TOKEN
-            return TOKEN;
-          case 2: // RESOURCE
-            return RESOURCE;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
-      tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deploy_args.class, metaDataMap);
-    }
-
-    public deploy_args() {
-    }
-
-    public deploy_args(
-      AuthToken token,
-      ResourceIdentifier resource)
-    {
-      this();
-      this.token = token;
-      this.resource = resource;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public deploy_args(deploy_args other) {
-      if (other.isSetToken()) {
-        this.token = new AuthToken(other.token);
-      }
-      if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
-      }
-    }
-
-    public deploy_args deepCopy() {
-      return new deploy_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.token = null;
-      this.resource = null;
-    }
-
-    public AuthToken getToken() {
-      return this.token;
-    }
-
-    public deploy_args setToken(AuthToken token) {
-      this.token = token;
-      return this;
-    }
-
-    public void unsetToken() {
-      this.token = null;
-    }
-
-    /** Returns true if field token is set (has been assigned a value) and false otherwise */
-    public boolean isSetToken() {
-      return this.token != null;
-    }
-
-    public void setTokenIsSet(boolean value) {
-      if (!value) {
-        this.token = null;
-      }
-    }
-
-    public ResourceIdentifier getResource() {
-      return this.resource;
-    }
-
-    public deploy_args setResource(ResourceIdentifier resource) {
-      this.resource = resource;
-      return this;
-    }
-
-    public void unsetResource() {
-      this.resource = null;
-    }
-
-    /** Returns true if field resource is set (has been assigned a value) and false otherwise */
-    public boolean isSetResource() {
-      return this.resource != null;
-    }
-
-    public void setResourceIsSet(boolean value) {
-      if (!value) {
-        this.resource = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case TOKEN:
-        if (value == null) {
-          unsetToken();
-        } else {
-          setToken((AuthToken)value);
-        }
-        break;
-
-      case RESOURCE:
-        if (value == null) {
-          unsetResource();
-        } else {
-          setResource((ResourceIdentifier)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case TOKEN:
-        return getToken();
-
-      case RESOURCE:
-        return getResource();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case TOKEN:
-        return isSetToken();
-      case RESOURCE:
-        return isSetResource();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof deploy_args)
-        return this.equals((deploy_args)that);
-      return false;
-    }
-
-    public boolean equals(deploy_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_token = true && this.isSetToken();
-      boolean that_present_token = true && that.isSetToken();
-      if (this_present_token || that_present_token) {
-        if (!(this_present_token && that_present_token))
-          return false;
-        if (!this.token.equals(that.token))
-          return false;
-      }
-
-      boolean this_present_resource = true && this.isSetResource();
-      boolean that_present_resource = true && that.isSetResource();
-      if (this_present_resource || that_present_resource) {
-        if (!(this_present_resource && that_present_resource))
-          return false;
-        if (!this.resource.equals(that.resource))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(deploy_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      deploy_args typedOther = (deploy_args)other;
-
-      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetToken()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetResource()).compareTo(typedOther.isSetResource());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetResource()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.resource, typedOther.resource);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("deploy_args(");
-      boolean first = true;
-
-      sb.append("token:");
-      if (this.token == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.token);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("resource:");
-      if (this.resource == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.resource);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class deploy_argsStandardSchemeFactory implements SchemeFactory {
-      public deploy_argsStandardScheme getScheme() {
-        return new deploy_argsStandardScheme();
-      }
-    }
-
-    private static class deploy_argsStandardScheme extends StandardScheme<deploy_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, deploy_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // TOKEN
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.token = new AuthToken();
-                struct.token.read(iprot);
-                struct.setTokenIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // RESOURCE
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
-                struct.resource.read(iprot);
-                struct.setResourceIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, deploy_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.token != null) {
-          oprot.writeFieldBegin(TOKEN_FIELD_DESC);
-          struct.token.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        if (struct.resource != null) {
-          oprot.writeFieldBegin(RESOURCE_FIELD_DESC);
-          struct.resource.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class deploy_argsTupleSchemeFactory implements SchemeFactory {
-      public deploy_argsTupleScheme getScheme() {
-        return new deploy_argsTupleScheme();
-      }
-    }
-
-    private static class deploy_argsTupleScheme extends TupleScheme<deploy_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, deploy_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetToken()) {
-          optionals.set(0);
-        }
-        if (struct.isSetResource()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetToken()) {
-          struct.token.write(oprot);
-        }
-        if (struct.isSetResource()) {
-          struct.resource.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, deploy_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
-        if (incoming.get(0)) {
-          struct.token = new AuthToken();
-          struct.token.read(iprot);
-          struct.setTokenIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
-          struct.resource.read(iprot);
-          struct.setResourceIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class deploy_result implements org.apache.thrift.TBase<deploy_result, deploy_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deploy_result");
-
-    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new deploy_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new deploy_resultTupleSchemeFactory());
-    }
-
-    public FARServiceException e; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      E((short)1, "e");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // E
-            return E;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deploy_result.class, metaDataMap);
-    }
-
-    public deploy_result() {
-    }
-
-    public deploy_result(
-      FARServiceException e)
-    {
-      this();
-      this.e = e;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public deploy_result(deploy_result other) {
-      if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
-      }
-    }
-
-    public deploy_result deepCopy() {
-      return new deploy_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.e = null;
-    }
-
-    public FARServiceException getE() {
-      return this.e;
-    }
-
-    public deploy_result setE(FARServiceException e) {
-      this.e = e;
-      return this;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been assigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((FARServiceException)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case E:
-        return getE();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case E:
-        return isSetE();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof deploy_result)
-        return this.equals((deploy_result)that);
-      return false;
-    }
-
-    public boolean equals(deploy_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(deploy_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      deploy_result typedOther = (deploy_result)other;
-
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("deploy_result(");
-      boolean first = true;
-
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class deploy_resultStandardSchemeFactory implements SchemeFactory {
-      public deploy_resultStandardScheme getScheme() {
-        return new deploy_resultStandardScheme();
-      }
-    }
-
-    private static class deploy_resultStandardScheme extends StandardScheme<deploy_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, deploy_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, deploy_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class deploy_resultTupleSchemeFactory implements SchemeFactory {
-      public deploy_resultTupleScheme getScheme() {
-        return new deploy_resultTupleScheme();
-      }
-    }
-
-    private static class deploy_resultTupleScheme extends TupleScheme<deploy_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, deploy_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetE()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, deploy_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.e = new FARServiceException();
+          struct.e = new RuntimeServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
         }
@@ -3484,7 +1742,7 @@ public class FARService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("status_args");
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField RESOURCE_FIELD_DESC = new org.apache.thrift.protocol.TField("resource", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -3493,12 +1751,12 @@ public class FARService {
     }
 
     public AuthToken token; // required
-    public ResourceIdentifier resource; // required
+    public FlowIdentifier identifier; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       TOKEN((short)1, "token"),
-      RESOURCE((short)2, "resource");
+      IDENTIFIER((short)2, "identifier");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3515,8 +1773,8 @@ public class FARService {
         switch(fieldId) {
           case 1: // TOKEN
             return TOKEN;
-          case 2: // RESOURCE
-            return RESOURCE;
+          case 2: // IDENTIFIER
+            return IDENTIFIER;
           default:
             return null;
         }
@@ -3562,8 +1820,8 @@ public class FARService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
-      tmpMap.put(_Fields.RESOURCE, new org.apache.thrift.meta_data.FieldMetaData("resource", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ResourceIdentifier.class)));
+      tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(status_args.class, metaDataMap);
     }
@@ -3573,11 +1831,11 @@ public class FARService {
 
     public status_args(
       AuthToken token,
-      ResourceIdentifier resource)
+      FlowIdentifier identifier)
     {
       this();
       this.token = token;
-      this.resource = resource;
+      this.identifier = identifier;
     }
 
     /**
@@ -3587,8 +1845,8 @@ public class FARService {
       if (other.isSetToken()) {
         this.token = new AuthToken(other.token);
       }
-      if (other.isSetResource()) {
-        this.resource = new ResourceIdentifier(other.resource);
+      if (other.isSetIdentifier()) {
+        this.identifier = new FlowIdentifier(other.identifier);
       }
     }
 
@@ -3599,7 +1857,7 @@ public class FARService {
     @Override
     public void clear() {
       this.token = null;
-      this.resource = null;
+      this.identifier = null;
     }
 
     public AuthToken getToken() {
@@ -3626,27 +1884,27 @@ public class FARService {
       }
     }
 
-    public ResourceIdentifier getResource() {
-      return this.resource;
+    public FlowIdentifier getIdentifier() {
+      return this.identifier;
     }
 
-    public status_args setResource(ResourceIdentifier resource) {
-      this.resource = resource;
+    public status_args setIdentifier(FlowIdentifier identifier) {
+      this.identifier = identifier;
       return this;
     }
 
-    public void unsetResource() {
-      this.resource = null;
+    public void unsetIdentifier() {
+      this.identifier = null;
     }
 
-    /** Returns true if field resource is set (has been assigned a value) and false otherwise */
-    public boolean isSetResource() {
-      return this.resource != null;
+    /** Returns true if field identifier is set (has been assigned a value) and false otherwise */
+    public boolean isSetIdentifier() {
+      return this.identifier != null;
     }
 
-    public void setResourceIsSet(boolean value) {
+    public void setIdentifierIsSet(boolean value) {
       if (!value) {
-        this.resource = null;
+        this.identifier = null;
       }
     }
 
@@ -3660,11 +1918,11 @@ public class FARService {
         }
         break;
 
-      case RESOURCE:
+      case IDENTIFIER:
         if (value == null) {
-          unsetResource();
+          unsetIdentifier();
         } else {
-          setResource((ResourceIdentifier)value);
+          setIdentifier((FlowIdentifier)value);
         }
         break;
 
@@ -3676,8 +1934,8 @@ public class FARService {
       case TOKEN:
         return getToken();
 
-      case RESOURCE:
-        return getResource();
+      case IDENTIFIER:
+        return getIdentifier();
 
       }
       throw new IllegalStateException();
@@ -3692,8 +1950,8 @@ public class FARService {
       switch (field) {
       case TOKEN:
         return isSetToken();
-      case RESOURCE:
-        return isSetResource();
+      case IDENTIFIER:
+        return isSetIdentifier();
       }
       throw new IllegalStateException();
     }
@@ -3720,12 +1978,12 @@ public class FARService {
           return false;
       }
 
-      boolean this_present_resource = true && this.isSetResource();
-      boolean that_present_resource = true && that.isSetResource();
-      if (this_present_resource || that_present_resource) {
-        if (!(this_present_resource && that_present_resource))
+      boolean this_present_identifier = true && this.isSetIdentifier();
+      boolean that_present_identifier = true && that.isSetIdentifier();
+      if (this_present_identifier || that_present_identifier) {
+        if (!(this_present_identifier && that_present_identifier))
           return false;
-        if (!this.resource.equals(that.resource))
+        if (!this.identifier.equals(that.identifier))
           return false;
       }
 
@@ -3755,12 +2013,12 @@ public class FARService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetResource()).compareTo(typedOther.isSetResource());
+      lastComparison = Boolean.valueOf(isSetIdentifier()).compareTo(typedOther.isSetIdentifier());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetResource()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.resource, typedOther.resource);
+      if (isSetIdentifier()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.identifier, typedOther.identifier);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3793,11 +2051,11 @@ public class FARService {
       }
       first = false;
       if (!first) sb.append(", ");
-      sb.append("resource:");
-      if (this.resource == null) {
+      sb.append("identifier:");
+      if (this.identifier == null) {
         sb.append("null");
       } else {
-        sb.append(this.resource);
+        sb.append(this.identifier);
       }
       first = false;
       sb.append(")");
@@ -3851,11 +2109,11 @@ public class FARService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
-            case 2: // RESOURCE
+            case 2: // IDENTIFIER
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.resource = new ResourceIdentifier();
-                struct.resource.read(iprot);
-                struct.setResourceIsSet(true);
+                struct.identifier = new FlowIdentifier();
+                struct.identifier.read(iprot);
+                struct.setIdentifierIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -3880,9 +2138,9 @@ public class FARService {
           struct.token.write(oprot);
           oprot.writeFieldEnd();
         }
-        if (struct.resource != null) {
-          oprot.writeFieldBegin(RESOURCE_FIELD_DESC);
-          struct.resource.write(oprot);
+        if (struct.identifier != null) {
+          oprot.writeFieldBegin(IDENTIFIER_FIELD_DESC);
+          struct.identifier.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -3906,15 +2164,15 @@ public class FARService {
         if (struct.isSetToken()) {
           optionals.set(0);
         }
-        if (struct.isSetResource()) {
+        if (struct.isSetIdentifier()) {
           optionals.set(1);
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetToken()) {
           struct.token.write(oprot);
         }
-        if (struct.isSetResource()) {
-          struct.resource.write(oprot);
+        if (struct.isSetIdentifier()) {
+          struct.identifier.write(oprot);
         }
       }
 
@@ -3928,9 +2186,9 @@ public class FARService {
           struct.setTokenIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.resource = new ResourceIdentifier();
-          struct.resource.read(iprot);
-          struct.setResourceIsSet(true);
+          struct.identifier = new FlowIdentifier();
+          struct.identifier.read(iprot);
+          struct.setIdentifierIsSet(true);
         }
       }
     }
@@ -3949,8 +2207,8 @@ public class FARService {
       schemes.put(TupleScheme.class, new status_resultTupleSchemeFactory());
     }
 
-    public FARStatus success; // required
-    public FARServiceException e; // required
+    public FlowStatus success; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4018,7 +2276,7 @@ public class FARService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FARStatus.class)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowStatus.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -4029,8 +2287,8 @@ public class FARService {
     }
 
     public status_result(
-      FARStatus success,
-      FARServiceException e)
+      FlowStatus success,
+      RuntimeServiceException e)
     {
       this();
       this.success = success;
@@ -4042,10 +2300,10 @@ public class FARService {
      */
     public status_result(status_result other) {
       if (other.isSetSuccess()) {
-        this.success = new FARStatus(other.success);
+        this.success = new FlowStatus(other.success);
       }
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
@@ -4059,11 +2317,11 @@ public class FARService {
       this.e = null;
     }
 
-    public FARStatus getSuccess() {
+    public FlowStatus getSuccess() {
       return this.success;
     }
 
-    public status_result setSuccess(FARStatus success) {
+    public status_result setSuccess(FlowStatus success) {
       this.success = success;
       return this;
     }
@@ -4083,11 +2341,11 @@ public class FARService {
       }
     }
 
-    public FARServiceException getE() {
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public status_result setE(FARServiceException e) {
+    public status_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -4113,7 +2371,7 @@ public class FARService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((FARStatus)value);
+          setSuccess((FlowStatus)value);
         }
         break;
 
@@ -4121,7 +2379,7 @@ public class FARService {
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -4301,7 +2559,7 @@ public class FARService {
           switch (schemeField.id) {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.success = new FARStatus();
+                struct.success = new FlowStatus();
                 struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
@@ -4310,7 +2568,7 @@ public class FARService {
               break;
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
+                struct.e = new RuntimeServiceException();
                 struct.e.read(iprot);
                 struct.setEIsSet(true);
               } else { 
@@ -4380,12 +2638,12 @@ public class FARService {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = new FARStatus();
+          struct.success = new FlowStatus();
           struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.e = new FARServiceException();
+          struct.e = new RuntimeServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
         }
@@ -4394,16 +2652,16 @@ public class FARService {
 
   }
 
-  public static class promote_args implements org.apache.thrift.TBase<promote_args, promote_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("promote_args");
+  public static class stop_args implements org.apache.thrift.TBase<stop_args, stop_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("stop_args");
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new promote_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new promote_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new stop_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new stop_argsTupleSchemeFactory());
     }
 
     public AuthToken token; // required
@@ -4479,13 +2737,13 @@ public class FARService {
       tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(promote_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(stop_args.class, metaDataMap);
     }
 
-    public promote_args() {
+    public stop_args() {
     }
 
-    public promote_args(
+    public stop_args(
       AuthToken token,
       FlowIdentifier identifier)
     {
@@ -4497,7 +2755,7 @@ public class FARService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public promote_args(promote_args other) {
+    public stop_args(stop_args other) {
       if (other.isSetToken()) {
         this.token = new AuthToken(other.token);
       }
@@ -4506,8 +2764,8 @@ public class FARService {
       }
     }
 
-    public promote_args deepCopy() {
-      return new promote_args(this);
+    public stop_args deepCopy() {
+      return new stop_args(this);
     }
 
     @Override
@@ -4520,7 +2778,7 @@ public class FARService {
       return this.token;
     }
 
-    public promote_args setToken(AuthToken token) {
+    public stop_args setToken(AuthToken token) {
       this.token = token;
       return this;
     }
@@ -4544,7 +2802,7 @@ public class FARService {
       return this.identifier;
     }
 
-    public promote_args setIdentifier(FlowIdentifier identifier) {
+    public stop_args setIdentifier(FlowIdentifier identifier) {
       this.identifier = identifier;
       return this;
     }
@@ -4616,12 +2874,12 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof promote_args)
-        return this.equals((promote_args)that);
+      if (that instanceof stop_args)
+        return this.equals((stop_args)that);
       return false;
     }
 
-    public boolean equals(promote_args that) {
+    public boolean equals(stop_args that) {
       if (that == null)
         return false;
 
@@ -4651,13 +2909,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(promote_args other) {
+    public int compareTo(stop_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      promote_args typedOther = (promote_args)other;
+      stop_args typedOther = (stop_args)other;
 
       lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
       if (lastComparison != 0) {
@@ -4696,7 +2954,7 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("promote_args(");
+      StringBuilder sb = new StringBuilder("stop_args(");
       boolean first = true;
 
       sb.append("token:");
@@ -4738,15 +2996,15 @@ public class FARService {
       }
     }
 
-    private static class promote_argsStandardSchemeFactory implements SchemeFactory {
-      public promote_argsStandardScheme getScheme() {
-        return new promote_argsStandardScheme();
+    private static class stop_argsStandardSchemeFactory implements SchemeFactory {
+      public stop_argsStandardScheme getScheme() {
+        return new stop_argsStandardScheme();
       }
     }
 
-    private static class promote_argsStandardScheme extends StandardScheme<promote_args> {
+    private static class stop_argsStandardScheme extends StandardScheme<stop_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, promote_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, stop_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -4785,7 +3043,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, promote_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, stop_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -4805,16 +3063,16 @@ public class FARService {
 
     }
 
-    private static class promote_argsTupleSchemeFactory implements SchemeFactory {
-      public promote_argsTupleScheme getScheme() {
-        return new promote_argsTupleScheme();
+    private static class stop_argsTupleSchemeFactory implements SchemeFactory {
+      public stop_argsTupleScheme getScheme() {
+        return new stop_argsTupleScheme();
       }
     }
 
-    private static class promote_argsTupleScheme extends TupleScheme<promote_args> {
+    private static class stop_argsTupleScheme extends TupleScheme<stop_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, promote_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, stop_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetToken()) {
@@ -4833,7 +3091,7 @@ public class FARService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, promote_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, stop_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -4851,20 +3109,20 @@ public class FARService {
 
   }
 
-  public static class promote_result implements org.apache.thrift.TBase<promote_result, promote_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("promote_result");
+  public static class stop_result implements org.apache.thrift.TBase<stop_result, stop_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("stop_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new promote_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new promote_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new stop_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new stop_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
-    public FARServiceException e; // required
+    public RunIdentifier success; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -4928,83 +3186,80 @@ public class FARService {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RunIdentifier.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(promote_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(stop_result.class, metaDataMap);
     }
 
-    public promote_result() {
+    public stop_result() {
     }
 
-    public promote_result(
-      boolean success,
-      FARServiceException e)
+    public stop_result(
+      RunIdentifier success,
+      RuntimeServiceException e)
     {
       this();
       this.success = success;
-      setSuccessIsSet(true);
       this.e = e;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public promote_result(promote_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+    public stop_result(stop_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new RunIdentifier(other.success);
+      }
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
-    public promote_result deepCopy() {
-      return new promote_result(this);
+    public stop_result deepCopy() {
+      return new stop_result(this);
     }
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.success = null;
       this.e = null;
     }
 
-    public boolean isSuccess() {
+    public RunIdentifier getSuccess() {
       return this.success;
     }
 
-    public promote_result setSuccess(boolean success) {
+    public stop_result setSuccess(RunIdentifier success) {
       this.success = success;
-      setSuccessIsSet(true);
       return this;
     }
 
     public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+      this.success = null;
     }
 
     /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+      return this.success != null;
     }
 
     public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+      if (!value) {
+        this.success = null;
+      }
     }
 
-    public FARServiceException getE() {
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public promote_result setE(FARServiceException e) {
+    public stop_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -5030,7 +3285,7 @@ public class FARService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Boolean)value);
+          setSuccess((RunIdentifier)value);
         }
         break;
 
@@ -5038,7 +3293,7 @@ public class FARService {
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -5048,7 +3303,7 @@ public class FARService {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+        return getSuccess();
 
       case E:
         return getE();
@@ -5076,21 +3331,21 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof promote_result)
-        return this.equals((promote_result)that);
+      if (that instanceof stop_result)
+        return this.equals((stop_result)that);
       return false;
     }
 
-    public boolean equals(promote_result that) {
+    public boolean equals(stop_result that) {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (this.success != that.success)
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -5111,13 +3366,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(promote_result other) {
+    public int compareTo(stop_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      promote_result typedOther = (promote_result)other;
+      stop_result typedOther = (stop_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -5156,11 +3411,15 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("promote_result(");
+      StringBuilder sb = new StringBuilder("stop_result(");
       boolean first = true;
 
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
@@ -5169,6 +3428,616 @@ public class FARService {
       } else {
         sb.append(this.e);
       }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class stop_resultStandardSchemeFactory implements SchemeFactory {
+      public stop_resultStandardScheme getScheme() {
+        return new stop_resultStandardScheme();
+      }
+    }
+
+    private static class stop_resultStandardScheme extends StandardScheme<stop_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, stop_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new RunIdentifier();
+                struct.success.read(iprot);
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new RuntimeServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, stop_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class stop_resultTupleSchemeFactory implements SchemeFactory {
+      public stop_resultTupleScheme getScheme() {
+        return new stop_resultTupleScheme();
+      }
+    }
+
+    private static class stop_resultTupleScheme extends TupleScheme<stop_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, stop_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          struct.success.write(oprot);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, stop_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = new RunIdentifier();
+          struct.success.read(iprot);
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new RuntimeServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class setInstances_args implements org.apache.thrift.TBase<setInstances_args, setInstances_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setInstances_args");
+
+    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+    private static final org.apache.thrift.protocol.TField FLOWLET_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("flowletId", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField INSTANCES_FIELD_DESC = new org.apache.thrift.protocol.TField("instances", org.apache.thrift.protocol.TType.I16, (short)4);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new setInstances_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new setInstances_argsTupleSchemeFactory());
+    }
+
+    public AuthToken token; // required
+    public FlowIdentifier identifier; // required
+    public String flowletId; // required
+    public short instances; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      TOKEN((short)1, "token"),
+      IDENTIFIER((short)2, "identifier"),
+      FLOWLET_ID((short)3, "flowletId"),
+      INSTANCES((short)4, "instances");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // TOKEN
+            return TOKEN;
+          case 2: // IDENTIFIER
+            return IDENTIFIER;
+          case 3: // FLOWLET_ID
+            return FLOWLET_ID;
+          case 4: // INSTANCES
+            return INSTANCES;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __INSTANCES_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
+      tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+      tmpMap.put(_Fields.FLOWLET_ID, new org.apache.thrift.meta_data.FieldMetaData("flowletId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.INSTANCES, new org.apache.thrift.meta_data.FieldMetaData("instances", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setInstances_args.class, metaDataMap);
+    }
+
+    public setInstances_args() {
+    }
+
+    public setInstances_args(
+      AuthToken token,
+      FlowIdentifier identifier,
+      String flowletId,
+      short instances)
+    {
+      this();
+      this.token = token;
+      this.identifier = identifier;
+      this.flowletId = flowletId;
+      this.instances = instances;
+      setInstancesIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public setInstances_args(setInstances_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      if (other.isSetToken()) {
+        this.token = new AuthToken(other.token);
+      }
+      if (other.isSetIdentifier()) {
+        this.identifier = new FlowIdentifier(other.identifier);
+      }
+      if (other.isSetFlowletId()) {
+        this.flowletId = other.flowletId;
+      }
+      this.instances = other.instances;
+    }
+
+    public setInstances_args deepCopy() {
+      return new setInstances_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.token = null;
+      this.identifier = null;
+      this.flowletId = null;
+      setInstancesIsSet(false);
+      this.instances = 0;
+    }
+
+    public AuthToken getToken() {
+      return this.token;
+    }
+
+    public setInstances_args setToken(AuthToken token) {
+      this.token = token;
+      return this;
+    }
+
+    public void unsetToken() {
+      this.token = null;
+    }
+
+    /** Returns true if field token is set (has been assigned a value) and false otherwise */
+    public boolean isSetToken() {
+      return this.token != null;
+    }
+
+    public void setTokenIsSet(boolean value) {
+      if (!value) {
+        this.token = null;
+      }
+    }
+
+    public FlowIdentifier getIdentifier() {
+      return this.identifier;
+    }
+
+    public setInstances_args setIdentifier(FlowIdentifier identifier) {
+      this.identifier = identifier;
+      return this;
+    }
+
+    public void unsetIdentifier() {
+      this.identifier = null;
+    }
+
+    /** Returns true if field identifier is set (has been assigned a value) and false otherwise */
+    public boolean isSetIdentifier() {
+      return this.identifier != null;
+    }
+
+    public void setIdentifierIsSet(boolean value) {
+      if (!value) {
+        this.identifier = null;
+      }
+    }
+
+    public String getFlowletId() {
+      return this.flowletId;
+    }
+
+    public setInstances_args setFlowletId(String flowletId) {
+      this.flowletId = flowletId;
+      return this;
+    }
+
+    public void unsetFlowletId() {
+      this.flowletId = null;
+    }
+
+    /** Returns true if field flowletId is set (has been assigned a value) and false otherwise */
+    public boolean isSetFlowletId() {
+      return this.flowletId != null;
+    }
+
+    public void setFlowletIdIsSet(boolean value) {
+      if (!value) {
+        this.flowletId = null;
+      }
+    }
+
+    public short getInstances() {
+      return this.instances;
+    }
+
+    public setInstances_args setInstances(short instances) {
+      this.instances = instances;
+      setInstancesIsSet(true);
+      return this;
+    }
+
+    public void unsetInstances() {
+      __isset_bit_vector.clear(__INSTANCES_ISSET_ID);
+    }
+
+    /** Returns true if field instances is set (has been assigned a value) and false otherwise */
+    public boolean isSetInstances() {
+      return __isset_bit_vector.get(__INSTANCES_ISSET_ID);
+    }
+
+    public void setInstancesIsSet(boolean value) {
+      __isset_bit_vector.set(__INSTANCES_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case TOKEN:
+        if (value == null) {
+          unsetToken();
+        } else {
+          setToken((AuthToken)value);
+        }
+        break;
+
+      case IDENTIFIER:
+        if (value == null) {
+          unsetIdentifier();
+        } else {
+          setIdentifier((FlowIdentifier)value);
+        }
+        break;
+
+      case FLOWLET_ID:
+        if (value == null) {
+          unsetFlowletId();
+        } else {
+          setFlowletId((String)value);
+        }
+        break;
+
+      case INSTANCES:
+        if (value == null) {
+          unsetInstances();
+        } else {
+          setInstances((Short)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case TOKEN:
+        return getToken();
+
+      case IDENTIFIER:
+        return getIdentifier();
+
+      case FLOWLET_ID:
+        return getFlowletId();
+
+      case INSTANCES:
+        return Short.valueOf(getInstances());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case TOKEN:
+        return isSetToken();
+      case IDENTIFIER:
+        return isSetIdentifier();
+      case FLOWLET_ID:
+        return isSetFlowletId();
+      case INSTANCES:
+        return isSetInstances();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof setInstances_args)
+        return this.equals((setInstances_args)that);
+      return false;
+    }
+
+    public boolean equals(setInstances_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_token = true && this.isSetToken();
+      boolean that_present_token = true && that.isSetToken();
+      if (this_present_token || that_present_token) {
+        if (!(this_present_token && that_present_token))
+          return false;
+        if (!this.token.equals(that.token))
+          return false;
+      }
+
+      boolean this_present_identifier = true && this.isSetIdentifier();
+      boolean that_present_identifier = true && that.isSetIdentifier();
+      if (this_present_identifier || that_present_identifier) {
+        if (!(this_present_identifier && that_present_identifier))
+          return false;
+        if (!this.identifier.equals(that.identifier))
+          return false;
+      }
+
+      boolean this_present_flowletId = true && this.isSetFlowletId();
+      boolean that_present_flowletId = true && that.isSetFlowletId();
+      if (this_present_flowletId || that_present_flowletId) {
+        if (!(this_present_flowletId && that_present_flowletId))
+          return false;
+        if (!this.flowletId.equals(that.flowletId))
+          return false;
+      }
+
+      boolean this_present_instances = true;
+      boolean that_present_instances = true;
+      if (this_present_instances || that_present_instances) {
+        if (!(this_present_instances && that_present_instances))
+          return false;
+        if (this.instances != that.instances)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(setInstances_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      setInstances_args typedOther = (setInstances_args)other;
+
+      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetToken()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetIdentifier()).compareTo(typedOther.isSetIdentifier());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetIdentifier()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.identifier, typedOther.identifier);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFlowletId()).compareTo(typedOther.isSetFlowletId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetFlowletId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flowletId, typedOther.flowletId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetInstances()).compareTo(typedOther.isSetInstances());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetInstances()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.instances, typedOther.instances);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("setInstances_args(");
+      boolean first = true;
+
+      sb.append("token:");
+      if (this.token == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.token);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("identifier:");
+      if (this.identifier == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.identifier);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("flowletId:");
+      if (this.flowletId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.flowletId);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("instances:");
+      sb.append(this.instances);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -5196,468 +4065,15 @@ public class FARService {
       }
     }
 
-    private static class promote_resultStandardSchemeFactory implements SchemeFactory {
-      public promote_resultStandardScheme getScheme() {
-        return new promote_resultStandardScheme();
+    private static class setInstances_argsStandardSchemeFactory implements SchemeFactory {
+      public setInstances_argsStandardScheme getScheme() {
+        return new setInstances_argsStandardScheme();
       }
     }
 
-    private static class promote_resultStandardScheme extends StandardScheme<promote_result> {
+    private static class setInstances_argsStandardScheme extends StandardScheme<setInstances_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, promote_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, promote_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class promote_resultTupleSchemeFactory implements SchemeFactory {
-      public promote_resultTupleScheme getScheme() {
-        return new promote_resultTupleScheme();
-      }
-    }
-
-    private static class promote_resultTupleScheme extends TupleScheme<promote_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, promote_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        if (struct.isSetE()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
-        }
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, promote_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
-        if (incoming.get(0)) {
-          struct.success = iprot.readBool();
-          struct.setSuccessIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.e = new FARServiceException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class remove_args implements org.apache.thrift.TBase<remove_args, remove_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("remove_args");
-
-    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new remove_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new remove_argsTupleSchemeFactory());
-    }
-
-    public AuthToken token; // required
-    public FlowIdentifier identifier; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TOKEN((short)1, "token"),
-      IDENTIFIER((short)2, "identifier");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // TOKEN
-            return TOKEN;
-          case 2: // IDENTIFIER
-            return IDENTIFIER;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
-      tmpMap.put(_Fields.IDENTIFIER, new org.apache.thrift.meta_data.FieldMetaData("identifier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(remove_args.class, metaDataMap);
-    }
-
-    public remove_args() {
-    }
-
-    public remove_args(
-      AuthToken token,
-      FlowIdentifier identifier)
-    {
-      this();
-      this.token = token;
-      this.identifier = identifier;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public remove_args(remove_args other) {
-      if (other.isSetToken()) {
-        this.token = new AuthToken(other.token);
-      }
-      if (other.isSetIdentifier()) {
-        this.identifier = new FlowIdentifier(other.identifier);
-      }
-    }
-
-    public remove_args deepCopy() {
-      return new remove_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.token = null;
-      this.identifier = null;
-    }
-
-    public AuthToken getToken() {
-      return this.token;
-    }
-
-    public remove_args setToken(AuthToken token) {
-      this.token = token;
-      return this;
-    }
-
-    public void unsetToken() {
-      this.token = null;
-    }
-
-    /** Returns true if field token is set (has been assigned a value) and false otherwise */
-    public boolean isSetToken() {
-      return this.token != null;
-    }
-
-    public void setTokenIsSet(boolean value) {
-      if (!value) {
-        this.token = null;
-      }
-    }
-
-    public FlowIdentifier getIdentifier() {
-      return this.identifier;
-    }
-
-    public remove_args setIdentifier(FlowIdentifier identifier) {
-      this.identifier = identifier;
-      return this;
-    }
-
-    public void unsetIdentifier() {
-      this.identifier = null;
-    }
-
-    /** Returns true if field identifier is set (has been assigned a value) and false otherwise */
-    public boolean isSetIdentifier() {
-      return this.identifier != null;
-    }
-
-    public void setIdentifierIsSet(boolean value) {
-      if (!value) {
-        this.identifier = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case TOKEN:
-        if (value == null) {
-          unsetToken();
-        } else {
-          setToken((AuthToken)value);
-        }
-        break;
-
-      case IDENTIFIER:
-        if (value == null) {
-          unsetIdentifier();
-        } else {
-          setIdentifier((FlowIdentifier)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case TOKEN:
-        return getToken();
-
-      case IDENTIFIER:
-        return getIdentifier();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case TOKEN:
-        return isSetToken();
-      case IDENTIFIER:
-        return isSetIdentifier();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof remove_args)
-        return this.equals((remove_args)that);
-      return false;
-    }
-
-    public boolean equals(remove_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_token = true && this.isSetToken();
-      boolean that_present_token = true && that.isSetToken();
-      if (this_present_token || that_present_token) {
-        if (!(this_present_token && that_present_token))
-          return false;
-        if (!this.token.equals(that.token))
-          return false;
-      }
-
-      boolean this_present_identifier = true && this.isSetIdentifier();
-      boolean that_present_identifier = true && that.isSetIdentifier();
-      if (this_present_identifier || that_present_identifier) {
-        if (!(this_present_identifier && that_present_identifier))
-          return false;
-        if (!this.identifier.equals(that.identifier))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(remove_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      remove_args typedOther = (remove_args)other;
-
-      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetToken()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetIdentifier()).compareTo(typedOther.isSetIdentifier());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetIdentifier()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.identifier, typedOther.identifier);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("remove_args(");
-      boolean first = true;
-
-      sb.append("token:");
-      if (this.token == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.token);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("identifier:");
-      if (this.identifier == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.identifier);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class remove_argsStandardSchemeFactory implements SchemeFactory {
-      public remove_argsStandardScheme getScheme() {
-        return new remove_argsStandardScheme();
-      }
-    }
-
-    private static class remove_argsStandardScheme extends StandardScheme<remove_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, remove_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, setInstances_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -5685,6 +4101,22 @@ public class FARService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // FLOWLET_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.flowletId = iprot.readString();
+                struct.setFlowletIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // INSTANCES
+              if (schemeField.type == org.apache.thrift.protocol.TType.I16) {
+                struct.instances = iprot.readI16();
+                struct.setInstancesIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -5696,7 +4128,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, remove_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, setInstances_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -5710,22 +4142,30 @@ public class FARService {
           struct.identifier.write(oprot);
           oprot.writeFieldEnd();
         }
+        if (struct.flowletId != null) {
+          oprot.writeFieldBegin(FLOWLET_ID_FIELD_DESC);
+          oprot.writeString(struct.flowletId);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldBegin(INSTANCES_FIELD_DESC);
+        oprot.writeI16(struct.instances);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
 
     }
 
-    private static class remove_argsTupleSchemeFactory implements SchemeFactory {
-      public remove_argsTupleScheme getScheme() {
-        return new remove_argsTupleScheme();
+    private static class setInstances_argsTupleSchemeFactory implements SchemeFactory {
+      public setInstances_argsTupleScheme getScheme() {
+        return new setInstances_argsTupleScheme();
       }
     }
 
-    private static class remove_argsTupleScheme extends TupleScheme<remove_args> {
+    private static class setInstances_argsTupleScheme extends TupleScheme<setInstances_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, remove_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, setInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetToken()) {
@@ -5734,19 +4174,31 @@ public class FARService {
         if (struct.isSetIdentifier()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetFlowletId()) {
+          optionals.set(2);
+        }
+        if (struct.isSetInstances()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
         if (struct.isSetToken()) {
           struct.token.write(oprot);
         }
         if (struct.isSetIdentifier()) {
           struct.identifier.write(oprot);
         }
+        if (struct.isSetFlowletId()) {
+          oprot.writeString(struct.flowletId);
+        }
+        if (struct.isSetInstances()) {
+          oprot.writeI16(struct.instances);
+        }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, remove_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, setInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
           struct.token = new AuthToken();
           struct.token.read(iprot);
@@ -5757,23 +4209,31 @@ public class FARService {
           struct.identifier.read(iprot);
           struct.setIdentifierIsSet(true);
         }
+        if (incoming.get(2)) {
+          struct.flowletId = iprot.readString();
+          struct.setFlowletIdIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.instances = iprot.readI16();
+          struct.setInstancesIsSet(true);
+        }
       }
     }
 
   }
 
-  public static class remove_result implements org.apache.thrift.TBase<remove_result, remove_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("remove_result");
+  public static class setInstances_result implements org.apache.thrift.TBase<setInstances_result, setInstances_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setInstances_result");
 
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new remove_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new remove_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new setInstances_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new setInstances_resultTupleSchemeFactory());
     }
 
-    public FARServiceException e; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -5840,14 +4300,14 @@ public class FARService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(remove_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setInstances_result.class, metaDataMap);
     }
 
-    public remove_result() {
+    public setInstances_result() {
     }
 
-    public remove_result(
-      FARServiceException e)
+    public setInstances_result(
+      RuntimeServiceException e)
     {
       this();
       this.e = e;
@@ -5856,14 +4316,14 @@ public class FARService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public remove_result(remove_result other) {
+    public setInstances_result(setInstances_result other) {
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
-    public remove_result deepCopy() {
-      return new remove_result(this);
+    public setInstances_result deepCopy() {
+      return new setInstances_result(this);
     }
 
     @Override
@@ -5871,11 +4331,11 @@ public class FARService {
       this.e = null;
     }
 
-    public FARServiceException getE() {
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public remove_result setE(FARServiceException e) {
+    public setInstances_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -5901,7 +4361,7 @@ public class FARService {
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -5934,12 +4394,12 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof remove_result)
-        return this.equals((remove_result)that);
+      if (that instanceof setInstances_result)
+        return this.equals((setInstances_result)that);
       return false;
     }
 
-    public boolean equals(remove_result that) {
+    public boolean equals(setInstances_result that) {
       if (that == null)
         return false;
 
@@ -5960,13 +4420,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(remove_result other) {
+    public int compareTo(setInstances_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      remove_result typedOther = (remove_result)other;
+      setInstances_result typedOther = (setInstances_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -5995,7 +4455,7 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("remove_result(");
+      StringBuilder sb = new StringBuilder("setInstances_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -6029,15 +4489,15 @@ public class FARService {
       }
     }
 
-    private static class remove_resultStandardSchemeFactory implements SchemeFactory {
-      public remove_resultStandardScheme getScheme() {
-        return new remove_resultStandardScheme();
+    private static class setInstances_resultStandardSchemeFactory implements SchemeFactory {
+      public setInstances_resultStandardScheme getScheme() {
+        return new setInstances_resultStandardScheme();
       }
     }
 
-    private static class remove_resultStandardScheme extends StandardScheme<remove_result> {
+    private static class setInstances_resultStandardScheme extends StandardScheme<setInstances_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, remove_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, setInstances_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6049,7 +4509,7 @@ public class FARService {
           switch (schemeField.id) {
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
+                struct.e = new RuntimeServiceException();
                 struct.e.read(iprot);
                 struct.setEIsSet(true);
               } else { 
@@ -6067,7 +4527,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, remove_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, setInstances_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6082,16 +4542,16 @@ public class FARService {
 
     }
 
-    private static class remove_resultTupleSchemeFactory implements SchemeFactory {
-      public remove_resultTupleScheme getScheme() {
-        return new remove_resultTupleScheme();
+    private static class setInstances_resultTupleSchemeFactory implements SchemeFactory {
+      public setInstances_resultTupleScheme getScheme() {
+        return new setInstances_resultTupleScheme();
       }
     }
 
-    private static class remove_resultTupleScheme extends TupleScheme<remove_result> {
+    private static class setInstances_resultTupleScheme extends TupleScheme<setInstances_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, remove_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, setInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetE()) {
@@ -6104,11 +4564,11 @@ public class FARService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, remove_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, setInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.e = new FARServiceException();
+          struct.e = new RuntimeServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
         }
@@ -6117,25 +4577,22 @@ public class FARService {
 
   }
 
-  public static class removeAll_args implements org.apache.thrift.TBase<removeAll_args, removeAll_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("removeAll_args");
+  public static class getFlows_args implements org.apache.thrift.TBase<getFlows_args, getFlows_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_args");
 
-    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new removeAll_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new removeAll_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getFlows_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlows_argsTupleSchemeFactory());
     }
 
-    public AuthToken token; // required
     public String accountId; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TOKEN((short)1, "token"),
-      ACCOUNT_ID((short)2, "accountId");
+      ACCOUNT_ID((short)1, "accountId");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -6150,9 +4607,7 @@ public class FARService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TOKEN
-            return TOKEN;
-          case 2: // ACCOUNT_ID
+          case 1: // ACCOUNT_ID
             return ACCOUNT_ID;
           default:
             return null;
@@ -6197,77 +4652,45 @@ public class FARService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(removeAll_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_args.class, metaDataMap);
     }
 
-    public removeAll_args() {
+    public getFlows_args() {
     }
 
-    public removeAll_args(
-      AuthToken token,
+    public getFlows_args(
       String accountId)
     {
       this();
-      this.token = token;
       this.accountId = accountId;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public removeAll_args(removeAll_args other) {
-      if (other.isSetToken()) {
-        this.token = new AuthToken(other.token);
-      }
+    public getFlows_args(getFlows_args other) {
       if (other.isSetAccountId()) {
         this.accountId = other.accountId;
       }
     }
 
-    public removeAll_args deepCopy() {
-      return new removeAll_args(this);
+    public getFlows_args deepCopy() {
+      return new getFlows_args(this);
     }
 
     @Override
     public void clear() {
-      this.token = null;
       this.accountId = null;
-    }
-
-    public AuthToken getToken() {
-      return this.token;
-    }
-
-    public removeAll_args setToken(AuthToken token) {
-      this.token = token;
-      return this;
-    }
-
-    public void unsetToken() {
-      this.token = null;
-    }
-
-    /** Returns true if field token is set (has been assigned a value) and false otherwise */
-    public boolean isSetToken() {
-      return this.token != null;
-    }
-
-    public void setTokenIsSet(boolean value) {
-      if (!value) {
-        this.token = null;
-      }
     }
 
     public String getAccountId() {
       return this.accountId;
     }
 
-    public removeAll_args setAccountId(String accountId) {
+    public getFlows_args setAccountId(String accountId) {
       this.accountId = accountId;
       return this;
     }
@@ -6289,14 +4712,6 @@ public class FARService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TOKEN:
-        if (value == null) {
-          unsetToken();
-        } else {
-          setToken((AuthToken)value);
-        }
-        break;
-
       case ACCOUNT_ID:
         if (value == null) {
           unsetAccountId();
@@ -6310,9 +4725,6 @@ public class FARService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TOKEN:
-        return getToken();
-
       case ACCOUNT_ID:
         return getAccountId();
 
@@ -6327,8 +4739,6 @@ public class FARService {
       }
 
       switch (field) {
-      case TOKEN:
-        return isSetToken();
       case ACCOUNT_ID:
         return isSetAccountId();
       }
@@ -6339,23 +4749,14 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof removeAll_args)
-        return this.equals((removeAll_args)that);
+      if (that instanceof getFlows_args)
+        return this.equals((getFlows_args)that);
       return false;
     }
 
-    public boolean equals(removeAll_args that) {
+    public boolean equals(getFlows_args that) {
       if (that == null)
         return false;
-
-      boolean this_present_token = true && this.isSetToken();
-      boolean that_present_token = true && that.isSetToken();
-      if (this_present_token || that_present_token) {
-        if (!(this_present_token && that_present_token))
-          return false;
-        if (!this.token.equals(that.token))
-          return false;
-      }
 
       boolean this_present_accountId = true && this.isSetAccountId();
       boolean that_present_accountId = true && that.isSetAccountId();
@@ -6374,24 +4775,14 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(removeAll_args other) {
+    public int compareTo(getFlows_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      removeAll_args typedOther = (removeAll_args)other;
+      getFlows_args typedOther = (getFlows_args)other;
 
-      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetToken()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
       if (lastComparison != 0) {
         return lastComparison;
@@ -6419,17 +4810,9 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("removeAll_args(");
+      StringBuilder sb = new StringBuilder("getFlows_args(");
       boolean first = true;
 
-      sb.append("token:");
-      if (this.token == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.token);
-      }
-      first = false;
-      if (!first) sb.append(", ");
       sb.append("accountId:");
       if (this.accountId == null) {
         sb.append("null");
@@ -6461,15 +4844,15 @@ public class FARService {
       }
     }
 
-    private static class removeAll_argsStandardSchemeFactory implements SchemeFactory {
-      public removeAll_argsStandardScheme getScheme() {
-        return new removeAll_argsStandardScheme();
+    private static class getFlows_argsStandardSchemeFactory implements SchemeFactory {
+      public getFlows_argsStandardScheme getScheme() {
+        return new getFlows_argsStandardScheme();
       }
     }
 
-    private static class removeAll_argsStandardScheme extends StandardScheme<removeAll_args> {
+    private static class getFlows_argsStandardScheme extends StandardScheme<getFlows_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, removeAll_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlows_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6479,16 +4862,7 @@ public class FARService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // TOKEN
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.token = new AuthToken();
-                struct.token.read(iprot);
-                struct.setTokenIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // ACCOUNT_ID
+            case 1: // ACCOUNT_ID
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
                 struct.accountId = iprot.readString();
                 struct.setAccountIdIsSet(true);
@@ -6507,15 +4881,10 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, removeAll_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlows_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.token != null) {
-          oprot.writeFieldBegin(TOKEN_FIELD_DESC);
-          struct.token.write(oprot);
-          oprot.writeFieldEnd();
-        }
         if (struct.accountId != null) {
           oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
           oprot.writeString(struct.accountId);
@@ -6527,43 +4896,32 @@ public class FARService {
 
     }
 
-    private static class removeAll_argsTupleSchemeFactory implements SchemeFactory {
-      public removeAll_argsTupleScheme getScheme() {
-        return new removeAll_argsTupleScheme();
+    private static class getFlows_argsTupleSchemeFactory implements SchemeFactory {
+      public getFlows_argsTupleScheme getScheme() {
+        return new getFlows_argsTupleScheme();
       }
     }
 
-    private static class removeAll_argsTupleScheme extends TupleScheme<removeAll_args> {
+    private static class getFlows_argsTupleScheme extends TupleScheme<getFlows_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, removeAll_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlows_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetToken()) {
+        if (struct.isSetAccountId()) {
           optionals.set(0);
         }
-        if (struct.isSetAccountId()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetToken()) {
-          struct.token.write(oprot);
-        }
+        oprot.writeBitSet(optionals, 1);
         if (struct.isSetAccountId()) {
           oprot.writeString(struct.accountId);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, removeAll_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlows_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.token = new AuthToken();
-          struct.token.read(iprot);
-          struct.setTokenIsSet(true);
-        }
-        if (incoming.get(1)) {
           struct.accountId = iprot.readString();
           struct.setAccountIdIsSet(true);
         }
@@ -6572,21 +4930,24 @@ public class FARService {
 
   }
 
-  public static class removeAll_result implements org.apache.thrift.TBase<removeAll_result, removeAll_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("removeAll_result");
+  public static class getFlows_result implements org.apache.thrift.TBase<getFlows_result, getFlows_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlows_result");
 
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new removeAll_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new removeAll_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getFlows_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlows_resultTupleSchemeFactory());
     }
 
-    public FARServiceException e; // required
+    public List<ActiveFlow> success; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
       E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -6602,6 +4963,8 @@ public class FARService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
           case 1: // E
             return E;
           default:
@@ -6647,45 +5010,97 @@ public class FARService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ActiveFlow.class))));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(removeAll_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlows_result.class, metaDataMap);
     }
 
-    public removeAll_result() {
+    public getFlows_result() {
     }
 
-    public removeAll_result(
-      FARServiceException e)
+    public getFlows_result(
+      List<ActiveFlow> success,
+      RuntimeServiceException e)
     {
       this();
+      this.success = success;
       this.e = e;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public removeAll_result(removeAll_result other) {
+    public getFlows_result(getFlows_result other) {
+      if (other.isSetSuccess()) {
+        List<ActiveFlow> __this__success = new ArrayList<ActiveFlow>();
+        for (ActiveFlow other_element : other.success) {
+          __this__success.add(new ActiveFlow(other_element));
+        }
+        this.success = __this__success;
+      }
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
-    public removeAll_result deepCopy() {
-      return new removeAll_result(this);
+    public getFlows_result deepCopy() {
+      return new getFlows_result(this);
     }
 
     @Override
     public void clear() {
+      this.success = null;
       this.e = null;
     }
 
-    public FARServiceException getE() {
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<ActiveFlow> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(ActiveFlow elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<ActiveFlow>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<ActiveFlow> getSuccess() {
+      return this.success;
+    }
+
+    public getFlows_result setSuccess(List<ActiveFlow> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public removeAll_result setE(FARServiceException e) {
+    public getFlows_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -6707,11 +5122,19 @@ public class FARService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<ActiveFlow>)value);
+        }
+        break;
+
       case E:
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -6720,6 +5143,9 @@ public class FARService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
       case E:
         return getE();
 
@@ -6734,6 +5160,8 @@ public class FARService {
       }
 
       switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
       case E:
         return isSetE();
       }
@@ -6744,14 +5172,23 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof removeAll_result)
-        return this.equals((removeAll_result)that);
+      if (that instanceof getFlows_result)
+        return this.equals((getFlows_result)that);
       return false;
     }
 
-    public boolean equals(removeAll_result that) {
+    public boolean equals(getFlows_result that) {
       if (that == null)
         return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
 
       boolean this_present_e = true && this.isSetE();
       boolean that_present_e = true && that.isSetE();
@@ -6770,14 +5207,24 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(removeAll_result other) {
+    public int compareTo(getFlows_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      removeAll_result typedOther = (removeAll_result)other;
+      getFlows_result typedOther = (getFlows_result)other;
 
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
@@ -6805,9 +5252,17 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("removeAll_result(");
+      StringBuilder sb = new StringBuilder("getFlows_result(");
       boolean first = true;
 
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("e:");
       if (this.e == null) {
         sb.append("null");
@@ -6839,15 +5294,15 @@ public class FARService {
       }
     }
 
-    private static class removeAll_resultStandardSchemeFactory implements SchemeFactory {
-      public removeAll_resultStandardScheme getScheme() {
-        return new removeAll_resultStandardScheme();
+    private static class getFlows_resultStandardSchemeFactory implements SchemeFactory {
+      public getFlows_resultStandardScheme getScheme() {
+        return new getFlows_resultStandardScheme();
       }
     }
 
-    private static class removeAll_resultStandardScheme extends StandardScheme<removeAll_result> {
+    private static class getFlows_resultStandardScheme extends StandardScheme<getFlows_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, removeAll_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlows_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6857,9 +5312,28 @@ public class FARService {
             break;
           }
           switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
+                  struct.success = new ArrayList<ActiveFlow>(_list16.size);
+                  for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+                  {
+                    ActiveFlow _elem18; // required
+                    _elem18 = new ActiveFlow();
+                    _elem18.read(iprot);
+                    struct.success.add(_elem18);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
+                struct.e = new RuntimeServiceException();
                 struct.e.read(iprot);
                 struct.setEIsSet(true);
               } else { 
@@ -6877,10 +5351,22 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, removeAll_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlows_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (ActiveFlow _iter19 : struct.success)
+            {
+              _iter19.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
         if (struct.e != null) {
           oprot.writeFieldBegin(E_FIELD_DESC);
           struct.e.write(oprot);
@@ -6892,33 +5378,59 @@ public class FARService {
 
     }
 
-    private static class removeAll_resultTupleSchemeFactory implements SchemeFactory {
-      public removeAll_resultTupleScheme getScheme() {
-        return new removeAll_resultTupleScheme();
+    private static class getFlows_resultTupleSchemeFactory implements SchemeFactory {
+      public getFlows_resultTupleScheme getScheme() {
+        return new getFlows_resultTupleScheme();
       }
     }
 
-    private static class removeAll_resultTupleScheme extends TupleScheme<removeAll_result> {
+    private static class getFlows_resultTupleScheme extends TupleScheme<getFlows_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, removeAll_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlows_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetE()) {
+        if (struct.isSetSuccess()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (ActiveFlow _iter20 : struct.success)
+            {
+              _iter20.write(oprot);
+            }
+          }
+        }
         if (struct.isSetE()) {
           struct.e.write(oprot);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, removeAll_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlows_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.e = new FARServiceException();
+          {
+            org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ActiveFlow>(_list21.size);
+            for (int _i22 = 0; _i22 < _list21.size; ++_i22)
+            {
+              ActiveFlow _elem23; // required
+              _elem23 = new ActiveFlow();
+              _elem23.read(iprot);
+              struct.success.add(_elem23);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new RuntimeServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
         }
@@ -6927,25 +5439,22 @@ public class FARService {
 
   }
 
-  public static class reset_args implements org.apache.thrift.TBase<reset_args, reset_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("reset_args");
+  public static class getFlowDefinition_args implements org.apache.thrift.TBase<getFlowDefinition_args, getFlowDefinition_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowDefinition_args");
 
-    private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new reset_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new reset_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getFlowDefinition_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowDefinition_argsTupleSchemeFactory());
     }
 
-    public AuthToken token; // required
-    public String accountId; // required
+    public FlowIdentifier id; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TOKEN((short)1, "token"),
-      ACCOUNT_ID((short)2, "accountId");
+      ID((short)1, "id");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -6960,9 +5469,1681 @@ public class FARService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TOKEN
-            return TOKEN;
-          case 2: // ACCOUNT_ID
+          case 1: // ID
+            return ID;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowDefinition_args.class, metaDataMap);
+    }
+
+    public getFlowDefinition_args() {
+    }
+
+    public getFlowDefinition_args(
+      FlowIdentifier id)
+    {
+      this();
+      this.id = id;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlowDefinition_args(getFlowDefinition_args other) {
+      if (other.isSetId()) {
+        this.id = new FlowIdentifier(other.id);
+      }
+    }
+
+    public getFlowDefinition_args deepCopy() {
+      return new getFlowDefinition_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.id = null;
+    }
+
+    public FlowIdentifier getId() {
+      return this.id;
+    }
+
+    public getFlowDefinition_args setId(FlowIdentifier id) {
+      this.id = id;
+      return this;
+    }
+
+    public void unsetId() {
+      this.id = null;
+    }
+
+    /** Returns true if field id is set (has been assigned a value) and false otherwise */
+    public boolean isSetId() {
+      return this.id != null;
+    }
+
+    public void setIdIsSet(boolean value) {
+      if (!value) {
+        this.id = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ID:
+        if (value == null) {
+          unsetId();
+        } else {
+          setId((FlowIdentifier)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ID:
+        return getId();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ID:
+        return isSetId();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlowDefinition_args)
+        return this.equals((getFlowDefinition_args)that);
+      return false;
+    }
+
+    public boolean equals(getFlowDefinition_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_id = true && this.isSetId();
+      boolean that_present_id = true && that.isSetId();
+      if (this_present_id || that_present_id) {
+        if (!(this_present_id && that_present_id))
+          return false;
+        if (!this.id.equals(that.id))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlowDefinition_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlowDefinition_args typedOther = (getFlowDefinition_args)other;
+
+      lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlowDefinition_args(");
+      boolean first = true;
+
+      sb.append("id:");
+      if (this.id == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.id);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getFlowDefinition_argsStandardSchemeFactory implements SchemeFactory {
+      public getFlowDefinition_argsStandardScheme getScheme() {
+        return new getFlowDefinition_argsStandardScheme();
+      }
+    }
+
+    private static class getFlowDefinition_argsStandardScheme extends StandardScheme<getFlowDefinition_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.id = new FlowIdentifier();
+                struct.id.read(iprot);
+                struct.setIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.id != null) {
+          oprot.writeFieldBegin(ID_FIELD_DESC);
+          struct.id.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getFlowDefinition_argsTupleSchemeFactory implements SchemeFactory {
+      public getFlowDefinition_argsTupleScheme getScheme() {
+        return new getFlowDefinition_argsTupleScheme();
+      }
+    }
+
+    private static class getFlowDefinition_argsTupleScheme extends TupleScheme<getFlowDefinition_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetId()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetId()) {
+          struct.id.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.id = new FlowIdentifier();
+          struct.id.read(iprot);
+          struct.setIdIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getFlowDefinition_result implements org.apache.thrift.TBase<getFlowDefinition_result, getFlowDefinition_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowDefinition_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getFlowDefinition_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowDefinition_resultTupleSchemeFactory());
+    }
+
+    public String success; // required
+    public RuntimeServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowDefinition_result.class, metaDataMap);
+    }
+
+    public getFlowDefinition_result() {
+    }
+
+    public getFlowDefinition_result(
+      String success,
+      RuntimeServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlowDefinition_result(getFlowDefinition_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new RuntimeServiceException(other.e);
+      }
+    }
+
+    public getFlowDefinition_result deepCopy() {
+      return new getFlowDefinition_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public getFlowDefinition_result setSuccess(String success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public RuntimeServiceException getE() {
+      return this.e;
+    }
+
+    public getFlowDefinition_result setE(RuntimeServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((String)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((RuntimeServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlowDefinition_result)
+        return this.equals((getFlowDefinition_result)that);
+      return false;
+    }
+
+    public boolean equals(getFlowDefinition_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlowDefinition_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlowDefinition_result typedOther = (getFlowDefinition_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlowDefinition_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getFlowDefinition_resultStandardSchemeFactory implements SchemeFactory {
+      public getFlowDefinition_resultStandardScheme getScheme() {
+        return new getFlowDefinition_resultStandardScheme();
+      }
+    }
+
+    private static class getFlowDefinition_resultStandardScheme extends StandardScheme<getFlowDefinition_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.success = iprot.readString();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new RuntimeServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          oprot.writeString(struct.success);
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getFlowDefinition_resultTupleSchemeFactory implements SchemeFactory {
+      public getFlowDefinition_resultTupleScheme getScheme() {
+        return new getFlowDefinition_resultTupleScheme();
+      }
+    }
+
+    private static class getFlowDefinition_resultTupleScheme extends TupleScheme<getFlowDefinition_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeString(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowDefinition_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readString();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new RuntimeServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getFlowHistory_args implements org.apache.thrift.TBase<getFlowHistory_args, getFlowHistory_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowHistory_args");
+
+    private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getFlowHistory_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowHistory_argsTupleSchemeFactory());
+    }
+
+    public FlowIdentifier id; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ID((short)1, "id");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ID
+            return ID;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowIdentifier.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowHistory_args.class, metaDataMap);
+    }
+
+    public getFlowHistory_args() {
+    }
+
+    public getFlowHistory_args(
+      FlowIdentifier id)
+    {
+      this();
+      this.id = id;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlowHistory_args(getFlowHistory_args other) {
+      if (other.isSetId()) {
+        this.id = new FlowIdentifier(other.id);
+      }
+    }
+
+    public getFlowHistory_args deepCopy() {
+      return new getFlowHistory_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.id = null;
+    }
+
+    public FlowIdentifier getId() {
+      return this.id;
+    }
+
+    public getFlowHistory_args setId(FlowIdentifier id) {
+      this.id = id;
+      return this;
+    }
+
+    public void unsetId() {
+      this.id = null;
+    }
+
+    /** Returns true if field id is set (has been assigned a value) and false otherwise */
+    public boolean isSetId() {
+      return this.id != null;
+    }
+
+    public void setIdIsSet(boolean value) {
+      if (!value) {
+        this.id = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ID:
+        if (value == null) {
+          unsetId();
+        } else {
+          setId((FlowIdentifier)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ID:
+        return getId();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ID:
+        return isSetId();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlowHistory_args)
+        return this.equals((getFlowHistory_args)that);
+      return false;
+    }
+
+    public boolean equals(getFlowHistory_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_id = true && this.isSetId();
+      boolean that_present_id = true && that.isSetId();
+      if (this_present_id || that_present_id) {
+        if (!(this_present_id && that_present_id))
+          return false;
+        if (!this.id.equals(that.id))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlowHistory_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlowHistory_args typedOther = (getFlowHistory_args)other;
+
+      lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlowHistory_args(");
+      boolean first = true;
+
+      sb.append("id:");
+      if (this.id == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.id);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getFlowHistory_argsStandardSchemeFactory implements SchemeFactory {
+      public getFlowHistory_argsStandardScheme getScheme() {
+        return new getFlowHistory_argsStandardScheme();
+      }
+    }
+
+    private static class getFlowHistory_argsStandardScheme extends StandardScheme<getFlowHistory_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.id = new FlowIdentifier();
+                struct.id.read(iprot);
+                struct.setIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.id != null) {
+          oprot.writeFieldBegin(ID_FIELD_DESC);
+          struct.id.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getFlowHistory_argsTupleSchemeFactory implements SchemeFactory {
+      public getFlowHistory_argsTupleScheme getScheme() {
+        return new getFlowHistory_argsTupleScheme();
+      }
+    }
+
+    private static class getFlowHistory_argsTupleScheme extends TupleScheme<getFlowHistory_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetId()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetId()) {
+          struct.id.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.id = new FlowIdentifier();
+          struct.id.read(iprot);
+          struct.setIdIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getFlowHistory_result implements org.apache.thrift.TBase<getFlowHistory_result, getFlowHistory_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowHistory_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getFlowHistory_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowHistory_resultTupleSchemeFactory());
+    }
+
+    public List<FlowRunRecord> success; // required
+    public RuntimeServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, FlowRunRecord.class))));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowHistory_result.class, metaDataMap);
+    }
+
+    public getFlowHistory_result() {
+    }
+
+    public getFlowHistory_result(
+      List<FlowRunRecord> success,
+      RuntimeServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getFlowHistory_result(getFlowHistory_result other) {
+      if (other.isSetSuccess()) {
+        List<FlowRunRecord> __this__success = new ArrayList<FlowRunRecord>();
+        for (FlowRunRecord other_element : other.success) {
+          __this__success.add(new FlowRunRecord(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new RuntimeServiceException(other.e);
+      }
+    }
+
+    public getFlowHistory_result deepCopy() {
+      return new getFlowHistory_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<FlowRunRecord> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(FlowRunRecord elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<FlowRunRecord>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<FlowRunRecord> getSuccess() {
+      return this.success;
+    }
+
+    public getFlowHistory_result setSuccess(List<FlowRunRecord> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public RuntimeServiceException getE() {
+      return this.e;
+    }
+
+    public getFlowHistory_result setE(RuntimeServiceException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((List<FlowRunRecord>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((RuntimeServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getFlowHistory_result)
+        return this.equals((getFlowHistory_result)that);
+      return false;
+    }
+
+    public boolean equals(getFlowHistory_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(getFlowHistory_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getFlowHistory_result typedOther = (getFlowHistory_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getFlowHistory_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getFlowHistory_resultStandardSchemeFactory implements SchemeFactory {
+      public getFlowHistory_resultStandardScheme getScheme() {
+        return new getFlowHistory_resultStandardScheme();
+      }
+    }
+
+    private static class getFlowHistory_resultStandardScheme extends StandardScheme<getFlowHistory_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
+                {
+                  org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
+                  struct.success = new ArrayList<FlowRunRecord>(_list24.size);
+                  for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                  {
+                    FlowRunRecord _elem26; // required
+                    _elem26 = new FlowRunRecord();
+                    _elem26.read(iprot);
+                    struct.success.add(_elem26);
+                  }
+                  iprot.readListEnd();
+                }
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new RuntimeServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          {
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
+            for (FlowRunRecord _iter27 : struct.success)
+            {
+              _iter27.write(oprot);
+            }
+            oprot.writeListEnd();
+          }
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getFlowHistory_resultTupleSchemeFactory implements SchemeFactory {
+      public getFlowHistory_resultTupleScheme getScheme() {
+        return new getFlowHistory_resultTupleScheme();
+      }
+    }
+
+    private static class getFlowHistory_resultTupleScheme extends TupleScheme<getFlowHistory_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          {
+            oprot.writeI32(struct.success.size());
+            for (FlowRunRecord _iter28 : struct.success)
+            {
+              _iter28.write(oprot);
+            }
+          }
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowHistory_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          {
+            org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<FlowRunRecord>(_list29.size);
+            for (int _i30 = 0; _i30 < _list29.size; ++_i30)
+            {
+              FlowRunRecord _elem31; // required
+              _elem31 = new FlowRunRecord();
+              _elem31.read(iprot);
+              struct.success.add(_elem31);
+            }
+          }
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new RuntimeServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class stopAll_args implements org.apache.thrift.TBase<stopAll_args, stopAll_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("stopAll_args");
+
+    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new stopAll_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new stopAll_argsTupleSchemeFactory());
+    }
+
+    public String accountId; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ACCOUNT_ID((short)1, "accountId");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ACCOUNT_ID
             return ACCOUNT_ID;
           default:
             return null;
@@ -7007,77 +7188,45 @@ public class FARService {
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TOKEN, new org.apache.thrift.meta_data.FieldMetaData("token", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AuthToken.class)));
       tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(reset_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(stopAll_args.class, metaDataMap);
     }
 
-    public reset_args() {
+    public stopAll_args() {
     }
 
-    public reset_args(
-      AuthToken token,
+    public stopAll_args(
       String accountId)
     {
       this();
-      this.token = token;
       this.accountId = accountId;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public reset_args(reset_args other) {
-      if (other.isSetToken()) {
-        this.token = new AuthToken(other.token);
-      }
+    public stopAll_args(stopAll_args other) {
       if (other.isSetAccountId()) {
         this.accountId = other.accountId;
       }
     }
 
-    public reset_args deepCopy() {
-      return new reset_args(this);
+    public stopAll_args deepCopy() {
+      return new stopAll_args(this);
     }
 
     @Override
     public void clear() {
-      this.token = null;
       this.accountId = null;
-    }
-
-    public AuthToken getToken() {
-      return this.token;
-    }
-
-    public reset_args setToken(AuthToken token) {
-      this.token = token;
-      return this;
-    }
-
-    public void unsetToken() {
-      this.token = null;
-    }
-
-    /** Returns true if field token is set (has been assigned a value) and false otherwise */
-    public boolean isSetToken() {
-      return this.token != null;
-    }
-
-    public void setTokenIsSet(boolean value) {
-      if (!value) {
-        this.token = null;
-      }
     }
 
     public String getAccountId() {
       return this.accountId;
     }
 
-    public reset_args setAccountId(String accountId) {
+    public stopAll_args setAccountId(String accountId) {
       this.accountId = accountId;
       return this;
     }
@@ -7099,14 +7248,6 @@ public class FARService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TOKEN:
-        if (value == null) {
-          unsetToken();
-        } else {
-          setToken((AuthToken)value);
-        }
-        break;
-
       case ACCOUNT_ID:
         if (value == null) {
           unsetAccountId();
@@ -7120,9 +7261,6 @@ public class FARService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TOKEN:
-        return getToken();
-
       case ACCOUNT_ID:
         return getAccountId();
 
@@ -7137,8 +7275,6 @@ public class FARService {
       }
 
       switch (field) {
-      case TOKEN:
-        return isSetToken();
       case ACCOUNT_ID:
         return isSetAccountId();
       }
@@ -7149,23 +7285,14 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof reset_args)
-        return this.equals((reset_args)that);
+      if (that instanceof stopAll_args)
+        return this.equals((stopAll_args)that);
       return false;
     }
 
-    public boolean equals(reset_args that) {
+    public boolean equals(stopAll_args that) {
       if (that == null)
         return false;
-
-      boolean this_present_token = true && this.isSetToken();
-      boolean that_present_token = true && that.isSetToken();
-      if (this_present_token || that_present_token) {
-        if (!(this_present_token && that_present_token))
-          return false;
-        if (!this.token.equals(that.token))
-          return false;
-      }
 
       boolean this_present_accountId = true && this.isSetAccountId();
       boolean that_present_accountId = true && that.isSetAccountId();
@@ -7184,24 +7311,14 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(reset_args other) {
+    public int compareTo(stopAll_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      reset_args typedOther = (reset_args)other;
+      stopAll_args typedOther = (stopAll_args)other;
 
-      lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetToken()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.token, typedOther.token);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
       if (lastComparison != 0) {
         return lastComparison;
@@ -7229,17 +7346,9 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("reset_args(");
+      StringBuilder sb = new StringBuilder("stopAll_args(");
       boolean first = true;
 
-      sb.append("token:");
-      if (this.token == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.token);
-      }
-      first = false;
-      if (!first) sb.append(", ");
       sb.append("accountId:");
       if (this.accountId == null) {
         sb.append("null");
@@ -7271,15 +7380,15 @@ public class FARService {
       }
     }
 
-    private static class reset_argsStandardSchemeFactory implements SchemeFactory {
-      public reset_argsStandardScheme getScheme() {
-        return new reset_argsStandardScheme();
+    private static class stopAll_argsStandardSchemeFactory implements SchemeFactory {
+      public stopAll_argsStandardScheme getScheme() {
+        return new stopAll_argsStandardScheme();
       }
     }
 
-    private static class reset_argsStandardScheme extends StandardScheme<reset_args> {
+    private static class stopAll_argsStandardScheme extends StandardScheme<stopAll_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, reset_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, stopAll_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7289,16 +7398,7 @@ public class FARService {
             break;
           }
           switch (schemeField.id) {
-            case 1: // TOKEN
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.token = new AuthToken();
-                struct.token.read(iprot);
-                struct.setTokenIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // ACCOUNT_ID
+            case 1: // ACCOUNT_ID
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
                 struct.accountId = iprot.readString();
                 struct.setAccountIdIsSet(true);
@@ -7317,15 +7417,10 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, reset_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, stopAll_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.token != null) {
-          oprot.writeFieldBegin(TOKEN_FIELD_DESC);
-          struct.token.write(oprot);
-          oprot.writeFieldEnd();
-        }
         if (struct.accountId != null) {
           oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
           oprot.writeString(struct.accountId);
@@ -7337,43 +7432,32 @@ public class FARService {
 
     }
 
-    private static class reset_argsTupleSchemeFactory implements SchemeFactory {
-      public reset_argsTupleScheme getScheme() {
-        return new reset_argsTupleScheme();
+    private static class stopAll_argsTupleSchemeFactory implements SchemeFactory {
+      public stopAll_argsTupleScheme getScheme() {
+        return new stopAll_argsTupleScheme();
       }
     }
 
-    private static class reset_argsTupleScheme extends TupleScheme<reset_args> {
+    private static class stopAll_argsTupleScheme extends TupleScheme<stopAll_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, reset_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, stopAll_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
-        if (struct.isSetToken()) {
+        if (struct.isSetAccountId()) {
           optionals.set(0);
         }
-        if (struct.isSetAccountId()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetToken()) {
-          struct.token.write(oprot);
-        }
+        oprot.writeBitSet(optionals, 1);
         if (struct.isSetAccountId()) {
           oprot.writeString(struct.accountId);
         }
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, reset_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, stopAll_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.token = new AuthToken();
-          struct.token.read(iprot);
-          struct.setTokenIsSet(true);
-        }
-        if (incoming.get(1)) {
           struct.accountId = iprot.readString();
           struct.setAccountIdIsSet(true);
         }
@@ -7382,18 +7466,18 @@ public class FARService {
 
   }
 
-  public static class reset_result implements org.apache.thrift.TBase<reset_result, reset_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("reset_result");
+  public static class stopAll_result implements org.apache.thrift.TBase<stopAll_result, stopAll_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("stopAll_result");
 
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new reset_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new reset_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new stopAll_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new stopAll_resultTupleSchemeFactory());
     }
 
-    public FARServiceException e; // required
+    public RuntimeServiceException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -7460,14 +7544,14 @@ public class FARService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(reset_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(stopAll_result.class, metaDataMap);
     }
 
-    public reset_result() {
+    public stopAll_result() {
     }
 
-    public reset_result(
-      FARServiceException e)
+    public stopAll_result(
+      RuntimeServiceException e)
     {
       this();
       this.e = e;
@@ -7476,14 +7560,14 @@ public class FARService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public reset_result(reset_result other) {
+    public stopAll_result(stopAll_result other) {
       if (other.isSetE()) {
-        this.e = new FARServiceException(other.e);
+        this.e = new RuntimeServiceException(other.e);
       }
     }
 
-    public reset_result deepCopy() {
-      return new reset_result(this);
+    public stopAll_result deepCopy() {
+      return new stopAll_result(this);
     }
 
     @Override
@@ -7491,11 +7575,11 @@ public class FARService {
       this.e = null;
     }
 
-    public FARServiceException getE() {
+    public RuntimeServiceException getE() {
       return this.e;
     }
 
-    public reset_result setE(FARServiceException e) {
+    public stopAll_result setE(RuntimeServiceException e) {
       this.e = e;
       return this;
     }
@@ -7521,7 +7605,7 @@ public class FARService {
         if (value == null) {
           unsetE();
         } else {
-          setE((FARServiceException)value);
+          setE((RuntimeServiceException)value);
         }
         break;
 
@@ -7554,12 +7638,12 @@ public class FARService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof reset_result)
-        return this.equals((reset_result)that);
+      if (that instanceof stopAll_result)
+        return this.equals((stopAll_result)that);
       return false;
     }
 
-    public boolean equals(reset_result that) {
+    public boolean equals(stopAll_result that) {
       if (that == null)
         return false;
 
@@ -7580,13 +7664,13 @@ public class FARService {
       return 0;
     }
 
-    public int compareTo(reset_result other) {
+    public int compareTo(stopAll_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      reset_result typedOther = (reset_result)other;
+      stopAll_result typedOther = (stopAll_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -7615,7 +7699,7 @@ public class FARService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("reset_result(");
+      StringBuilder sb = new StringBuilder("stopAll_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -7649,15 +7733,15 @@ public class FARService {
       }
     }
 
-    private static class reset_resultStandardSchemeFactory implements SchemeFactory {
-      public reset_resultStandardScheme getScheme() {
-        return new reset_resultStandardScheme();
+    private static class stopAll_resultStandardSchemeFactory implements SchemeFactory {
+      public stopAll_resultStandardScheme getScheme() {
+        return new stopAll_resultStandardScheme();
       }
     }
 
-    private static class reset_resultStandardScheme extends StandardScheme<reset_result> {
+    private static class stopAll_resultStandardScheme extends StandardScheme<stopAll_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, reset_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, stopAll_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7669,7 +7753,7 @@ public class FARService {
           switch (schemeField.id) {
             case 1: // E
               if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new FARServiceException();
+                struct.e = new RuntimeServiceException();
                 struct.e.read(iprot);
                 struct.setEIsSet(true);
               } else { 
@@ -7687,7 +7771,7 @@ public class FARService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, reset_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, stopAll_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7702,16 +7786,16 @@ public class FARService {
 
     }
 
-    private static class reset_resultTupleSchemeFactory implements SchemeFactory {
-      public reset_resultTupleScheme getScheme() {
-        return new reset_resultTupleScheme();
+    private static class stopAll_resultTupleSchemeFactory implements SchemeFactory {
+      public stopAll_resultTupleScheme getScheme() {
+        return new stopAll_resultTupleScheme();
       }
     }
 
-    private static class reset_resultTupleScheme extends TupleScheme<reset_result> {
+    private static class stopAll_resultTupleScheme extends TupleScheme<stopAll_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, reset_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, stopAll_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetE()) {
@@ -7724,11 +7808,11 @@ public class FARService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, reset_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, stopAll_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.e = new FARServiceException();
+          struct.e = new RuntimeServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
         }

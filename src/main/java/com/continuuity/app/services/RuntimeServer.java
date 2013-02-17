@@ -6,5 +6,5 @@ package com.continuuity.app.services;
 
 import com.continuuity.common.service.Server;
 
-public interface ProgramManagerServer extends Server {
+public interface RuntimeServer extends Server {
 }

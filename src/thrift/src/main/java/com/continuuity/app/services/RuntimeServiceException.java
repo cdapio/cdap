@@ -28,17 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Exception raised when issues are observed during uploading of resource.
+ * Exception raised when there is an issue in start/stop/status/pausing of Flows
  */
-public class FARServiceException extends Exception implements org.apache.thrift.TBase<FARServiceException, FARServiceException._Fields>, java.io.Serializable, Cloneable {
-  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("FARServiceException");
+public class RuntimeServiceException extends Exception implements org.apache.thrift.TBase<RuntimeServiceException, RuntimeServiceException._Fields>, java.io.Serializable, Cloneable {
+  private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RuntimeServiceException");
 
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
-    schemes.put(StandardScheme.class, new FARServiceExceptionStandardSchemeFactory());
-    schemes.put(TupleScheme.class, new FARServiceExceptionTupleSchemeFactory());
+    schemes.put(StandardScheme.class, new RuntimeServiceExceptionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new RuntimeServiceExceptionTupleSchemeFactory());
   }
 
   public String message; // required
@@ -108,13 +108,13 @@ public class FARServiceException extends Exception implements org.apache.thrift.
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
-    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(FARServiceException.class, metaDataMap);
+    org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RuntimeServiceException.class, metaDataMap);
   }
 
-  public FARServiceException() {
+  public RuntimeServiceException() {
   }
 
-  public FARServiceException(
+  public RuntimeServiceException(
     String message)
   {
     this();
@@ -124,14 +124,14 @@ public class FARServiceException extends Exception implements org.apache.thrift.
   /**
    * Performs a deep copy on <i>other</i>.
    */
-  public FARServiceException(FARServiceException other) {
+  public RuntimeServiceException(RuntimeServiceException other) {
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  public FARServiceException deepCopy() {
-    return new FARServiceException(this);
+  public RuntimeServiceException deepCopy() {
+    return new RuntimeServiceException(this);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class FARServiceException extends Exception implements org.apache.thrift.
     return this.message;
   }
 
-  public FARServiceException setMessage(String message) {
+  public RuntimeServiceException setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -202,12 +202,12 @@ public class FARServiceException extends Exception implements org.apache.thrift.
   public boolean equals(Object that) {
     if (that == null)
       return false;
-    if (that instanceof FARServiceException)
-      return this.equals((FARServiceException)that);
+    if (that instanceof RuntimeServiceException)
+      return this.equals((RuntimeServiceException)that);
     return false;
   }
 
-  public boolean equals(FARServiceException that) {
+  public boolean equals(RuntimeServiceException that) {
     if (that == null)
       return false;
 
@@ -228,13 +228,13 @@ public class FARServiceException extends Exception implements org.apache.thrift.
     return 0;
   }
 
-  public int compareTo(FARServiceException other) {
+  public int compareTo(RuntimeServiceException other) {
     if (!getClass().equals(other.getClass())) {
       return getClass().getName().compareTo(other.getClass().getName());
     }
 
     int lastComparison = 0;
-    FARServiceException typedOther = (FARServiceException)other;
+    RuntimeServiceException typedOther = (RuntimeServiceException)other;
 
     lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
@@ -263,7 +263,7 @@ public class FARServiceException extends Exception implements org.apache.thrift.
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("FARServiceException(");
+    StringBuilder sb = new StringBuilder("RuntimeServiceException(");
     boolean first = true;
 
     sb.append("message:");
@@ -297,15 +297,15 @@ public class FARServiceException extends Exception implements org.apache.thrift.
     }
   }
 
-  private static class FARServiceExceptionStandardSchemeFactory implements SchemeFactory {
-    public FARServiceExceptionStandardScheme getScheme() {
-      return new FARServiceExceptionStandardScheme();
+  private static class RuntimeServiceExceptionStandardSchemeFactory implements SchemeFactory {
+    public RuntimeServiceExceptionStandardScheme getScheme() {
+      return new RuntimeServiceExceptionStandardScheme();
     }
   }
 
-  private static class FARServiceExceptionStandardScheme extends StandardScheme<FARServiceException> {
+  private static class RuntimeServiceExceptionStandardScheme extends StandardScheme<RuntimeServiceException> {
 
-    public void read(org.apache.thrift.protocol.TProtocol iprot, FARServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol iprot, RuntimeServiceException struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
       iprot.readStructBegin();
       while (true)
@@ -334,7 +334,7 @@ public class FARServiceException extends Exception implements org.apache.thrift.
       struct.validate();
     }
 
-    public void write(org.apache.thrift.protocol.TProtocol oprot, FARServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol oprot, RuntimeServiceException struct) throws org.apache.thrift.TException {
       struct.validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
@@ -349,16 +349,16 @@ public class FARServiceException extends Exception implements org.apache.thrift.
 
   }
 
-  private static class FARServiceExceptionTupleSchemeFactory implements SchemeFactory {
-    public FARServiceExceptionTupleScheme getScheme() {
-      return new FARServiceExceptionTupleScheme();
+  private static class RuntimeServiceExceptionTupleSchemeFactory implements SchemeFactory {
+    public RuntimeServiceExceptionTupleScheme getScheme() {
+      return new RuntimeServiceExceptionTupleScheme();
     }
   }
 
-  private static class FARServiceExceptionTupleScheme extends TupleScheme<FARServiceException> {
+  private static class RuntimeServiceExceptionTupleScheme extends TupleScheme<RuntimeServiceException> {
 
     @Override
-    public void write(org.apache.thrift.protocol.TProtocol prot, FARServiceException struct) throws org.apache.thrift.TException {
+    public void write(org.apache.thrift.protocol.TProtocol prot, RuntimeServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       BitSet optionals = new BitSet();
       if (struct.isSetMessage()) {
@@ -371,7 +371,7 @@ public class FARServiceException extends Exception implements org.apache.thrift.
     }
 
     @Override
-    public void read(org.apache.thrift.protocol.TProtocol prot, FARServiceException struct) throws org.apache.thrift.TException {
+    public void read(org.apache.thrift.protocol.TProtocol prot, RuntimeServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {

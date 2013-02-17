@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ * Copyright (c) 2012, Continuuity Inc. All rights reserved.
  */
 
 package com.continuuity.internal.app.services;
@@ -14,19 +14,12 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Store;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
-import com.continuuity.app.services.ActiveFlow;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.FlowIdentifier;
-import com.continuuity.app.services.FlowRunRecord;
-import com.continuuity.app.services.ProgramServiceException;
-import com.continuuity.app.services.FlowStatus;
-import com.continuuity.app.services.ProgramServiceHandler;
-import com.continuuity.app.services.RunIdentifier;
-import com.continuuity.common.serializer.JSONSerializer;
+import com.continuuity.app.services.*;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.services.legacy.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.commons.lang.NotImplementedException;
 
@@ -37,37 +30,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
+/**
+ * A basic implementation of the FlowService interface.
+ */
+public final class RuntimeServiceImpl implements RuntimeService.Iface {
   private final Store store;
 
-  private boolean isAborted;
-  private boolean isStopped;
-
   @Inject
-  public ProgramServiceHandlerImpl(final Store store) {
+  public RuntimeServiceImpl(final Store store) {
     this.store = store;
-    this.isAborted = false;
-    this.isStopped = false;
   }
 
   @Override
-  public RunIdentifier start(final FlowIdentifier identifier) throws ProgramServiceException {
+  public RunIdentifier start(AuthToken token, final FlowDescriptor descriptor) throws RuntimeServiceException {
+    Preconditions.checkNotNull(token);
     throw new NotImplementedException();
   }
 
   @Override
-  public RunIdentifier stop(final FlowIdentifier identifier) throws ProgramServiceException {
+  public RunIdentifier stop(AuthToken token, final FlowIdentifier identifier) throws RuntimeServiceException {
+    Preconditions.checkNotNull(token);
     throw new NotImplementedException();
   }
 
   @Override
-  public FlowStatus status(final FlowIdentifier identifier) throws ProgramServiceException {
+  public FlowStatus status(AuthToken token, final FlowIdentifier identifier) throws RuntimeServiceException {
+    Preconditions.checkNotNull(token);
     throw new NotImplementedException();
   }
 
   @Override
-  public void setInstances(final FlowIdentifier identifier,
-                           final String flowletId, final int instances) throws ProgramServiceException {
+  public void setInstances(AuthToken token, final FlowIdentifier identifier,
+                           final String flowletId, final short instances) throws RuntimeServiceException {
+    Preconditions.checkNotNull(token);
     throw new NotImplementedException();
   }
 
@@ -77,7 +72,7 @@ public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
   }
 
   @Override
-  public String getFlowDefinition(final FlowIdentifier identifier) throws ProgramServiceException {
+  public String getFlowDefinition(final FlowIdentifier identifier) throws RuntimeServiceException {
     Preconditions.checkNotNull(identifier);
 
     // in this code XXXspec is new API class, XXXdef is legacy
@@ -86,10 +81,10 @@ public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
       ApplicationSpecification appSpec = null;
       try {
         appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
-                                       identifier.getApplicationId()));
+                                                          identifier.getApplicationId()));
       } catch(OperationException e) {
-        throw  new ProgramServiceException("Could NOT retrieve application spec for " +
-                                                             identifier.toString() + ", reason: " + e.getMessage());
+        throw  new RuntimeServiceException("Could NOT retrieve application spec for " +
+                                             identifier.toString() + ", reason: " + e.getMessage());
       }
 
       FlowSpecification flowSpec = appSpec.getFlows().get(identifier.getFlowId());
@@ -157,9 +152,9 @@ public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
       metaDefinition.setApp(identifier.getApplicationId());
 
       // user info (email, company, etc.) is left empty
-      JSONSerializer<FlowDefinition> flowSerializer = new JSONSerializer<FlowDefinition>();
-      byte[] defnBytes = flowSerializer.serialize(flowDef);
-      return new String(defnBytes);
+
+      Gson gson = new Gson();
+      return gson.toJson(flowDef);
 
     } else if(identifier.getType() == EntityType.QUERY) {
       ApplicationSpecification appSpec = null;
@@ -167,8 +162,8 @@ public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
         appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                           identifier.getApplicationId()));
       } catch(OperationException e) {
-        throw  new ProgramServiceException("Could NOT retrieve application spec for " +
-                                          identifier.toString() + ", reason: " + e.getMessage());
+        throw  new RuntimeServiceException("Could NOT retrieve application spec for " +
+                                             identifier.toString() + ", reason: " + e.getMessage());
       }
 
       ProcedureSpecification procedureSpec = appSpec.getProcedures().get(identifier.getFlowId());
@@ -176,62 +171,37 @@ public class ProgramServiceHandlerImpl implements ProgramServiceHandler {
       // todo: fill values once they are added to ProcedureSpecification
       queryDef.setServiceName(procedureSpec.getName());
 
-      JSONSerializer<QueryDefinition> querySerializer
-        = new JSONSerializer<QueryDefinition>();
-      byte[] defnBytes = querySerializer.serialize(queryDef);
-      return new String(defnBytes);
+      return new Gson().toJson(queryDef);
     }
 
     return null;
   }
 
   @Override
-  public List<FlowRunRecord> getFlowHistory(final FlowIdentifier id) throws ProgramServiceException {
+  public List<FlowRunRecord> getFlowHistory(final FlowIdentifier id) throws RuntimeServiceException {
     List<RunRecord> log;
     try {
       log = store.getRunHistory(new Id.Program(new Id.Application(new Id.Account(id.getAccountId()),
                                                                   id.getApplicationId()),
                                                id.getFlowId()));
     } catch(OperationException e) {
-      throw  new ProgramServiceException("Could NOT retrieve application spec for " +
+      throw  new RuntimeServiceException("Could NOT retrieve application spec for " +
                                            id.toString() + ", reason: " + e.getMessage());
 
     }
 
     List<FlowRunRecord> history = new ArrayList<FlowRunRecord>();
     for (RunRecord runRecord : log) {
-        history.add(new FlowRunRecord(runRecord.getPid(),
-                                      runRecord.getStartTs(), runRecord.getStopTs(),
-                                      runRecord.getEndStatus().name()));
+      history.add(new FlowRunRecord(runRecord.getPid(),
+                                    runRecord.getStartTs(), runRecord.getStopTs(),
+                                    runRecord.getEndStatus().name()));
     }
 
     return history;
   }
 
   @Override
-  public void stopAll(final String account) throws ProgramServiceException {
+  public void stopAll(final String account) throws RuntimeServiceException {
     throw new NotImplementedException();
-  }
-
-  @Override
-  public void abort(final String reason, final Throwable throwable) {
-    // Release all resources bing used
-    isAborted = true;
-  }
-
-  @Override
-  public boolean isAborted() {
-    return isAborted;
-  }
-
-  @Override
-  public void stop(final String reason) {
-    // Release all resources bing used
-    isStopped = true;
-  }
-
-  @Override
-  public boolean isStopped() {
-    return isStopped;
   }
 }

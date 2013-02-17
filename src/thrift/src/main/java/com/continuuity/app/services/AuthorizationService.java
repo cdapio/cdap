@@ -31,7 +31,7 @@ public class AuthorizationService {
 
   /**
    * Provides authorization service. This service returns a AuthToken that
-   * is then used in every call to FARService or ProgramService.
+   * is then used in every call to DeploymentService or RuntimeService.
    */
   public interface Iface {
 
