@@ -16,6 +16,9 @@ import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.metadata.thrift.Account;
+import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.MetadataService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -28,12 +31,14 @@ import java.util.List;
 
 public class MDSBasedStoreTest {
   private static MDSBasedStore store;
+  private static MetadataService.Iface metadataService;
 
   @BeforeClass
   public static void beforeClass() {
     final Injector injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                                    new StoreModule4Test());
 
+    metadataService = injector.getInstance(MetadataService.Iface.class);
     store = injector.getInstance(MDSBasedStore.class);
   }
 
@@ -92,7 +97,7 @@ public class MDSBasedStoreTest {
   }
 
   @Test
-  public void testAddGetApplication() throws OperationException {
+  public void testAddGetApplication() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(id, spec);
@@ -104,7 +109,17 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(spec.getFlows().get("WordCountFlow").getClassName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
 
-    // TODO: test that application items where added to metadataservice too 'cause UI will need it
+    // Checking that resources were registered in metadataService (UI still uses this)
+    Flow flow = metadataService.getFlow("account1", "application1", "WordCountFlow");
+    Assert.assertNotNull(flow);
+    Assert.assertEquals(1, flow.getDatasets().size());
+    Assert.assertEquals(1, flow.getStreams().size());
+    Assert.assertEquals("WordCountFlow", flow.getName());
+
+
+    Application app = metadataService.getApplication(new Account("account1"), new Application("application1"));
+    Assert.assertNotNull(app);
+    Assert.assertEquals("WordCountApp", app.getName());
   }
 
 }

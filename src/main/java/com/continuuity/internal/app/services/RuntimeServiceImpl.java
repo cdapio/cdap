@@ -168,7 +168,8 @@ public final class RuntimeServiceImpl implements RuntimeService.Iface {
 
       ProcedureSpecification procedureSpec = appSpec.getProcedures().get(identifier.getFlowId());
       QueryDefinitionImpl queryDef = new QueryDefinitionImpl();
-      // todo: fill values once they are added to ProcedureSpecification
+
+      // TODO: fill values (incl. list of datasets ) once they are added to ProcedureSpecification
       queryDef.setServiceName(procedureSpec.getName());
 
       return new Gson().toJson(queryDef);
