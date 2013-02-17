@@ -29,7 +29,7 @@ import org.apache.thrift.transport.TTransport;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ProgramManagerThriftServerTest {
+public class RuntimeThriftServerTest {
   private static MDSBasedStore store;
   private static RuntimeThriftServer server;
 
