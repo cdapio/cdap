@@ -46,7 +46,7 @@ public class AccountHandler {
     }
     else {
       return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJson("NOT_FOUND", "Account not found"))
+        .entity(Utils.getJsonError("Account not found"))
         .build();
     }
   }
@@ -239,13 +239,13 @@ public class AccountHandler {
     }
     catch(Exception e){
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
     }
   }
 
   @Path("authenticate")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response authenticate(String data){

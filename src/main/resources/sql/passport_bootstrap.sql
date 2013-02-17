@@ -160,6 +160,21 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
+-- -----------------------------------------------------
+-- Table `continuuity`.`nonce`
+-- Entity to store nonce
+-- -----------------------------------------------------
+
+CREATE  TABLE IF NOT EXISTS `continuuity`.`nonce` (
+  `nonce_id` INT(11) NOT NULL,
+  `id` INT(11) NOT NULL ,
+  `nonce_expires_at` DATETIME NOT NULL,
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ),
+  UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
+
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1;
+
 USE `continuuity` ;
 
 

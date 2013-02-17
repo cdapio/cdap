@@ -45,7 +45,7 @@ public class VPCHandler {
     }
     catch(Exception e){
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
     }
   }

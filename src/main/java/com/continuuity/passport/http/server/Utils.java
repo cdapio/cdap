@@ -6,6 +6,14 @@ package com.continuuity.passport.http.server;
 public class Utils {
 
 
+  public static String getJsonError(String error) {
+    return String.format("{\"error:\", \"%s\"",error);
+  }
+
+  public static String getJsonError(String error,Exception e) {
+    return String.format("{\"error:\", \"%s . %s \" ",error,e.getMessage());
+  }
+
   public static String getJson(String status, String message){
 
     return String.format("{\"status\":\"%s\",\"message\":\"%s\" }",status, message);

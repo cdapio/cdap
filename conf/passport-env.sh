@@ -1,5 +1,5 @@
 # Main class to be invoked.
-MAIN_CLASS=com.continuuity.passport.http.PassportHttpServer
+MAIN_CLASS=com.continuuity.passport.http.server.PassportHttpServer
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""
