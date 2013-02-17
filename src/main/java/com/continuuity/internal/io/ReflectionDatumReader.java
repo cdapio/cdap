@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -113,27 +114,29 @@ public final class ReflectionDatumReader<T> {
   private Object readArray(Decoder decoder, Schema sourceSchema,
                              Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
+    if (!targetTypeToken.isArray() && Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
+      throw new IOException("Only array or collection type is support for array value.");
+    }
+
     int len = decoder.readInt();
-    if (targetTypeToken.isArray()) {
-      Object[] array = new Object[len];
+    Collection<Object> collection = (Collection<Object>)create(targetTypeToken);
+    while (len != 0) {
       for (int i = 0; i < len; i++) {
-        array[i] = read(decoder, sourceSchema.getComponentSchema(),
-                        targetSchema.getComponentSchema(), targetTypeToken.getComponentType());
+        collection.add(read(decoder, sourceSchema.getComponentSchema(),
+                            targetSchema.getComponentSchema(), targetTypeToken.getComponentType()));
+      }
+      len = decoder.readInt();
+    }
+
+    if (targetTypeToken.isArray()) {
+      Object array = Array.newInstance(targetTypeToken.getComponentType().getRawType(), collection.size());
+      int idx = 0;
+      for (Object obj : collection) {
+        Array.set(array, idx++, obj);
       }
       return array;
-    } else if (Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
-      try {
-        Collection<Object> collection = (Collection<Object>)create(targetTypeToken);
-        for (int i = 0; i < len; i++) {
-          collection.add(read(decoder, sourceSchema.getComponentSchema(),
-                        targetSchema.getComponentSchema(), targetTypeToken.getComponentType()));
-        }
-        return collection;
-      } catch (Exception e) {
-        throw propagate(e);
-      }
     }
-    throw new IOException("Only array or collection type is support for array value.");
+    return collection;
   }
 
   private Map<Object, Object> readMap(Decoder decoder, Schema sourceSchema,

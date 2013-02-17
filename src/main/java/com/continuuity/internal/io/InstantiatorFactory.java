@@ -82,6 +82,14 @@ public final class InstantiatorFactory {
 
   private <T> Instantiator<T> getByKnownType(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
+    if (rawType.isArray()) {
+      return new Instantiator<T>() {
+        @Override
+        public T create() {
+          return (T) Lists.newLinkedList();
+        }
+      };
+    }
     if (Collection.class.isAssignableFrom(rawType)) {
       if (SortedSet.class.isAssignableFrom(rawType)) {
         return new Instantiator<T>() {
