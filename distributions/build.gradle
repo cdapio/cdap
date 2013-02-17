@@ -160,6 +160,7 @@ task cloud_dist (type: Tar) {
     from project(':singlenode').configurations.getByName('runtime')
     from tasks.findByPath(':performance:jar')
     from project(':passport').tasks.getByName('jar').outputs
+    from project(':passport').configurations.runtime.files 
     exclude 'passport-*-sources.jar'
     exclude 'overlord-*-loggly.jar'
   }
