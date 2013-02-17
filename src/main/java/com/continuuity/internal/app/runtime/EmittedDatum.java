@@ -15,14 +15,14 @@ import java.util.Map;
 /**
 *
 */
-final class EmittedDatum {
+public final class EmittedDatum {
 
   private final QueueProducer queueProducer;
   private final URI queueName;
   private final byte[] data;
   private final Map<String, String> header;
 
-  EmittedDatum(QueueProducer queueProducer, URI queueName, byte[] data, Map<String, Object> partitions) {
+  public EmittedDatum(QueueProducer queueProducer, URI queueName, byte[] data, Map<String, Object> partitions) {
     this.queueProducer = queueProducer;
     this.queueName = queueName;
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
@@ -33,7 +33,7 @@ final class EmittedDatum {
     this.header = builder.build();
   }
 
-  QueueEnqueue asEnqueue() {
+  public QueueEnqueue asEnqueue() {
     return new QueueEnqueue(queueProducer,
                             queueName.toASCIIString().getBytes(Charsets.US_ASCII),
                             header, data);

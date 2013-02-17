@@ -11,25 +11,23 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-class InputDatum {
+public class InputDatum {
 
   private final QueueConsumer consumer;
-  private final URI queueName;
   private final DequeueResult dequeueResult;
 
-  InputDatum(QueueConsumer consumer, URI queueName, DequeueResult dequeueResult) {
+  public InputDatum(QueueConsumer consumer, DequeueResult dequeueResult) {
     this.consumer = consumer;
-    this.queueName = queueName;
     this.dequeueResult = dequeueResult;
   }
 
-  QueueAck asAck() {
-    return new QueueAck(queueName.toASCIIString().getBytes(Charsets.US_ASCII),
+  public QueueAck asAck() {
+    return new QueueAck(dequeueResult.getEntryPointer().getQueueName(),
                         dequeueResult.getEntryPointer(),
                         consumer);
   }
 
-  ByteBuffer getData() {
+  public ByteBuffer getData() {
     return ByteBuffer.wrap(dequeueResult.getValue());
   }
 }

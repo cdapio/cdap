@@ -23,9 +23,21 @@ public final class SchemaHash {
     hash = computeHash(schema);
   }
 
+  /**
+   * Creates a SchemaHash by reading the hash value from the given {@link ByteBuffer}.
+   * The position of the {@link ByteBuffer} will be moved to the byte after the hash
+   * value.
+   */
   public SchemaHash(ByteBuffer bytes) {
     hash = new byte[16];
     bytes.get(hash);
+  }
+
+  /**
+   * @return A new byte array representing the raw hash value.
+   */
+  public byte[] toByteArray() {
+    return Arrays.copyOf(hash, hash.length);
   }
 
   @Override

@@ -50,8 +50,12 @@ public final class SchemaCache {
    * @return A {@link Schema} or {@code null} if the schema is not found.
    */
   public Schema get(ByteBuffer buffer) {
+    return get(new SchemaHash(buffer));
+  }
+
+  public Schema get(SchemaHash hash) {
     try {
-      return cache.get(new SchemaHash(buffer));
+      return cache.get(hash);
     } catch (ExecutionException e) {
       return null;
     }

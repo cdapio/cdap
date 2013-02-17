@@ -7,7 +7,7 @@ import java.util.List;
 /**
  *
  */
-interface ManagedOutputEmitter<T> extends OutputEmitter<T>  {
+public interface ManagedOutputEmitter<T> extends OutputEmitter<T>  {
 
   /**
    * Returns all the emitted datum. This also stop accepting new datum being emitted to this emitter until

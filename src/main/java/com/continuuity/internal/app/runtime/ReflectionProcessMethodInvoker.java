@@ -21,27 +21,36 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
 
   private final Flowlet flowlet;
   private final Method method;
-  private final TypeToken<T> dataType;
+  private final SchemaCache schemaCache;
   private final boolean needContext;
   private final ReflectionDatumReader<T> datumReader;
-  private final ByteBufferInputStream input;
+  private final ByteBufferInputStream byteBufferInput;
   private final BinaryDecoder decoder;
 
 
-  public ReflectionProcessMethodInvoker(Flowlet flowlet, Method method, Schema schema, TypeToken<T> dataType) {
+  public ReflectionProcessMethodInvoker(Flowlet flowlet, Method method,
+                                        TypeToken<T> dataType,
+                                        Schema schema, SchemaCache schemaCache) {
     this.flowlet = flowlet;
     this.method = method;
-    this.dataType = dataType;
+    this.schemaCache = schemaCache;
     this.needContext = method.getGenericParameterTypes().length == 2;
     this.datumReader = new ReflectionDatumReader<T>(schema, dataType);
-    this.input = new ByteBufferInputStream(null);
-    this.decoder = new BinaryDecoder(input);
+    this.byteBufferInput = new ByteBufferInputStream(null);
+    this.decoder = new BinaryDecoder(byteBufferInput);
+
+    if (!this.method.isAccessible()) {
+      this.method.setAccessible(true);
+    }
   }
 
   @Override
-  public void invoke(Schema sourceSchema, ByteBuffer data, InputContext context) {
+  public void invoke(InputDatum input, InputContext context) {
     try {
-      input.reset(data);
+      ByteBuffer data = input.getData();
+      Schema sourceSchema = schemaCache.get(data);
+
+      byteBufferInput.reset(data);
       T event = datumReader.read(decoder, sourceSchema);
 
       if (needContext) {
