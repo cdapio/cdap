@@ -22,12 +22,25 @@ public class VPCHandler {
   public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey){
     try{
       List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(apiKey);
-      Gson gson = new Gson();
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
       }
       else {
-        return Response.ok(gson.toJson(vpcList)).build();
+        StringBuilder returnJson = new StringBuilder();
+        returnJson.append("[");
+        boolean first = true;
+        for(VPC vpc : vpcList) {
+          if (first) {
+            first= false;
+          }
+          else {
+            returnJson.append(",");
+          }
+          returnJson.append(vpc.toString());
+
+        }
+        returnJson.append("]");
+        return Response.ok(returnJson.toString()).build();
       }
     }
     catch(Exception e){
