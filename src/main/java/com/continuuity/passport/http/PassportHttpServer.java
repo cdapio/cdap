@@ -10,7 +10,13 @@ import org.apache.shiro.realm.Realm;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.management.MBeanContainer;
 
+
+
+
+import javax.management.MBeanServer;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +36,12 @@ public class PassportHttpServer  {
         new PackagesResourceConfig("com.continuuity.passport.http"))), "/*");
 
       context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/*",0);
+
+        //JMX jetty
+      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+      MBeanContainer mBeanContainer = new MBeanContainer(mBeanServer);
+      server.getContainer().addEventListener(mBeanContainer);
+      mBeanContainer.start();
 
       server.start();
       server.join();
