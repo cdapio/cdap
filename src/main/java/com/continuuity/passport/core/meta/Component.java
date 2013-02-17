@@ -1,4 +1,4 @@
-package com.continuuity.passport.core;
+package com.continuuity.passport.core.meta;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -10,24 +10,22 @@ import java.util.Set;
  */
 public class Component {
 
-  public enum Type {DATASET, VPC}
-
   private final  String name;
 
-  private final  Type componentType;
+  private final  String componentType;
 
   private final String id;
 
   private final Set<ComponentACL> acls;
 
-  public Component( final String name,  final String id,  final Type type,  final Set<ComponentACL> acls) {
+  public Component( final String name,  final String id,  final String type,  final Set<ComponentACL> acls) {
     this.name = name;
     this.id = id;
     this.componentType = type;
     this.acls = acls;
   }
 
-  public Component( final String name,  final String id,  final Type type) {
+  public Component( final String name,  final String id,  final String type) {
     this.name = name;
     this.id = id;
     this.componentType = type;
@@ -38,7 +36,7 @@ public class Component {
     return name;
   }
 
-  public Type getComponentType() {
+  public String getComponentType() {
     return componentType;
   }
 

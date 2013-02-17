@@ -1,11 +1,16 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Account;
-import com.continuuity.passport.core.Component;
-import com.continuuity.passport.core.Credentials;
-import com.continuuity.passport.core.User;
+
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.meta.AccountSecurity;
+import com.continuuity.passport.core.meta.Component;
+import com.continuuity.passport.core.meta.Credentials;
+import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.core.status.Status;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -16,12 +21,17 @@ public interface DataManagementService {
    * Register an {@code Account} in the system
    *
    * @param account Account information
-   * @param owner   Owner of the account
    * @return Instance of {@code Status}
    * @throws RuntimeException
    */
-  public Status registerAccount(Account account, User owner) throws RetryException;
+  public long registerAccount(Account account) throws RuntimeException;
 
+  public long addVPC(int accountId, VPC vpc) throws RuntimeException;
+
+
+  public Status confirmRegistration(AccountSecurity account) throws RuntimeException;
+
+  public void confirmDownload(int accountId) throws RuntimeException;
 
   /**
    * Register a component with the account- Example: register VPC, Register DataSet
@@ -67,13 +77,6 @@ public interface DataManagementService {
    */
   public Status updateComponent(String accountId, Credentials credentials, Component component) throws RetryException;
 
-  /**
-   * get User Object
-   *
-   * @param userId Id that defines the user
-   * @return Instance of {@code User}
-   */
-  public User getUser(String userId);
 
   /**
    * GetAccount object
@@ -81,6 +84,28 @@ public interface DataManagementService {
    * @param accountId Id of the account
    * @return Instance of {@code Account}
    */
-  public Account getAccount(String accountId);
+  public Account getAccount(int accountId) throws RuntimeException;
+
+  /**
+   * Get VPC list for accountID
+   * @param accountId accountId identifying accounts
+   * @return List of {@code VPC}
+   */
+  public List<VPC> getVPC(int accountId);
+
+  /**
+   * Get VPC List based on the ApiKey
+   * @param apiKey apiKey of the account
+   * @return List of {@code VPC}
+   */
+  public List<VPC> getVPC(String apiKey);
+
+  /**
+   * Update account with passed Params
+   * @param accountId accountId
+   * @param params  Map<"keyName", "value">
+   */
+  public void updateAccount(int accountId, Map<String,Object> params) throws RuntimeException;
+
 
 }

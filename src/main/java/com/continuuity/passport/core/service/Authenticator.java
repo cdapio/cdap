@@ -1,9 +1,10 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Credentials;
-import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Credentials;
 import com.continuuity.passport.core.status.AuthenticationStatus;
+
+import java.util.Map;
 
 /**
  * Interface for user authentication
@@ -14,12 +15,13 @@ public interface Authenticator {
   /**
    * Authenticates User with the Credentials passed
    *
-   * @param user        User to be authenticated
+   * @param userId        User to be authenticated
    * @param credentials UserCredentials that authenticates the user
    * @return {@code AuthenticationStatus}
    * @throws {@code RetryException}
    */
-  AuthenticationStatus authenticate(User user, Credentials credentials) throws RetryException;
+  AuthenticationStatus authenticate(Credentials credentials) throws RetryException;
 
+  public void configure (Map<String,String> configurations);
 
 }

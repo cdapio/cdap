@@ -1,11 +1,10 @@
 package com.continuuity.passport.core.service;
 
-import com.continuuity.passport.core.Account;
-import com.continuuity.passport.core.Component;
-import com.continuuity.passport.core.ComponentACL;
-import com.continuuity.passport.core.Credentials;
-import com.continuuity.passport.core.User;
 import com.continuuity.passport.core.exceptions.RetryException;
+import com.continuuity.passport.core.meta.Account;
+import com.continuuity.passport.core.meta.Component;
+import com.continuuity.passport.core.meta.ComponentACL;
+import com.continuuity.passport.core.meta.Credentials;
 
 /**
  *
@@ -23,7 +22,7 @@ public interface Authorizer {
    * @param credentials UserCredentials that authenticates the user
    * @return Instance of {@code DelegationToken}
    */
-  DelegationToken authorize(User user, Account account, Component component, ComponentACL.Type aclType,
+  DelegationToken authorize(String user, Account account, Component component, ComponentACL.Type aclType,
                             Credentials credentials) throws RetryException;
 
   /**
