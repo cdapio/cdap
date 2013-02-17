@@ -26,7 +26,7 @@ public interface DataManagementService {
    */
   public Account registerAccount(Account account) throws RuntimeException;
 
-  public long addVPC(int accountId, VPC vpc) throws RuntimeException;
+  public VPC addVPC(int accountId, VPC vpc) throws RuntimeException;
 
 
   public Status confirmRegistration(AccountSecurity account) throws RuntimeException;

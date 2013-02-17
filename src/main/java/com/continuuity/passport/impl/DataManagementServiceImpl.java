@@ -222,7 +222,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   }
 
-  public long addVPC(int accountId, VPC vpc) throws RuntimeException {
+  public VPC addVPC(int accountId, VPC vpc) throws RuntimeException {
     if(vpcDao == null) {
       throw new RuntimeException("Could not initialize data access object");
     }

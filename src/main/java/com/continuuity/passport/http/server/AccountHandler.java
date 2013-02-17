@@ -180,7 +180,7 @@ public class AccountHandler {
 
 
   @Path("{id}/vpc/create")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response createVPC(String data, @PathParam("id")int id)  {
@@ -199,8 +199,8 @@ public class AccountHandler {
       }
 
       if ( (!vpcName.isEmpty()) ){
-        long genId = DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
-        return Response.ok(Utils.getJson("OK","VPC Created",genId)).build();
+        VPC vpc= DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
+        return Response.ok(vpc.toString()).build();
       }
       else {
         return Response.status(Response.Status.BAD_REQUEST)

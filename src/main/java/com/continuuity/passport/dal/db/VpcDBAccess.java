@@ -27,7 +27,7 @@ public class VpcDBAccess implements VpcDAO {
   private DBConnectionPoolManager poolManager =null;
 
   @Override
-  public long addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
+  public VPC addVPC(int accountId, VPC vpc) throws ConfigurationException, RuntimeException {
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
     }
@@ -52,8 +52,7 @@ public class VpcDBAccess implements VpcDAO {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
-      long id = result.getLong(1);
-      return id;
+      return new VPC(result.getInt(1),vpc.getVpcName());
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());
