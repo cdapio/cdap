@@ -6,6 +6,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
@@ -139,6 +140,8 @@ public class WebCrawlApp implements Application {
   public static final class UrlSanitizer extends AbstractFlowlet {
     private OutputEmitter<DocumentURL> output;
 
+    private OutputEmitter<String> str;
+
     public void process(StreamEvent event) {
       // Does some-fancy sanitization of url.
       output.emit(new DocumentURLImpl(event.getHeaders().get("url")));
@@ -158,4 +161,6 @@ public class WebCrawlApp implements Application {
       crawledPages.stage(new KeyValueTable.WriteKey(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8")));
     }
   }
+
+
 }
