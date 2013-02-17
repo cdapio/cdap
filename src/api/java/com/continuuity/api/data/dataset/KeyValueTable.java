@@ -83,7 +83,7 @@ public class KeyValueTable extends DataSet {
    * @param op the write operation
    * @throws OperationException if the operation fails
    */
-  public void stage(KeyOperation op) {
+  public void stage(KeyOperation op) throws OperationException {
     this.table.stage(op);
   }
 

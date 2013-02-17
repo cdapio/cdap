@@ -14,6 +14,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.data.operation.IncrementClosure;
+import com.continuuity.data.operation.executor.TransactionProxy;
 
 import java.util.Collections;
 
@@ -30,9 +31,27 @@ public class ReadWriteTable extends ReadOnlyTable {
    * @param fabric the data fabric
    * @param client the batch collection client
    * @return the new ReadWriteTable
+   *
+   * TODO this method will go away with the new flow system
    */
+  // @Deprecated
   public static ReadWriteTable setReadWriteTable(Table table, DataFabric fabric, BatchCollectionClient client) {
     ReadWriteTable readWriteTable = new ReadWriteTable(table, fabric, client);
+    table.setDelegate(readWriteTable);
+    return readWriteTable;
+  }
+
+  /**
+   * Given a Table, create a new ReadWriteTable and make it the delegate for that
+   * table.
+   *
+   * @param table the original table
+   * @param fabric the data fabric
+   * @param proxy transaction proxy for all operations
+   * @return the new ReadWriteTable
+   */
+  public static ReadWriteTable setReadWriteTable(Table table, DataFabric fabric, TransactionProxy proxy) {
+    ReadWriteTable readWriteTable = new ReadWriteTable(table, fabric, proxy);
     table.setDelegate(readWriteTable);
     return readWriteTable;
   }
@@ -42,19 +61,37 @@ public class ReadWriteTable extends ReadOnlyTable {
    * @param table the original table
    * @param fabric the data fabric
    * @param client the batch collection client
+   *
+   * TODO this method will go away with the new flow system
    */
+  // @Deprecated
   private ReadWriteTable(Table table, DataFabric fabric, BatchCollectionClient client) {
-    super(table, fabric);
+    super(table, fabric, null);
     this.collectionClient = client;
   }
 
+  /**
+   * private constructor, only to be called from @see #setReadWriteTable().
+   * @param table the original table
+   * @param fabric the data fabric
+   * @param proxy transaction proxy for all operations
+   */
+  private ReadWriteTable(Table table, DataFabric fabric, TransactionProxy proxy) {
+    super(table, fabric, proxy);
+    this.collectionClient = null;
+  }
+
+  // TODO this will go away with the new flow system
   // the batch collection client for executing asynchronous operations
   private BatchCollectionClient collectionClient = null;
 
   /**
    * helper method to get the batch collector from the collection client
    * @return the current batch collector
+   *
+   * TODO this method will go away with the new flow system
    */
+  // @Deprecated
   private BatchCollector getCollector() {
     return this.collectionClient.getCollector();
   }
@@ -98,19 +135,32 @@ public class ReadWriteTable extends ReadOnlyTable {
 
   // perform an asynchronous write operation (see toOperation())
   @Override
-  public void stage(WriteOperation op) {
-    this.getCollector().add(toOperation(op));
+  public void stage(WriteOperation op) throws OperationException {
+    // new style
+    if (this.proxy != null) {
+      this.getTransactionAgent().submit(toOperation(op));
+    } else {
+      // TODO old-style will go away
+      this.getCollector().add(toOperation(op));
+    }
   }
 
   // perform a synchronous write operation (see toOperation())
   @Override
   public void exec(WriteOperation op) throws OperationException {
-    this.getDataFabric().execute(Collections.singletonList(toOperation(op)));
+    // new style
+    if (this.proxy != null) {
+      this.getTransactionAgent().submit(toOperation(op));
+    } else {
+      // TODO old-style will go away
+      this.getDataFabric().execute(Collections.singletonList(toOperation(op)));
+    }
   }
 
   // get a closure for an increment
   @Override
   public Closure closure(Increment increment) {
+    // TODO old-style will go away
     return new IncrementClosure(new com.continuuity.data.operation.Increment
         (this.tableName(), increment.getRow(), increment.getColumns(), increment.getValues()));
   }
