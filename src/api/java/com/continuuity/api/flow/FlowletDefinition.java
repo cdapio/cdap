@@ -37,8 +37,8 @@ import java.util.Set;
  * Class defining the definition for a flowlet.
  */
 public final class FlowletDefinition {
-  private static final String PROCESS_METHOD_PREFIX = "process";
-  private static final String DEFAULT_OUTPUT = "out";
+  public static final String PROCESS_METHOD_PREFIX = "process";
+  public static final String DEFAULT_OUTPUT = "out";
   public static final String ANY_INPUT = "";
 
   private final FlowletSpecification flowletSpec;
