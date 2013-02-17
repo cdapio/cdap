@@ -34,6 +34,7 @@ public class VPC {
   public String getVpcName() {
     return vpcName;
   }
+
   @Override
   public String toString() {
     return vpcJson;
