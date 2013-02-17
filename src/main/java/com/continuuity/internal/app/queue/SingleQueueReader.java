@@ -1,7 +1,8 @@
 package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.QueueName;
+import com.continuuity.app.queue.QueueName;
+import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.ttqueue.QueueConfig;

@@ -37,38 +37,38 @@ public final class ReflectionDatumWriter {
   }
 
   private void write(Object object, Encoder encoder, Schema objSchema, Set<Object> seenRefs) throws IOException {
-    if (seenRefs.contains(object)) {
+    if(seenRefs.contains(object)) {
       throw new IOException("Circular reference not supported.");
     }
     seenRefs.add(object);
 
-    switch (objSchema.getType()) {
+    switch(objSchema.getType()) {
       case NULL:
         encoder.writeNull();
         break;
       case BOOLEAN:
-        encoder.writeBool((Boolean)object);
+        encoder.writeBool((Boolean) object);
         break;
       case INT:
-        encoder.writeInt(((Number)object).intValue());
+        encoder.writeInt(( (Number) object ).intValue());
         break;
       case LONG:
-        encoder.writeLong(((Number)object).longValue());
+        encoder.writeLong(( (Number) object ).longValue());
         break;
       case FLOAT:
-        encoder.writeFloat((Float)object);
+        encoder.writeFloat((Float) object);
         break;
       case DOUBLE:
-        encoder.writeDouble((Double)object);
+        encoder.writeDouble((Double) object);
         break;
       case STRING:
         encoder.writeString(object.toString());
         break;
       case BYTES:
-        if (object instanceof ByteBuffer) {
-          encoder.writeBytes((ByteBuffer)object);
+        if(object instanceof ByteBuffer) {
+          encoder.writeBytes((ByteBuffer) object);
         } else {
-          encoder.writeBytes((byte[])object);
+          encoder.writeBytes((byte[]) object);
         }
         break;
       case ENUM:
@@ -87,7 +87,7 @@ public final class ReflectionDatumWriter {
 
   private void writeEnum(String value, Encoder encoder, Schema schema) throws IOException {
     int idx = schema.getEnumIndex(value);
-    if (idx < 0) {
+    if(idx < 0) {
       throw new IOException("Invalid enum value " + value);
     }
     encoder.writeInt(idx);
@@ -95,16 +95,16 @@ public final class ReflectionDatumWriter {
 
   private void writeArray(Object array, Encoder encoder,
                           Schema componentSchema, Set<Object> seenRefs) throws IOException {
-    if (array instanceof Collection) {
-      Collection col = (Collection)array;
+    if(array instanceof Collection) {
+      Collection col = (Collection) array;
       encoder.writeInt(col.size());
-      for (Object obj : col) {
+      for(Object obj : col) {
         write(obj, encoder, componentSchema, seenRefs);
       }
     } else {
       int len = Array.getLength(array);
       encoder.writeInt(len);
-      for (int i = 0; i < len; i++) {
+      for(int i = 0; i < len; i++) {
         write(Array.get(array, i), encoder, componentSchema, seenRefs);
       }
     }
@@ -112,10 +112,11 @@ public final class ReflectionDatumWriter {
   }
 
   private void writeMap(Object map, Encoder encoder, Map.Entry<Schema,
-                        Schema> mapSchema, Set<Object> seenRefs) throws IOException {
-    Map<?,?> objMap = (Map<?,?>)map;
+                                                                Schema> mapSchema,
+                        Set<Object> seenRefs) throws IOException {
+    Map<?, ?> objMap = (Map<?, ?>) map;
     encoder.writeInt(objMap.size());
-    for (Map.Entry<?,?> entry : objMap.entrySet()) {
+    for(Map.Entry<?, ?> entry : objMap.entrySet()) {
       write(entry.getKey(), encoder, mapSchema.getKey(), seenRefs);
       write(entry.getValue(), encoder, mapSchema.getValue(), seenRefs);
     }
@@ -129,25 +130,25 @@ public final class ReflectionDatumWriter {
       Map<String, Method> methods = collectByMethod(type, Maps.<String, Method>newHashMap());
       Map<String, Field> fields = collectByFields(type, Maps.<String, Field>newHashMap());
 
-      for (Schema.Field field : recordSchema.getFields()) {
+      for(Schema.Field field : recordSchema.getFields()) {
         String fieldName = field.getName();
         Object value;
         Field recordField = fields.get(fieldName);
-        if (recordField != null) {
+        if(recordField != null) {
           recordField.setAccessible(true);
           value = recordField.get(record);
         } else {
           Method method = methods.get(fieldName);
-          if (method == null) {
+          if(method == null) {
             throw new IOException("Unable to read field value through getter. Class=" + type + ", field=" + fieldName);
           }
           value = method.invoke(record);
         }
 
         Schema fieldSchema = field.getSchema();
-        if (fieldSchema.getType() == Schema.Type.UNION) {
+        if(fieldSchema.getType() == Schema.Type.UNION) {
           // It's assumed that 0 is for the actual type, 1 is for null value.
-          if (value == null) {
+          if(value == null) {
             encoder.writeInt(1);
             fieldSchema = fieldSchema.getUnionSchemas().get(1);
           } else {
@@ -157,9 +158,9 @@ public final class ReflectionDatumWriter {
         }
         write(value, encoder, fieldSchema, seenRefs);
       }
-    } catch (Exception e) {
-      if (e instanceof IOException) {
-        throw (IOException)e;
+    } catch(Exception e) {
+      if(e instanceof IOException) {
+        throw (IOException) e;
       }
       throw new IOException(e);
     }
@@ -167,15 +168,15 @@ public final class ReflectionDatumWriter {
 
   private Map<String, Field> collectByFields(TypeToken<?> typeToken, Map<String, Field> fields) {
     // Collect the field types
-    for (TypeToken<?> classType : typeToken.getTypes().classes()) {
+    for(TypeToken<?> classType : typeToken.getTypes().classes()) {
       Class<?> rawType = classType.getRawType();
-      if (rawType.equals(Object.class)) {
+      if(rawType.equals(Object.class)) {
         // Ignore all object fields
         continue;
       }
 
-      for (Field field : rawType.getDeclaredFields()) {
-        if (Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
+      for(Field field : rawType.getDeclaredFields()) {
+        if(Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
           continue;
         }
         fields.put(field.getName(), field);
@@ -185,24 +186,24 @@ public final class ReflectionDatumWriter {
   }
 
   private Map<String, Method> collectByMethod(TypeToken<?> typeToken, Map<String, Method> methods) {
-    for (Method method : typeToken.getRawType().getMethods()) {
-      if (method.getDeclaringClass().equals(Object.class)) {
+    for(Method method : typeToken.getRawType().getMethods()) {
+      if(method.getDeclaringClass().equals(Object.class)) {
         // Ignore all object methods
         continue;
       }
       String methodName = method.getName();
-      if (!(methodName.startsWith("get") || methodName.startsWith("is"))
-        || method.isSynthetic() || method.getParameterTypes().length != 0) {
+      if(!( methodName.startsWith("get") || methodName.startsWith("is") )
+           || method.isSynthetic() || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
       String fieldName = methodName.startsWith("get") ?
-        methodName.substring("get".length()) : methodName.substring("is".length());
-      if (fieldName.isEmpty()) {
+                           methodName.substring("get".length()) : methodName.substring("is".length());
+      if(fieldName.isEmpty()) {
         continue;
       }
       fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1));
-      if (methods.containsKey(fieldName)) {
+      if(methods.containsKey(fieldName)) {
         continue;
       }
       methods.put(fieldName, method);

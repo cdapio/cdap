@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.InputContext;
-import com.continuuity.app.QueueName;
+import com.continuuity.app.queue.QueueName;
 import com.continuuity.data.operation.ttqueue.DequeueResult;
 import com.continuuity.data.operation.ttqueue.QueueAck;
 import com.continuuity.data.operation.ttqueue.QueueConsumer;
@@ -25,9 +25,11 @@ public class InputDatum {
   }
 
   public QueueAck asAck() {
-    return new QueueAck(dequeueResult.getEntryPointer().getQueueName(),
-                        dequeueResult.getEntryPointer(),
-                        consumer);
+    return new QueueAck(
+                         dequeueResult.getEntryPointer().getQueueName(),
+                         dequeueResult.getEntryPointer(),
+                         consumer
+    );
   }
 
   public ByteBuffer getData() {

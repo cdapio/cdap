@@ -9,6 +9,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  *
  */
-public interface Manager<I,O> {
+public interface Manager<I, O> {
   ListenableFuture<O> deploy(I input) throws Exception;
 }

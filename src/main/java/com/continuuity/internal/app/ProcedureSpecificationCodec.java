@@ -16,7 +16,8 @@ import java.lang.reflect.Type;
 /**
  *
  */
-final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpecification>, JsonDeserializer<ProcedureSpecification> {
+final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpecification>,
+                                                     JsonDeserializer<ProcedureSpecification> {
 
   @Override
   public JsonElement serialize(ProcedureSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -30,7 +31,8 @@ final class ProcedureSpecificationCodec implements JsonSerializer<ProcedureSpeci
   }
 
   @Override
-  public ProcedureSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+  public ProcedureSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+    throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();

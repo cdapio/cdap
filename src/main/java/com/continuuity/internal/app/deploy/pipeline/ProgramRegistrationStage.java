@@ -8,7 +8,7 @@ import com.google.common.reflect.TypeToken;
  */
 public class ProgramRegistrationStage extends AbstractStage<String> {
 
-  public ProgramRegistrationStage () {
+  public ProgramRegistrationStage() {
     super(TypeToken.of(String.class));
   }
 

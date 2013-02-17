@@ -12,12 +12,13 @@ import java.net.URI;
 /**
  * This interface defines the location and operations of a resource on the filesystem.
  * <p>
- *   {@link Location} is agnostic to the type of file system the resource is on.
+ * {@link Location} is agnostic to the type of file system the resource is on.
  * </p>
  */
 public interface Location {
   /**
    * Checks if the this location exists.
+   *
    * @return true if found; false otherwise.
    * @throws IOException
    */
@@ -43,8 +44,9 @@ public interface Location {
   /**
    * Appends the child to the current {@link Location}.
    * <p>
-   *   Returns a new instance of Location.
+   * Returns a new instance of Location.
    * </p>
+   *
    * @param child to be appended to this location.
    * @return A new instance of {@link Location}
    * @throws IOException

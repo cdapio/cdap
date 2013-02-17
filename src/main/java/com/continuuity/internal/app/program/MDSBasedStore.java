@@ -59,13 +59,14 @@ public class MDSBasedStore implements Store {
   /**
    * Logs start of program run.
    *
-   * @param id Info about program
-   * @param pid  run id
+   * @param id        Info about program
+   * @param pid       run id
    * @param startTime start timestamp
    */
   @Override
   public void setStart(ProgramId id, final String pid, final long startTime) throws OperationException {
-    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid);
+    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
+                                            FieldTypes.ProgramRun.ENTRY_TYPE, pid);
     entry.addField(FieldTypes.ProgramRun.PROGRAM, id.getProgramId());
     entry.addField(FieldTypes.ProgramRun.START_TS, String.valueOf(startTime));
 
@@ -77,10 +78,10 @@ public class MDSBasedStore implements Store {
   /**
    * Logs end of program run
    *
-   * @param id id of program
-   * @param pid run id
+   * @param id      id of program
+   * @param pid     run id
    * @param endTime end timestamp
-   * @param state State of program
+   * @param state   State of program
    */
   @Override
   public void setEnd(ProgramId id, final String pid, final long endTime, final Status state)
@@ -90,10 +91,14 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
 
     // we want program run info to be in one entry to make things cleaner on reading end
-    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
-                              FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
-    metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
-                              FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1);
+    metaDataStore.updateField(
+                               context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
+                               FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1
+    );
+    metaDataStore.updateField(
+                               context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
+                               FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1
+    );
   }
 
   @Override
@@ -101,21 +106,27 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
     Map<String, String> filterByFields = new HashMap<String, String>();
     filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getProgramId());
-    List<MetaDataEntry> entries = metaDataStore.list(context,
-                                                     id.getAccountId(), id.getApplicationId(),
-                                                     FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
+    List<MetaDataEntry> entries = metaDataStore.list(
+                                                      context,
+                                                      id.getAccountId(), id.getApplicationId(),
+                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields
+    );
 
     List<RunRecord> runHistory = new ArrayList<RunRecord>();
-    for (MetaDataEntry entry : entries) {
+    for(MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
-      if (endTsStr == null) {
+      if(endTsStr == null) {
         // we need to return only those that finished
         continue;
       }
-      runHistory.add(new RunRecord(entry.getId(),
-                                          Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
-                                          Long.valueOf(endTsStr),
-                                          Status.valueOf(entry.getTextField(FieldTypes.ProgramRun.END_STATE))));
+      runHistory.add(
+                      new RunRecord(
+                                     entry.getId(),
+                                     Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
+                                     Long.valueOf(endTsStr),
+                                     Status.valueOf(entry.getTextField(FieldTypes.ProgramRun.END_STATE))
+                      )
+      );
     }
 
     Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
@@ -129,7 +140,7 @@ public class MDSBasedStore implements Store {
   private static final class ProgramRunRecordStartTimeComparator implements Comparator<RunRecord> {
     @Override
     public int compare(final RunRecord left, final RunRecord right) {
-      if (left.getStartTs() > right.getStartTs()) {
+      if(left.getStartTs() > right.getStartTs()) {
         return 1;
       } else {
         return left.getStartTs() < right.getStartTs() ? -1 : 0;
@@ -140,9 +151,10 @@ public class MDSBasedStore implements Store {
   @Override
   public void addApplication(final ApplicationId id,
                              final ApplicationSpecification specification) throws OperationException {
-    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
+    MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
+                                            id.getApplicationId());
     ApplicationSpecificationAdapter adapter =
-                                  ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+      ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     entry.addField(FieldTypes.Application.SPEC_JSON, adapter.toJson(specification));
 
     OperationContext context = new OperationContext(id.getAccountId());
@@ -158,7 +170,7 @@ public class MDSBasedStore implements Store {
 
     MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
 
-    if (entry == null) {
+    if(entry == null) {
       return null;
     }
 

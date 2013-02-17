@@ -12,7 +12,9 @@ public class VerifyResult {
   public static enum Status {
     SUCCESS,
     FAILED
-  };
+  }
+
+  ;
 
   /**
    * Stores status of verification.
@@ -27,7 +29,7 @@ public class VerifyResult {
   /**
    * Constructor
    *
-   * @param status of the {@link Verifier#verify(Object)}
+   * @param status  of the {@link Verifier#verify(Object)}
    * @param message description in case of failure.
    */
   public VerifyResult(Status status, String message) {
@@ -64,7 +66,7 @@ public class VerifyResult {
    *
    * @return An instance of {@link VerifyResult} which has failed with descriptive message.
    */
-  public static VerifyResult FAILURE(Errors error, Object...objects) {
+  public static VerifyResult FAILURE(Errors error, Object... objects) {
     return new VerifyResult(Status.FAILED, error.getMessage(objects));
   }
 }

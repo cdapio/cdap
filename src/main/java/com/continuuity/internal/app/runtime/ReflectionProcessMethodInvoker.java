@@ -38,7 +38,7 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
     this.byteBufferInput = new ByteBufferInputStream(null);
     this.decoder = new BinaryDecoder(byteBufferInput);
 
-    if (!this.method.isAccessible()) {
+    if(!this.method.isAccessible()) {
       this.method.setAccessible(true);
     }
   }
@@ -52,13 +52,13 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
       byteBufferInput.reset(data);
       T event = datumReader.read(decoder, sourceSchema);
 
-      if (needContext) {
+      if(needContext) {
         method.invoke(flowlet, event, input.getInputContext());
       } else {
         method.invoke(flowlet, event);
       }
 
-    } catch (Exception e) {
+    } catch(Exception e) {
       throw Throwables.propagate(e);
     }
   }

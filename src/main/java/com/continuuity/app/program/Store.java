@@ -62,8 +62,8 @@ public interface Store {
   /**
    * Logs start of program run.
    *
-   * @param id Info about program
-   * @param pid  run id
+   * @param id        Info about program
+   * @param pid       run id
    * @param startTime start timestamp
    */
   void setStart(ProgramId id, String pid, long startTime) throws OperationException;
@@ -71,16 +71,17 @@ public interface Store {
   /**
    * Logs end of program run
    *
-   * @param id id of program
-   * @param pid run id
+   * @param id      id of program
+   * @param pid     run id
    * @param endTime end timestamp
-   * @param state State of program
+   * @param state   State of program
    */
   void setEnd(ProgramId id, String pid, long endTime, Status state) throws OperationException;
 
   /**
    * Fetches run history for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
+   *
    * @param id program id
    * @return list of logged runs
    * @throws OperationException
@@ -89,7 +90,8 @@ public interface Store {
 
   /**
    * Stores application specification
-   * @param id application id
+   *
+   * @param id            application id
    * @param specification application specification to store
    * @throws OperationException
    */
@@ -98,6 +100,7 @@ public interface Store {
 
   /**
    * Returns application specification by id.
+   *
    * @param id application id
    * @return application specification
    * @throws OperationException

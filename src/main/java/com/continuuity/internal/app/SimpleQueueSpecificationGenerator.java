@@ -8,9 +8,9 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.io.Schema;
-import com.continuuity.app.QueueName;
-import com.continuuity.app.QueueSpecification;
-import com.continuuity.app.QueueSpecificationGenerator;
+import com.continuuity.app.queue.QueueName;
+import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -77,7 +77,7 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
           .add(new Node(connection.getSourceType(), connection.getSourceName()));
       } else {
         List<Node> a = Lists.newArrayList();
-        a.add(new Node(connection.getSourceType(),connection.getSourceName()));
+        a.add(new Node(connection.getSourceType(), connection.getSourceName()));
         adjacencyList.put(connection.getTargetName(), a);
       }
     }
@@ -98,7 +98,7 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
         FlowletConnection.SourceType sourceNodeType = source.getSourceType();
 
         if(sourceNodeType == FlowletConnection.SourceType.STREAM) {
-          final Map<String,Set<Schema>> outputs = flowlets.get(targetNodeName).getInputs();
+          final Map<String, Set<Schema>> outputs = flowlets.get(targetNodeName).getInputs();
           QueueSpecification s = new QueueSpecification() {
             @Override
             public QueueName getQueueName() {
@@ -114,7 +114,7 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
         }
 
         if(sourceNodeType == FlowletConnection.SourceType.FLOWLET) {
-          final Map<String,Set<Schema>> outputs = flowlets.get(sourceNodeName).getOutputs();
+          final Map<String, Set<Schema>> outputs = flowlets.get(sourceNodeName).getOutputs();
           for(final Map.Entry<String, Set<Schema>> output : outputs.entrySet()) {
             if(inputs.containsKey(output.getKey())) {
               QueueSpecification s = new QueueSpecification() {
@@ -131,8 +131,8 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
               table.put(sourceNodeName, targetNodeName, s);
             } else {
               if(inputs.containsKey(FlowletDefinition.ANY_INPUT)) {
-                if(compareSchema(inputs.get(FlowletDefinition.ANY_INPUT), outputs.get("out"))){
-                  QueueSpecification s =  new QueueSpecification() {
+                if(compareSchema(inputs.get(FlowletDefinition.ANY_INPUT), outputs.get("out"))) {
+                  QueueSpecification s = new QueueSpecification() {
                     @Override
                     public QueueName getQueueName() {
                       return QueueName.from(generateQueueURI(flow, sourceNodeName, "out"));
@@ -143,7 +143,7 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
                       return outputs.get(FlowletDefinition.ANY_INPUT);
                     }
                   };
-                  table.put(sourceNodeName, targetNodeName,s);
+                  table.put(sourceNodeName, targetNodeName, s);
                 }
               }
             }
@@ -157,16 +157,16 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
   /**
    * Generates a Queue URI for connectivity between two flowlets.
    *
-   * @param flow Name of the Flow for which this queue is being generated
+   * @param flow    Name of the Flow for which this queue is being generated
    * @param flowlet Of the queue is connected to
-   * @param output name of the queue.
+   * @param output  name of the queue.
    * @return An {@link URI} with schema as queue
    */
-  private URI generateQueueURI(String flow, String flowlet, String output){
+  private URI generateQueueURI(String flow, String flowlet, String output) {
     try {
-      URI uri = new URI("queue", Joiner.on("/").join(new Object[] { "/", flow, flowlet, output }), null);
+      URI uri = new URI("queue", Joiner.on("/").join(new Object[]{ "/", flow, flowlet, output }), null);
       return uri;
-    } catch (Exception e) {
+    } catch(Exception e) {
       Throwables.propagate(e);
       // Unreachable.
       return null;
@@ -180,11 +180,11 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
    * @param stream  connected to flow
    * @return An {@link URI} with schema as stream
    */
-  private URI generateStreamURI(String account, String stream){
+  private URI generateStreamURI(String account, String stream) {
     try {
-      URI uri = new URI("stream", Joiner.on("/").join(new Object[] { "/", account, stream }), null);
+      URI uri = new URI("stream", Joiner.on("/").join(new Object[]{ "/", account, stream }), null);
       return uri;
-    } catch (Exception e) {
+    } catch(Exception e) {
       Throwables.propagate(e);
       // Unreachable.
       return null;
@@ -193,8 +193,9 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
 
   /**
    * Checks complete schema for equality.
+   *
    * @param output Schema
-   * @param input Schema
+   * @param input  Schema
    * @return true if they same; false otherwise.
    */
   private boolean compareSchema(Set<Schema> output, Set<Schema> input) {
@@ -202,7 +203,7 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
       int equal = 0;
       int compatible = 0;
       for(Schema inputSchema : input) {
-        if(! outputSchema.equals(inputSchema)) {
+        if(!outputSchema.equals(inputSchema)) {
           return false;
         }
       }

@@ -54,7 +54,7 @@ public final class ReflectionOutputEmitter implements ManagedOutputEmitter<Objec
       output.write(schemaHash);
       writer.write(data, new BinaryEncoder(output));
       queue.add(new EmittedDatum(queueProducer, queueName, output.toByteArray(), partitions));
-    } catch (IOException e) {
+    } catch(IOException e) {
       // This should never happens.
       throw Throwables.propagate(e);
     }

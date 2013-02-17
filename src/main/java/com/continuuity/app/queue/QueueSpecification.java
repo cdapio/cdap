@@ -2,10 +2,9 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app;
+package com.continuuity.app.queue;
 
 import com.continuuity.api.io.Schema;
-import com.continuuity.app.QueueName;
 
 import java.net.URI;
 import java.util.Set;

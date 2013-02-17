@@ -9,10 +9,10 @@ import com.continuuity.error.Err;
 /**
  * This class verifies a {@link ProcedureVerification}.
  * <p>
- *   Following are the checks that are done for Procedure.
- *   <ul>
- *     <li>Check if the procedure name is an id or not</li>
- *   </ul>
+ * Following are the checks that are done for Procedure.
+ * <ul>
+ * <li>Check if the procedure name is an id or not</li>
+ * </ul>
  * </p>
  */
 public class ProcedureVerification extends AbstractVerifier implements Verifier<ProcedureSpecification> {
@@ -26,7 +26,7 @@ public class ProcedureVerification extends AbstractVerifier implements Verifier<
   @Override
   public VerifyResult verify(final ProcedureSpecification input) {
     // Checks if Procedure name is an ID
-    if(! isId(input.getName())) {
+    if(!isId(input.getName())) {
       return VerifyResult.FAILURE(Err.NOT_AN_ID, "Procedure");
     }
     return VerifyResult.SUCCESS();

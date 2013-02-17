@@ -15,6 +15,7 @@ public final class FieldTypes {
     public static final String END_TS = "end";
     public static final String END_STATE = "stat";
   }
+
   public static class Application {
     public static final String ENTRY_TYPE = "app";
     public static final String SPEC_JSON = "spec";

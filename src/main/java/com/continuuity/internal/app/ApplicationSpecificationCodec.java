@@ -22,7 +22,8 @@ import java.util.Map;
 /**
  *
  */
-final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationSpecification>, JsonDeserializer<ApplicationSpecification> {
+final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationSpecification>,
+                                                       JsonDeserializer<ApplicationSpecification> {
 
   @Override
   public JsonElement serialize(ApplicationSpecification src, Type typeOfSrc, JsonSerializationContext context) {
@@ -30,41 +31,61 @@ final class ApplicationSpecificationCodec implements JsonSerializer<ApplicationS
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("streams", context.serialize(src.getStreams(),
-                                             new TypeToken<Map<String, StreamSpecification>>(){}.getType()));
-    jsonObj.add("datasets", context.serialize(src.getStreams(),
-                                             new TypeToken<Map<String, DataSetSpecification>>(){}.getType()));
-    jsonObj.add("flows", context.serialize(src.getStreams(),
-                                             new TypeToken<Map<String, FlowSpecification>>(){}.getType()));
-    jsonObj.add("procedures", context.serialize(src.getStreams(),
-                                             new TypeToken<Map<String, ProcedureSpecification>>(){}.getType()));
+    jsonObj.add(
+                 "streams", context.serialize(
+                                               src.getStreams(),
+                                               new TypeToken<Map<String, StreamSpecification>>() {}.getType()
+    )
+    );
+    jsonObj.add(
+                 "datasets", context.serialize(
+                                                src.getStreams(),
+                                                new TypeToken<Map<String, DataSetSpecification>>() {}.getType()
+    )
+    );
+    jsonObj.add(
+                 "flows", context.serialize(
+                                             src.getStreams(),
+                                             new TypeToken<Map<String, FlowSpecification>>() {}.getType()
+    )
+    );
+    jsonObj.add(
+                 "procedures", context.serialize(
+                                                  src.getStreams(),
+                                                  new TypeToken<Map<String, ProcedureSpecification>>() {}.getType()
+    )
+    );
 
     return jsonObj;
   }
 
   @Override
-  public ApplicationSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+  public ApplicationSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+    throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, StreamSpecification> streams = context.deserialize(
-                                                    jsonObj.get("streams"),
-                                                    new TypeToken<Map<String, StreamSpecification>>() {}.getType()
+                                                                    jsonObj.get("streams"),
+                                                                    new TypeToken<Map<String,
+                                                                                       StreamSpecification>>() {}
+                                                                      .getType()
     );
     Map<String, DataSetSpecification> datasets = context.deserialize(
-                                                    jsonObj.get("datasets"),
-                                                    new TypeToken<Map<String, DataSetSpecification>>(){}.getType()
+                                                                      jsonObj.get("datasets"),
+                                                                      new TypeToken<Map<String,
+                                                                                         DataSetSpecification>>() {}.getType()
     );
 
     Map<String, FlowSpecification> flows = context.deserialize(
-                                                    jsonObj.get("flows"),
-                                                    new TypeToken<Map<String, FlowSpecification>>(){}.getType()
+                                                                jsonObj.get("flows"),
+                                                                new TypeToken<Map<String, FlowSpecification>>() {}.getType()
     );
 
     Map<String, ProcedureSpecification> procedures = context.deserialize(
-                                                    jsonObj.get("procedures"),
-                                                    new TypeToken<Map<String, ProcedureSpecification>>(){}.getType()
+                                                                          jsonObj.get("procedures"),
+                                                                          new TypeToken<Map<String, ProcedureSpecification>>() {}.getType()
     );
 
     return new DefaultApplicationSpecification(name, description, streams, datasets, flows, procedures);

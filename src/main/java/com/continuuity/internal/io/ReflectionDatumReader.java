@@ -34,18 +34,18 @@ public final class ReflectionDatumReader<T> {
   }
 
   public T read(Decoder decoder, Schema sourceSchema) throws IOException {
-    return (T)read(decoder, sourceSchema, schema, type);
+    return (T) read(decoder, sourceSchema, schema, type);
   }
 
   private Object read(Decoder decoder, Schema sourceSchema,
                       Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
-    if (sourceSchema.getType() != Schema.Type.UNION && targetSchema.getType() == Schema.Type.UNION) {
+    if(sourceSchema.getType() != Schema.Type.UNION && targetSchema.getType() == Schema.Type.UNION) {
       // Try every target schemas
-      for (Schema schema : targetSchema.getUnionSchemas()) {
+      for(Schema schema : targetSchema.getUnionSchemas()) {
         try {
           return doRead(decoder, sourceSchema, schema, targetTypeToken);
-        } catch (IOException e) {
+        } catch(IOException e) {
           // Continue;
         }
       }
@@ -55,12 +55,12 @@ public final class ReflectionDatumReader<T> {
   }
 
   private Object doRead(Decoder decoder, Schema sourceSchema,
-                      Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+                        Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
     Schema.Type sourceType = sourceSchema.getType();
     Schema.Type targetType = targetSchema.getType();
 
-    switch (sourceType) {
+    switch(sourceType) {
       case NULL:
         check(sourceType == targetType, "Fails to resolve %s to %s", sourceType, targetType);
         return decoder.readNull();
@@ -84,7 +84,7 @@ public final class ReflectionDatumReader<T> {
         return readUnion(decoder, sourceSchema, targetSchema, targetTypeToken);
     }
     // For simple type other than NULL and BYTES
-    if (sourceType.isSimpleType()) {
+    if(sourceType.isSimpleType()) {
       return resolveType(decoder, sourceType, targetType);
     }
     throw new IOException(String.format("Fails to resolve %s to %s", sourceSchema, targetSchema));
@@ -93,10 +93,10 @@ public final class ReflectionDatumReader<T> {
   private Object readBytes(Decoder decoder, TypeToken<?> targetTypeToken) throws IOException {
     ByteBuffer buffer = decoder.readBytes();
 
-    if (targetTypeToken.getRawType().equals(byte[].class)) {
-      if (buffer.hasArray()) {
+    if(targetTypeToken.getRawType().equals(byte[].class)) {
+      if(buffer.hasArray()) {
         byte[] array = buffer.array();
-        if (buffer.remaining() == array.length) {
+        if(buffer.remaining() == array.length) {
           return array;
         }
         byte[] bytes = new byte[buffer.remaining()];
@@ -112,26 +112,30 @@ public final class ReflectionDatumReader<T> {
   }
 
   private Object readArray(Decoder decoder, Schema sourceSchema,
-                             Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+                           Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
 
-    if (!targetTypeToken.isArray() && Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
+    if(!targetTypeToken.isArray() && Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
       throw new IOException("Only array or collection type is support for array value.");
     }
 
     int len = decoder.readInt();
-    Collection<Object> collection = (Collection<Object>)create(targetTypeToken);
-    while (len != 0) {
-      for (int i = 0; i < len; i++) {
-        collection.add(read(decoder, sourceSchema.getComponentSchema(),
-                            targetSchema.getComponentSchema(), targetTypeToken.getComponentType()));
+    Collection<Object> collection = (Collection<Object>) create(targetTypeToken);
+    while(len != 0) {
+      for(int i = 0; i < len; i++) {
+        collection.add(
+                        read(
+                              decoder, sourceSchema.getComponentSchema(),
+                              targetSchema.getComponentSchema(), targetTypeToken.getComponentType()
+                        )
+        );
       }
       len = decoder.readInt();
     }
 
-    if (targetTypeToken.isArray()) {
+    if(targetTypeToken.isArray()) {
       Object array = Array.newInstance(targetTypeToken.getComponentType().getRawType(), collection.size());
       int idx = 0;
-      for (Object obj : collection) {
+      for(Object obj : collection) {
         Array.set(array, idx++, obj);
       }
       return array;
@@ -144,73 +148,75 @@ public final class ReflectionDatumReader<T> {
     check(Map.class.isAssignableFrom(targetTypeToken.getRawType()), "Only map type is supported for map data.");
     Type type = targetTypeToken.getType();
     Preconditions.checkArgument(type instanceof ParameterizedType, "Only parameterized map is supported.");
-    Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
+    Type[] typeArgs = ( (ParameterizedType) type ).getActualTypeArguments();
 
     int len = decoder.readInt();
     Map<Object, Object> map = (Map<Object, Object>) create(targetTypeToken);
-    for (int i = 0; i < len; i++) {
+    for(int i = 0; i < len; i++) {
       Map.Entry<Schema, Schema> sourceEntry = sourceSchema.getMapSchema();
       Map.Entry<Schema, Schema> targetEntry = targetSchema.getMapSchema();
 
-      map.put(read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
-              read(decoder, sourceEntry.getValue(), targetEntry.getValue(), TypeToken.of(typeArgs[1])));
+      map.put(
+               read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
+               read(decoder, sourceEntry.getValue(), targetEntry.getValue(), TypeToken.of(typeArgs[1]))
+      );
     }
 
     return map;
   }
 
   private Object readRecord(Decoder decoder, Schema sourceSchema,
-                           Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+                            Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
     try {
       Object record = create(targetTypeToken);
-      for (Schema.Field sourceField : sourceSchema.getFields()) {
+      for(Schema.Field sourceField : sourceSchema.getFields()) {
         Schema.Field targetField = targetSchema.getField(sourceField.getName());
-        if (targetField == null) {
+        if(targetField == null) {
           continue;
         }
         Field field = null;
-        for (TypeToken<?> type : targetTypeToken.getTypes().classes()) {
+        for(TypeToken<?> type : targetTypeToken.getTypes().classes()) {
           try {
             field = type.getRawType().getDeclaredField(sourceField.getName());
-          } catch (NoSuchFieldException e) {
+          } catch(NoSuchFieldException e) {
             // It's ok, keep searching.
             continue;
           }
           break;
         }
         check(field != null, "No such field in type. Type: %s, field: %s", targetTypeToken, sourceField.getName());
-        if (!field.isAccessible()) {
+        if(!field.isAccessible()) {
           field.setAccessible(true);
         }
         TypeToken<?> fieldTypeToken = targetTypeToken.resolveType(field.getGenericType());
         field.set(record, read(decoder, sourceField.getSchema(), targetField.getSchema(), fieldTypeToken));
       }
       return record;
-    } catch (Exception e) {
+    } catch(Exception e) {
       throw propagate(e);
     }
   }
 
   private Object readUnion(Decoder decoder, Schema sourceSchema,
-                            Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
+                           Schema targetSchema, TypeToken<?> targetTypeToken) throws IOException {
     int idx = decoder.readInt();
     Schema sourceValueSchema = sourceSchema.getUnionSchemas().get(idx);
 
 
-    if (targetSchema.getType() == Schema.Type.UNION) {
+    if(targetSchema.getType() == Schema.Type.UNION) {
       try {
         // A simple optimization to try resolve before resorting to linearly try the union schema.
         Schema targetValueSchema = targetSchema.getUnionSchema(idx);
-        if (targetValueSchema != null && targetValueSchema.getType() == sourceValueSchema.getType()) {
+        if(targetValueSchema != null && targetValueSchema.getType() == sourceValueSchema.getType()) {
           return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
         }
-      } catch (IOException e) {
+      } catch(IOException e) {
         // OK to ignore it, as we'll do union schema resolution
       }
-      for (Schema targetValueSchema : targetSchema.getUnionSchemas()) {
+      for(Schema targetValueSchema : targetSchema.getUnionSchemas()) {
         try {
           return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
-        } catch (IOException e) {
+        } catch(IOException e) {
           // It's ok to have exception here, as we'll keep trying until exhausted the target union.
         }
       }
@@ -221,9 +227,9 @@ public final class ReflectionDatumReader<T> {
   }
 
   private Object resolveType(Decoder decoder, Schema.Type sourceType, Schema.Type targetType) throws IOException {
-    switch (sourceType) {
+    switch(sourceType) {
       case BOOLEAN:
-        switch (targetType) {
+        switch(targetType) {
           case BOOLEAN:
             return decoder.readBool();
           case STRING:
@@ -231,43 +237,43 @@ public final class ReflectionDatumReader<T> {
         }
         break;
       case INT:
-        switch (targetType) {
+        switch(targetType) {
           case INT:
             return decoder.readInt();
           case LONG:
-            return (long)decoder.readInt();
+            return (long) decoder.readInt();
           case FLOAT:
-            return (float)decoder.readInt();
+            return (float) decoder.readInt();
           case DOUBLE:
-            return (double)decoder.readInt();
+            return (double) decoder.readInt();
           case STRING:
             return String.valueOf(decoder.readInt());
         }
         break;
       case LONG:
-        switch (targetType) {
+        switch(targetType) {
           case LONG:
             return decoder.readLong();
           case FLOAT:
-            return (float)decoder.readLong();
+            return (float) decoder.readLong();
           case DOUBLE:
-            return (double)decoder.readLong();
+            return (double) decoder.readLong();
           case STRING:
             return String.valueOf(decoder.readLong());
         }
         break;
       case FLOAT:
-        switch (targetType) {
+        switch(targetType) {
           case FLOAT:
             return decoder.readFloat();
           case DOUBLE:
-            return (double)decoder.readFloat();
+            return (double) decoder.readFloat();
           case STRING:
             return String.valueOf(decoder.readFloat());
         }
         break;
       case DOUBLE:
-        switch (targetType) {
+        switch(targetType) {
           case DOUBLE:
             return decoder.readDouble();
           case STRING:
@@ -275,7 +281,7 @@ public final class ReflectionDatumReader<T> {
         }
         break;
       case STRING:
-        switch (targetType) {
+        switch(targetType) {
           case STRING:
             return decoder.readString();
         }
@@ -285,15 +291,15 @@ public final class ReflectionDatumReader<T> {
     throw new IOException("Fail to resolve type " + sourceType + " to type " + targetType);
   }
 
-  private void check(boolean condition, String message, Object...objs) throws IOException {
-    if (!condition) {
+  private void check(boolean condition, String message, Object... objs) throws IOException {
+    if(!condition) {
       throw new IOException(String.format(message, objs));
     }
   }
 
   private IOException propagate(Throwable t) throws IOException {
-    if (t instanceof IOException) {
-      throw (IOException)t;
+    if(t instanceof IOException) {
+      throw (IOException) t;
     }
     throw new IOException(t);
   }
@@ -301,7 +307,7 @@ public final class ReflectionDatumReader<T> {
   private Object create(TypeToken<?> type) {
     Class<?> rawType = type.getRawType();
     Instantiator<?> creator = creators.get(rawType);
-    if (creator == null) {
+    if(creator == null) {
       creator = creatorFactory.get(type);
       creators.put(rawType, creator);
     }

@@ -2,8 +2,8 @@ package com.continuuity.internal.app;
 
 import com.continuuity.ToyApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.QueueSpecification;
-import com.continuuity.app.QueueSpecificationGenerator;
+import com.continuuity.app.queue.QueueSpecification;
+import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.collect.Table;
 import org.junit.Assert;

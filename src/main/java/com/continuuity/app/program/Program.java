@@ -48,8 +48,17 @@ public final class Program {
 
     String appSpecFile = manifest.getMainAttributes().getValue(ManifestFields.SPEC_FILE);
     specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create().fromJson(
-      CharStreams.newReaderSupplier(ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
-                                    Charsets.UTF_8));
+                                                                                                    CharStreams
+
+
+
+
+
+                                                                                                      .newReaderSupplier(
+                                                                                                                                   ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
+                                                                                                                                   Charsets.UTF_8
+                                                                                                    )
+    );
   }
 
   public Class<?> getMainClass() throws ClassNotFoundException {
@@ -68,8 +77,8 @@ public final class Program {
     return specification;
   }
 
-  private void check(boolean condition, String fmt, Object...objs) throws IOException {
-    if (!condition) {
+  private void check(boolean condition, String fmt, Object... objs) throws IOException {
+    if(!condition) {
       throw new IOException(String.format(fmt, objs));
     }
   }

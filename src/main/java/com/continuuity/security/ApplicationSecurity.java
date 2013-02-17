@@ -24,8 +24,9 @@ public final class ApplicationSecurity extends SecurityManager {
 
   /**
    * Invoked by the builder only.
+   *
    * @param permissions a collection of {@link Permission} objects.
-   * @param adminClass Class that had administratives
+   * @param adminClass  Class that had administratives
    */
   private ApplicationSecurity(PermissionCollection permissions, Class<?> adminClass) {
     this.permissions = permissions;
@@ -36,6 +37,7 @@ public final class ApplicationSecurity extends SecurityManager {
    * Throws a {@link SecurityException} if the requested access, specified by the given
    * <code>permission</code>, is not permitted based on the {@link Permission} objects
    * contained in the {@link ApplicationPermissionCollection}.
+   *
    * @param permission the requested permission
    */
   @Override
@@ -72,14 +74,17 @@ public final class ApplicationSecurity extends SecurityManager {
     if(permissions.implies(permission)) {
       return;
     } else {
-      throw new SecurityException("Access denied to " + permission.getClass()
-                                    + ", name : " + permission.getName()
-                                    + ", actions : " + permission.getActions());
+      throw new SecurityException(
+                                   "Access denied to " + permission.getClass()
+                                     + ", name : " + permission.getName()
+                                     + ", actions : " + permission.getActions()
+      );
     }
   }
 
   /**
    * Static builder for constructing list of permissions.
+   *
    * @return An instance of builder
    */
   public static Builder builder() {
@@ -103,6 +108,7 @@ public final class ApplicationSecurity extends SecurityManager {
 
     /**
      * Adds a {@link Permission} object to the {@link ApplicationPermissionCollection}
+     *
      * @param permission the permission to be added.
      * @return this builder.
      */

@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Default implementation of {@link StreamEvent}.
- *
+ * <p/>
  * This class is temporary until the serialization API uses ASM for bytecode generation, as
  * this implementation would be generated on the fly by implementing the StreamEvent interface.
  */

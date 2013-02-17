@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationSpecification}.
  * <p>
- *   This stage is responsible for reading the JAR and generating an ApplicationSpecification
- *   that is forwarded to the next stage of processing.
+ * This stage is responsible for reading the JAR and generating an ApplicationSpecification
+ * that is forwarded to the next stage of processing.
  * </p>
  */
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {

@@ -29,7 +29,7 @@ import java.io.StringWriter;
  *
  * @see SandboxConfigurator
  */
-public class InMemoryConfigurator implements Configurator  {
+public class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */
@@ -42,6 +42,7 @@ public class InMemoryConfigurator implements Configurator  {
 
   /**
    * Constructor that accepts archive file as input to invoke configure.
+   *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
   public InMemoryConfigurator(Location archive) {
@@ -52,6 +53,7 @@ public class InMemoryConfigurator implements Configurator  {
 
   /**
    * Constructor that takes an {@link Application} to invoke configure.
+   *
    * @param application instance for which configure needs to be invoked.
    */
   public InMemoryConfigurator(Application application) {
@@ -78,8 +80,9 @@ public class InMemoryConfigurator implements Configurator  {
   /**
    * Executes the <code>Application.configure</code> within the same JVM.
    * <p>
-   *   This method could be dangerous and should be used only in singlenode.
+   * This method could be dangerous and should be used only in singlenode.
    * </p>
+   *
    * @return A instance of {@link ListenableFuture}.
    */
   @Override
@@ -94,7 +97,7 @@ public class InMemoryConfigurator implements Configurator  {
         // Load the JAR using the JAR class load and load the manifest file.
         Object mainClass = new Program(archive).getMainClass().newInstance();
         // Convert it to the type application.
-        app  = (Application) mainClass;
+        app = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance
         app = application;
       } else {
@@ -110,15 +113,15 @@ public class InMemoryConfigurator implements Configurator  {
       // TODO: The SchemaGenerator should be injected
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       result.set(new DefaultConfigResponse(0, newStringStream(writer.toString())));
-    } catch (Exception e) {
+    } catch(Exception e) {
       return Futures.immediateFailedFuture(e);
-    } catch (Throwable throwable) {
+    } catch(Throwable throwable) {
       return Futures.immediateFailedFuture(throwable);
     } finally {
       if(writer != null) {
         try {
           writer.close();
-        } catch (IOException e) {
+        } catch(IOException e) {
           Futures.immediateFailedFuture(e);
         }
       }

@@ -38,12 +38,12 @@ public final class ApplicationSpecificationAdapter {
 
   public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
     Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
-      .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
-      .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
-      .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
-      .create();
+                  .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+                  .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
+                  .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
+                  .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
+                  .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
+                  .create();
     return new ApplicationSpecificationAdapter(generator, gson);
   }
 
@@ -56,7 +56,7 @@ public final class ApplicationSpecificationAdapter {
       StringBuilder builder = new StringBuilder();
       toJson(appSpec, builder);
       return builder.toString();
-    } catch (IOException e) {
+    } catch(IOException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -64,20 +64,20 @@ public final class ApplicationSpecificationAdapter {
   public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
     Preconditions.checkState(schemaGenerator != null, "No schema generator is configured. Fail to serialize to json");
     try {
-      for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-        for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
+      for(FlowSpecification flowSpec : appSpec.getFlows().values()) {
+        for(FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
           flowletDef.generateSchema(schemaGenerator);
         }
       }
       gson.toJson(appSpec, appendable);
 
-    } catch (UnsupportedTypeException e) {
+    } catch(UnsupportedTypeException e) {
       throw new IOException(e);
     }
   }
 
   public void toJson(ApplicationSpecification appSpec,
-                     OutputSupplier<? extends Writer> outputSupplier) throws IOException{
+                     OutputSupplier<? extends Writer> outputSupplier) throws IOException {
     Writer writer = outputSupplier.getOutput();
     try {
       toJson(appSpec, writer);
@@ -93,7 +93,7 @@ public final class ApplicationSpecificationAdapter {
   public ApplicationSpecification fromJson(Reader reader) throws IOException {
     try {
       return gson.fromJson(reader, ApplicationSpecification.class);
-    } catch (JsonParseException e) {
+    } catch(JsonParseException e) {
       throw new IOException(e);
     }
   }

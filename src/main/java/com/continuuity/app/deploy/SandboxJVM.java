@@ -29,10 +29,10 @@ import java.io.Writer;
  * Sandbox JVM allows the configuration phase of an application to be executed
  * within a contained JVM within minimal access to JVM capabilities.
  * <p>
- *   Idea is that this piece of code is called in during the configuration phase
- *   which happens during deployment and running in the same JVM as the server
- *   could be dangerous. Hence, we spin-up a JVM with restricted access to resources
- *   and invoke configure on application.
+ * Idea is that this piece of code is called in during the configuration phase
+ * which happens during deployment and running in the same JVM as the server
+ * could be dangerous. Hence, we spin-up a JVM with restricted access to resources
+ * and invoke configure on application.
  * </p>
  */
 public class SandboxJVM {
@@ -40,6 +40,7 @@ public class SandboxJVM {
 
   /**
    * Main class within the object.
+   *
    * @param args specified on command line.
    * @return 0 if successfull; otherwise non-zero.
    */
@@ -55,18 +56,18 @@ public class SandboxJVM {
     // Check all the options of command line
     try {
       CommandLine line = parser.parse(options, args);
-      if(! line.hasOption("jar")) {
+      if(!line.hasOption("jar")) {
         LOG.error("Application JAR not specified.");
         return -1;
       }
-      if(! line.hasOption("output")) {
+      if(!line.hasOption("output")) {
         LOG.error("Output file not specified.");
         return -1;
       }
 
       jarFilename = line.getOptionValue("jar");
       outputFile = new File(line.getOptionValue("output"));
-    } catch (org.apache.commons.cli.ParseException e) {
+    } catch(org.apache.commons.cli.ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
       return -1;
@@ -78,7 +79,7 @@ public class SandboxJVM {
     try {
       Program archive = new Program(new File(jarFilename));
       mainClass = archive.getMainClass().newInstance();
-    } catch (Exception e) {
+    } catch(Exception e) {
       LOG.error(e.getMessage());
       return -1;
     }
@@ -106,7 +107,7 @@ public class SandboxJVM {
       } finally {
         writer.close();
       }
-    } catch (IOException e) {
+    } catch(IOException e) {
       LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());
       return -1;
     }
@@ -116,6 +117,7 @@ public class SandboxJVM {
 
   /**
    * Invoked from command line.
+   *
    * @param args specified on command line.
    */
   public static void main(String[] args) {

@@ -22,6 +22,7 @@ public abstract class AbstractPipeline implements Pipeline {
 
   /**
    * Adds a {@link Stage} to the {@link Pipeline}
+   *
    * @param stage to be added to this pipeline.
    */
   @Override

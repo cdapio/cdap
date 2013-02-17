@@ -20,10 +20,10 @@ public final class ReflectionTransactionCallback implements TransactionCallback 
     this.success = success;
     this.failure = failure;
 
-    if (!this.success.isAccessible()) {
+    if(!this.success.isAccessible()) {
       this.success.setAccessible(true);
     }
-    if (!this.failure.isAccessible()) {
+    if(!this.failure.isAccessible()) {
       this.failure.setAccessible(true);
     }
   }
@@ -32,7 +32,7 @@ public final class ReflectionTransactionCallback implements TransactionCallback 
   public void onSuccess(Object object, InputContext inputContext) {
     try {
       success.invoke(target, object, inputContext);
-    } catch (Exception e) {
+    } catch(Exception e) {
       throw Throwables.propagate(e);
     }
   }
@@ -41,7 +41,7 @@ public final class ReflectionTransactionCallback implements TransactionCallback 
   public FailurePolicy onFailure(Object object, InputContext inputContext) {
     try {
       return (FailurePolicy) failure.invoke(target, object, inputContext);
-    } catch (Exception e) {
+    } catch(Exception e) {
       throw Throwables.propagate(e);
     }
   }

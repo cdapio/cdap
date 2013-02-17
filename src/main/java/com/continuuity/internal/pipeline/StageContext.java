@@ -16,6 +16,7 @@ final class StageContext implements Context {
 
   /**
    * Constructor constructed when the result is available from upstream.
+   *
    * @param upStream Object data
    */
   public StageContext(final Object upStream) {
@@ -24,6 +25,7 @@ final class StageContext implements Context {
 
   /**
    * Sets result to be sent to downstream from the current stage.
+   *
    * @param downStream Object to be sent to downstream
    */
   @Override

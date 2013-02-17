@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app;
+package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.google.common.collect.Table;
@@ -11,9 +11,9 @@ import com.google.common.collect.Table;
  * This interface specifies how the {@link QueueSpecification} is generated
  * for each {@link com.continuuity.api.flow.flowlet.Flowlet} and within
  * each Flowlet the inputs and outputs.
- *
+ * <p/>
  * <p>
- *   This requires looking at the whole Specification..
+ * This requires looking at the whole Specification..
  * </p>
  */
 public interface QueueSpecificationGenerator {

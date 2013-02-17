@@ -39,25 +39,25 @@ class PostProcessMethod {
     List<WriteOperation> writeOperations = Lists.newLinkedList(batchCollector.capture());
 
     // Creates write operations for each datum emitted
-    for (EmittedDatum datum : emittedDatums) {
+    for(EmittedDatum datum : emittedDatums) {
       // TODO: Metrics
       writeOperations.add(datum.asEnqueue());
     }
 
     // TODO: Metrics
 
-    if (input != null) {
+    if(input != null) {
       writeOperations.add(input.asAck());
     }
 
     // Check if there is nothing to do
-    if (writeOperations.isEmpty()) {
+    if(writeOperations.isEmpty()) {
       // TODO, return something
     }
 
     try {
       opex.execute(operationCtx, writeOperations);
-    } catch (OperationException e) {
+    } catch(OperationException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
   }
@@ -68,7 +68,7 @@ class PostProcessMethod {
 
     EmittedDatumIterable(Collection<ManagedOutputEmitter<?>> emitters) {
       List<Iterable<EmittedDatum>> captured = Lists.newArrayListWithCapacity(emitters.size());
-      for (ManagedOutputEmitter<?> emitter : emitters) {
+      for(ManagedOutputEmitter<?> emitter : emitters) {
         captured.add(emitter.capture());
       }
       iterable = Iterables.concat(captured);
