@@ -127,8 +127,8 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   `vpc_name` VARCHAR(100) NOT NULL ,
   `vpc_created_at` DATETIME NOT NULL,
   PRIMARY KEY (`id`) ,
-  INDEX `account_id` (`account_id` ASC) ,
-  UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC) ),
+  INDEX `account_id` (`account_id` ASC),
+  UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC),
   CONSTRAINT `vpc_ibfk_1`
     FOREIGN KEY (`account_id` )
     REFERENCES `continuuity`.`account` (`id` ))
