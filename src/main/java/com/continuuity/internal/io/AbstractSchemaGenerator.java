@@ -83,7 +83,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
     // Java array, use ARRAY schema.
     if (rawType.isArray()) {
-      return Schema.arrayOf(doGenerate(TypeToken.of(rawType), knownRecords));
+      return Schema.arrayOf(doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords));
     }
 
     if (!(type instanceof Class || type instanceof ParameterizedType)) {

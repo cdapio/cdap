@@ -70,7 +70,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       }
 
       for (Field field : rawType.getDeclaredFields()) {
-        if (Modifier.isTransient(field.getModifiers()) || field.isSynthetic()) {
+        int modifiers = field.getModifiers();
+        if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers) || field.isSynthetic()) {
           continue;
         }
         TypeToken<?> fieldType = classType.resolveType(field.getGenericType());
@@ -88,7 +89,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       }
       String methodName = method.getName();
       if (!(methodName.startsWith("get") || methodName.startsWith("is"))
-              || method.isSynthetic() || method.getParameterTypes().length != 0) {
+              || method.isSynthetic() || Modifier.isStatic(method.getModifiers())
+              || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
