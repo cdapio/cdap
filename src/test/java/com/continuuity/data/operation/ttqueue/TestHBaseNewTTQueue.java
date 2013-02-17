@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import java.util.Random;
 
-public class TestHBaseFifoTTQueue extends TestTTQueue {
+public class TestHBaseNewTTQueue extends TestTTQueue {
 
   private static Injector injector;
 
@@ -48,7 +48,7 @@ public class TestHBaseFifoTTQueue extends TestTTQueue {
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
     return new TTQueueAbstractOnVCTable(
-        handle.getTable(Bytes.toBytes("TTQueueFifoOnVCTable" + rand)),
+        handle.getTable(Bytes.toBytes("TTQueueNewOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.timeOracle, conf);
   }

@@ -37,7 +37,6 @@ public class QueueConsumer {
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
-   * @deprecated
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     this(instanceId, groupId, groupSize, null, null, config);
