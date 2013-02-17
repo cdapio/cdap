@@ -446,9 +446,9 @@ public abstract class TestOmidTransactionalOperationExecutor {
     writes.add(new QueueAck(queueName,
         dequeueResult.getEntryPointer(), consumer));
 
-    // Execute should return failure
+    // execute & commit should return failure
     try {
-      executor.execute(context, writes, ackPointer);
+      executor.commit(context, ackPointer, writes);
       fail("expecting OperationException");
     } catch (OperationException e) {
       // expected
@@ -471,7 +471,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
         dequeueResult.getEntryPointer(), consumer));
 
     // Execute should succeed
-    executor.execute(context, writes, ackPointer);
+    executor.commit(context, ackPointer, writes);
 
 
     // DequeuePayload should now return empty
@@ -568,9 +568,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
 
     // commit the real transaction with a delete, should be aborted
     try {
-      executor.execute(context,
-          Arrays.asList(new WriteOperation [] { new Delete(key, kvcol) }),
-          pointerThree);
+      executor.commit(context, pointerThree, batch(new Delete(key, kvcol)));
       fail("expecting OperationException");
     } catch (OperationException e) {
       // verify aborted
@@ -1114,7 +1112,7 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertArrayEquals(eleven, value);
     // enqueue the value and commit
     executor.commit(context, tx1, batch(new QueueEnqueue(qname, EnqueuePayload.write(new TreeMap<String, Long>(),
-                                                                                      value))));
+                                                                                     value))));
     // dequeue
     DequeueResult deqres = executor.execute(
       context, new QueueDequeue(qname, new QueueConsumer(0, 0, 1), new QueueConfig(PartitionerType.RANDOM, true)));
@@ -1131,6 +1129,55 @@ public abstract class TestOmidTransactionalOperationExecutor {
     Assert.assertTrue(deqres.isEmpty());
     // verify the write
     Assert.assertArrayEquals(value, executor.execute(context, new Read(table, g, x)).getValue().get(x));
+  }
+
+  // test increment with return value
+  @Test
+  public void testIncrementWithReturn() throws OperationException {
+    final String table = "tIWR";
+    final byte[] first = {'f','r'};
+    final byte[] second = {'s','r'};
+    final byte[] a = {'a'};
+    final byte[] b = {'b'};
+    final byte[] c = {'c'};
+    final byte[][] ab = {a,b};
+    final byte[][] abc = {a,b,c};
+
+    // write two out of three columns
+    executor.execute(context, new Write(table, first, ab, new byte[][] {
+      Bytes.toBytes(1L), Bytes.toBytes(10L) }));
+
+    // start a transaction
+    Transaction tx1 = executor.startTransaction(context);
+    // increment these columns within the transaction
+    OperationResult<Map<byte[], Long>> res = executor.
+      execute(context, tx1, new Increment(table, first, abc, new long[] { 1, 2, 55 } ));
+    // verify return values
+    Assert.assertFalse(res.isEmpty());
+    Assert.assertEquals(new Long(2L), res.getValue().get(a));
+    Assert.assertEquals(new Long(12L), res.getValue().get(b));
+    Assert.assertEquals(new Long(55L), res.getValue().get(c));
+    // write to a new row and commit transaction
+    executor.commit(context, tx1, batch(new Write(table, second, abc, new byte[][] {
+      Bytes.toBytes(res.getValue().get(a)),
+      Bytes.toBytes(res.getValue().get(b)),
+      Bytes.toBytes(res.getValue().get(c)) })));
+
+    // increment new row in own tx
+    res = executor.execute(context, new Increment(table, second, abc, new long[]{1, 3, 11}));
+    // verify return values
+    Assert.assertFalse(res.isEmpty());
+    Assert.assertEquals(new Long(3L), res.getValue().get(a));
+    Assert.assertEquals(new Long(15L), res.getValue().get(b));
+    Assert.assertEquals(new Long(66L), res.getValue().get(c));
+
+    // read back values as bytes in own tx
+    OperationResult<Map<byte[], byte[]>> res1 = executor.execute(context, new Read(table, second, abc));
+    // verify values again as bytes
+    Assert.assertFalse(res.isEmpty());
+    Assert.assertEquals(3L, Bytes.toLong(res1.getValue().get(a)));
+    Assert.assertEquals(15L, Bytes.toLong(res1.getValue().get(b)));
+    Assert.assertEquals(66L, Bytes.toLong(res1.getValue().get(c)));
   }
 
 }

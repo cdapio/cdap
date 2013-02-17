@@ -3,6 +3,7 @@ package com.continuuity.data.operation.executor;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.data.operation.Increment;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.Read;
 import com.continuuity.data.operation.ReadAllKeys;
@@ -115,6 +116,33 @@ public interface OperationExecutor
    */
   public void abort(OperationContext context,
                      Transaction transaction)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.Increment} operation.
+   *
+   * @param increment the operation
+   * @return a result object containing a map of columns to the new, incremented
+   *         values if the key is found. If the key is not found, the result will
+   *         be empty and the status code is KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Increment increment)
+    throws OperationException;
+
+  /**
+   * Executes a {@link com.continuuity.data.operation.Increment} operation in the
+   * context of an existing transaction.
+   *
+   * @param transaction the existing transaction
+   * @param increment the operation
+   * @return a result object containing a map of columns to the new, incremented
+   *         values if the key is found. If the key is not found, the result will
+   *         be empty and the status code is KEY_NOT_FOUND.
+   * @throws OperationException is something goes wrong
+   */
+  public OperationResult<Map<byte[], Long>> execute(OperationContext context, Transaction transaction,
+                                                    Increment increment)
     throws OperationException;
 
   /**
