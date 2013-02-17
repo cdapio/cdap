@@ -199,6 +199,16 @@ public class TTQueueAbstractOnVCTable implements TTQueue {
   @Override
   public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
     throws OperationException {
+    return dequeueInternal(consumer, config, readPointer);
+  }
+
+  @Override
+  public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException {
+    return dequeueInternal(consumer, consumer.getQueueConfig(), readPointer);
+  }
+
+  private DequeueResult dequeueInternal(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException {
     if (TRACE)
       log("Attempting dequeue [curNumDequeues=" + this.dequeueReturns.get() +
             "] (" + consumer + ", " + config + ", " + readPointer + ")");

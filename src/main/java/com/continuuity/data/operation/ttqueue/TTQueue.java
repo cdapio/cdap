@@ -42,11 +42,23 @@ public interface TTQueue {
    * Attempts to mark and return an entry from the queue for the specified
    * consumer from the specified group, according to the specified configuration
    * and read pointer.
+   * @param consumer the queue consumer
+   * @return dequeue result object
+   * @throws OperationException if unsuccessful
+   * @deprecated
+   */
+  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+    throws OperationException;
+
+  /**
+   * Attempts to mark and return an entry from the queue for the specified
+   * consumer from the specified group, according to the specified configuration
+   * and read pointer.
+   * @param consumer the queue consumer
    * @return dequeue result object
    * @throws OperationException if unsuccessful
    */
-  public DequeueResult dequeue(QueueConsumer consumer, QueueConfig config,
-      ReadPointer readPointer) throws OperationException;
+  public DequeueResult dequeue(QueueConsumer consumer, ReadPointer readPointer) throws OperationException;
 
   /**
    * Acknowledges a previously dequeue'd queue entry.  Returns true if consumer

@@ -10,14 +10,15 @@ public class QueueConsumer {
   private final int instanceId;
   private final long groupId;
   private final int groupSize;
+  private final QueueConfig config;
   private final String groupName; // may be null
   private final String partitioningKey; // may be null or empty
-  private final QueueConfig config;
 
   /**
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
+   * @deprecated
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize) {
     this(instanceId, groupId, groupSize, null, null, null);
@@ -27,6 +28,7 @@ public class QueueConsumer {
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
    * @param groupName the name of the consumer group
+   * @deprecated
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName) {
     this(instanceId, groupId, groupSize, groupName, null, null);
@@ -35,16 +37,17 @@ public class QueueConsumer {
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
+   * @deprecated
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, QueueConfig config) {
     this(instanceId, groupId, groupSize, null, null, config);
   }
-
   /**
    * @param instanceId id of this consumer instance (starts at 0)
    * @param groupId id of this consumer group (doesn't matter)
    * @param groupSize number of consumer instances in this consumer group
    * @param groupName the name of the consumer group
+   * @param config the queue configuration of the consumer group
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName, QueueConfig config) {
     this(instanceId, groupId, groupSize, groupName, null, config);
@@ -56,6 +59,7 @@ public class QueueConsumer {
    * @param groupSize number of consumer instances in this consumer group
    * @param groupName the name of the consumer group
    * @param partitioningKey the partitioning key of the consumer group
+   * @param config the queue configuration of the consumer group
    */
   public QueueConsumer(int instanceId, long groupId, int groupSize, String groupName, String partitioningKey,
                        QueueConfig config) {
