@@ -9,6 +9,7 @@ import com.continuuity.data.operation.ReadAllKeys;
 import com.continuuity.data.operation.ReadColumnRange;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.WriteOperation;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,8 @@ import java.util.Map;
  *   <li>Upon finish, all outstanding operations are executed, and the transaction
  *     is committed.</li>
  * </ul>
+ * This agent aborts the current transaction whenever an operation fails - even if
+ * it is a read operation. After a failure, no more operations may be submitted.
  */
 public class SmartTransactionAgent implements TransactionAgent {
 
@@ -43,7 +46,7 @@ public class SmartTransactionAgent implements TransactionAgent {
   // the current transaction
   private Transaction xaction;
   // the list of currently deferred operations
-  private List<WriteOperation> deferred;
+  private List<WriteOperation> deferred = Lists.newLinkedList();
   // keep track of current state
   private State state = State.New;
 
@@ -58,7 +61,6 @@ public class SmartTransactionAgent implements TransactionAgent {
   public SmartTransactionAgent(OperationExecutor opex, OperationContext context) {
     this.opex = opex;
     this.context = context;
-    this.deferred = new ArrayList<WriteOperation>();
   }
 
   @Override

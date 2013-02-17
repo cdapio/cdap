@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  *
  */
-public class SmartTransactionTest {
+public class SmartTransactionAgentTest {
 
   static OperationExecutor opex;
 
