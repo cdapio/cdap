@@ -6,7 +6,7 @@ package com.continuuity.internal.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.program.ProgramRunRecord;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Store;
 import com.continuuity.data.metadata.MetaDataEntry;
@@ -97,7 +97,7 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public List<ProgramRunRecord> getRunHistory(final ProgramId id) throws OperationException {
+  public List<RunRecord> getRunHistory(final ProgramId id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
     Map<String, String> filterByFields = new HashMap<String, String>();
     filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getProgramId());
@@ -105,14 +105,14 @@ public class MDSBasedStore implements Store {
                                                      id.getAccountId(), id.getApplicationId(),
                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
 
-    List<ProgramRunRecord> runHistory = new ArrayList<ProgramRunRecord>();
+    List<RunRecord> runHistory = new ArrayList<RunRecord>();
     for (MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
       if (endTsStr == null) {
         // we need to return only those that finished
         continue;
       }
-      runHistory.add(new ProgramRunRecord(entry.getId(),
+      runHistory.add(new RunRecord(entry.getId(),
                                           Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
                                           Long.valueOf(endTsStr),
                                           Status.valueOf(entry.getTextField(FieldTypes.ProgramRun.END_STATE))));
@@ -124,11 +124,11 @@ public class MDSBasedStore implements Store {
   }
 
   /**
-   * Compares ProgramRunRecord using their start time.
+   * Compares RunRecord using their start time.
    */
-  private static final class ProgramRunRecordStartTimeComparator implements Comparator<ProgramRunRecord> {
+  private static final class ProgramRunRecordStartTimeComparator implements Comparator<RunRecord> {
     @Override
-    public int compare(final ProgramRunRecord left, final ProgramRunRecord right) {
+    public int compare(final RunRecord left, final RunRecord right) {
       if (left.getStartTs() > right.getStartTs()) {
         return 1;
       } else {

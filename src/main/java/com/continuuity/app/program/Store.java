@@ -85,7 +85,7 @@ public interface Store {
    * @return list of logged runs
    * @throws OperationException
    */
-  List<ProgramRunRecord> getRunHistory(ProgramId id) throws OperationException;
+  List<RunRecord> getRunHistory(ProgramId id) throws OperationException;
 
   /**
    * Stores application specification

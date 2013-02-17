@@ -2,11 +2,10 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app.program;
+package com.continuuity.app;
 
 import com.continuuity.api.flow.FlowSpecification;
-
-import java.util.Map;
+import com.google.common.collect.Table;
 
 /**
  * This interface specifies how the {@link QueueSpecification} is generated
@@ -20,12 +19,11 @@ import java.util.Map;
 public interface QueueSpecificationGenerator {
 
   /**
-   * Given a {@link FlowSpecification} it will return a map of flowlet to
-   * the {@link QueueSpecificationHolder}
+   * Given a {@link FlowSpecification} we generate a map of from flowlet
+   * to to flowlet with their queue and schema.
    *
-   * @param app of the application
    * @param specification of a Flow
-   * @return Map of flowlet names to the {@link QueueSpecificationHolder}
+   * @return A {@link Table} consisting of From, To Flowlet and QueueSpecification.
    */
-  Map<String, QueueSpecificationHolder> create(String account, String app, FlowSpecification specification);
+  Table<String, String, QueueSpecification> create(FlowSpecification specification);
 }

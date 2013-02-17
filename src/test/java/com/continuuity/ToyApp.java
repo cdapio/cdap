@@ -7,7 +7,6 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Output;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.annotation.Process;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
@@ -18,7 +17,6 @@ import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
 
@@ -43,7 +41,7 @@ public class ToyApp implements Application {
     return ApplicationSpecification.Builder.with()
       .setName("ToyFlowApp")
       .setDescription("Toy Flow Application")
-      .withStreams().add(new Stream("x")).add(new Stream("y"))
+      .withStreams().add(new Stream("X")).add(new Stream("Y"))
       .withDataSets().add(new KeyValueTable("crawled-pages"))
       .withFlows().add(new ToyFlow())
       .noProcedure().build();
@@ -122,8 +120,10 @@ public class ToyApp implements Application {
   }
 
   public static final class D extends AbstractFlowlet {
+    @Output("d1")
     private OutputEmitter<List<String>> out;
 
+    @Process("c1")
     void process(Long l) {
       List<String> p = Lists.newArrayList();
       out.emit(p);
@@ -134,7 +134,7 @@ public class ToyApp implements Application {
     @Output("f1")
     private OutputEmitter<URI> f1;
 
-    @Process("c1")
+    @Process("c2")
     void process(Integer i) {
       f1.emit(URI.create("http://www.google.com"));
     }

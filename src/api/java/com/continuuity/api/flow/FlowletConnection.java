@@ -43,4 +43,5 @@ public final class FlowletConnection {
   public String getTargetName() {
     return targetName;
   }
+
 }

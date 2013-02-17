@@ -7,14 +7,11 @@ package com.continuuity.internal.app.program;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.app.program.ProgramRunRecord;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Store;
 import com.continuuity.app.program.Status;
-import com.continuuity.app.program.Store;
-import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -78,12 +75,12 @@ public class MDSBasedStoreTest {
     store.setEnd(programId2, "run4", 109, Status.SUCCEEDED);
 
     // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
-    List<ProgramRunRecord> history = store.getRunHistory(programId);
+    List<RunRecord> history = store.getRunHistory(programId);
 
     // only finished runs should be returned
     Assert.assertEquals(2, history.size());
     // records should be sorted by start time
-    ProgramRunRecord run = history.get(0);
+    RunRecord run = history.get(0);
     Assert.assertEquals(10, run.getStartTs());
     Assert.assertEquals(19, run.getStopTs());
     Assert.assertEquals(Status.SUCCEEDED, run.getEndStatus());

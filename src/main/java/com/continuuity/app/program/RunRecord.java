@@ -4,13 +4,13 @@
 
 package com.continuuity.app.program;
 
-public class ProgramRunRecord {
+public class RunRecord {
   private String pid;
   private long startTs;
   private long stopTs;
   private Status endStatus;
 
-  public ProgramRunRecord(final String pid, final long startTs, final long stopTs, final Status endStatus) {
+  public RunRecord(final String pid, final long startTs, final long stopTs, final Status endStatus) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;

@@ -2,11 +2,13 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.app.program;
+package com.continuuity.app;
 
 import com.continuuity.api.io.Schema;
+import com.continuuity.app.QueueName;
 
 import java.net.URI;
+import java.util.Set;
 
 /**
  * This interface defines the specification for associated with either
@@ -17,10 +19,10 @@ public interface QueueSpecification {
   /**
    * @return {@link URI} associated with the queue.
    */
-  URI getURI();
+  QueueName getQueueName();
 
   /**
    * @return {@link Schema} associated with the respective {@link URI}
    */
-  Schema getSchema();
+  Set<Schema> getSchemas();
 }
