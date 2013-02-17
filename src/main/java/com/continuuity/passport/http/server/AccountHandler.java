@@ -109,8 +109,7 @@ public class AccountHandler {
     }
   }
 
-  @Path("create")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAccount(String data) {
@@ -130,9 +129,9 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED", "First/last name or email id or company is missing")).build();
       }
       else {
-        long genId = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
+        Account account = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
                                                                                          lastName,company,emailId));
-        return Response.ok(Utils.getJson("OK","Account Created",genId)).build();
+        return Response.ok(account.toString()).build();
       }
     }
     catch (Exception e){
