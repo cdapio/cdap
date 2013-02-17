@@ -126,6 +126,7 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   `account_id` INT(11) NOT NULL ,
   `vpc_name` VARCHAR(100) NOT NULL ,
   `vpc_created_at` DATETIME NOT NULL,
+  `vpc_label` VARCHAR(100),
   PRIMARY KEY (`id`) ,
   INDEX `account_id` (`account_id` ASC),
   UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC),
