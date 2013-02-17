@@ -13,7 +13,7 @@ import com.google.common.base.Objects;
 public abstract class QueueUndo implements Undo {
 
   @Override
-  public byte[] getRowKey() {
+  public RowSet.Row getRow() {
     // queue operations are excluded from conflict detection
     return null;
   }

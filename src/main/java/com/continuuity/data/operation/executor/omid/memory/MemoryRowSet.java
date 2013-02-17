@@ -3,43 +3,46 @@
  */
 package com.continuuity.data.operation.executor.omid.memory;
 
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.continuuity.data.operation.executor.omid.RowSet;
 import com.google.common.base.Objects;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A set of rows (byte arrays).
  */
 public class MemoryRowSet implements RowSet {
 
-  private Set<byte[]> rows = new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
+  private Set<Row> rows = new TreeSet<Row>();
 
   @Override
-  public void addRow(byte [] row) {
+  public void addRow(Row row) {
     this.rows.add(row);
   }
 
+  // TODO this could be done more efficiently as a parallel scan
   @Override
-  public boolean contains(byte [] row) {
-    return this.rows.contains(row);
-  }
-
-  @Override
-  public boolean conflictsWith(RowSet rows) {
-    for (byte [] row : this.rows) {
-      if (rows.contains(row)) return true;
+  public boolean conflictsWith(RowSet other) {
+    for (Row row : other) {
+      if (this.rows.contains(row)) {
+        return true;
+      }
     }
     return false;
   }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("numrows", rows.size())
         .add("rows", rows)
         .toString();
+  }
+
+  @Override
+  public Iterator<Row> iterator() {
+    return rows.iterator();
   }
 }
