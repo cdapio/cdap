@@ -23,6 +23,7 @@ dependencies {
   //TODO: Move this to central dependency
   compile 'org.apache.shiro:shiro-core:1.2.1'
   compile libraries.jetty
+  compile 'jetty:jetty-management:6.0.0'
   testCompile libraries.junit
   testCompile 'org.hsqldb:hsqldb:2.2.6' //TODO: Move this to central dependency
 

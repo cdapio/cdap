@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
@@ -13,13 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.shiro.util.StringUtils;
 
-import javax.swing.tree.ExpandVetoException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +41,7 @@ public class AccountHandler {
     }
     else {
       return Response.status(Response.Status.NOT_FOUND)
-        .entity(Utils.getJson("NOT_FOUND", "Account not found"))
+        .entity(Utils.getJsonError("Account not found"))
         .build();
     }
   }
@@ -115,8 +109,7 @@ public class AccountHandler {
     }
   }
 
-  @Path("create")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response createAccount(String data) {
@@ -136,9 +129,9 @@ public class AccountHandler {
           .entity(Utils.getJson("FAILED", "First/last name or email id or company is missing")).build();
       }
       else {
-        long genId = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
+        Account account = DataManagementServiceImpl.getInstance().registerAccount(new Account(firstName,
                                                                                          lastName,company,emailId));
-        return Response.ok(Utils.getJson("OK","Account Created",genId)).build();
+        return Response.ok(account.toString()).build();
       }
     }
     catch (Exception e){
@@ -187,7 +180,7 @@ public class AccountHandler {
 
 
   @Path("{id}/vpc/create")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response createVPC(String data, @PathParam("id")int id)  {
@@ -206,8 +199,8 @@ public class AccountHandler {
       }
 
       if ( (!vpcName.isEmpty()) ){
-        long genId = DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
-        return Response.ok(Utils.getJson("OK","VPC Created",genId)).build();
+        VPC vpc= DataManagementServiceImpl.getInstance().addVPC(id, new VPC(vpcName));
+        return Response.ok(vpc.toString()).build();
       }
       else {
         return Response.status(Response.Status.BAD_REQUEST)
@@ -240,13 +233,13 @@ public class AccountHandler {
     }
     catch(Exception e){
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
     }
   }
 
   @Path("authenticate")
-  @PUT
+  @POST
   @Produces("application/json")
   @Consumes("application/json")
   public Response authenticate(String data){
@@ -265,16 +258,17 @@ public class AccountHandler {
                                                             StringUtils.EMPTY_STRING));
       if (status.getType().equals(AuthenticationStatus.Type.AUTHENTICATED)) {
         //TODO: Better naming for authenticatedJson?
-        return Response.ok(Utils.getAuthenticatedJson("OK",status.getMessage())).build();
+        return Response.ok(Utils.getAuthenticatedJson(status.getMessage())).build();
       }
       else {
         return Response.status(Response.Status.UNAUTHORIZED).entity(
-          Utils.getJson("FAILED","Authentication Failed. Either user doesn't exist or password doesn't match")).build();
+          Utils.getAuthenticatedJson("Authentication Failed." , "Either user doesn't exist or password doesn't match"))
+               .build();
       }
     } catch (Exception e) {
 
       return    Response.status(Response.Status.UNAUTHORIZED).entity(
-        Utils.getJson("FAILED","Authentication Failed",e)).build();
+        Utils.getAuthenticatedJson("Authentication Failed.",e.getMessage())).build();
     }
   }
 }

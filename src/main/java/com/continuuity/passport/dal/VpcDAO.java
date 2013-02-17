@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public interface VpcDAO {
 
-  public long addVPC ( int accountId, VPC vpc)
+  public VPC addVPC ( int accountId, VPC vpc)
                           throws ConfigurationException, RuntimeException;
 
   public boolean removeVPC (int vpcId)

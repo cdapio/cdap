@@ -51,7 +51,7 @@ public class DataManagementServiceImpl implements DataManagementService {
    * @throws RuntimeException
    */
   @Override
-  public long registerAccount(Account account) throws RuntimeException {
+  public Account registerAccount(Account account) throws RuntimeException {
     if (accountDAO ==null) {
       throw new RuntimeException("Could not init data access Object");
 
@@ -222,7 +222,7 @@ public class DataManagementServiceImpl implements DataManagementService {
 
   }
 
-  public long addVPC(int accountId, VPC vpc) throws RuntimeException {
+  public VPC addVPC(int accountId, VPC vpc) throws RuntimeException {
     if(vpcDao == null) {
       throw new RuntimeException("Could not initialize data access object");
     }

@@ -35,7 +35,7 @@ public class AccountDBAccess implements AccountDAO {
    * @throws {@code RetryException}
    */
   @Override
-  public long createAccount(Account account) throws ConfigurationException, RuntimeException {
+  public Account createAccount(Account account) throws ConfigurationException, RuntimeException {
     //TODO: Return boolean?
     if (this.poolManager == null){
       throw new ConfigurationException("DBConnection pool is null. DAO is not configured");
@@ -65,8 +65,10 @@ public class AccountDBAccess implements AccountDAO {
         throw new RuntimeException("Failed Insert");
       }
       result.next();
-      long id = result.getLong(1);
-      return id;
+
+      Account createdAccount  = new Account(account.getFirstName(),account.getLastName(),
+                                account.getCompany(),account.getEmailId(),result.getInt(1));
+      return createdAccount;
     } catch (SQLException e) {
       //TODO: Log
       throw new RuntimeException(e.getMessage(), e.getCause());

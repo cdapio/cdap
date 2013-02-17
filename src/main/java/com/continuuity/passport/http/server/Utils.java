@@ -1,10 +1,18 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 /**
  *
  */
 public class Utils {
 
+
+  public static String getJsonError(String error) {
+    return String.format("{\"error:\", \"%s\"",error);
+  }
+
+  public static String getJsonError(String error,Exception e) {
+    return String.format("{\"error:\", \"%s . %s \" ",error,e.getMessage());
+  }
 
   public static String getJson(String status, String message){
 
@@ -34,8 +42,11 @@ public class Utils {
     }
   }
 
-  public static String getAuthenticatedJson(String status, String payload) {
-    return String.format( "{\"status\": \"%s\", \"account\": %s }",status,payload);
+  public static String getAuthenticatedJson( String result) {
+    return String.format( "{\"error\": null, \"result\": %s }",result);
   }
 
+  public static String getAuthenticatedJson( String error, String result) {
+    return String.format( "{\"error\": \"%s\", \"result\": %s }",error, result);
+  }
 }

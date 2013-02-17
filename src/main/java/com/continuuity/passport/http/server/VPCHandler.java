@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.impl.DataManagementServiceImpl;
@@ -22,17 +22,30 @@ public class VPCHandler {
   public Response getVPC(@HeaderParam("X-Continuuity-ApiKey") String apiKey){
     try{
       List<VPC> vpcList = DataManagementServiceImpl.getInstance().getVPC(apiKey);
-      Gson gson = new Gson();
       if (vpcList.isEmpty()) {
         return Response.ok("[]").build();
       }
       else {
-        return Response.ok(gson.toJson(vpcList)).build();
+        StringBuilder returnJson = new StringBuilder();
+        returnJson.append("[");
+        boolean first = true;
+        for(VPC vpc : vpcList) {
+          if (first) {
+            first= false;
+          }
+          else {
+            returnJson.append(",");
+          }
+          returnJson.append(vpc.toString());
+
+        }
+        returnJson.append("]");
+        return Response.ok(returnJson.toString()).build();
       }
     }
     catch(Exception e){
       return Response.status(Response.Status.BAD_REQUEST)
-        .entity(Utils.getJson("FAILED", "VPC get Failed", e))
+        .entity(Utils.getJsonError("VPC get Failed", e))
         .build();
     }
   }

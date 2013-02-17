@@ -22,7 +22,7 @@ public interface AccountDAO {
    * @return int account Id that was generated
    * @throws {@code RetryException}
    */
-  public long createAccount(Account account) throws ConfigurationException, RuntimeException;
+  public Account createAccount(Account account) throws ConfigurationException, RuntimeException;
 
 
   public boolean confirmRegistration(AccountSecurity security) throws ConfigurationException, RuntimeException;

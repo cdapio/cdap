@@ -126,9 +126,10 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_account` (
   `account_id` INT(11) NOT NULL ,
   `vpc_name` VARCHAR(100) NOT NULL ,
   `vpc_created_at` DATETIME NOT NULL,
+  `vpc_label` VARCHAR(100),
   PRIMARY KEY (`id`) ,
-  INDEX `account_id` (`account_id` ASC) ,
-  UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC) ),
+  INDEX `account_id` (`account_id` ASC),
+  UNIQUE INDEX `vpc_name_UNIQUE` (`vpc_name` ASC),
   CONSTRAINT `vpc_ibfk_1`
     FOREIGN KEY (`account_id` )
     REFERENCES `continuuity`.`account` (`id` ))
@@ -157,6 +158,21 @@ CREATE  TABLE IF NOT EXISTS `continuuity`.`vpc_roles` (
   CONSTRAINT `vpc_roles_ibfk_3`
     FOREIGN KEY (`vpc_id` )
     REFERENCES `continuuity`.`vpc_account` (`id` ))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1;
+
+-- -----------------------------------------------------
+-- Table `continuuity`.`nonce`
+-- Entity to store nonce
+-- -----------------------------------------------------
+
+CREATE  TABLE IF NOT EXISTS `continuuity`.`nonce` (
+  `nonce_id` INT(11) NOT NULL,
+  `id` INT(11) NOT NULL ,
+  `nonce_expires_at` DATETIME NOT NULL,
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) ),
+  UNIQUE INDEX `nonce_id_UNIQUE` (`nonce_id` ASC) )
+
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
