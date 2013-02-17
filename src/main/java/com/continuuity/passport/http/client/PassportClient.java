@@ -4,6 +4,8 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.gson.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -14,6 +16,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.mortbay.jetty.HttpStatus;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +32,7 @@ public class PassportClient {
 
   private boolean debugEnabled = false;
 
-  private static Cache<String, HttpResponse> responseCache = null;
+  private static Cache<String, String> responseCache = null;
 
   /**
    * Enable debug - prints debug messages in std.out
@@ -44,34 +49,59 @@ public class PassportClient {
       .build();
   }
 
+
   /**
    * Get List of VPC for the apiKey
    * @param hostname Host of the service
    * @param apiKey apiKey of the developer
-   * @return  json that contains list of VPCs
+   * @return  List of VPC Names
    * @throws Exception RunTimeExceptions
    */
-  public HttpResponse getVPCList(String hostname, String apiKey) throws Exception {
+  public List<String> getVPCList(String hostname, String apiKey) throws Exception {
     String url  = getEndPoint(hostname,"passport/v1/vpc");
     //Check in cache- if present return it.
-    HttpResponse response = responseCache.getIfPresent(apiKey);
-    if (response != null) {
-      return response;
-    }
-    response = httpGet(url,apiKey);
-    //Cache if the response is 200.
-    if( response!= null && response.getStatusLine().getStatusCode() == HttpStatus.ORDINAL_200_OK) {
-      responseCache.put(apiKey,response);
+    List<String> vpcList = new ArrayList<String>();
+
+    try {
+      String data = responseCache.getIfPresent(apiKey);
+      if (data == null ) {
+        data = httpGet(url,apiKey);
+
+        if( data != null ) {
+          responseCache.put(apiKey,data);
+        }
+      }
+
+      if (data!= null ) {
+        JsonParser parser = new JsonParser();
+        JsonElement element = parser.parse(data);
+        JsonArray jsonArray = element.getAsJsonArray();
+        //for( )
+
+        for (JsonElement elements : jsonArray) {
+          JsonObject vpc = elements.getAsJsonObject();
+          if (vpc.get("vpc_name") != null ) {
+            vpcList.add(vpc.get("vpc_name").getAsString());
+          }
+        }
+      }
     }
 
-    return response;
+    catch (IOException e) {
+      e.printStackTrace();;
+      throw new RuntimeException(e.getMessage());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e.getMessage());
+    }
+    return vpcList;
+
   }
 
-  private HttpResponse httpGet(String url,String apiKey ) throws Exception {
-
+  private String httpGet(String url,String apiKey ) throws Exception {
+    String payload  = null;
     HttpGet get = new HttpGet(url);
     get.addHeader(CONTINUUITY_API_KEY,apiKey);
-
     get.addHeader("X-Continuuity-Signature","abcdef");
 
     if (debugEnabled) {
@@ -86,6 +116,7 @@ public class PassportClient {
 
     try {
       response = client.execute(get);
+      payload = IOUtils.toString(response.getEntity().getContent());
       client.getConnectionManager().shutdown();
       if (debugEnabled) {
         System.out.println(String.format("Response status: %d ", response.getStatusLine().getStatusCode()));
@@ -99,7 +130,7 @@ public class PassportClient {
     }
 
 
-    return response;
+    return payload;
   }
 
 
