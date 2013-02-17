@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

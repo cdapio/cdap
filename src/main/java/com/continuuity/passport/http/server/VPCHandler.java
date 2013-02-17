@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 import com.continuuity.passport.core.meta.VPC;
 import com.continuuity.passport.impl.DataManagementServiceImpl;

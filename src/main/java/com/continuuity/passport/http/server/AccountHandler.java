@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 import com.continuuity.passport.core.meta.Account;
 import com.continuuity.passport.core.meta.AccountSecurity;
@@ -13,7 +13,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.shiro.util.StringUtils;
 
-import javax.swing.tree.ExpandVetoException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;

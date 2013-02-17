@@ -1,4 +1,4 @@
-package com.continuuity.passport.http;
+package com.continuuity.passport.http.server;
 
 
 import com.continuuity.passport.dal.db.JDBCAuthrozingRealm;
@@ -35,7 +35,7 @@ public class PassportHttpServer  {
       context.addServlet(new ServletHolder(new ServletContainer(
         new PackagesResourceConfig("com.continuuity.passport.http"))), "/*");
 
-      context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/*",0);
+    //  context.addFilter(ContinuuitySecurityFilter.class,"/passport/v1/*",0);
 
         //JMX jetty
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -58,8 +58,8 @@ public class PassportHttpServer  {
 
     //TODO: Move this configurations to a central place
     config.put("jdbcType","mysql");
-    //config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
-    config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
+    config.put("connectionString","jdbc:mysql://a101.dev.sl:3306/continuuity?user=passport_user");
+    //config.put("connectionString","jdbc:mysql://localhost:3306/continuuity?user=passport_user");
 
     Realm realm = new JDBCAuthrozingRealm(config);
 
