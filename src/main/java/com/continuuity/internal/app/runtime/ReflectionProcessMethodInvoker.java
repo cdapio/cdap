@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.flow.flowlet.Flowlet;
-import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.io.Schema;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ByteBufferInputStream;
@@ -45,7 +44,7 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
   }
 
   @Override
-  public void invoke(InputDatum input, InputContext context) {
+  public void invoke(InputDatum input) {
     try {
       ByteBuffer data = input.getData();
       Schema sourceSchema = schemaCache.get(data);
@@ -54,7 +53,7 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
       T event = datumReader.read(decoder, sourceSchema);
 
       if (needContext) {
-        method.invoke(flowlet, event, context);
+        method.invoke(flowlet, event, input.getInputContext());
       } else {
         method.invoke(flowlet, event);
       }
@@ -62,5 +61,10 @@ public final class ReflectionProcessMethodInvoker<T> implements ProcessMethodInv
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public String toString() {
+    return method.toString();
   }
 }
