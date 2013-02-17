@@ -1,6 +1,7 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':test')
 evaluationDependsOn(':performance')
+evaluationDependsOn(':passport')
 
 apply plugin:'maven'
 apply plugin:'ubuntu'
@@ -158,6 +159,8 @@ task cloud_dist (type: Tar) {
     into("lib"){
         from project(':singlenode').configurations.getByName('runtime')
         from tasks.findByPath(':performance:jar')
+	from project(':passport').tasks.getByName('jar').outputs
+        exclude 'passport-*-sources.jar'
         exclude 'overlord-*-loggly.jar'
     }
 
