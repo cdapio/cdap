@@ -7,6 +7,7 @@ package com.continuuity.internal.app.program;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Store;
@@ -58,7 +59,7 @@ public class MDSBasedStoreTest {
   @Test
   public void testLogProgramRunHistory() throws OperationException {
     // record finished flow
-    Store.ProgramId programId = new Store.ProgramId("account1", "application1", "flow1");
+    Id.Program programId = Id.Program.from("account1", "application1", "flow1");
     store.setStart(programId, "run1", 20);
     store.setEnd(programId, "run1", 29, Status.FAILED);
 
@@ -70,7 +71,7 @@ public class MDSBasedStoreTest {
     store.setStart(programId, "run3", 50);
 
     // record run of different program
-    Store.ProgramId programId2 = new Store.ProgramId("account1", "application1", "flow2");
+    Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
     store.setStart(programId2, "run4", 100);
     store.setEnd(programId2, "run4", 109, Status.SUCCEEDED);
 
@@ -94,7 +95,7 @@ public class MDSBasedStoreTest {
   @Test
   public void testAddGetApplication() throws OperationException {
     ApplicationSpecification spec = new WordCountApp().configure();
-    Store.ApplicationId id = new Store.ApplicationId("account1", "application1");
+    Id.Application id = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(id, spec);
 
     ApplicationSpecification stored = store.getApplication(id);

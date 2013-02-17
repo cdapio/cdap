@@ -6,6 +6,7 @@ package com.continuuity.internal.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Status;
 import com.continuuity.app.program.Store;
@@ -64,10 +65,10 @@ public class MDSBasedStore implements Store {
    * @param startTime start timestamp
    */
   @Override
-  public void setStart(ProgramId id, final String pid, final long startTime) throws OperationException {
+  public void setStart(Id.Program id, final String pid, final long startTime) throws OperationException {
     MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
                                             FieldTypes.ProgramRun.ENTRY_TYPE, pid);
-    entry.addField(FieldTypes.ProgramRun.PROGRAM, id.getProgramId());
+    entry.addField(FieldTypes.ProgramRun.PROGRAM, id.getId());
     entry.addField(FieldTypes.ProgramRun.START_TS, String.valueOf(startTime));
 
     OperationContext context = new OperationContext(id.getAccountId());
@@ -84,7 +85,7 @@ public class MDSBasedStore implements Store {
    * @param state   State of program
    */
   @Override
-  public void setEnd(ProgramId id, final String pid, final long endTime, final Status state)
+  public void setEnd(Id.Program id, final String pid, final long endTime, final Status state)
     throws OperationException {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
@@ -92,24 +93,26 @@ public class MDSBasedStore implements Store {
 
     // we want program run info to be in one entry to make things cleaner on reading end
     metaDataStore.updateField(
-                               context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
+                               context, id.getAccountId(), id.getApplicationId(),
+                               FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                                FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1
     );
     metaDataStore.updateField(
-                               context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid,
+                               context, id.getAccountId(), id.getApplicationId(),
+                               FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                                FieldTypes.ProgramRun.END_STATE, String.valueOf(state), -1
     );
   }
 
   @Override
-  public List<RunRecord> getRunHistory(final ProgramId id) throws OperationException {
+  public List<RunRecord> getRunHistory(final Id.Program id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
     Map<String, String> filterByFields = new HashMap<String, String>();
-    filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getProgramId());
-    List<MetaDataEntry> entries = metaDataStore.list(
-                                                      context,
-                                                      id.getAccountId(), id.getApplicationId(),
-                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields
+    filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getId());
+    List<MetaDataEntry> entries = metaDataStore.list(context,
+                                                     id.getAccountId(),
+                                                     id.getApplicationId(),
+                                                     FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields
     );
 
     List<RunRecord> runHistory = new ArrayList<RunRecord>();
@@ -149,10 +152,10 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public void addApplication(final ApplicationId id,
+  public void addApplication(final Id.Application id,
                              final ApplicationSpecification specification) throws OperationException {
     MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
-                                            id.getApplicationId());
+                                            id.getId());
     ApplicationSpecificationAdapter adapter =
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     entry.addField(FieldTypes.Application.SPEC_JSON, adapter.toJson(specification));
@@ -165,10 +168,11 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public ApplicationSpecification getApplication(final ApplicationId id) throws OperationException {
+  public ApplicationSpecification getApplication(final Id.Application id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
 
-    MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
+    MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
+                                            id.getId());
 
     if(entry == null) {
       return null;

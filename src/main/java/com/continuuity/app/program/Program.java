@@ -23,18 +23,20 @@ public final class Program {
   private final Type processorType;
   private final String processorName;
   private final ApplicationSpecification specification;
+  private final Id.Program id;
 
   @Deprecated
-  public Program(File file) throws IOException {
-    this(new JarResources(file));
+  public Program(Id.Program id, File file) throws IOException {
+    this(id, new JarResources(file));
   }
 
-  public Program(Location location) throws IOException {
-    this(new JarResources(location));
+  public Program(Id.Program id, Location location) throws IOException {
+    this(id, new JarResources(location));
   }
 
-  private Program(JarResources jarResources) throws IOException {
+  private Program(Id.Program id, JarResources jarResources) throws IOException {
     jarClassLoader = new JarClassLoader(jarResources);
+    this.id = id;
 
     Manifest manifest = jarResources.getManifest();
 
@@ -47,18 +49,11 @@ public final class Program {
     processorName = manifest.getMainAttributes().getValue(ManifestFields.PROCESSOR_NAME);
 
     String appSpecFile = manifest.getMainAttributes().getValue(ManifestFields.SPEC_FILE);
-    specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create().fromJson(
-                                                                                                    CharStreams
-
-
-
-
-
-                                                                                                      .newReaderSupplier(
-                                                                                                                                   ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
-                                                                                                                                   Charsets.UTF_8
-                                                                                                    )
-    );
+    specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create()
+      .fromJson(CharStreams.newReaderSupplier(
+        ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
+        Charsets.UTF_8)
+      );
   }
 
   public Class<?> getMainClass() throws ClassNotFoundException {

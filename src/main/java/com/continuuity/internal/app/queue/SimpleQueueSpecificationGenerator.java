@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.app;
+package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -40,27 +40,6 @@ public final class SimpleQueueSpecificationGenerator implements QueueSpecificati
    */
   public SimpleQueueSpecificationGenerator(String account) {
     this.account = account;
-  }
-
-  /**
-   * This class represents a node in the DAG.
-   */
-  private static final class Node {
-    private final FlowletConnection.SourceType type;
-    private final String source;
-
-    public Node(FlowletConnection.SourceType type, String source) {
-      this.type = type;
-      this.source = source;
-    }
-
-    public FlowletConnection.SourceType getSourceType() {
-      return type;
-    }
-
-    public String getSourceName() {
-      return source;
-    }
   }
 
   @Override

@@ -7,9 +7,11 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.TestHelper;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.program.Id;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.filesystem.Location;
 import com.continuuity.filesystem.LocationFactory;
+import com.continuuity.internal.app.deploy.pipeline.ApplicationSpecLocation;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.internal.filesystem.LocalLocationFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
@@ -41,7 +43,7 @@ public class LocalManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
-    mgr.deploy(deployedJar);
+    mgr.deploy(Id.Account.DEFAULT(), deployedJar);
   }
 
   /**
@@ -52,8 +54,8 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class,
                                   TestHelper.getManifestWithMainClass(WebCrawlApp.class));
     Location deployedJar = lf.create(jar);
-    ListenableFuture<?> p = mgr.deploy(deployedJar);
-    VerificationStage.Input input = (VerificationStage.Input)p.get();
+    ListenableFuture<?> p = mgr.deploy(Id.Account.DEFAULT(), deployedJar);
+    ApplicationSpecLocation input = (ApplicationSpecLocation)p.get();
     Assert.assertEquals(input.getArchive(), deployedJar);
   }
 

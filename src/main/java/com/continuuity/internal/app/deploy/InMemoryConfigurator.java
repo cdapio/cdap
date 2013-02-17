@@ -8,6 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
@@ -41,12 +42,19 @@ public class InMemoryConfigurator implements Configurator {
   private final Application application;
 
   /**
+   * Id of the program
+   */
+  private final Id.Account id;
+
+  /**
    * Constructor that accepts archive file as input to invoke configure.
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Location archive) {
+  public InMemoryConfigurator(Id.Account id, Location archive) {
+    Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
+    this.id = id;
     this.archive = archive;
     this.application = null;
   }
@@ -56,8 +64,10 @@ public class InMemoryConfigurator implements Configurator {
    *
    * @param application instance for which configure needs to be invoked.
    */
-  public InMemoryConfigurator(Application application) {
+  public InMemoryConfigurator(Id.Account id, Application application) {
+    Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(application);
+    this.id = id;
     this.archive = null;
     this.application = application;
   }
@@ -94,8 +104,11 @@ public class InMemoryConfigurator implements Configurator {
       Application app = null;
 
       if(archive != null && application == null) { // Provided Application JAR.
+        // Create Program Id
+        Id.Program pgmId = Id.Program.from(id);
+
         // Load the JAR using the JAR class load and load the manifest file.
-        Object mainClass = new Program(archive).getMainClass().newInstance();
+        Object mainClass = new Program(pgmId, archive).getMainClass().newInstance();
         // Convert it to the type application.
         app = (Application) mainClass;
       } else if(application != null && archive == null) {  // Provided Application instance

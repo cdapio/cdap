@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.program.Id;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
@@ -25,9 +26,9 @@ public class LocalManager implements Manager<Location, String> {
   }
 
   @Override
-  public ListenableFuture<String> deploy(Location archive) throws Exception {
+  public ListenableFuture<String> deploy(Id.Account id, Location archive) throws Exception {
     Pipeline<String> pipeline = factory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage());
+    pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
     return pipeline.execute(archive);
   }

@@ -8,6 +8,7 @@ import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
+import com.continuuity.app.program.Id;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,7 +29,7 @@ public class ConfiguratorTest {
   @Test
   public void testInMemoryConfigurator() throws Exception {
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(new WordCountApp());
+    Configurator configurator = new InMemoryConfigurator(Id.Account.DEFAULT(), new WordCountApp());
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();

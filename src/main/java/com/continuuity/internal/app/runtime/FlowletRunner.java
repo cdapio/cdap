@@ -9,6 +9,7 @@ import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.Flowlet;
+import com.continuuity.app.program.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Cancellable;
@@ -25,9 +26,8 @@ import java.util.Map;
 public final class FlowletRunner implements Runner {
 
   @Override
-  public Cancellable run(Location archive, String name, Map<String, String> arguments) {
+  public Cancellable run(Program program, String name, Map<String, String> arguments) {
     try {
-      Program program = new Program(archive);
       Preconditions.checkArgument(program.getProcessorType() == Type.FLOW, "Supported process type");
 
       ApplicationSpecification appSpec = program.getSpecification();

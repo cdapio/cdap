@@ -6,6 +6,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.deploy.ConfigResponse;
+import com.continuuity.app.program.Id;
 import com.continuuity.filesystem.Location;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.deploy.InMemoryConfigurator;
@@ -25,13 +26,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   private final ApplicationSpecificationAdapter adapter;
+  private final Id.Account id;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage() {
+  public LocalArchiveLoaderStage(Id.Account id) {
     super(TypeToken.of(Location.class));
-    adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    this.id = id;
+    this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }
 
   /**
@@ -42,11 +45,11 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
    */
   @Override
   public void process(Location archive) throws Exception {
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(archive);
+    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(id, archive);
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    emit(new VerificationStage.Input(specification, archive));
+    emit(new ApplicationSpecLocation(specification, archive));
   }
 }

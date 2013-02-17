@@ -26,38 +26,10 @@ import com.google.common.reflect.TypeToken;
  * component of specification is achived by the {@link com.continuuity.app.verification.Verifier}
  * concrete implementations.
  */
-public class VerificationStage extends AbstractStage<VerificationStage.Input> {
-
-  /**
-   * This class carries information about ApplicationSpecification
-   * and Location between stages.
-   */
-  public static class Input {
-    private final ApplicationSpecification specification;
-    private final Location archive;
-
-    public Input(ApplicationSpecification specification, Location archive) {
-      this.specification = specification;
-      this.archive = archive;
-    }
-
-    /**
-     * @return {@link ApplicationSpecification} sent to this stage.
-     */
-    public ApplicationSpecification getSpecification() {
-      return specification;
-    }
-
-    /**
-     * @return Location of archive to this stage.
-     */
-    public Location getArchive() {
-      return archive;
-    }
-  }
+public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
 
   public VerificationStage() {
-    super(TypeToken.of(Input.class));
+    super(TypeToken.of(ApplicationSpecLocation.class));
   }
 
   /**
@@ -67,7 +39,7 @@ public class VerificationStage extends AbstractStage<VerificationStage.Input> {
    * @param input An instance of {@link Input}
    */
   @Override
-  public void process(Input input) throws Exception {
+  public void process(ApplicationSpecLocation input) throws Exception {
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();

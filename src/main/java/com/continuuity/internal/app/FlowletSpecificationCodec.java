@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
 package com.continuuity.internal.app;
 
 import com.continuuity.api.flow.flowlet.FailurePolicy;
@@ -33,11 +37,7 @@ final class FlowletSpecificationCodec implements JsonSerializer<FlowletSpecifica
   }
 
   @Override
-  public FlowletSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws
-
-
-
-                                                                                                              JsonParseException {
+  public FlowletSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();

@@ -5,6 +5,8 @@
 package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
+import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.google.common.collect.Table;
 
 /**
@@ -17,6 +19,27 @@ import com.google.common.collect.Table;
  * </p>
  */
 public interface QueueSpecificationGenerator {
+
+  /**
+   * This class represents a node in the DAG.
+   */
+  public static final class Node {
+    private final FlowletConnection.SourceType type;
+    private final String source;
+
+    public Node(FlowletConnection.SourceType type, String source) {
+      this.type = type;
+      this.source = source;
+    }
+
+    public FlowletConnection.SourceType getSourceType() {
+      return type;
+    }
+
+    public String getSourceName() {
+      return source;
+    }
+  }
 
   /**
    * Given a {@link FlowSpecification} we generate a map of from flowlet

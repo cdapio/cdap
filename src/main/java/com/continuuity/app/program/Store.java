@@ -16,45 +16,6 @@ import java.util.List;
  */
 public interface Store {
   /**
-   * Program Id identifies a given application.
-   * Application is global unique if used within context of account.
-   */
-  public static class ApplicationId {
-    private final String accountId;
-    private final String applicationId;
-
-    public ApplicationId(final String accountId, final String applicationId) {
-      this.accountId = accountId;
-      this.applicationId = applicationId;
-    }
-
-    public String getAccountId() {
-      return accountId;
-    }
-
-    public String getApplicationId() {
-      return applicationId;
-    }
-  }
-
-  /**
-   * Program Id identifies a given program.
-   * Program is global unique if used within context of account and application.
-   */
-  public static class ProgramId extends ApplicationId {
-    private final String programId;
-
-    public ProgramId(final String accountId, final String applicationId, final String programId) {
-      super(accountId, applicationId);
-      this.programId = programId;
-    }
-
-    public String getProgramId() {
-      return programId;
-    }
-  }
-
-  /**
    * @return MetaDataService to access program configuration data
    */
   MetadataService.Iface getMetaDataService();
@@ -66,7 +27,7 @@ public interface Store {
    * @param pid       run id
    * @param startTime start timestamp
    */
-  void setStart(ProgramId id, String pid, long startTime) throws OperationException;
+  void setStart(Id.Program id, String pid, long startTime) throws OperationException;
 
   /**
    * Logs end of program run
@@ -76,7 +37,7 @@ public interface Store {
    * @param endTime end timestamp
    * @param state   State of program
    */
-  void setEnd(ProgramId id, String pid, long endTime, Status state) throws OperationException;
+  void setEnd(Id.Program id, String pid, long endTime, Status state) throws OperationException;
 
   /**
    * Fetches run history for particular program. Returns only finished runs.
@@ -86,7 +47,7 @@ public interface Store {
    * @return list of logged runs
    * @throws OperationException
    */
-  List<RunRecord> getRunHistory(ProgramId id) throws OperationException;
+  List<RunRecord> getRunHistory(Id.Program id) throws OperationException;
 
   /**
    * Stores application specification
@@ -95,7 +56,7 @@ public interface Store {
    * @param specification application specification to store
    * @throws OperationException
    */
-  void addApplication(ApplicationId id,
+  void addApplication(Id.Application id,
                       ApplicationSpecification specification) throws OperationException;
 
   /**
@@ -105,5 +66,5 @@ public interface Store {
    * @return application specification
    * @throws OperationException
    */
-  ApplicationSpecification getApplication(ApplicationId id) throws OperationException;
+  ApplicationSpecification getApplication(Id.Application id) throws OperationException;
 }

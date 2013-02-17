@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Continuuity Inc. All rights reserved.
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
 package com.continuuity.internal.app.program;

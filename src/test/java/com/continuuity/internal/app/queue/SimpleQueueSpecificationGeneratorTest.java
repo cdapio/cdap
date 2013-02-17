@@ -1,9 +1,15 @@
-package com.continuuity.internal.app;
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
+
+package com.continuuity.internal.app.queue;
 
 import com.continuuity.ToyApp;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
+import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.collect.Table;
 import org.junit.Assert;

@@ -21,13 +21,7 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * This is a sample Web Crawler application that is used is test.
- * <p>
- *   This Application has multiple flowlets
- *   <ul>
- *     <li>Document Crawler : Gets urls from stream and crawls the pages and stores them. </li>
- *   </ul>
- * </p>
+ * This is a Toy Application used for only testing.
  */
 public class ToyApp implements Application {
   /**
