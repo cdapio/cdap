@@ -9,7 +9,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class FlowVerificationTest {
   @Test
   public void testFlowWithMoreOutputThanWhatInputCanHandle() throws Exception {
     ApplicationSpecification appSpec = new WebCrawlApp().configure();
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     FlowVerification flowSpec = new FlowVerification();
@@ -42,7 +42,7 @@ public class FlowVerificationTest {
   @Test
   public void testValidFlow() throws Exception {
     ApplicationSpecification appSpec = new WebCrawlApp().configure();
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     FlowVerification flowSpec = new FlowVerification();

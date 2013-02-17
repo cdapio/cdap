@@ -48,7 +48,7 @@ public class MDSBasedStoreTest {
     MetaDataStore metaDataStore = new SerializingMetaDataStore(executor);
     MDSBasedStore store = new MDSBasedStore(metaDataStore, metadataService);
     long startTs = System.currentTimeMillis();
-    store.setStart(new Store.ProgramId("account1", "application1", "flow1"), "run1", startTs);
+    store.logProgramStart("account1", "application1", "flow1", "run1", startTs);
     long endTs = startTs + 10;
     store.setEnd(new Store.ProgramId("account1", "application1", "flow1"), "run1", endTs, Status.FAILED);
 

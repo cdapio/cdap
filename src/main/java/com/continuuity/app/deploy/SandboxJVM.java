@@ -8,7 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.io.SimpleQueueSpecificationGeneratorFactory;
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.security.ApplicationSecurity;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -102,7 +102,7 @@ public class SandboxJVM {
       Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
       try {
         // TODO: The SchemaGenerator should be injected.
-        ApplicationSpecificationAdapter.create(SimpleQueueSpecificationGeneratorFactory.create()).toJson(specification, writer);
+        ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
       } finally {
         writer.close();
       }
