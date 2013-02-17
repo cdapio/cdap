@@ -5,6 +5,10 @@ package com.continuuity.data.operation.executor.omid;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.common.io.Decoder;
+import com.continuuity.common.io.Encoder;
 import com.continuuity.common.metrics.CMetrics;
 import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.metrics.MetricType;
@@ -57,7 +61,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -816,8 +823,9 @@ implements TransactionalOperationExecutor {
     initialize();
     requestMetric("QueueEnqueue");
     long begin = begin();
+    enqueue.getHeaderVersion();
     EnqueueResult result = getQueueTable(enqueue.getKey()).enqueue(enqueue.getKey(), enqueue.getData(),
-                                                                   pointer.getSecond());
+                                                                   wrap(enqueue.getHeaders()), pointer.getSecond());
     end("QueueEnqueue", begin);
     return new WriteTransactionResult(
         new QueueUnenqueue(enqueue.getKey(), enqueue.getData(),
@@ -1013,5 +1021,48 @@ implements TransactionalOperationExecutor {
       this.metaStore = new SerializingMetaDataStore(this);
     }
   }
+  private byte[] wrap(Map<String,String> map) {
+    byte[] mapAsBytes;
+    if (map == null)
+      return null;
+    else {
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      Encoder encoder = new BinaryEncoder(bos);
+      try {
+        encoder.writeInt(map.size());
+        for(Map.Entry<String,String> entry: map.entrySet()) {
+          encoder.writeString(entry.getKey());
+          encoder.writeString(entry.getValue());
+        }
+        mapAsBytes=bos.toByteArray();
+      } catch (IOException e) {
+        e.printStackTrace();
+        return null;
+      }
+      return mapAsBytes;
+    }
+  }
 
+  Map<String,String> unwrap(byte[] mapAsBytes) {
+    Map<String,String> map=null;
+    if (mapAsBytes == null) return map;
+    else {
+      ByteArrayInputStream bis = new ByteArrayInputStream(mapAsBytes);
+      Decoder decoder = new BinaryDecoder(bis);
+      int size= 0;
+      try {
+        size = decoder.readInt();
+        if (size>0) {
+          map=Maps.newHashMap();
+          for(int i=0; i<size; i++) {
+            map.put(decoder.readString(),decoder.readString());
+          }
+        }
+      } catch (IOException e) {
+        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        return null;
+      }
+      return map;
+    }
+  }
 } // end of OmitTransactionalOperationExecutor

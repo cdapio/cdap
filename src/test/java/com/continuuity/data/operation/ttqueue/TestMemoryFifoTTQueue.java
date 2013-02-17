@@ -16,7 +16,7 @@ public class TestMemoryFifoTTQueue extends TestTTQueue {
 
   @Override
   protected TTQueue createQueue(CConfiguration conf) {
-    return new TTQueueFifoOnVCTable(
+    return new TTQueueAbstractOnVCTable(
       new MemoryOVCTable(Bytes.toBytes("TestMemoryFifoTTQueue")),
       Bytes.toBytes("TestTTQueue"),
       TestTTQueue.timeOracle, conf);

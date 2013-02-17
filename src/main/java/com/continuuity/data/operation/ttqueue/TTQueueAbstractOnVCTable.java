@@ -3,6 +3,8 @@ package com.continuuity.data.operation.ttqueue;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.io.Decoder;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.omid.TimestampOracle;
@@ -11,15 +13,18 @@ import com.continuuity.data.operation.ttqueue.internal.EntryConsumerMeta;
 import com.continuuity.data.operation.ttqueue.internal.EntryMeta;
 import com.continuuity.data.table.ReadPointer;
 import com.continuuity.data.table.VersionedColumnarTable;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  */
-public abstract class TTQueueAbstractOnVCTable implements TTQueue {
+public class TTQueueAbstractOnVCTable implements TTQueue {
 
   protected final VersionedColumnarTable table;
   private final byte [] queueName;
@@ -28,24 +33,52 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
   // For testing
   AtomicLong dequeueReturns = new AtomicLong(0);
 
-  // Row prefix names and flags
-  static final byte [] GLOBAL_ENTRY_PREFIX = {10};
-  static final byte [] GLOBAL_DATA_PREFIX = {20};
-  static final byte [] CONSUMER_META_PREFIX = {30};
+  /*
+  for each queue (global):
+    global entry id counter for newest (highest) entry id, incremented during enqueue
+    row-key       | column | value
+    <queueName>10 | 10     | <entryId>
 
-  // Columns for row = GLOBAL_ENTRY_PREFIX
-  static final byte [] GLOBAL_ENTRYID_COUNTER = {10};
+    data and meta data (=entryState) for each entry (together in one row per entry)
+    (GLOBAL_DATA_PREFIX)
+    row-key                | column | value
+    <queueName>20<entryId> | 20     | <data>
+                           | 10     | <entryState>
+                           | 30     | <header data>
+
+  for each group of consumers (= each group of flowlet instances):
+    group read pointer for highest entry id processed by group of consumers
+    row-key                | column | value
+    <queueName>10<groupId> | 10     | <entryId>
+
+  for each consumer(=flowlet instance)
+    state of entry ids processed by consumer (one column per entry id), current active entry and consumer read pointer
+    (CONSUMER_META_PREFIX)
+    row-key                            | column          | value
+    <queueName>30<groupId><consumerId> | 20<entryId>     | <entryState>
+                                       | 10              | <entryId>
+                                       | 30              | <entryId>
+   */
+
+  // Row prefix names and flags
+  static final byte [] GLOBAL_ENTRY_ID_PREFIX = {10};  //row <queueName>10
+  static final byte [] GLOBAL_DATA_PREFIX = {20};   //row <queueName>20
+  static final byte [] CONSUMER_META_PREFIX = {30}; //row <queueName>30
+
+  // Columns for row = GLOBAL_ENTRY_ID_PREFIX
+  static final byte [] GLOBAL_ENTRYID_COUNTER = {10};  //newest (highest) entry id per queue (global)
 
   // Columns for row = GLOBAL_DATA_PREFIX
-  static final byte [] ENTRY_META = {10};
-  static final byte [] ENTRY_DATA = {20};
+  static final byte [] ENTRY_META = {10}; //row  <queueName>20<entryId>, column 10
+  static final byte [] ENTRY_DATA = {20}; //row  <queueName>20<entryId>, column 20
+  static final byte [] ENTRY_HEADER = {30};  //row  <queueName>20<entryId>, column 30
 
-  static final byte [] GROUP_READ_POINTER = {10};
+  static final byte [] GROUP_READ_POINTER = {10}; //row <queueName>10<groupId>, column 10
 
   // Columns for row = CONSUMER_META_PREFIX
-  static final byte [] ACTIVE_ENTRY = {10};
-  static final byte [] META_ENTRY_PREFIX = {20};
-  static final byte [] CONSUMER_READ_POINTER = {30};
+  static final byte [] ACTIVE_ENTRY = {10};          //row <queueName>30<groupId><consumerId>, column 10
+  static final byte [] META_ENTRY_PREFIX = {20};     //row <queueName>30<groupId><consumerId>, column 20<entryId>
+  static final byte [] CONSUMER_READ_POINTER = {30}; //row <queueName>30<groupId><consumerId>, column 30
 
   static final long INVALID_ACTIVE_ENTRY_ID_VALUE = -1;
 
@@ -56,11 +89,72 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     this.timeOracle = timeOracle;
   }
 
-  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
-    throws OperationException;
+//  protected abstract long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer)
+//    throws OperationException;
+
+  public String getValueFromHeader(byte[] header, String key) {
+    ByteArrayInputStream bis = new ByteArrayInputStream(header);
+    Decoder decoder = new BinaryDecoder(bis);
+    int size=0;
+    try {
+      size = decoder.readInt();
+      if (size>0) {
+        for(int i=0; i<size; i++) {
+          if (key.equalsIgnoreCase(decoder.readString())) {
+            return decoder.readString();
+          }
+          decoder.skipString();
+        }
+      }
+      return null;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  protected long fetchNextEntryId(QueueConsumer consumer, QueueConfig config, ReadPointer readPointer) throws OperationException {
+//    return this.table.incrementAtomicDirtily(
+//      makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+//      CONSUMER_READ_POINTER, consumer.getGroupSize());
+    long entryId=-1;
+    boolean foundEntry=false;
+    QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+
+    while (!foundEntry) {
+      if (partitioner.isDisjoint()) {
+        OperationResult<byte[]> result=this.table.get(
+                                    makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                                    CONSUMER_READ_POINTER,readPointer);
+        if (!result.isEmpty()) {
+          entryId=Bytes.toLong(result.getValue());
+        }
+      } else {
+        entryId = this.table.incrementAtomicDirtily(makeRowKey(GROUP_READ_POINTER, consumer.getGroupId()),
+                                                    GROUP_READ_POINTER, 1);
+      }
+      if (entryId!=-1) {
+        if (partitioner.usesHeaderData()) {
+          OperationResult<byte[]> result = this.table.get(makeRowKey(GLOBAL_DATA_PREFIX, entryId), ENTRY_HEADER,
+                                                          readPointer);
+          String partitioningKey=consumer.getPartitioningKey();
+          if (!result.isEmpty() && partitioningKey!=null && partitioningKey.length()!=0) {
+            String value=getValueFromHeader(result.getValue(),partitioningKey);
+            int hashValue=Integer.parseInt(value);
+            foundEntry=partitioner.shouldEmit(consumer, entryId, hashValue);
+          } else {
+            foundEntry=partitioner.shouldEmit(consumer, entryId);
+          }
+        } else {
+          foundEntry=partitioner.shouldEmit(consumer, entryId);
+        }
+      }
+    }
+    return entryId;
+  }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion) throws OperationException {
     if (TRACE)
       log("Enqueueing (data.len=" + data.length + ", writeVersion=" +
             cleanWriteVersion + ")");
@@ -70,7 +164,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     try {
       // Make sure the increment below uses increment operation of the underlying implementation directly
       // so that it is atomic (Eg. HBase increment operation)
-      entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_PREFIX), GLOBAL_ENTRYID_COUNTER, 1);
+      entryId = this.table.incrementAtomicDirtily(makeRowName(GLOBAL_ENTRY_ID_PREFIX), GLOBAL_ENTRYID_COUNTER, 1);
     } catch (OperationException e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, "Increment " +
         "of global entry id failed with status code " + e.getStatus() +
@@ -80,12 +174,12 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
     /*
     Insert entry with version=<cleanWriteVersion> and
-    row-key = 20<entryId> , column/value 20/<data> and 10/EntryState.VALID
+    row-key = <queueName>20<entryId> , column/value 20/<data> and 10/EntryState.VALID
     */
     this.table.put(makeRowKey(GLOBAL_DATA_PREFIX, entryId),
-                   new byte [][] { ENTRY_DATA, ENTRY_META},
+                   new byte [][] { ENTRY_DATA, ENTRY_META, ENTRY_HEADER},
                    cleanWriteVersion,
-                   new byte [][] {data, new EntryMeta(EntryMeta.EntryState.VALID).getBytes()});
+                   new byte [][] {data, new EntryMeta(EntryMeta.EntryState.VALID).getBytes(), headerData});
 
     // Return success with pointer to entry
     return new EnqueueResult(EnqueueResult.EnqueueStatus.SUCCESS, new QueueEntryPointer(this.queueName, entryId));
@@ -166,9 +260,20 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     long entryId = fetchNextEntryId(consumer, config, readPointer);
     // Persist the entryId this consumer will be working on
     // TODO: Later when active entry can saved in memory, there is no need to write it into HBase
-    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY}, readPointer.getMaximum(),
-      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(), Bytes.toBytes(entryId)});
+    QueuePartitioner partitioner=config.getPartitionerType().getPartitioner();
+
+    if (partitioner.isDisjoint()) {
+      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                     new byte[][] {CONSUMER_READ_POINTER, ACTIVE_ENTRY},
+                     readPointer.getMaximum(),
+                     new byte[][] {Bytes.toBytes(entryId), Bytes.toBytes(entryId)});
+    } else {
+      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                     new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryId), ACTIVE_ENTRY},
+                     readPointer.getMaximum(),
+                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.CLAIMED, 0).getBytes(),
+                       Bytes.toBytes(entryId)});
+    }
     return entryId;
   }
 
@@ -177,10 +282,22 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
     throws OperationException {
     // TODO: 1. Later when active entry can saved in memory, there is no need to write it into HBase
     // TODO: 2. Need to treat Ack as a simple write operation so that it can use a simple write rollback for unack
-    this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
-      new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY}, readPointer.getMaximum(),
-      new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
-                                                                        Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+
+    QueuePartitioner partitioner=consumer.getQueueConfig().getPartitionerType().getPartitioner();
+
+    if (partitioner.isDisjoint()) {
+      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                     new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
+                     readPointer.getMaximum(),
+                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
+                       Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+    } else {
+      this.table.put(makeRowKey(CONSUMER_META_PREFIX, consumer.getGroupId(), consumer.getInstanceId()),
+                     new byte[][] {makeColumnName(META_ENTRY_PREFIX, entryPointer.getEntryId()), ACTIVE_ENTRY},
+                     readPointer.getMaximum(),
+                     new byte[][] {new EntryConsumerMeta(EntryConsumerMeta.EntryState.ACKED, 0).getBytes(),
+                       Bytes.toBytes(INVALID_ACTIVE_ENTRY_ID_VALUE)});
+    }
   }
 
   @Override
@@ -235,8 +352,7 @@ public abstract class TTQueueAbstractOnVCTable implements TTQueue {
 
   protected byte[] makeRowKey(byte[] bytesToAppendToQueueName, long id1, int id2) {
     return Bytes.add(
-      Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)),
-      Bytes.toBytes(id2));
+      Bytes.add(this.queueName, bytesToAppendToQueueName, Bytes.toBytes(id1)), Bytes.toBytes(id2));
   }
   protected byte[] makeColumnName(byte[] bytesToPrependToId, long id) {
     return Bytes.add(bytesToPrependToId, Bytes.toBytes(id));

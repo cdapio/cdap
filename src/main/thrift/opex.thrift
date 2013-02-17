@@ -85,12 +85,24 @@ struct TQueueEnqueue {
   7: optional TQueueProducer producer,
 }
 
+enum TQueuePartitioner {
+  RANDOM,
+  HASH,
+  LONGMOD,
+}
+
+struct TQueueConfig {
+  1: TQueuePartitioner partitioner,
+  2: bool singleEntry,
+}
+
 struct TQueueConsumer {
   1: i32 instanceId,
   2: i64 groupId,
   3: i32 groupSize,
   4: optional string groupName,
   5: optional string partitioningKey,
+  6: optional TQueueConfig queueConfig,
 }
 
 struct TQueueEntryPointer {
@@ -105,17 +117,6 @@ struct TQueueAck {
   3: TQueueConsumer consumer,
   4: i32 numGroups,
   5: i64 id,
-}
-
-enum TQueuePartitioner {
-  RANDOM,
-  HASH,
-  LONGMOD,
-}
-
-struct TQueueConfig {
-  1: TQueuePartitioner partitioner,
-  2: bool singleEntry,
 }
 
 struct TQueueDequeue {

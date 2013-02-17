@@ -23,7 +23,7 @@ public class TTQueueTableFifoOnVCTable extends TTQueueAbstractTableOnVCTable {
   protected TTQueue getQueue(byte [] queueName) {
     TTQueue queue = this.queues.get(queueName);
     if (queue != null) return queue;
-    queue = new TTQueueFifoOnVCTable(this.table, queueName, this.timeOracle, this.conf);
+    queue = new TTQueueAbstractOnVCTable(this.table, queueName, this.timeOracle, this.conf);
     TTQueue existing = this.queues.putIfAbsent(queueName, queue);
     return existing != null ? existing : queue;
   }

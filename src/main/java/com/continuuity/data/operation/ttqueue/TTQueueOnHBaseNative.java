@@ -64,7 +64,7 @@ public class TTQueueOnHBaseNative implements TTQueue {
   }
 
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion)
+  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion)
       throws OperationException {
     if (TRACE)
       log("Enqueueing (data.len=" + data.length + ", writeVersion=" +

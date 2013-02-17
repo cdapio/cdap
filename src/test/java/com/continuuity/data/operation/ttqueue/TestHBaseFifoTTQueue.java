@@ -47,7 +47,7 @@ public class TestHBaseFifoTTQueue extends TestTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(r.nextInt());
-    return new TTQueueFifoOnVCTable(
+    return new TTQueueAbstractOnVCTable(
         handle.getTable(Bytes.toBytes("TTQueueFifoOnVCTable" + rand)),
         Bytes.toBytes("TestTTQueueName" + rand),
         TestTTQueue.timeOracle, conf);

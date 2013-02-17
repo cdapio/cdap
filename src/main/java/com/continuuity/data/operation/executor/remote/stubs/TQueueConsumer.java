@@ -35,6 +35,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final org.apache.thrift.protocol.TField GROUP_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("groupSize", org.apache.thrift.protocol.TType.I32, (short)3);
   private static final org.apache.thrift.protocol.TField GROUP_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("groupName", org.apache.thrift.protocol.TType.STRING, (short)4);
   private static final org.apache.thrift.protocol.TField PARTITIONING_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("partitioningKey", org.apache.thrift.protocol.TType.STRING, (short)5);
+  private static final org.apache.thrift.protocol.TField QUEUE_CONFIG_FIELD_DESC = new org.apache.thrift.protocol.TField("queueConfig", org.apache.thrift.protocol.TType.STRUCT, (short)6);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,6 +48,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   public int groupSize; // required
   public String groupName; // optional
   public String partitioningKey; // optional
+  public TQueueConfig queueConfig; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -54,7 +56,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     GROUP_ID((short)2, "groupId"),
     GROUP_SIZE((short)3, "groupSize"),
     GROUP_NAME((short)4, "groupName"),
-    PARTITIONING_KEY((short)5, "partitioningKey");
+    PARTITIONING_KEY((short)5, "partitioningKey"),
+    QUEUE_CONFIG((short)6, "queueConfig");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -79,6 +82,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           return GROUP_NAME;
         case 5: // PARTITIONING_KEY
           return PARTITIONING_KEY;
+        case 6: // QUEUE_CONFIG
+          return QUEUE_CONFIG;
         default:
           return null;
       }
@@ -123,7 +128,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
   private static final int __GROUPID_ISSET_ID = 1;
   private static final int __GROUPSIZE_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
-  private _Fields optionals[] = {_Fields.GROUP_NAME,_Fields.PARTITIONING_KEY};
+  private _Fields optionals[] = {_Fields.GROUP_NAME,_Fields.PARTITIONING_KEY,_Fields.QUEUE_CONFIG};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -137,6 +142,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.PARTITIONING_KEY, new org.apache.thrift.meta_data.FieldMetaData("partitioningKey", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.QUEUE_CONFIG, new org.apache.thrift.meta_data.FieldMetaData("queueConfig", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TQueueConfig.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TQueueConsumer.class, metaDataMap);
   }
@@ -173,6 +180,9 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     if (other.isSetPartitioningKey()) {
       this.partitioningKey = other.partitioningKey;
     }
+    if (other.isSetQueueConfig()) {
+      this.queueConfig = new TQueueConfig(other.queueConfig);
+    }
   }
 
   public TQueueConsumer deepCopy() {
@@ -189,6 +199,7 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     this.groupSize = 0;
     this.groupName = null;
     this.partitioningKey = null;
+    this.queueConfig = null;
   }
 
   public int getInstanceId() {
@@ -308,6 +319,30 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
     }
   }
 
+  public TQueueConfig getQueueConfig() {
+    return this.queueConfig;
+  }
+
+  public TQueueConsumer setQueueConfig(TQueueConfig queueConfig) {
+    this.queueConfig = queueConfig;
+    return this;
+  }
+
+  public void unsetQueueConfig() {
+    this.queueConfig = null;
+  }
+
+  /** Returns true if field queueConfig is set (has been assigned a value) and false otherwise */
+  public boolean isSetQueueConfig() {
+    return this.queueConfig != null;
+  }
+
+  public void setQueueConfigIsSet(boolean value) {
+    if (!value) {
+      this.queueConfig = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case INSTANCE_ID:
@@ -350,6 +385,14 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       }
       break;
 
+    case QUEUE_CONFIG:
+      if (value == null) {
+        unsetQueueConfig();
+      } else {
+        setQueueConfig((TQueueConfig)value);
+      }
+      break;
+
     }
   }
 
@@ -369,6 +412,9 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
 
     case PARTITIONING_KEY:
       return getPartitioningKey();
+
+    case QUEUE_CONFIG:
+      return getQueueConfig();
 
     }
     throw new IllegalStateException();
@@ -391,6 +437,8 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       return isSetGroupName();
     case PARTITIONING_KEY:
       return isSetPartitioningKey();
+    case QUEUE_CONFIG:
+      return isSetQueueConfig();
     }
     throw new IllegalStateException();
   }
@@ -450,6 +498,15 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (!(this_present_partitioningKey && that_present_partitioningKey))
         return false;
       if (!this.partitioningKey.equals(that.partitioningKey))
+        return false;
+    }
+
+    boolean this_present_queueConfig = true && this.isSetQueueConfig();
+    boolean that_present_queueConfig = true && that.isSetQueueConfig();
+    if (this_present_queueConfig || that_present_queueConfig) {
+      if (!(this_present_queueConfig && that_present_queueConfig))
+        return false;
+      if (!this.queueConfig.equals(that.queueConfig))
         return false;
     }
 
@@ -519,6 +576,16 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetQueueConfig()).compareTo(typedOther.isSetQueueConfig());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetQueueConfig()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queueConfig, typedOther.queueConfig);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -567,6 +634,16 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
         sb.append("null");
       } else {
         sb.append(this.partitioningKey);
+      }
+      first = false;
+    }
+    if (isSetQueueConfig()) {
+      if (!first) sb.append(", ");
+      sb.append("queueConfig:");
+      if (this.queueConfig == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.queueConfig);
       }
       first = false;
     }
@@ -654,6 +731,15 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 6: // QUEUE_CONFIG
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.queueConfig = new TQueueConfig();
+              struct.queueConfig.read(iprot);
+              struct.setQueueConfigIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -692,6 +778,13 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
           oprot.writeFieldEnd();
         }
       }
+      if (struct.queueConfig != null) {
+        if (struct.isSetQueueConfig()) {
+          oprot.writeFieldBegin(QUEUE_CONFIG_FIELD_DESC);
+          struct.queueConfig.write(oprot);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -725,7 +818,10 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetPartitioningKey()) {
         optionals.set(4);
       }
-      oprot.writeBitSet(optionals, 5);
+      if (struct.isSetQueueConfig()) {
+        optionals.set(5);
+      }
+      oprot.writeBitSet(optionals, 6);
       if (struct.isSetInstanceId()) {
         oprot.writeI32(struct.instanceId);
       }
@@ -741,12 +837,15 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (struct.isSetPartitioningKey()) {
         oprot.writeString(struct.partitioningKey);
       }
+      if (struct.isSetQueueConfig()) {
+        struct.queueConfig.write(oprot);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TQueueConsumer struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(5);
+      BitSet incoming = iprot.readBitSet(6);
       if (incoming.get(0)) {
         struct.instanceId = iprot.readI32();
         struct.setInstanceIdIsSet(true);
@@ -766,6 +865,11 @@ public class TQueueConsumer implements org.apache.thrift.TBase<TQueueConsumer, T
       if (incoming.get(4)) {
         struct.partitioningKey = iprot.readString();
         struct.setPartitioningKeyIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.queueConfig = new TQueueConfig();
+        struct.queueConfig.read(iprot);
+        struct.setQueueConfigIsSet(true);
       }
     }
   }

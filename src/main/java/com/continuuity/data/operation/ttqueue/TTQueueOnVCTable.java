@@ -94,7 +94,7 @@ public class TTQueueOnVCTable implements TTQueue {
     this.maxAgeBeforeSemiAckedToAcked = conf.getLong("ttqueue.entry.semiacked.max", 10 * 1000); // 10 second default
   }
   @Override
-  public EnqueueResult enqueue(byte[] data, long cleanWriteVersion) throws OperationException {
+  public EnqueueResult enqueue(byte[] data, byte[] headerData, long cleanWriteVersion) throws OperationException {
     if (TRACE) log("Enqueueing (data.len=" + data.length + ", writeVersion=" + cleanWriteVersion + ")");
 
     // Get a dirty pointer

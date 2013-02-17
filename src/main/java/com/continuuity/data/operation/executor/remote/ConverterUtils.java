@@ -556,6 +556,8 @@ public class ConverterUtils {
         consumer.getGroupSize());
     if (consumer.getGroupName() != null)
       tQueueConsumer.setGroupName(consumer.getGroupName());
+    if (consumer.getQueueConfig() != null)
+      tQueueConsumer.setQueueConfig(wrap(consumer.getQueueConfig()));
     return tQueueConsumer;
   }
   /** unwrap a queue consumer */
@@ -564,7 +566,8 @@ public class ConverterUtils {
         tQueueConsumer.getInstanceId(),
         tQueueConsumer.getGroupId(),
         tQueueConsumer.getGroupSize(),
-        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null);
+        tQueueConsumer.isSetGroupName() ? tQueueConsumer.getGroupName() : null,
+        tQueueConsumer.isSetQueueConfig() ? unwrap(tQueueConsumer.getQueueConfig()) : null);
   }
 
   /** wrap a queue producer */

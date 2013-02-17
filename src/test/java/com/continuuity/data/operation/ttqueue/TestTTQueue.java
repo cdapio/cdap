@@ -52,7 +52,7 @@ public abstract class TestTTQueue {
     int numEntries = getNumIterations();
 
     for (int i=1; i<numEntries+1; i++) {
-      queue.enqueue(Bytes.toBytes(i), dirtyVersion);
+      queue.enqueue(Bytes.toBytes(i), null, dirtyVersion);
     }
     System.out.println("Done enqueueing");
 
@@ -62,8 +62,8 @@ public abstract class TestTTQueue {
         (enqueueStop-startTime) + " ms (" +
         (enqueueStop-startTime)/((float)numEntries) + " ms/entry)");
 
-    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1);
     QueueConfig configSync = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConsumer consumerSync = new QueueConsumer(0, 0, 1, configSync);
     for (int i=1; i<numEntries+1; i++) {
       MemoryReadPointer rp = new MemoryReadPointer(timeOracle.getTimestamp());
       DequeueResult result =
@@ -84,8 +84,8 @@ public abstract class TestTTQueue {
 
     // Async
 
-    QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1);
     QueueConfig configAsync = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConsumer consumerAsync = new QueueConsumer(0, 2, 1, configAsync);
     for (int i=1; i<numEntries+1; i++) {
       DequeueResult result =
           queue.dequeue(consumerAsync, configAsync,
@@ -141,9 +141,9 @@ public abstract class TestTTQueue {
     long dirtyVersion = 1;
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
-    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
+    QueueConsumer consumer2 = new QueueConsumer(0, 1, 1, config);
 
     // first try with evict-on-ack off
     TTQueue queueNormal = createQueue();
@@ -151,7 +151,7 @@ public abstract class TestTTQueue {
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      queueNormal.enqueue(Bytes.toBytes(i), dirtyVersion);
+      queueNormal.enqueue(Bytes.toBytes(i), null, dirtyVersion);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=-1
@@ -176,7 +176,7 @@ public abstract class TestTTQueue {
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      queueEvict.enqueue(Bytes.toBytes(i), dirtyVersion);
+      queueEvict.enqueue(Bytes.toBytes(i), null, dirtyVersion);
     }
 
     // dequeue/ack/finalize 10 things w/ numGroups=1
@@ -205,17 +205,17 @@ public abstract class TestTTQueue {
     long dirtyVersion = 1;
     ReadPointer dirtyReadPointer = getDirtyPointer();
 
-    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1);
-    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1);
-    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConsumer consumer1 = new QueueConsumer(0, queue.getGroupID(), 1,config);
+    QueueConsumer consumer2 = new QueueConsumer(0, queue.getGroupID(), 1,config);
+    QueueConsumer consumer3 = new QueueConsumer(0, queue.getGroupID(), 1,config);
 
     // enable evict-on-ack for 3 groups
     int numGroups = 3;
 
     // enqueue 10 things
     for (int i=0; i<10; i++) {
-      queue.enqueue(Bytes.toBytes(i), dirtyVersion);
+      queue.enqueue(Bytes.toBytes(i), null, dirtyVersion);
     }
 
     // dequeue/ack/finalize 10 things w/ group1 and numGroups=3
@@ -264,7 +264,7 @@ public abstract class TestTTQueue {
     // now the first 9 entries should have been physically evicted!
 
     // create a new consumer and dequeue, should get the 10th entry!
-    QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1);
+    QueueConsumer consumer4 = new QueueConsumer(0, queue.getGroupID(), 1,config);
     DequeueResult result = queue.dequeue(consumer4, config, dirtyReadPointer);
     assertTrue("Expected 9 but was " + Bytes.toInt(result.getValue()),
         Bytes.equals(Bytes.toBytes(9), result.getValue()));
@@ -314,12 +314,12 @@ public abstract class TestTTQueue {
     byte [] valueTwo = Bytes.toBytes("value2");
 
     // enqueue two entries
-    assertTrue(queue.enqueue(valueOne, dirtyVersion).isSuccess());
-    assertTrue(queue.enqueue(valueTwo, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueOne, null, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueTwo, null, dirtyVersion).isSuccess());
 
     // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
     DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
 
     // verify we got something and it's the first value
@@ -365,13 +365,13 @@ public abstract class TestTTQueue {
     byte [] valueSemiAckedToAcked = Bytes.toBytes("semiAckedToAcked");
 
     // enqueue three entries
-    assertTrue(queue.enqueue(valueSemiAckedTimeout, dirtyVersion).isSuccess());
-    assertTrue(queue.enqueue(valueSemiAckedToDequeued, dirtyVersion).isSuccess());
-    assertTrue(queue.enqueue(valueSemiAckedToAcked, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueSemiAckedTimeout, null, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueSemiAckedToDequeued, null, dirtyVersion).isSuccess());
+    assertTrue(queue.enqueue(valueSemiAckedToAcked, null, dirtyVersion).isSuccess());
 
     // dequeue with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, true);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // get the first entry
     DequeueResult result = queue.dequeue(consumer, config, dirtyReadPointer);
@@ -432,12 +432,12 @@ public abstract class TestTTQueue {
     // enqueue ten entries
     int n=10;
     for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(Bytes.toBytes(i+1), version).isSuccess());
+      assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
     // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, config, readPointer);
@@ -509,12 +509,12 @@ public abstract class TestTTQueue {
     // enqueue ten entries
     int n=10;
     for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(Bytes.toBytes(i+1), version).isSuccess());
+      assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
     // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig config = new QueueConfig(PartitionerType.RANDOM, singleEntry);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, config, readPointer);
@@ -633,12 +633,12 @@ public abstract class TestTTQueue {
     // enqueue 3 entries
     int n=3;
     for (int i=0;i<n;i++) {
-      assertTrue(queue.enqueue(Bytes.toBytes(i+1), version).isSuccess());
+      assertTrue(queue.enqueue(Bytes.toBytes(i+1), null, version).isSuccess());
     }
 
     // dequeue it with the single consumer and random partitioner
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1);
     QueueConfig multiConfig = new QueueConfig(PartitionerType.RANDOM, false);
+    QueueConsumer consumer = new QueueConsumer(0, 0, 1, multiConfig);
 
     // verify it's the first value
     DequeueResult resultOne = queue.dequeue(consumer, multiConfig, readPointer);
@@ -694,7 +694,7 @@ public abstract class TestTTQueue {
     int n=4;
     EnqueueResult [] results = new EnqueueResult[n];
     for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), null, version);
       assertTrue(results[i].isSuccess());
     }
 
@@ -781,7 +781,7 @@ public abstract class TestTTQueue {
     n=3;
     results = new EnqueueResult[n];
     for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), null, version);
       assertTrue(results[i].isSuccess());
     }
 
@@ -842,7 +842,7 @@ public abstract class TestTTQueue {
     int n=4;
     EnqueueResult [] results = new EnqueueResult[n];
     for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), null, version);
       assertTrue(results[i].isSuccess());
     }
 
@@ -924,8 +924,8 @@ public abstract class TestTTQueue {
     assertTrue(result.isEmpty());
 
     // enqueue twice, dequeue/ack once
-    queue.enqueue(Bytes.toBytes(5), version);
-    queue.enqueue(Bytes.toBytes(6), version);
+    queue.enqueue(Bytes.toBytes(5), null, version);
+    queue.enqueue(Bytes.toBytes(6), null, version);
     result = queue.dequeue(consumer, config, readPointer);
     assertTrue(result.isSuccess());
     assertTrue(Bytes.equals(result.getValue(), Bytes.toBytes(5)));
@@ -957,7 +957,7 @@ public abstract class TestTTQueue {
     int n=100;
     EnqueueResult [] results = new EnqueueResult[n];
     for (int i=0;i<n;i++) {
-      results[i] = queue.enqueue(Bytes.toBytes(i+1), version);
+      results[i] = queue.enqueue(Bytes.toBytes(i+1), null, version);
       assertTrue(results[i].isSuccess());
     }
     // we want to verify at the end of the test we acked every entry
@@ -997,7 +997,7 @@ public abstract class TestTTQueue {
     // everything for consumer 1 is dequeued but not acked, there is a gap
 
     // we should not be able to reconfigure (try to introduce consumer 3)
-    QueueConsumer consumer3 = new QueueConsumer(2, 0, 3);
+    QueueConsumer consumer3 = new QueueConsumer(2, 0, 3, config);
     try {
       queue.dequeue(consumer3, config, readPointer);
       fail("dequeue should fail because it changes group size.");
@@ -1098,7 +1098,7 @@ public abstract class TestTTQueue {
     assertNull(result);
 
     // enqueue
-    assertTrue(queue.enqueue(valueOne, version).isSuccess());
+    assertTrue(queue.enqueue(valueOne, null, version).isSuccess());
     waitForAndAssertCount(1, dequeuer.dequeues);
     waitForAndAssertCount(2, dequeuer.dequeueRunLoop);
 
@@ -1127,7 +1127,7 @@ public abstract class TestTTQueue {
     assertNull(result);
 
     // enqueue
-    assertTrue(queue.enqueue(valueTwo, version).isSuccess());
+    assertTrue(queue.enqueue(valueTwo, null, version).isSuccess());
     waitForAndAssertCount(2, dequeuer.dequeues);
     // dequeuer had dequeueped and goes into its next loop
     waitForAndAssertCount(3, dequeuer.dequeueRunLoop);
@@ -1167,8 +1167,8 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
-    } else if (queue instanceof TTQueueFifoOnVCTable) {
-      dequeueReturns = ((TTQueueFifoOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueAbstractOnVCTable) {
+      dequeueReturns = ((TTQueueAbstractOnVCTable)queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1220,7 +1220,7 @@ public abstract class TestTTQueue {
       public void run() {
         for (int i=0; i<n; i++) {
           try {
-            queue.enqueue(Bytes.toBytes(i), version);
+            queue.enqueue(Bytes.toBytes(i), null, version);
           } catch (OperationException e) {
             fail("EnqueuePayload got exception: " + e.getMessage());
           }
@@ -1258,8 +1258,8 @@ public abstract class TestTTQueue {
       dequeueReturns = ((TTQueueOnVCTable)queue).dequeueReturns;
     } else if (queue instanceof TTQueueOnHBaseNative) {
       dequeueReturns = ((TTQueueOnHBaseNative)queue).dequeueReturns;
-    } else if (queue instanceof TTQueueFifoOnVCTable) {
-      dequeueReturns = ((TTQueueFifoOnVCTable)queue).dequeueReturns;
+    } else if (queue instanceof TTQueueAbstractOnVCTable) {
+      dequeueReturns = ((TTQueueAbstractOnVCTable)queue).dequeueReturns;
     }
 
     assertNotNull(dequeueReturns);
@@ -1319,7 +1319,7 @@ public abstract class TestTTQueue {
     long numEnqueues = 0;
     // enqueue the first four values
     for (int i=0; i<n; i++) {
-      assertTrue(queue.enqueue(values[i], version).isSuccess());
+      assertTrue(queue.enqueue(values[i], null, version).isSuccess());
       numEnqueues++;
     }
 
@@ -1464,7 +1464,7 @@ public abstract class TestTTQueue {
 
     // enqueue everything!
     for (int i=0; i<n*n; i++) {
-      assertTrue(queue.enqueue(values[i], version).isSuccess());
+      assertTrue(queue.enqueue(values[i], null, version).isSuccess());
       numEnqueues++;
     }
 

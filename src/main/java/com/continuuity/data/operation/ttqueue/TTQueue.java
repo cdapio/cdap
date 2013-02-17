@@ -24,7 +24,8 @@ public interface TTQueue {
    * @return return code, and if success, the unique entryId of the queue entry
    * @throws OperationException if unsuccessful
    */
-  public EnqueueResult enqueue(byte [] data, long writeVersion)
+  public EnqueueResult enqueue(byte [] data, byte[] headerData, long writeVersion)
+//  public EnqueueResult enqueue(byte [] data, byte [] mapData, long writeVersion)
       throws OperationException;
 
   /**

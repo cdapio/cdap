@@ -19,7 +19,7 @@ public interface TTQueueTable {
    * @return return code, and if success, the unique entryId of the queue entry
    * @throws OperationException if something goes wrong
    */
-  public EnqueueResult enqueue(byte [] queueName, byte [] data,
+  public EnqueueResult enqueue(byte [] queueName, byte [] data, byte[] headerData,
       long writeVersion) throws OperationException;
 
   /**

@@ -41,7 +41,7 @@ public class BenchHBaseFifoTTqueue extends BenchTTQueue {
   @Override
   protected TTQueue createQueue(CConfiguration conf) throws OperationException {
     String rand = "" + Math.abs(BenchTTQueue.r.nextInt());
-    return new TTQueueFifoOnVCTable(
+    return new TTQueueAbstractOnVCTable(
         handle.getTable(Bytes.toBytes("BenchTable" + rand)),
         Bytes.toBytes("BQN" + rand),
         TestTTQueue.timeOracle, conf);
